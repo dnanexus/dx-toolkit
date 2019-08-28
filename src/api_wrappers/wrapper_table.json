@@ -535,8 +535,8 @@
         }
     ],
     [
-        "/database-xxxx/readFile",
-        "databaseReadFile(req, objectId)",
+        "/database-xxxx/downloadFile",
+        "databaseDownloadFile(req, objectId)",
         {
             "objectMethod": true,
             "retryable": true,

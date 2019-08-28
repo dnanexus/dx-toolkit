@@ -383,7 +383,7 @@ class DXDatabase(DXDataObject):
                 if "timeout" not in kwargs:
                     kwargs["timeout"] = FILE_REQUEST_TIMEOUT
                 do_debug("dxdatabase get_download_url - args = {}".format(args))
-                resp = dxpy.api.database_read_file(self._dxid, args, **kwargs)
+                resp = dxpy.api.database_download_file(self._dxid, args, **kwargs)
                 do_debug("dxdatabase get_download_url - resp = {}".format(resp));
                 self._download_url = resp["url"]
                 self._download_url_headers = _validate_headers(resp.get("headers", {}))
