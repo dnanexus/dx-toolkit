@@ -161,7 +161,7 @@ def _download_files(files, destdir, args, dest_filename=None):
     for project in files:
         for f in files[project]:
             file_desc = f['describe']
-            dest = dest_filename or os.path.join(destdir, file_desc['id'].replace('/', '%2F'))
+            dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
             download_one_file(project, file_desc, dest, args)
 
 
@@ -181,6 +181,7 @@ def _download_folders(folders, destdir, args):
                                      show_progress=show_progress)
             except:
                 err_exit()
+
 
 # Main entry point.
 def download(args):
