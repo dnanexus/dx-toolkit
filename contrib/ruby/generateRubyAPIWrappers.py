@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
 #
@@ -69,7 +69,7 @@ def make_app_object_method(wrapper_method_name, api_method_name, retry=False, ur
 def camel_case_to_underscore(name):
     return re.sub("[A-Z]+", lambda m: "_" + m.group(0).lower(), name, 0)
 
-print preamble
+print(preamble)
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
@@ -78,10 +78,10 @@ for method in json.loads(sys.stdin.read()):
     if (opts['objectMethod']):
         root, oid_route, api_method_name = route.split("/")
         if oid_route == 'app-xxxx':
-            print make_app_object_method(wrapper_method_name, api_method_name, retry=retry, url=opts.get('wikiLink', None))
+            print(make_app_object_method(wrapper_method_name, api_method_name, retry=retry, url=opts.get('wikiLink', None)))
         else:
-            print make_object_method(wrapper_method_name, api_method_name, route, retry=retry, url=opts.get('wikiLink', None))
+            print(make_object_method(wrapper_method_name, api_method_name, route, retry=retry, url=opts.get('wikiLink', None)))
     else:
-        print make_class_method(wrapper_method_name, route, retry=retry, url=opts.get('wikiLink', None))
+        print(make_class_method(wrapper_method_name, route, retry=retry, url=opts.get('wikiLink', None)))
 
-print postscript
+print(postscript)
