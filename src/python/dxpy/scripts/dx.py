@@ -1771,8 +1771,12 @@ def get_output_path(obj_name, obj_class, args):
     # Here, output_path points to a directory
     if len(os.listdir(output_path)):
         # For safety, refuse to remove an existing non-empty
-        # directory automatically.
-        err_exit(fill('Error: path "' + output_path + '" already exists. Remove it and try again.'), 3)
+        # directory automatically. Exception: if we are downloading
+        # database files and -f/--overwrite was set, then we can
+        # proceed, and downloaded files will be added to the existing
+        # directory structure.
+        if not (obj_class == 'database' and args.overwrite):
+            err_exit(fill('Error: path "' + output_path + '" already exists. Remove it and try again.'), 3)
     return output_path
 
 
@@ -1825,7 +1829,8 @@ def do_debug(msg):
     logging.info(msg)
 
 def get_database(entity_result, args):
-    do_debug("dx.py#get_database - entity_result = {}, args = {}".format(entity_result, args))
+    do_debug("dx.py#get_database - entity_result = {}".format(entity_result))
+    do_debug("dx.py#get_database - args = {}".format(args))
     obj_name = entity_result['describe']['name']
     obj_id = entity_result['id']
     project = entity_result['describe']['project']
