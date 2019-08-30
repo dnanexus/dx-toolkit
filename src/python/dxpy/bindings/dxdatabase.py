@@ -112,34 +112,14 @@ class DXDatabase(DXDataObject):
     _class = "database"
 
     _describe = staticmethod(dxpy.api.file_describe)
-    _add_types = staticmethod(dxpy.api.file_add_types)
-    _remove_types = staticmethod(dxpy.api.file_remove_types)
-    _get_details = staticmethod(dxpy.api.file_get_details)
-    _set_details = staticmethod(dxpy.api.file_set_details)
-    _set_visibility = staticmethod(dxpy.api.file_set_visibility)
-    _rename = staticmethod(dxpy.api.file_rename)
-    _set_properties = staticmethod(dxpy.api.file_set_properties)
-    _add_tags = staticmethod(dxpy.api.file_add_tags)
-    _remove_tags = staticmethod(dxpy.api.file_remove_tags)
-    _close = staticmethod(dxpy.api.file_close)
-    _list_projects = staticmethod(dxpy.api.file_list_projects)
 
     _http_threadpool_size = DXFILE_HTTP_THREADS
     _http_threadpool = dxpy.utils.get_futures_threadpool(max_workers=_http_threadpool_size)
 
     NO_PROJECT_HINT = 'NO_PROJECT_HINT'
 
-    @classmethod
-    def set_http_threadpool_size(cls, num_threads):
-        '''
-
-        .. deprecated:: 0.191.0
-
-        '''
-        print('set_http_threadpool_size is deprecated')
-
     def __init__(self, dxid=None, project=None, mode=None, read_buffer_size=DEFAULT_BUFFER_SIZE,
-                 write_buffer_size=DEFAULT_BUFFER_SIZE, expected_file_size=None, file_is_mmapd=False):
+                 expected_file_size=None, file_is_mmapd=False):
         """
         :param dxid: Object ID
         :type dxid: string
@@ -150,10 +130,6 @@ class DXDatabase(DXDataObject):
         :type mode: string
         :param read_buffer_size: size of read buffer in bytes
         :type read_buffer_size: int
-        :param write_buffer_size: hint for size of write buffer in
-            bytes. A lower or higher value may be used depending on
-            region-specific parameters and on the expected file size.
-        :type write_buffer_size: int
         :param expected_file_size: size of data that will be written, if
             known
         :type expected_file_size: int
@@ -162,8 +138,6 @@ class DXDatabase(DXDataObject):
             the allocation granularity)
         :type file_is_mmapd: bool
         """
-
-        do_debug("dxdatabase.py __init__")
 
         DXDataObject.__init__(self, dxid=dxid, project=project)
 
@@ -180,17 +154,9 @@ class DXDatabase(DXDataObject):
                 raise ValueError("mode must be one of 'r', 'w', or 'a'. Character 'b' may be used in combination (e.g. 'wb').")
             self._close_on_exit = (mode == 'w')
         self._read_buf = BytesIO()
-        self._write_buf = BytesIO()
 
         self._read_bufsize = read_buffer_size
 
-        # Computed lazily later since this depends on the project, and
-        # we want to allow the project to be set as late as possible.
-        # Call _ensure_write_bufsize to ensure that this is set before
-        # trying to rexoad it.
-        self._write_bufsize = None
-
-        self._write_buffer_size_hint = write_buffer_size
         self._expected_file_size = expected_file_size
         self._file_is_mmapd = file_is_mmapd
 
@@ -205,11 +171,7 @@ class DXDatabase(DXDataObject):
         self._http_threadpool_futures = set()
 
         # Initialize state
-        self._pos = 0
-        self._file_length = None
-        self._cur_part = 1
-        # self._num_uploaded_parts = 0
-        do_debug("dxdatabase.py __init__ - done initializing")
+        # self._pos = 0
 
     def __enter__(self):
         return self
@@ -272,32 +234,7 @@ class DXDatabase(DXDataObject):
         DXDataObject.set_ids(self, dxid, project)
 
         # Reset state
-        # TODO: some of these not needed for dxdatabase
-        self._pos = 0
-        self._file_length = None
-        self._cur_part = 1
-        # self._num_uploaded_parts = 0
-
-    def tell(self):
-        '''
-        Returns the current position of the file read cursor.
-
-        Warning: Because of buffering semantics, this value will **not** be accurate when using the line iterator form
-        (`for line in file`).
-        '''
-        return self._pos
-
-    def closed(self, **kwargs):
-        '''
-        :returns: Whether the remote file is closed
-        :rtype: boolean
-
-        Returns :const:`True` if the remote file is closed and
-        :const:`False` otherwise. Note that if it is not closed, it can
-        be in either the "open" or "closing" states.
-        '''
-
-        return self.describe(fields={'state'}, **kwargs)["state"] == "closed"
+        # self._pos = 0
 
     def get_download_url(self, duration=None, preauthenticated=False, filename=None, src_filename=None, project=None, **kwargs):
         """
@@ -400,148 +337,3 @@ class DXDatabase(DXDataObject):
             retval_download_url_headers = copy.copy(self._download_url_headers)
 
         return retval_download_url, retval_download_url_headers
-
-    def _generate_read_requests(self, start_pos=0, end_pos=None, project=None,
-                                limit_chunk_size=None, **kwargs):
-        # project=None means no hint is to be supplied to the apiserver. It is
-        # an error to supply a project that does not contain this file.
-        if limit_chunk_size is None:
-            limit_chunk_size = self._read_bufsize
-
-        if self._file_length == None:
-            desc = self.describe(**kwargs)
-            self._file_length = int(desc["size"])
-
-        if end_pos == None:
-            end_pos = self._file_length
-        if end_pos > self._file_length:
-            raise DXFileError("Invalid end_pos")
-
-        def chunk_ranges(start_pos, end_pos, init_chunk_size=1024*64, ramp=2, num_requests_between_ramp=4):
-            cur_chunk_start = start_pos
-            cur_chunk_size = min(init_chunk_size, limit_chunk_size)
-            i = 0
-            while cur_chunk_start < end_pos:
-                cur_chunk_end = min(cur_chunk_start + cur_chunk_size - 1, end_pos)
-                yield cur_chunk_start, cur_chunk_end
-                cur_chunk_start += cur_chunk_size
-                if cur_chunk_size < limit_chunk_size and i % num_requests_between_ramp == (num_requests_between_ramp - 1):
-                    cur_chunk_size = min(cur_chunk_size * ramp, limit_chunk_size)
-                i += 1
-
-        for chunk_start_pos, chunk_end_pos in chunk_ranges(start_pos, end_pos):
-            url, headers = self.get_download_url(project=project, **kwargs)
-            # It is possible for chunk_end_pos to be outside of the range of the file
-            yield dxpy._dxhttp_read_range, [url, headers, chunk_start_pos, min(chunk_end_pos, self._file_length - 1),
-                                            FILE_REQUEST_TIMEOUT], {}
-
-    def _next_response_content(self, get_first_chunk_sequentially=False):
-        if self._response_iterator is None:
-            self._response_iterator = dxpy.utils.response_iterator(
-                self._request_iterator,
-                self._http_threadpool,
-                do_first_task_sequentially=get_first_chunk_sequentially
-            )
-        try:
-            return next(self._response_iterator)
-        except:
-            # If an exception is raised, the iterator is unusable for
-            # retrieving any more items. Destroy it so we'll reinitialize it
-            # next time.
-            self._response_iterator = None
-            self._request_iterator = None
-            raise
-
-    def _read2(self, length=None, use_compression=None, project=None, **kwargs):
-        '''
-        :param length: Maximum number of bytes to be read
-        :type length: integer
-        :param project: project to use as context for this download (may affect
-            which billing account is billed for this download). If specified,
-            must be a project in which this file exists. If not specified, the
-            project ID specified in the handler is used for the download, IF it
-            contains this file. If set to DXFile.NO_PROJECT_HINT, no project ID
-            is supplied for the download, even if the handler specifies a
-            project ID.
-        :type project: str or None
-        :rtype: string
-        :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if *project* is supplied
-           and it does not contain this file
-
-        Returns the next *length* bytes, or all the bytes until the end of file
-        (if no *length* is given or there are fewer than *length* bytes left in
-        the file).
-
-        .. note:: After the first call to read(), the project arg and
-           passthrough kwargs are not respected while using the same response
-           iterator (i.e. until next seek).
-
-        '''
-        if self._file_length == None:
-            desc = self.describe(**kwargs)
-            if desc["state"] != "closed":
-                raise DXFileError("Cannot read from file until it is in the closed state")
-            self._file_length = int(desc["size"])
-
-        # If running on a worker, wait for the first file download chunk
-        # to come back before issuing any more requests. This ensures
-        # that all subsequent requests can take advantage of caching,
-        # rather than having all of the first DXFILE_HTTP_THREADS
-        # requests simultaneously hit a cold cache. Enforce a minimum
-        # size for this heuristic so we don't incur the overhead for
-        # tiny files (which wouldn't contribute as much to the load
-        # anyway).
-        get_first_chunk_sequentially = (self._file_length > 128 * 1024 and self._pos == 0 and dxpy.JOB_ID)
-
-        if self._pos == self._file_length:
-            return b""
-
-        if length == None or length > self._file_length - self._pos:
-            length = self._file_length - self._pos
-
-        buf = self._read_buf
-        buf_remaining_bytes = dxpy.utils.string_buffer_length(buf) - buf.tell()
-        if length <= buf_remaining_bytes:
-            self._pos += length
-            return buf.read(length)
-        else:
-            orig_buf_pos = buf.tell()
-            orig_file_pos = self._pos
-            buf.seek(0, os.SEEK_END)
-            self._pos += buf_remaining_bytes
-            while self._pos < orig_file_pos + length:
-                remaining_len = orig_file_pos + length - self._pos
-
-                if self._response_iterator is None:
-                    self._request_iterator = self._generate_read_requests(
-                        start_pos=self._pos, project=project, **kwargs)
-
-                content = self._next_response_content(get_first_chunk_sequentially=get_first_chunk_sequentially)
-
-                if len(content) < remaining_len:
-                    buf.write(content)
-                    self._pos += len(content)
-                else: # response goes beyond requested length
-                    buf.write(content[:remaining_len])
-                    self._pos += remaining_len
-                    self._read_buf = BytesIO()
-                    self._read_buf.write(content[remaining_len:])
-                    self._read_buf.seek(0)
-            buf.seek(orig_buf_pos)
-            return buf.read()
-
-        # Debug fallback
-        # import urllib2
-        # req = urllib2.Request(url, headers=headers)
-        # response = urllib2.urlopen(req)
-        # return response.read()
-
-    # TODO: remove if not needed
-    def read(self, length=None, use_compression=None, project=None, **kwargs):
-        data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
-        if USING_PYTHON2:
-            return data
-        # In python3, the underlying system methods use the 'bytes' type, not 'string'
-        if self._binary_mode is True:
-            return data
-        return data.decode("utf-8")
