@@ -37,18 +37,18 @@ from . import dxfile, DXFile
 from . import dxdatabase, DXDatabase
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open, USING_PYTHON2
-from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..exceptions import DXFileError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 from .dxdatabase import do_debug
 import subprocess
 
-def download_dxdatabasefile(dxid, filename, src_filename, file_status, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    project=None, describe_output=None, **kwargs):
+def download_dxdatabasefile(dxid, dst_filename, src_filename, file_status, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
+                            project=None, describe_output=None, **kwargs):
     '''
     :param dxid: DNAnexus database ID or DXDatabase (database handler) object
     :type dxid: string or DXDatabase
-    :param filename: Local filename
-    :type filename: string
+    :param dst_filename: Local filename
+    :type dst_filename: string
     :param src_filename: Name of database file or folder being downloaded
     :type src_filename: string
     :param file_status: Metadata for the source file being downloaded
@@ -66,7 +66,7 @@ def download_dxdatabasefile(dxid, filename, src_filename, file_status, chunksize
     :type describe_output: dict or None
 
     Downloads the remote file referenced by *src_filename* from database referenced
-    by *dxid* and saves it to *filename*.
+    by *dxid* and saves it to *dst_filename*.
 
     Example::
 
@@ -79,16 +79,16 @@ def download_dxdatabasefile(dxid, filename, src_filename, file_status, chunksize
     success = False
     while not success:
         success = _download_dxdatabasefile(dxid,
-                                   filename,
-                                   src_filename,
-                                   file_status,
-                                   part_retry_counter,
-                                   chunksize=chunksize,
-                                   append=append,
-                                   show_progress=show_progress,
-                                   project=project,
-                                   describe_output=describe_output,
-                                   **kwargs)
+                                           dst_filename,
+                                           src_filename,
+                                           file_status,
+                                           part_retry_counter,
+                                           chunksize=chunksize,
+                                           append=append,
+                                           show_progress=show_progress,
+                                           project=project,
+                                           describe_output=describe_output,
+                                           **kwargs)
 
 
 # Check if a program (wget, curl, etc.) is on the path, and
@@ -182,22 +182,17 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
 
     do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxdatabase_desc {}".format(dxdatabase_desc)) 
 
-    # TODO: clean up usage of 'parts'
-    # TODO: don't need md5.
-    parts = {u'1': {u'state': u'complete', u'md5': u'85c149c110a91df15ffd6a2c9da45cdb', u'size': file_status["size"]}}
+    # For database files, the whole parquet file is one 'part'.
+    # Consider a multi part download approach in the future.
+    parts = {u'1': {u'state': u'complete', u'size': file_status["size"]}}
     parts_to_get = sorted(parts, key=int)
     file_size = file_status["size"]
-
-    do_debug("dxdatabase_functions.py _download_dxdatabasefile - parts = {}".format(parts)) 
-    do_debug("dxdatabase_functions.py _download_dxdatabasefile - file_size {}".format(file_size)) 
 
     offset = 0
     for part_id in parts_to_get:
         parts[part_id]["start"] = offset
         offset += parts[part_id]["size"]
 
-    do_debug("dxdatabase_functions.py _download_dxdatabasefile - filename = {}, src_filename = {}".format(filename, src_filename)) 
-    
     # Create proper destination path, including any subdirectories needed within path.
     ensure_local_dir(filename);
     dest_path = os.path.join(filename, src_filename)
@@ -223,12 +218,9 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
         url, headers = dxdatabase.get_download_url(src_filename=src_filename, project=project, **kwargs)
         do_debug("dxdatabase_functions.py get_chunk - url = {}".format(url))
  
-        # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
-        # transfer compression
+        # No sub ranges for database file downloads
         sub_range = False
-        if len(parts) > 1 or (start > 0) or (end - start + 1 < parts[part_id_to_get]["size"]):
-            sub_range = True
-        # TODO: read the whole range here since it's a URL
+
         data_url = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
         do_debug("dxdatabase_functions.py get_chunk - data_url = {}".format(data_url))
         # 'data_url' is the s3 URL, so read again, just like in DNAxFileSystem
@@ -265,6 +257,7 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
                 for part_id in parts_to_get:
                     part_info = parts[part_id]
 
+                    # TODO: remove permanently if not needed
                     # if "md5" not in part_info:
                     #     raise DXFileError("File {} does not contain part md5 checksums".format(dxdatabase.get_id()))
                     bytes_to_read = part_info["size"]
@@ -275,7 +268,7 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
                             raise DXFileError("Local data for part {} is truncated".format(part_id))
                         hasher.update(chunk)
                         bytes_to_read -= max_verify_chunk_size
-                    if hasher.hexdigest() != part_info["md5"]:
+                    if "md5" in part_info and hasher.hexdigest() != part_info["md5"]:
                         raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
                     else:
                         last_verified_part = part_id
