@@ -6,7 +6,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [285.0] - 2019.06.19 beta
+## [286.1] - 2019.07.08 beta
+
+### Changed
+
+* Documentation links to https://documentation.dnanexus.com
+
+## [285.1] - 2019.07.08 stable
+
+### Fixed
+
+* Remove non-ascii char from readme
+
+## [285.0] - 2019.06.19 
 
 ### Added
 
