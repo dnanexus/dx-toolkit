@@ -1826,7 +1826,7 @@ def get_workflow(entity_result, args):
     dump_executable(dx_obj, output_path, omit_resources=True, describe_output=describe_output)
 
 def do_debug(msg):
-    logging.info(msg)
+    logging.debug(msg)
 
 def get_database(entity_result, args):
     do_debug("dx.py#get_database - entity_result = {}".format(entity_result))
@@ -1864,7 +1864,7 @@ def get_database(entity_result, args):
             idx = src_filename.rfind("database-")
             if idx != -1:
                 src_filename = src_filename[idx + 34:]
-            do_debug("dx.py#get_database - file path = {}".format(src_filename))
+            print(src_filename)
             download_one_database_file(project, entity_result['describe'], output_path, src_filename, dbfilestatus, args)
 
 def get(args):

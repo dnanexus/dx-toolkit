@@ -39,7 +39,6 @@ from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open, USING_PYTHON2
 from ..exceptions import DXFileError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
-from .dxdatabase import do_debug
 import subprocess
 
 def download_dxdatabasefile(dxid, dst_filename, src_filename, file_status, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
@@ -127,6 +126,9 @@ def _verify(filename, md5digest):
         err_exit("Checksum doesn't match " + str(actual_md5) + "  expected:" + str(md5digest))
     print("Checksum correct")
 
+def do_debug(msg):
+    logger.debug(msg)
+
 def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                      project=None, describe_output=None, **kwargs):
@@ -164,8 +166,6 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
         sys.stderr.write("\r")
         sys.stderr.flush()
 
-    do_debug("dxdatabase_functions.py _download_dxdatabasefile - filename {}".format(filename)) 
-
     _bytes = 0
 
     if isinstance(dxid, DXDatabase):
@@ -180,8 +180,6 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
     else:
         dxdatabase_desc = dxdatabase.describe(fields={"parts"}, default_fields=True, **kwargs)
 
-    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxdatabase_desc {}".format(dxdatabase_desc)) 
-
     # For database files, the whole parquet file is one 'part'.
     # Consider a multi part download approach in the future.
     parts = {u'1': {u'state': u'complete', u'size': file_status["size"]}}
@@ -193,6 +191,8 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
         parts[part_id]["start"] = offset
         offset += parts[part_id]["size"]
 
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - parts {}".format(parts))
+
     # Create proper destination path, including any subdirectories needed within path.
     ensure_local_dir(filename);
     dest_path = os.path.join(filename, src_filename)
@@ -201,7 +201,8 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
         dest_dir = dest_path[:dest_dir_idx]
         ensure_local_dir(dest_dir)      
 
-    # Use dest_path not filename
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dest_path {}".format(dest_path)) 
+
     if append:
         fh = open(dest_path, "ab")
     else:
@@ -216,11 +217,8 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
     def get_chunk(part_id_to_get, start, end):
         do_debug("dxdatabase_functions.py get_chunk - start {}, end {}, part id {}".format(start, end, part_id_to_get))
         url, headers = dxdatabase.get_download_url(src_filename=src_filename, project=project, **kwargs)
-        do_debug("dxdatabase_functions.py get_chunk - url = {}".format(url))
- 
         # No sub ranges for database file downloads
         sub_range = False
-
         data_url = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
         do_debug("dxdatabase_functions.py get_chunk - data_url = {}".format(data_url))
         # 'data_url' is the s3 URL, so read again, just like in DNAxFileSystem
@@ -247,48 +245,10 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
             raise DXChecksumMismatchError(msg)
 
     with fh:
-        last_verified_pos = 0
-
-        if fh.mode == "rb+":
-            # We already downloaded the beginning of the file, verify that the
-            # chunk checksums match the metadata.
-            last_verified_part, max_verify_chunk_size = None, 1024*1024
-            try:
-                for part_id in parts_to_get:
-                    part_info = parts[part_id]
-
-                    # TODO: remove permanently if not needed
-                    # if "md5" not in part_info:
-                    #     raise DXFileError("File {} does not contain part md5 checksums".format(dxdatabase.get_id()))
-                    bytes_to_read = part_info["size"]
-                    hasher = hashlib.md5()
-                    while bytes_to_read > 0:
-                        chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
-                        if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
-                            raise DXFileError("Local data for part {} is truncated".format(part_id))
-                        hasher.update(chunk)
-                        bytes_to_read -= max_verify_chunk_size
-                    if "md5" in part_info and hasher.hexdigest() != part_info["md5"]:
-                        raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
-                    else:
-                        last_verified_part = part_id
-                        last_verified_pos = fh.tell()
-                        if show_progress:
-                            _bytes += part_info["size"]
-                            print_progress(_bytes, file_size, action="Verified")
-            except (IOError, DXFileError) as e:
-                logger.debug(e)
-            fh.seek(last_verified_pos)
-            fh.truncate()
-            if last_verified_part is not None:
-                del parts_to_get[:parts_to_get.index(last_verified_part)+1]
-            if show_progress and len(parts_to_get) < len(parts):
-                print_progress(last_verified_pos, file_size, action="Resuming at")
-            logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
 
         try:
             # Main loop. In parallel: download chunks, verify them, and write them to disk.
-            get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
+            get_first_chunk_sequentially = (file_size > 128 * 1024 and dxpy.JOB_ID)
             cur_part, got_bytes, hasher = None, None, None
             for chunk_part, chunk_data in response_iterator(chunk_requests(),
                                                             dxdatabase._http_threadpool,
@@ -322,7 +282,6 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
         return True
 
 def ensure_local_dir(d):
-    do_debug("dxdatabase_functions.py ensure_local_dir - d = {}".format(d)) 
     if not os.path.isdir(d):
         if os.path.exists(d):
             raise DXFileError("Destination location '{}' already exists and is not a directory".format(d))

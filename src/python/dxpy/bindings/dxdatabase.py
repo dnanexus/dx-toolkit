@@ -80,7 +80,7 @@ def _readable_part_size(num_bytes):
         return '{0:.2f} TiB'.format(B/TB)
 
 def do_debug(msg):
-    logger.info(msg)
+    logger.debug(msg)
 
 class DXDatabase(DXDataObject):
     '''Remote database object handler.
@@ -170,71 +170,6 @@ class DXDatabase(DXDataObject):
         self._request_iterator, self._response_iterator = None, None
         self._http_threadpool_futures = set()
 
-        # Initialize state
-        # self._pos = 0
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        return
-
-    def __iter__(self):
-        _buffer = self.read(self._read_bufsize)
-        done = False
-        if USING_PYTHON2:
-            while not done:
-                if b"\n" in _buffer:
-                    lines = _buffer.splitlines()
-                    for i in range(len(lines) - 1):
-                        yield lines[i]
-                    _buffer = lines[len(lines) - 1]
-                else:
-                    more = self.read(self._read_bufsize)
-                    if more == b"":
-                        done = True
-                    else:
-                        _buffer = _buffer + more
-        else:
-            if self._binary_mode:
-                raise DXFileError("Cannot read lines when file opened in binary mode")
-            # python3 is much stricter about distinguishing
-            # 'bytes' from 'str'.
-            while not done:
-                if "\n" in _buffer:
-                    lines = _buffer.splitlines()
-                    for i in range(len(lines) - 1):
-                        yield lines[i]
-                    _buffer = lines[len(lines) - 1]
-                else:
-                    more = self.read(self._read_bufsize)
-                    if more == "":
-                        done = True
-                    else:
-                        _buffer = _buffer + more
-
-        if _buffer:
-            yield _buffer
-
-    next = next
-    __next__ = next
-
-    def set_ids(self, dxid, project=None):
-        '''
-        :param dxid: Object ID
-        :type dxid: string
-        :param project: Project ID
-        :type project: string
-
-        Discards the currently stored ID and associates the handler with
-        *dxid*. As a side effect, it also flushes the buffer for the
-        previous file object if the buffer is nonempty.
-        '''
-    
-        DXDataObject.set_ids(self, dxid, project)
-
-        # Reset state
-        # self._pos = 0
 
     def get_download_url(self, duration=None, preauthenticated=False, filename=None, src_filename=None, project=None, **kwargs):
         """
@@ -270,14 +205,11 @@ class DXDatabase(DXDataObject):
 
         """
 
-        do_debug("dxdatabase get_download_url - project = {}".format(project))
-
         args = {"preauthenticated": preauthenticated}
 
         if duration is not None:
             args["duration"] = duration
 
-        # 'src_filename' is file being downloaded so use that rather than 'filename'
         if src_filename is not None:
             args["filename"] = src_filename
 
@@ -296,7 +228,6 @@ class DXDatabase(DXDataObject):
                 project = project_from_handler
 
         if project is not None and project is not DXDatabase.NO_PROJECT_HINT:
-            # args["project"] = project
             args["projectContext"] = project
 
         # Test hook to write 'project' argument passed to API call to a
@@ -319,9 +250,9 @@ class DXDatabase(DXDataObject):
                 # logging.debug("Download URL unset or expired, requesting a new one")
                 if "timeout" not in kwargs:
                     kwargs["timeout"] = FILE_REQUEST_TIMEOUT
-                do_debug("dxdatabase get_download_url - args = {}".format(args))
+                do_debug("dxdatabase get_download_url - download_file args = {}".format(args))
                 resp = dxpy.api.database_download_file(self._dxid, args, **kwargs)
-                do_debug("dxdatabase get_download_url - resp = {}".format(resp));
+                do_debug("dxdatabase get_download_url - download_file resp = {}".format(resp));
                 self._download_url = resp["url"]
                 self._download_url_headers = _validate_headers(resp.get("headers", {}))
                 if preauthenticated:

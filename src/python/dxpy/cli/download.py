@@ -99,13 +99,12 @@ def download_one_file(project, file_desc, dest_filename, args):
         err_exit()
 
 def do_debug(msg):
-    logging.info(msg)
+    logging.debug(msg)
 
 # dest_filename = local file where downloaded file will go
 # src_filename = name of parquet file or folder being downloaded from database
 def download_one_database_file(project, file_desc, dest_filename, src_filename, file_status, args):
-    do_debug("\n\n\n\ndownload.py#download_one_database_file - src_filename = {}".format(src_filename));
-    do_debug("download.py#download_one_database_file - file_desc: {}".format(file_desc));
+    do_debug("download.py#download_one_database_file - src_filename = {}".format(src_filename));
     if file_status is not None:
         do_debug("download.py#download_one_database_file - file_status = {}".format(file_status));
 
