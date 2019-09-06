@@ -103,7 +103,7 @@ def do_debug(msg):
 
 # dest_filename = local file where downloaded file will go
 # src_filename = name of parquet file or folder being downloaded from database
-def download_one_database_file(project, file_desc, dest_filename, src_filename, file_status, args):
+def download_one_database_file(project, database_desc, dest_filename, src_filename, file_status, args):
     do_debug("download.py#download_one_database_file - src_filename = {}".format(src_filename));
     if file_status is not None:
         do_debug("download.py#download_one_database_file - file_status = {}".format(file_status));
@@ -112,8 +112,8 @@ def download_one_database_file(project, file_desc, dest_filename, src_filename, 
         if os.path.exists(dest_filename):
             err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
 
-    if file_desc['class'] != 'database':
-        print("Skipping non-database data object {name} ({id})".format(**file_desc), file=sys.stderr)
+    if database_desc['class'] != 'database':
+        print("Skipping non-database data object {name} ({id})".format(**database_desc), file=sys.stderr)
         return
 
     try:
@@ -123,13 +123,13 @@ def download_one_database_file(project, file_desc, dest_filename, src_filename, 
 
     try:
         dxpy.download_dxdatabasefile(
-            file_desc['id'],
+            database_desc['id'],
             dest_filename,
             src_filename,
             file_status,
             show_progress=show_progress,
             project=project,
-            describe_output=file_desc)
+            describe_output=database_desc)
     except:
         err_exit()
 

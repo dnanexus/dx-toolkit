@@ -1831,7 +1831,6 @@ def do_debug(msg):
 def get_database(entity_result, args):
     do_debug("dx.py#get_database - entity_result = {}".format(entity_result))
     do_debug("dx.py#get_database - args = {}".format(args))
-    obj_name = entity_result['describe']['name']
     obj_id = entity_result['id']
     project = entity_result['describe']['project']
     do_debug("dx.py#get_database - project = {}".format(project))

@@ -58,7 +58,7 @@ def download_dxdatabasefile(dxid, dst_filename, src_filename, file_status, chunk
             which billing account is billed for this download). If None or
             DXFile.NO_PROJECT_HINT, no project hint is supplied to the API server.
     :type project: str or None
-    :param describe_output: (experimental) output of the file-xxxx/describe API call,
+    :param describe_output: (experimental) output of the database-xxxx/describe API call,
             if available. It will make it possible to skip another describe API call.
             It should contain the default fields of the describe API call output and
             the "parts" field, not included in the output by default.
@@ -133,7 +133,8 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                      project=None, describe_output=None, **kwargs):
     '''
-    Core of download logic. Download file-id *dxid* and store it in
+    Core of download logic. Download the specified file/folder *src_filename*
+    associated with database-id *dxid* and store it in
     a local file *filename*.
 
     The return value is as follows:
