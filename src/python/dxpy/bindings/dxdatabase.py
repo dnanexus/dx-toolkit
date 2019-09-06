@@ -89,23 +89,6 @@ class DXDatabase(DXDataObject):
     :type dxid: string
     :param project: Project ID
     :type project: string
-    :param mode: One of "r", "w", or "a" for read, write, and append modes, respectively.
-                 Use "b" for binary mode. For example, "rb" means open a file for reading
-                 in binary mode.
-    :type mode: string
-
-    .. note:: The attribute values below are current as of the last time
-              :meth:`~dxpy.bindings.DXDataObject.describe` was run.
-              (Access to any of the below attributes causes
-              :meth:`~dxpy.bindings.DXDataObject.describe` to be called
-              if it has never been called before.)
-
-    .. py:attribute:: media
-
-       String containing the Internet Media Type (also known as MIME type
-       or Content-type) of the file.
-
-    .. automethod:: _new
 
     '''
 
@@ -118,16 +101,13 @@ class DXDatabase(DXDataObject):
 
     NO_PROJECT_HINT = 'NO_PROJECT_HINT'
 
-    def __init__(self, dxid=None, project=None, mode=None, read_buffer_size=DEFAULT_BUFFER_SIZE,
+    def __init__(self, dxid=None, project=None, read_buffer_size=DEFAULT_BUFFER_SIZE,
                  expected_file_size=None, file_is_mmapd=False):
         """
         :param dxid: Object ID
         :type dxid: string
         :param project: Project ID
         :type project: string
-        :param mode: One of "r", "w", or "a" for read, write, and append
-            modes, respectively. Add "b" for binary mode.
-        :type mode: string
         :param read_buffer_size: size of read buffer in bytes
         :type read_buffer_size: int
         :param expected_file_size: size of data that will be written, if
@@ -141,22 +121,8 @@ class DXDatabase(DXDataObject):
 
         DXDataObject.__init__(self, dxid=dxid, project=project)
 
-        # By default, a file is created in text mode. This makes a difference
-        # in python 3.
-        self._binary_mode = False
-        if mode is None:
-            self._close_on_exit = True
-        else:
-            if 'b' in mode:
-                self._binary_mode = True
-                mode = mode.replace("b", "")
-            if mode not in ['r', 'w', 'a']:
-                raise ValueError("mode must be one of 'r', 'w', or 'a'. Character 'b' may be used in combination (e.g. 'wb').")
-            self._close_on_exit = (mode == 'w')
         self._read_buf = BytesIO()
-
         self._read_bufsize = read_buffer_size
-
         self._expected_file_size = expected_file_size
         self._file_is_mmapd = file_is_mmapd
 

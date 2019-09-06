@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2016 DNAnexus, Inc.
+# Copyright (C) 2013-2019 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -171,7 +171,7 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
     if isinstance(dxid, DXDatabase):
         dxdatabase = dxid
     else:
-        dxdatabase = DXDatabase(dxid, mode="r", project=(project if project != DXFile.NO_PROJECT_HINT else None))
+        dxdatabase = DXDatabase(dxid, project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
     do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxdatabase: {}".format(dxdatabase)) 
 

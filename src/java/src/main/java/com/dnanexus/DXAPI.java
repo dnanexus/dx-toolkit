@@ -10963,8 +10963,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseDownloadFile method with an empty input, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      *
@@ -10982,8 +10980,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseDownloadFile method with the given input, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11007,8 +11003,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseDownloadFile method with an empty input using the given environment, deserializing to an object of the specified class.
      *
-     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param outputClass class to deserialize the server reponse to
      * @param env environment object specifying the auth token and remote server and protocol
@@ -11027,8 +11021,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseDownloadFile method with the given input using the given environment, deserializing to an object of the specified class.
-     *
-     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputObject input object (to be JSON serialized to an input hash)
@@ -11054,8 +11046,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseDownloadFile method.
      *
-     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      *
      * @return Server response parsed from JSON
@@ -11075,8 +11065,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseDownloadFile method with the specified parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call
@@ -11100,8 +11088,6 @@ public final class DXAPI {
     /**
      * Invokes the databaseDownloadFile method with the specified environment.
      *
-     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder">API specification</a>.
-     *
      * @param objectId ID of the object to operate on
      * @param env environment object specifying the auth token and remote server and protocol
      *
@@ -11122,8 +11108,6 @@ public final class DXAPI {
     }
     /**
      * Invokes the databaseDownloadFile method with the specified environment and parameters.
-     *
-     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder">API specification</a>.
      *
      * @param objectId ID of the object to operate on
      * @param inputParams input parameters to the API call

@@ -2118,7 +2118,7 @@ databaseSetVisibility <- function(objectID,
 ##' response is returned (using \code{RJSONIO::fromJSON}).
 ##' @export
 ##' @seealso \code{\link{dxHTTPRequest}}
-##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listFolder}
+##' @references API spec documentation: \url{}
 databaseDownloadFile <- function(objectID,
                                  inputParams=emptyNamedList,
                                  jsonifyData=TRUE,
