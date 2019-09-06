@@ -137,44 +137,32 @@ class DXDatabase(DXDataObject):
         self._http_threadpool_futures = set()
 
 
-    def get_download_url(self, duration=None, preauthenticated=False, filename=None, src_filename=None, project=None, **kwargs):
+    def get_download_url(self, filename=None, src_filename=None, project=None, **kwargs):
         """
-        :param duration: number of seconds for which the generated URL will be
-            valid, should only be specified when preauthenticated is True
-        :type duration: int
-        :param preauthenticated: if True, generates a 'preauthenticated'
-            download URL, which embeds authentication info in the URL and does
-            not require additional headers
-        :type preauthenticated: bool
-        :param filename: desired filename of the downloaded file
+        :param filename: desired filename of the local downloaded file
         :type filename: str
         :param project: ID of a project containing the file (the download URL
             will be associated with this project, and this may affect which
             billing account is billed for this download).
-            If no project is specified, an attempt will be made to verify if the file is
+            If no project is specified, an attempt will be made to verify if the database is
             in the project from the DXDatabase handler (as specified by the user or
             the current project stored in dxpy.WORKSPACE_ID). Otherwise, no hint is supplied.
             This fall back behavior does not happen inside a job environment.
-            A non preauthenticated URL is only valid as long as the user has
-            access to that project and the project contains that file.
         :type project: str
         :returns: download URL and dict containing HTTP headers to be supplied
             with the request
         :rtype: tuple (str, dict)
         :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if a project context was
-            given and the file was not found in that project context.
+            given and the database was not found in that project context.
         :raises: :exc:`~dxpy.exceptions.ResourceNotFound` if no project context was
-            given and the file was not found in any projects.
+            given and the database was not found in any projects.
 
-        Obtains a URL that can be used to directly download the associated
-        file.
+        Obtains a URL that can be used to directly download files associated
+        with the specified database.
 
         """
 
-        args = {"preauthenticated": preauthenticated}
-
-        if duration is not None:
-            args["duration"] = duration
+        args = {}
 
         if src_filename is not None:
             args["filename"] = src_filename
@@ -221,10 +209,7 @@ class DXDatabase(DXDataObject):
                 do_debug("dxdatabase get_download_url - download_file resp = {}".format(resp));
                 self._download_url = resp["url"]
                 self._download_url_headers = _validate_headers(resp.get("headers", {}))
-                if preauthenticated:
-                    self._download_url_expires = resp["expires"]/1000 - 60  # Try to account for drift
-                else:
-                    self._download_url_expires = 32503680000  # doesn't expire (year 3000)
+                self._download_url_expires = 32503680000  # doesn't expire (year 3000)
 
             # Make a copy, ensuring each thread has its own mutable
             # version of the headers.  Note: python strings are
