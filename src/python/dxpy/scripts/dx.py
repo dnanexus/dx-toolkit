@@ -1845,9 +1845,7 @@ def get_database(entity_result, args):
     do_debug("dx.py#get_database - dx_obj = {}".format(dx_obj))
 
     # Call /database-xxx/listFolder to fetch database file metadata
-    list_folder_args = {"folder": args.filename}
-    # TODO: don't assume recursive
-    list_folder_args["recurse"] = True
+    list_folder_args = {"folder": args.filename, "recurse": args.recurse}
     list_folder_resp = dxpy.api.database_list_folder(obj_id, list_folder_args)
     do_debug("dx.py#get_database - list_folder_resp = {}".format(list_folder_resp))
     results = list_folder_resp["results"]
@@ -5139,6 +5137,7 @@ parser_get = subparsers.add_parser('get', help='Download records, apps, applets,
 parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet', 'app', 'workflow', 'database'])
 parser_get.add_argument('-o', '--output', help='local file path where the data is to be saved ("-" indicates stdout output for objects of class file and record). If not supplied, the object\'s name on the platform will be used, along with any applicable extensions. For app(let) and workflow objects, if OUTPUT does not exist, the object\'s source directory will be created there; if OUTPUT is an existing directory, a new directory with the object\'s name will be created inside it.')
 parser_get.add_argument('--filename', help='When downloading from a database, the specified database file or folder to be downloaded.')
+parser_get.add_argument("--recurse", default=False, help='When downloading from a database, look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
 parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
 parser_get.add_argument('--omit-resources', help='When downloading an app(let), omit fetching the resources associated with the app(let).', action='store_true')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')
