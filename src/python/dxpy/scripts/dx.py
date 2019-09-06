@@ -1845,6 +1845,11 @@ def get_database(entity_result, args):
     describe_output = entity_result['describe']
     do_debug("dx.py#get_database - dx_obj = {}".format(dx_obj))
 
+    # If filename is omitted, this is an error unless --allow-all-files is True
+    if args.filename is None or args.filename == '/' or args.filename == '':
+        if not args.allow_all_files:
+            err_exit('Error: downloading all files from a database not allowed unless --allow-all-files argument is specified.', 3)
+
     # Call /database-xxx/listFolder to fetch database file metadata
     list_folder_args = {"folder": args.filename, "recurse": args.recurse}
     list_folder_resp = dxpy.api.database_list_folder(obj_id, list_folder_args)
@@ -5137,7 +5142,8 @@ parser_get = subparsers.add_parser('get', help='Download records, apps, applets,
                                    parents=[env_args])
 parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet', 'app', 'workflow', 'database'])
 parser_get.add_argument('-o', '--output', help='local file path where the data is to be saved ("-" indicates stdout output for objects of class file and record). If not supplied, the object\'s name on the platform will be used, along with any applicable extensions. For app(let) and workflow objects, if OUTPUT does not exist, the object\'s source directory will be created there; if OUTPUT is an existing directory, a new directory with the object\'s name will be created inside it.')
-parser_get.add_argument('--filename', default='/', help='When downloading from a database, the specified database file or folder to be downloaded. If omitted, all files in the database will be downloaded, so use caution.')
+parser_get.add_argument('--filename', default='/', help='When downloading from a database, name of the file or folder to be downloaded. If omitted, all files in the database will be downloaded, so use caution and include the --allow-all-files argument.')
+parser_get.add_argument("--allow-all-files", default=False, help='When downloading from a database, this allows all files in a database to be downloaded when --filename argument is omitted.', action='store_true', dest='allow_all_files')
 parser_get.add_argument("--recurse", default=False, help='When downloading from a database, look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
 parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
 parser_get.add_argument('--omit-resources', help='When downloading an app(let), omit fetching the resources associated with the app(let).', action='store_true')
