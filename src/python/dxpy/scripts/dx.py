@@ -40,7 +40,7 @@ from dxpy import workflow_builder
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.download import (download_one_file, download)
+from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
@@ -410,8 +410,8 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
-            if not USING_PYTHON2:	
-                # python 3 requires conversion to bytes before hashing	
+            if not USING_PYTHON2:
+                # python 3 requires conversion to bytes before hashing
                 token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
@@ -1771,8 +1771,12 @@ def get_output_path(obj_name, obj_class, args):
     # Here, output_path points to a directory
     if len(os.listdir(output_path)):
         # For safety, refuse to remove an existing non-empty
-        # directory automatically.
-        err_exit(fill('Error: path "' + output_path + '" already exists. Remove it and try again.'), 3)
+        # directory automatically. Exception: if we are downloading
+        # database files and -f/--overwrite was set, then we can
+        # proceed, and downloaded files will be added to the existing
+        # directory structure.
+        if not (obj_class == 'database' and args.overwrite):
+            err_exit(fill('Error: path "' + output_path + '" already exists. Remove it and try again.'), 3)
     return output_path
 
 
@@ -1821,6 +1825,50 @@ def get_workflow(entity_result, args):
     describe_output = entity_result['describe']
     dump_executable(dx_obj, output_path, omit_resources=True, describe_output=describe_output)
 
+def do_debug(msg):
+    logging.debug(msg)
+
+def get_database(entity_result, args):
+    do_debug("dx.py#get_database - entity_result = {}".format(entity_result))
+    do_debug("dx.py#get_database - args = {}".format(args))
+    obj_id = entity_result['id']
+    project = entity_result['describe']['project']
+    do_debug("dx.py#get_database - project = {}".format(project))
+    # output_path = root output directory for the database
+    output_path = get_output_path(obj_id,
+                                  entity_result['describe']['class'],
+                                  args)
+    do_debug("dx.py#get_database - output_path = {}".format(output_path))
+    from dxpy.utils.executable_unbuilder import dump_executable
+    print("Downloading database files", file=sys.stderr)
+    dx_obj = dxpy.DXDatabase(obj_id)
+    describe_output = entity_result['describe']
+    do_debug("dx.py#get_database - dx_obj = {}".format(dx_obj))
+
+    # If filename is omitted, this is an error unless --allow-all-files is True
+    if args.filename is None or args.filename == '/' or args.filename == '':
+        if not args.allow_all_files:
+            err_exit('Error: downloading all files from a database not allowed unless --allow-all-files argument is specified.', 3)
+
+    # Call /database-xxx/listFolder to fetch database file metadata
+    list_folder_args = {"folder": args.filename, "recurse": args.recurse}
+    list_folder_resp = dxpy.api.database_list_folder(obj_id, list_folder_args)
+    do_debug("dx.py#get_database - list_folder_resp = {}".format(list_folder_resp))
+    results = list_folder_resp["results"]
+    for dbfilestatus in results:
+        # Skip the entries that represent directories, because the local directory structure
+        # will be created automatically as real files are downloaded.
+        try:
+            is_dir = dbfilestatus["isDirectory"]
+        except:
+            is_dir = True
+        if is_dir == False:
+            src_filename = dbfilestatus["path"]
+            idx = src_filename.rfind("database-")
+            if idx != -1:
+                src_filename = src_filename[idx + 34:]
+            print(src_filename)
+            download_one_database_file(project, entity_result['describe'], output_path, src_filename, dbfilestatus, args)
 
 def get(args):
     # Decide what to do based on entity's class
@@ -1853,6 +1901,8 @@ def get(args):
         get_app(entity_result, args)
     elif entity_result_class in ('workflow', 'globalworkflow'):
         get_workflow(entity_result, args)
+    elif entity_result_class == 'database':
+        get_database(entity_result, args)
     else:
         err_exit('Error: The given object is of class ' + entity_result['describe']['class'] +
                  ' but an object of class file, record, applet, app, or workflow was expected', 3)
@@ -5086,12 +5136,15 @@ register_parser(parser_wait, categories=('data', 'metadata', 'exec'))
 #####################################
 # get
 #####################################
-parser_get = subparsers.add_parser('get', help='Download records, apps, applets, workflows, and files',
-                                   description='Download the contents of some types of data (records, apps, applets, workflows, and files).  Downloading an app, applet or a workflow will attempt to reconstruct a source directory that can be used to rebuild it with "dx build".  Use "-o -" to direct the output to stdout.',
+parser_get = subparsers.add_parser('get', help='Download records, apps, applets, workflows, files, and databases.',
+                                   description='Download the contents of some types of data (records, apps, applets, workflows, files, and databases).  Downloading an app, applet or a workflow will attempt to reconstruct a source directory that can be used to rebuild it with "dx build".  Use "-o -" to direct the output to stdout.',
                                    prog='dx get',
                                    parents=[env_args])
-parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet', 'app', 'workflow'])
+parser_get.add_argument('path', help='Data object ID or name to access').completer = DXPathCompleter(classes=['file', 'record', 'applet', 'app', 'workflow', 'database'])
 parser_get.add_argument('-o', '--output', help='local file path where the data is to be saved ("-" indicates stdout output for objects of class file and record). If not supplied, the object\'s name on the platform will be used, along with any applicable extensions. For app(let) and workflow objects, if OUTPUT does not exist, the object\'s source directory will be created there; if OUTPUT is an existing directory, a new directory with the object\'s name will be created inside it.')
+parser_get.add_argument('--filename', default='/', help='When downloading from a database, name of the file or folder to be downloaded. If omitted, all files in the database will be downloaded, so use caution and include the --allow-all-files argument.')
+parser_get.add_argument("--allow-all-files", default=False, help='When downloading from a database, this allows all files in a database to be downloaded when --filename argument is omitted.', action='store_true', dest='allow_all_files')
+parser_get.add_argument("--recurse", default=False, help='When downloading from a database, look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
 parser_get.add_argument('--no-ext', help='If -o is not provided, do not add an extension to the filename', action='store_true')
 parser_get.add_argument('--omit-resources', help='When downloading an app(let), omit fetching the resources associated with the app(let).', action='store_true')
 parser_get.add_argument('-f', '--overwrite', help='Overwrite the local file if necessary', action='store_true')

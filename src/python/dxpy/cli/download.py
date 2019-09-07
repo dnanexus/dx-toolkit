@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 import warnings
+import logging
 
 import dxpy
 from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_project_explicit,
@@ -97,6 +98,40 @@ def download_one_file(project, file_desc, dest_filename, args):
     except:
         err_exit()
 
+def do_debug(msg):
+    logging.debug(msg)
+
+# dest_filename = local file where downloaded file will go
+# src_filename = name of parquet file or folder being downloaded from database
+def download_one_database_file(project, database_desc, dest_filename, src_filename, file_status, args):
+    do_debug("download.py#download_one_database_file - src_filename = {}".format(src_filename));
+    if file_status is not None:
+        do_debug("download.py#download_one_database_file - file_status = {}".format(file_status));
+
+    if not args.overwrite:
+        if os.path.exists(dest_filename):
+            err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
+
+    if database_desc['class'] != 'database':
+        print("Skipping non-database data object {name} ({id})".format(**database_desc), file=sys.stderr)
+        return
+
+    try:
+        show_progress = args.show_progress
+    except AttributeError:
+        show_progress = False
+
+    try:
+        dxpy.download_dxdatabasefile(
+            database_desc['id'],
+            dest_filename,
+            src_filename,
+            file_status,
+            show_progress=show_progress,
+            project=project,
+            describe_output=database_desc)
+    except:
+        err_exit()
 
 
 def _ensure_local_dir(d):

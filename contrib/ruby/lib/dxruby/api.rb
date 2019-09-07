@@ -497,6 +497,12 @@ module DX
       return DX::http_request("/#{object_id}/setVisibility", input_params, opts)
     end
 
+    # Invokes the /database-xxxx/downloadFile API method.
+    def self.database_download_file(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/downloadFile", input_params, opts)
+    end
+
     # Invokes the /database-xxxx/listFolder API method.
     #
     # For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-listfolder
