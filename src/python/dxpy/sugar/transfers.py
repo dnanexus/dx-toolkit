@@ -64,7 +64,8 @@ from dxpy.sugar import processing as proc
 
 
 LOG = logging.getLogger()
-SPECIAL_RE = re.compile(r"[^\w.]")
+SPECIAL_RE = re.compile(r"[^\w-.]")
+"""Used based on recommendation here: https://superuser.com/a/748264/70028."""
 MAX_READ_SIZE = (1024 * 1024 * 1024 * 2) - 1
 """Maximum number of bytes that can be read from a file at once. The limit here is
 due to a known bug in some versions of python on macOS:
