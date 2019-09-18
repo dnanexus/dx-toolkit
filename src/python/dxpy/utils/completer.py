@@ -469,16 +469,13 @@ class InstanceTypesCompleter():
     instance_types.update(aws_preferred_instance_types)
     instance_types.update(azure_preferred_instance_types)
 
-    for i in (InstanceTypeSpec('mem1_hdd2_x8', 7.0, 1680, 8),
-              InstanceTypeSpec('mem1_hdd2_x32', 60.5, 3360, 32),
+    for i in (
+              InstanceTypeSpec('mem2_hdd2_v2_x2', 8.0, 1000, 2),
+              InstanceTypeSpec('mem2_hdd2_v2_x4', 16.0, 2000, 4),
 
-              InstanceTypeSpec('mem2_hdd2_x1', 3.8, 410, 1),
-              InstanceTypeSpec('mem2_hdd2_x2', 7.5, 840, 2),
-              InstanceTypeSpec('mem2_hdd2_x4', 15.0, 1680, 4),
-
-              InstanceTypeSpec('mem3_hdd2_x2', 17.1, 420, 2),
-              InstanceTypeSpec('mem3_hdd2_x4', 34.2, 850, 4),
-              InstanceTypeSpec('mem3_hdd2_x8', 68.4, 1680, 8)):
+              InstanceTypeSpec('mem3_hdd2_v2_x2', 16.0, 500, 2),
+              InstanceTypeSpec('mem3_hdd2_v2_x4', 32.0, 1000, 4),
+              InstanceTypeSpec('mem3_hdd2_v2_x8', 64.0, 2000, 8)):
         instance_types[i.Name] = i
     default_instance_type = aws_preferred_instance_types['mem1_ssd1_x4']
     instance_type_names = instance_types.keys()
