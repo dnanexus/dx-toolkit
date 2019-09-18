@@ -469,7 +469,26 @@ class InstanceTypesCompleter():
     instance_types.update(aws_preferred_instance_types)
     instance_types.update(azure_preferred_instance_types)
 
-    for i in (
+    for i in (InstanceTypeSpec('mem1_ssd1_x2', 3.8, 32, 2),
+              InstanceTypeSpec('mem1_ssd1_x4', 7.5, 80, 4),
+              InstanceTypeSpec('mem1_ssd1_x8', 15.0, 160, 8),
+              InstanceTypeSpec('mem1_ssd1_x16', 30.0, 320, 16),
+
+              InstanceTypeSpec('mem2_ssd1_x2', 7.5, 32, 2),
+              InstanceTypeSpec('mem2_ssd1_x4', 15.0, 80, 4),
+              InstanceTypeSpec('mem2_ssd1_x8', 30.0, 160, 8),
+
+              InstanceTypeSpec('mem3_ssd1_x2', 15.0, 32, 2),
+              InstanceTypeSpec('mem3_ssd1_x4', 30.5, 80, 4),
+              InstanceTypeSpec('mem3_ssd1_x8', 61.0, 160, 8),
+              InstanceTypeSpec('mem3_ssd1_x16', 122.0, 320, 16),
+              InstanceTypeSpec('mem3_ssd1_x32', 244.0, 640, 32),
+
+              InstanceTypeSpec('mem1_ssd2_x2', 3.8, 160, 2),
+              InstanceTypeSpec('mem1_ssd2_x4', 7.5, 320, 4),
+              InstanceTypeSpec('mem1_ssd2_x8', 15, 640, 8),
+              InstanceTypeSpec('mem1_ssd2_x16', 30, 1280, 16),
+              InstanceTypeSpec('mem1_ssd2_x36', 60, 2880, 36),
               InstanceTypeSpec('mem2_hdd2_v2_x2', 8.0, 1000, 2),
               InstanceTypeSpec('mem2_hdd2_v2_x4', 16.0, 2000, 4),
 
