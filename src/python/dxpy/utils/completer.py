@@ -477,7 +477,7 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem3_hdd2_v2_x4', 32.0, 1000, 4),
               InstanceTypeSpec('mem3_hdd2_v2_x8', 64.0, 2000, 8)):
         instance_types[i.Name] = i
-    default_instance_type = aws_preferred_instance_types['mem1_ssd1_x4']
+    default_instance_type = aws_preferred_instance_types['mem1_ssd1_v2_x4']
     instance_type_names = instance_types.keys()
 
     def complete(self, text, state):
