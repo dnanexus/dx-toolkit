@@ -416,27 +416,28 @@ class InstanceTypesCompleter():
 
     # AWS
     aws_preferred_instance_types = OrderedDict()
-    for i in (InstanceTypeSpec('mem1_ssd1_x2', 3.8, 32, 2),
-              InstanceTypeSpec('mem1_ssd1_x4', 7.5, 80, 4),
-              InstanceTypeSpec('mem1_ssd1_x8', 15.0, 160, 8),
-              InstanceTypeSpec('mem1_ssd1_x16', 30.0, 320, 16),
+    for i in (InstanceTypeSpec('mem1_ssd1_v2_x2', 4.0, 47, 2),
+              InstanceTypeSpec('mem1_ssd1_v2_x4', 8.0, 93, 4),
+              InstanceTypeSpec('mem1_ssd1_v2_x8', 16.0, 186, 8),
+              InstanceTypeSpec('mem1_ssd1_v2_x16', 32.0, 372, 16),
               InstanceTypeSpec('mem1_ssd1_x32', 60.0, 640, 32),
+              InstanceTypeSpec('mem1_ssd1_v2_x36', 72.0, 837, 36),
 
-              InstanceTypeSpec('mem2_ssd1_x2', 7.5, 32, 2),
-              InstanceTypeSpec('mem2_ssd1_x4', 15.0, 80, 4),
-              InstanceTypeSpec('mem2_ssd1_x8', 30.0, 160, 8),
+              InstanceTypeSpec('mem2_ssd1_v2_x2', 8.0, 69, 2),
+              InstanceTypeSpec('mem2_ssd1_v2_x4', 16.0, 139, 4),
+              InstanceTypeSpec('mem2_ssd1_v2_x8', 32.0, 279, 8),
 
-              InstanceTypeSpec('mem3_ssd1_x2', 15.0, 32, 2),
-              InstanceTypeSpec('mem3_ssd1_x4', 30.5, 80, 4),
-              InstanceTypeSpec('mem3_ssd1_x8', 61.0, 160, 8),
-              InstanceTypeSpec('mem3_ssd1_x16', 122.0, 320, 16),
-              InstanceTypeSpec('mem3_ssd1_x32', 244.0, 640, 32),
+              InstanceTypeSpec('mem3_ssd1_v2_x2', 16.0, 69, 2),
+              InstanceTypeSpec('mem3_ssd1_v2_x4', 32.0, 139, 4),
+              InstanceTypeSpec('mem3_ssd1_v2_x8', 64.0, 279, 8),
+              InstanceTypeSpec('mem3_ssd1_v2_x16', 128.0, 558, 16),
+              InstanceTypeSpec('mem3_ssd1_v2_x32', 256.0, 1166, 32),
 
-              InstanceTypeSpec('mem1_ssd2_x2', 3.8, 160, 2),
-              InstanceTypeSpec('mem1_ssd2_x4', 7.5, 320, 4),
-              InstanceTypeSpec('mem1_ssd2_x8', 15, 640, 8),
-              InstanceTypeSpec('mem1_ssd2_x16', 30, 1280, 16),
-              InstanceTypeSpec('mem1_ssd2_x36', 60, 2880, 36)):
+              InstanceTypeSpec('mem1_ssd2_v2_x2', 4.0, 160, 2),
+              InstanceTypeSpec('mem1_ssd2_v2_x4', 8.0, 320, 4),
+              InstanceTypeSpec('mem1_ssd2_v2_x8', 16.0, 640, 8),
+              InstanceTypeSpec('mem1_ssd2_v2_x16', 32.0, 1280, 16),
+              InstanceTypeSpec('mem1_ssd2_v2_x36', 72.0, 2880, 36)):
         aws_preferred_instance_types[i.Name] = i
 
     # Azure
