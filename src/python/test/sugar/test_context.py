@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 
-from .. import dxpy_testutil as testutil
+import dxpy_testutil as testutil
 
 import dxpy
 from dxpy.sugar import context
