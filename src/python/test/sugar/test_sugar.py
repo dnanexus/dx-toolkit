@@ -14,7 +14,7 @@ class TestUpload(unittest.TestCase):
         # Use a mock /proc/meminfo
         with isolated_dir():
             with open("meminfo", "w") as out:
-                out.write("MemTotal: 1048576 kB")
+                out.write("MemAvailable: 1048576 kB")
 
             assert available_memory("K", "meminfo") == 1048576.0
             assert available_memory("M", "meminfo") == 1024.0
