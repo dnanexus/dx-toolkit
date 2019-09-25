@@ -234,10 +234,10 @@ def get_data_object(
         )
 
     if not data_obj and exists is True:
-        raise dxpy.DXSearchError("Data object {} does not to exist", data_obj_desc)
+        raise dxpy.DXSearchError("Data object {} does not to exist".format(data_obj_desc))
     if data_obj and exists is False:
         raise dxpy.DXSearchError(
-            "Data object {} exists but was expected not to exist", data_obj_desc
+            "Data object {} exists but was expected not to exist".format(data_obj_desc)
         )
 
     return data_obj
