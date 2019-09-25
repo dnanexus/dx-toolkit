@@ -1,24 +1,15 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
+from uuid import uuid4
 import random
 import string
 import unittest
 
+import dxpy_testutil as testutil
+
 import dxpy
 from dxpy.sugar import objects
 
-
-PROJECT_ID = "project-BzQf6k80V3bJk7x0yv6z82j7"
-PROJECT_NAME = "DNAnexus Regression Testing Project AWS US east"
-WORKFLOW_ID = "workflow-F417G8Q0V3bGVjG642Zjx1Gv"
-WORKFLOW_FOLDER = "/gatk3/2017_04_27_22_51_39"
-WORKFLOW_NAME = "GATK3 best practices"
-APPLET_ID = "applet-F417G0j0V3b6bxQG68KF3j2q"
-APPLET_NAME = "gatk3_bqsr_parallel"
-APPLET_FOLDER = "/gatk3/2017_04_27_22_51_39/Applets"
 TAG = "sugar-test"
-APP_ID = "app-FYzxFq09ZZYPKkfp05027F5g"
-APP_NAME = "bwa_mem_fastq_read_mapper"
-
 
 def random_name(name_len, prefix=None):
     if prefix:
@@ -32,131 +23,160 @@ def random_name(name_len, prefix=None):
     return name
 
 
-class TestObjects(unittest.TestCase):
-    def test_get_project(self):
-        proj = objects.get_project(PROJECT_ID)
-        self.assertIsInstance(proj, dxpy.DXProject)
-        self.assertEqual(proj.get_id(), PROJECT_ID)
+class TestProjectSearchSugar(unittest.TestCase):
 
-        proj = objects.get_project(PROJECT_NAME)
-        self.assertIsInstance(proj, dxpy.DXProject)
-        self.assertEqual(proj.get_id(), PROJECT_ID)
-
-        with self.assertRaises(dxpy.DXSearchError):
-            objects.get_project(PROJECT_NAME, exists=True, region="azure:westus")
-
-        newproj_name_len = 20
-        newproj_name = random_name(newproj_name_len)
-        with self.assertRaises(dxpy.DXSearchError):
-            objects.get_project(newproj_name, exists=True)
-
-        newproj = None
-        cleanup = True
-        try:
-            newproj = objects.get_project(newproj_name, exists=False, create=True)
-            self.assertIsInstance(newproj, dxpy.DXProject)
-            self.assertEqual(newproj.describe()["name"], newproj_name)
-        except dxpy.AppError as err:
-            # There is a small chance a project will already exist -
-            # if so, don't delete it.
-            if "exists" in err.message:
-                cleanup = False
-        finally:
-            if newproj and cleanup:
-                newproj.destroy()
-
-        newproj = None
-        try:
-            newproj = objects.get_project(
-                newproj_name, create=True, region="azure:westus"
-            )
+    def test_get_project_by_id(self):
+        with testutil.temporary_project(name="[dxpy sugar tests] Temp project") as temp_projdx:
+            project_id = temp_projdx.get_id()
+            proj = objects.get_project(project_id)
             self.assertIsInstance(proj, dxpy.DXProject)
-            self.assertEqual(newproj.describe()["name"], newproj_name)
-            self.assertEqual(newproj.describe()["region"], "azure:westus")
-            self.assertEqual(
-                newproj.describe()["name"],
-                objects.get_project(newproj.get_id()).describe()["name"]
-            )
-            self.assertEqual(
-                newproj.get_id(),
-                objects.get_project(
-                    newproj.describe()["name"], region="azure:westus"
-                ).get_id()
-            )
-        finally:
-            if newproj:
-                newproj.destroy()
+            self.assertEqual(proj.get_id(), project_id)
 
-    def test_ensure_folder(self):
-        proj = objects.get_project(PROJECT_ID)
-        folder_name_len = 20
-        folder_name = random_name(folder_name_len, prefix="/")
+    def test_get_project_by_name(self):
+        project_name = random_name(15, prefix="[dxpy sugar tests] ")
+        with testutil.temporary_project(name=project_name) as temp_projdx:
+            proj = objects.get_project(project_name)
+            self.assertIsInstance(proj, dxpy.DXProject)
+            self.assertEqual(proj.get_id(), temp_projdx.get_id())
+
+    def test_fail_to_find_project(self):
         with self.assertRaises(dxpy.DXSearchError):
-            objects.ensure_folder(folder_name, proj, exists=True)
+            objects.get_project(random_name(20), exists=True, region="azure:westus")
 
-        cleanup = True
+    def test_create_project_on_search_fail(self):
+        unq_project_name = "[dxpy sugar tests]-{}".format(uuid4())
+        new_proj = None
         try:
-            objects.ensure_folder(folder_name, proj, exists=False, create=True)
-            ls = objects.ensure_folder(folder_name, proj, exists=True)
-            self.assertIsNotNone(ls)
-            self.assertEqual(len(ls["folders"]), 0)
-            self.assertEqual(len(ls["objects"]), 0)
-        except dxpy.AppError as err:
-            # There is a small chance a folder will already exist -
-            # if so, don't delete it.
-            if "exists" in err.message:
-                cleanup = False
+            new_proj = objects.get_project(unq_project_name, exists=False, create=True)
+            self.assertIsInstance(new_proj, dxpy.DXProject)
+            self.assertEqual(new_proj.describe()["name"], unq_project_name)
         finally:
-            if cleanup:
-                proj.remove_folder(folder_name)
+            if new_proj:
+                new_proj.destroy()
 
-    def test_get_file(self):
-        proj = objects.get_project(PROJECT_ID)
-        file_name_len = 20
-        file_name = random_name(file_name_len)
-        folder_name_len = 20
-        folder_name = random_name(folder_name_len, prefix="/")
-
-        dxfile = None
-        cleanup_folder = False
+    def test_create_project_in_region(self):
+        unq_project_name = "[dxpy sugar tests]-{}".format(uuid4())
+        new_proj = None
         try:
-            objects.ensure_folder(folder_name, proj, exists=False, create=True)
-            cleanup_folder = True
+            new_proj = objects.get_project(
+                unq_project_name, create=True, region="azure:westus"
+            )
+            self.assertIsInstance(new_proj, dxpy.DXProject)
+            self.assertEqual(new_proj.describe()["name"], unq_project_name)
+            self.assertEqual(new_proj.describe()["region"], "azure:westus")
+        finally:
+            if new_proj:
+                new_proj.destroy()
 
-            with self.assertRaises(dxpy.DXSearchError):
-                objects.get_data_object(file_name, proj, exists=True)
-            dxfile = dxpy.upload_string(
-                "test",
-                project=proj.get_id(),
-                name=file_name,
-                folder=folder_name,
-                wait_on_close=True
+
+class TestEnsureFolderSugar(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.temp_projectdx = dxpy.DXProject(dxpy.api.project_new(
+            {"name": "[dxpy sugar tests] Test Ensure folder"}
+        )['id'])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temp_projectdx.destroy(input_params={"terminateJobs": True})
+
+    def test_ensure_folder_fail_search(self):
+        folder_name = random_name(name_len=20, prefix="/")
+        with self.assertRaises(dxpy.DXSearchError):
+            objects.ensure_folder(folder_name, self.temp_projectdx, exists=True)
+
+    def test_ensure_folder_creates_folder(self):
+        folder_name = random_name(name_len=20, prefix="/")
+        objects.ensure_folder(folder_name, self.temp_projectdx, exists=False, create=True)
+        ls = objects.ensure_folder(folder_name, self.temp_projectdx, exists=True)
+        self.assertIsNotNone(ls)
+        self.assertEqual(len(ls["folders"]), 0)
+        self.assertEqual(len(ls["objects"]), 0)
+
+class TestDataObjectSugar(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.temp_project = dxpy.DXProject(dxpy.api.project_new(
+            {"name": "[dxpy sugar tests] Test Data Object Sugar"}
+        )['id'])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temp_project.destroy(input_params={"terminateJobs": True})
+
+    def test_get_file_search_fail(self):
+        file_name = random_name(name_len=20, prefix="[Doesn't exist] ")
+        with self.assertRaises(dxpy.DXSearchError):
+            objects.get_data_object(
+                file_name, classname="file",
+                project=self.temp_project,
+                exists=True
             )
 
-            self.assertEqual(
-                dxfile.get_id(), objects.get_data_object(file_name, proj).get_id()
+    def test_get_file_successfully(self):
+        dxfile = dxpy.upload_string(
+            "test",
+            project=self.temp_project.get_id(),
+            name=random_name(name_len=20),
+            wait_on_close=True
+        )
+        found_dxfile = objects.get_data_object(
+            file_name, exists=True, project=self.temp_project.get_id())
+        self.assertEqual(
+            dxfile.get_id(), found_dxfile.get_id()
+        )
+
+    def test_data_object_search_fail_incorrect_classname(self):
+        file_name = random_name(name_len=20)
+        dxfile = dxpy.upload_string(
+            "test",
+            project=self.temp_project.get_id(),
+            name=file_name,
+            wait_on_close=True
+        )
+
+        with self.assertRaises(dxpy.DXSearchError):
+            objects.get_data_object(
+                file_name,
+                project=self.temp_project.get_id(),
+                classname="record",
+                exists=True
             )
-            with self.assertRaises(dxpy.DXSearchError):
-                objects.get_data_object(
-                    file_name, proj, classname="record", exists=True)
-            with self.assertRaises(dxpy.DXSearchError):
-                objects.get_data_object(file_name, proj, exists=False)
-        except dxpy.AppError as err:
-            # There is a small chance a folder will already exist -
-            # if so, don't delete it.
-            if "exists" in err.message:
-                cleanup_folder = False
-        finally:
-            if cleanup_folder:
-                proj.remove_folder(folder_name, recurse=True, force=True)
-            if dxfile:
-                try:
-                    dxfile.remove()
-                except dxpy.exceptions.ResourceNotFound:
-                    pass
+
+    def test_data_object_false_exist_search_fail(self):
+        file_name = random_name(name_len=20)
+        dxfile = dxpy.upload_string(
+            "test",
+            project=self.temp_project.get_id(),
+            name=file_name,
+            wait_on_close=True
+        )
+
+        with self.assertRaises(dxpy.DXSearchError):
+            objects.get_data_object(
+                file_name,
+                project=self.temp_project.get_id(),
+                exists=False
+            )
+
+"""
+@unittest.skipUnless(
+    testutil.TEST_ENV, "skipping test that would clobber your local environment"
+)
+class TestExecutableObjectSugar(DXTestCaseBuildWorkflows):
+
+    def test_get_app(self):
+        self.assertIsInstance(
+            objects.get_app(APP_ID),
+            dxpy.DXApp
+        )
+        self.assertEqual(
+            objects.get_app(APP_NAME).get_id(),
+            APP_ID
+        )
 
     def test_get_workflow(self):
-        # TODO: test global workflows
         proj = objects.get_project(PROJECT_ID)
         self.assertIsInstance(
             objects.get_data_object(WORKFLOW_ID, proj, classname="workflow"),
@@ -184,15 +204,6 @@ class TestObjects(unittest.TestCase):
             WORKFLOW_ID
         )
 
-    def test_get_app(self):
-        self.assertIsInstance(
-            objects.get_app(APP_ID),
-            dxpy.DXApp
-        )
-        self.assertEqual(
-            objects.get_app(APP_NAME).get_id(),
-            APP_ID
-        )
 
     def test_get_applet(self):
         proj = objects.get_project(PROJECT_ID)
@@ -222,3 +233,4 @@ class TestObjects(unittest.TestCase):
             objects.get_data_object(workflow_path, proj, classname="applet").get_id(),
             APPLET_ID
         )
+"""
