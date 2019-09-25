@@ -130,7 +130,7 @@ def ensure_folder(folder, project=None, exists=None, create=False):
     if folder is None:
         raise ValueError("'folder' cannot be None.")
 
-    project = get_project(project)
+    project = get_project(project, exists=True)
 
     LOG.info(
         "Checking whether folder %s exists in project %s", folder, project.get_id()
@@ -197,7 +197,7 @@ def get_data_object(
     if data_obj_desc is None:
         raise ValueError("'data_obj_desc' cannot be None")
 
-    project = get_project(project)
+    project = get_project(project, exists=True)
     data_obj = None
     search = True
 
