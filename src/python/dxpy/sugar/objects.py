@@ -34,9 +34,10 @@ def get_project(
         `create is False`.
 
     Raises:
-        * dxpy.DXSearchError if the project is not in the expected region, or if the
-            project exists but was not expected to, or if project is expected to exist
-            and does not.
+        * dxpy.DXSearchError for one of the following reasons:
+          * if the project is not in the expected region.
+          * if the project exists but was not expected to.
+          * if project is expected to exist and does not.
         * dxpy.exceptions.PermissionDenied if user does not have proper permissions
             to access the project.
     """
@@ -218,6 +219,8 @@ def get_data_object(
     if data_obj is None and search:
         folder, name, recurse = _parse_object_name(data_obj_desc)
         kwargs["return_handler"] = True
+        if project is not None:
+            kwargs["project"] = project.get_id()
         if "folder" not in kwargs:
             kwargs["folder"] = folder
         if "recurse" not in kwargs:
