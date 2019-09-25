@@ -6,13 +6,25 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [286.1] - 2019.07.08 beta
+### Added
+
+* `dx get` for database files
+* v2 instance types in `dx-app-wizard`
+
+## [287.0] - 2019.08.30 beta
+
+### Fixed
+
+* Generating ruby wrappers in python 3
+* dx-app-wizard in python 3
+
+## [286.1] - 2019.07.08 stable
 
 ### Changed
 
 * Documentation links to https://documentation.dnanexus.com
 
-## [285.1] - 2019.07.08 stable
+## [285.1] - 2019.07.08 
 
 ### Fixed
 
