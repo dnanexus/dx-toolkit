@@ -115,10 +115,11 @@ class TestDataObjectSugar(unittest.TestCase):
             )
 
     def test_get_file_successfully(self):
+        file_name = random_name(name_len=20)
         dxfile = dxpy.upload_string(
             "test",
             project=self.temp_project.get_id(),
-            name=random_name(name_len=20),
+            name=file_name,
             wait_on_close=True
         )
         found_dxfile = objects.get_data_object(
@@ -129,7 +130,7 @@ class TestDataObjectSugar(unittest.TestCase):
 
     def test_data_object_search_fail_incorrect_classname(self):
         file_name = random_name(name_len=20)
-        dxfile = dxpy.upload_string(
+        _ = dxpy.upload_string(
             "test",
             project=self.temp_project.get_id(),
             name=file_name,
@@ -146,7 +147,7 @@ class TestDataObjectSugar(unittest.TestCase):
 
     def test_data_object_false_exist_search_fail(self):
         file_name = random_name(name_len=20)
-        dxfile = dxpy.upload_string(
+        _ = dxpy.upload_string(
             "test",
             project=self.temp_project.get_id(),
             name=file_name,
@@ -160,77 +161,148 @@ class TestDataObjectSugar(unittest.TestCase):
                 exists=False
             )
 
-"""
+
 @unittest.skipUnless(
     testutil.TEST_ENV, "skipping test that would clobber your local environment"
 )
-class TestExecutableObjectSugar(DXTestCaseBuildWorkflows):
+class TestExecutableObjectSugar(testutil.DXTestCaseBuildWorkflows):
 
-    def test_get_app(self):
+    def test_get_workflow(self):
+        dxworkflow = self.create_workflow(self.project)
         self.assertIsInstance(
-            objects.get_app(APP_ID),
+            objects.get_data_object(
+                dxworkflow.get_id(),
+                project=self.project,
+                classname="workflow"
+            ),
+            dxpy.DXWorkflow
+        )
+
+    def test_fail_to_find_workflow(self):
+        with self.assertRaises(dxpy.DXSearchError):
+            objects.get_data_object(
+                data_obj_desc=random_name(20),
+                project=self.project,
+                classname="workflow",
+                exists=True
+            )
+    
+    def test_get_workflow_by_name(self):
+        workflow_name = random_name(15)
+        workflow_spec = self.create_workflow_spec(self.project, workflow_name=workflow_name)
+        dxworkflow = self.create_workflow(self.project, workflow_spec=workflow_spec)
+        workflow = objects.get_data_object(
+            workflow_name, project=self.project, classname="workflow"
+        )
+        self.assertIsNotNone(workflow)
+        self.assertEqual(workflow.get_id(), dxworkflow.get_id())
+
+    def test_get_workflow_failed_multiple_matches(self):
+        # Create 2 workflows with the same name
+        workflow_name = random_name(15)
+        workflow_spec = self.create_workflow_spec(self.project, workflow_name=workflow_name)
+        _ = self.create_workflow(self.project, workflow_spec=workflow_spec)
+        _ = self.create_workflow(self.project, workflow_spec=workflow_spec)
+
+        # Fail search due to duplicate workflows in search scope
+        with self.assertRaises(dxpy.DXSearchError):
+            # Should be multiple workflows with the same name
+            objects.get_data_object(
+                data_obj_desc=workflow_name,
+                project=self.project,
+                classname="workflow",
+                exists=True
+            )
+
+    def test_get_workflow_in_specific_folder(self):
+        # Create 2 workflows with the same name
+        workflow_name = random_name(15)
+        workflow_spec = self.create_workflow_spec(self.project, workflow_name=workflow_name)
+        _ = self.create_workflow(self.project, workflow_spec=workflow_spec)
+        dxworkflow = self.create_workflow(self.project, workflow_spec=workflow_spec)
+
+        # Move workflow to a different folder
+        projectdx = dxpy.DXProject(self.project)
+        dest_fld = random_name(10, prefix="/")
+        projectdx.new_folder(dest_fld, parents=True)
+        projectdx.move(destination=dest_fld, objects=[dxworkflow.get_id()])
+
+        # Search for a workflow with the duplicate name above in a specific folder
+        self.assertEqual(
+            objects.get_data_object(
+                workflow_name, project=self.project, classname="workflow", folder=dest_fld
+            ).get_id(),
+            dxworkflow.get_id()
+        )
+
+    def test_get_workflow_by_absolute_path(self):
+        # Create 2 workflows with the same name
+        workflow_name = random_name(15)
+        workflow_spec = self.create_workflow_spec(self.project, workflow_name=workflow_name)
+        dxworkflow = self.create_workflow(self.project, workflow_spec=workflow_spec)
+
+        # Move workflow to a folder
+        projectdx = dxpy.DXProject(self.project)
+        dest_fld = random_name(10, prefix="/")
+        projectdx.new_folder(dest_fld, parents=True)
+        projectdx.move(destination=dest_fld, objects=[dxworkflow.get_id()])
+
+        # Verify Search for folder explicitly works
+        workflow_path = "{}/{}".format(dest_fld, workflow_name)
+        self.assertEqual(
+            objects.get_data_object(workflow_path, project=self.project, classname="workflow").get_id(),
+            dxworkflow.get_id()
+        )
+
+    def test_get_applet(self):
+        self.assertIsInstance(
+            objects.get_data_object(self.test_applet_id, project=self.project, classname="applet"),
+            dxpy.DXApplet
+        )
+    
+    def test_get_applet_by_name(self):
+        appletdx = dxpy.DXApplet(self.test_applet_id)
+        self.assertEqual(
+            objects.get_data_object(
+                appletdx.name, project=self.project, classname="applet"
+            ).get_id(),
+            self.test_applet_id
+        )
+    
+    def test_get_applet_in_folder(self):
+        applet_name = random_name(20)
+        applet_spec = self.create_applet_spec(self.project, applet_name=applet_name)
+        applet_id = self.create_applet(project_id=self.project, applet_spec=applet_spec)
+        
+        # Move applet to a different folder
+        projectdx = dxpy.DXProject(self.project)
+        dest_fld = random_name(10, prefix="/")
+        projectdx.new_folder(dest_fld, parents=True)
+        projectdx.move(destination=dest_fld, objects=[applet_id])
+
+        # Search for applet and verify success
+        self.assertEqual(
+            objects.get_data_object(
+                applet_name, project=self.project, classname="applet", folder=dest_fld
+            ).get_id(),
+            applet_id
+        )
+
+
+class TestAppExecutableObjectSugar(testutil.DXTestCaseBuildApps):
+    def test_get_app(self):
+        #Create App
+        app_id = self.make_apps(num_apps=1, name_prefix="Test_App")[0]["id"]
+
+        # Search for App
+        appdx = objects.get_app(app_id)
+
+        # Verify Search
+        self.assertIsInstance(
+            appdx,
             dxpy.DXApp
         )
         self.assertEqual(
-            objects.get_app(APP_NAME).get_id(),
-            APP_ID
+            appdx.get_id(),
+            app_id
         )
-
-    def test_get_workflow(self):
-        proj = objects.get_project(PROJECT_ID)
-        self.assertIsInstance(
-            objects.get_data_object(WORKFLOW_ID, proj, classname="workflow"),
-            dxpy.DXWorkflow
-        )
-        with self.assertRaises(dxpy.DXSearchError):
-            # Should be multiple workflows with the same name
-            objects.get_data_object(
-                WORKFLOW_NAME, proj, classname="workflow", exists=True
-            )
-        workflow = objects.get_data_object(
-            WORKFLOW_NAME, proj, classname="workflow", tag=TAG
-        )
-        self.assertIsNotNone(workflow)
-        self.assertEqual(workflow.get_id(), WORKFLOW_ID)
-        self.assertEqual(
-            objects.get_data_object(
-                WORKFLOW_NAME, proj, classname="workflow", folder=WORKFLOW_FOLDER
-            ).get_id(),
-            WORKFLOW_ID
-        )
-        workflow_path = "{}/{}".format(WORKFLOW_FOLDER, WORKFLOW_NAME)
-        self.assertEqual(
-            objects.get_data_object(workflow_path, proj, classname="workflow").get_id(),
-            WORKFLOW_ID
-        )
-
-
-    def test_get_applet(self):
-        proj = objects.get_project(PROJECT_ID)
-        self.assertIsInstance(
-            objects.get_data_object(APPLET_ID, proj, classname="applet"),
-            dxpy.DXApplet
-        )
-        with self.assertRaises(dxpy.DXSearchError):
-            # Should be multiple workflows with the same name
-            objects.get_data_object(
-                APPLET_NAME, proj, classname="workflow", exists=True
-            )
-        self.assertEqual(
-            objects.get_data_object(
-                APPLET_NAME, proj, classname="applet", tag=TAG
-            ).get_id(),
-            APPLET_ID
-        )
-        self.assertEqual(
-            objects.get_data_object(
-                APPLET_NAME, proj, classname="applet", folder=APPLET_FOLDER
-            ).get_id(),
-            APPLET_ID
-        )
-        workflow_path = "{}/{}".format(APPLET_FOLDER, APPLET_NAME)
-        self.assertEqual(
-            objects.get_data_object(workflow_path, proj, classname="applet").get_id(),
-            APPLET_ID
-        )
-"""
