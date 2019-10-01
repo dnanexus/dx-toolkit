@@ -1,3 +1,10 @@
+dx-toolkit (0.288.0) precise; urgency=medium
+
+  * Added: `dx get` for database files
+  * Added: v2 instance types in `dx-app-wizard`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 01 Oct 2019 17:33:55 +0000
+
 dx-toolkit (0.287.0) precise; urgency=medium
 
   * Fixed: Generating ruby wrappers in python 3
