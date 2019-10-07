@@ -63,6 +63,8 @@ def get_size_str(size):
 
     The returned string is no more than 9 characters long.
     """
+    if size is None:
+        return "0 " + SIZE_LEVEL[0]
     if size == 0:
         magnitude = 0
         level = 0
