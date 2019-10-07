@@ -126,7 +126,7 @@ class TestSymlink(unittest.TestCase):
     def test_symlinks(self):
         dxfile1 = self.download_url_create_symlink("https://s3.amazonaws.com/1000genomes/CHANGELOG",
                                                    "sym1")
-        dxfile2 = self.download_url_create_symlink("https://documentation.dnanexus.com/",
+        dxfile2 = self.download_url_create_symlink("https://documentation.dnanexus.com/release-nodes",
                                                    "sym2")
 
         # download to PWD
