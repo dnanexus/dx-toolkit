@@ -6,19 +6,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Upgrade jackson to 2.9.10
+
+### Fixed
+
+* Python 3 wrapper generation and tests
+
+## [287.0] - 2019.10.01 beta
+
 ### Added
 
 * `dx get` for database files
 * v2 instance types in `dx-app-wizard`
 
-## [287.0] - 2019.08.30 beta
+## [287.0] - 2019.08.30 stable
 
 ### Fixed
 
 * Generating ruby wrappers in python 3
 * dx-app-wizard in python 3
 
-## [286.1] - 2019.07.08 stable
+## [286.1] - 2019.07.08 
 
 ### Changed
 
