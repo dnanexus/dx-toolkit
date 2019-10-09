@@ -1,3 +1,10 @@
+dx-toolkit (0.289.0) precise; urgency=medium
+
+  * Changed: Upgrade jackson to 2.9.10
+  * Fixed: Python 3 wrapper generation and tests
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 09 Oct 2019 17:48:32 +0000
+
 dx-toolkit (0.288.0) precise; urgency=medium
 
   * Added: `dx get` for database files
