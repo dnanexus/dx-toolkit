@@ -30,6 +30,7 @@ import dxpy_testutil as testutil
 import pytest
 
 CACHE_DIR = '/tmp/dx-docker-cache'
+SAMTOOLS_IMAGE = 'quay.io/ucsc_cgl/samtools:1.8--cba1ddbca3e1ab94813b58e40e56ab87a59f1997'
 
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
@@ -78,7 +79,7 @@ class TestDXDocker(DXTestCase):
         self.assertEqual(dx_docker_out, '')
 
     def test_dx_docker_pull_quay(self):
-        run("dx-docker pull quay.io/ucsc_cgl/samtools")
+        run("dx-docker pull {}".format(SAMTOOLS_IMAGE))
         self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'quay.io%2Fucsc_cgl%2Fsamtools.aci')))
 
     def test_dx_docker_pull_hash_or_not(self):
@@ -130,7 +131,7 @@ class TestDXDocker(DXTestCase):
         self.assertTrue(dx_docker_out.find("HOME=/somethingelse") != -1)
 
     def test_dx_docker_run_canonical(self):
-        run("dx-docker run quay.io/ucsc_cgl/samtools --help")
+        run("dx-docker run {} --help".format(SAMTOOLS_IMAGE))
 
     def test_dx_docker_add_to_applet(self):
         os.makedirs('tmpapp')
@@ -193,7 +194,7 @@ class TestDXDocker(DXTestCase):
         run("dx-docker run busybox ls")
 
     def test_dx_docker_working_dir_override(self):
-        run("dx-docker run -v $PWD:/tmp -w /tmp quay.io/ucsc_cgl/samtools faidx test.fa")
+        run("dx-docker run -v $PWD:/tmp -w /tmp {} faidx test.fa".format(SAMTOOLS_IMAGE))
 
     def test_complex_quote(self):
         run('dx-docker run python:2-slim /bin/sh -c "echo \'{"foo": {"location": "file:///"}}\' > /dev/stdout"')
