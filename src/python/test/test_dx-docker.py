@@ -77,10 +77,6 @@ class TestDXDocker(DXTestCase):
         dx_docker_out = run("dx-docker pull -q busybox").strip()
         self.assertEqual(dx_docker_out, '')
 
-    def test_dx_docker_pull_quay(self):
-        run("dx-docker pull quay.io/ucsc_cgl/samtools")
-        self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'quay.io%2Fucsc_cgl%2Fsamtools.aci')))
-
     def test_dx_docker_pull_hash_or_not(self):
         run("dx-docker pull dnanexus/testdocker")
         self.assertTrue(os.path.isfile(os.path.join(CACHE_DIR, 'dnanexus%2Ftestdocker.aci')))
@@ -128,9 +124,6 @@ class TestDXDocker(DXTestCase):
     def test_dx_docker_set_env(self):
         dx_docker_out = run("dx-docker run --env HOME=/somethingelse busybox env")
         self.assertTrue(dx_docker_out.find("HOME=/somethingelse") != -1)
-
-    def test_dx_docker_run_canonical(self):
-        run("dx-docker run quay.io/ucsc_cgl/samtools --help")
 
     def test_dx_docker_add_to_applet(self):
         os.makedirs('tmpapp')
@@ -193,7 +186,7 @@ class TestDXDocker(DXTestCase):
         run("dx-docker run busybox ls")
 
     def test_dx_docker_working_dir_override(self):
-        run("dx-docker run -v $PWD:/tmp -w /tmp quay.io/ucsc_cgl/samtools faidx test.fa")
+        run("dx-docker run -v $PWD:/tmp -w /tmp busybox ls")
 
     def test_complex_quote(self):
         run('dx-docker run python:2-slim /bin/sh -c "echo \'{"foo": {"location": "file:///"}}\' > /dev/stdout"')
