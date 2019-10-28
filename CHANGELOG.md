@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [289.0] - 2019.10.09 beta
+
 ### Changed
 
 * Upgrade jackson to 2.9.10
@@ -14,14 +16,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Python 3 wrapper generation and tests
 
-## [287.0] - 2019.10.01 beta
+## [288.0] - 2019.10.01 stable
 
 ### Added
 
 * `dx get` for database files
 * v2 instance types in `dx-app-wizard`
 
-## [287.0] - 2019.08.30 stable
+## [287.0] - 2019.08.30 
 
 ### Fixed
 
