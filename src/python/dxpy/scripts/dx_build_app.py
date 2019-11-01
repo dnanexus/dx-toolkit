@@ -297,7 +297,7 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         if USING_PYTHON2:
             errmsg = e.output
         else:
-            errmsg = e.output.decode("utf-8")
+            errmsg = e.output
         for line in errmsg.strip("\n").split("\n"):
             print("  " + line.rstrip("\n"), file=sys.stderr)
         if enforce:
@@ -307,7 +307,7 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         if USING_PYTHON2:
             errmsg = e.msg
         else:
-            errmsg = e.msg.decode("utf-8")
+            errmsg = e.msg
         print("  " + errmsg.strip(), file=sys.stderr)
         if enforce:
             raise DXSyntaxError(e.msg.strip())
