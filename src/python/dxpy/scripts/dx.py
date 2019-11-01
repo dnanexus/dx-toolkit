@@ -858,7 +858,7 @@ def rm(args):
             try:
                 with nostderr():
                     project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
-                if folderpath == '/':
+                if folderpath == '/' and entity_results is None:
                     print("")
                     print("===========================================================================")
                     print("*     {}: Recursive deletion will remove all files in project!     *".format(RED("RED ALERT")))
