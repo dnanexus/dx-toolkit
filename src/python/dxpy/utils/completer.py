@@ -488,13 +488,13 @@ class InstanceTypesCompleter():
     instance_types.update(aws_preferred_instance_types)
     instance_types.update(azure_preferred_instance_types)
 
-    for i in (InstanceTypeSpec('mem1_ssd1_x2', 3.8, 40, 2),
+    for i in (InstanceTypeSpec('mem1_ssd1_x2', 3.8, 32, 2),
               InstanceTypeSpec('mem1_ssd1_x4', 7.5, 80, 4),
               InstanceTypeSpec('mem1_ssd1_x8', 15.0, 160, 8),
               InstanceTypeSpec('mem1_ssd1_x16', 30.0, 320, 16),
               InstanceTypeSpec('mem1_ssd1_x32', 60.0, 640, 32),
 
-              InstanceTypeSpec('mem2_ssd1_x2', 7.5, 40, 2),
+              InstanceTypeSpec('mem2_ssd1_x2', 7.5, 32, 2),
               InstanceTypeSpec('mem2_ssd1_x4', 15.0, 80, 4),
               InstanceTypeSpec('mem2_ssd1_x8', 30.0, 160, 8),
 
