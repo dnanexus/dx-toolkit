@@ -71,12 +71,15 @@ def _find_asset_project(region):
     try:
         cmd = 'dx find projects --level CONTRIBUTE --name "{proj_name}" --region "{region}" --brief '
         projects = subprocess.check_output(
-            cmd.format(proj_name=project_name, region=region), shell=True).strip()
-        if projects == '':
+            cmd.format(proj_name=project_name, region=region), shell=True
+        ).strip().decode()
+        if projects == b'':
             cmd = 'dx new project --region "{region}" "{proj_name}" --brief '
-            return subprocess.check_output(cmd.format(region=region, proj_name=project_name), shell=True).strip()
+            return subprocess.check_output(
+                cmd.format(region=region, proj_name=project_name), shell=True
+            ).strip().decode()
         else:
-            projects = projects.split('\n')
+            projects = projects.split(b'\n')
             return projects[0]
     except subprocess.CalledProcessError:
         traceback.print_exc()
@@ -105,16 +108,16 @@ def _clone_asset_into_region(region, record_name, asset_properties, asset_file_n
     while curr_try <= num_retries:
         cmd = ['dx', 'run', CLONE_ASSET_APP_NAME, '--project', project_id, '-iurl=' + url, '-irecord_name=' + record_name]
         cmd += ['-iasset_file_name=' + asset_file_name, '-iasset_properties=' + json.dumps(asset_properties), '--brief']
-        job = subprocess.check_output(cmd).strip()
+        job = subprocess.check_output(cmd).strip().decode()
         print('{region}: {job_id}'.format(region=region, job_id=job), file=sys.stderr)
         try:
             cmd = 'dx wait {job_id} '.format(job_id=job)
-            subprocess.check_output(cmd, shell=True)
+            subprocess.check_call(cmd, shell=True)
         except subprocess.CalledProcessError:
             traceback.print_exc()
 
         cmd = 'dx describe {job_id} --json '.format(job_id=job)
-        job_desc = json.loads(subprocess.check_output(cmd, shell=True).strip())
+        job_desc = json.loads(subprocess.check_output(cmd, shell=True).strip().decode())
 
         if job_desc['state'] == 'done':
             record_id = job_desc['output']['asset_bundle']
