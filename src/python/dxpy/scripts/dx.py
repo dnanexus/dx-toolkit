@@ -2888,7 +2888,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "ignore_reuse_stages": args.ignore_reuse_stages or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
-        "priority": ("high" if args.watch else args.priority),
+        "priority": ("high" if args.watch or args.ssh or args.allow_ssh else args.priority),
         "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
@@ -2897,7 +2897,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "extra_args": args.extra_args
     }
 
-    if args.priority == "normal" and not args.brief:
+    if run_kwargs["priority"] == "normal" and not args.brief:
         special_access = set()
         executable_desc = executable_describe or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
@@ -4758,7 +4758,8 @@ parser_run.add_argument('--delay-workspace-destruction',
                         action='store_true')
 parser_run.add_argument('--priority',
                         choices=['normal', 'high'],
-                        help='Request a scheduling priority for all resulting jobs')
+                        help='Request a scheduling priority for all resulting jobs. Will be overriden (set to high) ' +
+                             'when either --watch, --ssh, or --allow-ssh flags are used')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it; sets --priority high", action='store_true')

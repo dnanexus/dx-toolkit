@@ -2781,6 +2781,39 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(watched_job_desc['applet'], applet_id)
         self.assertEqual(watched_job_desc['priority'], 'high')
 
+        # don't actually need it to run
+        run("dx terminate " + watched_job_id)
+
+        # --ssh implies --priority high
+        try:
+            dx_run_output = run("dx run myapplet -y --ssh --brief")
+        except subprocess.CalledProcessError:
+            # ignore any ssh errors; just want to test requested
+            # priority
+            pass
+        watched_job_id = dx_run_output.split('\n')[0]
+        watched_job_desc = dxpy.describe(watched_job_id)
+        self.assertEqual(watched_job_desc['applet'], applet_id)
+        self.assertEqual(watched_job_desc['priority'], 'high')
+
+        # don't actually need it to run
+        run("dx terminate " + watched_job_id)
+
+        # --allow-ssh implies --priority high
+        try:
+            dx_run_output = run("dx run myapplet -y --allow-ssh --brief")
+        except subprocess.CalledProcessError:
+            # ignore any ssh errors; just want to test requested
+            # priority
+            pass
+        watched_job_id = dx_run_output.split('\n')[0]
+        watched_job_desc = dxpy.describe(watched_job_id)
+        self.assertEqual(watched_job_desc['applet'], applet_id)
+        self.assertEqual(watched_job_desc['priority'], 'high')
+
+        # don't actually need it to run
+        run("dx terminate " + watched_job_id)
+
         # errors
         with self.assertSubprocessFailure(exit_code=2):
             # expect argparse error code 2 for bad choice
