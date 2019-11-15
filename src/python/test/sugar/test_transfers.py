@@ -5,7 +5,7 @@ import subprocess
 import unittest
 
 from . import isolated_dir, make_random_files, random_name
-from ..dxpy_testutil import run
+import dxpy_testutil as testutil
 
 import dxpy
 from dxpy.sugar import transfers as xfer
@@ -17,7 +17,9 @@ class TestUpload(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.project = dxpy.DXProject()
-        cls.project.new(name=random_name())
+        cls.project.new(name=random_name(
+            fmt_str="[dxpy.sugar TestUpload] {}"
+        ))
 
     @classmethod
     def tearDownClass(cls):
@@ -50,8 +52,8 @@ class TestUpload(unittest.TestCase):
             local_name = random_name("{}.tar.gz")
             dxpy.download_dxfile(handler, local_name)
 
-            run("tar -xzf {}".format(local_name))
-            run("rm {}".format(local_name))
+            testutil.run("tar -xzf {}".format(local_name))
+            testutil.run("rm {}".format(local_name))
 
             untarred_files = os.listdir(".")
             self.assertEqual(len(filenames), len(untarred_files))
@@ -152,7 +154,7 @@ class TestUpload(unittest.TestCase):
                 {"plain_file", "zip_file", "tar_file", "dict_file_0", "dict_file_1"},
                 set(result.keys())
             )
-            for key, val in result.items():
+            for val in result.values():
                 self.assertIsInstance(val, dxpy.DXFile)
 
             self.assertEqual("test0", result["plain_file"].read())
@@ -214,7 +216,7 @@ class TestDownload(unittest.TestCase):
             opts = "cf"
         with isolated_dir():
             filenames = make_random_files(2)
-            run("tar {} {} {}".format(opts, tar_filename, " ".join(filenames)))
+            testutil.run("tar {} {} {}".format(opts, tar_filename, " ".join(filenames)))
             return filenames, self._upload_file(tar_filename)
 
     def test_simple_download_file(self):
@@ -267,7 +269,7 @@ class TestDownload(unittest.TestCase):
             self.assertIn("simple", result)
             for i, fname in enumerate(result["simple"]):
                 with open(fname, "rt") as inp:
-                    self.assertEqual("test".format(i), inp.read())
+                    self.assertEqual("test{}".format(i), inp.read())
 
             self.assertIn("tar", result)
             unpacked_filenames = result["tar"]
