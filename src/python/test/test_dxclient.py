@@ -5212,13 +5212,15 @@ class TestDXClientFind(DXTestCase):
         self.assertFalse(dxpy.api.org_describe(org_without_billable_activities)["allowBillableActivities"])
         org_with_admin = "org-piratelabs"
         self.assertTrue(dxpy.api.org_describe(org_with_admin)["level"] == "ADMIN")
+        org_with_authorized_file_app_download_feature = "org-auth_file_app_download"
 
         cmd = "dx find orgs --level {l} {o} --json"
 
         results = json.loads(run(cmd.format(l="MEMBER", o="")).strip())
         self.assertItemsEqual([org_with_billable_activities,
                                org_without_billable_activities,
-                               org_with_admin],
+                               org_with_admin,
+                               org_with_authorized_file_app_download_feature],
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
