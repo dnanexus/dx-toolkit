@@ -5226,7 +5226,8 @@ class TestDXClientFind(DXTestCase):
         results = json.loads(run(cmd.format(
             l="MEMBER", o="--with-billable-activities")).strip())
         self.assertItemsEqual([org_with_billable_activities,
-                               org_with_admin],
+                               org_with_admin,
+                               org_with_authorized_file_app_download_feature],
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
