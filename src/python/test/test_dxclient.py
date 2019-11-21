@@ -5210,21 +5210,22 @@ class TestDXClientFind(DXTestCase):
         self.assertTrue(dxpy.api.org_describe(org_with_billable_activities)["allowBillableActivities"])
         org_without_billable_activities = "org-members_without_billing_rights"
         self.assertFalse(dxpy.api.org_describe(org_without_billable_activities)["allowBillableActivities"])
-        org_with_admin = "org-piratelabs"
-        self.assertTrue(dxpy.api.org_describe(org_with_admin)["level"] == "ADMIN")
+        orgs_with_admin = ["org-piratelabs", "org-auth_file_app_download"]
+        for org_with_admin in orgs_with_admin:
+            self.assertTrue(dxpy.api.org_describe(org_with_admin)["level"] == "ADMIN")
 
         cmd = "dx find orgs --level {l} {o} --json"
 
         results = json.loads(run(cmd.format(l="MEMBER", o="")).strip())
         self.assertItemsEqual([org_with_billable_activities,
                                org_without_billable_activities,
-                               org_with_admin],
+                               org_with_licensed_feature
+                              ] + orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
             l="MEMBER", o="--with-billable-activities")).strip())
-        self.assertItemsEqual([org_with_billable_activities,
-                               org_with_admin],
+        self.assertItemsEqual([org_with_billable_activities] + orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
@@ -5233,12 +5234,12 @@ class TestDXClientFind(DXTestCase):
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(l="ADMIN", o="")).strip())
-        self.assertItemsEqual([org_with_admin],
+        self.assertItemsEqual(orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
             l="ADMIN", o="--with-billable-activities")).strip())
-        self.assertItemsEqual([org_with_admin],
+        self.assertItemsEqual(orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
