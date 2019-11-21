@@ -633,8 +633,6 @@ class TestDXClient(DXTestCase):
         self.assertRegex(desc_output, field_regexp("Name", "dxclient_test_pröject"))
         self.assertRegex(desc_output, field_regexp("Region", "aws:us-east-1"))
         self.assertRegex(desc_output, field_regexp("Contains PHI", "false"))
-        self.assertNotRegex(desc_output, field_regexp("Archival state", "null"))
-        self.assertNotRegex(desc_output, field_regexp("Archival progress", "null"))
         self.assertRegex(desc_output, field_regexp("Data usage", "0.00 GB"))
         self.assertRegex(desc_output,
                          field_regexp("Storage cost", "$0.000/month"),
@@ -642,10 +640,6 @@ class TestDXClient(DXTestCase):
         self.assertRegex(desc_output, field_regexp("Sponsored egress", "0.00 GB used of 0.00 GB total"))
         self.assertRegex(desc_output, field_regexp("At spending limit?", "false"))
         self.assertRegex(desc_output, field_regexp("Properties", "-"))
-
-        desc_output = run("dx describe --verbose :").strip()
-        self.assertRegex(desc_output, field_regexp("Archival state", "live"))
-        self.assertRegex(desc_output, field_regexp("Archival progress", "null"))
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_PROJ_DELETE","DNA_API_PROJ_DELETE_PROJECT"])
