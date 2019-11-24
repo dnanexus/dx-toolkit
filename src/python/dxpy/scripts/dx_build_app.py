@@ -485,8 +485,9 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         builder_app = 'app-tarball_applet_builder'
 
     app_spec = _parse_app_spec(src_dir)
-    if app_spec['runSpec'].get('release') == '14.04':
-        builder_app += "_trusty"
+    builder_versions = {"12.04": "", "14.04": "_trusty", "16.04": "_xenial",
+                        "18.04": "_bionic", "20.04": "_focal"}
+    builder_app += builder_versions.get(app_spec['runSpec'].get('release'), "")
 
     temp_dir = tempfile.mkdtemp()
 
