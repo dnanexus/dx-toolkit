@@ -43,8 +43,35 @@ class DXJobLogStreamingException(Exception):
 class DXJobLogStreamClient:
     def __init__(
         self, job_id, input_params=None, msg_output_format="{job} {level} {msg}",
-        msg_callback=None, print_job_info=True
+        msg_callback=None, print_job_info=True, exit_on_failed=True
     ):
+        """Initialize job log client.
+
+        :param job_id: dxid for a job (hash ID 'job-xxxx')
+        :type job_id: str
+        :param input_params: blob with connection parameters, should have keys
+        ``numRecentMessages`` (int) (wich may not be more than 1024 * 256, otherwise no logs will be returned),
+        ``recurseJobs`` (bool) - if True, attempts to traverse subtree
+        ``tail`` (bool) - if True, keep watching job. Should also be set to True to get all logs
+        from a completed job.
+        :type input_params: dict
+        :param msg_output_format: how messages should be printed to console. Ignored if
+        ``msg_callback`` is specified
+        :type msg_output_form: str
+        :param print_job_info: if True, prints metadata about job
+        :type print_job_info: bool
+        :param msg_callback: single argument function that accepts a JSON blob with message
+        details. Example:
+        ``{"timestamp": 1575465039481, "source": "APP", "level": "STDOUT", "job": "job-123",
+           "line":24, "msg": "success WfFragment"}``
+        where ``timestamp`` is Unix epoch time in milliseconds and ``line`` is a sequence number.
+        :type msg_callback: callable
+        :param exit_on_failed: if True, will raise SystemExit with code of 3 if encountering a
+        failed job (this is the default behavior)
+        :type exit_on_failed: bool
+        """
+        # TODO: add unit tests; note it is a public class
+
         self.job_id = job_id
         self.input_params = input_params
         self.msg_output_format = msg_output_format
@@ -55,6 +82,7 @@ class DXJobLogStreamClient:
         self.exception = None
         self.closed_code = None
         self.closed_reason = None
+        self.exit_on_failed = exit_on_failed
         self.url = "{protocol}://{host}:{port}/{job_id}/getLog/websocket".format(
             protocol='wss' if dxpy.APISERVER_PROTOCOL == 'https' else 'ws',
             host=dxpy.APISERVER_HOST,
@@ -156,7 +184,8 @@ class DXJobLogStreamClient:
         else:
             self.seen_jobs[self.job_id] = dxpy.describe(self.job_id)
 
-        if self.seen_jobs[self.job_id].get('state') in {'failed', 'terminated'}:
+        if (self.exit_on_failed
+                and self.seen_jobs[self.job_id].get('state') in {'failed', 'terminated'}):
             err_exit(code=3)
 
     def received_message(self, message):
