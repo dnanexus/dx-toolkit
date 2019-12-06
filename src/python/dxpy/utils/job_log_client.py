@@ -47,31 +47,30 @@ class DXJobLogStreamClient:
     ):
         """Initialize job log client.
 
-        :param job_id: dxid for a job (e.g. 'job-123' style)
+        :param job_id: dxid for a job (hash ID 'job-xxxx')
         :type job_id: str
         :param input_params: blob with connection parameters, should have keys
-        ``numRecentMessages`` (int) (wich may not be more than 1024 * 256 otherwise no logs returned),
+        ``numRecentMessages`` (int) (wich may not be more than 1024 * 256, otherwise no logs will be returned),
         ``recurseJobs`` (bool) - if True, attempts to traverse subtree
-        ``tail`` (bool) - if True, keep watching job. Should also be set to true to get all logs
+        ``tail`` (bool) - if True, keep watching job. Should also be set to True to get all logs
         from a completed job.
         :type input_params: dict
         :param msg_output_format: how messages should be printed to console. Ignored if
-        ``msg_callback`` specified
+        ``msg_callback`` is specified
         :type msg_output_form: str
         :param print_job_info: if True, prints metadata about job
         :type print_job_info: bool
         :param msg_callback: single argument function that accepts a JSON blob with message
-        details. blob looks like
-        ``{"timestamp":1575465039481,"source":"APP","level":"STDOUT","job":"job-123","line":24,"msg":"success WfFragment"}``
-        where ``timestamp`` is milliseconds since epic and ``line`` is a sequence number.
+        details. Example:
+        ``{"timestamp": 1575465039481, "source": "APP", "level": "STDOUT", "job": "job-123",
+           "line":24, "msg": "success WfFragment"}``
+        where ``timestamp`` is Unix epoch time in milliseconds and ``line`` is a sequence number.
         :type msg_callback: callable
         :param exit_on_failed: if True, will raise SystemExit with code of 3 if encountering a
         failed job (this is the default behavior)
         :type exit_on_failed: bool
-
-        NOTE: If you change the functionality of this client, please contact downstream users (including Myriad
-        Genetics) to confirm that you are not breaking their implementations. Thanks!
         """
+        # TODO: add unit tests; note it is a public class
 
         self.job_id = job_id
         self.input_params = input_params
