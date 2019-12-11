@@ -23,24 +23,24 @@ import dxpy.api
 BYTES_PER_GB = 1024 * 1024 * 1024
 
 
-def divide_dxfiles_into_chunks(dxfiles, target_size_gb):
+def divide_files_into_chunks(file_descriptors, target_size_gb):
     """
     This is a general function to divide input files into a set of chunks based on
     file size.
 
     Args:
-        dxfiles: List of dx files to split
+        file_descriptors (list): DXFile objects, dxlinks, or file IDs to split
         target_size_gb: Target size (in gigabytes) of each bin
 
     Returns:
-        Groups of files with each group having roughly target_size of data
+        List of files with each group having roughly target_size of data
     """
-    if not dxfiles:
+    if not file_descriptors:
         return []
     if target_size_gb <= 0:
         raise ValueError("Target size must be > 0")
 
-    filesizes = get_filesizes(dxfiles)
+    filesizes = get_filesizes(file_descriptors)
     total_size_bytes = sum(filesizes)
     num_bins = max(
         1, int(math.ceil(total_size_bytes / (target_size_gb * BYTES_PER_GB)))
@@ -48,7 +48,7 @@ def divide_dxfiles_into_chunks(dxfiles, target_size_gb):
 
     # It's conceivable that some of the splits could be empty.  We'll remove
     # those from our list.
-    return list(filter(None, _schedule_lpt(list(zip(dxfiles, filesizes)), num_bins)))
+    return list(filter(None, _schedule_lpt(list(zip(file_descriptors, filesizes)), num_bins)))
 
 
 def get_filesizes(file_descriptors):
@@ -104,7 +104,7 @@ def _schedule_lpt(jobs, num_bins):
         fl = filenames_and_sizes(files)
         fl_groups = schedule_lpt(fl, num_jobs)
         for group in fl_groups:
-            print group
+            print(group)
             job = dxpy.new_dxjob({'files': group}, 'subjob_name')
             output['output_files'].append(job.get_output_ref('output_files'))
     """

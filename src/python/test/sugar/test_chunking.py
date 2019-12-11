@@ -1,29 +1,70 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from multiprocessing import cpu_count
 import unittest
 
+from . import isolated_dir, random_name
+import test.dxpy_testutil as testutil
 from dxpy.sugar import chunking
-
-
-DATA_FILES = [
-    ("file-F5JFjb80K2yZB6JFPKQvfy3y", 369942,    1),
-    ("file-F6X4Z1Q05Y4x2z9g9qgpQVfP", 921688957, 0),
-    ("file-F74zxf005F9y9jYJ6kbQqyBf", 439068741, 1),
-    ("file-F69bp1Q0xG8v79K429jffKPZ", 289,       1),
-    ("file-F5JFzyQ037pV0Q41Gj453xYy", 4023512,   1),
-    ("file-F796xbj0jY6VpgxJFy8q5xpz", 431058109, 2),
-    ("file-FKGp6700xG8fP7gG1BQ4XjF2", 18066045,  2),
-    ("file-F5JGXgj0X64qfXPK87jG6b9v", 366622,    1),
-    ("file-F69bkyj0xG8bG1Jq29v3BjPG", 284,       1),
-]
+import dxpy
 
 
 class TestChunking(unittest.TestCase):
-    def test_divide_dxfiles_into_chunks(self):
-        file_ids = [d[0] for d in DATA_FILES]
-        groups = chunking.divide_dxfiles_into_chunks(
-            file_ids, sum(d[1] for d in DATA_FILES) / 3 / chunking.BYTES_PER_GB
+    @classmethod
+    def setUpClass(cls):
+        cls.project = dxpy.DXProject()
+        cls.project.new(name=random_name())
+
+        cls.data_sizes = [
+            10 << 10,
+            10 << 10,
+            10 << 10,
+            15 << 10,
+            15 << 10,
+            30 << 10,
+        ]
+
+        cls.total_size = sum(s for s in cls.data_sizes)
+
+        # populate decribes on data files, so that size is available
+        with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+            futures = [executor.submit(cls._upload_fake_file, size) for size in cls.data_sizes]
+            cls.data_dxfiles = [f.result() for f in as_completed(futures)]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.destroy()
+
+    @classmethod
+    def _upload_fake_file(cls, size):
+        """Create empty files of set size on disk."""
+        with testutil.TemporaryFile(prefix=random_name()) as tf:
+            tf.temp_file.truncate(size)
+            dxf = dxpy.upload_local_file(tf.name, wait_on_close=True, project=cls.project.get_id())
+            # populate decribes on data files, so that size is available
+            _ = dxf.describe()
+            return dxf
+
+    def test_divide_files_into_chunks(self):
+        expected_size_groups = {
+            3: [15 << 10, 10 << 10, 10 << 10],
+            2: [15 << 10, 10 << 10],
+            1: [30 << 10],
+        }
+
+        groups = chunking.divide_files_into_chunks(
+            file_descriptors=self.data_dxfiles,
+            target_size_gb=30. / 1024. / 1024.
         )
+
+        for i, group in enumerate(groups):
+            print("\nGroup", i)
+            for f in group:
+                print(f.size)
+
         assert len(groups) == 3
-        for i in range(3):
-            assert len(groups[i]) == len(list(filter(lambda d: d[2] == i, DATA_FILES)))
-            assert set(groups[i]) == set(d[0] for d in DATA_FILES if d[2] == i)
+
+        for group in groups:
+            group_size = len(group)
+            sizes = [dxf.size for dxf in group]
+            assert sizes == expected_size_groups[group_size]
