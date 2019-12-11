@@ -269,7 +269,7 @@ class TestDownload(unittest.TestCase):
             self.assertIn("simple", result)
             for i, fname in enumerate(result["simple"]):
                 with open(fname, "rt") as inp:
-                    self.assertEqual("test{}".format(i), inp.read())
+                    self.assertEqual("test", inp.read())
 
             self.assertIn("tar", result)
             unpacked_filenames = result["tar"]
