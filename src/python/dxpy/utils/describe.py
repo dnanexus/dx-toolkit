@@ -63,6 +63,8 @@ def get_size_str(size):
 
     The returned string is no more than 9 characters long.
     """
+    if size is None:
+        return "0 " + SIZE_LEVEL[0]
     if size == 0:
         magnitude = 0
         level = 0
@@ -408,8 +410,7 @@ def print_project_desc(desc, verbose=False):
         'id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified',
         'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties',
         'appCaches', 'billTo', 'version', 'createdBy', 'totalSponsoredEgressBytes', 'consumedSponsoredEgressBytes',
-        'containsPHI', 'region', 'storageCost', 'pendingTransfer', 'archivalState', 'atSpendingLimit',
-        'archivalProgress',
+        'containsPHI', 'region', 'storageCost', 'pendingTransfer','atSpendingLimit',
         # Following are app container-specific
         'destroyAt', 'project', 'type', 'app', 'appName'
     ]
@@ -443,10 +444,6 @@ def print_project_desc(desc, verbose=False):
         print_json_field("Restricted", desc["restricted"])
     if 'containsPHI' in desc:
         print_json_field('Contains PHI', desc['containsPHI'])
-    if 'archivalState' in desc and verbose:
-        print_field('Archival state', desc['archivalState'])
-    if 'archivalProgress' in desc and verbose:
-        print_json_field('Archival progress', desc['archivalProgress'])
 
     # Usage
     print_field("Created", render_timestamp(desc['created']))

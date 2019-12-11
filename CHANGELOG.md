@@ -6,7 +6,43 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [285.0] - 2019.06.19 beta
+## [289.0] - 2019.10.09 beta
+
+### Changed
+
+* Upgrade jackson to 2.9.10
+
+### Fixed
+
+* Python 3 wrapper generation and tests
+
+## [288.0] - 2019.10.01 stable
+
+### Added
+
+* `dx get` for database files
+* v2 instance types in `dx-app-wizard`
+
+## [287.0] - 2019.08.30 
+
+### Fixed
+
+* Generating ruby wrappers in python 3
+* dx-app-wizard in python 3
+
+## [286.1] - 2019.07.08 
+
+### Changed
+
+* Documentation links to https://documentation.dnanexus.com
+
+## [285.1] - 2019.07.08 
+
+### Fixed
+
+* Remove non-ascii char from readme
+
+## [285.0] - 2019.06.19 
 
 ### Added
 

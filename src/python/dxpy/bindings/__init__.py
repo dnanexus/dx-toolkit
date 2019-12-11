@@ -36,6 +36,7 @@ def verify_string_dxid(dxid, expected_classes):
     :type expected_classes: string or list of strings
     :raises: :exc:`~dxpy.exceptions.DXError` if *dxid* is not a string or is not a valid DNAnexus ID of the expected class
     '''
+
     if isinstance(expected_classes, basestring):
         expected_classes = [expected_classes]
     if not isinstance(expected_classes, list) or len(expected_classes) == 0:
@@ -281,6 +282,7 @@ class DXDataObject(DXObject):
         data container is used).
 
         '''
+
         if is_dxlink(dxid):
             dxid, project_from_link = get_dxlink_ids(dxid)
             if project is None:
@@ -656,8 +658,10 @@ class DXDataObject(DXObject):
             elapsed += wait
 
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
+from .dxdatabase import DXDatabase, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .download_all_inputs import download_all_inputs
 from .dxfile_functions import open_dxfile, new_dxfile, download_dxfile, upload_local_file, upload_string, list_subfolders, download_folder
+from .dxdatabase_functions import download_dxdatabasefile
 from .dxrecord import DXRecord, new_dxrecord
 from .dxproject import DXContainer, DXProject
 from .dxjob import DXJob, new_dxjob

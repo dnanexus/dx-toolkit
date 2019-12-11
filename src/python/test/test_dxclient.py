@@ -633,8 +633,6 @@ class TestDXClient(DXTestCase):
         self.assertRegex(desc_output, field_regexp("Name", "dxclient_test_pröject"))
         self.assertRegex(desc_output, field_regexp("Region", "aws:us-east-1"))
         self.assertRegex(desc_output, field_regexp("Contains PHI", "false"))
-        self.assertNotRegex(desc_output, field_regexp("Archival state", "null"))
-        self.assertNotRegex(desc_output, field_regexp("Archival progress", "null"))
         self.assertRegex(desc_output, field_regexp("Data usage", "0.00 GB"))
         self.assertRegex(desc_output,
                          field_regexp("Storage cost", "$0.000/month"),
@@ -642,10 +640,6 @@ class TestDXClient(DXTestCase):
         self.assertRegex(desc_output, field_regexp("Sponsored egress", "0.00 GB used of 0.00 GB total"))
         self.assertRegex(desc_output, field_regexp("At spending limit?", "false"))
         self.assertRegex(desc_output, field_regexp("Properties", "-"))
-
-        desc_output = run("dx describe --verbose :").strip()
-        self.assertRegex(desc_output, field_regexp("Archival state", "live"))
-        self.assertRegex(desc_output, field_regexp("Archival progress", "null"))
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_PROJ_DELETE","DNA_API_PROJ_DELETE_PROJECT"])
@@ -1532,23 +1526,6 @@ class TestDXClientUploadDownload(DXTestCase):
             download_url = run("dx make_download_url " + file_id + " --filename foo")
             run("wget -P " + output_testdir + " " + download_url)
             run('cmp ' + os.path.join(output_testdir, "foo") + ' ' + fd.name)
-
-
-    def test_dx_make_download_url_project_affinity(self):
-        # Ensure that URLs created with make_download_url have project
-        # affinity unless created in a job workspace
-        with temporary_project("make_download_url test 2") as temp_project_2:
-            with temporary_project("make_download_url test 1", select=True) as temp_project_1:
-                fh = dxpy.upload_string("foo", project=temp_project_1.get_id(), wait_on_close=True)
-                # file now appears in both projects
-                temp_project_1.clone(temp_project_2.get_id(), objects=[fh.get_id()])
-                download_url = run("dx make_download_url " + temp_project_1.get_id().strip() + ":" + fh.get_id()).strip()
-                run("wget -O /dev/null " + download_url)
-            # After project 1 is destroyed, the download URL should no longer work
-            time.sleep(35)
-            with self.assertSubprocessFailure(stderr_regexp="Not Found",
-                                          exit_code=8):
-                run("wget -O /dev/null " + download_url)
 
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
@@ -2797,6 +2774,39 @@ dx-jobutil-add-output record_array $second_record --array
         watched_job_desc = dxpy.describe(watched_job_id)
         self.assertEqual(watched_job_desc['applet'], applet_id)
         self.assertEqual(watched_job_desc['priority'], 'high')
+
+        # don't actually need it to run
+        run("dx terminate " + watched_job_id)
+
+        # --ssh implies --priority high
+        try:
+            dx_run_output = run("dx run myapplet -y --ssh --brief")
+        except subprocess.CalledProcessError:
+            # ignore any ssh errors; just want to test requested
+            # priority
+            pass
+        watched_job_id = dx_run_output.split('\n')[0]
+        watched_job_desc = dxpy.describe(watched_job_id)
+        self.assertEqual(watched_job_desc['applet'], applet_id)
+        self.assertEqual(watched_job_desc['priority'], 'high')
+
+        # don't actually need it to run
+        run("dx terminate " + watched_job_id)
+
+        # --allow-ssh implies --priority high
+        try:
+            dx_run_output = run("dx run myapplet -y --allow-ssh --brief")
+        except subprocess.CalledProcessError:
+            # ignore any ssh errors; just want to test requested
+            # priority
+            pass
+        watched_job_id = dx_run_output.split('\n')[0]
+        watched_job_desc = dxpy.describe(watched_job_id)
+        self.assertEqual(watched_job_desc['applet'], applet_id)
+        self.assertEqual(watched_job_desc['priority'], 'high')
+
+        # don't actually need it to run
+        run("dx terminate " + watched_job_id)
 
         # errors
         with self.assertSubprocessFailure(exit_code=2):
@@ -5194,21 +5204,21 @@ class TestDXClientFind(DXTestCase):
         self.assertTrue(dxpy.api.org_describe(org_with_billable_activities)["allowBillableActivities"])
         org_without_billable_activities = "org-members_without_billing_rights"
         self.assertFalse(dxpy.api.org_describe(org_without_billable_activities)["allowBillableActivities"])
-        org_with_admin = "org-piratelabs"
-        self.assertTrue(dxpy.api.org_describe(org_with_admin)["level"] == "ADMIN")
+        orgs_with_admin = ["org-piratelabs", "org-auth_file_app_download"]
+        for org_with_admin in orgs_with_admin:
+            self.assertTrue(dxpy.api.org_describe(org_with_admin)["level"] == "ADMIN")
 
         cmd = "dx find orgs --level {l} {o} --json"
 
         results = json.loads(run(cmd.format(l="MEMBER", o="")).strip())
         self.assertItemsEqual([org_with_billable_activities,
-                               org_without_billable_activities,
-                               org_with_admin],
+                               org_without_billable_activities
+                              ] + orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
             l="MEMBER", o="--with-billable-activities")).strip())
-        self.assertItemsEqual([org_with_billable_activities,
-                               org_with_admin],
+        self.assertItemsEqual([org_with_billable_activities] + orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
@@ -5217,12 +5227,12 @@ class TestDXClientFind(DXTestCase):
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(l="ADMIN", o="")).strip())
-        self.assertItemsEqual([org_with_admin],
+        self.assertItemsEqual(orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
             l="ADMIN", o="--with-billable-activities")).strip())
-        self.assertItemsEqual([org_with_admin],
+        self.assertItemsEqual(orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
