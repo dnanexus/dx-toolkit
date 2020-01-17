@@ -5273,7 +5273,10 @@ parser_find_data = subparsers_find.add_parser(
     parents=[stdout_args, json_arg, no_color_arg, delim_arg, env_args, find_by_properties_and_tags_args],
     prog='dx find data'
 )
-parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'applet', 'workflow'], help='Data object class', metavar='{record,file,applet,workflow}')
+parser_find_data.add_argument('--class', dest='classname', choices=['record', 'file', 'applet', 'workflow', 'database'],
+    help='Data object class',
+    metavar='{record,file,applet,workflow,database}'
+)
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
 parser_find_data.add_argument('--name', help='Name of the object')

@@ -119,7 +119,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     """
     :param classname:
         Class with which to restrict the search, i.e. one of "record",
-        "file", "applet", "workflow"
+        "file", "applet", "workflow", "database"
     :type classname: string
     :param state: State of the object ("open", "closing", "closed", "any")
     :type state: string
