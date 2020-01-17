@@ -82,15 +82,9 @@ class DXLogHandler(SysLogHandler):
         return message
 
     def is_resource_log(self, message):
-        is_resource_log_message = False
         if USING_PYTHON2:
-            if message.startswith(b"CPU: "):
-                is_resource_log_message = True
-        else:
-            if message.startswith("CPU: "):
-                is_resource_log_message = True
-        return is_resource_log_message
-
+            return message.startswith(b"CPU: "):
+        return message.startswith("CPU: "):
 
     def emit(self, record):
         level = self.encodePriority(record)
