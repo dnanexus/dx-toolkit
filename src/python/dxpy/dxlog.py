@@ -108,7 +108,7 @@ class DXLogHandler(SysLogHandler):
                            "level": level, "msg": message}).encode('utf-8', 'ignore')
 
         levelno = int(record.levelno)
-        if levelno >= logging.CRITICAL or (levelno == logging.INFO and USING_PYTHON2 and self.is_resource_log(message)):
+        if levelno >= logging.CRITICAL or (levelno == logging.INFO and self.is_resource_log(message)):
             # Critical, alert, emerg, or resource status
             cur_socket = self.priority_log_socket
             cur_socket_address = self.priority_log_address
