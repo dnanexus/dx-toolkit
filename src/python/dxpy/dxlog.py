@@ -21,6 +21,7 @@ import socket, json, time, os, logging
 from logging.handlers import SysLogHandler
 
 from dxpy.exceptions import DXError
+from dxpy.compat import USING_PYTHON2
 
 class DXLogHandler(SysLogHandler):
     '''
@@ -68,6 +69,23 @@ class DXLogHandler(SysLogHandler):
         # See logging.handlers.SysLogHandler for an explanation of this.
         return self.priority_names[self.priority_map.get(record.levelname, "warning")]
 
+    def truncate_message(self, message):
+        if USING_PYTHON2:
+            if len(message) > 8015:
+                message = message[:8000] + "... [truncated]"
+        else:
+            # Trim bytes
+            encoded = message.encode('utf-8')
+            if len(encoded) > 8015:
+                # Ignore UnicodeDecodeError chars that could have been messed up by truncating
+                message = encoded[:8015].decode('utf-8', 'ignore') + "... [truncated]"
+        return message
+
+    def is_resource_log(self, message):
+        if USING_PYTHON2:
+            return message.startswith(b"CPU: "):
+        return message.startswith("CPU: "):
+
     def emit(self, record):
         level = self.encodePriority(record)
         message = record.getMessage()
@@ -78,14 +96,13 @@ class DXLogHandler(SysLogHandler):
         # Note: we use Python 2 semantics here (byte strings). This
         # script is not Python 3 ready. If *line* was a unicode string
         # with wide chars, its byte length would exceed the limit.
-        if len(message) > 8015:
-            message = message[:8000] + "... [truncated]"
+        message = self.truncate_message(message)
 
         data = json.dumps({"source": self.source, "timestamp": int(round(time.time() * 1000)),
-                           "level": level, "msg": message})
+                           "level": level, "msg": message}).encode('utf-8', 'ignore')
 
         levelno = int(record.levelno)
-        if levelno >= logging.CRITICAL or (levelno == logging.INFO and message.startswith(b"CPU: ")):
+        if levelno >= logging.CRITICAL or (levelno == logging.INFO and self.is_resource_log(message)):
             # Critical, alert, emerg, or resource status
             cur_socket = self.priority_log_socket
             cur_socket_address = self.priority_log_address
