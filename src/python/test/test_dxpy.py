@@ -1355,7 +1355,6 @@ def main():
         smaller_jobdesc = dxjob.describe(fields={"id": True, "state": True, "parentJob": True})
         self.assertEqual(len(smaller_jobdesc), 3)
         self.assertEqual(smaller_jobdesc['id'], dxjob.get_id())
-        self.assertIsInstance(smaller_jobdesc['state'], basestring)
         self.assertIsNone(smaller_jobdesc['parentJob'])
 
         with self.assertRaises(DXError):
