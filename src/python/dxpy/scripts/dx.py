@@ -3641,7 +3641,7 @@ def generate_batch_inputs(args):
 
     eprint("Found {num_success} valid batch IDs matching desired pattern.".format(num_success=len(successful)))
 
-    input_names = list(input_dict.keys())
+    input_names = sorted(list(input_dict.keys()))
 
     # Output TSV Batch.  This procedure generates a TSV file with file names and IDs grouped by pattern
     for i,batch in enumerate(batches):
@@ -3661,7 +3661,7 @@ def generate_batch_inputs(args):
         with open(batch_fname, write_mode) as csvfile:
             batchwriter = csv.writer(csvfile, delimiter=delimiter)
             # Write headers of TSV
-            headers = ['batch ID'] + [iname for iname in sorted(input_names)] + [iname+" ID" for iname in sorted(input_names)]
+            headers = ['batch ID'] + [iname for iname in input_names] + [iname+" ID" for iname in input_names]
             batchwriter.writerow(headers)
             for bi in batch:
                 batchwriter.writerow(flatten_batch(bi))
