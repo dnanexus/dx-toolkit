@@ -52,10 +52,6 @@ parser.add_argument("-s", "--source", help="Source ID to use", default='DX_APP_S
                     choices=['DX_APP', 'DX_APP_STREAM'])
 args = parser.parse_args()
 
-if not USING_PYTHON2:
-    print("dx-log-stream: This script is not compatible with Python 3", file=sys.stderr)
-    sys.exit(1)
-
 try:
     log_function = logging.__dict__[args.level]
 except:

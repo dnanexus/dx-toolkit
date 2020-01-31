@@ -304,10 +304,10 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
             raise DXSyntaxError(filename + " has a syntax error")
     except py_compile.PyCompileError as e:
         print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
-        if USING_PYTHON2:
-            errmsg = e.msg
-        else:
+        try:
             errmsg = e.msg.decode("utf-8")
+        except AttributeError:
+            errmsg = e.msg
         print("  " + errmsg.strip(), file=sys.stderr)
         if enforce:
             raise DXSyntaxError(e.msg.strip())
