@@ -10224,13 +10224,7 @@ class TestDXGenerateBatchInputs(DXTestCase):
             cornercase_test_stderr = run("dx generate_batch_inputs -ipair1='SRR1(.*)_1.gz' -ipair2='SRR2(.*)_2.gz' 2>&1")
             raise Exception("Expected test to return non-zero exit code, but it did not.")
         except Exception as e:
-            print("CATCHING EXCEPTION")
             cornercase_test_stderr = str(e.output)
-
-        print("OLAOLA START")
-        print(cornercase_test_stderr)
-        print(type(cornercase_test_stderr))
-        print("OLAOLA END")
 
         expected_cornercase_test_stderr = """
         Found 1 valid batch IDs matching desired pattern.
