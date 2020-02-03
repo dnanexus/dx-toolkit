@@ -1,3 +1,10 @@
+dx-toolkit (0.290.1) precise; urgency=medium
+
+  * Fixed: Java build
+  * Removed: Precise debian package
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 03 Feb 2020 22:32:16 +0000
+
 dx-toolkit (0.290.0) precise; urgency=medium
 
   * Fixed: Project deletion warning if specifying file-id
