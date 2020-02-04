@@ -110,7 +110,7 @@ def update_environ(**kwargs):
     Returns a copy of os.environ with the specified updates (VAR=value for each kwarg)
     """
     output = os.environ.copy()
-    for k, v in kwargs.iteritems():
+    for k, v in kwargs.items():
         if v is None:
             del output[k]
         else:

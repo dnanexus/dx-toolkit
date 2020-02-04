@@ -10220,13 +10220,11 @@ class TestDXGenerateBatchInputs(DXTestCase):
         readpair_test_tsv_cut = run("cut -f1-3 dx_batch.0000.tsv | sort")
         self.assertEqual(readpair_test_tsv_cut.strip(), textwrap.dedent(expected_readpair_test_tsv_cut).strip())
 
-
         try:
             cornercase_test_stderr = run("dx generate_batch_inputs -ipair1='SRR1(.*)_1.gz' -ipair2='SRR2(.*)_2.gz' 2>&1")
             raise Exception("Expected test to return non-zero exit code, but it did not.")
         except Exception as e:
             cornercase_test_stderr = str(e.output)
-
 
         expected_cornercase_test_stderr = """
         Found 1 valid batch IDs matching desired pattern.
