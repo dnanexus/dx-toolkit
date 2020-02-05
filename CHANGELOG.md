@@ -6,6 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Python documentation build
+* dxpy tests in Python 3 
+
 ## [291.1] - 2020.02.04 beta
 
 ### Changed
