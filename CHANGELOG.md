@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [291.1] - 2020.02.04 beta
+
 ### Changed
 
 * Bump jackson-databind from 2.9.10 to 2.9.10.1 
@@ -23,7 +25,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python3 compatibility for exec environment scripts
 * pip3 package manager for execDepends
 
-## [290.0] - 2019.11.21 beta
+### Removed
+
+* Precise debian package build target
+
+## [290.1] - 2019.11.21 stable
 
 ### Changed
 
@@ -37,7 +43,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * New instance types to `dx-app-wizard`
 
-## [289.0] - 2019.10.09 stable
+## [289.0] - 2019.10.09 
 
 ### Changed
 
