@@ -222,6 +222,8 @@ def build_asset(args):
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_PRECISE, input_params=builder_run_options)
         elif asset_conf['release'] == "14.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_TRUSTY, input_params=builder_run_options)
+        elif asset_conf['release'] == "16.04" and asset_conf['runSpecVersion'] == 1:
+            app_run_result = dxpy.api.applet_run('applet-applet-FjyxkZQ0x24p0vfpJVXKPYgx', input_params=builder_run_options)
         elif asset_conf['release'] == "16.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_XENIAL, input_params=builder_run_options)
 
