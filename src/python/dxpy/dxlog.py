@@ -83,8 +83,8 @@ class DXLogHandler(SysLogHandler):
 
     def is_resource_log(self, message):
         if USING_PYTHON2:
-            return message.startswith(b"CPU: "):
-        return message.startswith("CPU: "):
+            return message.startswith(b"CPU: ")
+        return message.startswith("CPU: ")
 
     def emit(self, record):
         level = self.encodePriority(record)
