@@ -9552,7 +9552,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "title": "Sir",
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04"},
+                        "distribution": "Ubuntu", "release": "14.04", "version": 0},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
