@@ -172,6 +172,7 @@ def build_asset(args):
 
     try:
         asset_conf = parse_asset_spec(args.src_dir)
+        print(asset_conf)
         validate_conf(asset_conf)
         asset_conf_file = os.path.join(args.src_dir, "dxasset.json")
 
