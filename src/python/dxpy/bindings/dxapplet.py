@@ -49,7 +49,6 @@ class DXExecutable:
         translating ONLY the fields that can be handled uniformly across all executables: project, folder, name, tags,
         properties, details, depends_on, allow_ssh, debug, delay_workspace_destruction, ignore_reuse, and extra_args.
         '''
-        project = kwargs.get('project') or dxpy.WORKSPACE_ID
 
         run_input = {"input": executable_input}
         for arg in ['folder', 'name', 'tags', 'properties', 'details']:
@@ -93,6 +92,8 @@ class DXExecutable:
 
         if dxpy.JOB_ID is None:
             run_input["project"] = project
+ 
+       run_input["project"] = kwargs.get("project") or dxpy.JOB_ID or dxpy.WORKSPACE_ID
 
         if kwargs.get('extra_args') is not None:
             merge(run_input, kwargs['extra_args'])
