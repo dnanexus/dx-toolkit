@@ -65,8 +65,11 @@ def validate_conf(asset_conf):
             "title": "A human readable name",
             "description": " A detailed description abput the asset",
             "version": "0.0.1",
-            "distribution": "Ubuntu",# (Optional)
-            "release": "12.04",
+            "runSpec": {
+                "release": "16.04",
+                "version": 1,
+                "distribution": Ubuntu
+            },
             "execDepends":
                         [
                             {"name": "samtools", "package_manager": "apt"},
@@ -79,22 +82,47 @@ def validate_conf(asset_conf):
     """
     if 'name' not in asset_conf:
         raise AssetBuilderException('The asset configuration does not contain the required field "name".')
-    # TODO: this default is not a good idea, and we will have to remove it once we ask customers to always provide release
-    if 'release' not in asset_conf:
-        asset_conf['release'] = "12.04"
-    elif asset_conf['release'] not in ['16.04', '14.04', '12.04']:
-        raise AssetBuilderException('The "release" field value should be either "12.04" (DEPRECATED), "14.04", "16.04".')
+
+    # Validate runSpec
+    # runSpec.version, runSpec.release, runSpec.distribution
+    if 'runSpec' in asset_conf:
+        if 'release' not in asset_conf['runSpec'] or asset_conf['release'] not in ['16.04', '14.04', '12.04']:
+            raise AssetBuilderException('The "runSpec.release" field value should be either "16.04", "14.04", or "12.04" (DEPRECATED)')
+        if 'version' not in asset_conf['runSpec']:
+            asset_conf['runSpec']['version'] = 0
+        elif 'version' in asset_conf['runSpec'] and  asset_conf['runSpec']['version'] not in [0, 1]:
+            raise AssetBuilderException('The "runSpec.version" field value should be either 0, or 1')
+        elif asset_conf['runSpec']['version'] == 1 and asset_conf['runSpec']['release'] != '16.04':
+            raise AssetBuilderException('runSpec.version 1 requires runSpec.version "16.04"')
+        if 'distribution' in asset_conf['runSpec']:
+            if asset_conf['runSpec']['distribution'] != 'Ubuntu':
+                raise AssetBuilderException('The distribution may only take the value "Ubuntu".')
+        else:
+            asset_conf['distribution']['runSpec'] = "Ubuntu"
+    else:
+        asset_conf['runSpec'] = {}
+        # Legacy runSpec keys at the root level. Move to runSpec dict
+        if 'release' not in asset_conf or asset_conf['release'] not in ['16.04', '14.04', '12.04']:
+            raise AssetBuilderException('The "release" field value should be either "16.04", "14.04", or "12.04" (DEPRECATED)')
+        else:
+            asset_conf['runSpec']['release'] = asset_conf['release']
+            del asset_conf['release']
+            # Legacy runSpec keys by default use runSpec.version 0
+            asset_conf['runSpec']['version'] = 0
+        if 'distribution' in asset_conf:
+            if asset_conf['distribution'] != 'Ubuntu':
+                raise AssetBuilderException('The distribution may only take the value "Ubuntu".')
+        else:
+            asset_conf['runSpec']['distribution'] = "Ubuntu"
+            del asset_conf['distribution']
+
     if 'version' not in asset_conf:
         raise AssetBuilderException('The asset configuration does not contain the required field "version". ')
     if 'title' not in asset_conf:
         raise AssetBuilderException('The asset configuration does not contain the required field "title". ')
     if 'description' not in asset_conf:
         raise AssetBuilderException('The asset configuration does not contain the required field "description".')
-    if 'distribution' in asset_conf:
-        if asset_conf['distribution'] != 'Ubuntu':
-            raise AssetBuilderException('The distribution may only take the value "Ubuntu".')
-    else:
-        asset_conf['distribution'] = "Ubuntu"
+    
 
 
 def dx_upload(file_name, dest_project, target_folder, json_out):
@@ -172,7 +200,6 @@ def build_asset(args):
 
     try:
         asset_conf = parse_asset_spec(args.src_dir)
-        print(asset_conf)
         validate_conf(asset_conf)
         asset_conf_file = os.path.join(args.src_dir, "dxasset.json")
 
@@ -213,19 +240,18 @@ def build_asset(args):
         # Add the default destination project to app run options, if it is not run from a job
         if not dxpy.JOB_ID:
             builder_run_options["project"] = dest_project_name
-
+        print(asset_conf)
         if 'instanceType' in asset_conf:
             builder_run_options["systemRequirements"] = {"*": {"instanceType": asset_conf["instanceType"]}}
         if dest_folder_name:
             builder_run_options["folder"] = dest_folder_name
-
-        if asset_conf['release'] == "12.04":
+        if asset_conf['runSpec']['release'] == "12.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_PRECISE, input_params=builder_run_options)
-        elif asset_conf['release'] == "14.04":
+        elif asset_conf['runSpec']['release'] == "14.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_TRUSTY, input_params=builder_run_options)
-        elif asset_conf['release'] == "16.04" and asset_conf['runSpecVersion'] == 1:
-            app_run_result = dxpy.api.applet_run('applet-applet-FjyxkZQ0x24p0vfpJVXKPYgx', input_params=builder_run_options)
-        elif asset_conf['release'] == "16.04":
+        elif asset_conf['runSpec']['release'] == "16.04" and asset_conf['runSpec']['version'] == 1:
+            app_run_result = dxpy.api.applet_run('applet-FjzZYx00x24Yb1Fq4V219jgz', input_params=builder_run_options)
+        elif asset_conf['runSpec']['release'] == "16.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_XENIAL, input_params=builder_run_options)
 
         job_id = app_run_result["id"]
