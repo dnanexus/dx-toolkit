@@ -223,7 +223,6 @@ def build_asset(args):
         # Add the default destination project to app run options, if it is not run from a job
         if not dxpy.JOB_ID:
             builder_run_options["project"] = dest_project_name
-        print(asset_conf)
         if 'instanceType' in asset_conf:
             builder_run_options["systemRequirements"] = {"*": {"instanceType": asset_conf["instanceType"]}}
         if dest_folder_name:
