@@ -9333,7 +9333,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
-                                      "distribution": "Ubuntu", "release": "14.04", "version": 0}
+                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
 
         output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}
 
@@ -9463,7 +9463,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
-                                      "distribution": "Ubuntu", "release": "14.04", "version": 0}
+                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
 
         app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -9495,7 +9495,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         app_spec = dict(self.base_applet_spec, name="get_applet_field_cleanup")
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
-                                      "distribution": "Ubuntu", "release": "14.04", "version": 0}
+                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
         output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py",
@@ -9519,7 +9519,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         app_spec = dict(self.base_applet_spec, name="get_applet_windows")
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
-                                      "distribution": "Ubuntu", "release": "14.04", "version": 0}
+                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
         output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_windows", json.dumps(app_spec), "code.py",
@@ -9552,7 +9552,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "title": "Sir",
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04", "version": 0},
+                        "distribution": "Ubuntu", "release": "14.04", "version": "0"},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
@@ -9567,7 +9567,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                                for (k, v) in app_spec.iteritems()
                                if k not in ('description', 'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
-                                      "distribution": "Ubuntu", "release": "14.04", "version": 0}
+                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
 
         app_dir = self.write_app_directory(name,
                                            json.dumps(app_spec),
