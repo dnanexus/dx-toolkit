@@ -596,7 +596,7 @@ class DXTestCaseBuildApps(DXTestCase):
           "interpreter": "python2.7",
           "distribution": "Ubuntu",
           "release": "14.04",
-          "version": 0
+          "version": '0'
           },
         "inputSpec": [],
         "outputSpec": [],
