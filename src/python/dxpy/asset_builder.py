@@ -65,11 +65,10 @@ def validate_conf(asset_conf):
             "title": "A human readable name",
             "description": " A detailed description abput the asset",
             "version": "0.0.1",
-            "runSpec": {
-                "release": "16.04",
-                "version": 1,
-                "distribution": Ubuntu
-            },
+            "runSpecVersion": "1",
+            "release": "16.04",
+            "version": 1,
+            "distribution": Ubuntu
             "execDepends":
                         [
                             {"name": "samtools", "package_manager": "apt"},
@@ -233,7 +232,7 @@ def build_asset(args):
         elif asset_conf['release'] == "14.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_TRUSTY, input_params=builder_run_options)
         elif asset_conf['release'] == "16.04" and asset_conf['runSpecVersion'] == '1':
-            app_run_result = dxpy.api.applet_run('applet-Fk23Z2j0x24vqKq344BpJ5p7', input_params=builder_run_options)
+            app_run_result = dxpy.api.applet_run('applet-Fk2kP2Q0x24VPPBZ0q3qgvVP', input_params=builder_run_options)
         elif asset_conf['release'] == "16.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_XENIAL, input_params=builder_run_options)
 
