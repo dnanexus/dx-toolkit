@@ -68,8 +68,7 @@ def validate_conf(asset_conf):
             "version": "0.0.1",
             "runSpecVersion": "1",
             "release": "16.04",
-            "version": 1,
-            "distribution": Ubuntu
+            "distribution": "Ubuntu"
             "execDepends":
                         [
                             {"name": "samtools", "package_manager": "apt"},
@@ -84,17 +83,17 @@ def validate_conf(asset_conf):
         raise AssetBuilderException('The asset configuration does not contain the required field "name".')
 
     # Validate runSpec
-    if 'release' not in asset_conf or asset_conf['release'] not in ['16.04', '14.04', '12.04']:
+    if 'release' not in asset_conf or asset_conf['release'] not in ["16.04", "14.04", "12.04"]:
         raise AssetBuilderException('The "release" field value should be either "16.04", "14.04", or "12.04" (DEPRECATED)')
     if 'runSpecVersion' in asset_conf:
-        if asset_conf['runSpecVersion'] not in ['0','1']:
+        if asset_conf['runSpecVersion'] not in ["0", "1"]:
             raise AssetBuilderException('The "runSpecVersion" field should be either "0", or "1"')
-        if (asset_conf['runSpecVersion'] == '1' and asset_conf['release'] != '16.04'):
+        if (asset_conf['runSpecVersion'] == "1" and asset_conf['release'] != "16.04"):
             raise AssetBuilderException('The "runSpecVersion" field can only be "1" if "release" is "16.04"')
     else:
-        asset_conf['runSpecVersion'] = '0'
+        asset_conf['runSpecVersion'] = "0"
     if 'distribution' in asset_conf:
-        if asset_conf['distribution'] != 'Ubuntu':
+        if asset_conf['distribution'] != "Ubuntu":
             raise AssetBuilderException('The distribution may only take the value "Ubuntu".')
     else:
         asset_conf['distribution'] = "Ubuntu"
