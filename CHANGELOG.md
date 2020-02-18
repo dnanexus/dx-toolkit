@@ -6,6 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* runSpec.version dxapp.json key for 16.04 applets
+* `dx build_asset` support for runSpecVersion key in dxasset.json
+
 ### Fixed
 
 * Python documentation build
