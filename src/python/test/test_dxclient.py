@@ -7516,6 +7516,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         asset.close()
         return asset.get_id()
 
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
                          'skipping test that would create apps')
     def test_build_multi_region_app_with_regional_options(self):
