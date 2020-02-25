@@ -4938,8 +4938,8 @@ parser_new_user.set_defaults(func=new_user)
 register_parser(parser_new_user, subparsers_action=subparsers_new,
                    categories="other")
 
-parser_new_org = subparsers_new.add_parser('org', help='Create new org',
-                                           description='Create a new org',
+parser_new_org = subparsers_new.add_parser('org', help='Create new non-billable org',
+                                           description='Create a new non-billable org. Contact sales@dnanexus.com for the creation of billable orgs',
                                            parents=[stdout_args, env_args],
                                            prog='dx new org')
 parser_new_org.add_argument('name', help='Descriptive name of the org', nargs='?')
