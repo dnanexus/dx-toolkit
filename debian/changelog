@@ -1,3 +1,12 @@
+dx-toolkit (0.292.0) trusty; urgency=medium
+
+  * Added: runSpec.version dxapp.json key for 16.04 applets
+  * Added: `dx build_asset` support for runSpecVersion key in dxasset.json
+  * Fixed: Python documentation build
+  * Fixed: dxpy tests in Python 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 10 Mar 2020 20:50:11 +0000
+
 dx-toolkit (0.291.0) precise; urgency=medium
 
   * Changed: Bump jackson-databind from 2.9.10 to 2.9.10.1
