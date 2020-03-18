@@ -22,6 +22,7 @@ VERSION := $(shell cat $(DNANEXUS_HOME)/build/info/ua_version || echo 'UNKNOWN_V
 DXTOOLKIT_GITVERSION := $(shell cat $(DNANEXUS_HOME)/build/info/version || echo 'UNKNOWN_VERSION')
 CENTOS_MAJOR_VERSION := $(shell grep -o "CentOS release [0-9]\+" /etc/issue | sed -e "s/CentOS release //")
 RHEL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Red Hat Enterprise Linux .* release [0-9]\+" /etc/redhat-release | sed -e "s/Red Hat Enterprise Linux .* release //"))
+RHSL_MAJOR_VERSION := $(shell test -e /etc/redhat-release && (grep -o "Scientific Linux.* release [0-9]\+" /etc/redhat-release | sed -e "s/Scientific Linux.* release //"))
 
 curl_dir = $(DNANEXUS_HOME)/src/curl/stage
 cares_dir = $(DNANEXUS_HOME)/src/c-ares/stage
@@ -77,6 +78,9 @@ else
 			CXXFLAGS += -stdlib=libc++
 		endif
         else ifeq ($(RHEL_MAJOR_VERSION), 7)
+		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
+		LDFLAGS += -lrt -static
+        else ifeq ($(RHSL_MAJOR_VERSION), 7)
 		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -static
 	else
