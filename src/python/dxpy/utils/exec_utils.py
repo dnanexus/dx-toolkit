@@ -279,7 +279,7 @@ class DXExecDependencyInstaller(object):
     runSpec hash (the former two are deprecated). Neighboring package
     dependencies of the same type are grouped.
     """
-    group_pms = ("apt", "gem", "cpan", "cran", "pip")
+    group_pms = ("apt", "gem", "cpan", "cran", "pip", "pip3")
 
     def __init__(self, executable_desc, job_desc, logger=None):
         """
@@ -365,6 +365,8 @@ class DXExecDependencyInstaller(object):
             return apt_shellcode.format(p=make_pm_atoms(packages))
         elif dep_type == "pip":
             return "pip install --upgrade " + make_pm_atoms(packages, version_separator="==")
+        elif dep_type == "pip3":
+            return "pip3 install --upgrade " + make_pm_atoms(packages, version_separator="==")
         elif dep_type == "gem":
             commands = []
             for p in packages:

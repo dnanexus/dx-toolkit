@@ -6,7 +6,90 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [285.0] - 2019.06.19 beta
+### Added
+
+* runSpec.version dxapp.json key for 16.04 applets
+* `dx build_asset` support for runSpecVersion key in dxasset.json
+
+### Fixed
+
+* Python documentation build
+* dxpy tests in Python 3 
+
+## [291.1] - 2020.02.04 beta
+
+### Changed
+
+* Bump jackson-databind from 2.9.10 to 2.9.10.1 
+* Retry symlink file downloads with `aria2c`
+
+### Fixed
+
+* Python3 issue in dx app builder test
+
+### Added
+
+* Remote app tarball builder for xenial
+* Allow disabling system exit on log client
+* database class in dx find data 
+* Python3 compatibility for exec environment scripts
+* pip3 package manager for execDepends
+
+### Removed
+
+* Precise debian package build target
+
+## [290.1] - 2019.11.21 stable
+
+### Changed
+
+* Run job as high priority if '--ssh' provided
+
+### Fixed
+
+* Project deletion warning if specifying file-id
+
+### Added
+
+* New instance types to `dx-app-wizard`
+
+## [289.0] - 2019.10.09 
+
+### Changed
+
+* Upgrade jackson to 2.9.10
+
+### Fixed
+
+* Python 3 wrapper generation and tests
+
+## [288.0] - 2019.10.01 
+
+### Added
+
+* `dx get` for database files
+* v2 instance types in `dx-app-wizard`
+
+## [287.0] - 2019.08.30 
+
+### Fixed
+
+* Generating ruby wrappers in python 3
+* dx-app-wizard in python 3
+
+## [286.1] - 2019.07.08 
+
+### Changed
+
+* Documentation links to https://documentation.dnanexus.com
+
+## [285.1] - 2019.07.08 
+
+### Fixed
+
+* Remove non-ascii char from readme
+
+## [285.0] - 2019.06.19 
 
 ### Added
 

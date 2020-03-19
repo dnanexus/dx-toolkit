@@ -1,3 +1,54 @@
+dx-toolkit (0.292.0) trusty; urgency=medium
+
+  * Added: runSpec.version dxapp.json key for 16.04 applets
+  * Added: `dx build_asset` support for runSpecVersion key in dxasset.json
+  * Fixed: Python documentation build
+  * Fixed: dxpy tests in Python 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 10 Mar 2020 20:50:11 +0000
+
+dx-toolkit (0.291.0) precise; urgency=medium
+
+  * Changed: Bump jackson-databind from 2.9.10 to 2.9.10.1
+  * Changed: Retry symlink file downloads with aria2c
+  * Fixed: Python3 issue in ds app builder test
+  * Added: Remote app tarball builder for xenial
+  * Added: Allow disabling system exit on log client
+  * database class in `dx find data`
+  * Python3 compatibility for exec environment scripts
+  * pip3 package manager for execDepends
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 31 Jan 2020 21:27:13 +0000
+
+dx-toolkit (0.290.0) precise; urgency=medium
+
+  * Fixed: Project deletion warning if specifying file-id
+  * Changed: Run job as high priority if '--ssh' provided
+  * Added: New instance types to `dx-app-wizard`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 21 Nov 2019 18:30:28 +0000
+
+dx-toolkit (0.289.0) precise; urgency=medium
+
+  * Changed: Upgrade jackson to 2.9.10
+  * Fixed: Python 3 wrapper generation and tests
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 09 Oct 2019 17:48:32 +0000
+
+dx-toolkit (0.288.0) precise; urgency=medium
+
+  * Added: `dx get` for database files
+  * Added: v2 instance types in `dx-app-wizard`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 01 Oct 2019 17:33:55 +0000
+
+dx-toolkit (0.287.0) precise; urgency=medium
+
+  * Fixed: Generating ruby wrappers in python 3
+  * Fixed: dx-app-wizard in python 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 30 Aug 2019 17:25:41 +0000
+
 dx-toolkit (0.286.0) precise; urgency=low
 
   * Changed: Documentation links to https://documentation.dnanexus.com

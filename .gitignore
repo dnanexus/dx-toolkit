@@ -70,6 +70,7 @@ dxR.Rcheck
 /bin/chardetect
 /bin/proot
 /bin/pbr
+/bin/xattr
 /bin/wsdump.py
 /bin/dx-su-contrib
 /src/python/test/*.traceability.*.csv

@@ -199,7 +199,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         print("aria2c found in path so using that instead of wget \n")
         # aria2c does not allow more than 16 connections per server
         max_connections = min(16, multiprocessing.cpu_count())
-        cmd = ["aria2c", "--check-certificate=false", "-s", str(max_connections), "-x", str(max_connections)]
+        cmd = ["aria2c", "--check-certificate=false", "-s", str(max_connections), "-x", str(max_connections), "--retry-wait=10", "--max-tries=15"]
         # Split path properly for aria2c
         # If '-d' arg not provided, aria2c uses current working directory
         cwd = os.getcwd()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
 #
@@ -65,7 +65,7 @@ sub {method_name}WithAlias($;$%) {{
 }}
 '''
 
-print preamble
+print(preamble)
 
 all_method_names = []
 
@@ -75,11 +75,11 @@ for method in json.loads(sys.stdin.read()):
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name, method_route=method_route)
+            print(app_object_method_template.format(method_name=method_name, method_route=method_route))
         else:
-            print object_method_template.format(method_name=method_name, method_route=method_route)
+            print(object_method_template.format(method_name=method_name, method_route=method_route))
     else:
-        print class_method_template.format(method_name=method_name, route=route)
+        print(class_method_template.format(method_name=method_name, route=route))
     all_method_names.append(method_name)
 
-print postscript.format(all_method_names=" ".join(all_method_names))
+print(postscript.format(all_method_names=" ".join(all_method_names)))
