@@ -402,7 +402,7 @@ class DXTestCase(DXTestCaseCompat):
                 if not re.search(stderr_regexp, e.stderr):
                     print("stderr:")
                     print(e.stderr)
-                    self.fail("Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
+                    self.fail("Expected stderr (%s) to match '%s' but it didn't".format(stderr_regexp, stderr_regexp))
             return
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
 
