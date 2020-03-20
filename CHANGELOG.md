@@ -8,6 +8,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Sci Linux compilation option for upload agent
+
+### Fixed
+
+* dxR build
+* `dx upload` retry for "SSL EOF" error
+
+## [292.0] - beta
+
+### Added
+
 * runSpec.version dxapp.json key for 16.04 applets
 * `dx build_asset` support for runSpecVersion key in dxasset.json
 
@@ -16,7 +27,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python documentation build
 * dxpy tests in Python 3 
 
-## [291.1] - 2020.02.04 beta
+### Changed
+
+* Bump jackson-databind from 2.9.10 to 2.9.10.1 
+
+## [291.1] - 2020.03.10 stable
 
 ### Changed
 
