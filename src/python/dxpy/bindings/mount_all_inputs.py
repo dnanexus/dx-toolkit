@@ -31,7 +31,7 @@ def _build_mount_manifest(to_mount):
         file_name = file_rec['trg_fname']
         k = file_name.rfind("/")
         file_parent = file_name[:k]
-        file_entry['parent'] = "/in/" + file_parent
+        file_entry['parent'] = "/" + file_parent
         files_list.append(file_entry)
     files_manifest = {}
     files_manifest['Files'] = files_list
@@ -107,7 +107,7 @@ def mount_all_inputs(exclude=None):
     print("Mounting inputs...")
 
     home_dir = os.environ["HOME"]
-    mount_dir = os.path.join(home_dir, "mount")
+    mount_dir = os.path.join(home_dir, "in")
     mount_manifest_file = os.path.join(home_dir, "mount-manifest.json")
     dxfuse_cmd = "/usr/bin/dxfuse"
 
