@@ -18,8 +18,8 @@ from __future__ import print_function
 import subprocess
 import json
 import os
-import dxpy
 from dxpy.utils import file_load_utils
+from dxpy.exceptions import err_exit
 
 def _build_mount_manifest(to_mount):
     files_list = []
@@ -39,6 +39,15 @@ def _build_mount_manifest(to_mount):
     print(files_manifest)
     return files_manifest
 
+def _which(program):
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        exe_file = os.path.join(path, program)
+        if is_exe(exe_file):
+            return exe_file
+    return None
 
 def _gen_helper_dict(filtered_inputs):
     '''
@@ -109,7 +118,9 @@ def mount_all_inputs(exclude=None):
     home_dir = os.environ["HOME"]
     mount_dir = os.path.join(home_dir, "in")
     mount_manifest_file = os.path.join(home_dir, "mount-manifest.json")
-    dxfuse_cmd = "/usr/bin/dxfuse"
+    dxfuse_cmd = _which("dxfuse")
+    if dxfuse_cmd is None:
+        err_exit("dxfuse is not installed on this system")
 
     subprocess.check_output(["mkdir", mount_dir])
 
