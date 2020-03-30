@@ -29,12 +29,9 @@ def _build_mount_manifest(to_mount):
         file_entry['proj_id'] = file_handler.get_proj_id()
         file_entry['file_id'] = file_rec['src_file_id']
         file_name = file_rec['trg_fname']
-        k = file_name.rfind("/")
-        file_parent = file_name[:k]
-        file_entry['parent'] = "/" + file_parent
+        file_entry['parent'] = "/" + os.path.dirname(file_name)
         files_list.append(file_entry)
-    files_manifest = {}
-    files_manifest['Files'] = files_list
+    files_manifest = {'Files': files_list}
     print("File mount manifest:")
     print(files_manifest)
     return files_manifest
