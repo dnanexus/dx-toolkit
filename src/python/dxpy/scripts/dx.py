@@ -3278,9 +3278,12 @@ def run(args):
                 }
         else:
             # make a temporary workflow
-            args.executable = dxpy.api.workflow_new({"project": dest_proj,
-                                                     "initializeFrom": {"id": clone_desc["id"]},
-                                                     "temporary": True})["id"]
+            if args.executable == "":
+                args.executable = dxpy.api.workflow_new({"project": dest_proj,
+                                                         "initializeFrom": {"id": clone_desc["id"]},
+                                                         "temporary": True})["id"]
+            args.input_from_clone = clone_desc["runInput"]
+            # args.sys_reqs_from_clone = clone_desc["systemRequirements"]
 
     handler = try_call(get_exec_handler, args.executable, args.alias)
 
