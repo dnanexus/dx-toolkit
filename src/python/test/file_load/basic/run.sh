@@ -1,5 +1,5 @@
 main() {
-    dx-download-all-inputs
+    dx-fake-download-all-inputs
 
     # Check file content
     dx download "$seq1" -o seq1
@@ -32,7 +32,7 @@ main() {
     echo "ABC" > out/foo/X_1.txt
     for i in 2 3;
     do
-        cp out/foo/X_1.txt out/foo/X_$i.txt
+        cp out/foo/X_1.txt out/foo/X_$i.txt.fake
     done
 
     dx-upload-all-outputs
