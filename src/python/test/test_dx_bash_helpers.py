@@ -151,7 +151,7 @@ class TestDXBashHelpers(DXTestCase):
             env = update_environ(DX_PROJECT_CONTEXT_ID=dxproj.get_id())
 
             # Upload some files for use by the applet
-            dxpy.upload_string("1234\n", project=dxproj.get_id(), name="A.fake")
+            dxpy.upload_string("1234\n", project=dxproj.get_id(), name="A.txt")
             dxpy.upload_string("ABCD\n", project=dxproj.get_id(), name="B.txt")
 
             # Build the applet, patching in the bash helpers from the
