@@ -230,7 +230,7 @@ def _check_syntax(code, lang, temp_dir, enforce=True):
     """
     # This function needs the language to be explicitly set, so we can
     # generate an appropriate temp filename.
-    if lang == 'python2.7' or 'python3' in lang':
+    if lang == 'python2.7' or 'python3' in lang:
         temp_basename = 'inlined_code_from_dxapp_json.py'
     elif lang == 'bash':
         temp_basename = 'inlined_code_from_dxapp_json.sh'
