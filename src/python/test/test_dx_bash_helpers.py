@@ -51,6 +51,7 @@ def run(command, **kwargs):
     return output
 
 TEST_APPS = os.path.join(os.path.dirname(__file__), 'file_load')
+TEST_MOUNT_APPS = os.path.join(os.path.dirname(__file__), 'file_mount')
 LOCAL_SCRIPTS = os.path.join(os.path.dirname(__file__), '..', 'scripts')
 LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
 DUMMY_HASH = "123456789012345678901234"
@@ -157,6 +158,24 @@ class TestDXBashHelpers(DXTestCase):
             # Build the applet, patching in the bash helpers from the
             # local checkout
             applet_id = build_app_with_bash_helpers(os.path.join(TEST_APPS, 'basic'), dxproj.get_id())
+
+            # Run the applet
+            applet_args = ['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt', "-ivalue=5", "-iages=4"]
+            cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
+            cmd_args.extend(applet_args)
+            run(cmd_args, env=env)
+
+    def test_mount_basic(self):
+        with temporary_project('TestDXBashHelpers.test_app1 temporary project') as dxproj:
+            env = update_environ(DX_PROJECT_CONTEXT_ID=dxproj.get_id())
+
+            # Upload some files for use by the applet
+            dxpy.upload_string("1234\n", project=dxproj.get_id(), name="A.txt")
+            dxpy.upload_string("ABCD\n", project=dxproj.get_id(), name="B.txt")
+
+            # Build the applet, patching in the bash helpers from the
+            # local checkout
+            applet_id = build_app_with_bash_helpers(os.path.join(TEST_MOUNT_APPS, 'basic'), dxproj.get_id())
 
             # Run the applet
             applet_args = ['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt', "-ivalue=5", "-iages=4"]
