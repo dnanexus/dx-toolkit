@@ -8,6 +8,8 @@ import dxpy
 import dxpy.app_builder
 
 from dxpy.exceptions import DXAPIError
+from __future__ import print_function
+
 
 src_dir = os.path.join(os.path.dirname(__file__), "..")
 test_resources_dir = os.path.join(src_dir, "test", "resources")
