@@ -230,12 +230,12 @@ def _check_syntax(code, lang, temp_dir, enforce=True):
     """
     # This function needs the language to be explicitly set, so we can
     # generate an appropriate temp filename.
-    if lang == 'python2.7':
+    if lang == 'python2.7' or lang == 'python3':
         temp_basename = 'inlined_code_from_dxapp_json.py'
     elif lang == 'bash':
         temp_basename = 'inlined_code_from_dxapp_json.sh'
     else:
-        raise ValueError('lang must be one of "python2.7" or "bash"')
+        raise ValueError('lang must be one of "python2.7", "python3", or "bash"')
     # Dump the contents out to a temporary file, then call _check_file_syntax.
     with open(os.path.join(temp_dir, temp_basename), 'w') as ofile:
         ofile.write(code)
