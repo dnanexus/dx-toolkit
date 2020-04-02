@@ -8,6 +8,8 @@ import dxpy
 import dxpy.app_builder
 
 from dxpy.exceptions import DXAPIError
+from __future__ import print_function
+
 
 src_dir = os.path.join(os.path.dirname(__file__), "..")
 test_resources_dir = os.path.join(src_dir, "test", "resources")
@@ -35,8 +37,8 @@ class TestDX_APP_WIZARD_NAME(unittest.TestCase):
         try:
             dxpy.api.container_remove_objects(dxpy.WORKSPACE_ID, {"objects": [cls.applet_id]})
         except DXAPIError as e:
-            print "Error removing %s during cleanup; ignoring." % (cls.applet_id,)
-            print e
+            print("Error removing %s during cleanup; ignoring." % (cls.applet_id,))
+            print(e)
 
     def setUp(self):
         pass
@@ -49,9 +51,9 @@ class TestDX_APP_WIZARD_NAME(unittest.TestCase):
         Tests the app with a basic input.
         """
         job = dxpy.DXApplet(self.applet_id).run(self.base_input)
-        print "Waiting for %s to complete" % (job.get_id(),)
+        print("Waiting for %s to complete" % (job.get_id(),))
         job.wait_on_done()
-        print json.dumps(job.describe()["output"])
+        print( json.dumps(job.describe()["output"]) )
 
 if __name__ == '__main__':
     unittest.main()
