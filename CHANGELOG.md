@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Sci Linux compilation option for upload agent
+* Python 3 support for `dx-app-wizard`
 
 ### Fixed
 
