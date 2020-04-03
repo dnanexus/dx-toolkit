@@ -14,7 +14,7 @@ main() {
         exit 1
     fi
 
-    FILE=$(cat /home/dnanexus/in/seq2/A.txt)
+    FILE=$(cat /home/dnanexus/in/seq2/B.txt)
     if [ "$FILE" != "ABCD" ]
     then
         echo "Failed to read correct data from mounted file."
