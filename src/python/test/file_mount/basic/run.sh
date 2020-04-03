@@ -3,16 +3,18 @@ main() {
 
     dx-mount-all-inputs
 
-    #DIFF=$(diff -r --brief tmp out)
-    #if [ "$DIFF" != "" ]
-    #then
-    #    echo "Upload of subdirectories does not work properly"
-    #    exit 1
-    #fi
-
     find /home/dnanexus/in -name \*
 
-    exit 1
+    cat /home/dnanexus/in/seq1/A.txt
+
+    FILE1=$(cat /home/dnanexus/in/seq1/A.txt)
+    echo wjktest FILE1 $FILE1
+
+    if [ "$FILE1" != "1234\n" ]
+    then
+        echo "Failed to read correct data from mounted file."
+        exit 1
+    fi
 
     echo "(wjk) done!"
 }
