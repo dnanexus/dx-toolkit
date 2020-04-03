@@ -178,7 +178,7 @@ class TestDXBashHelpers(DXTestCase):
             applet_id = build_app_with_bash_helpers(os.path.join(TEST_MOUNT_APPS, 'basic'), dxproj.get_id())
 
             # Run the applet
-            applet_args = ['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt', "-ivalue=5", "-iages=4"]
+            applet_args = ['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt']
             cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
             cmd_args.extend(applet_args)
             run(cmd_args, env=env)

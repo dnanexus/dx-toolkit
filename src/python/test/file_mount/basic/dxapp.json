@@ -10,10 +10,7 @@
   "inputSpec": [
     {"name": "seq1", "class": "file"},
     {"name": "seq2", "class": "file"},
-    {"name": "ref",  "class": "array:file"},
-    {"name": "bar",  "class": "file", "optional" : true},
-    {"name": "value", "class" : "int"},
-    {"name": "ages", "class": "array:int"}
+    {"name": "ref",  "class": "array:file"}
   ],
   "outputSpec": [
   ],
