@@ -242,6 +242,20 @@ def _check_syntax(code, lang, temp_dir, enforce=True):
     _check_file_syntax(os.path.join(temp_dir, temp_basename), temp_dir, override_lang=lang, enforce=enforce)
 
 
+# convert the error message embedded in the exception to a proper string
+def _error_message_to_string(e):
+    if USING_PYTHON2:
+        return e.msg
+    else:
+        if isinstance(e.msg, str):
+            return e.msg
+        elif isinstance(e.msg, bytes):
+            return e.msg.decode("utf-8")
+        else:
+            # What kind of object is this?
+            print("The error message is neither string nor bytes, it is {}".format(type(e.msg)))
+            raise e
+
 def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
     """
     Checks that the code in FILENAME parses, attempting to autodetect
@@ -294,20 +308,14 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         checker_fn(filename)
     except subprocess.CalledProcessError as e:
         print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
-        if USING_PYTHON2:
-            errmsg = e.output
-        else:
-            errmsg = e.output.decode("utf-8")
+        errmsg = _error_message_to_string(e)
         for line in errmsg.strip("\n").split("\n"):
             print("  " + line.rstrip("\n"), file=sys.stderr)
         if enforce:
             raise DXSyntaxError(filename + " has a syntax error")
     except py_compile.PyCompileError as e:
         print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
-        if USING_PYTHON2:
-            errmsg = e.msg
-        else:
-            errmsg = e.msg.decode("utf-8")
+        errmsg = _error_message_to_string(e)
         print("  " + errmsg.strip(), file=sys.stderr)
         if enforce:
             raise DXSyntaxError(e.msg.strip())
