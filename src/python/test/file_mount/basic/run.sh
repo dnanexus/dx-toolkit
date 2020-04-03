@@ -1,10 +1,12 @@
 main() {
     echo "(wjk) starting..."
+
+    curl -O https://github.com/dnanexus/dxfuse/releases/download/v0.21/dxfuse-linux
+    mv dxfuse-linux dxfuse
+
+    ls dxfuse
     ls .
     ls /usr/bin
-
-    #curl -O https://github.com/dnanexus/dxfuse/releases/download/v0.21/dxfuse-linux
-    #mv dxfuse-linux dxfuse
 
     dx-mount-all-inputs
 
