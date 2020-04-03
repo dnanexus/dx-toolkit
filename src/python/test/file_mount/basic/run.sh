@@ -10,7 +10,7 @@ main() {
     FILE1=$(cat /home/dnanexus/in/seq1/A.txt)
     echo wjktest FILE1 $FILE1
 
-    if [ "$FILE1" != "1234\n" ]
+    if [ "$FILE1" != "1234" ]
     then
         echo "Failed to read correct data from mounted file."
         exit 1
