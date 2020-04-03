@@ -1,16 +1,18 @@
 main() {
     echo "(wjk) starting..."
 
-    curl -O https://github.com/dnanexus/dxfuse/releases/download/v0.21/dxfuse-linux
-    mv dxfuse-linux dxfuse
-
-    ls dxfuse
-    ls .
-    ls /usr/bin
-
     dx-mount-all-inputs
 
+    #DIFF=$(diff -r --brief tmp out)
+    #if [ "$DIFF" != "" ]
+    #then
+    #    echo "Upload of subdirectories does not work properly"
+    #    exit 1
+    #fi
+
     find /home/dnanexus/in -name \*
+
+    exit 1
 
     echo "(wjk) done!"
 }

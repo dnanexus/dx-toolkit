@@ -1,2 +1,2 @@
-This is a testing app, for the download-all-inputs python scripts.
+This is a testing app, for the mount-all-inputs python scripts.
 
