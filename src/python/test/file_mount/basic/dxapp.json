@@ -1,0 +1,20 @@
+{ "name": "basic",
+  "title": "basic",
+  "summary" : "basic file mount",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash",
+    "distribution": "Ubuntu",
+    "release": "14.04"
+  },
+  "inputSpec": [
+    {"name": "seq1", "class": "file"},
+    {"name": "seq2", "class": "file"},
+    {"name": "ref",  "class": "array:file"}
+  ],
+  "outputSpec": [
+  ],
+  "access": {
+    "network": ["*"]
+  }
+}
