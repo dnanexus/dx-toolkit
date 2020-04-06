@@ -5,7 +5,6 @@ all:
 	ls -l ./resources/usr/bin
 	echo msg 2
 	chmod +x ./resources/usr/bin/dxfuse
-  echo msg 3
+	echo msg 3
 	ls -l ./resources/usr/bin
-  echo msg 4
-  
+	echo msg 4
