@@ -8,4 +8,4 @@ all:
   echo msg 3
 	ls -l ./resources/usr/bin
   echo msg 4
-
+  
