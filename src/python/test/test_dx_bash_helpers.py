@@ -101,7 +101,10 @@ def build_app_with_bash_helpers(app_dir, project_id):
         with open(os.path.join(updated_app_dir, dxapp_json['runSpec']['file']), 'w') as fh:
             fh.write(entry_point_data)
 
+        print("(wjk) project_id = " + project_id + ", updated_app_dir = " + updated_app_dir)
         build_output = run(['dx', 'build', '--json', '--destination', project_id + ':', updated_app_dir])
+        print("(wjk) build_output = ")
+        print(build_output)
         return json.loads(build_output)['id']
     finally:
         shutil.rmtree(tempdir)
