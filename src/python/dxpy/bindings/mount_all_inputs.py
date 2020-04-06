@@ -144,7 +144,7 @@ def mount_all_inputs(exclude=None):
         json.dump(files_manifest, mfile)
 
     dxfuse_version = subprocess.check_output([dxfuse_cmd, "-version"])
-    print("(wjk) Using dxfuse version " + dxfuse_version)
+    print("(wjk) Using dxfuse version " + str(dxfuse_version))
 
     uid = str(int(subprocess.check_output(["id", "-u"])))
     gid = str(int(subprocess.check_output(["id", "-g"])))
