@@ -56,8 +56,10 @@ Other useful resources:
 
 Python version compatibility
 ----------------------------
+dxpy is supported on Python 2 (2.7+) and Python 3 (3.5+)
 
 Code going into the Python codebase should be written in Python 3.5 style, and should be compatible with Python 2.7.  Python 2.7 support will end on March 1, 2021.
+
 To facilitate Python 2 compatibility, we have the compat module in https://github.com/dnanexus/dx-toolkit/blob/master/src/python/dxpy/compat.py. Also, the following boilerplate should be
 inserted into all Python source files:
 
