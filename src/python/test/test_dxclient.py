@@ -3401,6 +3401,11 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x2')
 
+        # Cannot provide workflow executable (ID or name) with --clone analysis
+        error_mesg = 'cannot be provided when re-running an analysis'
+        with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
+            run("dx run myworkflow --clone " + analysis_id)
+
         # Run in a different project and add some metadata
         try:
             other_proj_id = run("dx new project 'cloned analysis project' --brief").strip()
