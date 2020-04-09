@@ -66,9 +66,10 @@ def run():
     else:
         subproc_env = dict(os.environ)
 
+    print("Running following command in run_python_integration_tests:")
+    print(cmd)
     try:
-        print("Running following command in run_python_integration_tests:")
-        print(cmd)
+
         subprocess.check_call(cmd, cwd=PYTHON_TEST_DIR, env=subproc_env)
     except subprocess.CalledProcessError as e:
         print('*** unittest invocation failed with code %d' % (e.returncode,), file=sys.stderr)
