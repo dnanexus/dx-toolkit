@@ -3402,7 +3402,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                          'mem2_hdd2_x2')
 
         # Cannot provide workflow executable (ID or name) with --clone analysis
-        error_mesg = 'Workflow executable cannot be provided'
+        error_mesg = 'cannot be provided when re-running an analysis'
         with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
             run("dx run myworkflow --clone " + analysis_id)
 
