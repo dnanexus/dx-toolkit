@@ -3277,6 +3277,11 @@ def run(args):
                     }
                 }
         else:
+            if args.executable != "":
+                error_mesg = "Workflow executable (\"{}\") cannot be provided when re-running an analysis with 'dx run --clone'. ".format(args.executable)
+                error_mesg += "You can instead run 'dx run --clone {}', with other optional CLI arguments, to re-run the previously run analysis.".format(args.clone)
+                err_exit(exception=DXParserError(error_mesg),
+                         expected_exceptions=(DXParserError,))
             # make a temporary workflow
             args.executable = dxpy.api.workflow_new({"project": dest_proj,
                                                      "initializeFrom": {"id": clone_desc["id"]},
@@ -4727,7 +4732,7 @@ parser_run.add_argument('-d', '--depends-on',
                         action='append', type=str)
 
 parser_run.add_argument('-h', '--help', help='show this help message and exit', nargs=0, action=runHelp)
-parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments)', width_adjustment=-24))
+parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments. When using an analysis with --clone a workflow executable cannot be overriden and should not be provided)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', dest='alias',
                         help=fill('Alias (tag) or version of the app to run (default: "default" if an app)', width_adjustment=-24))
 parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
