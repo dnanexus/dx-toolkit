@@ -6,17 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [293.0] - beta
+
 ### Added
 
+* `dx-mount-all-inputs` for dxfuse 
 * Sci Linux compilation option for upload agent
-* Python 3 support for `dx-app-wizard`
+* Python 3 interpreter for `dx-app-wizard`
 
 ### Fixed
 
 * dxR build
 * `dx upload` retry for "SSL EOF" error
+* Error out for dx run --clone with analysis and executable
 
-## [292.0] - beta
+## [292.0] - 2020.04.09 stable
 
 ### Added
 
@@ -32,7 +36,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Bump jackson-databind from 2.9.10 to 2.9.10.1 
 
-## [291.1] - 2020.03.10 stable
+## [291.1] - 2020.03.10 
 
 ### Changed
 
