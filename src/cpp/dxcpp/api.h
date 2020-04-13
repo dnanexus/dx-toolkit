@@ -501,6 +501,9 @@ namespace dx {
   JSON systemDescribeExecutions(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemDescribeExecutions(const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON systemBulkCloneRenameAndTag(const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON systemBulkCloneRenameAndTag(const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON systemDescribeProjects(const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON systemDescribeProjects(const dx::JSON &input_params, const bool safe_to_retry=true);
 

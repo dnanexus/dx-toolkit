@@ -1208,6 +1208,14 @@ def system_describe_executions(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/describeExecutions', input_params, always_retry=always_retry, **kwargs)
 
+def system_bulk_clone_rename_and_tag(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/bulkCloneRenameAndTag API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/system-methods
+    """
+    return DXHTTPRequest('/system/bulkCloneRenameAndTag', input_params, always_retry=always_retry, **kwargs)
+
 def system_describe_projects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/describeProjects API method.

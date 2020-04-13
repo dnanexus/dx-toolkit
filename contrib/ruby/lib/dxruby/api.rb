@@ -1179,6 +1179,14 @@ module DX
       return DX::http_request("/system/describeExecutions", input_params, opts)
     end
 
+    # Invokes the /system/bulkCloneRenameAndTag API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/system-methods
+    def self.system_bulk_clone_rename_and_tag(input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/system/bulkCloneRenameAndTag", input_params, opts)
+    end
+
     # Invokes the /system/describeProjects API method.
     #
     # For more info, see: https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-describeprojects

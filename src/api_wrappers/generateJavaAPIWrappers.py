@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
 #
@@ -395,7 +395,7 @@ def make_retry_param(retryable):
     return "RetryStrategy.SAFE_TO_RETRY" if retryable else "RetryStrategy.UNSAFE_TO_RETRY"
 
 
-print preamble
+print(preamble)
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
@@ -434,25 +434,25 @@ for method in json.loads(sys.stdin.read()):
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name,
+            print (app_object_method_template.format(method_name=method_name,
                                                     method_route=method_route,
                                                     wiki_link=wiki_link,
                                                     retry_strategy_with_nonce=make_retry_param(retryable or accept_nonce),
                                                     retry_strategy=make_retry_param(retryable),
-                                                    input_code=make_input_code(accept_nonce))
+                                                    input_code=make_input_code(accept_nonce)))
         else:
-            print object_method_template.format(method_name=method_name,
+            print (object_method_template.format(method_name=method_name,
                                                 method_route=method_route,
                                                 wiki_link=wiki_link,
                                                 retry_strategy_with_nonce=make_retry_param(retryable or accept_nonce),
                                                 retry_strategy=make_retry_param(retryable),
-                                                input_code=make_input_code(accept_nonce))
+                                                input_code=make_input_code(accept_nonce)))
     else:
-        print class_method_template.format(method_name=method_name,
+        print (class_method_template.format(method_name=method_name,
                                            route=route,
                                            wiki_link=wiki_link,
                                            retry_strategy_with_nonce=make_retry_param(retryable or accept_nonce),
                                            retry_strategy=make_retry_param(retryable),
-                                           input_code=make_input_code(accept_nonce))
+                                           input_code=make_input_code(accept_nonce)))
 
-print postscript
+print (postscript)

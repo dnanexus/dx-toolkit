@@ -1337,6 +1337,14 @@ namespace dx {
     return systemDescribeExecutions(input_params.toString(), safe_to_retry);
   }
 
+  JSON systemBulkCloneRenameAndTag(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/system/bulkCloneRenameAndTag", input_params, safe_to_retry);
+  }
+
+  JSON systemBulkCloneRenameAndTag(const JSON &input_params, const bool safe_to_retry) {
+    return systemBulkCloneRenameAndTag(input_params.toString(), safe_to_retry);
+  }
+
   JSON systemDescribeProjects(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/system/describeProjects", input_params, safe_to_retry);
   }

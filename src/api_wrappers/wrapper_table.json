@@ -1315,6 +1315,15 @@
         }
     ],
     [
+        "/system/bulkCloneRenameAndTag",
+        "systemBulkCloneRenameAndTag(req)",
+        {
+            "objectMethod": false,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/system-methods"
+        }
+    ],
+    [
         "/system/describeProjects",
         "systemDescribeProjects(req)",
         {
