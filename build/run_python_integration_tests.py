@@ -66,10 +66,14 @@ def run():
     else:
         subproc_env = dict(os.environ)
 
+    print("Current dir:")
+    print(os.getcwd())
+
+
+    cmd = ["pytest", "--junitxml", "results.xml"]
     print("Running following command in run_python_integration_tests:")
     print(cmd)
     try:
-
         subprocess.check_call(cmd, cwd=PYTHON_TEST_DIR, env=subproc_env)
     except subprocess.CalledProcessError as e:
         print('*** unittest invocation failed with code %d' % (e.returncode,), file=sys.stderr)
