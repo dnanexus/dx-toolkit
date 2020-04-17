@@ -98,10 +98,6 @@ def check_output(*popenargs, **kwargs):
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
     output, err = process.communicate()
     retcode = process.poll()
-    print("Encodings")
-    print(locale.getpreferredencoding())
-    print(sys.stdin.encoding)
-    print(sys.stderr.encoding)
     output = output.decode(locale.getpreferredencoding())
     err = err.decode(locale.getpreferredencoding())
     if retcode:
