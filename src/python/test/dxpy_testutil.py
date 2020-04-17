@@ -102,8 +102,8 @@ def check_output(*popenargs, **kwargs):
     print(locale.getpreferredencoding())
     print(sys.stdin.encoding)
     print(sys.stderr.encoding)
-    output = output.decode(sys.stdin.encoding)
-    err = err.decode(sys.stderr.encoding)
+    output = output.decode(locale.getpreferredencoding())
+    err = err.decode(locale.getpreferredencoding())
     if retcode:
         print(err)
         cmd = kwargs.get("args")
