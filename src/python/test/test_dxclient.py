@@ -51,7 +51,8 @@ if USING_PYTHON2:
     spawn_extra_args = {}
 else:
     # Python 3 requires specifying the encoding
-    spawn_extra_args = {"encoding" : "utf-8" }
+    spawn_extra_args = {"encoding": "utf-8"}
+
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
     data = "foo"
@@ -84,6 +85,7 @@ def list_folder(proj_id, path):
     output['objects'] = sorted(output['objects'])
     return output
 
+
 # for some reason, python 3 insists that we run the command first,
 # and then load the result into json. Doing this in one line causes
 # an error.
@@ -102,6 +104,7 @@ class TestDXPYImport(unittest.TestCase):
         from dxpy.cli import INTERACTIVE_CLI
 
 
+@pytest.mark.serial
 class TestDXTestUtils(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_PRINT_CURRENT_WORKING_DIRECTORY"])
@@ -145,9 +148,11 @@ class TestDXTestUtils(DXTestCase):
         self.assertNotEqual(default_user, second_user)
 
 
+@pytest.mark.serial
 class TestDXRemove(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_REMOVE","DNA_API_DATA_OBJ_CREATE_NEW_DATA_OBJECT","DNA_API_DATA_OBJ_REMOVE_DATA_OBJECT"])
+    @testutil.update_traceability_matrix(
+        ["DNA_CLI_DATA_OBJ_REMOVE", "DNA_API_DATA_OBJ_CREATE_NEW_DATA_OBJECT", "DNA_API_DATA_OBJ_REMOVE_DATA_OBJECT"])
     def test_remove_objects(self):
         dxpy.new_dxrecord(name="my record")
         dxpy.find_one_data_object(name="my record", project=self.project, zero_ok=False)
@@ -159,7 +164,7 @@ class TestDXRemove(DXTestCase):
             run("dx rm nonexistent")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_FOLDERS","DNA_API_PROJ_REMOVE_FOLDER"])
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_FOLDERS", "DNA_API_PROJ_REMOVE_FOLDER"])
     def test_remove_folders(self):
         folder_name = "/test_folder"
         record_name = "test_folder"
@@ -174,9 +179,9 @@ class TestDXRemove(DXTestCase):
         self.assertIn(folder_name, list_folder(self.project, "/")['folders'])
         run("dx new record {f}".format(f=record_name))
         self.assertEqual(record_name,
-                          dxpy.find_one_data_object(classname="record",
-                                                    describe=True,
-                                                    project=self.project)['describe']['name'])
+                         dxpy.find_one_data_object(classname="record",
+                                                   describe=True,
+                                                   project=self.project)['describe']['name'])
         # -r flag shouldn't matter, object will take precedence over folder
         run("dx rm -r {f}".format(f=record_name))
         with self.assertRaises(DXSearchError):
@@ -192,9 +197,9 @@ class TestDXRemove(DXTestCase):
         # make a record and then try to delete that record along with a non-existent record
         run("dx new record {f}".format(f=record_name))
         self.assertEqual(record_name,
-                          dxpy.find_one_data_object(classname="record",
-                                                    describe=True,
-                                                    project=self.project)['describe']['name'])
+                         dxpy.find_one_data_object(classname="record",
+                                                   describe=True,
+                                                   project=self.project)['describe']['name'])
         with self.assertSubprocessFailure(exit_code=3):
             run("dx rm {f} {f2}".format(f=record_name, f2=record_name2))
 
@@ -205,11 +210,12 @@ class TestDXRemove(DXTestCase):
             run("dx rm -r :")
 
 
+@pytest.mark.serial
 class TestApiDebugOutput(DXTestCase):
     def test_dx_debug_shows_request_id(self):
         (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
         self.assertRegex(stderr, "POST \d{13}-\d{1,6} http",
-                                 msg="stderr does not appear to contain request ID")
+                         msg="stderr does not appear to contain request ID")
 
     def test_dx_debug_shows_timestamp(self):
         timestamp_regex = "\[\d{1,15}\.\d{0,8}\]"
@@ -255,6 +261,7 @@ class TestApiDebugOutput(DXTestCase):
             self.assertIn("<file data of length 4>", stderr)
 
 
+@pytest.mark.serial
 class TestDXClient(DXTestCase):
     def test_dx_version(self):
         version = run("dx --version")
@@ -327,7 +334,7 @@ class TestDXClient(DXTestCase):
         for query in ("Ψ", "alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
                       "alice.nonexistent@example.com {p}", "alice.nonexistent : VIEW"):
             with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
-                run(("dx invite "+query).format(p=self.project))
+                run(("dx invite " + query).format(p=self.project))
         with self.assertSubprocessFailure(stderr_regexp="invalid choice", exit_code=2):
             run(("dx invite alice.nonexistent : ПРОСМОТР").format(p=self.project))
 
@@ -339,7 +346,7 @@ class TestDXClient(DXTestCase):
         for query in ("Ψ", "alice.nonexistent", "alice.nonexistent {p}", "user-alice.nonexistent {p}",
                       "alice.nonexistent@example.com {p}"):
             with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
-                run(("dx uninvite "+query).format(p=self.project))
+                run(("dx uninvite " + query).format(p=self.project))
 
     def test_dx_add_missing_arguments(self):
         if USING_PYTHON2:
@@ -373,7 +380,8 @@ class TestDXClient(DXTestCase):
 
     def test_dx_set_details_with_file(self):
         # Create temporary JSON file with valid JSON.
-        with tempfile.NamedTemporaryFile(mode='w+') as tmp_file, tempfile.NamedTemporaryFile(mode='w+') as tmp_invalid_file:
+        with tempfile.NamedTemporaryFile(mode='w+') as tmp_file, tempfile.NamedTemporaryFile(
+                mode='w+') as tmp_invalid_file:
             tmp_file.write('{\"foo\": \"bar\"}')
             tmp_file.flush()
 
@@ -416,8 +424,8 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_watch_invalid_auth(self):
         with without_auth():
-          with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
-            run("dx watch job-000000000000000000000001")
+            with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
+                run("dx watch job-000000000000000000000001")
 
         prev_user = os.environ.get('DX_USERNAME')
         prev_sec_context = os.environ.get('DX_SECURITY_CONTEXT')
@@ -429,12 +437,12 @@ class TestDXClient(DXTestCase):
         bad_auth_context = {"auth_token": "outside3", "auth_token_type": "Bearer"}
         bad_auth_override = {"DX_USERNAME": "user-eve", "DX_SECURITY_CONTEXT": json.dumps(bad_auth_context)}
         try:
-          with self.assertSubprocessFailure(stderr_regexp="InvalidAuthentication", exit_code=3):
-            run("dx watch job-000000000000000000000001", env=override_environment(**expired_override))
-          with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
-            run("dx watch job-000000000000000000000001", env=override_environment(**bad_auth_override))
+            with self.assertSubprocessFailure(stderr_regexp="InvalidAuthentication", exit_code=3):
+                run("dx watch job-000000000000000000000001", env=override_environment(**expired_override))
+            with self.assertSubprocessFailure(stderr_regexp="PermissionDenied", exit_code=3):
+                run("dx watch job-000000000000000000000001", env=override_environment(**bad_auth_override))
         finally:
-          override_environment(**previous)
+            override_environment(**previous)
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DOWNLOAD_RECORDS"])
@@ -488,7 +496,8 @@ class TestDXClient(DXTestCase):
             run("dx untag nonexistent atag")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_TAG", "DNA_CLI_PROJ_UNTAG","DNA_API_PROJ_ADD_TAGS","DNA_API_PROJ_REMOVE_TAGS"])
+    @testutil.update_traceability_matrix(
+        ["DNA_CLI_PROJ_TAG", "DNA_CLI_PROJ_UNTAG", "DNA_API_PROJ_ADD_TAGS", "DNA_API_PROJ_REMOVE_TAGS"])
     def test_dx_project_tagging(self):
         the_tags = ["$my.tag", "secoиdtag", "тhird тagggg"]
         # tag
@@ -577,7 +586,9 @@ class TestDXClient(DXTestCase):
         self.assertEqual(my_properties["bar"], "")
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_SET_PROPERTIES","DNA_API_PROJ_ADD_PROPERTIES","DNA_API_PROJ_REMOVE_PROPERTIES", "DNA_CLI_PROJ_UNSET_PROPERTIES"])
+    @testutil.update_traceability_matrix(
+        ["DNA_CLI_PROJ_SET_PROPERTIES", "DNA_API_PROJ_ADD_PROPERTIES", "DNA_API_PROJ_REMOVE_PROPERTIES",
+         "DNA_CLI_PROJ_UNSET_PROPERTIES"])
     def test_dx_project_properties(self):
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
         property_values = ["$hello.world", "Σ2,n", "stuff"]
@@ -642,7 +653,7 @@ class TestDXClient(DXTestCase):
         self.assertRegex(desc_output, field_regexp("Properties", "-"))
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_DELETE","DNA_API_PROJ_DELETE_PROJECT"])
+    @testutil.update_traceability_matrix(["DNA_CLI_PROJ_DELETE", "DNA_API_PROJ_DELETE_PROJECT"])
     def test_dx_remove_project_by_name(self):
         # TODO: this test makes no use of the DXTestCase-provided
         # project.
@@ -656,7 +667,7 @@ class TestDXClient(DXTestCase):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_SHAREES","DNA_API_PROJ_ADD_USERS"])
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_SHAREES", "DNA_API_PROJ_ADD_USERS"])
     def test_dx_project_invite_without_email(self):
         user_id = 'user-bob'
         with temporary_project() as unique_project:
@@ -676,7 +687,9 @@ class TestDXClient(DXTestCase):
             self.assertEqual(conf[user_id], 'VIEW')
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_CLOSE", "DNA_CLI_DATA_OBJ_COPY", "DNA_CLI_PROJ_LIST_FOLDERS_OR_OBJECTS","DNA_API_PROJ_COPY_DATA"])
+    @testutil.update_traceability_matrix(
+        ["DNA_CLI_DATA_OBJ_CLOSE", "DNA_CLI_DATA_OBJ_COPY", "DNA_CLI_PROJ_LIST_FOLDERS_OR_OBJECTS",
+         "DNA_API_PROJ_COPY_DATA"])
     def test_dx_cp(self):
         project_name = "test_dx_cp_" + str(random.randint(0, 1000000)) + "_" + str(int(time.time() * 1000))
         dest_project_id = run("dx new project {name} --brief".format(name=project_name)).strip()
@@ -712,15 +725,15 @@ class TestDXClient(DXTestCase):
         def expect_dx_env_cwd(shell, wd):
             shell.expect(self.project)
             shell.expect(wd)
-            shell.expect([">", "#", "$"]) # prompt
+            shell.expect([">", "#", "$"])  # prompt
 
-        shell1.sendline("dx select "+self.project)
+        shell1.sendline("dx select " + self.project)
         shell1.sendline("dx mkdir /sessiontest1")
         shell1.sendline("dx cd /sessiontest1")
         shell1.sendline("dx env")
         expect_dx_env_cwd(shell1, "sessiontest1")
 
-        shell2.sendline("dx select "+self.project)
+        shell2.sendline("dx select " + self.project)
         shell2.sendline("dx mkdir /sessiontest2")
         shell2.sendline("dx cd /sessiontest2")
         shell2.sendline("dx env")
@@ -858,7 +871,7 @@ class TestDXClient(DXTestCase):
             # Ensure that private key upload is rejected
             with open(os.path.join(wd, ".dnanexus_config", "ssh_id")) as private_key:
                 with self.assertRaisesRegex(DXAPIError,
-                                             'Tried to put a private key in the sshPublicKey field'):
+                                            'Tried to put a private key in the sshPublicKey field'):
                     dxpy.api.user_update(user_id, {"sshPublicKey": private_key.read()})
         finally:
             if original_ssh_public_key:
@@ -903,7 +916,8 @@ class TestDXClient(DXTestCase):
                                                                  "interpreter": "bash",
                                                                  "distribution": "Ubuntu", "release": "14.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
-                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                                                 "systemRequirements": {
+                                                                     "*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=project))["id"]
@@ -917,7 +931,7 @@ class TestDXClient(DXTestCase):
 
                 dx.expect("This is the DNAnexus Execution Environment", timeout=600)
                 # Check for job name (e.g. "Job: sleep")
-                #dx.expect("Job: \x1b\[1msleep", timeout=5)
+                # dx.expect("Job: \x1b\[1msleep", timeout=5)
                 if USING_PYTHON2:
                     # \xf6 is ö
                     project_line = "Project: dxclient_test_pr\xf6ject".encode(sys_encoding)
@@ -935,10 +949,10 @@ class TestDXClient(DXTestCase):
                 # results in characters that are NOT plain ascii.
                 #
                 # Expect the shell prompt - for example: dnanexus@job-xxxx:~⟫
-                #dx.expect(("dnanexus@%s" % job_id), timeout=30)
+                # dx.expect(("dnanexus@%s" % job_id), timeout=30)
 
                 expected_history_filename = os.path.join(
-                        os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
+                    os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
                 self.assertTrue(os.path.isfile(expected_history_filename))
 
                 # Make sure the job can be connected to using 'dx ssh <job id>'
@@ -954,7 +968,7 @@ class TestDXClient(DXTestCase):
                 # Exit SSH session and terminate job
                 dx2.sendline("exit")
                 dx2.expect("bash running")
-                dx2.sendcontrol("c") # CTRL-c
+                dx2.sendcontrol("c")  # CTRL-c
                 dx2.expect("[exited]")
                 dx2.expect("dnanexus@job", timeout=10)
                 dx2.sendline("exit")
@@ -1054,7 +1068,8 @@ class TestDXClient(DXTestCase):
             dx2.expect("[exited]")
             dx2.expect("dnanexus@job", timeout=10)
             # Test proxy connection from worker side
-            squid_address = run("netstat -plant 2>/dev/null|grep squid3|grep :{p}|awk '{{print $4}}'".format(p=job_ssh_port))
+            squid_address = run(
+                "netstat -plant 2>/dev/null|grep squid3|grep :{p}|awk '{{print $4}}'".format(p=job_ssh_port))
             squid_port = squid_address.split(':')[1][:-1]
             dx2.sendline("netstat -plant 2>/dev/null|grep :{p}|awk '{{print $6}}'".format(p=squid_port))
             dx2.expect("ESTABLISHED", timeout=60)
@@ -1151,8 +1166,8 @@ class TestDXClient(DXTestCase):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
-                                                         "distribution": "Ubuntu", "release": "14.04",
-                                                         "execDepends": [{"name": "dx-toolkit"}]},
+                                                             "distribution": "Ubuntu", "release": "14.04",
+                                                             "execDepends": [{"name": "dx-toolkit"}]},
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
                                                     project=self.project))["id"]
@@ -1188,7 +1203,6 @@ class TestDXClient(DXTestCase):
         dx_setenv.sendline()
         dx_setenv.sendline()
         dx_setenv.close()
-
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_AUTH_LOGIN", "DNA_CLI_AUTH_LOGOUT"])
@@ -1260,6 +1274,7 @@ class TestDXClient(DXTestCase):
             run("dx api file-InvalidFileID describe")
 
 
+@pytest.mark.serial
 class TestDXNewRecord(DXTestCase):
 
     @pytest.mark.TRACEABILITY_MATRIX
@@ -1311,6 +1326,7 @@ class TestDXNewRecord(DXTestCase):
             self.assertEqual(dxpy.DXRecord(record_id).name, "foo")
 
 
+@pytest.mark.serial
 class TestDXWhoami(DXTestCase):
 
     @pytest.mark.TRACEABILITY_MATRIX
@@ -1318,11 +1334,13 @@ class TestDXWhoami(DXTestCase):
     def test_dx_whoami_name(self):
         whoami_output = run("dx whoami").strip()
         self.assertEqual(whoami_output, dxpy.api.user_describe(dxpy.whoami())['handle'])
+
     def test_dx_whoami_id(self):
         whoami_output = run("dx whoami --id").strip()
         self.assertEqual(whoami_output, dxpy.whoami())
 
 
+@pytest.mark.serial
 class TestDXRmdir(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_PROJ_REMOVE_FOLDER"])
@@ -1333,6 +1351,7 @@ class TestDXRmdir(DXTestCase):
         self.assertNotIn("/mydirectory", list_folder(self.project, "/")['folders'])
 
 
+@pytest.mark.serial
 class TestDXMv(DXTestCase):
     def test_dx_mv(self):
         dxpy.new_dxrecord(name="a")
@@ -1357,9 +1376,10 @@ class TestDXMv(DXTestCase):
         self.assertNotIn(folder_name, list_folder(self.project, "/")['folders'])
 
 
+@pytest.mark.serial
 class TestDXRename(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_RENAME_PROJECT","DNA_API_DATA_OBJ_RENAME_DATA_OBJECT"])
+    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_RENAME_PROJECT", "DNA_API_DATA_OBJ_RENAME_DATA_OBJECT"])
     def test_rename(self):
         my_record = dxpy.new_dxrecord(name="my record").get_id()
         self.assertEqual(dxpy.describe(my_record)["name"], "my record")
@@ -1384,7 +1404,9 @@ class TestDXClientUploadDownload(DXTestCase):
         run("rm -rf {wd}".format(wd=wd))
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DOWNLOAD_FILES", "DNA_CLI_DATA_OBJ_UPLOAD_FILES", "DNA_CLI_DATA_OBJ_WAIT","DNA_API_DATA_OBJ_DOWNLOAD","DNA_API_DATA_OBJ_UPLOAD_TO_OPEN_FILE"])
+    @testutil.update_traceability_matrix(
+        ["DNA_CLI_DATA_OBJ_DOWNLOAD_FILES", "DNA_CLI_DATA_OBJ_UPLOAD_FILES", "DNA_CLI_DATA_OBJ_WAIT",
+         "DNA_API_DATA_OBJ_DOWNLOAD", "DNA_API_DATA_OBJ_UPLOAD_TO_OPEN_FILE"])
     def test_dx_upload_download(self):
         with self.assertSubprocessFailure(stderr_regexp='expected the path to be a non-empty string',
                                           exit_code=3):
@@ -1394,19 +1416,21 @@ class TestDXClientUploadDownload(DXTestCase):
         os.mkdir(os.path.join(wd, "a", "б"))
         os.mkdir(os.path.join(wd, "a", "б", "c"))
         with testutil.TemporaryFile(dir=os.path.join(wd, "a", "б")) as fd:
-            fd.write("0123456789ABCDEF"*64)
+            fd.write("0123456789ABCDEF" * 64)
             fd.flush()
             fd.close()
-            with self.assertSubprocessFailure(stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=3):
-                run("dx upload "+wd)
-            run("dx upload -r "+wd)
+            with self.assertSubprocessFailure(
+                    stderr_regexp='is a directory but the -r/--recursive option was not given', exit_code=3):
+                run("dx upload " + wd)
+            run("dx upload -r " + wd)
             run('dx wait "{f}"'.format(f=os.path.join(os.path.basename(wd), "a", "б",
                                                       os.path.basename(fd.name))))
-            with self.assertSubprocessFailure(stderr_regexp='is a folder but the -r/--recursive option was not given', exit_code=1):
-                run("dx download "+os.path.basename(wd))
+            with self.assertSubprocessFailure(stderr_regexp='is a folder but the -r/--recursive option was not given',
+                                              exit_code=1):
+                run("dx download " + os.path.basename(wd))
             old_dir = os.getcwd()
             with chdir(tempfile.mkdtemp()):
-                run("dx download -r "+os.path.basename(wd))
+                run("dx download -r " + os.path.basename(wd))
 
                 tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
                 tree2 = check_output("cd {wd}; find .".format(wd=os.path.basename(wd)), shell=True)
@@ -1414,7 +1438,7 @@ class TestDXClientUploadDownload(DXTestCase):
 
             with chdir(tempfile.mkdtemp()):
                 os.mkdir('t')
-                run("dx download -r -o t "+os.path.basename(wd))
+                run("dx download -r -o t " + os.path.basename(wd))
                 tree1 = check_output("cd {wd}; find .".format(wd=wd), shell=True)
                 tree2 = check_output("cd {wd}; find .".format(wd=os.path.join("t",
                                                                               os.path.basename(wd))),
@@ -1422,10 +1446,10 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertEqual(tree1, tree2)
 
                 os.mkdir('t2')
-                run("dx download -o t2 "+os.path.join(os.path.basename(wd), "a", "б",
-                                                      os.path.basename(fd.name)))
+                run("dx download -o t2 " + os.path.join(os.path.basename(wd), "a", "б",
+                                                        os.path.basename(fd.name)))
                 self.assertEqual(os.stat(os.path.join("t2", os.path.basename(fd.name))).st_size,
-                                 len("0123456789ABCDEF"*64))
+                                 len("0123456789ABCDEF" * 64))
 
             with chdir(tempfile.mkdtemp()), temporary_project('dx download test proj') as other_project:
                 run("dx mkdir /super/")
@@ -1538,7 +1562,7 @@ class TestDXClientUploadDownload(DXTestCase):
                 fd.close()
                 tmp_filename = os.path.basename(fd.name)
                 listing = run("dx upload --wait {filepath} --path {project}:{filename}".format(
-                              filepath=fd.name, project=p_accessible.get_id(), filename=tmp_filename))
+                    filepath=fd.name, project=p_accessible.get_id(), filename=tmp_filename))
                 self.assertIn(p_accessible.get_id(), listing)
                 self.assertIn(os.path.basename(fd.name), listing)
 
@@ -1819,7 +1843,7 @@ dxpy.run()
                 fh.truncate()
 
         # Manually upload 2 parts
-        part1, part2 = b"0123456789ABCDEF"*1024*64*5, b"0"
+        part1, part2 = b"0123456789ABCDEF" * 1024 * 64 * 5, b"0"
         dxfile = dxpy.new_dxfile(name="test")
         dxfile.upload_part(part1, index=1)
         dxfile.upload_part(part2, index=2)
@@ -1828,10 +1852,10 @@ dxpy.run()
         wd = tempfile.mkdtemp()
         run("cd {wd}; dx download test; ls -la".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        truncate(os.path.join(wd, "test"), 1024*1024*5)
+        truncate(os.path.join(wd, "test"), 1024 * 1024 * 5)
         run("cd {wd}; dx download -f test".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
-        truncate(os.path.join(wd, "test"), 1024*1024*5 - 1)
+        truncate(os.path.join(wd, "test"), 1024 * 1024 * 5 - 1)
         run("cd {wd}; dx download -f test".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
         truncate(os.path.join(wd, "test"), 1)
@@ -2095,6 +2119,7 @@ class TestDXClientDownloadDataEgressBilling(DXTestCase):
             with self.assertSubprocessFailure(stderr_regexp="ResolutionError: Found multiple projects", exit_code=3):
                 run("dx download -f --no-progress {pname}:{f}".format(pname=proj_name, f=file2_id))
 
+
 class TestDXClientDescribe(DXTestCaseBuildWorkflows):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_DESCRIBE"])
@@ -2167,8 +2192,8 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
 
         # make second app with no default tag
         app_new_output2 = dxpy.api.app_new({"name": "app_to_delete",
-                                           "applet": applet_id,
-                                           "version": "1.0.1"})
+                                            "applet": applet_id,
+                                            "version": "1.0.1"})
         dxpy.api.app_delete(app_new_output2["id"])
 
         run("dx describe " + app_new_output2["id"])
@@ -2187,6 +2212,7 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         self.assertIn("Workflow Outputs", by_id)
         self.assertIn("Billed to", by_id)
 
+
 class TestDXClientRun(DXTestCase):
     def setUp(self):
         self.other_proj_id = run("dx new project other --brief").strip()
@@ -2197,13 +2223,12 @@ class TestDXClientRun(DXTestCase):
         super(TestDXClientRun, self).tearDown()
 
     def test_dx_run_disallow_project_and_folder(self):
-        with self.assertRaisesRegex(subprocess.CalledProcessError, "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."):
+        with self.assertRaisesRegex(subprocess.CalledProcessError,
+                                    "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."):
             run("dx run bogusapplet --project project-bogus --folder bogusfolder")
 
-
-
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_APPLET","DNA_API_DATA_OBJ_RUN_APPLET"])
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_APPLET", "DNA_API_DATA_OBJ_RUN_APPLET"])
     def test_dx_run_applet_with_input_spec(self):
         record = dxpy.new_dxrecord(name="my_record")
 
@@ -2252,14 +2277,16 @@ dx-jobutil-add-output outrecord $record0
         job_desc = dxpy.describe(job_id)
         self.assertEqual(job_desc["input"], exp)
 
-        job_id = run("dx run {applet_id} -iint0:int=16 -istring0:string=input_string -irecord0:record={record_id} --brief".format(
-            applet_id=applet_id, record_id=record.get_id())).strip()
+        job_id = run(
+            "dx run {applet_id} -iint0:int=16 -istring0:string=input_string -irecord0:record={record_id} --brief".format(
+                applet_id=applet_id, record_id=record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
         self.assertEqual(job_desc["input"], exp)
 
         # Run with "dx run" with JBORs.
-        other_job_id = run("dx run {applet_id} -iint0={job_id}:outint -istring0={job_id}:outstring -irecord0={job_id}:outrecord --brief".format(
-            applet_id=applet_id, job_id=job_id)).strip()
+        other_job_id = run(
+            "dx run {applet_id} -iint0={job_id}:outint -istring0={job_id}:outstring -irecord0={job_id}:outrecord --brief".format(
+                applet_id=applet_id, job_id=job_id)).strip()
         job_desc = dxpy.describe(other_job_id)
         exp = {"int0": {"$dnanexus_link": {"field": "outint",
                                            "job": job_id}},
@@ -2297,16 +2324,18 @@ dx-jobutil-add-output outrecord $record0
         self.assertEqual(job_desc["input"], exp)
 
         # Run with "dx run".
-        job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} -iint1=32 -istring1=second_input_string -irecord1={second_record_id} --brief".format(
-            applet_id=applet_id, record_id=record.get_id(),
-            second_record_id=second_record.get_id())).strip()
+        job_id = run(
+            "dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} -iint1=32 -istring1=second_input_string -irecord1={second_record_id} --brief".format(
+                applet_id=applet_id, record_id=record.get_id(),
+                second_record_id=second_record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
         self.assertEqual(job_desc["input"], exp)
 
         # Run with "dx run" with JBORs.
-        other_job_id = run("dx run {applet_id} -iint0=32 -iint1={job_id}:outint -istring0=second_input_string -istring1={job_id}:outstring -irecord0={second_record_id} -irecord1={job_id}:outrecord --brief".format(
-            applet_id=applet_id, job_id=job_id,
-            second_record_id=second_record.get_id())).strip()
+        other_job_id = run(
+            "dx run {applet_id} -iint0=32 -iint1={job_id}:outint -istring0=second_input_string -istring1={job_id}:outstring -irecord0={second_record_id} -irecord1={job_id}:outrecord --brief".format(
+                applet_id=applet_id, job_id=job_id,
+                second_record_id=second_record.get_id())).strip()
         job_desc = dxpy.describe(other_job_id)
         exp = {"int0": 32,
                "int1": {"$dnanexus_link": {"field": "outint",
@@ -2351,16 +2380,21 @@ dx-jobutil-add-output outrecord $record_id
         self.assertEqual(job_desc["input"], exp)
 
         # Run with "dx run".
-        job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} --brief".format(applet_id=applet_id, record_id=record.get_id())).strip()
+        job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} --brief".format(
+            applet_id=applet_id, record_id=record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
         self.assertEqual(job_desc["input"], exp)
 
-        job_id = run("dx run {applet_id} -iint0:int=16 -istring0:string=input_string -irecord0:record={record_id} --brief".format(applet_id=applet_id, record_id=record.get_id())).strip()
+        job_id = run(
+            "dx run {applet_id} -iint0:int=16 -istring0:string=input_string -irecord0:record={record_id} --brief".format(
+                applet_id=applet_id, record_id=record.get_id())).strip()
         job_desc = dxpy.describe(job_id)
         self.assertEqual(job_desc["input"], exp)
 
         # Run with "dx run" with JBORs.
-        other_job_id = run("dx run {applet_id} -iint0={job_id}:outint -istring0={job_id}:outstring -irecord0={job_id}:outrecord --brief".format(applet_id=applet_id, job_id=job_id)).strip()
+        other_job_id = run(
+            "dx run {applet_id} -iint0={job_id}:outint -istring0={job_id}:outstring -irecord0={job_id}:outrecord --brief".format(
+                applet_id=applet_id, job_id=job_id)).strip()
         job_desc = dxpy.describe(other_job_id)
         exp = {"int0": {"$dnanexus_link": {"field": "outint",
                                            "job": job_id}},
@@ -2487,11 +2521,11 @@ dx-jobutil-add-output outrecord $record_id
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "inputSpec": [
-                                            {"name": "input0", "class": "record"},
-                                            {"name": "input1", "class": "array:record", "optional": True},
-                                            {"name": "int0", "class": "int"},
-                                            {"name": "int1", "class": "array:int", "optional": True},
-                                            {"name": "bool0", "class": "array:boolean", "optional": True}
+                                             {"name": "input0", "class": "record"},
+                                             {"name": "input1", "class": "array:record", "optional": True},
+                                             {"name": "int0", "class": "int"},
+                                             {"name": "int1", "class": "array:int", "optional": True},
+                                             {"name": "bool0", "class": "array:boolean", "optional": True}
                                          ],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash",
@@ -2539,10 +2573,10 @@ dx-jobutil-add-output outrecord $record_id
                                          "name": "myrecord"})['id']
 
         self.assertEqual(check_resolution("some_path", self.project, "/", "myrecord"),
-                          (True, self.project, "/", "myrecord"))
+                         (True, self.project, "/", "myrecord"))
 
         self.assertEqual(check_resolution("some_path", "not_a_real_project_id", "/", "notarealrecord"),
-                          (True, "not_a_real_project_id", "/", "notarealrecord"))
+                         (True, "not_a_real_project_id", "/", "notarealrecord"))
 
         # If the entity is a DX ID, but not an expected class, the result should be False, None, None, None
         result = check_resolution("some_path", self.project, "/", record_id, expected_classes=["file"])
@@ -2645,7 +2679,6 @@ dx-jobutil-add-output outrecord $record_id
         with self.assertSubprocessFailure(stderr_regexp='--depends-on.*workflows', exit_code=3):
             run("dx run myworkflow -d " + job1_dep_id + " -y --brief")
 
-
     def test_dx_run_no_hidden_executables(self):
         # hidden applet
         applet_name = "hidden_applet"
@@ -2661,7 +2694,7 @@ dx-jobutil-add-output outrecord $record_id
                                          "name": applet_name})['id']
         run("dx describe hidden_applet")
         with self.assertSubprocessFailure(stderr_regexp='ResolutionError: Unable to resolve "{f}"'
-                                          .format(f=applet_name), exit_code=3):
+                .format(f=applet_name), exit_code=3):
             run("dx run hidden_applet")
         # by ID will still work
         run("dx run " + applet_id + " -y")
@@ -2671,7 +2704,7 @@ dx-jobutil-add-output outrecord $record_id
         dxworkflow = dxpy.new_dxworkflow(name=workflow_name, hidden=True)
         dxworkflow.add_stage(applet_id)
         with self.assertSubprocessFailure(stderr_regexp='ResolutionError: Unable to resolve "{f}"'
-                                          .format(f=workflow_name), exit_code=3):
+                .format(f=workflow_name), exit_code=3):
             run("dx run hidden_workflow")
         # by ID will still work
         run("dx run " + dxworkflow.get_id() + " -y")
@@ -2739,6 +2772,7 @@ dx-jobutil-add-output record_array $second_record --array
             analysis_id_line = "".join([i for i in dx_run_output.split('\n') if i.startswith("Analysis ID")])
             self.assertIn("analysis-", analysis_id_line)
             return analysis_id_line.split(":")[1].strip()
+
         ###
 
         applet_id = dxpy.api.applet_new({"project": self.project,
@@ -2897,8 +2931,8 @@ dx-jobutil-add-output record_array $second_record --array
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
-                                                    "distribution": "Ubuntu",
-                                                    "release": "14.04",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
                                                      "code": "echo 'hello'"}
                                          })['id']
         property_names = ["$my.prop", "secoиdprop", "тhird prop"]
@@ -2978,7 +3012,7 @@ dx-jobutil-add-output record_array $second_record --array
                                                            "code": "echo 'hello'",
                                                            "distribution": "Ubuntu",
                                                            "release": "14.04"}
-                                           })['id']
+                                               })['id']
 
         def check_new_job_metadata(new_job_desc, cloned_job_desc, overridden_fields=[]):
             '''
@@ -3230,26 +3264,27 @@ def main():
                                              wait_on_close=True)
 
         app_spec = {
-                    "project": self.project,
-                    "name": "app-bundled-depends-name-with-spaces",
-                    "dxapi": "1.0.0",
-                    "runSpec": {
-                                "interpreter": "bash",
-                                "distribution": "Ubuntu",
-                                "release": "14.04",
-                                "code": "echo 'hello'",
-                                "bundledDepends": [{"name": bundle_name,
-                                                    "id": {"$dnanexus_link": bundle_file.get_id()}}]
-                                },
-                    "inputSpec": [],
-                    "outputSpec": [],
-                    "version": "1.0.0"
-                    }
+            "project": self.project,
+            "name": "app-bundled-depends-name-with-spaces",
+            "dxapi": "1.0.0",
+            "runSpec": {
+                "interpreter": "bash",
+                "distribution": "Ubuntu",
+                "release": "14.04",
+                "code": "echo 'hello'",
+                "bundledDepends": [{"name": bundle_name,
+                                    "id": {"$dnanexus_link": bundle_file.get_id()}}]
+            },
+            "inputSpec": [],
+            "outputSpec": [],
+            "version": "1.0.0"
+        }
         bundle_applet_id = dxpy.api.applet_new(app_spec)["id"]
         bundle_applet = dxpy.DXApplet(bundle_applet_id)
         applet_job = bundle_applet.run({})
         applet_job.wait_on_done()
         self.assertEqual(applet_job.describe()['state'], 'done')
+
 
 class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
     default_inst_type = "mem2_hdd2_x2"
@@ -3276,7 +3311,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn('stage_0.number = 32', analysis_desc)
         self.assertIn('foo', analysis_desc)
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
-        time.sleep(2) # May need to wait for job to be created in the system
+        time.sleep(2)  # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 32', job_desc)
 
@@ -3320,7 +3355,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         dxpy.api.workflow_update(workflow_id,
                                  {"editVersion": 2,
                                   "inputs": [{"name": "foo", "class": "int"}],
-                                  "stages": {'stage_0': {'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
+                                  "stages": {'stage_0': {
+                                      'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}}})
         updated_workflow_desc = run("dx describe " + workflow_id)
         self.assertIn("Workflow Inputs", updated_workflow_desc)
         self.assertNotIn("Workflow Outputs", updated_workflow_desc)
@@ -3330,9 +3366,9 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertTrue(analysis_id.startswith('analysis-'))
         analysis_desc = run("dx describe " + analysis_id)
         self.assertIn('foo', analysis_desc)
-        analysis_desc = json.loads(run("dx describe --json " + analysis_id ))
+        analysis_desc = json.loads(run("dx describe --json " + analysis_id))
         self.assertTrue(analysis_desc["runInput"], {"foo": 747})
-        time.sleep(2) # May need to wait for job to be created in the system
+        time.sleep(2)  # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 474', job_desc)
 
@@ -3370,7 +3406,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
                                            " --instance-type mem2_hdd2_x2 --brief -y").strip()
 
-        time.sleep(2) # May need to wait for any new jobs to be created in the system
+        time.sleep(2)  # May need to wait for any new jobs to be created in the system
 
         # make assertions for test cases
         orig_analysis_desc = dxpy.describe(analysis_id)
@@ -3489,7 +3525,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 ' +
                          '--instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
-        time.sleep(2) # give time for all jobs to be populated
+        time.sleep(2)  # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
         self.assertEqual(no_req_desc['stages'][0]['execution']['instanceType'],
@@ -3541,15 +3577,15 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         all_stg_folder_id = run(cmd + '--stage-output-folder "*" bar').strip()
         all_stg_rel_folder_id = run(cmd + '--stage-relative-output-folder "*" /bar').strip()
         # request for stage specifically (by name)
-        per_stg_folders_id = run(cmd + '--stage-relative-output-folder a_simple_name /baz ' + # as "baz"
-                                 '--stage-output-folder second baz').strip() # resolves as ./baz
+        per_stg_folders_id = run(cmd + '--stage-relative-output-folder a_simple_name /baz ' +  # as "baz"
+                                 '--stage-output-folder second baz').strip()  # resolves as ./baz
         # request for stage specifically (by index)
         per_stg_folders_id_2 = run(cmd + '--stage-output-folder 1 quux ' +
                                    '--stage-relative-output-folder 0 /quux').strip()
         # only modify one
         per_stg_folders_id_3 = run(cmd + '--stage-output-folder ' + stage_ids[0] + ' /hello').strip()
 
-        time.sleep(2) # give time for all jobs to be generated
+        time.sleep(2)  # give time for all jobs to be generated
 
         def expect_stage_folders(analysis_id, first_stage_folder, second_stage_folder):
             analysis_desc = dxpy.describe(analysis_id)
@@ -3692,7 +3728,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn("default=10", desc)
 
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_ADD_STAGE_WORKFLOW", "DNA_CLI_WORKFLOW_REMOVE_STAGE", "DNA_CLI_WORKFLOW_LIST_STAGES"])
+    @testutil.update_traceability_matrix(
+        ["DNA_CLI_WORKFLOW_ADD_STAGE_WORKFLOW", "DNA_CLI_WORKFLOW_REMOVE_STAGE", "DNA_CLI_WORKFLOW_LIST_STAGES"])
     def test_dx_add_remove_list_stages(self):
         workflow_id = run("dx new workflow myworkflow --title title --brief").strip()
         run("dx describe " + workflow_id)
@@ -3885,7 +3922,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                                            "distribution": "Ubuntu",
                                                            "release": "14.04",
                                                            "code": "exit 0"}
-                                           })['id']
+                                               })['id']
 
         desc = dxpy.api.workflow_describe(workflow_id)
         self.assertIsNone(desc["stages"][0]["name"])
@@ -3973,26 +4010,26 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          })['id']
 
         stage0 = {"id": "stage_0",
-                        "name": "stage_0_name",
-                        "executable": applet_id,
-                        "input": {"number": 123456},
-                        "folder": "/stage_0_output",
-                        "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
-                        "systemRequirements": {"main": {"instanceType": self.default_inst_type}}}
+                  "name": "stage_0_name",
+                  "executable": applet_id,
+                  "input": {"number": 123456},
+                  "folder": "/stage_0_output",
+                  "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
+                  "systemRequirements": {"main": {"instanceType": self.default_inst_type}}}
         stage1 = {"id": "stage_1",
-                        "executable": applet_id,
-                        "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
-                                                                "outputField": "number"}}}}
+                  "executable": applet_id,
+                  "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
+                                                          "outputField": "number"}}}}
         wf_input = [{"name": "foo", "class": "int"}]
         wf_output = [{"name": "bar", "class": "int", "outputSource":
-                        {"$dnanexus_link": {"stage": "stage_0", "outputField": "number"}}}]
+            {"$dnanexus_link": {"stage": "stage_0", "outputField": "number"}}}]
 
         workflow_spec = {"name": "my_workflow",
-                        "outputFolder": "/",
-                        "stages": [stage0, stage1],
-                        "inputs": wf_input,
-                        "outputs": wf_output
-                        }
+                         "outputFolder": "/",
+                         "stages": [stage0, stage1],
+                         "inputs": wf_input,
+                         "outputs": wf_output
+                         }
 
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow",
                                                      json.dumps(workflow_spec),
@@ -4014,9 +4051,9 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(wf_describe["stages"][0]["executable"], applet_id)
         self.assertEqual(wf_describe["stages"][0]["executionPolicy"]["restartOn"], {})
         self.assertEqual(wf_describe["stages"][0]["executionPolicy"]["onNonRestartableFailure"],
-            "failStage")
+                         "failStage")
         self.assertEqual(wf_describe["stages"][0]["systemRequirements"]["main"]["instanceType"],
-            self.default_inst_type)
+                         self.default_inst_type)
         self.assertEqual(wf_describe["stages"][1]["id"], "stage_1")
         self.assertIsNone(wf_describe["stages"][1]["name"])
         self.assertEqual(wf_describe["stages"][1]["executable"], applet_id)
@@ -4029,7 +4066,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                                      json.dumps(workflow_spec))
         # PROJECT
         new_workflow = json.loads(run("dx build --json --destination {dest} {src_dir}".format(
-                                      dest=self.project, src_dir=workflow_dir)))
+            dest=self.project, src_dir=workflow_dir)))
         wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
         self.assertEqual(wf_describe["id"], new_workflow["id"])
         self.assertEqual(wf_describe["project"], self.project)
@@ -4039,7 +4076,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # /ENTITYNAME
         destination = "/{entityname}".format(entityname="overriding_wf_name")
         new_workflow = json.loads(run("dx build --json -d {dest} {src_dir}".format(
-                                      dest=destination, src_dir=workflow_dir)))
+            dest=destination, src_dir=workflow_dir)))
         wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
         self.assertEqual(wf_describe["id"], new_workflow["id"])
         self.assertEqual(wf_describe["project"], self.project)
@@ -4051,7 +4088,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         create_folder_in_project(self.project, dest_folder)
         destination = "{folder}/".format(folder=dest_folder)
         new_workflow = json.loads(run("dx build --json --destination {dest} {src_dir}".format(
-                                      dest=destination, src_dir=workflow_dir)))
+            dest=destination, src_dir=workflow_dir)))
         wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
         self.assertEqual(wf_describe["id"], new_workflow["id"])
         self.assertEqual(wf_describe["project"], self.project)
@@ -4063,10 +4100,10 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         dest_name = "overriding_wf_name"
         create_folder_in_project(self.project, dest_folder)
         destination = "{project}:{folder}/{entityname}".format(project=self.project,
-                                                                folder=dest_folder,
-                                                                entityname=dest_name)
+                                                               folder=dest_folder,
+                                                               entityname=dest_name)
         new_workflow = json.loads(run("dx build --json --destination {dest} {src_dir}".format(
-                                      dest=destination, src_dir=workflow_dir)))
+            dest=destination, src_dir=workflow_dir)))
         wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
         self.assertEqual(wf_describe["id"], new_workflow["id"])
         self.assertEqual(wf_describe["project"], self.project)
@@ -4092,16 +4129,16 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # fail - no such stage ID
         dxworkflow_json['ignoreReuse'] = ["no_such_stage_id"]
         dir_fail = self.write_workflow_directory(workflow_name,
-                                                     json.dumps(dxworkflow_json),
-                                                     readme_content="Workflow Readme")
+                                                 json.dumps(dxworkflow_json),
+                                                 readme_content="Workflow Readme")
         with self.assertSubprocessFailure(stderr_regexp='Stage with ID no_such_stage_id not found', exit_code=3):
             run("dx build " + dir_fail)
 
         # success
         dxworkflow_json['ignoreReuse'] = ["stage_0"]
         dir_ok = self.write_workflow_directory(workflow_name,
-                                                     json.dumps(dxworkflow_json),
-                                                     readme_content="Workflow Readme")
+                                               json.dumps(dxworkflow_json),
+                                               readme_content="Workflow Readme")
         workflow_id = json.loads(run('dx build --workflow ' + dir_ok))['id']
         workflow_desc = dxpy.get_handler(workflow_id).describe()
         self.assertEqual(workflow_desc['ignoreReuse'], ["stage_0"])
@@ -4132,7 +4169,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(analysis_desc.get('ignoreReuse'), ["stage_1"])
 
         # Run the workflow with multiple ignore-reuse-stage
-        analysis_id = run('dx run ' + workflow_id + ' --ignore-reuse-stage stage_0 --ignore-reuse-stage stage_1 -y --brief').strip()
+        analysis_id = run(
+            'dx run ' + workflow_id + ' --ignore-reuse-stage stage_0 --ignore-reuse-stage stage_1 -y --brief').strip()
         analysis_desc = dxpy.describe(analysis_id)
         self.assertIn("stage_0", analysis_desc.get('ignoreReuse'))
         self.assertIn("stage_1", analysis_desc.get('ignoreReuse'))
@@ -4160,14 +4198,14 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                                      "code": "exit 0"}
                                          })['id']
         stage0 = {"id": "stage_0",
-                        "name": "stage_0_name",
-                        "executable": applet_id,
-                        "input": {"number": 123456},
-                        "folder": "/stage_0_output"}
+                  "name": "stage_0_name",
+                  "executable": applet_id,
+                  "input": {"number": 123456},
+                  "folder": "/stage_0_output"}
         stage1 = {"id": "stage_1",
-                        "executable": applet_id,
-                        "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
-                                                                "outputField": "number"}}}}
+                  "executable": applet_id,
+                  "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
+                                                          "outputField": "number"}}}}
         workflow_spec = {
             "name": workflow_name,
             "title": workflow_name,
@@ -4194,7 +4232,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             self.assertEqual(output_json, workflow_spec)
 
             # 3. Build again and compare with the initial workflow
-            os.chdir(workflow_name) # move to the directory created with dx get
+            os.chdir(workflow_name)  # move to the directory created with dx get
             workflow_02 = json.loads(run("dx build --json"))
             wf_describe_02 = dxpy.get_handler(workflow_02["id"]).describe()
             self.assertEqual(wf_describe_02["class"], "workflow")
@@ -4242,7 +4280,7 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn(gwf_name, analysis_desc)
 
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
-        time.sleep(2) # May need to wait for job to be created in the system
+        time.sleep(2)  # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 32', job_desc)
 
@@ -4277,7 +4315,7 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         updated_desc = json.loads(run('dx build --globalworkflow ' + workflow_dir + ' -y --json'))
         self.assertEqual("New title", updated_desc["title"])
         self.assertEqual("New summary", updated_desc["summary"])
-        self.assertEqual({"contactEmail":"alice@foo.edu"}, updated_desc["details"])
+        self.assertEqual({"contactEmail": "alice@foo.edu"}, updated_desc["details"])
 
         # The ID should not be updated
         self.assertEqual(gwf_id, updated_desc["id"])
@@ -4300,18 +4338,18 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
     def test_build_multi_region_workflow_with_apps(self):
         def create_multi_reg_app():
             app_spec = {
-              "name": "multi_region_app",
-              "dxapi": "1.0.0",
-              "version": "0.0.111",
-              "runSpec": {
-                "file": "code.py",
-                "interpreter": "python2.7",
-                "distribution": "Ubuntu",
-                "release": "14.04"
-              },
-              "inputSpec": [],
-              "outputSpec": [],
-              "regionalOptions": {"aws:us-east-1": {}}
+                "name": "multi_region_app",
+                "dxapi": "1.0.0",
+                "version": "0.0.111",
+                "runSpec": {
+                    "file": "code.py",
+                    "interpreter": "python2.7",
+                    "distribution": "Ubuntu",
+                    "release": "14.04"
+                },
+                "inputSpec": [],
+                "outputSpec": [],
+                "regionalOptions": {"aws:us-east-1": {}}
             }
             app_dir = self.write_app_directory("multi_region_app", json.dumps(app_spec), "code.py")
             app_id = json.loads(run("dx build --create-app --json " + app_dir))["id"]
@@ -4325,7 +4363,7 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
                            "regionalOptions": {'aws:us-east-1': {},
                                                'azure:westus': {}},
                            "stages": [{'id': 'stage-0', 'executable': create_multi_reg_app()}]
-        }
+                           }
 
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json),
@@ -4361,12 +4399,12 @@ class TestDXClientFind(DXTestCase):
         category_help_apps = run("dx find apps --category-help")
         for category in APP_CATEGORIES:
             self.assertIn(category, category_help_apps)
-        run("dx find apps --category foo") # any category can be searched
+        run("dx find apps --category foo")  # any category can be searched
 
         category_help_workflows = run("dx find globalworkflows --category-help")
         for category in APP_CATEGORIES:
             self.assertIn(category, category_help_workflows)
-        run("dx find globalworkflows --category foo") # any category can be searched
+        run("dx find globalworkflows --category foo")  # any category can be searched
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that creates apps')
@@ -4476,7 +4514,7 @@ class TestDXClientFind(DXTestCase):
             "version": "0.0.1",
             "regionalOptions": {
                 "aws:us-east-1": {
-                     "workflow": dxworkflow.get_id()
+                    "workflow": dxworkflow.get_id()
                 }
             }
         }
@@ -4783,7 +4821,7 @@ class TestDXClientFind(DXTestCase):
 
             # Case: --project and --path PROJECTID:FOLDERPATH specified (fail).
             with self.assertSubprocessFailure(stderr_regexp="Cannot supply both --project and --path " +
-                                              "PROJECTID:FOLDERPATH", exit_code=3):
+                                                            "PROJECTID:FOLDERPATH", exit_code=3):
                 run('dx find data --brief --project ' + test_projectid + ' --path ' + test_projectid + ':' +
                     test_dirname)
 
@@ -4800,7 +4838,7 @@ class TestDXClientFind(DXTestCase):
             self.assertIn(record_id,
                           run("dx find data --all-projects --brief --region azure:westus"))
             self.assertNotIn(record_id,
-                          run("dx find data --all-projects --brief --region aws:us-east-1"))
+                             run("dx find data --all-projects --brief --region aws:us-east-1"))
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_PROJ_LIST_PROJECTS"])
@@ -4832,15 +4870,15 @@ class TestDXClientFind(DXTestCase):
         created_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(created_project_name) as unique_project:
             self.assertEqual(run("dx find projects --created-after=-1d --brief --name " +
-                             pipes.quote(created_project_name)), unique_project.get_id() + '\n')
+                                 pipes.quote(created_project_name)), unique_project.get_id() + '\n')
             self.assertEqual(run("dx find projects --created-before=" + str(int(time.time() + 1000) * 1000) +
-                             " --brief --name " + pipes.quote(created_project_name)),
+                                 " --brief --name " + pipes.quote(created_project_name)),
                              unique_project.get_id() + '\n')
             self.assertEqual(run("dx find projects --created-after=-1d --created-before=" +
-                             str(int(time.time() + 1000) * 1000) + " --brief --name " +
-                             pipes.quote(created_project_name)), unique_project.get_id() + '\n')
+                                 str(int(time.time() + 1000) * 1000) + " --brief --name " +
+                                 pipes.quote(created_project_name)), unique_project.get_id() + '\n')
             self.assertEqual(run("dx find projects --created-after=" + str(int(time.time() + 1000) * 1000) + " --name "
-                             + pipes.quote(created_project_name)), "")
+                                 + pipes.quote(created_project_name)), "")
 
     def test_dx_find_projects_by_region(self):
         awseast = "aws:us-east-1"
@@ -4848,8 +4886,8 @@ class TestDXClientFind(DXTestCase):
         created_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(created_project_name, region=awseast) as unique_project:
             self.assertEqual(run("dx find projects --region {} --brief --name {}".format(
-                                 awseast, pipes.quote(created_project_name))),
-                             unique_project.get_id() + '\n')
+                awseast, pipes.quote(created_project_name))),
+                unique_project.get_id() + '\n')
             self.assertIn(unique_project.get_id(),
                           run("dx find projects --region {} --brief".format(awseast)))
             self.assertNotIn(unique_project.get_id(),
@@ -4965,7 +5003,8 @@ class TestDXClientFind(DXTestCase):
         property_values = ["$hello.world", "Σ2,n", "stuff"]
         the_tags = ["Σ1=n", "helloo0", "ωω"]
         job_id = run("dx run " + applet_id + ' -inumber=32 --brief -y ' +
-                     " ".join(["--property '" + prop[0] + "'='" + prop[1] + "'" for prop in zip(property_names, property_values)]) +
+                     " ".join(["--property '" + prop[0] + "'='" + prop[1] + "'" for prop in
+                               zip(property_names, property_values)]) +
                      "".join([" --tag " + tag for tag in the_tags])).strip()
 
         # matches
@@ -4978,7 +5017,7 @@ class TestDXClientFind(DXTestCase):
                          job_id)
         self.assertEqual(run("dx find jobs --brief" +
                              "".join([" --property '" + key + "'='" + value + "'" for
-                                       key, value in zip(property_names, property_values)])).strip(),
+                                      key, value in zip(property_names, property_values)])).strip(),
                          job_id)
 
         # no matches
@@ -5012,7 +5051,7 @@ class TestDXClientFind(DXTestCase):
                       "rowFetchChunk": 100}
         dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
         stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
-        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200},
+        dxanalysis = dxworkflow.run({stage + ".rowFetchChunk": 200},
                                     tags=["foo"],
                                     properties={"foo": "bar"})
         dxapplet.run(applet_input=prog_input)
@@ -5036,68 +5075,68 @@ class TestDXClientFind(DXTestCase):
                 time.sleep(1)
 
         options = "--user=self"
-        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
-        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
-        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
-        options += " --project="+dxapplet.get_proj_id()
-        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
-        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
-        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
-        options += " --created-after=-150s --no-subjobs --applet="+dxapplet.get_id()
-        self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
-        self.assertEqual(len(run("dx find jobs "+options).splitlines()), 6)
-        self.assertEqual(len(run("dx find analyses "+options).splitlines()), 2)
+        self.assertEqual(len(run("dx find executions " + options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs " + options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses " + options).splitlines()), 2)
+        options += " --project=" + dxapplet.get_proj_id()
+        self.assertEqual(len(run("dx find executions " + options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs " + options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses " + options).splitlines()), 2)
+        options += " --created-after=-150s --no-subjobs --applet=" + dxapplet.get_id()
+        self.assertEqual(len(run("dx find executions " + options).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs " + options).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses " + options).splitlines()), 2)
         options2 = options + " --brief -n 9000"
-        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 4)
-        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 3)
-        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 1)
-        options3 = options2 + " --origin="+dxjob.get_id()
-        self.assertEqual(len(run("dx find executions "+options3).splitlines()), 1)
-        self.assertEqual(len(run("dx find jobs "+options3).splitlines()), 1)
-        self.assertEqual(len(run("dx find analyses "+options3).splitlines()), 0)
-        options3 = options2 + " --root="+dxanalysis.get_id()
-        self.assertEqual(len(run("dx find executions "+options3).splitlines()), 2)
-        self.assertEqual(len(run("dx find jobs "+options3).splitlines()), 1)
-        self.assertEqual(len(run("dx find analyses "+options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find executions " + options2).splitlines()), 4)
+        self.assertEqual(len(run("dx find jobs " + options2).splitlines()), 3)
+        self.assertEqual(len(run("dx find analyses " + options2).splitlines()), 1)
+        options3 = options2 + " --origin=" + dxjob.get_id()
+        self.assertEqual(len(run("dx find executions " + options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find jobs " + options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find analyses " + options3).splitlines()), 0)
+        options3 = options2 + " --root=" + dxanalysis.get_id()
+        self.assertEqual(len(run("dx find executions " + options3).splitlines()), 2)
+        self.assertEqual(len(run("dx find jobs " + options3).splitlines()), 1)
+        self.assertEqual(len(run("dx find analyses " + options3).splitlines()), 1)
         options2 = options + " --origin-jobs"
-        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
-        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
-        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
+        self.assertEqual(len(run("dx find executions " + options2).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs " + options2).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses " + options2).splitlines()), 2)
         options2 = options + " --origin-jobs -n 9000"
-        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
-        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
-        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
+        self.assertEqual(len(run("dx find executions " + options2).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs " + options2).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses " + options2).splitlines()), 2)
         options2 = options + " --all-jobs"
-        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 8)
-        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 6)
-        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 2)
+        self.assertEqual(len(run("dx find executions " + options2).splitlines()), 8)
+        self.assertEqual(len(run("dx find jobs " + options2).splitlines()), 6)
+        self.assertEqual(len(run("dx find analyses " + options2).splitlines()), 2)
         options2 = options + " --state=done"
-        self.assertEqual(len(run("dx find executions "+options2).splitlines()), 0)
-        self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 0)
-        self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 0)
+        self.assertEqual(len(run("dx find executions " + options2).splitlines()), 0)
+        self.assertEqual(len(run("dx find jobs " + options2).splitlines()), 0)
+        self.assertEqual(len(run("dx find analyses " + options2).splitlines()), 0)
 
         # Search by tag
         options2 = options + " --all-jobs --brief"
         options3 = options2 + " --tag foo"
         analysis_id = dxanalysis.get_id()
         job_id = dxjob.get_id()
-        self.assert_cmd_gives_ids("dx find executions "+options3, [analysis_id, job_id])
-        self.assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
-        self.assert_cmd_gives_ids("dx find analyses "+options3, [analysis_id])
+        self.assert_cmd_gives_ids("dx find executions " + options3, [analysis_id, job_id])
+        self.assert_cmd_gives_ids("dx find jobs " + options3, [job_id])
+        self.assert_cmd_gives_ids("dx find analyses " + options3, [analysis_id])
         options3 = options2 + " --tag foo --tag bar"
-        self.assert_cmd_gives_ids("dx find executions "+options3, [job_id])
-        self.assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
-        self.assert_cmd_gives_ids("dx find analyses "+options3, [])
+        self.assert_cmd_gives_ids("dx find executions " + options3, [job_id])
+        self.assert_cmd_gives_ids("dx find jobs " + options3, [job_id])
+        self.assert_cmd_gives_ids("dx find analyses " + options3, [])
 
         # Search by property (presence and by value)
         options3 = options2 + " --property foo"
-        self.assert_cmd_gives_ids("dx find executions "+options3, [analysis_id, job_id])
-        self.assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
-        self.assert_cmd_gives_ids("dx find analyses "+options3, [analysis_id])
+        self.assert_cmd_gives_ids("dx find executions " + options3, [analysis_id, job_id])
+        self.assert_cmd_gives_ids("dx find jobs " + options3, [job_id])
+        self.assert_cmd_gives_ids("dx find analyses " + options3, [analysis_id])
         options3 = options2 + " --property foo=baz"
-        self.assert_cmd_gives_ids("dx find executions "+options3, [job_id])
-        self.assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
-        self.assert_cmd_gives_ids("dx find analyses "+options3, [])
+        self.assert_cmd_gives_ids("dx find executions " + options3, [job_id])
+        self.assert_cmd_gives_ids("dx find jobs " + options3, [job_id])
+        self.assert_cmd_gives_ids("dx find analyses " + options3, [])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
@@ -5126,10 +5165,11 @@ class TestDXClientFind(DXTestCase):
                          dxapi="1.0.0",
                          inputSpec=[],
                          outputSpec=[],
-                         runSpec={"code": "dx run " + dxworkflow.get_id() + " --priority high --project " + temp_proj_id,
-                                  "interpreter": "bash",
-                                  "distribution": "Ubuntu", "release": "14.04",
-                                  "execDepends": [{"name": "dx-toolkit"}]},
+                         runSpec={
+                             "code": "dx run " + dxworkflow.get_id() + " --priority high --project " + temp_proj_id,
+                             "interpreter": "bash",
+                             "distribution": "Ubuntu", "release": "14.04",
+                             "execDepends": [{"name": "dx-toolkit"}]},
                          project=temp_proj_id)
 
             job_id = dxapplet.run(applet_input={}, project=temp_proj_id).get_id()
@@ -5163,42 +5203,42 @@ class TestDXClientFind(DXTestCase):
                         raise Exception("Timeout while waiting for job to be created for an analysis stage")
                     time.sleep(1)
 
-            options = "--brief --user=self --project="+temp_proj_id
-            self.assert_cmd_gives_ids("dx find executions "+options, [job_id, analysis_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find jobs "+options, [job_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find analyses "+options, [analysis_id])
-            options2 = options + " --applet="+workflow_id
-            self.assert_cmd_gives_ids("dx find executions "+options2, [job_id, analysis_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find jobs "+options2, [])
-            self.assert_cmd_gives_ids("dx find analyses "+options2, [analysis_id])
-            options2 = options + " --applet="+jobapplet_id
-            self.assert_cmd_gives_ids("dx find executions "+options2, [job_id, analysis_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find jobs "+options2, [job_id])
-            self.assert_cmd_gives_ids("dx find analyses "+options2, [])
+            options = "--brief --user=self --project=" + temp_proj_id
+            self.assert_cmd_gives_ids("dx find executions " + options, [job_id, analysis_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find jobs " + options, [job_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find analyses " + options, [analysis_id])
+            options2 = options + " --applet=" + workflow_id
+            self.assert_cmd_gives_ids("dx find executions " + options2, [job_id, analysis_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find jobs " + options2, [])
+            self.assert_cmd_gives_ids("dx find analyses " + options2, [analysis_id])
+            options2 = options + " --applet=" + jobapplet_id
+            self.assert_cmd_gives_ids("dx find executions " + options2, [job_id, analysis_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find jobs " + options2, [job_id])
+            self.assert_cmd_gives_ids("dx find analyses " + options2, [])
             options2 = options + " -n 9000"
-            self.assert_cmd_gives_ids("dx find executions "+options2, [job_id, analysis_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find jobs "+options2, [job_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find analyses "+options2, [analysis_id])
-            options3 = options2 + " --origin="+job_id
-            self.assert_cmd_gives_ids("dx find executions "+options3, [job_id, analysis_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
-            self.assert_cmd_gives_ids("dx find analyses "+options3, [analysis_id])
+            self.assert_cmd_gives_ids("dx find executions " + options2, [job_id, analysis_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find jobs " + options2, [job_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find analyses " + options2, [analysis_id])
+            options3 = options2 + " --origin=" + job_id
+            self.assert_cmd_gives_ids("dx find executions " + options3, [job_id, analysis_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find jobs " + options3, [job_id])
+            self.assert_cmd_gives_ids("dx find analyses " + options3, [analysis_id])
             options2 = options + " --origin-jobs"
-            self.assert_cmd_gives_ids("dx find executions "+options2, [job_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find jobs "+options2, [job_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find analyses "+options2, [])
+            self.assert_cmd_gives_ids("dx find executions " + options2, [job_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find jobs " + options2, [job_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find analyses " + options2, [])
             options2 = options + " --origin-jobs -n 9000"
-            self.assert_cmd_gives_ids("dx find executions "+options2, [job_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find jobs "+options2, [job_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find analyses "+options2, [])
+            self.assert_cmd_gives_ids("dx find executions " + options2, [job_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find jobs " + options2, [job_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find analyses " + options2, [])
             options2 = options + " --all-jobs"
-            self.assert_cmd_gives_ids("dx find executions "+options2, [job_id, analysis_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find jobs "+options2, [job_id, subjob_id])
-            self.assert_cmd_gives_ids("dx find analyses "+options2, [analysis_id])
+            self.assert_cmd_gives_ids("dx find executions " + options2, [job_id, analysis_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find jobs " + options2, [job_id, subjob_id])
+            self.assert_cmd_gives_ids("dx find analyses " + options2, [analysis_id])
             options2 = options + " --state=done"
-            self.assert_cmd_gives_ids("dx find executions "+options2, [])
-            self.assert_cmd_gives_ids("dx find jobs "+options2, [])
-            self.assert_cmd_gives_ids("dx find analyses "+options2, [])
+            self.assert_cmd_gives_ids("dx find executions " + options2, [])
+            self.assert_cmd_gives_ids("dx find jobs " + options2, [])
+            self.assert_cmd_gives_ids("dx find analyses " + options2, [])
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_ORGS"])
@@ -5218,7 +5258,7 @@ class TestDXClientFind(DXTestCase):
         results = json.loads(run(cmd.format(l="MEMBER", o="")).strip())
         self.assertItemsEqual([org_with_billable_activities,
                                org_without_billable_activities
-                              ] + orgs_with_admin,
+                               ] + orgs_with_admin,
                               [result["id"] for result in results])
 
         results = json.loads(run(cmd.format(
@@ -5389,45 +5429,48 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             self.assertItemsEqual(output, [''])
 
             output = run("dx find org projects org-piratelabs --ids {p} --brief".format(
-                         p=project1_id)).strip().split("\n")
+                p=project1_id)).strip().split("\n")
             self.assertItemsEqual(output, [project1_id])
 
             output = run("dx find org projects org-piratelabs --ids {p1} {p2} --brief".format(p1=project1_id,
-                         p2=project2_id)).strip().split("\n")
+                                                                                              p2=project2_id)).strip().split(
+                "\n")
             self.assertItemsEqual(output, [project1_id])
 
             # With --tag
             dxpy.api.project_add_tags(project1_id, {'tags': ['tag-1', 'tag-2']})
             dxpy.api.project_add_tags(project2_id, {'tags': ['tag-1', 'tag-2']})
             output = run("dx find org projects org-piratelabs --tag {t1} --brief".format(
-                         t1='tag-1')).strip().split("\n")
+                t1='tag-1')).strip().split("\n")
             self.assertEqual(output, [project1_id])
 
             # With multiple --tag
             output = run("dx find org projects org-piratelabs --tag {t1} --tag {t2} --brief".format(t1='tag-1',
-                         t2='tag-2')).strip().split("\n")
+                                                                                                    t2='tag-2')).strip().split(
+                "\n")
             self.assertEqual(output, [project1_id])
 
             output = run("dx find org projects org-piratelabs --tag {t1} --tag {t2} --brief".format(t1='tag-1',
-                         t2='tag-3')).strip().split("\n")
+                                                                                                    t2='tag-3')).strip().split(
+                "\n")
             self.assertEqual(output, [""])
 
             # With --property
             dxpy.api.project_set_properties(project1_id, {'properties': {'property-1': 'value1', 'property-2':
-                                                          'value2'}})
+                'value2'}})
             dxpy.api.project_set_properties(project2_id, {'properties': {'property-1': 'value1', 'property-2':
-                                                          'value2'}})
+                'value2'}})
             output = run("dx find org projects org-piratelabs --property {p1} --brief".format(
-                         p1='property-1')).strip().split("\n")
+                p1='property-1')).strip().split("\n")
             self.assertItemsEqual(output, [project1_id])
 
             # With multiple --property
             output = run("dx find org projects org-piratelabs --property {p1} --property {p2} --brief".format(
-                         p1='property-1', p2='property-2')).strip().split("\n")
+                p1='property-1', p2='property-2')).strip().split("\n")
             self.assertItemsEqual(output, [project1_id])
 
             output = run("dx find org projects org-piratelabs --property {p1} --property {p2} --brief".format(
-                         p1='property-1', p2='property-3')).strip().split("\n")
+                p1='property-1', p2='property-3')).strip().split("\n")
             self.assertItemsEqual(output, [""])
 
             # With --region
@@ -5465,30 +5508,31 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
 
             # Test integer time stamp
             self.assertItemsEqual(run("dx find org projects org-piratelabs --created-before={cb} --brief".format(
-                                  cb=str(created + 1000))).strip().split("\n"), org_projects)
+                cb=str(created + 1000))).strip().split("\n"), org_projects)
 
             self.assertItemsEqual(run("dx find org projects org-piratelabs --created-after={ca} --brief".format(
-                                  ca=str(created - 1000))).strip().split("\n"), [project_id])
+                ca=str(created - 1000))).strip().split("\n"), [project_id])
 
-            self.assertItemsEqual(run("dx find org projects org-piratelabs --created-after={ca} --created-before={cb} --brief".format(
-                                  ca=str(created - 1000), cb=str(created + 1000))).strip().split("\n"), [project_id])
+            self.assertItemsEqual(
+                run("dx find org projects org-piratelabs --created-after={ca} --created-before={cb} --brief".format(
+                    ca=str(created - 1000), cb=str(created + 1000))).strip().split("\n"), [project_id])
 
             self.assertItemsEqual(run("dx find org projects org-piratelabs --created-before={cb} --brief".format(
-                                  cb=str(created - 1000))).strip().split("\n"), [self.project_ppb])
+                cb=str(created - 1000))).strip().split("\n"), [self.project_ppb])
 
             # Test integer with suffix
             self.assertItemsEqual(run("dx find org projects org-piratelabs --created-before={cb} --brief".format(
-                                  cb="-1d")).strip().split("\n"), [self.project_ppb])
+                cb="-1d")).strip().split("\n"), [self.project_ppb])
 
             self.assertItemsEqual(run("dx find org projects org-piratelabs --created-after={ca} --brief".format(
-                                  ca="-1d")).strip().split("\n"), [project_id])
+                ca="-1d")).strip().split("\n"), [project_id])
 
             # Test date
             self.assertItemsEqual(run("dx find org projects org-piratelabs --created-before={cb} --brief".format(
-                                  cb="2015-10-28")).strip().split("\n"), [self.project_ppb])
+                cb="2015-10-28")).strip().split("\n"), [self.project_ppb])
 
             self.assertItemsEqual(run("dx find org projects org-piratelabs --created-after={ca} --brief".format(
-                                  ca="2015-10-28")).strip().split("\n"), [project_id])
+                ca="2015-10-28")).strip().split("\n"), [project_id])
 
     def test_dx_find_org_projects_format(self):
         cmd = "dx find org projects org-piratelabs {opts}"
@@ -5523,7 +5567,8 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             res = run('dx find org projects org-piratelabs --phi true --brief --name ' + pipes.quote(projectName))
             self.assertTrue(len(res) == 0, "Expected no PHI projects to be found")
 
-            res = run('dx find org projects org-piratelabs --phi false --brief --name ' + pipes.quote(projectName)).strip().split("\n")
+            res = run('dx find org projects org-piratelabs --phi false --brief --name ' + pipes.quote(
+                projectName)).strip().split("\n")
 
             self.assertTrue(len(res) == 1, "Expected to find one project")
             self.assertEqual(res[0], project1_id)
@@ -5591,7 +5636,7 @@ class TestDXClientOrg(DXTestCase):
             run('dx new org --member-list-visibility ADMIN --project-transfer-ability MEMBER')
 
         with self.assertRaisesRegex(subprocess.CalledProcessError,
-                                     "error: argument --member-list-visibility: invalid choice"):
+                                    "error: argument --member-list-visibility: invalid choice"):
             run('dx new org --member-list-visibility NONE')
 
     @pytest.mark.TRACEABILITY_MATRIX
@@ -5648,7 +5693,8 @@ class TestDXClientOrg(DXTestCase):
     def test_create_new_org_prompt(self):
         # Prompt with only handle
         org_handle = TestDXClientOrg.get_unique_org_handle()
-        dx_new_org = pexpect.spawn('dx new org --handle {h}'.format(h=org_handle), logfile=sys.stderr, **spawn_extra_args)
+        dx_new_org = pexpect.spawn('dx new org --handle {h}'.format(h=org_handle), logfile=sys.stderr,
+                                   **spawn_extra_args)
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -5677,7 +5723,7 @@ class TestDXClientOrg(DXTestCase):
 
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {mlv}'.format(h=org_handle,
-                                   mlv="MEMBER"),
+                                                                                                   mlv="MEMBER"),
                                    logfile=sys.stderr,
                                    **spawn_extra_args)
         dx_new_org.expect('Enter descriptive name')
@@ -5692,7 +5738,7 @@ class TestDXClientOrg(DXTestCase):
 
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {mlv}'.format(h=org_handle,
-                                   mlv="ADMIN"),
+                                                                                                   mlv="ADMIN"),
                                    logfile=sys.stderr,
                                    **spawn_extra_args)
         dx_new_org.expect('Enter descriptive name')
@@ -5708,7 +5754,7 @@ class TestDXClientOrg(DXTestCase):
         # Prompt with "--project-transfer-ability" & "handle"
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --project-transfer-ability {pta}'.format(h=org_handle,
-                                   pta="MEMBER"),
+                                                                                                     pta="MEMBER"),
                                    logfile=sys.stderr,
                                    **spawn_extra_args)
         dx_new_org.expect('Enter descriptive name')
@@ -5723,7 +5769,7 @@ class TestDXClientOrg(DXTestCase):
 
         org_handle = TestDXClientOrg.get_unique_org_handle()
         dx_new_org = pexpect.spawn('dx new org --handle {h} --project-transfer-ability {pta}'.format(h=org_handle,
-                                   pta="ADMIN"),
+                                                                                                     pta="ADMIN"),
                                    logfile=sys.stderr,
                                    **spawn_extra_args)
         dx_new_org.expect('Enter descriptive name')
@@ -5738,10 +5784,11 @@ class TestDXClientOrg(DXTestCase):
 
         # Prompt with "--member-list-visibility", "--project-transfer-ability", & "--handle"
         org_handle = TestDXClientOrg.get_unique_org_handle()
-        dx_new_org = pexpect.spawn('dx new org --handle {h} --member-list-visibility {p} --project-transfer-ability {p}'.format(
-                                   h=org_handle, p="MEMBER"),
-                                   logfile=sys.stderr,
-                                   **spawn_extra_args)
+        dx_new_org = pexpect.spawn(
+            'dx new org --handle {h} --member-list-visibility {p} --project-transfer-ability {p}'.format(
+                h=org_handle, p="MEMBER"),
+            logfile=sys.stderr,
+            **spawn_extra_args)
         dx_new_org.expect('Enter descriptive name')
         dx_new_org.sendline("Test New Org Prompt")
         dx_new_org.expect('Created new org')
@@ -5843,8 +5890,9 @@ class TestDXClientOrg(DXTestCase):
         proposed_pta = "MEMBER"
         exp_org_policies = dict(cur_org_policies, memberListVisibility=proposed_mlv,
                                 restrictProjectTransfer=proposed_pta)
-        res = run('dx update org {o} --name {n} --member-list-visibility {mlv} --project-transfer-ability {pta} --brief'.format(
-            o=self.org_id, n=proposed_org_name, mlv=proposed_mlv, pta=proposed_pta)).strip()
+        res = run(
+            'dx update org {o} --name {n} --member-list-visibility {mlv} --project-transfer-ability {pta} --brief'.format(
+                o=self.org_id, n=proposed_org_name, mlv=proposed_mlv, pta=proposed_pta)).strip()
         self.assertEqual(res, self.org_id)
         new_org_name, new_org_policies = get_name_and_policies(res)
         self.assertEqual(new_org_name, proposed_org_name)
@@ -5891,13 +5939,13 @@ class TestDXClientNewProject(DXTestCase):
 
         # Create project billTo org
         project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
-                         billTo=org_id)).strip()
+                                                                                   billTo=org_id)).strip()
         self.assertEqual(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], org_id)
         dxpy.api.project_destroy(project_id)
 
         # Create project billTo requesting user
         project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
-                         billTo=dxpy.whoami())).strip()
+                                                                                   billTo=dxpy.whoami())).strip()
         self.assertEqual(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], dxpy.whoami())
         dxpy.api.project_destroy(project_id)
 
@@ -5910,12 +5958,12 @@ class TestDXClientNewProject(DXTestCase):
         self.assertEqual(dxpy.api.user_describe(dxpy.whoami())['billTo'], org_id)
 
         project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
-                         billTo=dxpy.whoami())).strip()
+                                                                                   billTo=dxpy.whoami())).strip()
         self.assertEqual(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], dxpy.whoami())
         dxpy.api.project_destroy(project_id)
 
         project_id = run("dx new project {name} --bill-to {billTo} --brief".format(name=project_name,
-                         billTo=org_id)).strip()
+                                                                                   billTo=org_id)).strip()
         self.assertEqual(dxpy.api.project_describe(project_id, {'fields': {'billTo': True}})['billTo'], org_id)
         dxpy.api.project_destroy(project_id)
 
@@ -5975,7 +6023,7 @@ class TestDXClientNewUser(DXTestCase):
         ]
         for invalid_opts in dx_api_error_opts:
             with self.assertRaisesRegex(subprocess.CalledProcessError,
-                                         "DXAPIError"):
+                                        "DXAPIError"):
                 run(" ".join([cmd, invalid_opts]))
 
         resource_not_found_opts = [
@@ -5984,7 +6032,7 @@ class TestDXClientNewUser(DXTestCase):
         ]
         for invalid_opts in resource_not_found_opts:
             with self.assertRaisesRegex(subprocess.CalledProcessError,
-                                         "ResourceNotFound"):
+                                        "ResourceNotFound"):
                 run(" ".join([cmd, invalid_opts]))
 
         dx_cli_error_opts = [
@@ -6003,9 +6051,8 @@ class TestDXClientNewUser(DXTestCase):
         ]
         for invalid_opts in dx_cli_error_opts:
             with self.assertRaisesRegex(subprocess.CalledProcessError,
-                                         "DXCLIError"):
+                                        "DXCLIError"):
                 run(" ".join([cmd, invalid_opts]))
-
 
     def test_self_signup_negative(self):
         # How to unset context?
@@ -6020,21 +6067,21 @@ class TestDXClientNewUser(DXTestCase):
         # Basic with first name only.
         username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first)).strip()
+            cmd=cmd, u=username, e=email, f=first)).strip()
         self._assert_user_desc(user_id, {"first": first})
 
         # Basic with last name only.
         username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --last {l} --brief".format(
-                      cmd=cmd, u=username, e=email, l=last)).strip()
+            cmd=cmd, u=username, e=email, l=last)).strip()
         self._assert_user_desc(user_id, {"last": last})
 
         # Basic with all options we can verify.
         # TODO: Test --occupation.
         username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --middle {m} --last {l} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first, m=middle,
-                      l=last)).strip()
+            cmd=cmd, u=username, e=email, f=first, m=middle,
+            l=last)).strip()
         self._assert_user_desc(user_id, {"first": first,
                                          "last": last,
                                          "middle": middle})
@@ -6050,8 +6097,8 @@ class TestDXClientNewUser(DXTestCase):
         # Grant default org membership level and permission flags.
         username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id)).strip()
+            cmd=cmd, u=username, e=email, f=first,
+            o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
@@ -6068,8 +6115,8 @@ class TestDXClientNewUser(DXTestCase):
         username, email = generate_unique_username_email()
         username = username.upper()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id)).strip()
+            cmd=cmd, u=username, e=email, f=first,
+            o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
@@ -6083,9 +6130,10 @@ class TestDXClientNewUser(DXTestCase):
 
         # Grant custom org membership level and permission flags.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id, l="MEMBER", pa="VIEW")).strip()
+        user_id = run(
+            "{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(
+                cmd=cmd, u=username, e=email, f=first,
+                o=self.org_id, l="MEMBER", pa="VIEW")).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
@@ -6100,9 +6148,10 @@ class TestDXClientNewUser(DXTestCase):
         # Grant ADMIN org membership level; ignore all other org permission
         # options.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --no-app-access --project-access {pa} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id, l="ADMIN", pa="VIEW")).strip()
+        user_id = run(
+            "{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --no-app-access --project-access {pa} --brief".format(
+                cmd=cmd, u=username, e=email, f=first,
+                o=self.org_id, l="ADMIN", pa="VIEW")).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "ADMIN",
@@ -6121,9 +6170,10 @@ class TestDXClientNewUser(DXTestCase):
         # --allow-billable-activities is implied; grant custom org membership
         # level and other permission flags.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --project-access {pa} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id, l="MEMBER", pa="VIEW")).strip()
+        user_id = run(
+            "{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --project-access {pa} --brief".format(
+                cmd=cmd, u=username, e=email, f=first,
+                o=self.org_id, l="MEMBER", pa="VIEW")).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
@@ -6138,8 +6188,8 @@ class TestDXClientNewUser(DXTestCase):
         # Grant ADMIN org membership level.
         username, email = generate_unique_username_email()
         user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level ADMIN --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id)).strip()
+            cmd=cmd, u=username, e=email, f=first,
+            o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "ADMIN",
@@ -6390,7 +6440,7 @@ class TestDXClientMembership(DXTestCase):
 
         # Cannot remove a user who is not currently a member of the org.
         with self.assertRaisesRegex(subprocess.CalledProcessError,
-                                     "DXCLIError"):
+                                    "DXCLIError"):
             run(" ".join([cmd, self.org_id, self.username]))
 
         called_process_error_opts = [
@@ -6417,8 +6467,9 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        run("dx update member {o} {u} --level MEMBER --allow-billable-activities false --project-access VIEW --app-access true".format(
-            o=self.org_id, u=self.username))
+        run(
+            "dx update member {o} {u} --level MEMBER --allow-billable-activities false --project-access VIEW --app-access true".format(
+                o=self.org_id, u=self.username))
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
@@ -6480,7 +6531,7 @@ class TestDXClientMembership(DXTestCase):
         # Cannot update the membership of a user who is not currently a member
         # of the org.
         with self.assertRaisesRegex(subprocess.CalledProcessError,
-                                     "DXCLIError"):
+                                    "DXCLIError"):
             run(" ".join([cmd, self.org_id, self.username, "--level ADMIN"]))
 
         called_process_error_opts = [
@@ -6505,7 +6556,7 @@ class TestDXClientMembership(DXTestCase):
 
         for invalid_opt in api_error_opts:
             with self.assertRaisesRegex(subprocess.CalledProcessError,
-                                         "InvalidInput"):
+                                        "InvalidInput"):
                 run(' '.join([cmd, invalid_opt]))
 
     def test_add_update_remove_membership(self):
@@ -6613,7 +6664,7 @@ class TestDXClientUpdateProject(DXTestCase):
                         'summary': 'This is a summary',
                         'description': 'This is a description'}
 
-        #Update items one by one.
+        # Update items one by one.
         for item in update_items:
             run(self.cmd.format(pid=self.project, item=item, n=pipes.quote(update_items[item])))
             describe_input = {}
@@ -6624,22 +6675,25 @@ class TestDXClientUpdateProject(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_PROJ_UPDATE_OPTIONS"])
     def test_update_multiple_items(self):
-        #Test updating multiple items in a single api call
+        # Test updating multiple items in a single api call
         update_items = {'name': 'NewProjectName' + str(time.time()),
                         'summary': 'This is new a summary',
                         'description': 'This is new a description',
                         'protected': 'false'}
 
         update_project_output = check_output(["dx", "update", "project", self.project, "--name",
-                pipes.quote(update_items['name']), "--summary", update_items['summary'], "--description",
-                update_items['description'], "--protected", update_items['protected']])
+                                              pipes.quote(update_items['name']), "--summary", update_items['summary'],
+                                              "--description",
+                                              update_items['description'], "--protected", update_items['protected']])
         update_project_json = json.loads(update_project_output);
         self.assertTrue("id" in update_project_json)
         self.assertEqual(self.project, update_project_json["id"])
 
         update_project_output = check_output(["dx", "update", "project", self.project, "--name",
-                pipes.quote(update_items['name']), "--summary", update_items['summary'], "--description",
-                update_items['description'], "--protected", update_items['protected'], "--brief"])
+                                              pipes.quote(update_items['name']), "--summary", update_items['summary'],
+                                              "--description",
+                                              update_items['description'], "--protected", update_items['protected'],
+                                              "--brief"])
         self.assertEqual(self.project, update_project_output.rstrip("\n"))
 
         describe_input = {}
@@ -6769,12 +6823,12 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         unexpected_warnings = ["missing a name",
                                "should be a short phrase not ending in a period"]
         expected_warnings = [
-                             "should be all lowercase",
-                             "does not match containing directory",
-                             "missing a title",
-                             "missing a summary",
-                             # "missing a description",
-                             "should be semver compliant"]
+            "should be all lowercase",
+            "does not match containing directory",
+            "missing a title",
+            "missing a summary",
+            # "missing a description",
+            "should be semver compliant"]
         try:
             # Expect "dx build" to succeed, exit with error code to
             # grab stderr.
@@ -6785,7 +6839,6 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
                 self.assertNotIn(warning, err.stderr)
             for warning in expected_warnings:
                 self.assertIn(warning, err.stderr)
-
 
     def test_build_workflow_invalid_project_context(self):
         gwf_name = "invalid_project_context_{t}".format(t=int(time.time()))
@@ -6895,7 +6948,8 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
             workflow_desc = dxpy.api.global_workflow_describe("globalworkflow-wf_test_dx_developers", {})
             workflow_id = workflow_desc["id"]
             my_userid = workflow_desc["createdBy"]
-            developers = dxpy.api.global_workflow_list_developers("globalworkflow-wf_test_dx_developers", {})["developers"]
+            developers = dxpy.api.global_workflow_list_developers("globalworkflow-wf_test_dx_developers", {})[
+                "developers"]
             # reset developers to default list
             if len(developers) != 1:
                 run("dx remove developers globalworkflow-wf_test_dx_developers " +
@@ -6940,7 +6994,6 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         run('dx remove developers wf_test_dx_developers nonexistentuser')
         run('dx remove developers wf_test_dx_developers piratelabs')
 
-
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_WORKFLOW_PUBLISH_GLOBALWF"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -6972,6 +7025,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp="already published", exit_code=3):
             run("dx publish {name}/{version}".format(name=gwf_name, version="2.0.0"))
 
+
 class TestSparkClusterApps(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -6987,7 +7041,7 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
         cluster_spec_no_bootstrap = {"type": "spark",
                                      "version": "2.4.0",
                                      "initialInstanceCount": 10}
-        bootstrap_code_aws = "def improper():\nprint 'oops'" # syntax error
+        bootstrap_code_aws = "def improper():\nprint 'oops'"  # syntax error
         bootstrap_code_azure = "import os\n"
 
         # cluster spec must be specified under "regionalOptions"
@@ -6996,11 +7050,12 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             main=dict(instanceType="mem2_hdd2_x1", clusterSpec=cluster_spec_with_bootstrap_aws)
         )
         app_dir = self.write_app_directory(app_name, json.dumps(non_regional_app_spec), "code.py")
-        with self.assertSubprocessFailure(stderr_regexp="clusterSpec.*must be specified.*under the \"regionalOptions\" field"):
+        with self.assertSubprocessFailure(
+                stderr_regexp="clusterSpec.*must be specified.*under the \"regionalOptions\" field"):
             run("dx build " + app_dir)
 
         app_spec = dict(self.base_app_spec, name=app_name,
-                        regionalOptions = {
+                        regionalOptions={
                             "aws:us-east-1": {
                                 "systemRequirements": {
                                     "main": {
@@ -7027,15 +7082,18 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
                             }})
         del app_spec["runSpec"]["systemRequirements"]
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
-        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAzure.py", code_content=bootstrap_code_azure)
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py",
+                                 code_content=bootstrap_code_aws)
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAzure.py",
+                                 code_content=bootstrap_code_azure)
 
         # confirm syntax checking
         with self.assertSubprocessFailure(stderr_regexp="Code in cluster bootstrapScript \\S+ has syntax errors"):
             run("dx build " + app_dir)
         # get rid of syntax error
         bootstrap_code_aws = "import sys\n"
-        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py", code_content=bootstrap_code_aws)
+        self.write_app_directory(app_name, json.dumps(app_spec), "clusterBootstrapAws.py",
+                                 code_content=bootstrap_code_aws)
 
         def build_and_verify_bootstrap_script_inlined(app_dir):
             # build cluster app with multiple bootstrap scripts and regions
@@ -7045,7 +7103,8 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             self.assertEqual(sys_reqs["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
             self.assertEqual(sys_reqs["cluster_3"]["clusterSpec"]["bootstrapScript"], bootstrap_code_aws)
             self.assertFalse("bootstrapScript" in sys_reqs["cluster_2"]["clusterSpec"])
-            self.assertEqual(app_doc["runSpec"]['systemRequirementsByRegion']["azure:westus"]["main"]["clusterSpec"]["bootstrapScript"], bootstrap_code_azure)
+            self.assertEqual(app_doc["runSpec"]['systemRequirementsByRegion']["azure:westus"]["main"]["clusterSpec"][
+                                 "bootstrapScript"], bootstrap_code_azure)
             return app_doc["id"]
 
         app_id = build_and_verify_bootstrap_script_inlined(app_dir)
@@ -7082,6 +7141,7 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             # now rebuild with the result of `dx get` and verify that we get the same result
             build_and_verify_bootstrap_script_inlined("cluster_app")
 
+
 class TestDXBuildApp(DXTestCaseBuildApps):
     def run_and_assert_stderr_matches(self, cmd, stderr_regexp):
         with self.assertSubprocessFailure(stderr_regexp=stderr_regexp, exit_code=28):
@@ -7089,7 +7149,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     def test_help_without_security_context(self):
         env = override_environment(DX_SECURITY_CONTEXT=None, DX_APISERVER_HOST=None,
-                                  DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
+                                   DX_APISERVER_PORT=None, DX_APISERVER_PROTOCOL=None)
         run("dx build -h", env=env)
 
     def test_accepts_semver(self):
@@ -7231,7 +7291,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0"
-            }
+        }
         app_dir = self.write_app_directory("minimal_remote_build_åpp_trusty", json.dumps(app_spec), "code.py")
         run("dx build --remote --app " + app_dir)
 
@@ -7256,7 +7316,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0"
-            }
+        }
         app_dir = self.write_app_directory("minimal_remote_build_åpplet_trusty", json.dumps(app_spec), "code.py")
         run("dx build --remote " + app_dir)
 
@@ -7287,7 +7347,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "outputSpec": [{"name": "92", "class": "string"}],
             "version": "1.0.0",
             "categories": ["foo", "Import", "Export"]
-            }
+        }
         app_dir = self.write_app_directory("test_build_åpplet_warnings", json.dumps(app_spec), "code.py")
         with open(os.path.join(app_dir, 'Readme.md'), 'w') as readme:
             readme.write('a readme file')
@@ -7319,7 +7379,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec = {
             "dxapi": "1.0.0",
             "runSpec": {"file": "code.py"}
-            }
+        }
         app_dir = self.write_app_directory("test_build_second_åpplet_warnings", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp='interpreter field was not present'):
             run("dx build " + app_dir)
@@ -7355,7 +7415,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             for warning in app_expected_warnings:
                 self.assertIn(warning, err.stderr)
 
-    @ unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_suggestions(self):
         app_spec = {
             "name": "test_build_app_suggestions",
@@ -7368,11 +7428,12 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         }
 
         # check if project exists
-        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": "project-0000000000000000000000NA", "path": "/"}]
+        app_spec["inputSpec"][0]["suggestions"] = [
+            {"name": "somename", "project": "project-0000000000000000000000NA", "path": "/"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
         res = run("dx build --app " + app_dir, also_return_stderr=True)
         self.assertIn('Suggested project {name} does not exist'.
-                       format(name=app_spec["inputSpec"][0]["suggestions"][0]["project"]), res[1])
+                      format(name=app_spec["inputSpec"][0]["suggestions"][0]["project"]), res[1])
 
         # check path
         app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "project": self.project,
@@ -7380,16 +7441,17 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
         res = run("dx build --app " + app_dir, also_return_stderr=True)
         self.assertIn('Folder {path} could not be found in project'.
-                       format(path=app_spec["inputSpec"][0]["suggestions"][0]["path"]), res[1])
+                      format(path=app_spec["inputSpec"][0]["suggestions"][0]["path"]), res[1])
 
         # check for $dnanexus_link
-        app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename", "$dnanexus_link": "file-0000000000000000000000NA"}]
+        app_spec["inputSpec"][0]["suggestions"] = [
+            {"name": "somename", "$dnanexus_link": "file-0000000000000000000000NA"}]
         app_dir = self.write_app_directory("test_build_app_suggestions", json.dumps(app_spec), "code.py")
         try:
             run("dx build --app " + app_dir)
         except subprocess.CalledProcessError as err:
             self.assertIn('Suggested object {name} could not be found'.format
-                         (name=app_spec["inputSpec"][0]["suggestions"][0]["$dnanexus_link"]), err.stderr)
+                          (name=app_spec["inputSpec"][0]["suggestions"][0]["$dnanexus_link"]), err.stderr)
 
         # check for value and $dnanexus_link in it
         app_spec["inputSpec"][0]["suggestions"] = [{"name": "somename",
@@ -7399,9 +7461,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             run("dx build --app " + app_dir)
         except subprocess.CalledProcessError as err:
             self.assertIn('Suggested object {name} could not be found'.format
-                         (name=app_spec["inputSpec"][0]["suggestions"][0]['value']["$dnanexus_link"]), err.stderr)
+                          (name=app_spec["inputSpec"][0]["suggestions"][0]['value']["$dnanexus_link"]), err.stderr)
 
-    @ unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_suggestions_success(self):
         app_spec = {"name": "test_build_app_suggestions",
                     "dxapi": "1.0.0",
@@ -7587,7 +7649,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 # inclusion of that asset would have generated
                 def get_asset_spec(asset_id):
                     tarball_id = dxpy.DXRecord(asset_id).describe(
-                       fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
+                        fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
                     tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
                     return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
 
@@ -7650,7 +7712,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         cmd = "dx build --create-app --region aws:us-east-1 --region azure:westus --json {app_dir}".format(
-                app_dir=app_dir)
+            app_dir=app_dir)
         app_new_res = run_and_parse_json(cmd)
         app_desc_res = json.loads(run("dx describe --json " + app_new_res["id"]))
         self.assertEqual(app_desc_res["class"], "app")
@@ -7677,15 +7739,15 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                             resources=tmp_project.get_id())
             app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
             cmd = "dx build --create-app --json --region {} --region {} {}".format(
-                   region_0, region_1, app_dir)
+                region_0, region_1, app_dir)
             with self.assertRaisesRegex(DXCalledProcessError, error_message):
                 run(cmd)
 
             # Build an app where both top-level "resources" and "regionalOptions" are set
             app_name = "asset_{t}_multi_region_app_resources".format(t=int(time.time()))
             app_spec_resources_regionalOpts = dict(self.base_app_spec, name=app_name,
-                            resources = tmp_project.get_id(),
-                            regionalOptions={region_0: dict(resources=tmp_project.get_id())})
+                                                   resources=tmp_project.get_id(),
+                                                   regionalOptions={region_0: dict(resources=tmp_project.get_id())})
             app_dir = self.write_app_directory(app_name,
                                                json.dumps(app_spec_resources_regionalOpts),
                                                "code.py")
@@ -7696,7 +7758,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                          'skipping test that would create apps')
     def test_update_multi_region_app(self):
         app_name = "asset_{t}_multi_region_app".format(t=int(time.time()))
-        app_spec = dict(self.base_app_spec, name=app_name, regionalOptions = {"aws:us-east-1": {}, "azure:westus": {}})
+        app_spec = dict(self.base_app_spec, name=app_name, regionalOptions={"aws:us-east-1": {}, "azure:westus": {}})
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
 
         app_new_res = json.loads(run("dx build --create-app --json " + app_dir))
@@ -7803,15 +7865,15 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                     app_spec_without_regional_option = dict(app_spec)
                     app_spec_without_regional_option['regionalOptions'] = dict(app_spec['regionalOptions'])
                     app_spec_without_regional_option['regionalOptions'][region_to_remove] = (
-                       dict(app_spec['regionalOptions'][region_to_remove]))
+                        dict(app_spec['regionalOptions'][region_to_remove]))
                     del app_spec_without_regional_option['regionalOptions'][region_to_remove][key_to_remove]
 
                     app_dir = self.write_app_directory(app_name,
                                                        json.dumps(app_spec_without_regional_option),
                                                        "code.py")
                     with self.assertSubprocessFailure(
-                           stderr_regexp=key_to_remove + " was given for [-a-z0-9:]+ but not for " +
-                           region_to_remove):
+                            stderr_regexp=key_to_remove + " was given for [-a-z0-9:]+ but not for " +
+                                          region_to_remove):
                         run("dx build --create-app --json " + app_dir)
 
                 # Build an app spec where some of the keys in the
@@ -7886,7 +7948,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_and_pretend_to_update_devs(self):
         app_spec = dict(self.base_app_spec, name="test_build_app_and_pretend_to_update_devs",
-                        developers = ['user-dnanexus'])
+                        developers=['user-dnanexus'])
         app_dir = self.write_app_directory("test_build_app_and_pretend_to_update_devs",
                                            json.dumps(app_spec), "code.py")
 
@@ -7895,7 +7957,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.run_and_assert_stderr_matches('dx build --create-app --json ' + app_dir,
                                            'skipping requested change to the developer list')
         app_developers = dxpy.api.app_list_developers('app-test_build_app_and_pretend_to_update_devs')['developers']
-        self.assertEqual(len(app_developers), 1) # the id of the user we are calling as
+        self.assertEqual(len(app_developers), 1)  # the id of the user we are calling as
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_and_update_devs(self):
@@ -7996,11 +8058,11 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 "interpreter": "python2.7",
                 "distribution": "Ubuntu", "release": "14.04",
                 "execDepends": {"name": "oops"}
-                },
+            },
             "inputSpec": [],
             "outputSpec": [],
             "version": "1.0.0"
-            }
+        }
         app_dir = self.write_app_directory("invalid_execdepends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="Expected runSpec\.execDepends to"):
             run("dx build --json " + app_dir)
@@ -8104,7 +8166,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     @pytest.mark.TRACEABILITY_MATRIX
-    @testutil.update_traceability_matrix(["DNA_API_APP_LIST_AUTHORIZED_USERS","DNA_API_APP_ADD_AUTHORIZED_USER"])
+    @testutil.update_traceability_matrix(["DNA_API_APP_LIST_AUTHORIZED_USERS", "DNA_API_APP_ADD_AUTHORIZED_USER"])
     def test_update_app_authorized_users(self):
         app0_spec = dict(self.base_app_spec, name="update_app_authorized_users")
         app1_spec = dict(self.base_app_spec, name="update_app_authorized_users", authorizedUsers=[])
@@ -8113,17 +8175,17 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                                            "code.py")
         app_id = json.loads(run("dx build --create-app --json " + app_dir))['id']
         self.assertEqual(json.loads(run("dx api " + app_id +
-                                         " listAuthorizedUsers"))["authorizedUsers"], [])
+                                        " listAuthorizedUsers"))["authorizedUsers"], [])
         shutil.rmtree(app_dir)
         self.write_app_directory("update_app_authorized_users", json.dumps(app1_spec), "code.py")
         run("dx build --create-app --json " + app_dir)
         self.assertEqual(json.loads(run("dx api " + app_id +
-                                         " listAuthorizedUsers"))["authorizedUsers"], [])
+                                        " listAuthorizedUsers"))["authorizedUsers"], [])
         shutil.rmtree(app_dir)
         self.write_app_directory("update_app_authorized_users", json.dumps(app2_spec), "code.py")
         run("dx build --create-app --yes --json " + app_dir)
         self.assertEqual(json.loads(run("dx api " + app_id +
-                                         " listAuthorizedUsers"))["authorizedUsers"], ["user-eve"])
+                                        " listAuthorizedUsers"))["authorizedUsers"], ["user-eve"])
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_APP_ADD_AUTHORIZED_USERS_APP",
@@ -8249,7 +8311,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         run("dx build --create-app --json --publish " + app_dir)
         with self.assertSubprocessFailure(stderr_regexp="Could not create"):
             print(run("dx build --create-app --json --no-version-autonumbering " + app_dir))
-        run("dx build --create-app --json " + app_dir) # Creates autonumbered version
+        run("dx build --create-app --json " + app_dir)  # Creates autonumbered version
 
     def test_build_failure(self):
         app_spec = dict(self.base_app_spec, name="build_failure")
@@ -8286,7 +8348,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 {"name": "out1", "class": "int"}
             ],
             "version": "1.0.0"
-            }
+        }
         app_code = """import dxpy
 @dxpy.entry_point("main")
 def main(in1):
@@ -8322,7 +8384,7 @@ def main(in1):
                  "help": "The mapped reads."}
             ],
             "version": "1.0.0"
-            }
+        }
         app_dir = self.write_app_directory("åpplet_help", json.dumps(app_spec),
                                            code_filename="code.py", code_content="")
         applet_id = run_and_parse_json("dx build --json " + app_dir)["id"]
@@ -8381,7 +8443,8 @@ def main(in1):
         app_spec = dict(self.base_app_spec, name="upload_resources_symlink")
         test_symlink_dir = "upload_resources_symlink"
         os.mkdir(os.path.join(self.temp_file_path, test_symlink_dir))
-        app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_symlink_dir, 'app'), json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_symlink_dir, 'app'),
+                                           json.dumps(app_spec), "code.py")
         os.mkdir(os.path.join(app_dir, 'resources'))
 
         with open(os.path.join(app_dir, 'resources', 'test_file2.txt'), 'w') as resources_file2:
@@ -8486,7 +8549,8 @@ def main(in1):
         os.symlink(os.path.join(os.pardir, 'test_outside_dir'),
                    os.path.join(app_dir, 'resources', 'symbolic_link'))
 
-        with self.assertSubprocessFailure(stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
+        with self.assertSubprocessFailure(
+                stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
             run("dx build -f " + app_dir)
 
         # == Links to remote directories are NOT dereferenced with --force-symlink
@@ -8525,8 +8589,10 @@ def main(in1):
         os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
         os.mkdir(os.path.join(app_dir, os.pardir, 'lib'))
         shutil.move(os.path.join(app_dir, os.pardir, 'remote_file'), os.path.join(app_dir, os.pardir, 'lib'))
-        os.symlink(os.path.join(app_dir, os.pardir, 'lib', 'remote_file'), os.path.join(app_dir, os.pardir, 'outside_link'))
-        os.symlink(os.path.join(os.pardir, os.pardir, 'outside_link'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(app_dir, os.pardir, 'lib', 'remote_file'),
+                   os.path.join(app_dir, os.pardir, 'outside_link'))
+        os.symlink(os.path.join(os.pardir, os.pardir, 'outside_link'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
 
         # create applet and get the resource_file id
         res_temp_dir = self._build_check_resources(app_dir)
@@ -8550,7 +8616,8 @@ def main(in1):
 
         # == Absolute links to files are ALWAYS dereferenced, regardless of destination
         os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
-        os.symlink(os.path.join(app_dir, 'resources', 'test_file2.txt'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(app_dir, 'resources', 'test_file2.txt'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
 
         # create applet and get the resource_file id
         res_temp_dir = self._build_check_resources(app_dir)
@@ -8574,7 +8641,8 @@ def main(in1):
         os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
         os.symlink(os.path.join(app_dir, 'resources', 'local_dir'), os.path.join(app_dir, 'resources', 'symbolic_link'))
 
-        with self.assertSubprocessFailure(stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
+        with self.assertSubprocessFailure(
+                stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
             run("dx build -f " + app_dir)
 
         # == Absolute links to directories are keps when --force-symlinks is used
@@ -8587,7 +8655,8 @@ def main(in1):
 
         # == Relative link to a file that extends outside the resource path is dereferenced
         os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
-        os.symlink(os.path.join(os.pardir, 'resources', 'test_file2.txt'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(os.pardir, 'resources', 'test_file2.txt'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
 
         # create applet and get the resource_file id
         res_temp_dir = self._build_check_resources(app_dir)
@@ -8609,9 +8678,11 @@ def main(in1):
 
         # == Relative link to directory extending outside resource path causes error
         os.remove(os.path.join(app_dir, 'resources', 'symbolic_link'))
-        os.symlink(os.path.join(os.pardir, 'resources', 'local_dir'), os.path.join(app_dir, 'resources', 'symbolic_link'))
+        os.symlink(os.path.join(os.pardir, 'resources', 'local_dir'),
+                   os.path.join(app_dir, 'resources', 'symbolic_link'))
 
-        with self.assertSubprocessFailure(stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
+        with self.assertSubprocessFailure(
+                stderr_regexp="Cannot include symlinks to directories outside of the resource directory"):
             run("dx build -f " + app_dir)
 
         # == Relative link to directory extending outside resource path are kept when --force-symlinks is used
@@ -8626,7 +8697,8 @@ def main(in1):
         app_spec = dict(self.base_app_spec, name="upload_resources_permissions")
         test_perms_dir = "upload_resources_permissions"
         os.mkdir(os.path.join(self.temp_file_path, test_perms_dir))
-        app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_perms_dir, 'app'), json.dumps(app_spec), "code.py")
+        app_dir = self.write_app_directory(os.path.join(self.temp_file_path, test_perms_dir, 'app'),
+                                           json.dumps(app_spec), "code.py")
         os.mkdir(os.path.join(app_dir, 'resources'))
 
         with open(os.path.join(app_dir, 'resources', 'test_644.txt'), 'w') as rf:
@@ -8644,17 +8716,17 @@ def main(in1):
 
         # Now, set the permissions alluded to above
         os.chmod(os.path.join(app_dir, 'resources', 'test_644.txt'),
-            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+                 stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
         os.chmod(os.path.join(app_dir, 'resources', 'test_660.txt'),
-            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
+                 stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
         os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'),
-            stat.S_IRUSR)
+                 stat.S_IRUSR)
         os.chmod(os.path.join(app_dir, 'resources', 'test_755.txt'),
-            stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+                 stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
         os.chmod(os.path.join(app_dir, 'resources', 'test_770.txt'),
-            stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
+                 stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
         os.chmod(os.path.join(app_dir, 'resources', 'test_670.txt'),
-            stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
+                 stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP)
 
         # build app
         res_temp_dir = self._build_check_resources(app_dir)
@@ -8665,21 +8737,21 @@ def main(in1):
         # Test file permissions (all will have stat.S_IFREG as well)
         # 644 => 644
         self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_644.txt")).st_mode,
-            stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+                         stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
         # 660 => 664
-        #self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_660.txt")).st_mode,
+        # self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_660.txt")).st_mode,
         #    stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
         # 400 => 444
         self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_400.txt")).st_mode,
-            stat.S_IFREG | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+                         stat.S_IFREG | stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
         # 755 => 755
-        #self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_755.txt")).st_mode,
+        # self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_755.txt")).st_mode,
         #    stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
         # 770 => 775
-        #self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_770.txt")).st_mode,
+        # self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_770.txt")).st_mode,
         #    stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
         # 670 => 674
-        #self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_670.txt")).st_mode,
+        # self.assertEqual(os.stat(os.path.join(res_temp_dir, "test_670.txt")).st_mode,
         #    stat.S_IFREG | stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IXGRP | stat.S_IROTH)
 
         shutil.rmtree(res_temp_dir)
@@ -8689,7 +8761,7 @@ def main(in1):
 
         # change the 400 => 444
         os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'),
-            stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+                 stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
 
         id2 = self._build_check_resources(app_dir, extract_resources=False)
 
@@ -8699,12 +8771,11 @@ def main(in1):
 
         # change 400 => 500 (will result in perms 555)
         os.chmod(os.path.join(app_dir, 'resources', 'test_400.txt'),
-            stat.S_IRUSR | stat.S_IXUSR)
+                 stat.S_IRUSR | stat.S_IXUSR)
 
         id3 = self._build_check_resources(app_dir, extract_resources=False)
 
         self.assertNotEqual(id1, id3)
-
 
     # This test uses an applet name that include unicode characters. Therefore,
     # we need to encode to byte everytime we use os filesystem operations.
@@ -8788,7 +8859,7 @@ def main(in1):
 
         idr2 = self._build_check_resources(app_dir, "", False)
 
-        self.assertNotEqual(idr1, idr2) # Upload should happen
+        self.assertNotEqual(idr1, idr2)  # Upload should happen
 
         # Change link destination; target mtime change
         os.remove(os.path.join(app_dir, 'outside_link'))
@@ -8935,16 +9006,20 @@ def main(in1):
         # failure: asset will not be searched in folders recursively
         with self.assertSubprocessFailure(stderr_regexp="No asset bundle was found", exit_code=3):
             app_spec = dict(self.base_app_spec, name="asset_depends",
-                            runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
-                                       "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                            runSpec={
+                                "assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
+                                "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                "interpreter": "python2.7"})
             app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
             asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
             run("dx build --json {app_dir}".format(app_dir=app_dir))
 
         # success: asset found
         app_spec = dict(self.base_app_spec, name="asset_depends",
-                        runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project, "folder": "/record_subfolder"}],
-                                   "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                        runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project,
+                                                   "folder": "/record_subfolder"}],
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                 "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
 
@@ -8958,12 +9033,13 @@ def main(in1):
                           details=record_details, name=record_name, properties=record_properties, close=True)
         with self.assertSubprocessFailure(stderr_regexp="Found more than one asset record that matches", exit_code=3):
             app_spec = dict(self.base_app_spec, name="asset_depends_fail",
-                            runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project, "folder": "/record_subfolder"}],
-                                       "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                            runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project,
+                                                       "folder": "/record_subfolder"}],
+                                     "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                     "interpreter": "python2.7"})
             app_dir = self.write_app_directory("asset_depends_fail", json.dumps(app_spec), "code.py")
             asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
             run("dx build --json {app_dir}".format(app_dir=app_dir))
-
 
     def test_asset_depends_using_id(self):
         # upload a tar.gz file and mark it hidden
@@ -8980,7 +9056,8 @@ def main(in1):
 
         app_spec = dict(self.base_app_spec, name="asset_depends",
                         runSpec={"assetDepends": [{"id": record.get_id()}],
-                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                 "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = run_and_parse_json("dx build --json {app_dir}".format(app_dir=app_dir))["id"]
         self.assertEqual(
@@ -9002,8 +9079,9 @@ def main(in1):
                           properties=record_properties, close=True)
 
         app_spec = dict(self.base_app_spec, name="asset_depends",
-                       runSpec={"assetDepends": [{"name": record_name, "version": "0.1.1", "project": self.project}],
-                                "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                        runSpec={"assetDepends": [{"name": record_name, "version": "0.1.1", "project": self.project}],
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                 "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="No asset bundle was found", exit_code=3):
             run("dx build --json {app_dir}".format(app_dir=app_dir))
@@ -9023,7 +9101,8 @@ def main(in1):
 
         app_spec = dict(self.base_app_spec, name="asset_depends",
                         runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
-                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                 "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="The required field 'archiveFileId'", exit_code=3):
             run("dx build --json {app_dir}".format(app_dir=app_dir))
@@ -9045,8 +9124,8 @@ def main(in1):
         with temporary_project('test_select_project', select=True):
             app_spec = dict(self.base_app_spec, name="asset_depends",
                             runSpec={"assetDepends": [{"id": record.get_id()}],
-                                      "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
-                                      "interpreter": "python2.7"})
+                                     "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                     "interpreter": "python2.7"})
             app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
             run("dx build --json {app_dir}".format(app_dir=app_dir))
             temp_record_id = run("dx ls {asset} --brief".format(asset=record_name)).strip()
@@ -9095,7 +9174,8 @@ def main(in1):
 
         app_spec = dict(self.base_app_spec, name="asset_depends",
                         runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
-                                  "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
+                                 "interpreter": "python2.7"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = run_and_parse_json("dx build --json {app_dir}".format(app_dir=app_dir))["id"]
 
@@ -9112,6 +9192,7 @@ def main(in1):
     @testutil.update_traceability_matrix(["DNA_CLI_APP_PUBLISH"])
     def test_dx_publish_app(self):
         app_name = "dx_publish_app"
+
         def _create_app(version):
             app_spec = dict(self.base_app_spec, name=app_name, version=version)
             app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
@@ -9167,7 +9248,7 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
                                                   {"editVersion": 0, "executable": applet_01_id,
                                                    "name": stage_01_name})['stage']
         bound_input = {"my_number_in_02": {
-                       "$dnanexus_link": {"stage": stage_01_id, "outputField": "my_number_out_01"}}}
+            "$dnanexus_link": {"stage": stage_01_id, "outputField": "my_number_out_01"}}}
         stage_02_name = "Stage 2 name"
         stage_02_id = dxpy.api.workflow_add_stage(workflow_id,
                                                   {"editVersion": 1, "executable": applet_02_id,
@@ -9177,15 +9258,15 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
             "name": "get_workflow",
             "title": "get_workflow",
             "stages": [{
-              "id": stage_01_id,
-              "name": stage_01_name,
-              "executable": applet_01_id
+                "id": stage_01_id,
+                "name": stage_01_name,
+                "executable": applet_01_id
             }, {
-              "id": stage_02_id,
-              "name": stage_02_name,
-              "executable": applet_02_id,
-              "input": bound_input
-          }]
+                "id": stage_02_id,
+                "name": stage_02_name,
+                "executable": applet_02_id,
+                "input": bound_input
+            }]
         }
         with chdir(tempfile.mkdtemp()):
             run("dx get {workflow_id}".format(workflow_id=workflow_id))
@@ -9245,9 +9326,9 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
                        "globalworkflow-" + gwf_name,
                        # TODO: enable once dx get can be used with non-prefixed app & global workflow name
                        # TODO: (which works for dx describe)
-                       #gwf_name,
-                       #gwf_name + "/0.0.7"
-                      ]
+                       # gwf_name,
+                       # gwf_name + "/0.0.7"
+                       ]
         for identifier in identifiers:
             with chdir(tempfile.mkdtemp()):
                 run("dx get {wfidentifier}".format(wfidentifier=identifier))
@@ -9258,7 +9339,6 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create global workflows')
     def test_dx_cross_get_and_build_workflows(self):
-
         def _build(name, atype):
             dxworkflow_json = dict(self.dxworkflow_spec, name=name)
             workflow_dir = self.write_workflow_directory(name,
@@ -9294,6 +9374,7 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
         _build('workflow_cycle', 'workflow')
         _get_and_build('workflow_cycle', 'workflow')
 
+
 class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
     def test_get_applet(self):
@@ -9303,10 +9384,10 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "name": "get_applet",
             "dxapi": "1.0.0",
             "runSpec": {
-              "file": "code.py",
-              "interpreter": "python2.7",
-              "distribution": "Ubuntu",
-              "release": "14.04"},
+                "file": "code.py",
+                "interpreter": "python2.7",
+                "distribution": "Ubuntu",
+                "release": "14.04"},
             "inputSpec": [{
                 "name": "in1",
                 "help": "A help for in1 input param",
@@ -9315,11 +9396,11 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                 "label": "A label for in1 input param",
                 "patterns": ["*.bam", "*.babam", "*.pab\"abam"]
             }, {
-              "name": "reads_type",
-              "choices": ["single-end", "paired-end"],
-              "default": "paired-end",
-              "class": "string",
-              "group": "Advanced Options"
+                "name": "reads_type",
+                "choices": ["single-end", "paired-end"],
+                "default": "paired-end",
+                "class": "string",
+                "group": "Advanced Options"
             }],
             "outputSpec": [{
                 "name": "out1",
@@ -9333,7 +9414,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "properties": {"sample_id": "123456"},
             "details": {"key1": "value1"},
             "ignoreReuse": False
-            }
+        }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
@@ -9360,11 +9441,17 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             self.assertTrue(applet_metadata.find('"patterns": ["*.bam"]') >= 0)
 
             # Checking inputSpec keys ordering
-            self.assertTrue(applet_metadata.find('"name": "in1"') < applet_metadata.find('"label": "A label for in1 input param"'))
-            self.assertTrue(applet_metadata.find('"label": "A label for in1 input param"') < applet_metadata.find('"help": "A help for in1 input param"'))
-            self.assertTrue(applet_metadata.find('"help": "A help for in1 input param"') < applet_metadata.find('"class": "file"'))
-            self.assertTrue(applet_metadata.find('"class": "file"') < applet_metadata.find('"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]'))
-            self.assertTrue(applet_metadata.find('"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]') < applet_metadata.find('"optional": false'))
+            self.assertTrue(
+                applet_metadata.find('"name": "in1"') < applet_metadata.find('"label": "A label for in1 input param"'))
+            self.assertTrue(applet_metadata.find('"label": "A label for in1 input param"') < applet_metadata.find(
+                '"help": "A help for in1 input param"'))
+            self.assertTrue(
+                applet_metadata.find('"help": "A help for in1 input param"') < applet_metadata.find('"class": "file"'))
+            self.assertTrue(applet_metadata.find('"class": "file"') < applet_metadata.find(
+                '"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]'))
+            self.assertTrue(
+                applet_metadata.find('"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]') < applet_metadata.find(
+                    '"optional": false'))
 
             self.assertTrue(applet_metadata.find('"name": "reads_type"') < applet_metadata.find('"class": "string"'))
             self.assertTrue(applet_metadata.find('"class": "string"') < applet_metadata.find('"default": "paired-end"'))
@@ -9373,8 +9460,11 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             # Checking outputSpec keys ordering
             output_spec_index = applet_metadata.find('"outputSpec"')
-            self.assertTrue(applet_metadata.find('"name": "out1"', output_spec_index) < applet_metadata.find('"class": "file"', output_spec_index))
-            self.assertTrue(applet_metadata.find('"class": "file"', output_spec_index) < applet_metadata.find('"patterns": ["*.bam"]', output_spec_index))
+            self.assertTrue(
+                applet_metadata.find('"name": "out1"', output_spec_index) < applet_metadata.find('"class": "file"',
+                                                                                                 output_spec_index))
+            self.assertTrue(applet_metadata.find('"class": "file"', output_spec_index) < applet_metadata.find(
+                '"patterns": ["*.bam"]', output_spec_index))
 
             output_json = json.loads(applet_metadata)
             self.assertEqual(output_app_spec, output_json)
@@ -9463,7 +9553,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "tags": ["bar"],
             "properties": {"sample_id": "123456"},
             "details": {"key1": "value1"},
-            }
+        }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
@@ -9501,7 +9591,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
-        output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
+        output_app_spec["regionalOptions"] = {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -9525,7 +9615,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
-        output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
+        output_app_spec["regionalOptions"] = {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_windows", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -9771,7 +9861,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "developerNotes": "Developer notes\n",
             "openSource": True,
             "version": "0.0.1"
-            }
+        }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v)
                                for (k, v) in app_spec.iteritems()
@@ -9836,7 +9926,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "authorizedUsers": authorized_users,
             "openSource": True,
             "version": "0.0.1"
-            }
+        }
         app_dir = self.write_app_directory(name, json.dumps(app_spec), "code.py", code_content="import os\n")
         build_cmd = "dx build --create-app --json --publish "
         app_json = json.loads(run(build_cmd + app_dir))
@@ -9893,6 +9983,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                 app_spec = json.load(fh)
                 self.assertEqual(app_spec["regionalOptions"], regional_options)
 
+
 class TestDXBuildReportHtml(unittest.TestCase):
     js = "console.log('javascript');"
     css = "body {background-color: green;}"
@@ -9911,7 +10002,8 @@ class TestDXBuildReportHtml(unittest.TestCase):
         css_file.write(self.css)
         css_file.close()
         html_file = open("{}/index.html".format(self.temp_file_path), "w")
-        html = "<html><head><link rel='stylesheet' href='index.css' type='text/css'/><script src='index.js'></script></head><body><a href='/'/><a href='/' target='_new'/><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
+        html = "<html><head><link rel='stylesheet' href='index.css' type='text/css'/><script src='index.js'></script></head><body><a href='/'/><a href='/' target='_new'/><img src='img.gif'/><img src='{}'/></body></html>".format(
+            wiki_logo)
         html_file.write(html)
         html_file.close()
 
@@ -9951,7 +10043,8 @@ class TestDXBuildReportHtml(unittest.TestCase):
         self.assertTrue(re.search("<img src=\"data:", html))
 
     def test_remote_file(self):
-        report = json.loads(run("dx-build-report-html {d}/index.html --remote /html_report -w 47 -g 63".format(d=self.temp_file_path)))
+        report = json.loads(
+            run("dx-build-report-html {d}/index.html --remote /html_report -w 47 -g 63".format(d=self.temp_file_path)))
         fileId = report["fileIds"][0]
         desc = json.loads(run("dx describe {record} --details --json".format(record=report["recordId"])))
         self.assertEqual(desc["types"], ["Report", "HTMLReport"])
@@ -9970,8 +10063,10 @@ class TestTcshEnvironment(unittest.TestCase):
     def test_tcsh_dash_c(self):
         # tcsh -c doesn't set $_, or provide any other way for us to determine the source directory, so
         # "source environment" only works from DNANEXUS_HOME
-        run('cd $DNANEXUS_HOME && env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment && dx --help"')
-        run('cd $DNANEXUS_HOME && env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment.csh && dx --help"')
+        run(
+            'cd $DNANEXUS_HOME && env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment && dx --help"')
+        run(
+            'cd $DNANEXUS_HOME && env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh -c "source /etc/csh.cshrc && source /etc/csh.login && source $DNANEXUS_HOME/environment.csh && dx --help"')
 
     def test_tcsh_source_environment(self):
         tcsh = pexpect.spawn("env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh",
@@ -10163,7 +10258,7 @@ class TestDXCp(DXTestCase):
                                           exit_code=3), without_project_context():
             run('dx cp ' + file_id + ' ' + proj_id)
 
-        #cleanup
+        # cleanup
         rm_project(proj_id)
 
 
@@ -10205,7 +10300,8 @@ class TestDXGenerateBatchInputs(DXTestCase):
         run("dx upload --brief {}".format(files))
 
         # Test for basic working TSV and stderr output
-        readpair_test_stderr = run("dx generate_batch_inputs -ipair1='RP(.*)_R1_(.*).fastq.gz' -ipair2='RP(.*)_R2_(.*).fastq.gz' 2>&1")
+        readpair_test_stderr = run(
+            "dx generate_batch_inputs -ipair1='RP(.*)_R1_(.*).fastq.gz' -ipair2='RP(.*)_R2_(.*).fastq.gz' 2>&1")
         expected_readpair_test_stderr = """
         Found 4 valid batch IDs matching desired pattern.
         Created batch file dx_batch.0000.tsv
@@ -10226,7 +10322,8 @@ class TestDXGenerateBatchInputs(DXTestCase):
         self.assertEqual(readpair_test_tsv_cut.strip(), textwrap.dedent(expected_readpair_test_tsv_cut).strip())
 
         try:
-            cornercase_test_stderr = run("dx generate_batch_inputs -ipair1='SRR1(.*)_1.gz' -ipair2='SRR2(.*)_2.gz' 2>&1")
+            cornercase_test_stderr = run(
+                "dx generate_batch_inputs -ipair1='SRR1(.*)_1.gz' -ipair2='SRR2(.*)_2.gz' 2>&1")
             raise Exception("Expected test to return non-zero exit code, but it did not.")
         except Exception as e:
             cornercase_test_stderr = str(e.output)
@@ -10274,6 +10371,7 @@ class TestDXRun(DXTestCase):
             })
             run("dx run myapplet -inumber=5 --project %s" % temp_project.name)
 
+
 class TestDXUpdateApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that creates apps')
@@ -10315,5 +10413,6 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
-        sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')
+        sys.stderr.write(
+            'WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')
     unittest.main()
