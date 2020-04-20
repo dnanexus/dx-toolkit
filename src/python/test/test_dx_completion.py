@@ -18,6 +18,7 @@
 
 import os, unittest, subprocess, sys
 from tempfile import NamedTemporaryFile, mkdtemp
+import pytest
 
 import dxpy
 import dxpy_testutil as testutil
@@ -27,6 +28,7 @@ from dxpy.compat import USING_PYTHON2
 # TODO: unit tests for dxpy.utils.completer
 
 IFS = '\013'
+
 
 class TestDXTabCompletion(unittest.TestCase):
     project_id = None
@@ -74,7 +76,6 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assertIn(stderr_contains, err)
         return out.split(IFS)
 
-
     def assert_completion(self, line, completion):
         actual_completions = self.get_bash_completions(line)
         completion = completion.replace("\\", "")
@@ -119,6 +120,7 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assertTrue(len(APP_CATEGORIES) > 0)
         self.assert_completions("dx find apps --category ", APP_CATEGORIES)
 
+    @pytest.mark.serial
     def test_applet_completion(self):
         dxapplet = dxpy.DXApplet()
         run_spec = {"code": "placeholder", "interpreter": "bash",
@@ -199,6 +201,7 @@ class TestDXTabCompletion(unittest.TestCase):
         # FIXME, this stopped working when migrating to python3
         # self.assert_completion('dx ls "my', '"my <<awesome.>> record \\!@#\\$%^&*(){}[]|;\\:?\\`')
         # self.assert_completion("dx ls 'my", "'my <<awesome.>> record !@#$%^&*(){}[]|;\\:?`")
+
 
 if __name__ == '__main__':
     unittest.main()
