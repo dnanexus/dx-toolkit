@@ -123,6 +123,7 @@ class TestDXTestUtils(DXTestCase):
                 # successfully changed by select_project
                 run('dx cd {dirname}'.format(dirname=test_dirname))
 
+    @pytest.mark.serial
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_without_project_context(self):
         self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
@@ -417,6 +418,7 @@ class TestDXClient(DXTestCase):
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
 
+    @pytest.mark.serial
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_watch_invalid_auth(self):
         with without_auth():
@@ -1308,6 +1310,7 @@ class TestDXNewRecord(DXTestCase):
         second_record_id = run("dx new record --brief").strip()
         self.assertEqual("open", dxpy.describe(second_record_id)['state'])
 
+    @pytest.mark.serial
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_new_record_without_context(self):
         # Without project context, cannot create new object without
@@ -3622,6 +3625,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                           exit_code=3):
             run("dx run myworkflow")
 
+    @pytest.mark.serial
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_dx_new_workflow_without_context(self):
         # Without project context, cannot create new object without
@@ -5232,6 +5236,7 @@ class TestDXClientFind(DXTestCase):
             self.assert_cmd_gives_ids("dx find jobs " + options2, [])
             self.assert_cmd_gives_ids("dx find analyses " + options2, [])
 
+    @pytest.mark.nonserial
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_ORGS"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -9778,6 +9783,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                     with self.assertSubprocessFailure(stderr_regexp='code 401', exit_code=3):
                         run('dx get {}'.format(app_id), env=as_second_user())
 
+    @pytest.mark.serial
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require another user')
