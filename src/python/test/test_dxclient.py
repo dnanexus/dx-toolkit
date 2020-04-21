@@ -1397,6 +1397,7 @@ class TestDXClientUploadDownload(DXTestCase):
         self.assertEqual(tree1, tree2)
         run("rm -rf {wd}".format(wd=wd))
 
+    @pytest.mark.serial
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(
         ["DNA_CLI_DATA_OBJ_DOWNLOAD_FILES", "DNA_CLI_DATA_OBJ_UPLOAD_FILES", "DNA_CLI_DATA_OBJ_WAIT",
@@ -1494,6 +1495,7 @@ class TestDXClientUploadDownload(DXTestCase):
             finally:
                 shutil.rmtree(testdir)
 
+    @pytest.mark.serial
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
     def test_dx_download_no_env(self):

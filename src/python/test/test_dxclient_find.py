@@ -53,6 +53,15 @@ else:
     # Python 3 requires specifying the encoding
     spawn_extra_args = {"encoding": "utf-8"}
 
+class TestDXPYImport(unittest.TestCase):
+    @patch('sys.stdin', None)
+    def test_dxpy_import_stdin_none(self):
+        """
+        Ensure that importing dxpy works even if stdin is None.
+        """
+        del sys.modules['dxpy.cli']
+        from dxpy.cli import INTERACTIVE_CLI
+
 
 @pytest.mark.serial
 class TestDXClientFind(DXTestCase):
