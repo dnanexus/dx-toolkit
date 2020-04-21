@@ -418,7 +418,7 @@ class TestDXClient(DXTestCase):
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
 
-
+    @pytest.mark.serial
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_watch_invalid_auth(self):
         with without_auth():
@@ -4380,7 +4380,7 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
             self.assertIn("regionalOptions", gwf_describe)
             self.assertItemsEqual(sorted(gwf_describe["regionalOptions"].keys()), ["aws:us-east-1", "azure:westus"])
 
-
+@pytest.mark.serial
 class TestDXClientFind(DXTestCase):
 
     def assert_cmd_gives_ids(self, cmd, ids):

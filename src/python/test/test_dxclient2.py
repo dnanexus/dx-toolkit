@@ -2838,6 +2838,7 @@ def main(in1):
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + first_applet)
 
+    @pytest.mark.serial
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_build_without_context(self):
         app_spec = dict(self.base_app_spec, name="applet_without_context")
