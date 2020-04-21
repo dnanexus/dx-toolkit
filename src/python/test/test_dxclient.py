@@ -418,7 +418,7 @@ class TestDXClient(DXTestCase):
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
 
-    @pytest.mark.serial
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test user')
     def test_dx_watch_invalid_auth(self):
         with without_auth():
@@ -1310,7 +1310,7 @@ class TestDXNewRecord(DXTestCase):
         second_record_id = run("dx new record --brief").strip()
         self.assertEqual("open", dxpy.describe(second_record_id)['state'])
 
-    @pytest.mark.serial
+
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_new_record_without_context(self):
         # Without project context, cannot create new object without
@@ -1511,7 +1511,7 @@ class TestDXClientUploadDownload(DXTestCase):
                 run('dx download ' + file_id + ' -o ' + output_path)
             run('cmp ' + output_path + ' ' + fd.name)
 
-    @pytest.mark.serial
+
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_dx_upload_no_env(self):
         # Without project context, cannot upload to a
@@ -3625,7 +3625,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                           exit_code=3):
             run("dx run myworkflow")
 
-    @pytest.mark.serial
+
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_dx_new_workflow_without_context(self):
         # Without project context, cannot create new object without
@@ -5236,7 +5236,7 @@ class TestDXClientFind(DXTestCase):
             self.assert_cmd_gives_ids("dx find jobs " + options2, [])
             self.assert_cmd_gives_ids("dx find analyses " + options2, [])
 
-    @pytest.mark.nonserial
+    @pytest.mark.serial
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_ORGS"])
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -5327,7 +5327,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         with self.assertSubprocessFailure(stderr_regexp='error: argument --level: expected one argument', exit_code=2):
             run("dx find org members org-piratelabs --level")
 
-    @pytest.mark.serial
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_MEMBERS",
                                           "DNA_API_ORG_FIND_MEMBERS"])
@@ -5348,7 +5348,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         output = run("dx find org members org-piratelabs --level {l} --brief".format(l="MEMBER")).strip().split("\n")
         self.assertItemsEqual(output, [self.user_bob])
 
-    @pytest.mark.serial
+
     def test_dx_find_org_members_format(self):
         cmd = "dx find org members org-piratelabs {opts}"
 
@@ -5497,7 +5497,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             output = run(cmd.format(opts="--private-only")).strip().split("\n")
             self.assertItemsEqual(output, [private_project_id])
 
-    @pytest.mark.serial
+
     def test_dx_find_org_projects_created(self):
         with temporary_project() as unique_project:
             project_id = unique_project.get_id()
@@ -6260,7 +6260,7 @@ class TestDXClientMembership(DXTestCase):
         self._remove_user(self.user_id)
         super(TestDXClientMembership, self).tearDown()
 
-    @pytest.mark.serial
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_ADD_MEMBER"])
     def test_add_membership_default(self):
@@ -6286,7 +6286,7 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-    @pytest.mark.serial
+
     def test_add_membership_with_options(self):
         cmd = "dx add member {o} {u} --level {l}"
 
@@ -6312,7 +6312,7 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-    @pytest.mark.serial
+
     def test_add_membership_negative(self):
         cmd = "dx add member"
 
@@ -6332,7 +6332,7 @@ class TestDXClientMembership(DXTestCase):
         with self.assertRaisesRegex(subprocess.CalledProcessError, "DXCLIError"):
             run(" ".join([cmd, self.org_id, self.username, "--level ADMIN"]))
 
-    @pytest.mark.serial
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_REMOVE_MEMBER",
                                           "DNA_API_ORG_REMOVE_USER"])
@@ -6351,7 +6351,7 @@ class TestDXClientMembership(DXTestCase):
         with self.assertRaises(IndexError):
             self._org_find_members(self.user_id)
 
-    @pytest.mark.serial
+
     def test_remove_membership_interactive_conf(self):
         self._add_user(self.user_id)
 
@@ -6399,7 +6399,7 @@ class TestDXClientMembership(DXTestCase):
         dx_rm_member_int.sendline("y")
         dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
 
-    @pytest.mark.serial
+
     def test_remove_membership_interactive_conf_format(self):
         self._add_user(self.user_id)
 
@@ -6441,7 +6441,7 @@ class TestDXClientMembership(DXTestCase):
         dxpy.api.project_update(project_id_1, {"billTo": prev_bill_to_1})
         dxpy.api.project_update(project_id_2, {"billTo": prev_bill_to_2})
 
-    @pytest.mark.serial
+
     def test_remove_membership_negative(self):
         cmd = "dx remove member"
 
@@ -6459,7 +6459,7 @@ class TestDXClientMembership(DXTestCase):
             with self.assertRaises(subprocess.CalledProcessError):
                 run(" ".join([cmd, invalid_opts]))
 
-    @pytest.mark.serial
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_UPDATE_USER_MEMBERSHIP",
                                           "DNA_API_ORG_CHANGE_USER_PERMISSIONS"])
@@ -6497,7 +6497,7 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-    @pytest.mark.serial
+
     def test_update_membership_to_member_without_membership_flags(self):
         cmd = "dx update member {o} {u} --level MEMBER".format(o=self.org_id, u=self.username)
 
@@ -6607,7 +6607,7 @@ class TestDXClientMembership(DXTestCase):
         with self.assertRaises(IndexError):
             self._org_find_members(self.user_id)
 
-    @pytest.mark.serial
+
     def test_add_update_remove_membership_with_user_id(self):
         # This is similar to `test_add_update_remove_membership()` above, but
         # it specifies user id instead of username as arg to `dx` command.
@@ -7683,7 +7683,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
                 self.assertIn(azure_file_id_a, azure_obj_id_list)
                 self.assertIn(azure_file_id_b, azure_obj_id_list)
 
-    @pytest.mark.serial
+
     def test_build_applets_using_multi_region_dxapp_json(self):
         app_name = "applet_{t}_multi_region_dxapp_json_with_regional_system_requirements".format(t=int(time.time()))
 
@@ -8314,7 +8314,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         run('dx remove developers test_dx_developers nonexistentuser')
         run('dx remove developers test_dx_developers piratelabs')
 
-    @pytest.mark.serial
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
     def test_build_app_autonumbering(self):
@@ -8986,7 +8986,7 @@ def main(in1):
         with self.assertSubprocessFailure(exit_code=3):
             run("dx describe " + first_applet)
 
-    @pytest.mark.serial
+
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_build_without_context(self):
         app_spec = dict(self.base_app_spec, name="applet_without_context")
@@ -9783,7 +9783,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                     with self.assertSubprocessFailure(stderr_regexp='code 401', exit_code=3):
                         run('dx get {}'.format(app_id), env=as_second_user())
 
-    @pytest.mark.serial
+
     @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require another user')

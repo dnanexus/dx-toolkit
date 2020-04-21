@@ -120,7 +120,6 @@ class TestDXTabCompletion(unittest.TestCase):
         self.assertTrue(len(APP_CATEGORIES) > 0)
         self.assert_completions("dx find apps --category ", APP_CATEGORIES)
 
-    @pytest.mark.serial
     def test_applet_completion(self):
         dxapplet = dxpy.DXApplet()
         run_spec = {"code": "placeholder", "interpreter": "bash",
