@@ -128,6 +128,7 @@ class ArgumentParser(argparse.ArgumentParser):
                     }
                 },
                 "interpreter": self._args.interpreter,
+                "version": self._args.version,
                 "release": self._args.release,
                 "distribution": self._args.distribution,
                 "file": self._args.target_executable or self.prog
@@ -316,7 +317,7 @@ def main():
         '-r', '--output-param-regexp', default=None,
         help="Regular expression that identifies output parameter names.")
     parser.add_argument(
-        '-n', '--interpreter', default='bash', choices=('bash', 'python2.7'),
+        '-n', '--interpreter', default='bash', choices=('bash', 'python3'),
         help="Type of script that will wrap the executable.")
     parser.add_argument(
         '-i', '--instance-type', default="mem1_ssd1_x4",
@@ -330,6 +331,9 @@ def main():
     parser.add_argument(
         '--release', default="14.04",
         help="Distribution release to use for the machine image.")
+    parser.add_argument(
+        '--version', default="0",
+        help="Version of the application execution environment inside the runSpec block.")
     argparse_to_dxapp(parser.parse_args())
 
 
