@@ -1,3 +1,9 @@
+dx-toolkit (0.294.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 24 Apr 2020 16:08:42 +0000
+
 dx-toolkit (0.293.0) trusty; urgency=medium
 
   * Added: Sci Linux compilation option for upload agent
