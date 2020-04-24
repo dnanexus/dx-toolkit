@@ -47,7 +47,6 @@ def run():
     # Note that Macs must run the make command before running this script,
     # as of b9d8487 (when virtualenv was added to the Mac dx-toolkit release).
     if sys.platform != "darwin":
-        print("running src_libs stuff")
         subprocess.check_call(["make", "python", "src_libs"], cwd=TOOLKIT_ROOT_DIR)
 
     python_version = "python{}.{}".format(sys.version_info.major, sys.version_info.minor)
@@ -67,14 +66,6 @@ def run():
     else:
         subproc_env = dict(os.environ)
 
-    print("Current dir:")
-    print(os.getcwd())
-    print(PYTHON_TEST_DIR)
-
-
-    cmd = ["pytest", "--junitxml", "results.xml"]
-    print("Running following command in run_python_integration_tests:")
-    print(cmd)
     try:
         subprocess.check_call(cmd, cwd=PYTHON_TEST_DIR, env=subproc_env)
     except subprocess.CalledProcessError as e:
