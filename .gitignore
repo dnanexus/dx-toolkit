@@ -12,7 +12,6 @@
 /src/.setup_doc_virtualenv
 /src/java/target/
 /src/java/src/main/java/com/dnanexus/DXToolkitVersion.java
-/src/python/dxpy/toolkit_version.py
 /src/python/coverage-reports/
 /src/R/install_dxR_deps.Rout
 /src/R/dxR*.tar.gz
