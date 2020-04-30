@@ -1,3 +1,11 @@
+dx-toolkit (0.295.0) trusty; urgency=medium
+
+  * Changed: Commit dxpy version during release
+  * Changed: Python 2.7 example applets to use Python 3
+  * Fixed: `dx get` for python3 interpreter
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 30 Apr 2020 18:25:52 +0000
+
 dx-toolkit (0.294.0) trusty; urgency=medium
 
   * No significant changes
