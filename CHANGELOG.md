@@ -6,7 +6,20 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [293.0] - beta
+### Fixed
+
+* `dx get` for applets with `python3` interpreter
+
+### Changed
+
+* Python 2.7 example applets to use Python 3
+* Commit dxpy version during release
+
+## [294.0] - beta
+
+* No significant changes
+
+## [293.0] - 2020.04.24 stable
 
 ### Added
 
@@ -20,7 +33,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx upload` retry for "SSL EOF" error
 * Error out for dx run --clone with analysis and executable
 
-## [292.0] - 2020.04.09 stable
+## [292.0] - 2020.04.09
 
 ### Added
 
