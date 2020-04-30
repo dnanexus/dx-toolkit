@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [295.0] - beta
+
 ### Fixed
 
 * `dx get` for applets with `python3` interpreter
@@ -15,11 +17,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python 2.7 example applets to use Python 3
 * Commit dxpy version during release
 
-## [294.0] - beta
+## [294.0] - 2020.04.30 stable
 
 * No significant changes
 
-## [293.0] - 2020.04.24 stable
+## [293.0] - 2020.04.24 
 
 ### Added
 
