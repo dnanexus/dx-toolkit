@@ -128,6 +128,7 @@ class TestDXTestUtils(DXTestCase):
             self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
         self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
 
+    #FIXME: This is the only test that fails when using PyTest
     # @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     # def test_without_auth(self):
     #     self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
