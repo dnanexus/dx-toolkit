@@ -2,3 +2,6 @@
   path = src/jq
   url = https://github.com/stedolan/jq.git
   ignore = dirty
+[submodule "src/python/test/behave_tests/medusa"]
+	path = src/python/test/behave_tests/medusa
+	url = git@github.com:dnanexus/medusa.git

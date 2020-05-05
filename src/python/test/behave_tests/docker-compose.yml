@@ -1,0 +1,16 @@
+version: '2.1'
+
+services:
+  medusa:
+    image: registry.internal.dnanexus.com/docker/medusa:6.7.0
+    environment:
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - TAG
+      - PARALLEL
+    volumes:
+      - "./features/:/tmp"
+#      - "./medusa/helpers/:/helpers" #Uncomment when developing with local version of helpers
+#      - "./medusa/biome/:/biome" #Uncomment when developing with local version of settings.yml
+#      - "./pageobject/:/pageobject" #Uncomment when developing UI selenium tests
+

@@ -1,0 +1,17 @@
+@dx
+Feature: 1: dx commands example
+
+  Scenario: 1010_CLI new project test
+    Given CLI login as user qa_admin_org1
+    When CLI create new project
+      | name      | --bill-to     | expect_error |
+      | [default] | org-test_org1 | no           |
+    Then login as user qa_admin_org1
+    And add qa_tester_orgs123 user as ADMINISTER to project
+
+
+  Scenario: 1020_CLI new project test with error
+    Given CLI login as user qa_admin_org1
+    When CLI create new project
+      | name      | --bill-to | expect_error                                                             |
+      | [default] | zzz       | InvalidInput: Expected key "billTo" to be a user id or org id, code 422. |
