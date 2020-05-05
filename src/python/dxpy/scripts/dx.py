@@ -5188,10 +5188,14 @@ parser_find_apps.add_argument('--installed', help='Return only installed apps', 
 parser_find_apps.add_argument('--billed-to', help='User or organization responsible for the app')
 parser_find_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_apps.add_argument('--developer', help='Developer of the app')
-parser_find_apps.add_argument('--created-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--created-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_apps.add_argument('--created-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                         Negative input example "--created-after=-2d"''')
+parser_find_apps.add_argument('--created-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                        Negative input example "--created-before=-2d"''')
+parser_find_apps.add_argument('--mod-after',help='''Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                    Negative input example "--mod-after=-2d"''')
+parser_find_apps.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                      Negative input example "--mod-before=-2d"''')
 parser_find_apps.set_defaults(func=find_apps)
 register_parser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
 
@@ -5214,10 +5218,14 @@ parser_find_globalworkflows.add_argument('--unpublished', help='Return only unpu
 parser_find_globalworkflows.add_argument('--billed-to', help='User or organization responsible for the workflow')
 parser_find_globalworkflows.add_argument('--creator', help='Creator of the workflow version')
 parser_find_globalworkflows.add_argument('--developer', help='Developer of the workflow')
-parser_find_globalworkflows.add_argument('--created-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_globalworkflows.add_argument('--created-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_globalworkflows.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_globalworkflows.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_globalworkflows.add_argument('--created-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                         Negative input example "--created-after=-2d"''')
+parser_find_globalworkflows.add_argument('--created-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                        Negative input example "--created-before=-2d"''')
+parser_find_globalworkflows.add_argument('--mod-after',help='''Date (e.g. 2012-01-01) or integer timestamp after which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                    Negative input example "--mod-after=-2d"''')
+parser_find_globalworkflows.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                      Negative input example "--mod-before=-2d"''')
 parser_find_globalworkflows.set_defaults(func=find_global_workflows)
 register_parser(parser_find_globalworkflows, subparsers_action=subparsers_find, categories='exec')
 
@@ -5293,10 +5301,14 @@ parser_find_data.add_argument('--folder', help=argparse.SUPPRESS).completer = DX
 parser_find_data.add_argument('--path', help='Project and/or folder in which to restrict the results',
                               metavar='PROJECT:FOLDER').completer = DXPathCompleter(expected='folder')
 parser_find_data.add_argument('--norecurse', dest='recurse', help='Do not recurse into subfolders', action='store_false')
-parser_find_data.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--created-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_data.add_argument('--created-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_data.add_argument('--created-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                         Negative input example "--created-after=-2d"''')
+parser_find_data.add_argument('--created-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                        Negative input example "--created-before=-2d"''')
+parser_find_data.add_argument('--mod-after',help='''Date (e.g. 2012-01-01) or integer timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                    Negative input example "--mod-after=-2d"''')
+parser_find_data.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                      Negative input example "--mod-before=-2d"''')
 parser_find_data.add_argument('--region', help='Restrict the search to the provided region')
 
 parser_find_data.set_defaults(func=find_data)
@@ -5317,11 +5329,13 @@ parser_find_projects.add_argument('--public',
                                   help='Include ONLY public projects (will automatically set --level to VIEW)',
                                   action='store_true')
 parser_find_projects.add_argument('--created-after',
-                                  help='Date (e.g. 2012-01-01) or integer timestamp after which the project was ' +
-                                  'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+                                  help='''Date (e.g. 2012-01-01) or integer timestamp after which the project was 
+                                  created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)
+                                  Negative input example "--created-after=-2d"''')
 parser_find_projects.add_argument('--created-before',
-                                  help='Date (e.g. 2012-01-01) or integer timestamp after which the project was ' +
-                                  'created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+                                  help='''Date (e.g. 2012-01-01) or integer timestamp after which the project was 
+                                  created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)
+                                  Negative input example "--created-before=-2d"''')
 parser_find_projects.add_argument('--region', help='Restrict the search to the provided region')
 parser_find_projects.set_defaults(func=find_projects)
 register_parser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
@@ -5368,8 +5382,10 @@ parser_find_org_projects.add_argument('--ids', nargs='+', help='Possible project
 find_org_projects_public = parser_find_org_projects.add_mutually_exclusive_group()
 find_org_projects_public.add_argument('--public-only', dest='public', help='Include only public projects', action='store_true', default=None)
 find_org_projects_public.add_argument('--private-only', dest='public', help='Include only private projects', action='store_false', default=None)
-parser_find_org_projects.add_argument('--created-after', help='Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
-parser_find_org_projects.add_argument('--created-before', help='Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
+parser_find_org_projects.add_argument('--created-after', help='''Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch. 
+                                                                 Negative input example "--created-after=-2d"''')
+parser_find_org_projects.add_argument('--created-before', help='''Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch. 
+                                                                  Negative input example "--created-before=-2d"''')
 parser_find_org_projects.add_argument('--region', help='Restrict the search to the provided region')
 parser_find_org_projects.set_defaults(func=org_find_projects)
 register_parser(parser_find_org_projects, subparsers_action=subparsers_find_org, categories=('data', 'org'))
@@ -5396,10 +5412,14 @@ parser_find_org_apps.add_argument('--unpublished', help='Return only unpublished
 parser_find_org_apps.add_argument('--installed', help='Return only installed apps', action='store_true')
 parser_find_org_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_org_apps.add_argument('--developer', help='Developer of the app')
-parser_find_org_apps.add_argument('--created-after', help='Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
-parser_find_org_apps.add_argument('--created-before', help='Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch.')
-parser_find_org_apps.add_argument('--mod-after', help='Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
-parser_find_org_apps.add_argument('--mod-before', help='Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)')
+parser_find_org_apps.add_argument('--created-after', help='''Date (e.g. 2012-01-31) or integer timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch. 
+                                                             Negative input example "--created-after=-2d"''')
+parser_find_org_apps.add_argument('--created-before', help='''Date (e.g. 2012-01-31) or integer timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch. 
+                                                              Negative input example "--created-before=-2d"''')
+parser_find_org_apps.add_argument('--mod-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                         Negative input example "--mod-after=-2d"''')
+parser_find_org_apps.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+                                                          Negative input example "--mod-before=-2d"''')
 parser_find_org_apps.set_defaults(func=org_find_apps)
 register_parser(parser_find_org_apps, subparsers_action=subparsers_find_org, categories=('exec', 'org'))
 
