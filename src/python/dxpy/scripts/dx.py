@@ -2517,11 +2517,23 @@ def wait(args):
 def build(args):
     sys.argv = ['dx build'] + sys.argv[2:]
 
-    def get_mode(src_dir):
+    def get_mode(args, src_dir):
         """
         Returns an applet or a workflow mode based on whether
         the source directory contains dxapp.json or dxworkflow.json.
+
+        If --from option is used, it will set it to:
+        app if --from=applet-xxxx
+        globalworkflow if --from=workflow-xxxx
+        Note: dictionaries of regional options that can replace optionally
+        ID strings will be supported in the future
         """
+        if args._from is not None:
+            if args._from.starts_with("applet"):
+                return "app"
+            elif args._from.starts_with("workflow"):
+                build_parser.error('--from option with a workflow is not supported')
+        
         if not os.path.isdir(src_dir):
             parser.error("{} is not a directory".format(src_dir))
 
@@ -2531,6 +2543,11 @@ def build(args):
             return "applet"
 
     def get_validated_source_dir(args):
+        if args._from is not None:
+            if args.src_dir is not None:
+                build_parser.error('Source directory and --from cannot be specified together')
+            return None
+
         src_dir = args.src_dir
         if src_dir is None:
             src_dir = os.getcwd()
@@ -2556,6 +2573,18 @@ def build(args):
 
         if args.run and args.remote and args.mode == 'app':
             build_parser.error("Options --remote, --app, and --run cannot all be specified together. Try removing --run and then separately invoking dx run.")
+
+        if args.mode == "app" and args._from is not None and not args._from.starts_with("applet"):
+            build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
+
+        if args.mode == "globalworkflow" and args._from is not None and not args._from.starts_with("applet"):
+            build_parser.error("building a global workflow from a local workflow using --from is not supported")
+
+        if args.mode == "app" and args._from is not None and args.version is not None:
+            build_parser.error("--version must be specified when using the --from option")
+
+        if args._from is not None and args.dry_run is not None:
+            build_parser.error("Options --dry-run and --from cannot be specified together")
 
         # options not supported by workflow building
         if args.mode == "workflow":
@@ -4299,6 +4328,9 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
 
 src_dir_action = build_parser.add_argument("src_dir", help="App, applet, or workflow source directory (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
+
+build_parser.add_argument("--from", help="ID of an applet to create an app from. Source directory cannot be given with this option",
+                          dest="_from").completer = DXPathCompleter(classes=['applet'])
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
 build_parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")

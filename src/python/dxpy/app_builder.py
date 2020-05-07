@@ -742,8 +742,13 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
 def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
                 try_versions=None, try_update=True, confirm=True):
-    app_spec = _get_app_spec(src_dir)
-    logger.info("Will create app with spec: %s" % (json.dumps(app_spec),))
+
+    if src_dir:
+        app_spec = _get_app_spec(src_dir)
+        logger.info("Will create app with spec: %s" % (json.dumps(app_spec),))
+    else:
+        app_spec = {}
+        logger.info("Will create app from the applet: %s" % (applet_or_regional_options,))
 
     app_spec.update(applet_or_regional_options, name=app_name)
 
