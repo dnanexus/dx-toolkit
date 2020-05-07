@@ -676,11 +676,32 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
                    return_object_dump=False, confirm=True, **kwargs):
 
     applet_desc = dxpy.api.applet_describe(applet_id)
-
     app_name = applet_desc["name"]
     dxpy.executable_builder.verify_developer_rights('app-' + app_name)
+    logger.info("Will create app from the applet: %s (%s)" % (applet_desc["name"], applet_desc['id'],))
 
-    app_id = dxpy.app_builder.create_app_multi_region(app_name,
+    applet_region = dxpy.api.project_describe(applet_desc["project"],
+                                              input_params={"fields": {"region": True}})["region"]
+
+    #TODO: make it possible to build multi region app by uploadling
+    # the applet tarball to different regions
+    regional_options = {
+        applet_region: {'applet': applet_id}
+    }
+
+    # Certain metadata is not copied from an applet for the app
+    # It must be passed explicitly otherwise default values will be
+    # set by the API server
+    fields_to_inherit = (
+        "summary", "title", "description", "developerNotes",
+        "details", "access", "ignoreReuse"
+    )
+    inherited_metadata = {}
+    for field in fields_to_inherit: 
+        if field in applet_desc:
+            inherited_metadata[field] = applet_desc[field]
+
+    app_id = dxpy.app_builder.create_app_multi_region(regional_options,
                                                       app_name,
                                                       None,
                                                       publish=publish,
@@ -688,7 +709,9 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
                                                       billTo=bill_to_override,
                                                       try_versions=version,
                                                       try_update=do_try_update,
-                                                      confirm=confirm)
+                                                      confirm=confirm,
+                                                      inherited_metadata=inherited_metadata
+                                                      )
     app_describe = dxpy.api.app_describe(app_id)
 
     if publish:
@@ -698,6 +721,9 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
         print("You can publish this app with:", file=sys.stderr)
         print("  dx publish {n}/{v}".format(n=app_describe["name"],
                                             v=app_describe["version"]), file=sys.stderr)
+
+    return app_describe if return_object_dump else {"id": app_id}
+
 
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
@@ -946,11 +972,10 @@ def _build_app(args, extra_args):
 
     if args._from:
         # BUILD FROM EXISTING APPLET
-
         try:
             output = build_app_from(
                 args._from,
-                args.version,
+                [args.version_override],
                 publish=args.publish,
                 do_try_update=args.update,
                 bill_to_override=args.bill_to,
