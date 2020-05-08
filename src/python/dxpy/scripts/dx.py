@@ -2517,20 +2517,41 @@ def wait(args):
 def build(args):
     sys.argv = ['dx build'] + sys.argv[2:]
 
-    def get_mode(src_dir):
+    def get_mode(args):
         """
         Returns an applet or a workflow mode based on whether
         the source directory contains dxapp.json or dxworkflow.json.
-        """
-        if not os.path.isdir(src_dir):
-            parser.error("{} is not a directory".format(src_dir))
 
-        if os.path.exists(os.path.join(src_dir, "dxworkflow.json")):
+        If --from option is used, it will set it to:
+        app if --from=applet-xxxx
+        globalworkflow if --from=workflow-xxxx
+        Note: dictionaries of regional options that can replace optionally
+        ID strings will be supported in the future
+        """
+        if args._from is not None:
+            if not is_hashid(args._from):
+                build_parser.error('--from option only accepts a DNAnexus applet ID')
+            if args._from.startswith("applet"):
+                return "app"
+            elif args._from.startswith("workflow"):
+                build_parser.error('--from option with a workflow is not supported')
+            else:
+                build_parser.error('--from option only accepts a DNAnexus applet ID')
+
+        if not os.path.isdir(args.src_dir):
+            parser.error("{} is not a directory".format(args.src_dir))
+
+        if os.path.exists(os.path.join(args.src_dir, "dxworkflow.json")):
             return "workflow"
         else:
             return "applet"
 
     def get_validated_source_dir(args):
+        if args._from is not None:
+            if args.src_dir is not None:
+                build_parser.error('Source directory and --from cannot be specified together')
+            return None
+
         src_dir = args.src_dir
         if src_dir is None:
             src_dir = os.getcwd()
@@ -2557,7 +2578,43 @@ def build(args):
         if args.run and args.remote and args.mode == 'app':
             build_parser.error("Options --remote, --app, and --run cannot all be specified together. Try removing --run and then separately invoking dx run.")
 
+        # conflicts and incompatibilities with --from
+
+        if args._from is not None and args.region:
+            build_parser.error("Options --from and --region cannot be specified together. The app will be enabled only in the region of the project in which the applet is stored")
+
+        if args._from is not None and args.ensure_upload:
+            build_parser.error("Options --from and --ensure-upload cannot be specified together")
+
+        if args._from is not None and args.force_symlinks:
+            build_parser.error("Options --from and --force-symlinks cannot be specified together")
+
+        if args._from is not None and args.remote:
+            build_parser.error("Options --from and --remote cannot be specified together")
+
+        if args._from is not None and not args.dx_toolkit_autodep:
+            build_parser.error("Options --from and --no-dx-toolkit-autodep cannot be specified together")
+
+        if args._from is not None and not args.parallel_build:
+            build_parser.error("Options --from and --no-parallel-build cannot be specified together")
+            
+        if args._from is not None and args.mode == "globalworkflow":
+            build_parser.error("building a global workflow using --from is not supported")
+
+        if args._from is not None and args.mode != "app":
+            build_parser.error("--from can only be used to build an app from an applet")
+
+        if args.mode == "app" and args._from is not None and not args._from.startswith("applet"):
+            build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
+
+        if args.mode == "app" and args._from is not None and not args.version_override:
+            build_parser.error("--version must be specified when using the --from option")
+
+        if args._from and args.dry_run:
+            build_parser.error("Options --dry-run and --from cannot be specified together")
+
         # options not supported by workflow building
+
         if args.mode == "workflow":
             unsupported_options = {
                 '--ensure-upload': args.ensure_upload,
@@ -2593,7 +2650,7 @@ def build(args):
 
         # If mode is not specified, determine it by the json file
         if args.mode is None:
-            args.mode = get_mode(args.src_dir)
+            args.mode = get_mode(args)
 
         handle_arg_conflicts(args)
 
@@ -4274,8 +4331,8 @@ register_parser(parser_head, categories='data')
 #####################################
 # build
 #####################################
-build_parser = subparsers.add_parser('build', help='Upload and build a new applet/app, or a workflow',
-                                     description='Build an applet, app, or workflow object from a local source directory.  You can use ' + BOLD("dx-app-wizard") + ' to generate a skeleton directory of an app/applet with the necessary files.',
+build_parser = subparsers.add_parser('build', help='Create a new applet/app, or a workflow',
+                                     description='Build an applet, app, or workflow object from a local source directory or an app from an existing applet in the platform. You can use ' + BOLD("dx-app-wizard") + ' to generate a skeleton directory of an app/applet with the necessary files.',
                                      prog='dx build',
                                      parents=[env_args])
 
@@ -4327,6 +4384,8 @@ app_options.set_defaults(publish=False)
 app_options.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
                          dest="publish")
 app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
+app_options.add_argument("--from", help="ID of an applet to create an app from. Source directory cannot be given with this option",
+                          dest="_from").completer = DXPathCompleter(classes=['applet'])
 
 
 # --[no-]remote

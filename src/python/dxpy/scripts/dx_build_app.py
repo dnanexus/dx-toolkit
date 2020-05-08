@@ -672,6 +672,65 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         shutil.rmtree(temp_dir)
 
 
+def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_to_override=None,
+                   return_object_dump=False, confirm=True, **kwargs):
+
+    applet_desc = dxpy.api.applet_describe(applet_id)
+    app_name = applet_desc["name"]
+    dxpy.executable_builder.verify_developer_rights('app-' + app_name)
+    logger.info("Will create app from the applet: %s (%s)" % (applet_desc["name"], applet_desc['id'],))
+
+    applet_region = dxpy.api.project_describe(applet_desc["project"],
+                                              input_params={"fields": {"region": True}})["region"]
+
+    #TODO: make it possible to build multi region app by uploadling
+    # the applet tarball to different regions
+    regional_options = {
+        applet_region: {'applet': applet_id}
+    }
+
+    # Certain metadata is not copied from an applet to the app
+    # It must be passed explicitly otherwise default values will be
+    # set by the API server or an error will be throw during app build
+    # for required non-empty fields
+    fields_to_inherit = (
+        "summary", "title", "description", "developerNotes",
+        "details", "access", "ignoreReuse"
+    )
+    inherited_metadata = {}
+    for field in fields_to_inherit: 
+        if field in applet_desc:
+            inherited_metadata[field] = applet_desc[field]
+
+    required_non_empty = ("summary", "title", "description", "developerNotes")
+    for field in required_non_empty:
+        if field not in inherited_metadata or not inherited_metadata[field]:
+            inherited_metadata[field] = applet_desc["name"]
+    
+    app_id = dxpy.app_builder.create_app_multi_region(regional_options,
+                                                      app_name,
+                                                      None,
+                                                      publish=publish,
+                                                      set_default=publish,
+                                                      billTo=bill_to_override,
+                                                      try_versions=version,
+                                                      try_update=do_try_update,
+                                                      confirm=confirm,
+                                                      inherited_metadata=inherited_metadata
+                                                      )
+    app_describe = dxpy.api.app_describe(app_id)
+
+    if publish:
+        print("Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
+    else:
+        print("Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
+        print("You can publish this app with:", file=sys.stderr)
+        print("  dx publish {n}/{v}".format(n=app_describe["name"],
+                                            v=app_describe["version"]), file=sys.stderr)
+
+    return app_describe if return_object_dump else {"id": app_id}
+
+
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
@@ -696,8 +755,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
         raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
 
+    # Prepare projects in which the app's underlying applets will be built (one per region).
     projects_by_region = None
-
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
         region = dxpy.api.project_describe(working_project,
@@ -916,6 +975,33 @@ def _build_app(args, extra_args):
     TODO: remote app builds still return None, but we should fix this.
 
     """
+
+    if args._from:
+        # BUILD FROM EXISTING APPLET
+        try:
+            output = build_app_from(
+                args._from,
+                [args.version_override],
+                publish=args.publish,
+                do_try_update=args.update,
+                bill_to_override=args.bill_to,
+                confirm=args.confirm,
+                return_object_dump=args.json,
+                **extra_args
+            )
+            if output is not None and args.run is None:
+                print(json.dumps(output))
+
+        except dxpy.app_builder.AppBuilderException as e:
+            # AppBuilderException represents errors during app building
+            # that could reasonably have been anticipated by the user.
+            print("Error: %s" % (e.args,), file=sys.stderr)
+            sys.exit(3)
+        except dxpy.exceptions.DXAPIError as e:
+            print("Error: %s" % (e,), file=sys.stderr)
+            sys.exit(3)
+
+        return output['id']
 
     if not args.remote:
         # LOCAL BUILD

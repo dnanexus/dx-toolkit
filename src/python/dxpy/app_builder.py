@@ -707,7 +707,7 @@ def _update_version(app_name, version, app_spec, try_update=True):
 
 
 def create_app_multi_region(regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
-                            try_versions=None, try_update=True, confirm=True):
+                            try_versions=None, try_update=True, confirm=True, inherited_metadata={}):
     """
     Creates a new app object from the specified applet(s).
 
@@ -721,7 +721,7 @@ def create_app_multi_region(regional_options, app_name, src_dir, publish=False, 
     """
     return _create_app(dict(regionalOptions=regional_options), app_name, src_dir, publish=publish,
                        set_default=set_default, billTo=billTo, try_versions=try_versions, try_update=try_update,
-                       confirm=confirm)
+                       confirm=confirm, inherited_metadata=inherited_metadata)
 
 
 def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
@@ -741,14 +741,17 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
 
 def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
-                try_versions=None, try_update=True, confirm=True):
-    app_spec = _get_app_spec(src_dir)
-    logger.info("Will create app with spec: %s" % (json.dumps(app_spec),))
+                try_versions=None, try_update=True, confirm=True, inherited_metadata={}):
+
+    if src_dir:
+        app_spec = _get_app_spec(src_dir)
+        logger.info("Will create app with spec: %s" % (json.dumps(app_spec),))
+        # Inline Readme.md and Readme.developer.md
+        dxpy.executable_builder.inline_documentation_files(app_spec, src_dir)
+    else:
+        app_spec = inherited_metadata
 
     app_spec.update(applet_or_regional_options, name=app_name)
-
-    # Inline Readme.md and Readme.developer.md
-    dxpy.executable_builder.inline_documentation_files(app_spec, src_dir)
 
     if billTo:
         app_spec["billTo"] = billTo
@@ -758,6 +761,7 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
     for version in try_versions:
         logger.debug("Attempting to create version %s..." % (version,))
         app_spec['version'] = version
+
         app_describe = None
         try:
             # 404, which is rather likely in this app_describe request
