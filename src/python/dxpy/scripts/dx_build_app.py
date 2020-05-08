@@ -689,9 +689,10 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
         applet_region: {'applet': applet_id}
     }
 
-    # Certain metadata is not copied from an applet for the app
+    # Certain metadata is not copied from an applet to the app
     # It must be passed explicitly otherwise default values will be
-    # set by the API server
+    # set by the API server or an error will be throw during app build
+    # for required non-empty fields
     fields_to_inherit = (
         "summary", "title", "description", "developerNotes",
         "details", "access", "ignoreReuse"
@@ -701,6 +702,11 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
         if field in applet_desc:
             inherited_metadata[field] = applet_desc[field]
 
+    required_non_empty = ("summary", "title", "description", "developerNotes")
+    for field in required_non_empty:
+        if field not in inherited_metadata or not inherited_metadata[field]:
+            inherited_metadata[field] = applet_desc["name"]
+    
     app_id = dxpy.app_builder.create_app_multi_region(regional_options,
                                                       app_name,
                                                       None,

@@ -4332,7 +4332,7 @@ register_parser(parser_head, categories='data')
 # build
 #####################################
 build_parser = subparsers.add_parser('build', help='Create a new applet/app, or a workflow',
-                                     description='Build an applet, app, or workflow object from a local source directory or from an existing applet in the platform.  You can use ' + BOLD("dx-app-wizard") + ' to generate a skeleton directory of an app/applet with the necessary files.',
+                                     description='Build an applet, app, or workflow object from a local source directory or an app from an existing applet in the platform. You can use ' + BOLD("dx-app-wizard") + ' to generate a skeleton directory of an app/applet with the necessary files.',
                                      prog='dx build',
                                      parents=[env_args])
 
@@ -4356,9 +4356,6 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
 
 src_dir_action = build_parser.add_argument("src_dir", help="App, applet, or workflow source directory (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
-
-build_parser.add_argument("--from", help="ID of an applet to create an app from. Source directory cannot be given with this option",
-                          dest="_from").completer = DXPathCompleter(classes=['applet'])
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
 build_parser.add_argument("--create-applet", help=argparse.SUPPRESS, action="store_const", dest="mode", const="applet")
@@ -4387,6 +4384,8 @@ app_options.set_defaults(publish=False)
 app_options.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
                          dest="publish")
 app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
+app_options.add_argument("--from", help="ID of an applet to create an app from. Source directory cannot be given with this option",
+                          dest="_from").completer = DXPathCompleter(classes=['applet'])
 
 
 # --[no-]remote
