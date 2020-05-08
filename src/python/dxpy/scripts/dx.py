@@ -91,12 +91,14 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        import readline
+        import gnureadline
+        readline = gnureadline
+
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
-        if readline.__doc__ and 'libedit' in readline.__doc__:
-            print('Warning: incompatible readline module detected (libedit), tab completion disabled', file=sys.stderr)
+        # if readline.__doc__ and 'libedit' in readline.__doc__:
+        #     print('Warning: incompatible readline module detected (libedit), tab completion disabled', file=sys.stderr)
     except ImportError:
         if os.name != 'nt':
             print('Warning: readline module is not available, tab completion disabled', file=sys.stderr)
@@ -4334,7 +4336,7 @@ register_parser(parser_head, categories='data')
 build_parser = subparsers.add_parser('build', help='Create a new applet/app, or a workflow',
                                      description='Build an applet, app, or workflow object from a local source directory or an app from an existing applet in the platform. You can use ' + BOLD("dx-app-wizard") + ' to generate a skeleton directory of an app/applet with the necessary files.',
                                      prog='dx build',
-                                     parents=[env_args])
+                                     parents=[env_args, stdout_args])
 
 app_options = build_parser.add_argument_group('options for creating apps', '(Only valid when --app/--create-app is specified)')
 applet_and_workflow_options = build_parser.add_argument_group('options for creating applets or workflows', '(Only valid when --app/--create-app is NOT specified)')
@@ -4441,7 +4443,6 @@ app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for con
 build_parser.set_defaults(json=False)
 build_parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
 build_parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
-
 build_parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
 build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 

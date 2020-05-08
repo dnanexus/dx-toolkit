@@ -52,6 +52,7 @@ dxR.Rcheck
 /bin/dx-jobutil-*
 /bin/dx-log-stream
 /bin/dx-mount
+/bin/dx-mount-all-inputs
 /bin/dx-notebook-reconnect
 /bin/dx-verify-file
 /bin/dx-print-bash-vars
