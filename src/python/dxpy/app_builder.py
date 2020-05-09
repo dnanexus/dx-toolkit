@@ -795,7 +795,8 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
             app_id = _create_or_update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
-            logger.info("Created app " + app_id)
+            if not brief:
+                logger.info("Created app " + app_id)
             # Success!
             break
         elif app_describe.get("published", 0) == 0:
