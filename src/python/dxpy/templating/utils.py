@@ -40,7 +40,10 @@ completer_state = {
 }
 
 try:
-    import readline
+    try:
+        import gnureadline as readline
+    except ImportError:
+        import readline
     import rlcompleter
     readline.parse_and_bind("tab: complete")
     readline.set_completer_delims("")

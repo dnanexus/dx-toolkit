@@ -246,7 +246,10 @@ def get_input_array(param_desc):
     print(fill(prompt))
 
     try:
-        import readline
+        try:
+            import gnureadline as readline
+        except ImportError:
+            import readline
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
@@ -351,7 +354,10 @@ def get_input_single(param_desc):
     print(fill(prompt))
 
     try:
-        import readline
+        try:
+            import gnureadline as readline
+        except ImportError:
+            import readline
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
@@ -670,7 +676,10 @@ class ExecutableInputs(object):
 
     def init_completer(self):
         try:
-            import readline
+            try:
+                import gnureadline as readline
+            except ImportError:
+                import readline
             import rlcompleter
             readline.parse_and_bind("tab: complete")
 
@@ -684,7 +693,10 @@ class ExecutableInputs(object):
 
     def uninit_completer(self):
         try:
-            import readline
+            try:
+                import gnureadline as readline
+            except ImportError:
+                import readline
             readline.set_completer()
             readline.clear_history()
         except:
