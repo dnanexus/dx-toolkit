@@ -676,12 +676,13 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
 
 def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_to_override=None,
-                   return_object_dump=False, confirm=True, **kwargs):
+                   return_object_dump=False, confirm=True, brief=False, **kwargs):
 
     applet_desc = dxpy.api.applet_describe(applet_id)
     app_name = applet_desc["name"]
     dxpy.executable_builder.verify_developer_rights('app-' + app_name)
-    logger.info("Will create app from the applet: %s (%s)" % (applet_desc["name"], applet_desc['id'],))
+    if not brief:
+        logger.info("Will create app from the applet: %s (%s)" % (applet_desc["name"], applet_desc['id'],))
 
     applet_region = dxpy.api.project_describe(applet_desc["project"],
                                               input_params={"fields": {"region": True}})["region"]
@@ -719,17 +720,16 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
                                                       try_versions=version,
                                                       try_update=do_try_update,
                                                       confirm=confirm,
-                                                      inherited_metadata=inherited_metadata
-                                                      )
+                                                      inherited_metadata=inherited_metadata,
+                                                      brief=brief)
     app_describe = dxpy.api.app_describe(app_id)
 
-    if publish:
-        print("Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
-    else:
-        print("Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
-        print("You can publish this app with:", file=sys.stderr)
-        print("  dx publish {n}/{v}".format(n=app_describe["name"],
-                                            v=app_describe["version"]), file=sys.stderr)
+    if not brief:
+        if publish:
+            logger.info("Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id))
+        else:
+            logger.info("Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id))
+            logger.info("You can publish this app with: dx publish {n}/{v}".format(n=app_describe["name"], v=app_describe["version"]))
 
     return app_describe if return_object_dump else {"id": app_id}
 
@@ -739,9 +739,10 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
-                             region=None, **kwargs):
+                             region=None, brief=False, **kwargs):
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
+
     _check_suggestions(app_json, publish=publish)
     _verify_app_source_dir(src_dir, mode, enforce=do_check_syntax)
     if mode == "app" and not dry_run:
@@ -870,7 +871,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 project=project,
                 folder=override_folder,
                 ensure_upload=ensure_upload,
-                force_symlinks=force_symlinks) if not dry_run else []
+                force_symlinks=force_symlinks,
+                brief=brief) if not dry_run else []
 
         # TODO: Clean up these applets if the app build fails.
         applet_ids_by_region = {}
@@ -887,6 +889,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     override_name=override_applet_name,
                     dx_toolkit_autodep=dx_toolkit_autodep,
                     dry_run=dry_run,
+                    brief=brief,
                     **kwargs)
                 if not dry_run:
                     logger.debug("Created applet " + applet_id + " successfully")
@@ -946,17 +949,17 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                                                               billTo=bill_to_override,
                                                               try_versions=try_versions,
                                                               try_update=do_try_update,
-                                                              confirm=confirm)
+                                                              confirm=confirm,
+                                                              brief=brief)
 
             app_describe = dxpy.api.app_describe(app_id)
 
-            if publish:
-                print("Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
-            else:
-                print("Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id), file=sys.stderr)
-                print("You can publish this app with:", file=sys.stderr)
-                print("  dx publish {n}/{v}".format(n=app_describe["name"],
-                                                    v=app_describe["version"]), file=sys.stderr)
+            if not brief:
+                if publish:
+                    logger.info("Uploaded and published app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id))
+                else:
+                    logger.info("Uploaded app %s/%s (%s) successfully" % (app_describe["name"], app_describe["version"], app_id))
+                    logger.info("You can publish this app with: dx publish {n}/{v}".format(n=app_describe["name"], v=app_describe["version"]))
 
             return app_describe if return_object_dump else {"id": app_id}
 
@@ -990,6 +993,7 @@ def _build_app(args, extra_args):
                 bill_to_override=args.bill_to,
                 confirm=args.confirm,
                 return_object_dump=args.json,
+                brief=args.brief,
                 **extra_args
             )
             if output is not None and args.run is None:
@@ -1031,6 +1035,7 @@ def _build_app(args, extra_args):
                 confirm=args.confirm,
                 return_object_dump=args.json,
                 region=args.region,
+                brief=args.brief,
                 **extra_args
                 )
 
