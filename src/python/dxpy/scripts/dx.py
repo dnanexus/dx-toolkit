@@ -91,12 +91,7 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        try:
-            import gnureadline
-            readline = gnureadline
-        except:
-            import readline
-
+        import readline
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
@@ -104,7 +99,7 @@ if '_ARGCOMPLETE' not in os.environ:
             print('Warning: incompatible readline module detected (libedit), tab completion disabled', file=sys.stderr)
     except ImportError:
         if os.name != 'nt':
-            print('Warning: gnureadline or readline module is not available, tab completion disabled', file=sys.stderr)
+            print('Warning: readline module is not available, tab completion disabled', file=sys.stderr)
 
 state = {"interactive": False,
          "colors": "auto",
