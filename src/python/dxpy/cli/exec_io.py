@@ -34,7 +34,10 @@ from ..utils.resolver import (parse_input_keyval, is_hashid, is_job_id, is_local
                               resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex, basestring, USING_PYTHON2
-
+try:
+    import gnureadline as readline
+except ImportError:
+    import readline
 ####################
 # -i Input Parsing #
 ####################
@@ -246,10 +249,7 @@ def get_input_array(param_desc):
     print(fill(prompt))
 
     try:
-        try:
-            import gnureadline as readline
-        except ImportError:
-            import readline
+        
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
@@ -354,10 +354,6 @@ def get_input_single(param_desc):
     print(fill(prompt))
 
     try:
-        try:
-            import gnureadline as readline
-        except ImportError:
-            import readline
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
@@ -676,10 +672,6 @@ class ExecutableInputs(object):
 
     def init_completer(self):
         try:
-            try:
-                import gnureadline as readline
-            except ImportError:
-                import readline
             import rlcompleter
             readline.parse_and_bind("tab: complete")
 
@@ -693,10 +685,6 @@ class ExecutableInputs(object):
 
     def uninit_completer(self):
         try:
-            try:
-                import gnureadline as readline
-            except ImportError:
-                import readline
             readline.set_completer()
             readline.clear_history()
         except:
