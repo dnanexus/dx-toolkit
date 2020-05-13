@@ -91,7 +91,11 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        import readline
+        # gnureadline required on macos
+        try:
+            import gnureadline as readline
+        except ImportError:
+            import readline
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
