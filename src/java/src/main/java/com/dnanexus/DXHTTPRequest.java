@@ -16,8 +16,9 @@
 
 package com.dnanexus;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -31,11 +32,20 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.*;
+import org.apache.http.util.*;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.BasicHttpContext;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.HeaderElement;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.ParseException;
+import org.apache.http.entity.ContentType;
 
 import com.dnanexus.exceptions.DXAPIException;
 import com.dnanexus.exceptions.DXHTTPException;
@@ -119,6 +129,15 @@ public class DXHTTPRequest {
         return baseError;
     }
 
+    private static String errorMessage(String method, String resource, String errorString, String data,
+                                       int retryWait, int nextRetryNum, int maxRetries) {
+        String baseError = method + " " + resource + ": " + errorString + ". Data: " + data;
+        if (nextRetryNum <= maxRetries) {
+            return baseError + "  Waiting " + retryWait + " seconds before retry " + nextRetryNum
+              + " of " + maxRetries;
+        }
+        return baseError;
+    }
     /**
      * Prints an error message to stderr
      *
@@ -126,7 +145,17 @@ public class DXHTTPRequest {
      *
      */
     private static void logError(String msg) {
-        System.err.println("[" + System.currentTimeMillis() + "] " + msg);
+        System.err.println("[(wjk) " + System.currentTimeMillis() + "] " + msg);
+    }
+
+    private static void logMsg(String msg, String resource, String data) {
+        System.out.println("[(wjk) " + resource + "] " + msg);
+        System.err.println("[(wjk) " + resource + "] " + msg);
+    }
+
+    private static void logMsg2(String msg, String resource, String data) {
+        System.out.println("[(wjk) " + resource + "] data = " + data + ": " + msg);
+        System.err.println("[(wjk) " + resource + "] data = " + data + ": " + msg);
     }
 
     /**
@@ -317,17 +346,33 @@ public class DXHTTPRequest {
     private ParsedResponse requestImpl(String resource, String data, boolean parseResponse,
             RetryStrategy retryStrategy) {
 
+        logMsg2("Starting requestImpl (data length " + data.length() + ")...", resource, data);
         HttpPost request = new HttpPost(apiserver + resource);
+        logMsg("HttpPost object created.", resource, data);
 
         if (securityContext == null || securityContext.isNull()) {
             throw new DXHTTPException(new IOException("No security context was set"));
         }
 
+        logMsg("Preparing request (header)...", resource, data);
         request.setHeader("Content-Type", "application/json");
         request.setHeader("Connection", "close");
         request.setHeader("Authorization", securityContext.get("auth_token_type").textValue() + " "
                 + securityContext.get("auth_token").textValue());
-        request.setEntity(new StringEntity(data, Charset.forName("UTF-8")));
+
+        HttpEntity reqEntity = new StringEntity(data, Charset.forName("UTF-8"));
+        if (resource.endsWith("writeFile")) {
+            ((StringEntity)reqEntity).setChunked(true);
+        }
+        logMsg("Request entity = " + reqEntity, resource, data);
+
+        request.setEntity(reqEntity);
+
+        logMsg("Request is prepared: " + request, resource, data);
+        logMsg("Request headers: " + request.getAllHeaders(), resource, data);
+        for (Header header : request.getAllHeaders()) {
+            logMsg("Request header: name,value: " + header.getName() + "," + header.getValue(), resource, data);
+        }
 
         // Retry with exponential backoff
         int timeoutSeconds = 1;
@@ -355,11 +400,43 @@ public class DXHTTPRequest {
                 // TODO: distinguish between errors during connection init and socket errors while
                 // sending or receiving data. The former can always be retried, but the latter can
                 // only be retried if the request is idempotent.
-                HttpResponse response = getHttpClient().execute(request, getHttpContext());
+                HttpClient client = getHttpClient();
+                logMsg("Executing request (client " + client.getClass().getName() + ") ...", resource, data);
+                HttpResponse response = client.execute(request, getHttpContext());
+                logMsg("Request completed with no exception. Response = " + response, resource, data);
+                for (Header header : response.getAllHeaders()) {
+                    logMsg("Response header: name,value: " + header.getName() + "," + header.getValue(), resource, data);
+                }
 
                 statusCode = response.getStatusLine().getStatusCode();
                 requestId = getHeader(response, "X-Request-ID");
                 HttpEntity entity = response.getEntity();
+                int i = (int)entity.getContentLength();
+                logMsg("Got entity from response. Status code = " + statusCode +
+                  ", requestId = " + requestId + ", entity (" + entity.getClass().getName() + ") = " + entity,
+                  resource, data);
+                logMsg("ContentLength = " + i + ", isChunked = " + entity.isChunked(), resource, data);
+
+                if (entity.isChunked()) {
+                    InputStream is = null;
+                    try {
+                        is = entity.getContent();
+                        logMsg("InputStream for chunks = " + is.getClass().getName(), resource, data);
+                        ByteArrayBuffer buffer = new ByteArrayBuffer(4096);
+                        byte[] tmp = new byte[4096];
+
+                        int len;
+                        int count = 1;
+                        while((len = is.read(tmp)) != -1) {
+                            logMsg("Byte read count " + count, resource, data);
+                            buffer.append(tmp, 0, len);
+                        }
+                        byte[] ba = buffer.toByteArray();
+                        logMsg("ba (length " + ba.length + "): " + ba, resource, data);
+                    } finally {
+                        if (is != null) is.close();
+                    }
+                }
 
                 if (statusCode == null) {
                     throw new DXHTTPException();
@@ -374,7 +451,9 @@ public class DXHTTPRequest {
                     } else if (parseResponse) {
                         JsonNode responseJson = null;
                         try {
+                            logMsg("Parsing response...", resource, data);
                             responseJson = DXJSON.parseJson(new String(value, "UTF-8"));
+                            logMsg("Parsing response complete", resource, data);
                         } catch (JsonProcessingException e) {
                             if (entity.getContentLength() < 0) {
                                 // content-length was not provided, and the JSON could not be
@@ -423,7 +502,7 @@ public class DXHTTPRequest {
                         // Just fall back to reproducing the entire response
                         // body.
                     }
-                    logError(errorType + ": " + errorMessage + ". Code: " + Integer.toString(statusCode)
+                    logError("Got the exception" + errorType + ": " + errorMessage + ". Code: " + Integer.toString(statusCode)
                         + " Request ID: " + requestId);
                     throw DXAPIException.getInstance(errorType, errorMessage, statusCode);
                 } else {
@@ -449,7 +528,9 @@ public class DXHTTPRequest {
                         }
                         throw new ServiceUnavailableException("503 Service Unavailable", statusCode, retryAfterSeconds);
                     }
-                    throw new IOException(EntityUtils.toString(entity));
+                    logMsg("Got the exception IOException (1). Entity = " + entity,
+                      resource, data);
+                    throw new IOException("wjk said don't call EntityUtils"); // EntityUtils.toString(entity));
                 }
             } catch (ServiceUnavailableException e) {
                 int secondsToWait = retryAfterSeconds;
@@ -467,17 +548,22 @@ public class DXHTTPRequest {
                 sleep(secondsToWait);
                 continue;
             } catch (IOException e) {
+                logMsg("Got the exception IOException (2). Status code = " + statusCode + ", requestId = " + requestId, resource, data);
+                e.printStackTrace(System.out);
+                if (e.getCause() != null) {
+                    logMsg("Got the exception cause " + e.getCause().toString(), resource, data);
+                }
                 // Note, this catches both exceptions directly thrown from httpclient.execute (e.g.
                 // no connectivity to server) and exceptions thrown by our code above after parsing
                 // the response.
-                logError(errorMessage("POST", resource, e.toString(), timeoutSeconds,
+                logError(errorMessage("POST", resource, e.toString(), data, timeoutSeconds,
                         attempts + 1, NUM_RETRIES));
                 if (attempts == NUM_RETRIES || !retryRequest) {
                     if (statusCode == null) {
                         throw new DXHTTPException();
                     }
-                    throw new InternalErrorException("Maximum number of retries reached, or unsafe to retry",
-                            statusCode);
+                    throw new InternalErrorException(
+                        "(wjk) Maximum number of retries reached, or unsafe to retry. Data: " + data, statusCode);
                 }
             }
 
