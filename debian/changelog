@@ -1,3 +1,9 @@
+dx-toolkit (0.295.1) trusty; urgency=medium
+
+  * Fixed: `dx-upload-all-outputs ---xattr-properties`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 19 May 2020 20:56:20 +0000
+
 dx-toolkit (0.295.0) trusty; urgency=medium
 
   * Changed: Commit dxpy version during release
