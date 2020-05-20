@@ -1,3 +1,14 @@
+dx-toolkit (0.296.0) trusty; urgency=medium
+
+  * Added: Examples for `dx find` with negative timestamp
+  * Added: `dx build --from applet-xxx` for app
+  * Added: --brief option to dx build for apps and applets
+  * Fixed: Error handling during syntax check for dx build
+  * Fixed: gnureadline import for macOS
+  * Fixed: `dx-upload-all-outputs ---xattr-properties` parsing
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 19 May 2020 20:51:51 +0000
+
 dx-toolkit (0.295.0) trusty; urgency=medium
 
   * Changed: Commit dxpy version during release
