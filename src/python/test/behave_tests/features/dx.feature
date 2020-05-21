@@ -4,8 +4,8 @@ Feature: 1: dx commands example
   Scenario: 1010_CLI new project test
     Given CLI login as user qa_admin_org1
     When CLI create new project
-      | name      | --bill-to     | expect_error |
-      | [default] | org-test_org1 | no           |
+      | name      | --bill-to     |
+      | [default] | org-test_org1 |
     Then login as user qa_admin_org1
     And add qa_tester_orgs123 user as ADMINISTER to project
 
@@ -20,7 +20,6 @@ Feature: 1: dx commands example
   Scenario: 1030_CLI file upload test, project select on login
     Given CLI login as user qa_admin_org1
     When CLI create new project
-    # TODO: remove expect error (by default no)
       | name      | --select | expect_error |
       | [default] |          | no           |
     And generate file big 2 Bytes named zzz.file
