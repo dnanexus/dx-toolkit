@@ -449,7 +449,16 @@ public class DXHTTPRequest {
                         }
                         throw new ServiceUnavailableException("503 Service Unavailable", statusCode, retryAfterSeconds);
                     }
-                    throw new IOException(EntityUtils.toString(entity));
+                    String entityStr = EntityUtils.toString(entity);
+                    String msg;
+                    if (entityStr == null || "".equals(entityStr)) {
+                        // This can happen if the server was unable to send response back to us,
+                        // as happened with TIP-1743. Make this more clear in the exception.
+                        msg = "No response entity received";
+                    } else {
+                        msg = String.format("Response entity: %s", entityStr);
+                    }
+                    throw new IOException(msg);
                 }
             } catch (ServiceUnavailableException e) {
                 int secondsToWait = retryAfterSeconds;
