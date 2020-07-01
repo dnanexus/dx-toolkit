@@ -1,3 +1,10 @@
+dx-toolkit (0.297.0) trusty; urgency=medium
+
+  * Changed: Python cryptography version >= 2.3
+  * Removed: Ubuntu 14.04 builds
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 01 Jul 2020 18:14:48 +0000
+
 dx-toolkit (0.296.0) trusty; urgency=medium
 
   * Added: Examples for `dx find` with negative timestamp
