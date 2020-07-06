@@ -6,18 +6,46 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [295.0] - beta
+## [297.0] - beta
+
+### Changed
+
+* Python cryptography version >= 2.3
+
+### Removed
+
+* Ubuntu 14.04 builds
+
+## [296.0] - 2020.07.01 stable
+
+### Added
+
+* Examples for `dx find` with negative timestamp
+* `dx build --from applet-xxx` for app
+* --brief option to dx build for apps and applets
 
 ### Fixed
 
-* `dx get` for applets with `python3` interpreter
+* Error handling during syntax check for dx build
 
 ### Changed
 
 * Python 2.7 example applets to use Python 3
 * Commit dxpy version during release
 
-## [294.0] - 2020.04.30 stable
+## [295.1] - 2020.05.19
+
+### Fixed
+
+* `dx get` for applets with `python3` interpreter
+* `dx-upload-all-outputs ---xattr-properties` parsing
+
+### Changed
+
+* Python 2.7 example applets to use Python 3
+* Commit dxpy version during release
+
+## [294.0] - 2020.04.30 
 
 * No significant changes
 
