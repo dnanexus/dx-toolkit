@@ -395,7 +395,7 @@ def make_retry_param(retryable):
     return "RetryStrategy.SAFE_TO_RETRY" if retryable else "RetryStrategy.UNSAFE_TO_RETRY"
 
 
-print preamble
+print(preamble)
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
