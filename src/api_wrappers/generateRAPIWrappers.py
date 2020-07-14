@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
 #
@@ -124,7 +124,7 @@ app_object_method_template = '''
                 alwaysRetry=alwaysRetry)
 }}'''
 
-print preamble
+print(preamble)
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
@@ -135,22 +135,22 @@ for method in json.loads(sys.stdin.read()):
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name,
+            print(app_object_method_template.format(method_name=method_name,
                                                     route=route,
                                                     method_route=method_route,
                                                     retry=retry,
                                                     wiki_ref=wiki_ref,
-                                                    indent=indent)
+                                                    indent=indent))
         else:
-            print object_method_template.format(method_name=method_name,
+            print(object_method_template.format(method_name=method_name,
                                                 route=route,
                                                 method_route=method_route,
                                                 retry=retry,
                                                 wiki_ref=wiki_ref,
-                                                indent=indent)
+                                                indent=indent))
     else:
-        print class_method_template.format(method_name=method_name,
+        print(class_method_template.format(method_name=method_name,
                                            route=route,
                                            retry=retry,
                                            wiki_ref=wiki_ref,
-                                           indent=indent)
+                                           indent=indent))
