@@ -2526,7 +2526,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=False)
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where())
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where(), cert_file=None, key_file=None)
-        with self.assertRaises(TypeError):
+        with self.assertRaises((TypeError, FileNotFoundError)):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
         if dxpy.APISERVER_PROTOCOL == "https":
             with self.assertRaisesRegex((TypeError,SSLError, OpenSSL.SSL.Error), "file|string"):
