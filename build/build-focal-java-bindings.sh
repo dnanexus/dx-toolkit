@@ -26,6 +26,6 @@ echo $root
 cd "$root/.."
 
 # Remove make of dx-toolkit deb, not uploaded to apt repo for 20.04
-sed '/debian_install/d' ./debian/rules
+sed -i '/debian_install/d' ./debian/rules
 # Build dx-java-bindings
 debuild --no-lintian --no-tgz-check -us -uc
