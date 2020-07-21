@@ -40,7 +40,13 @@ rm Makefile
 rm -rf debian src/{java,javascript,R,ua,python/build,{dx-verify-file}/build} build/*_env share/dnanexus/lib/javascript
 mv build/Prebuilt-Readme.md Readme.md
 
-"$(dirname $0)/fix_shebang_lines.sh" bin "/usr/bin/env python2.7"
+if [[ product_name == *"20.04"* ]]; then
+  python_env="/usr/bin/env python3"
+else
+  python_env="/usr/bin/env python2.7"
+fi
+
+"$(dirname $0)/fix_shebang_lines.sh" bin "$python_env"
 
 if [[ "$ostype" == 'Linux' ]]; then
   osversion=$(lsb_release -c | sed s/Codename:.//)
