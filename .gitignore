@@ -43,6 +43,7 @@ dxR.Rcheck
 /bin/dx-build-app
 /bin/dx-build-applet
 /bin/dx-build-asset
+/bin/dx-build-report-html
 /bin/dx-clone-asset
 /bin/dx-docker
 /bin/dx-fetch-bundled-depends
