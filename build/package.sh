@@ -40,7 +40,7 @@ rm Makefile
 rm -rf debian src/{java,javascript,R,ua,python/build,{dx-verify-file}/build} build/*_env share/dnanexus/lib/javascript
 mv build/Prebuilt-Readme.md Readme.md
 
-if [[ product_name == *"20.04"* ]]; then
+if [[ "$product_name" == *"20.04"* ]]; then
   python_env="/usr/bin/env python3"
 else
   python_env="/usr/bin/env python2.7"
