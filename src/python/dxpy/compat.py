@@ -19,8 +19,12 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, sys, io, locale, threading
 from io import TextIOWrapper
 from contextlib import contextmanager
-from collections import MutableMapping
-
+try:
+    # Python 3
+    from collections.abc import MutableMapping
+except ImportError:
+    # Python 2.7
+    from collections import MutableMapping
 try:
     sys_encoding = locale.getdefaultlocale()[1] or "UTF-8"
 except Exception:
