@@ -9893,78 +9893,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             with open(path_to_dxapp_json, "r") as fh:
                 app_spec = json.load(fh)
                 self.assertEqual(app_spec["regionalOptions"], regional_options)
-
-class TestDXBuildReportHtml(unittest.TestCase):
-    js = "console.log('javascript');"
-    css = "body {background-color: green;}"
-
-    def setUp(self):
-        self.temp_file_path = tempfile.mkdtemp()
-        self.gif_base64 = "R0lGODdhAQABAIAAAAQCBAAAACwAAAAAAQABAAACAkQBADs="
-        gif_file = open("{}/img.gif".format(self.temp_file_path), "wb")
-        gif_file.write(base64.b64decode(self.gif_base64))
-        gif_file.close()
-        wiki_logo = "http://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/200px-Wikipedia-logo-v2.svg.png"
-        script_file = open("{}/index.js".format(self.temp_file_path), "w")
-        script_file.write(self.js)
-        script_file.close()
-        css_file = open("{}/index.css".format(self.temp_file_path), "w")
-        css_file.write(self.css)
-        css_file.close()
-        html_file = open("{}/index.html".format(self.temp_file_path), "w")
-        html = "<html><head><link rel='stylesheet' href='index.css' type='text/css'/><script src='index.js'></script></head><body><a href='/'/><a href='/' target='_new'/><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
-        html_file.write(html)
-        html_file.close()
-
-        self.proj_id = dxpy.api.project_new({'name': 'TestDXBuildReportHtml Project'})['id']
-        os.environ['DX_PROJECT_CONTEXT_ID'] = self.proj_id
-
-    def tearDown(self):
-        shutil.rmtree(self.temp_file_path)
-        dxpy.api.project_destroy(self.proj_id, {'terminateJobs': True})
-
-    def test_local_file(self):
-        run("dx-build-report-html {d}/index.html --local {d}/out.html".format(d=self.temp_file_path))
-        out_path = "{}/out.html".format(self.temp_file_path)
-        self.assertTrue(os.path.exists(out_path))
-        f = open(out_path, "r")
-        html = f.read()
-        f.close()
-        self.assertTrue(re.search(self.gif_base64, html))
-        self.assertEqual(len(re.split("src=\"data:image", html)), 3)
-        self.assertEqual(len(re.split("<img", html)), 3)
-        self.assertTrue(re.search("target=\"_top\"", html))
-        self.assertTrue(re.search("target=\"_new\"", html))
-        self.assertTrue(re.search("<style", html))
-        self.assertTrue(re.search(re.escape(self.css), html))
-        self.assertFalse(re.search("<link", html))
-        self.assertFalse(re.search("index.css", html))
-        self.assertTrue(re.search(re.escape(self.js), html))
-        self.assertFalse(re.search("index.js", html))
-
-    def test_image_only(self):
-        run("dx-build-report-html {d}/img.gif --local {d}/gif.html".format(d=self.temp_file_path))
-        out_path = "{}/gif.html".format(self.temp_file_path)
-        self.assertTrue(os.path.exists(out_path))
-        f = open(out_path, "r")
-        html = f.read()
-        f.close()
-        self.assertTrue(re.search("<img src=\"data:", html))
-
-    def test_remote_file(self):
-        report = json.loads(run("dx-build-report-html {d}/index.html --remote /html_report -w 47 -g 63".format(d=self.temp_file_path)))
-        fileId = report["fileIds"][0]
-        desc = json.loads(run("dx describe {record} --details --json".format(record=report["recordId"])))
-        self.assertEqual(desc["types"], ["Report", "HTMLReport"])
-        self.assertEqual(desc["name"], "html_report")
-        self.assertEqual(desc["details"]["files"][0]["$dnanexus_link"], fileId)
-        self.assertEqual(desc["details"]["width"], "47")
-        self.assertEqual(desc["details"]["height"], "63")
-        desc = json.loads(run("dx describe {file} --details --json".format(file=fileId)))
-        self.assertTrue(desc["hidden"])
-        self.assertEqual(desc["name"], "index.html")
-        run("dx rm {record} {file}".format(record=report["recordId"], file=fileId))
-
+                
 
 @unittest.skipUnless(testutil.TEST_TCSH, 'skipping tests that require tcsh to be installed')
 class TestTcshEnvironment(unittest.TestCase):

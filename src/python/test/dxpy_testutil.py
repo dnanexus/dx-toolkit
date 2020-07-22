@@ -54,9 +54,10 @@ def _transform_words_to_regexp(s):
 
 
 def host_is_centos_5():
-    distro = platform.linux_distribution()
-    if distro[0] == 'CentOS' and distro[1].startswith('5.'):
-        return True
+    if USING_PYTHON2:
+        distro = platform.linux_distribution()
+        if distro[0] == 'CentOS' and distro[1].startswith('5.'):
+            return True
     return False
 
 class DXCalledProcessError(subprocess.CalledProcessError):
