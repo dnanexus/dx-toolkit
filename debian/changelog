@@ -1,3 +1,12 @@
+dx-toolkit (0.298.0) trusty; urgency=medium
+
+  * Added: Ubuntu 20.04 build targets
+  * Changed: jackson-databind from 2.9.10.3 to 2.9.10.5
+  * Fixed: `dx-clone-asset` with Python 3
+  * Fixed: API wrapper generation with Python 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 22 Jul 2020 19:46:03 +0000
+
 dx-toolkit (0.297.0) trusty; urgency=medium
 
   * Changed: Python cryptography version >= 2.3
