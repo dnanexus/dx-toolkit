@@ -1,3 +1,9 @@
+dx-toolkit (0.297.1) trusty; urgency=medium
+
+  * Fixed: `dx-clone-asset` with Python 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 22 Jul 2020 19:49:14 +0000
+
 dx-toolkit (0.297.0) trusty; urgency=medium
 
   * Changed: Python cryptography version >= 2.3
