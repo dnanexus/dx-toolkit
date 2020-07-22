@@ -6,17 +6,35 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [297.0] - beta
+## [298.0] - beta
+
+### Added
+
+* Ubuntu 20.04 build targets
+
+### Changed
+
+* jackson-databind from 2.9.10.3 to 2.9.10.5
+
+### Fixed
+
+* API wrapper generation with Python 3
+
+## [297.1] - 2020.07.22 stable
 
 ### Changed
 
 * Python cryptography version >= 2.3
 
+### Fixed
+
+* `dx-clone-asset` with Python 3
+
 ### Removed
 
 * Ubuntu 14.04 builds
 
-## [296.0] - 2020.07.01 stable
+## [296.0] - 2020.07.01 
 
 ### Added
 
