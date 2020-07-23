@@ -1221,7 +1221,7 @@ public abstract class DXDataObject extends DXObject {
     public void rename(String newName) {
         Preconditions.checkNotNull(this.container,
                 "Container must be supplied for this metadata operation");
-        apiCallOnObject("removeTags",
+        apiCallOnObject("rename",
                 MAPPER.valueToTree(new RenameRequest(this.container.getId(), newName)),
                 RetryStrategy.SAFE_TO_RETRY);
     }
