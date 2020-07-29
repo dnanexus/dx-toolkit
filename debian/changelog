@@ -1,3 +1,10 @@
+dx-toolkit (0.298.1) trusty; urgency=medium
+
+  * Fixed: `dx-clone-asset` when no project exists
+  * Fixed: DXJava DXDataObject.Rename()
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 29 Jul 2020 22:23:40 +0000
+
 dx-toolkit (0.298.0) trusty; urgency=medium
 
   * Added: Ubuntu 20.04 build targets
