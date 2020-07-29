@@ -72,7 +72,7 @@ def _find_asset_project(region):
         cmd = 'dx find projects --level CONTRIBUTE --name "{proj_name}" --region "{region}" --brief '
         projects = subprocess.check_output(
             cmd.format(proj_name=project_name, region=region), shell=True).strip()
-        if projects == '':
+        if not projects:
             cmd = 'dx new project --region "{region}" "{proj_name}" --brief '
             return subprocess.check_output(cmd.format(region=region, proj_name=project_name), shell=True).strip()
         else:
