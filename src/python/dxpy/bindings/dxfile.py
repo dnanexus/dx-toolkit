@@ -963,22 +963,22 @@ class DXFile(DXDataObject):
             return data
         return data.decode("utf-8")
     
-    def archive(self, allCopies=False):
+    def archive(self, all_copies=False):
         '''
-        :param allCopies: Force the transition of files into the archived state. Requesting user must be the ADMIN of the project billTo org. 
+        :param all_copies: Force the transition of files into the archived state. Requesting user must be the ADMIN of the project billTo org. 
             If true, archive all the copies of files in projects with the same billTo org.
-        :type allCopies: boolean
+        :type all_copies: boolean
         :raises: :exc:`~dxpy.exceptions.InvalidState` if the file is not in a live state
         :raises: :exc:`~dxpy.exceptions.PermissionDenied` if the requesting user does not have CONTRIBUTE access or
             is not an ADMIN of the project billTo org with allCopies=True.
         '''
-        dxpy.api.project_archive(self.get_proj_id(), {"files": [self.get_id()], "allCopies": allCopies})
+        dxpy.api.project_archive(self.get_proj_id(), {"files": [self.get_id()], "allCopies": all_copies})
 
-    def unarchive(self, dryRun=False):
+    def unarchive(self, dry_run=False):
         '''
-        :param dryRun:  If true, only display the output of the API call without executing the unarchival
-        :type dryRun: boolean
+        :param dry_run:  If true, only display the output of the API call without executing the unarchival
+        :type dry_run: boolean
         :raises: :exc:`~dxpy.exceptions.InvalidState` if the file is not in a closed or archived state
         :raises: :exc:`~dxpy.exceptions.PermissionDenied` if the requesting user does not have CONTRIBUTE access    
         '''
-        dxpy.api.project_unarchive(self.get_proj_id(), {"files": [self.get_id()], "dryRun": dryRun})
+        dxpy.api.project_unarchive(self.get_proj_id(), {"files": [self.get_id()], "dryRun": dry_run})
