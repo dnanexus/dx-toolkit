@@ -964,7 +964,7 @@ class DXFile(DXDataObject):
         return data.decode("utf-8")
     
     def archive(self, allCopies=False):
-        dxpy.api.project_archive(self.get_proj_id, {"files": [self.get_id()], "allCopies": allCopies})
+        dxpy.api.project_archive(self.get_proj_id(), {"files": [self.get_id()], "allCopies": allCopies})
 
     def unarchive(self, dryRun=False):
-        dxpy.api.project_unarchive(self.get_proj_id, {"files": [self.get_id()], "dryRun": dryRun})
+        dxpy.api.project_unarchive(self.get_proj_id(), {"files": [self.get_id()], "dryRun": dryRun})
