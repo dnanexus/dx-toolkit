@@ -943,6 +943,22 @@ def project_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def project_archive(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /project-xxxx/archive API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive
+    """
+    return DXHTTPRequest('/%s/archive' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def project_unarchive(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /project-xxxx/unarchive API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-unarchive
+    """
+    return DXHTTPRequest('/%s/unarchive' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def project_clone(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/clone API method.
