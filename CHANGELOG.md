@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [298.0] - beta
+## [299.0] - beta
+
+### Fixed
+
+* Macos tarball build
+
+## [298.1] - 2020.07.29 stable
 
 ### Added
 
@@ -19,8 +25,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * API wrapper generation with Python 3
+* `dx-clone-asset` when no project exists
+* DXJava DXDataObject.Rename()
 
-## [297.1] - 2020.07.22 stable
+## [297.1] - 2020.07.22 
 
 ### Changed
 
