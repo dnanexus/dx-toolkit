@@ -402,6 +402,12 @@ namespace dx {
   JSON projectAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON projectAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON projectArchive(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON projectArchive(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON projectUnarchive(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON projectUnarchive(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON projectClone(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON projectClone(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
 

@@ -915,6 +915,22 @@ module DX
       return DX::http_request("/#{object_id}/addTags", input_params, opts)
     end
 
+    # Invokes the /project-xxxx/archive API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive
+    def self.project_archive(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/archive", input_params, opts)
+    end
+
+    # Invokes the /project-xxxx/unarchive API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-unarchive
+    def self.project_unarchive(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/unarchive", input_params, opts)
+    end
+
     # Invokes the /project-xxxx/clone API method.
     #
     # For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/cloning#api-method-class-xxxx-clone
