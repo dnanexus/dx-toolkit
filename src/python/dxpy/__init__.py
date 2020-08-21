@@ -150,7 +150,6 @@ from requests.auth import AuthBase
 from requests.packages import urllib3
 from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from threading import Lock
-from . import ssh_tunnel_app_support
 
 try:
     # python-3
