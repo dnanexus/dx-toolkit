@@ -144,7 +144,7 @@ class TestDXRunBatch(DXTestCase):
                      .format(applet["id"], arg_table)).strip()
         job_desc = dxpy.api.job_describe(job_id)
         self.assertEqual(job_desc["executableName"], 'copy_file')
-        self.assertEqual(job_desc["input"], { "plant": {"$dnanexus_link": dxfile.get_id() }})
+        self.assertEqual(job_desc["input"], { "plant": {"$dnanexus_link": dxfile.get_proj_id() +":"+ dxfile.get_id() }})
 
     def test_file_arrays(self):
         # Create file with junk content
@@ -193,7 +193,7 @@ class TestDXRunBatch(DXTestCase):
         self.assertEqual(job_desc["executableName"], 'ident_file_array')
         self.assertEqual(job_desc["input"],
                          { "plant":
-                           [{ "$dnanexus_link": dxfile.get_id() }]
+                           [{ "$dnanexus_link": dxfile.get_proj_id() +":"+ dxfile.get_id() }]
                          })
 
 
