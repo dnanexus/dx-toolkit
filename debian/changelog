@@ -1,3 +1,10 @@
+dx-toolkit (0.300.0) trusty; urgency=medium
+
+  * Added: Archival api wrappers
+  * Removed: `dx notebook` and `dx loupe-viewier`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 25 Aug 2020 03:37:23 +0000
+
 dx-toolkit (0.299.0) trusty; urgency=medium
 
   * Fixed: Mac tarball build
