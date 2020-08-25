@@ -127,7 +127,7 @@ class TestDXRunBatch(DXTestCase):
             writer = csv.writer(csvfile, delimiter=delimiter)
             header = ["batch ID", "plant", "plant ID"]
             writer.writerow(header)
-            writer.writerow(["SRR_1", "bubbles", dxfile.get_id()])
+            writer.writerow(["SRR_1", "bubbles", dxfile.get_proj_id() +":"+ dxfile.get_id()])
 
         applet = dxpy.api.applet_new({
             "name": "copy_file",
