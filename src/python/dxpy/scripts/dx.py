@@ -3712,7 +3712,7 @@ def generate_batch_inputs(args):
     # Output TSV Batch.  This procedure generates a TSV file with file names and IDs grouped by pattern
     for i,batch in enumerate(batches):
         def flatten_batch(b):
-            return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]
+            return [b['batchPattern']] + [ival['name'] for iname, ival in sorted(b['inputs'].items())] + [project + ":" + ival['ids'][0] for iname, ival in sorted(b['inputs'].items())]
 
         batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
 
