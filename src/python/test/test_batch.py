@@ -173,7 +173,7 @@ class TestDXRunBatch(DXTestCase):
             writer.writerow(header)
             writer.writerow(["SRR_1",
                              "[bubbles]",
-                             "[" + dxfile.get_id() + "]"
+                             "[" + dxfile.get_proj_id() +":"+ dxfile.get_id() + "]"
             ])
 
         applet = dxpy.api.applet_new({
