@@ -3880,6 +3880,9 @@ class DXNewUserOrgArgsAction(argparse.Action):
 class DXArgumentParser(argparse.ArgumentParser):
     def _print_message(self, message, file=None):
         if message:
+            if message.startswith("usage: dx [-h] [--version] command") and "dx: error: argument command: invalid choice:" in message:
+                message = message.replace(", notebook","")
+                message = message.replace(", loupe-viewer","")
             pager(message, file=file)
 
     def _check_value(self, action, value):
@@ -5499,6 +5502,41 @@ parser_find_orgs_with_billable_activities.add_argument("--without-billable-activ
 parser_find_orgs.set_defaults(func=find_orgs, with_billable_activities=None)
 register_parser(parser_find_orgs, subparsers_action=subparsers_find, categories="org")
 
+#####################################
+# notebook
+#####################################
+
+from ..ssh_tunnel_app_support import run_notebook
+parser_notebook = subparsers.add_parser('notebook', help='Launch a web notebook inside DNAnexus.',
+                                        description='Launch a web notebook inside DNAnexus.',
+                                        formatter_class=argparse.RawTextHelpFormatter,
+                                        prog='dx notebook')
+parser_notebook.add_argument('notebook_type', help='Type of notebook to launch', choices=['jupyter_lab', 'jupyter_notebook', 'jupyter'])
+parser_notebook.add_argument('--notebook_files', help='Files to include on notebook instance', default=[], nargs='*').completer = DXPathCompleter(classes=['file'])
+parser_notebook.add_argument('--spark', help='Install spark infrastructure.', action='store_true', default=False)
+parser_notebook.add_argument('--port', help='local port to use to access the notebook.', default='2001')
+parser_notebook.add_argument('--snapshot', help='A snapshot file to reform on the server.').completer = DXPathCompleter(classes=['file'])
+parser_notebook.add_argument('--timeout', help='How long to keep the notebook open (smhwMy).', default='1h')
+parser_notebook.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
+parser_notebook.add_argument('--version', help='What version of the notebook app to launch.', default=None)
+parser_notebook.add_argument('--instance-type', help='Instance type to run the notebook on.', default='mem1_ssd1_x4')
+parser_notebook.add_argument('--only_check_config', help='Only check SSH config do not launch app', action='store_true')
+notebook_with_ssh_config_check = functools.partial(run_notebook, ssh_config_check=verify_ssh_config)
+parser_notebook.set_defaults(func=notebook_with_ssh_config_check)
+register_parser(parser_notebook, categories='data', add_help=False)
+
+from ..ssh_tunnel_app_support import run_loupe
+parser_loupe_viewer = subparsers.add_parser('loupe-viewer', help='Launch the Loupe viewer for 10x data on DNAnexus.',
+                                            description='Launch the Loupe viewer for 10x data on DNAnexus.',
+                                            formatter_class=argparse.RawTextHelpFormatter,
+                                            prog='dx loupe-viewer')
+parser_loupe_viewer.add_argument('loupe_files', help='Files to include in loupe viewer', default=[], nargs=argparse.REMAINDER).completer = DXPathCompleter(classes=['file'])
+parser_loupe_viewer.add_argument('--port', help='local port to use to access the Loupe viewer.', default='2001')
+parser_loupe_viewer.add_argument('--timeout', help='How long to keep the Loupe viewer open (smhwMy).', default='1h')
+parser_loupe_viewer.add_argument('-q', '--quiet', help='Do not launch web browser.', action='store_false', dest='open_server')
+parser_loupe_viewer.add_argument('--instance-type', help='Instance type to run the Loupe viewer on.', default='mem1_ssd1_x4')
+parser_loupe_viewer.set_defaults(func=run_loupe)
+register_parser(parser_loupe_viewer, categories='data', add_help=False)
 
 #####################################
 # api
