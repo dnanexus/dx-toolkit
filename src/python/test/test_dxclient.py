@@ -1168,7 +1168,7 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_notebook(self):
         with self.configure_ssh() as wd:
-            run("dx notebook jupyter_notebook --only_check_config", env=override_environment(HOME=wd))
+            run("dx notebook --only_check_config jupyter_notebook", env=override_environment(HOME=wd))
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_AUTH_SET_ENVIRONMENT"])
