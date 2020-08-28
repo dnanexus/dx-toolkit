@@ -3880,6 +3880,9 @@ class DXNewUserOrgArgsAction(argparse.Action):
 class DXArgumentParser(argparse.ArgumentParser):
     def _print_message(self, message, file=None):
         if message:
+            if message.startswith("usage: dx [-h] [--version] command") and "dx: error: argument command: invalid choice:" in message:
+                message = message.replace(", notebook","")
+                message = message.replace(", loupe-viewer","")
             pager(message, file=file)
 
     def _check_value(self, action, value):
