@@ -1,3 +1,9 @@
+dx-toolkit (0.300.1) trusty; urgency=medium
+
+  * Changed: Hide `dx notebook` from help output
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 31 Aug 2020 15:35:38 +0000
+
 dx-toolkit (0.300.0) trusty; urgency=medium
 
   * Added: Archival api wrappers
