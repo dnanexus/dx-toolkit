@@ -6,13 +6,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [299.0] - beta
+## [301.0] - beta
+
+### Changed
+
+* Provide project-id in batch tsv file
+
+## [300.1] - 2020.08.31 stable
+
+### Added
+
+* Archival api wrappers
+
+### Changed
+
+* Hide `notebook` and `loupe-viewier` from `dx` help output
+
+## [299.0] - 2020.08.26
 
 ### Fixed
 
 * Macos tarball build
 
-## [298.1] - 2020.07.29 stable
+## [298.1] - 2020.07.29 
 
 ### Added
 
