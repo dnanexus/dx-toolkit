@@ -152,8 +152,8 @@ def mount_all_inputs(exclude=None, verbose=False):
     uid = str(int(subprocess.check_output(["id", "-u"])))
     gid = str(int(subprocess.check_output(["id", "-g"])))
     cmd = [dxfuse_cmd, "-uid", uid, "-gid", gid, mount_dir, mount_manifest_file]
-    if (verbose):
-        cmd[1:1] ["-verbose", "2"]
+    if verbose:
+        cmd[1:1] = ["-verbose", "2"]
     print(subprocess.check_output(cmd))
 
     print("Done mounting inputs.")
