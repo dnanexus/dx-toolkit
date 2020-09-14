@@ -66,7 +66,12 @@ parser.add_argument('--except',
                     action="append",
                     dest="exclude",
                     default=[])
+parser.add_argument('--verbose',
+                    help=fill("Start dxfuse with '-verbose 2' logging",
+                              width_adjustment=-20),
+                    action="store_true",
+                    default=False)
 
 args = parser.parse_args()
 
-dxpy.mount_all_inputs(exclude=args.exclude)
+dxpy.mount_all_inputs(exclude=args.exclude, verbose=args.verbose)
