@@ -72,13 +72,16 @@ def _gen_helper_dict(filtered_inputs):
     return flattened_dict
 
 
-def mount_all_inputs(exclude=None):
+def mount_all_inputs(exclude=None, verbose=False):
     '''
     :param exclude: List of input variables that should not be mounted.
     :type exclude: Array of strings
     :returns: dict of lists of strings where each key is the input variable
                 and each list element is the full path to the file that has
                 been mounted.
+    :param verbose: Start dxfuse with '-verbose 2' logging
+    :type verbose: boolean
+
 
     This function mounts all files that were supplied as inputs to the app.
     By convention, if an input parameter "FOO" has value
@@ -148,7 +151,10 @@ def mount_all_inputs(exclude=None):
 
     uid = str(int(subprocess.check_output(["id", "-u"])))
     gid = str(int(subprocess.check_output(["id", "-g"])))
-    print(subprocess.check_output([dxfuse_cmd, "-uid", uid, "-gid", gid, mount_dir, mount_manifest_file]))
+    cmd = [dxfuse_cmd, "-uid", uid, "-gid", gid, mount_dir, mount_manifest_file]
+    if verbose:
+        cmd[1:1] = ["-verbose", "2"]
+    print(subprocess.check_output(cmd))
 
     print("Done mounting inputs.")
 
