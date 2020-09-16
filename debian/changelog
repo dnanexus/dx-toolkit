@@ -1,3 +1,11 @@
+dx-toolkit (0.302.0) trusty; urgency=medium
+
+  * Added: Remote builders for 16.04 v1, 20.04
+  * Added: Asset builder for 20.04
+  * Added: '--verbose' flag for `dx-mount-all-inputs`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 16 Sep 2020 19:16:14 +0000
+
 dx-toolkit (0.301.0) trusty; urgency=medium
 
   * Changed: Provide project-id in batch tsv file
