@@ -6,13 +6,23 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [301.0] - beta
+## [302.0] - beta
+
+No significant changes
+
+## [301.1] - 2020.09.16 stable
+
+### Added
+
+* Remote builders for 16.04 v1, 20.04
+* Asset builder for 20.04
+* '--verbose' flag for `dx-mount-all-inputs`
 
 ### Changed
 
 * Provide project-id in batch tsv file
 
-## [300.1] - 2020.08.31 stable
+## [300.1] - 2020.08.31
 
 ### Added
 
