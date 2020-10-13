@@ -6,5 +6,5 @@ beautifulsoup4==4.4.1
 psutil>=3.3.0
 requests>=2.8.0,<2.24.0
 cryptography>=2.3,<3.0
-gnureadline==6.3.8; sys_platform == "darwin"
+gnureadline==8.0.0; sys_platform == "darwin" and python_version < "3.9"
 xattr==0.9.6; sys_platform == 'linux2' or sys_platform == 'linux'
