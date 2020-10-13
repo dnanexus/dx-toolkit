@@ -1,3 +1,9 @@
+dx-toolkit (0.302.1) trusty; urgency=medium
+
+  * Changed: gnureadline macos dependency to 8.0.0 for Python versions < 3.9
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 13 Oct 2020 18:28:13 +0000
+
 dx-toolkit (0.302.0) trusty; urgency=medium
 
   * Added: Remote builders for 16.04 v1, 20.04
