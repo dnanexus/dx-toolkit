@@ -210,17 +210,17 @@ endif
 
 BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams,signals
 
-ifeq ($(UNAME)$(CC), Darwinclang)
-	BOOST_MAJOR=1
-	BOOST_MINOR=56
-	BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
-	BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
-	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
-else
-	BOOST_PV=1.55
-	BOOST_URL=${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2
-	BOOST_SHA=cef9a0cc7084b1d639e06cd3bc34e4251524c840
-endif
+#ifeq ($(UNAME), Darwin)
+BOOST_MAJOR=1
+BOOST_MINOR=56
+BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
+BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
+BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
+#else
+#	BOOST_PV=1.55
+#	BOOST_URL=${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2
+#	BOOST_SHA=cef9a0cc7084b1d639e06cd3bc34e4251524c840
+#endif
 
 boost: boost/stage
 
