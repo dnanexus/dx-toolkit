@@ -190,7 +190,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         if wget_exe is None:
             err_exit("wget is not installed on this system")
 
-        cmd = ["wget", "--tries=5", "--quiet"]
+        cmd = ["wget", "--tries=20", "--quiet"]
         if os.path.isfile(dxid):
             # file already exists, resume upload.
             cmd += ["--continue"]
