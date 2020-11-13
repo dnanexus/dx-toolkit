@@ -81,7 +81,6 @@ public:
   bool variants;
   std::string refGenome;
 
-  bool noRoundRobinDNS;
 
   int64_t throttle;
   

@@ -363,11 +363,6 @@ void uploadChunks(vector<File> &files) {
         int numTry = NUMTRIES_g - c->triesLeft + 1; // find out which try is it
         int timeout = (numTry > 6) ? 256 : 4 << numTry; // timeout is always between [8, 256] seconds
         c->log("Will retry reading and uploading this chunks in " + boost::lexical_cast<string>(timeout) + " seconds", logWARNING);
-        if (!opt.noRoundRobinDNS) {
-          boost::mutex::scoped_lock forceRefreshLock(forceRefreshDNSMutex);
-          c->log("Setting forceRefreshDNS = true in main.cpp:uploadChunks()");
-          forceRefreshDNS = true; // refresh the DNS list in next call to getRandomIP()
-        }
         --(c->triesLeft);
         c->clear(); // we will read & compress data again
         boost::this_thread::sleep(boost::posix_time::milliseconds(timeout * 1000));

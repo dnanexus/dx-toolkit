@@ -504,22 +504,6 @@ pair<string, dx::JSON> Chunk::uploadURL(Options &opt) {
   const string &url = toReturn.first;
   log("/" + fileID + "/upload call returned this url: " + url);
 
-  if (!opt.noRoundRobinDNS) {
-    // Now, try to resolve the host name in url to an ip address (for explicit round robin DNS)
-    // If we are unable to do so, just leave the resolvedIP variable an empty string
-    resolvedIP.clear();
-    hostName = extractHostFromURL(url);
-    log("Host name extracted from URL ('" + url + "'): '" + hostName + "'");
-
-    if (attemptExplicitDNSResolve(hostName)) {
-      resolvedIP = getRandomIP(hostName);
-      log("Call to getRandomIP() returned: '" + resolvedIP + "'", dx::logWARNING);
-    } else {
-      log("Not attempting to resolve hostname '" + hostName + "'");
-    }
-  } else {
-    log("Flag --no-round-robin-dns was set, so won't try to explicitly resolve ip address");
-  }
   return toReturn;
 }
 
