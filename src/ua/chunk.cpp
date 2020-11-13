@@ -295,16 +295,6 @@ void Chunk::upload(Options &opt) {
     // http://curl.haxx.se/libcurl/c/curl_easy_setopt.html#CURLOPTERRORBUFFER
     checkConfigCURLcode(curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errorBuffer), errorBuffer);
 
-    if (!hostName.empty() && !resolvedIP.empty()) { // Will never be true when compiling on windows
-      log("Adding ip '" + resolvedIP + "' to resolve list for hostname '" + hostName + "'");
-      slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":443:" + resolvedIP).c_str());
-      slist_resolved_ip = curl_slist_append(slist_resolved_ip, (hostName + ":80:" + resolvedIP).c_str());
-      // Note: We don't remove this extra host name resolution info by setting "-HOST:PORT:IP" at the end,
-      // since we don't reuse the curl handle anyway
-    } else {
-      log("Not adding any explicit IP address using CURLOPT_RESOLVE. resolvedIP = '" + resolvedIP + "', hostName = '" + hostName + "'", dx::logWARNING);
-    }
-
     // If we are using the TCP tunnel, then we'll be tunneling to the normal
     // AWS IP, receiving that certificate, and then raise a warning because
     // the TCP tunnel URL won't appear on the AWS certificate.  We'll resolve
