@@ -1,3 +1,8 @@
+DNAnexus Upload Agent 1.5.33 <support@dnanexus.com>, 2020-Nov-13
+----------------------------------------------------------------
+  * Add JSON manifest input with --manifest argument
+  * Remove round-robin DNS from file upload
+
 DNAnexus Upload Agent 1.5.32 <support@dnanexus.com>, 2020-Apr-10
 ----------------------------------------------------------------
   * Sci Linux compilation option
