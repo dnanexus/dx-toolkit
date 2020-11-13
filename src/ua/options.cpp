@@ -100,7 +100,6 @@ Options::Options():
     ("apiserver-host", po::value<string>(&apiserverHost), "API server host")
     ("apiserver-port", po::value<int>(&apiserverPort)->default_value(-1), "API server port")
     ("certificate-file", po::value<string>(&certificateFile)->default_value(""), "Certificate file (for verifying peer). Set to NOVERIFY for no check.")
-    ("no-round-robin-dns", po::bool_switch(&noRoundRobinDNS), "Disable explicit resolution of ip address by /UPLOAD calls (for round robin DNS)")
     ("override-file-limit", po::bool_switch(&overrideFileLimit), "Override the file number limit")
     // Options for running import apps
     ("reads", po::bool_switch(&reads), "After uploading is complete, run import app to convert file(s) to Reads object(s)")
@@ -610,8 +609,7 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  mappings: " << opt.mappings << endl
         << "  variants: " << opt.variants << endl
         << "  ref-genome: " << opt.refGenome << endl
-        << "  certificate-file" << opt.certificateFile << endl
-        << "  no-round-robin-dns" << opt.noRoundRobinDNS << endl;
+        << "  certificate-file" << opt.certificateFile << endl;
   }
   return out;
 }
