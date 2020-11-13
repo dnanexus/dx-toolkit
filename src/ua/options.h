@@ -59,7 +59,7 @@ public:
   std::vector<std::string> propertiesInput;
   std::vector<std::string> typeInput;
   std::vector<std::string> tagsInput;
-    
+
   int readThreads;
   int compressThreads;
   int uploadThreads;
@@ -73,7 +73,8 @@ public:
   bool recursive;
   bool overrideFileLimit;
   bool standardInput;
-
+  bool manifest;
+  
   // Import flags
   bool reads;
   bool pairedReads;

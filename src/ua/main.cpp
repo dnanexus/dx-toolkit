@@ -898,8 +898,93 @@ int main(int argc, char * argv[]) {
     NUMTRIES_g = opt.tries;
 
     vector<File> files;
+    unsigned int i = 0;
 
-    for (unsigned int i = 0; i < opt.files.size(); ++i) {
+    if (opt.manifest) {
+      string manifestFile = opt.files[0];
+      i = 1;
+      JSON manifest;
+      ifstream in(manifestFile, ifstream::in);
+      if (!in) {
+        ostringstream msg;
+        msg << "file('" << manifestFile << "') cannot be opened for reading...";
+        throw runtime_error(msg.str());
+      }
+      try {
+        manifest.read(in);
+      } catch (JSONException &j) {
+        ostringstream msg;
+        msg << "An error occured while trying to parse the mainfest file '" 
+            << manifestFile;
+        throw runtime_error(msg.str());
+      }
+      if (manifest.type() != JSON_HASH) {
+        ostringstream msg;
+        msg << "The manifest file '" << manifestFile 
+            << "' does not contain a valid JSON hash.";
+        throw runtime_error(msg.str());
+      }
+      for (JSON::object_iterator projIt = manifest.object_begin(); 
+           projIt != manifest.object_end(); ++projIt) {
+        string project = projIt->first;
+        if (projIt->second.type() != JSON_ARRAY) {
+          ostringstream msg;
+          msg << "The manifest file '" << manifestFile 
+              << "' does not contain a valid JSON hash value for project '" 
+              << project.c_str() << "'.";
+          throw runtime_error(msg.str());
+        }
+        for (JSON::array_iterator fileIt = projIt->second.array_begin(); 
+             fileIt != projIt->second.array_end(); ++fileIt) {
+          const JSON &item = *fileIt;
+          int index = fileIt - projIt->second.array_begin();
+          if (item.type() != JSON_HASH) {
+            ostringstream msg;
+            msg << "The manifest file '" << manifestFile
+                << "' contains an invalid entry for project '" 
+                << project.c_str() << "' at index '" << index << "'.";
+            throw runtime_error(msg.str());
+          }
+          string path;
+          if (item.has("path")) {
+            path = item["path"].get<string>();
+          } else {
+            ostringstream msg;
+            msg << "The manifest file '" << manifestFile
+                << "' contains an invalid entry for project '" 
+                << project.c_str() << "' at index '" << index 
+                << "' - missing key 'path'.";
+            throw runtime_error(msg.str());
+          }
+          string folders;
+          if (item.has("folder")) {
+            folders = item["folder"].get<string>();
+          } else {
+            ostringstream msg;
+            msg << "The manifest file '" << manifestFile 
+                << "' contains an invalid entry for project '" 
+                << project.c_str() << "' at index '" << index 
+                << "' - missing key 'folder'.";
+            throw runtime_error(msg.str());
+          }
+          string name;
+          if (item.has("name")) {
+            name = item["name"].get<string>();
+          } else {
+            ostringstream msg;
+            msg << "The manifest file '" << manifestFile
+                << "' contains an invalid entry for project '" 
+                << project.c_str() << "' at index '" << index 
+                << "' - missing key 'name'.";
+            throw runtime_error(msg.str());
+          }
+          unsigned int fileIndex = files.size();
+          files.push_back(createFile(path, project, folders, name, fileIndex));
+        }
+      }
+    } 
+
+    for (; i < opt.files.size(); ++i) {
       if (fs::is_directory(opt.files[i])) {
         traverseDirectory(fs::path(opt.files[i]), opt.projects[i], fs::path(opt.folders[i]), fs::path(opt.names[i]), files);
       } else {
@@ -910,7 +995,7 @@ int main(int argc, char * argv[]) {
         }
       }
     }
-
+    
     if (opt.waitOnClose) {
       for (unsigned int i = 0; i < files.size(); ++i) {
         files[i].waitOnClose = true;
