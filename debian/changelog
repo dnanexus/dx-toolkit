@@ -1,3 +1,9 @@
+dx-toolkit (0.303.1) trusty; urgency=medium
+
+  * Changed: Increase wget retries to 20 for symlink downloads
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 13 Nov 2020 18:06:09 +0000
+
 dx-toolkit (0.303.0) trusty; urgency=medium
 
   * Changed: gnureadline macos dependency to 8.0.0
