@@ -4,6 +4,8 @@ APP_CATEGORIES = frozenset([
     'Debugging',
     'Export',
     'Import',
+    'Interactive',
+    'Machine Learning',
     'Mappings Manipulation',
     'Read Manipulation',
     'Read Mapping',
@@ -11,5 +13,6 @@ APP_CATEGORIES = frozenset([
     'RNA-Seq',
     'Statistics',
     'Structural Variation',
+    'Translational Informatics',
     'Variation Calling'
 ])
