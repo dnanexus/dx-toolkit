@@ -179,6 +179,21 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
                                             duration=6*3600,
                                             project=project)
 
+    def call_cmd(cmd, retry=True):
+        try:
+            if aria2c_exe is not None:
+                print("Downloading symbolic link with aria2c")
+            else:
+                print("Downloading symbolic link with wget")
+            subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            if e.returncode == 22 && retry:  # hotfix, DEVEX-1779
+                call_cmd(cmd, False)
+            msg = ""
+            if e and e.output:
+                msg = e.output.strip()
+            err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
+
     # Follow the redirection
     print('Following redirect for ' + url)
 
@@ -206,18 +221,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         directory, filename = os.path.split(dest_filename)
         directory = cwd if directory in ["", cwd] else directory
         cmd += ["-o", filename, "-d", os.path.abspath(directory), url]
-
-    try:
-        if aria2c_exe is not None:
-            print("Downloading symbolic link with aria2c")
-        else:
-            print("Downloading symbolic link with wget")
-        subprocess.check_call(cmd, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        msg = ""
-        if e and e.output:
-            msg = e.output.strip()
-        err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
+    call_cmd(cmd)
 
     if md5digest is not None:
         _verify(dest_filename, md5digest)
