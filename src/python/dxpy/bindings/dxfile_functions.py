@@ -190,7 +190,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
             msg = ""
             if e and e.output:
                 msg = e.output.strip()
-            if e.returncode == 22 && retry:  # hotfix, DEVEX-1779
+            if e.returncode == 22 and retry:  # hotfix, DEVEX-1779
                 print("Download failed with code 22. Retrying... Error details:{cmd}\n:{msg}\n")
                 call_cmd(cmd, False)
             err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
