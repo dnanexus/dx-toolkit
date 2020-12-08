@@ -92,7 +92,7 @@ setup(
     long_description=readme_content,
     long_description_content_type="text/markdown",
     author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
-    author_email='expert-dev@dnanexus.com',
+    author_email='support@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
     zip_safe=False,
     license='Apache Software License',
@@ -103,6 +103,9 @@ setup(
         "console_scripts": scripts,
     },
     install_requires = dependencies,
+    extras_require={
+        'xattr': ["xattr==0.9.6; sys_platform == 'linux2' or sys_platform == 'linux'"]
+    },
     tests_require = test_dependencies,
     test_suite = "test",
     classifiers=[
