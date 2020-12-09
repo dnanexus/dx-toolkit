@@ -3377,8 +3377,11 @@ def run(args):
     if is_global_workflow:
         args.region = dxpy.api.project_describe(dest_proj,
                                                 input_params={"fields": {"region": True}})["region"]
+    print(args.detach)
     if args.detach is None:
         args.detach = os.environ.get("DX_RUN_DETACH", 0) == 1
+    print(args.detach)
+    print("HEEEEERE")
 
     # if the destination path has still not been set, use the current
     # directory as the default; but only do this if not running a
