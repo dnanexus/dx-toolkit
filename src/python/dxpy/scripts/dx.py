@@ -2840,8 +2840,6 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
                    subsequent_indent='  ') + '\n')
 
     # Run the executable
-    print(executable)
-    print(type(executable))
     try:
         dxexecution = executable.run(input_json, **run_kwargs)
         if not args.brief:
