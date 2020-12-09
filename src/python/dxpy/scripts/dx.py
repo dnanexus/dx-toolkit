@@ -2958,7 +2958,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "rerun_stages": args.rerun_stages,
         "cluster_spec": srd_cluster_spec.as_dict(),
         "extra_args": args.extra_args,
-        "detach": args.detach
+        "detached": args.detach
     }
 
     if run_kwargs["priority"] == "normal" and not args.brief:
