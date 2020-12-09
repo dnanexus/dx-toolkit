@@ -3380,7 +3380,7 @@ def run(args):
     print(args.detach)
     print(os.environ.get("DX_RUN_DETACH", 0))
     print(os.environ.get("DX_RUN_DETACH"))
-    if args.detach is None:
+    if not args.detach:
         args.detach = os.environ.get("DX_RUN_DETACH", 0) == 1
     print(args.detach)
     print("HEEEEERE")
