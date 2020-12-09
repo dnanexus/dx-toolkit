@@ -3382,6 +3382,7 @@ def run(args):
     print(os.environ.get("DX_RUN_DETACH"))
     if not args.detach:
         print("Imhere")
+        print(os.environ.get("DX_RUN_DETACH") == 1)
         args.detach = os.environ.get("DX_RUN_DETACH") == 1
     print(args.detach)
     print("HEEEEERE")
