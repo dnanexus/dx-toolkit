@@ -899,6 +899,21 @@ public class DXFile extends DXDataObject {
     }
 
     /**
+     * Returns an OutputStream that uploads any data written to it
+     * <p>
+     * The file must be in the "open" state. This method assumes exclusive access to the file: the
+     * file must have no parts uploaded before this call is made, and no other clients may upload
+     * data to the same file concurrently.
+     * </p>
+     *
+     * @return OutputStream to which file contents are written
+     */
+    public OutputStream getUploadStream(int uploadChunkSizeOverride) {
+        this.uploadChunkSize = uploadChunkSizeOverride;
+        return new FileApiOutputStream();
+    }
+
+    /**
      * HTTP PUT request to upload the data part to the server.
      *
      * @param dataChunk data part that is uploaded
@@ -973,6 +988,26 @@ public class DXFile extends DXDataObject {
     }
 
     /**
+     * Uploads data from the specified byte array to the file.
+     *
+     * <p>
+     * The file must be in the "open" state. This method assumes exclusive access to the file: the
+     * file must have no parts uploaded before this call is made, and no other clients may upload
+     * data to the same file concurrently.
+     * </p>
+     *
+     * @param data data in bytes to be uploaded
+     *
+     * @throws IOException if an error occurs while uploading the data
+     */
+    public void upload(byte[] data, int uploadChunkSizeOverride) throws IOException {
+        Preconditions.checkNotNull(data, "data may not be null");
+        try (OutputStream uploadOutputStream = this.getUploadStream(uploadChunkSizeOverride)) {
+            IOUtils.write(data, uploadOutputStream);
+        }
+    }
+
+    /**
      * Uploads data from the specified stream to the file.
      *
      * <p>
@@ -988,6 +1023,26 @@ public class DXFile extends DXDataObject {
     public void upload(InputStream data) throws IOException {
         Preconditions.checkNotNull(data, "data may not be null");
         try (OutputStream uploadOutputStream = this.getUploadStream()) {
+            IOUtils.copyLarge(data, uploadOutputStream);
+        }
+    }
+
+    /**
+     * Uploads data from the specified stream to the file.
+     *
+     * <p>
+     * The file must be in the "open" state. This method assumes exclusive access to the file: the
+     * file must have no parts uploaded before this call is made, and no other clients may upload
+     * data to the same file concurrently.
+     * </p>
+     *
+     * @param data stream containing data to be uploaded
+     * @param uploadChunkSizeOverride stream containing data to be uploaded
+     * @throws IOException if an error occurs while uploading the data
+     */
+    public void upload(InputStream data, int uploadChunkSizeOverride) throws IOException {
+        Preconditions.checkNotNull(data, "data may not be null");
+        try (OutputStream uploadOutputStream = this.getUploadStream(uploadChunkSizeOverride)) {
             IOUtils.copyLarge(data, uploadOutputStream);
         }
     }
