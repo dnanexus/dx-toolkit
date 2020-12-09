@@ -2601,7 +2601,7 @@ def build(args):
 
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
-            
+
         if args._from is not None and args.mode == "globalworkflow":
             build_parser.error("building a global workflow using --from is not supported")
 
@@ -2955,7 +2955,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
         "cluster_spec": srd_cluster_spec.as_dict(),
-        "extra_args": args.extra_args
+        "extra_args": args.extra_args,
+        "detach": args.detach
     }
 
     if run_kwargs["priority"] == "normal" and not args.brief:
@@ -3376,6 +3377,8 @@ def run(args):
     if is_global_workflow:
         args.region = dxpy.api.project_describe(dest_proj,
                                                 input_params={"fields": {"region": True}})["region"]
+    if args.detach is None:
+        args.detach = os.environ.get("DX_RUN_DETACH", 0) == 1
 
     # if the destination path has still not been set, use the current
     # directory as the default; but only do this if not running a
@@ -4881,6 +4884,7 @@ parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),
                         action=runInputHelp, nargs=0)
+parser_run.add_argument('--detach', help=fill("New job will not start as subjob if run inside of a different job.", width_adjustment=-24))
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None)
 register_parser(parser_run, categories='exec')
