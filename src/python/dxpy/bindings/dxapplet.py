@@ -97,6 +97,9 @@ class DXExecutable:
         if kwargs.get('extra_args') is not None:
             merge(run_input, kwargs['extra_args'])
 
+        if kwargs.get('detach') is not None:
+            run_input["detach"] = kwargs['detach']
+
         return run_input
 
     @staticmethod
@@ -226,11 +229,7 @@ class DXExecutable:
                                         priority=priority,
                                         extra_args=extra_args,
                                         detach=detach)
-        a = self._run_impl(run_input, **kwargs)
-        print(run_input)
-        print(kwargs)
-        return a
-        # return self._run_impl(run_input, **kwargs)
+        return self._run_impl(run_input, **kwargs)
 
 
 ############
