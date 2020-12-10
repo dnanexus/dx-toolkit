@@ -226,7 +226,11 @@ class DXExecutable:
                                         priority=priority,
                                         extra_args=extra_args,
                                         detach=detach)
-        return self._run_impl(run_input, **kwargs)
+        a = self._run_impl(run_input, **kwargs)
+        print(run_input)
+        print(kwargs)
+        return a
+        # return self._run_impl(run_input, **kwargs)
 
 
 ############
@@ -366,7 +370,6 @@ class DXApplet(DXDataObject, DXExecutable):
         return dxpy.api.applet_get(self._dxid, **kwargs)
 
     def _run_impl(self, run_input, **kwargs):
-        print("ohere ")
         return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
 
     def _get_run_input(self, executable_input, **kwargs):
