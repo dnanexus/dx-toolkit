@@ -192,12 +192,10 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
             msg = ""
             if e and e.output:
                 msg = e.output.strip()
-            if e.returncode == 22 and num_attempts < max_retries:  # hotfix, DEVEX-1779
-
+            if e.returncode == 22 and num_attempts <= max_retries:  # hotfix, DEVEX-1779
                 time_to_wait = 1 if num_attempts <= 2 else min(randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1)), 60)
                 print("Download failed with code 22. Retrying after {} seconds... Error details: cmd: {}\nmsg: {}\n".format(str(time_to_wait), str(cmd), msg))
                 sleep(time_to_wait)
-
                 call_cmd(cmd, max_retries, num_attempts + 1)
             err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
 
