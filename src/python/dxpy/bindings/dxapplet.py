@@ -373,6 +373,7 @@ class DXApplet(DXDataObject, DXExecutable):
         return DXJob(dxpy.api.applet_run(self._dxid, run_input, **kwargs)["id"])
 
     def _get_run_input(self, executable_input, **kwargs):
+        print("here")
         return DXExecutable._get_run_input_fields_for_applet(executable_input, **kwargs)
 
     def _get_required_keys(self):
