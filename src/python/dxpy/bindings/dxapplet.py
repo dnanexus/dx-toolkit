@@ -226,7 +226,7 @@ class DXExecutable:
                                         priority=priority,
                                         extra_args=extra_args,
                                         detach=detach)
-
+        print(detach)
         return self._run_impl(run_input, **kwargs)
 
 
