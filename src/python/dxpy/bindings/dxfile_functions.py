@@ -30,6 +30,8 @@ import traceback
 import warnings
 from collections import defaultdict
 import multiprocessing
+from random import randint
+from time import sleep
 
 import dxpy
 from .. import logger
@@ -179,7 +181,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
                                             duration=6*3600,
                                             project=project)
 
-    def call_cmd(cmd, retry=True):
+    def call_cmd(cmd, max_retries=2, num_attempts=0):
         try:
             if aria2c_exe is not None:
                 print("Downloading symbolic link with aria2c")
@@ -190,9 +192,13 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
             msg = ""
             if e and e.output:
                 msg = e.output.strip()
-            if e.returncode == 22 and retry:  # hotfix, DEVEX-1779
-                print("Download failed with code 22. Retrying... Error details:{cmd}\n:{msg}\n")
-                call_cmd(cmd, False)
+            if e.returncode == 22 and num_attempts < max_retries:  # hotfix, DEVEX-1779
+
+                time_to_wait = 1 if num_attempts <= 2 else min(randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1)), 60)
+                print("Download failed with code 22. Retrying after {} seconds... Error details: cmd: {}\nmsg: {}\n".format(str(time_to_wait), str(cmd), msg))
+                sleep(time_to_wait)
+
+                call_cmd(cmd, max_retries, num_attempts + 1)
             err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
 
     # Follow the redirection
