@@ -161,7 +161,7 @@ class DXExecutable:
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
-            ignore_reuse=None, ignore_reuse_stages=None, extra_args=None, detach=None, **kwargs):
+            ignore_reuse=None, ignore_reuse_stages=None, detach=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
