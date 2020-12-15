@@ -4884,13 +4884,17 @@ parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
 ic_format = '\'{"entrypoint": <number of instances>}\''
 parser_run.add_argument('--instance-count',
                                metavar='INSTANCE_COUNT_OR_MAPPING',
-                               help=fill('Specify spark cluster instance count(s). It can be an int or a mapping of the format {ic}'.format(ic=ic_format), width_adjustment=-24),
+                               help=fill('Specify spark cluster instance count(s). It can be an int or a mapping of the format {ic}'.format(ic=ic_format),
+                                         width_adjustment=-24),
                                action='append')
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),
                         action=runInputHelp, nargs=0)
-parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches the new job from the creator job so the new job will appear as a typical root execution.  Setting DX_RUN_DETACH environment variable to 1 causes this option to be set by default.", width_adjustment=-24), action='store_true')
+parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches the new job from the "
+                                              "creator job so the new job will appear as a typical root execution. "
+                                              "Setting DX_RUN_DETACH environment variable to 1 causes this option to be set by default.",
+                                              width_adjustment=-24), action='store_true')
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None)
 register_parser(parser_run, categories='exec')
