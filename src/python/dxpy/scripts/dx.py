@@ -36,6 +36,7 @@ decode_command_line_args()
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy import workflow_builder
+from dxpy.exceptions import PermissionDenied
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
@@ -2841,9 +2842,7 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
 
     # Run the executable
     try:
-        print("hueh")
         dxexecution = executable.run(input_json, **run_kwargs)
-        print("hueh2")
         if not args.brief:
             print(dxexecution._class.capitalize() + " ID: " + dxexecution.get_id())
         else:
@@ -2871,9 +2870,11 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
                 else:
                     ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
                 ssh(ssh_args, ssh_config_verified=True)
-    except Exception as e:
-        print(e)
-        print(type(e))
+    except PermissionDenied as e:
+        if run_kwargs.get("detach") && os.environ.get("DX_RUN_DETACH") == "1" && "detachedJob" in e.msg:
+            print("Unable to start detached job in given project. To disable running detached job by default unset the environment variable DX_RUN_DETACH ('unset DX_RUN_DETACH')")
+        err_exit()
+    except Exception:
         err_exit()
 
     return dxexecution
@@ -2959,8 +2960,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
         "cluster_spec": srd_cluster_spec.as_dict(),
-        "extra_args": args.extra_args,
-        "detach": args.detach
+        "detach": args.detach,
+        "extra_args": args.extra_args
     }
 
     if run_kwargs["priority"] == "normal" and not args.brief:
