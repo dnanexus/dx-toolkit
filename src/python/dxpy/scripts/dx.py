@@ -2841,7 +2841,9 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
 
     # Run the executable
     try:
+        print("hueh")
         dxexecution = executable.run(input_json, **run_kwargs)
+        print("hueh2")
         if not args.brief:
             print(dxexecution._class.capitalize() + " ID: " + dxexecution.get_id())
         else:
@@ -2870,6 +2872,7 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
                     ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
                 ssh(ssh_args, ssh_config_verified=True)
     except Exception:
+        print("error")
         err_exit()
 
     return dxexecution
