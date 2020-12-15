@@ -131,7 +131,7 @@ def get_asset_make(src_dir, dest_folder, target_folder, json_out):
 
 
 def get_asset_dotenv(src_dir, dest_folder, target_folder, json_out):
-    dotenv_path = os.path.join(src_dir, ".env"))
+    dotenv_path = os.path.join(src_dir, ".env")
     if os.path.exists(dotenv_path):
         return dx_upload(dotenv_path, dest_folder, target_folder, json_out)
 
