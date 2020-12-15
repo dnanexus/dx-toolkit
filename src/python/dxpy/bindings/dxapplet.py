@@ -193,10 +193,10 @@ class DXExecutable:
         :type ignore_reuse: boolean
         :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
         :type ignore_reuse_stages: list
-        :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
-        :type extra_args: dict
         :param detach: If provided, job will not start as subjob if run inside of a different job.
         :type detach: boolean
+        :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
+        :type extra_args: dict
         :returns: Object handler of the newly created job
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
