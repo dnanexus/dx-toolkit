@@ -4891,9 +4891,9 @@ parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),
                         action=runInputHelp, nargs=0)
-parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches the new job from the "
-                                              "creator job so the new job will appear as a typical root execution. "
-                                              "Setting DX_RUN_DETACH environment variable to 1 causes this option to be set by default.",
+parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches the new job from the creator job so the "
+                                              "new job will appear as a typical root execution. Setting DX_RUN_DETACH "
+                                              "environment variable to 1 causes this option to be set by default.",
                                               width_adjustment=-24), action='store_true')
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None)
