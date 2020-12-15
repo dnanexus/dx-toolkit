@@ -130,6 +130,12 @@ def get_asset_make(src_dir, dest_folder, target_folder, json_out):
         return dx_upload(os.path.join(src_dir, "makefile"), dest_folder, target_folder, json_out)
 
 
+def get_asset_dotenv(src_dir, dest_folder, target_folder, json_out):
+    dotenv_path = os.path.join(src_dir, ".env"))
+    if os.path.exists(dotenv_path):
+        return dx_upload(dotenv_path, dest_folder, target_folder, json_out)
+
+
 def parse_destination(dest_str):
     """
     Parses dest_str, which is (roughly) of the form
@@ -204,6 +210,7 @@ def build_asset(args):
 
         conf_file = dx_upload(asset_conf_file, dest_project_name, dest_folder_name, args.json)
         make_file = get_asset_make(args.src_dir, dest_project_name, dest_folder_name, args.json)
+        dotenv_file = get_asset_dotenv(args.src_dir, dest_project_name, dest_folder_name, args.json)
         asset_file = get_asset_tarball(asset_conf['name'], args.src_dir, dest_project_name,
                                        dest_folder_name, args.json)
 
@@ -212,6 +219,8 @@ def build_asset(args):
             input_hash["custom_asset"] = dxpy.dxlink(asset_file)
         if make_file:
             input_hash["asset_makefile"] = dxpy.dxlink(make_file)
+        if dotenv_file:
+            input_hash["asset_dotenv"] = dxpy.dxlink(dotenv_file)
 
         builder_run_options = {
             "name": dest_asset_name,
