@@ -2871,8 +2871,9 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
                 else:
                     ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
                 ssh(ssh_args, ssh_config_verified=True)
-    except Exception:
-        print("error")
+    except Exception as e:
+        print(e)
+        print(type(e))
         err_exit()
 
     return dxexecution

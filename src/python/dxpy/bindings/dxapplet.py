@@ -227,8 +227,8 @@ class DXExecutable:
                                         debug=debug,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
-                                        extra_args=extra_args,
-                                        detach=detach)
+                                        detach=detach,
+                                        extra_args=extra_args)
         return self._run_impl(run_input, **kwargs)
 
 
