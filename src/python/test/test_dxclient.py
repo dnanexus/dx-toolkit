@@ -257,6 +257,7 @@ class TestApiDebugOutput(DXTestCase):
 
 
 class TestDXClient(DXTestCase):
+
     def test_dx_version(self):
         version = run("dx --version")
         self.assertIn("dx", version)
@@ -895,6 +896,7 @@ class TestDXClient(DXTestCase):
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
+
     def _test_dx_ssh(self, project, instance_type):
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
         for use_alternate_config_dir in [False, True]:
@@ -962,6 +964,56 @@ class TestDXClient(DXTestCase):
                 dx2.expect("still running. Terminate now?")
                 dx2.sendline("y")
                 dx2.expect("Terminated job", timeout=60)
+
+    def test_dx_run_detach(self):
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
+        for use_alternate_config_dir in [False, True]:
+            with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
+                sleep_applet1 = dxpy.api.applet_new(dict(name="sleep1",
+                                                        runSpec={"code": "sleep 1200",
+                                                                 "interpreter": "bash",
+                                                                 "distribution": "Ubuntu", "release": "14.04",
+                                                                 "execDepends": [{"name": "dx-toolkit"}],
+                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                                        inputSpec=[], outputSpec=[],
+                                                        dxapi="1.0.0", version="1.0.0",
+                                                        project=self.project))["id"]
+                sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2",
+                                                        runSpec={"code": "sleep 1200",
+                                                                 "interpreter": "bash",
+                                                                 "distribution": "Ubuntu", "release": "14.04",
+                                                                 "execDepends": [{"name": "dx-toolkit"}],
+                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                                        inputSpec=[], outputSpec=[],
+                                                        dxapi="1.0.0", version="1.0.0",
+                                                        project=self.project))["id"]
+
+                dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet1),
+                                   env=override_environment(HOME=wd),
+                                   **spawn_extra_args)
+                dx.logfile = sys.stdout
+                dx.setwinsize(20, 90)
+                dx.expect("Waiting for job")
+                dx.expect("Resolving job hostname and SSH host key", timeout=1200)
+
+                dx.expect("This is the DNAnexus Execution Environment", timeout=600)
+                # Check for job name (e.g. "Job: sleep")
+                #dx.expect("Job: \x1b\[1msleep", timeout=5)
+                if USING_PYTHON2:
+                    # \xf6 is ö
+                    project_line = "Project: dxclient_test_pr\xf6ject".encode(sys_encoding)
+                else:
+                    project_line = "Project: dxclient_test_pröject"
+                dx.expect(project_line)
+
+                dx.expect("The job is running in terminal 1.", timeout=5)
+                # Check for terminal prompt and verify we're in the container
+                job = next(dxpy.find_jobs(name="sleep1", project=self.project), None)
+                job_id = job['id']
+                dx.expect("OS version: Ubuntu 14.04", timeout=5)
+                dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
+                job2 = next(dxpy.find_jobs(name="sleep2", project=self.project), None)
+                self.assertTrue(job_id in job2['detachedFrom'])
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
@@ -10241,58 +10293,6 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
         app_2 = dxpy.describe(app_id_2)
         self.assertEqual(app_2['name'], app_spec_2['name'])
         self.assertEqual(app_2['version'], "0.0.2")
-
-
-class TestDxRunDetach(DXTestCase):
-    def test_dx_run_detach(self):
-        dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
-        for use_alternate_config_dir in [False, True]:
-            with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
-                sleep_applet1 = dxpy.api.applet_new(dict(name="sleep1",
-                                                        runSpec={"code": "sleep 1200",
-                                                                 "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "14.04",
-                                                                 "execDepends": [{"name": "dx-toolkit"}],
-                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
-                                                        inputSpec=[], outputSpec=[],
-                                                        dxapi="1.0.0", version="1.0.0",
-                                                        project=self.project))["id"]
-                sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2",
-                                                        runSpec={"code": "sleep 1200",
-                                                                 "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "14.04",
-                                                                 "execDepends": [{"name": "dx-toolkit"}],
-                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
-                                                        inputSpec=[], outputSpec=[],
-                                                        dxapi="1.0.0", version="1.0.0",
-                                                        project=self.project))["id"]
-
-                dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet1),
-                                   env=override_environment(HOME=wd),
-                                   **spawn_extra_args)
-                dx.logfile = sys.stdout
-                dx.setwinsize(20, 90)
-                dx.expect("Waiting for job")
-                dx.expect("Resolving job hostname and SSH host key", timeout=1200)
-
-                dx.expect("This is the DNAnexus Execution Environment", timeout=600)
-                # Check for job name (e.g. "Job: sleep")
-                #dx.expect("Job: \x1b\[1msleep", timeout=5)
-                if USING_PYTHON2:
-                    # \xf6 is ö
-                    project_line = "Project: dxclient_test_pr\xf6ject".encode(sys_encoding)
-                else:
-                    project_line = "Project: dxclient_test_pröject"
-                dx.expect(project_line)
-
-                dx.expect("The job is running in terminal 1.", timeout=5)
-                # Check for terminal prompt and verify we're in the container
-                job = next(dxpy.find_jobs(name="sleep1", project=self.project), None)
-                job_id = job['id']
-                dx.expect("OS version: Ubuntu 14.04", timeout=5)
-                dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
-                job2 = next(dxpy.find_jobs(name="sleep2", project=self.project), None)
-                self.assertTrue(job_id in job2['detachedFrom'])
 
 
 if __name__ == '__main__':
