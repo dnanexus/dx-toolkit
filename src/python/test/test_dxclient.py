@@ -9893,7 +9893,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             with open(path_to_dxapp_json, "r") as fh:
                 app_spec = json.load(fh)
                 self.assertEqual(app_spec["regionalOptions"], regional_options)
-                
+
 
 @unittest.skipUnless(testutil.TEST_TCSH, 'skipping tests that require tcsh to be installed')
 class TestTcshEnvironment(unittest.TestCase):
@@ -10241,6 +10241,58 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
         app_2 = dxpy.describe(app_id_2)
         self.assertEqual(app_2['name'], app_spec_2['name'])
         self.assertEqual(app_2['version'], "0.0.2")
+
+
+class TestDxRunDetach(DXTestCase):
+    def test_dx_run_detach(self, project, instance_type):
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
+        for use_alternate_config_dir in [False, True]:
+            with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
+                sleep_applet1 = dxpy.api.applet_new(dict(name="sleep1",
+                                                        runSpec={"code": "sleep 1200",
+                                                                 "interpreter": "bash",
+                                                                 "distribution": "Ubuntu", "release": "14.04",
+                                                                 "execDepends": [{"name": "dx-toolkit"}],
+                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                                        inputSpec=[], outputSpec=[],
+                                                        dxapi="1.0.0", version="1.0.0",
+                                                        project=project))["id"]
+                sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2",
+                                                        runSpec={"code": "sleep 1200",
+                                                                 "interpreter": "bash",
+                                                                 "distribution": "Ubuntu", "release": "14.04",
+                                                                 "execDepends": [{"name": "dx-toolkit"}],
+                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                                        inputSpec=[], outputSpec=[],
+                                                        dxapi="1.0.0", version="1.0.0",
+                                                        project=project))["id"]
+
+                dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet1),
+                                   env=override_environment(HOME=wd),
+                                   **spawn_extra_args)
+                dx.logfile = sys.stdout
+                dx.setwinsize(20, 90)
+                dx.expect("Waiting for job")
+                dx.expect("Resolving job hostname and SSH host key", timeout=1200)
+
+                dx.expect("This is the DNAnexus Execution Environment", timeout=600)
+                # Check for job name (e.g. "Job: sleep")
+                #dx.expect("Job: \x1b\[1msleep", timeout=5)
+                if USING_PYTHON2:
+                    # \xf6 is ö
+                    project_line = "Project: dxclient_test_pr\xf6ject".encode(sys_encoding)
+                else:
+                    project_line = "Project: dxclient_test_pröject"
+                dx.expect(project_line)
+
+                dx.expect("The job is running in terminal 1.", timeout=5)
+                # Check for terminal prompt and verify we're in the container
+                job = next(dxpy.find_jobs(name="sleep1", project=project), None)
+                job_id = job['id']
+                dx.expect("OS version: Ubuntu 14.04", timeout=5)
+                dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
+                job2 = next(dxpy.find_jobs(name="sleep2", project=project), None)
+                self.assertTrue(job_id in job2['detachedFrom'])
 
 
 if __name__ == '__main__':
