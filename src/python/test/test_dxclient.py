@@ -974,7 +974,7 @@ class TestDXClient(DXTestCase):
                                                                  "interpreter": "bash",
                                                                  "distribution": "Ubuntu", "release": "14.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
-                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                                                 "systemRequirements": {"*": {"instanceType": "mem2_hdd2_x1"}}},
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=self.project))["id"]
@@ -983,7 +983,7 @@ class TestDXClient(DXTestCase):
                                                                  "interpreter": "bash",
                                                                  "distribution": "Ubuntu", "release": "14.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
-                                                                 "systemRequirements": {"*": {"instanceType": instance_type}}},
+                                                                 "systemRequirements": {"*": {"instanceType": "mem2_hdd2_x1"}}},
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=self.project))["id"]
