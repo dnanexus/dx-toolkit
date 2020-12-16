@@ -73,7 +73,7 @@ else
 
 	ifeq ($(UNAME), Darwin)
 		CXXFLAGS += -DMAC_BUILD=1 -std=c++0x
-		LDFLAGS += -Wl,-headerpad,100
+		LDFLAGS += -Wl,-headerpad,100 -Wl,-static
 		ifeq ($(CC), clang)
 			CXXFLAGS += -stdlib=libc++
 		endif
