@@ -968,7 +968,7 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_detach(self):
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
-        for use_alternate_config_dir in [False]:
+        for use_alternate_config_dir in [False, True]:
             with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
                 sleep_applet1 = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
@@ -1013,7 +1013,9 @@ class TestDXClient(DXTestCase):
                 job_id = job['id']
                 dx.expect("OS version: Ubuntu 14.04", timeout=5)
                 dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
+                time.sleep(1)
                 job2 = next(dxpy.find_jobs(name="sleep2", project=self.project), None)
+                print(job2)
                 self.assertTrue(job_id in job2['detachedFrom'])
                 dx.sendline("exit")
                 dx.expect("bash running", timeout=10)
