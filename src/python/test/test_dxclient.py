@@ -965,9 +965,10 @@ class TestDXClient(DXTestCase):
                 dx2.sendline("y")
                 dx2.expect("Terminated job", timeout=60)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_detach(self):
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
-        for use_alternate_config_dir in [False, True]:
+        for use_alternate_config_dir in [False]:
             with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
                 sleep_applet1 = dxpy.api.applet_new(dict(name="sleep1",
                                                         runSpec={"code": "sleep 1200",
@@ -979,7 +980,7 @@ class TestDXClient(DXTestCase):
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=self.project))["id"]
                 sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2",
-                                                        runSpec={"code": "sleep 1200",
+                                                        runSpec={"code": "sleep 5",
                                                                  "interpreter": "bash",
                                                                  "distribution": "Ubuntu", "release": "14.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
@@ -1014,6 +1015,11 @@ class TestDXClient(DXTestCase):
                 dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
                 job2 = next(dxpy.find_jobs(name="sleep2", project=self.project), None)
                 self.assertTrue(job_id in job2['detachedFrom'])
+                dx.sendline("exit")
+                dx.expect("bash running", timeout=10)
+                dx.sendcontrol("c")  # CTRL-c
+                dx.expect("[exited]")
+                dx.expect("dnanexus@job", timeout=10)
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
