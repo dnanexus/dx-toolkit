@@ -10244,8 +10244,8 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
 
 
 class TestDxRunDetach(DXTestCase):
-    def test_dx_run_detach(self, project, instance_type):
-        dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
+    def test_dx_run_detach(self):
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
         for use_alternate_config_dir in [False, True]:
             with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
                 sleep_applet1 = dxpy.api.applet_new(dict(name="sleep1",
@@ -10256,7 +10256,7 @@ class TestDxRunDetach(DXTestCase):
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
-                                                        project=project))["id"]
+                                                        project=self.project))["id"]
                 sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
@@ -10265,7 +10265,7 @@ class TestDxRunDetach(DXTestCase):
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
-                                                        project=project))["id"]
+                                                        project=self.project))["id"]
 
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet1),
                                    env=override_environment(HOME=wd),
@@ -10287,11 +10287,11 @@ class TestDxRunDetach(DXTestCase):
 
                 dx.expect("The job is running in terminal 1.", timeout=5)
                 # Check for terminal prompt and verify we're in the container
-                job = next(dxpy.find_jobs(name="sleep1", project=project), None)
+                job = next(dxpy.find_jobs(name="sleep1", project=self.project), None)
                 job_id = job['id']
                 dx.expect("OS version: Ubuntu 14.04", timeout=5)
                 dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
-                job2 = next(dxpy.find_jobs(name="sleep2", project=project), None)
+                job2 = next(dxpy.find_jobs(name="sleep2", project=self.project), None)
                 self.assertTrue(job_id in job2['detachedFrom'])
 
 
