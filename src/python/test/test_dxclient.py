@@ -993,9 +993,8 @@ class TestDXClient(DXTestCase):
                                    env=override_environment(HOME=wd),
                                    **spawn_extra_args)
                 # debug
-
+                time.sleep(5)
                 job = next(dxpy.find_jobs(name="sleep", project=self.project), None)
-                job_id = job['id']
                 print("___________________HERE_________")
                 print(job)
                 #/debug
