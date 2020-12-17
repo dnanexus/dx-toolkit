@@ -910,15 +910,6 @@ class TestDXClient(DXTestCase):
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=project))["id"]
-                sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2_run_detach",
-                                                        runSpec={"code": "sleep 5",
-                                                                 "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "14.04",
-                                                                 "execDepends": [{"name": "dx-toolkit"}],
-                                                                 "systemRequirements": {"*": {"instanceType": "mem2_hdd2_x1"}}},
-                                                        inputSpec=[], outputSpec=[],
-                                                        dxapi="1.0.0", version="1.0.0",
-                                                        project=self.project))["id"]
 
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
                                    env=override_environment(HOME=wd),
@@ -948,7 +939,8 @@ class TestDXClient(DXTestCase):
                 # results in characters that are NOT plain ascii.
                 #
                 # Expect the shell prompt - for example: dnanexus@job-xxxx:~⟫
-                #dx.expect(("dnanexus@%s" % job_id), timeout=30
+                #dx.expect(("dnanexus@%s" % job_id), timeout=30)
+
 
                 expected_history_filename = os.path.join(
                         os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
@@ -1034,7 +1026,7 @@ class TestDXClient(DXTestCase):
                 job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project), None)
                 print("___________________HERE_________")
                 print(job2)
-                self.assertTrue(job_id in job2['detachedFrom'])
+                self.assertTrue(job_id in job2['describe']['detachedFrom'])
                 dx.sendline("exit")
                 dx.expect("bash running", timeout=10)
                 dx.sendcontrol("c")  # CTRL-c
