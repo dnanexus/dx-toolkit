@@ -994,7 +994,7 @@ class TestDXClient(DXTestCase):
                                    **spawn_extra_args)
                 # debug
                 time.sleep(5)
-                job = next(dxpy.find_jobs(name="sleep", project=self.project), None)
+                job = next(dxpy.find_jobs(name="sleep", project=self.project, describe=True), None)
                 print("___________________HERE_________")
                 print(job)
                 #/debug
