@@ -910,6 +910,16 @@ class TestDXClient(DXTestCase):
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=project))["id"]
+                sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2_run_detach",
+                                                        runSpec={"code": "sleep 5",
+                                                                 "interpreter": "bash",
+                                                                 "distribution": "Ubuntu", "release": "14.04",
+                                                                 "execDepends": [{"name": "dx-toolkit"}],
+                                                                 "systemRequirements": {"*": {"instanceType": "mem2_hdd2_x1"}}},
+                                                        inputSpec=[], outputSpec=[],
+                                                        dxapi="1.0.0", version="1.0.0",
+                                                        project=self.project))["id"]
+
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
                                    env=override_environment(HOME=wd),
                                    **spawn_extra_args)
@@ -939,6 +949,11 @@ class TestDXClient(DXTestCase):
                 #
                 # Expect the shell prompt - for example: dnanexus@job-xxxx:~⟫
                 #dx.expect(("dnanexus@%s" % job_id), timeout=30)
+                dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
+                time.sleep(1)
+                job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project), None)
+                print("___________________HERE_________")
+                print(job2)
 
                 expected_history_filename = os.path.join(
                         os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
@@ -970,7 +985,7 @@ class TestDXClient(DXTestCase):
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
         for use_alternate_config_dir in [False, True]:
             with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
-                sleep_applet1 = dxpy.api.applet_new(dict(name="sleep",
+                sleep_applet1 = dxpy.api.applet_new(dict(name="sleep_run_detach",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
                                                                  "distribution": "Ubuntu", "release": "14.04",
@@ -979,7 +994,7 @@ class TestDXClient(DXTestCase):
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=self.project))["id"]
-                sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2",
+                sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2_run_detach",
                                                         runSpec={"code": "sleep 5",
                                                                  "interpreter": "bash",
                                                                  "distribution": "Ubuntu", "release": "14.04",
@@ -994,7 +1009,7 @@ class TestDXClient(DXTestCase):
                                    **spawn_extra_args)
                 # debug
                 time.sleep(5)
-                job = next(dxpy.find_jobs(name="sleep", project=self.project, describe=True), None)
+                job = next(dxpy.find_jobs(name="sleep_run_detach", project=self.project, describe=True), None)
                 print("___________________HERE_________")
                 print(job)
                 #/debug
@@ -1021,7 +1036,7 @@ class TestDXClient(DXTestCase):
                 print("sleep_applet_2 : {}".format(sleep_applet2))
                 dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
                 time.sleep(1)
-                job2 = next(dxpy.find_jobs(name="sleep2", project=self.project), None)
+                job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project), None)
                 print("___________________HERE_________")
                 print(job2)
                 self.assertTrue(job_id in job2['detachedFrom'])
