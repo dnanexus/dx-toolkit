@@ -948,12 +948,7 @@ class TestDXClient(DXTestCase):
                 # results in characters that are NOT plain ascii.
                 #
                 # Expect the shell prompt - for example: dnanexus@job-xxxx:~⟫
-                #dx.expect(("dnanexus@%s" % job_id), timeout=30)
-                dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
-                time.sleep(1)
-                job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project), None)
-                print("___________________HERE_________")
-                print(job2)
+                #dx.expect(("dnanexus@%s" % job_id), timeout=30
 
                 expected_history_filename = os.path.join(
                         os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
