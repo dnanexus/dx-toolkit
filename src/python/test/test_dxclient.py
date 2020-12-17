@@ -1012,9 +1012,11 @@ class TestDXClient(DXTestCase):
                 job = next(dxpy.find_jobs(name="sleep", project=self.project), None)
                 job_id = job['id']
                 dx.expect("OS version: Ubuntu 14.04", timeout=5)
+                print("sleep_applet_2 : {}".format(sleep_applet2))
                 dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
                 time.sleep(1)
                 job2 = next(dxpy.find_jobs(name="sleep2", project=self.project), None)
+                print("___________________HERE_________")
                 print(job2)
                 self.assertTrue(job_id in job2['detachedFrom'])
                 dx.sendline("exit")
