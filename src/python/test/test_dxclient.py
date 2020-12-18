@@ -982,7 +982,7 @@ class TestDXClient(DXTestCase):
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=self.project))["id"]
                 sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2_run_detach",
-                                                        runSpec={"code": "sleep 5",
+                                                        runSpec={"code": "sleep 15",
                                                                  "interpreter": "bash",
                                                                  "distribution": "Ubuntu", "release": "14.04",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
@@ -1021,7 +1021,7 @@ class TestDXClient(DXTestCase):
                 job_id = job['id']
                 dx.expect("OS version: Ubuntu 14.04", timeout=5)
                 print("sleep_applet_2 : {}".format(sleep_applet2))
-                dx.sendline("dx run {} --yes".format(sleep_applet2))
+                dx.sendline("dx run {} --detach --yes".format(sleep_applet2))
                 time.sleep(5)
                 job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project, describe=True), None)
                 print("___________________job2_________")
