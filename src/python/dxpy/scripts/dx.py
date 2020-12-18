@@ -2874,6 +2874,7 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
         if run_kwargs.get("detach") and os.environ.get("DX_RUN_DETACH") == "1" and "detachedJob" in e.msg:
             print("Unable to start detached job in given project. "
                   "To disable running jobs as detached by default, please unset the environment variable DX_RUN_DETACH ('unset DX_RUN_DETACH')")
+        raise(e)
         err_exit()
     except Exception:
         err_exit()
