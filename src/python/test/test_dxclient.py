@@ -997,7 +997,7 @@ class TestDXClient(DXTestCase):
                 # debug
                 time.sleep(5)
                 job = next(dxpy.find_jobs(name="sleep_run_detach", project=self.project, describe=True), None)
-                print("___________________HERE_________")
+                print("___________________JOB1_________")
                 print(job)
                 #/debug
                 dx.logfile = sys.stdout
@@ -1022,9 +1022,9 @@ class TestDXClient(DXTestCase):
                 dx.expect("OS version: Ubuntu 14.04", timeout=5)
                 print("sleep_applet_2 : {}".format(sleep_applet2))
                 dx.sendline("dx run {} --yes --detach".format(sleep_applet2))
-                time.sleep(1)
+                time.sleep(5)
                 job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project), None)
-                print("___________________HERE_________")
+                print("___________________job2_________")
                 print(job2)
                 self.assertTrue(job_id in job2['describe']['detachedFrom'])
                 dx.sendline("exit")
