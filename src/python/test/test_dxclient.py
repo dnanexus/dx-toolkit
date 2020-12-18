@@ -1017,7 +1017,7 @@ class TestDXClient(DXTestCase):
 
                 dx.expect("The job is running in terminal 1.", timeout=5)
                 # Check for terminal prompt and verify we're in the container
-                job = next(dxpy.find_jobs(name="sleep", project=self.project), None)
+                job = next(dxpy.find_jobs(name="sleep_run_detach", project=self.project), None)
                 job_id = job['id']
                 dx.expect("OS version: Ubuntu 14.04", timeout=5)
                 print("sleep_applet_2 : {}".format(sleep_applet2))
