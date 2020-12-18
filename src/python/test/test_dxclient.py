@@ -257,7 +257,6 @@ class TestApiDebugOutput(DXTestCase):
 
 
 class TestDXClient(DXTestCase):
-
     def test_dx_version(self):
         version = run("dx --version")
         self.assertIn("dx", version)
@@ -896,7 +895,6 @@ class TestDXClient(DXTestCase):
             if original_ssh_public_key:
                 dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
-
     def _test_dx_ssh(self, project, instance_type):
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
         for use_alternate_config_dir in [False, True]:
@@ -910,7 +908,6 @@ class TestDXClient(DXTestCase):
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
                                                         project=project))["id"]
-
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
                                    env=override_environment(HOME=wd),
                                    **spawn_extra_args)
@@ -941,7 +938,6 @@ class TestDXClient(DXTestCase):
                 # Expect the shell prompt - for example: dnanexus@job-xxxx:~⟫
                 #dx.expect(("dnanexus@%s" % job_id), timeout=30)
 
-
                 expected_history_filename = os.path.join(
                         os.environ.get("DX_USER_CONF_DIR", os.path.join(wd, ".dnanexus_config")), ".dx_history")
                 self.assertTrue(os.path.isfile(expected_history_filename))
@@ -966,72 +962,6 @@ class TestDXClient(DXTestCase):
                 dx2.expect("still running. Terminate now?")
                 dx2.sendline("y")
                 dx2.expect("Terminated job", timeout=60)
-
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
-    def test_dx_run_detach(self):
-        dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
-        for use_alternate_config_dir in [False, True]:
-            with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
-                sleep_applet1 = dxpy.api.applet_new(dict(name="sleep_run_detach",
-                                                        runSpec={"code": "sleep 1200",
-                                                                 "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "14.04",
-                                                                 "execDepends": [{"name": "dx-toolkit"}],
-                                                                 "systemRequirements": {"*": {"instanceType": "mem2_hdd2_x1"}}},
-                                                        inputSpec=[], outputSpec=[],
-                                                        dxapi="1.0.0", version="1.0.0",
-                                                        project=self.project))["id"]
-                sleep_applet2 = dxpy.api.applet_new(dict(name="sleep2_run_detach",
-                                                        runSpec={"code": "sleep 15",
-                                                                 "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "14.04",
-                                                                 "execDepends": [{"name": "dx-toolkit"}],
-                                                                 "systemRequirements": {"*": {"instanceType": "mem2_hdd2_x1"}}},
-                                                        inputSpec=[], outputSpec=[],
-                                                        dxapi="1.0.0", version="1.0.0",
-                                                        project=self.project))["id"]
-
-                dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet1),
-                                   env=override_environment(HOME=wd),
-                                   **spawn_extra_args)
-                # debug
-                time.sleep(5)
-                job = next(dxpy.find_jobs(name="sleep_run_detach", project=self.project, describe=True), None)
-                print("___________________JOB1_________")
-                print(job)
-                #/debug
-                dx.logfile = sys.stdout
-                dx.setwinsize(20, 90)
-                dx.expect("Waiting for job")
-                dx.expect("Resolving job hostname and SSH host key", timeout=1200)
-
-                dx.expect("This is the DNAnexus Execution Environment", timeout=600)
-                # Check for job name (e.g. "Job: sleep")
-                #dx.expect("Job: \x1b\[1msleep", timeout=5)
-                if USING_PYTHON2:
-                    # \xf6 is ö
-                    project_line = "Project: dxclient_test_pr\xf6ject".encode(sys_encoding)
-                else:
-                    project_line = "Project: dxclient_test_pröject"
-                dx.expect(project_line)
-
-                dx.expect("The job is running in terminal 1.", timeout=5)
-                # Check for terminal prompt and verify we're in the container
-                job = next(dxpy.find_jobs(name="sleep_run_detach", project=self.project), None)
-                job_id = job['id']
-                dx.expect("OS version: Ubuntu 14.04", timeout=5)
-                print("sleep_applet_2 : {}".format(sleep_applet2))
-                dx.sendline("dx run {} --detach --yes".format(sleep_applet2))
-                time.sleep(5)
-                job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project, describe=True), None)
-                print("___________________job2_________")
-                print(job2)
-                self.assertTrue(job_id in job2['describe']['detachedFrom'])
-                dx.sendline("exit")
-                dx.expect("bash running", timeout=10)
-                dx.sendcontrol("c")  # CTRL-c
-                dx.expect("[exited]")
-                dx.expect("dnanexus@job", timeout=10)
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
@@ -9963,7 +9893,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             with open(path_to_dxapp_json, "r") as fh:
                 app_spec = json.load(fh)
                 self.assertEqual(app_spec["regionalOptions"], regional_options)
-
+                
 
 @unittest.skipUnless(testutil.TEST_TCSH, 'skipping tests that require tcsh to be installed')
 class TestTcshEnvironment(unittest.TestCase):
