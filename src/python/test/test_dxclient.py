@@ -1023,7 +1023,7 @@ class TestDXClient(DXTestCase):
                 print("sleep_applet_2 : {}".format(sleep_applet2))
                 dx.sendline("dx run {} --yes".format(sleep_applet2))
                 time.sleep(5)
-                job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project), None)
+                job2 = next(dxpy.find_jobs(name="sleep2_run_detach", project=self.project, describe=True), None)
                 print("___________________job2_________")
                 print(job2)
                 self.assertTrue(job_id in job2['describe']['detachedFrom'])
