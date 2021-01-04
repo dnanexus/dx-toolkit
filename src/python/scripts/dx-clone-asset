@@ -39,7 +39,6 @@ def _parse_args():
     ap.add_argument('--regions',
                     help='Regions to clone asset into.  Permitted regions are:\n[{supported_regions}]'.format(
                         supported_regions=', '.join(SUPPORTED_REGIONS)),
-                    choices=SUPPORTED_REGIONS,
                     default=SUPPORTED_REGIONS,
                     nargs='+',
                     metavar='',
@@ -52,6 +51,10 @@ def _parse_args():
     ap.add_argument('--priority',
                     help='Priority with which to run the clone_asset app',
                     choices=['normal', 'high'],
+                    required=False)
+    ap.add_argument('--brief',
+                    help='Print only a mapping with the regions as keys and the cloned record ids as the values to stdout',
+                    action="store_true",
                     required=False)
 
     return ap.parse_args()
@@ -84,7 +87,7 @@ def _find_asset_project(region):
     return None
 
 
-def _clone_asset_into_region(region, record_name, asset_properties, asset_file_name, url, num_retries, q, priority):
+def _clone_asset_into_region(region, record_name, asset_properties, asset_file_name, url, num_retries, q, priority, brief):
     """
     Run the _clone_asset app to clone the given asset information into a new asset in the given region.
     The new asset will live in a project in the given region with a prefix given by ASSET_PROJECT_PREFIX.
@@ -106,7 +109,8 @@ def _clone_asset_into_region(region, record_name, asset_properties, asset_file_n
         cmd = ['dx', 'run', CLONE_ASSET_APP_NAME, '--project', project_id, '-iurl=' + url, '-irecord_name=' + record_name]
         cmd += ['-iasset_file_name=' + asset_file_name, '-iasset_properties=' + json.dumps(asset_properties), '--brief']
         job = subprocess.check_output(cmd).strip().decode()
-        print('{region}: {job_id}'.format(region=region, job_id=job), file=sys.stderr)
+        if not brief:
+            print('{region}: {job_id}'.format(region=region, job_id=job), file=sys.stderr)
         try:
             cmd = 'dx wait {job_id} '.format(job_id=job)
             subprocess.check_output(cmd, shell=True)
@@ -126,7 +130,7 @@ def _clone_asset_into_region(region, record_name, asset_properties, asset_file_n
     return {region: record_id}
 
 
-def clone_asset(record_id, regions, num_retries=0, priority=None):
+def clone_asset(record_id, regions, num_retries=0, priority=None, brief=False):
     """
     This function will attempt to clone the given record into all of the given regions.
     It will return a dictionary with the regions as keys and the record-ids of the
@@ -163,12 +167,14 @@ def clone_asset(record_id, regions, num_retries=0, priority=None):
                                          asset_properties=asset_properties,
                                          asset_file_name=asset_file_name,
                                          url=url, num_retries=num_retries,
-                                         priority=priority)
+                                         priority=priority,
+                                         brief=brief)
     results = pool.map_async(clone_asset_func, regions)
 
     # Get and return the results
     remaining_regions = regions
-    print('Waiting on region(s): {regions} '.format(regions=' '.join(remaining_regions)))
+    if not brief:
+        print('Waiting on region(s): {regions} '.format(regions=' '.join(remaining_regions)))
     while True:
         if results.ready():
             break
@@ -177,12 +183,15 @@ def clone_asset(record_id, regions, num_retries=0, priority=None):
                 for i in range(q.qsize()):
                     received = set([q.get()])
                     remaining_regions = remaining_regions - received
-                print('\nWaiting on region(s): {regions} '.format(regions=' '.join(remaining_regions)))
-            sys.stdout.write('.')
-            sys.stdout.flush()
+                if not brief:
+                    print('\nWaiting on region(s): {regions} '.format(regions=' '.join(remaining_regions)))
+            if not brief:
+                sys.stdout.write('.')
+                sys.stdout.flush()
             time.sleep(SLEEP_TIME)
 
-    print('\nDone')
+    if not brief:
+        print('\nDone')
     results = results.get()
     record_ids = {}
     for result in results:
@@ -195,14 +204,17 @@ def clone_asset(record_id, regions, num_retries=0, priority=None):
     return record_ids
 
 
-def main(record, regions, num_retries=0, priority=None):
-    record_ids = clone_asset(record, regions, num_retries, priority)
+def main(record, regions, num_retries=0, priority=None, brief=False):
+    record_ids = clone_asset(record, regions, num_retries, priority, brief)
 
     for region in record_ids:
         record_id = 'Failed' if record_ids[region] is None else record_ids[region]
-        print('{region}:\t{record_id}'.format(region=region, record_id=record_id))
+        if not brief:
+            print('{region}:\t{record_id}'.format(region=region, record_id=record_id))
 
+    if brief:
+        print(record_ids)
 
 if __name__ == '__main__':
     args = _parse_args()
-    main(args.record, args.regions, args.num_retries, args.priority)
+    main(args.record, args.regions, args.num_retries, args.priority, args.brief)
