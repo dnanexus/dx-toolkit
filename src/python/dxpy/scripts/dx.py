@@ -36,6 +36,7 @@ decode_command_line_args()
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy import workflow_builder
+from dxpy.exceptions import PermissionDenied
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
@@ -2601,7 +2602,7 @@ def build(args):
 
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
-            
+
         if args._from is not None and args.mode == "globalworkflow":
             build_parser.error("building a global workflow using --from is not supported")
 
@@ -2869,6 +2870,11 @@ def run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs):
                 else:
                     ssh_args = parser.parse_args(['ssh', dxexecution.get_id()])
                 ssh(ssh_args, ssh_config_verified=True)
+    except PermissionDenied as e:
+        if run_kwargs.get("detach") and os.environ.get("DX_RUN_DETACH") == "1" and "detachedJob" in e.msg:
+            print("Unable to start detached job in given project. "
+                  "To disable running jobs as detached by default, please unset the environment variable DX_RUN_DETACH ('unset DX_RUN_DETACH')")
+        raise(e)
     except Exception:
         err_exit()
 
@@ -2955,6 +2961,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
         "cluster_spec": srd_cluster_spec.as_dict(),
+        "detach": args.detach,
         "extra_args": args.extra_args
     }
 
@@ -3376,6 +3383,8 @@ def run(args):
     if is_global_workflow:
         args.region = dxpy.api.project_describe(dest_proj,
                                                 input_params={"fields": {"region": True}})["region"]
+    if not args.detach:
+        args.detach = os.environ.get("DX_RUN_DETACH") == "1"
 
     # if the destination path has still not been set, use the current
     # directory as the default; but only do this if not running a
@@ -4875,12 +4884,17 @@ parser_run.add_argument('--batch-tsv', dest='batch_tsv', metavar="FILE",
 ic_format = '\'{"entrypoint": <number of instances>}\''
 parser_run.add_argument('--instance-count',
                                metavar='INSTANCE_COUNT_OR_MAPPING',
-                               help=fill('Specify spark cluster instance count(s). It can be an int or a mapping of the format {ic}'.format(ic=ic_format), width_adjustment=-24),
+                               help=fill('Specify spark cluster instance count(s). It can be an int or a mapping of the format {ic}'.format(ic=ic_format),
+                                         width_adjustment=-24),
                                action='append')
 parser_run.add_argument('--input-help',
                         help=fill('Print help and examples for how to specify inputs',
                                   width_adjustment=-24),
                         action=runInputHelp, nargs=0)
+parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches the new job from the creator job so the "
+                                              "new job will appear as a typical root execution. Setting DX_RUN_DETACH "
+                                              "environment variable to 1 causes this option to be set by default.",
+                                              width_adjustment=-24), action='store_true')
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None)
 register_parser(parser_run, categories='exec')

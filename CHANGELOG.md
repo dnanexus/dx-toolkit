@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Added '--detach' flag for `dx run`
+
 ## [302.0] - beta
 
 No significant changes

@@ -97,6 +97,9 @@ class DXExecutable:
         if kwargs.get('extra_args') is not None:
             merge(run_input, kwargs['extra_args'])
 
+        if kwargs.get('detach') is not None:
+            run_input["detach"] = kwargs['detach']
+
         return run_input
 
     @staticmethod
@@ -158,7 +161,7 @@ class DXExecutable:
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
-            ignore_reuse=None, ignore_reuse_stages=None, extra_args=None, **kwargs):
+            ignore_reuse=None, ignore_reuse_stages=None, detach=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -190,6 +193,8 @@ class DXExecutable:
         :type ignore_reuse: boolean
         :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
         :type ignore_reuse_stages: list
+        :param detach: If provided, job will not start as subjob if run inside of a different job.
+        :type detach: boolean
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
@@ -222,8 +227,8 @@ class DXExecutable:
                                         debug=debug,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
+                                        detach=detach,
                                         extra_args=extra_args)
-
         return self._run_impl(run_input, **kwargs)
 
 
