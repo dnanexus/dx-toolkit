@@ -8,13 +8,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Added '--detach' flag for `dx run`
+* '--detach' flag for `dx run`
 
-## [302.0] - beta
+### Changed
 
-No significant changes
+* Add xattr dependency to extras_require, only install if specified
 
-## [301.1] - 2020.09.16 stable
+### Removed
+
+* Unused python-magic, beatifulsoup4 python dependencies
+
+## [303.1] - 2020.11.13 stable
+
+### Changed
+
+* Increase wget retries to 20 for symlink downloads
+
+## [302.1] - 2020.10.13
+
+### Changed
+
+* gnureadline macos dependency to 8.0.0 for Python versions < 3.9
+
+## [301.1] - 2020.09.16
 
 ### Added
 
