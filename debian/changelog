@@ -1,3 +1,9 @@
+dx-toolkit (0.304.1) trusty; urgency=medium
+
+  * Fixed: Building assets for Ubuntu 20.04
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 05 Jan 2021 20:27:38 +0000
+
 dx-toolkit (0.304.0) trusty; urgency=medium
 
   * Changed: Increase wget retries to 20 for symlink downloads
