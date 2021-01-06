@@ -181,7 +181,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
                                             duration=6*3600,
                                             project=project)
 
-    def call_cmd(cmd, max_retries=2, num_attempts=0):
+    def call_cmd(cmd, max_retries=6, num_attempts=0):
         try:
             if aria2c_exe is not None:
                 print("Downloading symbolic link with aria2c")
