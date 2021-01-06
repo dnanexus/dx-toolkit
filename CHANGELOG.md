@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Symlink download retries when error 22 is thrown
+
+## [305.0] - beta
+
 ### Added
 
 * '--detach' flag for `dx run`
@@ -18,7 +24,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Unused python-magic, beatifulsoup4 python dependencies
 
-## [303.1] - 2020.11.13 stable
+## [304.1] - 2020.01.05 stable
+
+### Fixed
+
+* Building assets for Ubuntu 20.04
+
+## [303.1] - 2020.11.13 
 
 ### Changed
 
