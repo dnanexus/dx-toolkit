@@ -373,13 +373,13 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
             raise WorkflowBuilderException("Building a global workflow with nested global workflows is not yet supported")
 
 
-def _build_regular_workflow(json_spec):
+def _build_regular_workflow(json_spec, keep_open=False):
     """
     Precondition: json_spec must be validated
     """
-    print(json_spec)
     workflow_id = dxpy.api.workflow_new(json_spec)["id"]
-    dxpy.api.workflow_close(workflow_id)
+    if keep_open:
+        dxpy.api.workflow_close(workflow_id)
     return workflow_id
 
 
@@ -454,7 +454,7 @@ def _build_underlying_workflows(enabled_regions, json_spec, args):
     try:
         for region, project in projects_by_region.items():
             json_spec['project'] = project
-            workflow_id = _build_regular_workflow(json_spec)
+            workflow_id = _build_regular_workflow(json_spec, args.keep_open)
             logger.debug("Created workflow " + workflow_id + " successfully")
             workflows_by_region[region] = workflow_id
     except:
@@ -574,11 +574,10 @@ def _build_or_update_workflow(json_spec, args):
     Creates or updates a workflow on the platform.
     Returns the workflow ID, or None if the workflow cannot be created.
     """
-    print(args)
     try:
         if args.mode == 'workflow':
             json_spec = _get_validated_json(json_spec, args)
-            workflow_id = _build_regular_workflow(json_spec)
+            workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
             # Verify if the global workflow already exists and if the user has developer rights to it
             # If the global workflow name doesn't exist, the user is free to build it
