@@ -618,6 +618,7 @@ def build(args, parser):
 
     if args is None:
         raise Exception("arguments not provided")
+    print(args)
     if args.keep_open and args.globalworkflow:
         raise Exception("Global workflow cannot be kept open!")
     raise Exception("just in case.. dont continue ..")
