@@ -574,6 +574,7 @@ def _build_or_update_workflow(json_spec, args):
     Creates or updates a workflow on the platform.
     Returns the workflow ID, or None if the workflow cannot be created.
     """
+    print(args)
     try:
         if args.mode == 'workflow':
             json_spec = _get_validated_json(json_spec, args)
