@@ -377,6 +377,7 @@ def _build_regular_workflow(json_spec):
     """
     Precondition: json_spec must be validated
     """
+    print(json_spec)
     workflow_id = dxpy.api.workflow_new(json_spec)["id"]
     dxpy.api.workflow_close(workflow_id)
     return workflow_id
