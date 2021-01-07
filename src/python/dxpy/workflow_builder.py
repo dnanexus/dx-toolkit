@@ -379,7 +379,6 @@ def _build_regular_workflow(json_spec, keep_open=False):
     """
     workflow_id = dxpy.api.workflow_new(json_spec)["id"]
     if not keep_open:
-        print("I aint closing this.")
         dxpy.api.workflow_close(workflow_id)
     return workflow_id
 
@@ -619,11 +618,14 @@ def build(args, parser):
 
     if args is None:
         raise Exception("arguments not provided")
+    if args.keep_open and args.globalworkflow:
+        raise Exception("Global workflow cannot be kept open!")
+    raise Exception("just in case.. dont continue ..")
 
-    try:
-        json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
-        workflow_id = _build_or_update_workflow(json_spec, args)
-        _print_output(workflow_id, args)
-    except WorkflowBuilderException as e:
-        print("Error: %s" % (e.args,), file=sys.stderr)
-        sys.exit(3)
+    # try:
+    #     json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
+    #     workflow_id = _build_or_update_workflow(json_spec, args)
+    #     _print_output(workflow_id, args)
+    # except WorkflowBuilderException as e:
+    #     print("Error: %s" % (e.args,), file=sys.stderr)
+    #     sys.exit(3)
