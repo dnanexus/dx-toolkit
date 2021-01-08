@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Added '--keep-open' flag for `dx build`
+
 ### Fixed
 
 * Symlink download retries when error 22 is thrown
