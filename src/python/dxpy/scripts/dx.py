@@ -2618,6 +2618,10 @@ def build(args):
         if args._from and args.dry_run:
             build_parser.error("Options --dry-run and --from cannot be specified together")
 
+        if args.mode == "globalworkflow" and args.keep_open:
+            build_parser.error("Global workflow cannot be kept open")
+        print(args.mode)
+
         # options not supported by workflow building
 
         if args.mode == "workflow":
