@@ -4467,7 +4467,7 @@ build_parser.add_argument("--run", help="Run the app or applet after building it
 app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
 
 # --keep-open
-build_parser.add_argument('--keep-open', help=fill("Do not close workflow after building it. Cannot be used with when building apps, applets or global workflows",
+build_parser.add_argument('--keep-open', help=fill("Do not close workflow after building it. Cannot be used when building apps, applets or global workflows.",
                                                    width_adjustment=-24), action='store_true')
 
 build_parser.set_defaults(func=build)
