@@ -2619,8 +2619,9 @@ def build(args):
             build_parser.error("Options --dry-run and --from cannot be specified together")
 
         if args.mode in ["globalworkflow", "applet", "app"] and args.keep_open:
-            build_parser.error("Global workflow cannot be kept open")
+            build_parser.error("Global workflows, applets and apps cannot be kept open")
         print(args.mode)
+        print(args.mode in ["globalworkflow", "applet", "app"])
 
         # options not supported by workflow building
 
