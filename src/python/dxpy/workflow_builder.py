@@ -454,7 +454,7 @@ def _build_underlying_workflows(enabled_regions, json_spec, args):
     try:
         for region, project in projects_by_region.items():
             json_spec['project'] = project
-            workflow_id = _build_regular_workflow(json_spec, args.keep_open)
+            workflow_id = _build_regular_workflow(json_spec)
             logger.debug("Created workflow " + workflow_id + " successfully")
             workflows_by_region[region] = workflow_id
     except:
