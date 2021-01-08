@@ -617,8 +617,6 @@ def build(args, parser):
     """
     if args is None:
         raise Exception("Arguments not provided")
-    if args.keep_open and args.mode == 'globalworkflow':
-        raise Exception("Cannot use keep-open option when building global workflow as global workflow cannot be kept open!")
 
     try:
         json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
