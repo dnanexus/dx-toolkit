@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [306.0] - beta
+
 ### Added
 
 * Added '--keep-open' flag for `dx build`
@@ -14,7 +16,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Symlink download retries when error 22 is thrown
 
-## [305.0] - beta
+## [305.0] - 2020.01.12 stable
 
 ### Added
 
@@ -28,7 +30,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Unused python-magic, beatifulsoup4 python dependencies
 
-## [304.1] - 2020.01.05 stable
+## [304.1] - 2020.01.05 
 
 ### Fixed
 
