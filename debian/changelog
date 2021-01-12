@@ -1,3 +1,10 @@
+dx-toolkit (0.306.0) trusty; urgency=medium
+
+  * Added: '--keep-open' flag for dx `build`
+  * Fixed: Symlink download retries when error 22 is thrown
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 12 Jan 2021 18:36:09 +0000
+
 dx-toolkit (0.305.0) trusty; urgency=medium
 
   * Removed: Unused python-magic, beatifulsoup4 python dependencies
