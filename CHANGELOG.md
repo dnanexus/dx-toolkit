@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `--brief` flag to dx-clone-asset so that script results can be used downstream
+
 ## [306.0] - beta
 
 ### Added
