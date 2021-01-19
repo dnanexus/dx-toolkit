@@ -6,6 +6,7 @@
     "interpreter": "bash",
     "distribution": "Ubuntu",
     "release": "20.04",
+    "version": "0",
     "execDepends": [{"name": "attr", "package_manager": "apt"}, {"name": "libffi-dev", "package_manager": "apt"}]
   },
   "inputSpec": [
