@@ -5,7 +5,7 @@
     "file": "run.sh",
     "interpreter": "bash",
     "distribution": "Ubuntu",
-    "release": "16.04",
+    "release": "20.04",
     "execDepends": [{"name": "attr", "package_manager": "apt"}, {"name": "libffi-dev", "package_manager": "apt"}]
   },
   "inputSpec": [

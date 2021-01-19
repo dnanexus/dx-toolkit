@@ -28,7 +28,7 @@
     "interpreter": "bash",
     "file": "code.sh",
     "distribution": "Ubuntu",
-    "release": "14.04"
+    "release": "20.04"
   },
   "authorizedUsers": [],
   "access": {
