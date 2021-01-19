@@ -50,7 +50,7 @@ version = make_valid_pypi_version(version)
 
 # The readme file is used as the long-description of the package.
 # It will show up in the pypi site.
-with open("Readme.md", "r") as fh:
+with open(os.path.join(os.path.dirname(__file__), "Readme.md"), "r") as fh:
     readme_content = fh.read()
 
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
