@@ -38,7 +38,6 @@ import stat
 import sys
 import json
 import argparse
-import xattr
 import dxpy
 from dxpy.utils import file_load_utils
 from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
@@ -293,6 +292,10 @@ def create_entry(subdir_desc, local_path, target_path, basename):
             'dxlink': None}
 
 def return_xattr_as_properties(file):
+    try:
+        import xattr
+    except ImportError:
+        return {}
     properties = {}
     for attribute in xattr.listxattr(file):
         if attribute.startswith('user.'):
