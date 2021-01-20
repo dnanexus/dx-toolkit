@@ -1577,6 +1577,7 @@ def main(number):
 
         # empty rerun_stages should reuse results
         rerun_analysis = dxworkflow.run({}, rerun_stages=[])
+        print(rerun_analysis.describe())
         self.assertEqual(rerun_analysis.describe()['stages'][0]['execution']['id'],
                          job_ids[0])
 

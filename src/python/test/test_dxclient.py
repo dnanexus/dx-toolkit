@@ -3378,6 +3378,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
         # no change: expect both stages to have reused jobs
         no_change_analysis_desc = dxpy.describe(no_change_analysis_id)
+        print(no_change_analysis_desc)
         self.assertEqual(no_change_analysis_desc['stages'][0]['execution']['id'],
                          orig_analysis_desc['stages'][0]['execution']['id'])
         self.assertEqual(no_change_analysis_desc['stages'][1]['execution']['id'],
@@ -3442,6 +3443,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         run_resp = dxpy.api.workflow_run(workflow_id,
                                          {"project": self.project,
                                           "input": {(stage_id + ".number"): 32}})
+        print(run_resp)
         first_analysis_id = run_resp['id']
         self.assertTrue(first_analysis_id.startswith('analysis-'))
         job_id = run_resp['stages'][0]
@@ -3503,6 +3505,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(all_stg_req_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x1')
         stg_req_desc = dxpy.describe(stg_req_id)
+        print(stg_req_desc)
         self.assertEqual(stg_req_desc['stages'][0]['execution']['instanceType'],
                          'mem2_hdd2_x2')
         self.assertEqual(stg_req_desc['stages'][1]['execution']['instanceType'],
@@ -3554,6 +3557,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
         def expect_stage_folders(analysis_id, first_stage_folder, second_stage_folder):
             analysis_desc = dxpy.describe(analysis_id)
+            print(analysis_desc)
             self.assertEqual(analysis_desc['stages'][0]['execution']['folder'],
                              first_stage_folder)
             self.assertEqual(analysis_desc['stages'][1]['execution']['folder'],
