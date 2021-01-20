@@ -3451,7 +3451,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertTrue(job_id.startswith('job-'))
 
         # wait for events to propagate and for the job to be created
-        time.sleep(2)
+        time.sleep(300)
 
         # Running the workflow again with no changes should result in
         # the job getting reused
