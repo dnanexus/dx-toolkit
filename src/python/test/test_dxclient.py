@@ -3443,6 +3443,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         run_resp = dxpy.api.workflow_run(workflow_id,
                                          {"project": self.project,
                                           "input": {(stage_id + ".number"): 32}})
+        print("RUN RESP")
         print(run_resp)
         first_analysis_id = run_resp['id']
         self.assertTrue(first_analysis_id.startswith('analysis-'))
