@@ -3500,6 +3500,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(no_req_desc['stages'][1]['execution']['instanceType'],
                          self.default_inst_type)
         all_stg_req_desc = dxpy.describe(all_stg_req_id)
+        print(all_stg_req_desc)
         self.assertEqual(all_stg_req_desc['stages'][0]['execution']['instanceType'],
                          'mem2_hdd2_x1')
         self.assertEqual(all_stg_req_desc['stages'][1]['execution']['instanceType'],
