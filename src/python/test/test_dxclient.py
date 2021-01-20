@@ -3492,7 +3492,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 ' +
                          '--instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
-        time.sleep(2) # give time for all jobs to be populated
+        time.sleep(10) # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
         self.assertEqual(no_req_desc['stages'][0]['execution']['instanceType'],
