@@ -97,7 +97,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
             raise Exception('Sorry, I only know how to patch bash apps for remote testing')
         entry_point_filename = os.path.join(app_dir, dxapp_json['runSpec']['file'])
         with open(entry_point_filename) as fh:
-            entry_point_data = ''.join(preamble) + ofh.read()
+            entry_point_data = ''.join(preamble) + fh.read()
         with open(os.path.join(updated_app_dir, dxapp_json['runSpec']['file']), 'w') as fh:
             fh.write(entry_point_data)
 
