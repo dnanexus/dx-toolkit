@@ -3371,7 +3371,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
                                            " --instance-type mem2_hdd2_x2 --brief -y").strip()
 
-        time.sleep(2) # May need to wait for any new jobs to be created in the system
+        time.sleep(25) # May need to wait for any new jobs to be created in the system
 
         # make assertions for test cases
         orig_analysis_desc = dxpy.describe(analysis_id)
