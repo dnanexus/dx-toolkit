@@ -3554,7 +3554,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # only modify one
         per_stg_folders_id_3 = run(cmd + '--stage-output-folder ' + stage_ids[0] + ' /hello').strip()
 
-        time.sleep(2) # give time for all jobs to be generated
+        time.sleep(10) # give time for all jobs to be generated
 
         def expect_stage_folders(analysis_id, first_stage_folder, second_stage_folder):
             analysis_desc = dxpy.describe(analysis_id)
