@@ -3456,6 +3456,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # Running the workflow again with no changes should result in
         # the job getting reused
         run_output = run("dx run " + workflow_id + " -i0.number=32 -y").strip()
+        print(run_output)
         self.assertIn('will reuse results from a previous analysis', run_output)
         self.assertIn(job_id, run_output)
         second_analysis_id = run_output[run_output.rfind('analysis-'):]
