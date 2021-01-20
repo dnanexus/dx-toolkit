@@ -3420,7 +3420,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             self.assertEqual(new_analysis_desc['folder'], '/foo')
             self.assertEqual(new_analysis_desc['tags'], ['sometag'])
             self.assertEqual(new_analysis_desc['properties'], {'propkey': 'propval'})
-            time.sleep(2)
+            time.sleep(10)
             new_job_desc = dxpy.describe(new_analysis_desc['stages'][0]['execution']['id'])
             self.assertEqual(new_job_desc['project'], other_proj_id)
             self.assertEqual(new_job_desc['input']['number'], 32)
