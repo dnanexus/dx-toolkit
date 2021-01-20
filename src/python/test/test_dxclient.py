@@ -3363,6 +3363,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
         # run it
         analysis_id = run("dx run myworkflow -y --brief").strip()
+        dxpy.DXAnalysis(analysis_id).wait_on_done(timeout=500)
 
         # test cases
         no_change_analysis_id = run("dx run --clone " + analysis_id + " --brief -y").strip()
@@ -3447,7 +3448,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertTrue(first_analysis_id.startswith('analysis-'))
         job_id = run_resp['stages'][0]
         self.assertTrue(job_id.startswith('job-'))
-        dxpy.DXAnalysis(first_analysis_id).wait_on_done(timeout=400)
+        dxpy.DXAnalysis(first_analysis_id).wait_on_done(timeout=500)
 
         # Running the workflow again with no changes should result in
         # the job getting reused
