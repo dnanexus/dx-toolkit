@@ -3449,9 +3449,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertTrue(first_analysis_id.startswith('analysis-'))
         job_id = run_resp['stages'][0]
         self.assertTrue(job_id.startswith('job-'))
-
-        # wait for events to propagate and for the job to be created
-        time.sleep(300)
+        dxpy.DXAnalysis(first_analysis_id).wait_on_done(timeout=400)
 
         # Running the workflow again with no changes should result in
         # the job getting reused
