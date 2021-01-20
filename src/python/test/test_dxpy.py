@@ -1574,6 +1574,7 @@ def main(number):
         # make initial analysis
         dxanalysis = dxworkflow.run({})
         job_ids = [dxanalysis.describe()['stages'][0]['execution']['id']]
+        dxanalysis.wait_on_done(timeout=500)
 
         # empty rerun_stages should reuse results
         rerun_analysis = dxworkflow.run({}, rerun_stages=[])

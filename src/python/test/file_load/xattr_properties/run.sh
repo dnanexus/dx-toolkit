@@ -1,6 +1,8 @@
 main() {
     # parallel download
     dx-download-all-inputs --parallel
+    # Install xattr
+    python3 -m pip install -U xattr
 
     # creating some output results
     echo "ABCD" > dummy_data.txt
