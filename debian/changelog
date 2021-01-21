@@ -1,3 +1,11 @@
+dx-toolkit (0.307.0) trusty; urgency=medium
+
+  * Added: '--brief' flag for `dx-clone-asset`
+  * Fixed: xattr import for dx-upload-all-outputs
+  * Changed: Bump jackson-databind from 2.9.10.5 to 2.9.10.7
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 21 Jan 2021 23:32:39 +0000
+
 dx-toolkit (0.306.0) trusty; urgency=medium
 
   * Added: '--keep-open' flag for dx `build`
