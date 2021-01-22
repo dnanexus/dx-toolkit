@@ -6,11 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [307.0] - beta
+
 ### Added
 
 * `--brief` flag to dx-clone-asset so that script results can be used downstream
 
-## [306.0] - beta
+### Changed
+
+* Bump jackson-databind from 2.9.10.5 to 2.9.10.7
+
+### Fixed
+
+* xattr import in `dx-upload-all-outputs`
+
+## [306.0] - 2020.01.21 stable
 
 ### Added
 
@@ -20,7 +30,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Symlink download retries when error 22 is thrown
 
-## [305.0] - 2020.01.12 stable
+## [305.0] - 2020.01.12 
 
 ### Added
 
