@@ -130,7 +130,7 @@ def interactive_help(in_class, param_desc, prompt):
             print('Pick an option to find input data:')
             try:
                 opt_num = pick(['List and choose from available data in the current project',
-                                'List and choose from available data in the DNAnexus Reference Genomes project',
+                                'List and choose from available data in the DNAnexus Reference Genomes Files project',
                                 'Select another project to list and choose available data',
                                 'Select an output from a previously-run job (current project only)',
                                 'Return to original prompt (specify an ID or path directly)'])
