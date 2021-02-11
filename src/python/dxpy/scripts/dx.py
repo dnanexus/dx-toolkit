@@ -2396,7 +2396,7 @@ def find_global_workflows_result(args):
 
 def print_find_results(results, args):
     def maybe_x(result):
-        return DNANEXUS_X() if result['describe']['billTo'] == 'org-dnanexus' else ' '
+        return DNANEXUS_X() if result['describe']['billTo'] in ['org-dnanexus', 'org-dnanexus_apps'] else ' '
 
     if args.json:
         print(json.dumps(list(results), indent=4))

@@ -195,7 +195,7 @@ def _format_find_projects_results(results):
 
 def _format_find_apps_results(results, verbose=False):
     def maybe_x(result):
-        return DNANEXUS_X() if result['describe']['billTo'] == 'org-dnanexus' else ' '
+        return DNANEXUS_X() if result['describe']['billTo'] in ['org-dnanexus', 'org-dnanexus_apps'] else ' '
 
     if not verbose:
         for result in results:
