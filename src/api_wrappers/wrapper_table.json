@@ -1531,6 +1531,15 @@
         }
     ],
     [
+        "/watermark/new",
+        "watermarkNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/watermarks#api-method-watermark-new"
+        }
+    ],
+    [
         "/workflow-xxxx/addStage",
         "workflowAddStage(req, objectId)",
         {

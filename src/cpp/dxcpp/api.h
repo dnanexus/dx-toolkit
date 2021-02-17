@@ -573,6 +573,9 @@ namespace dx {
   JSON userUpdate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON userUpdate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);
 
+  JSON watermarkNew(const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON watermarkNew(const dx::JSON &input_params, const bool safe_to_retry=false);
+
   JSON workflowAddStage(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON workflowAddStage(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 

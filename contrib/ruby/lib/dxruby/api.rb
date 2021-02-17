@@ -1357,6 +1357,14 @@ module DX
       return DX::http_request("/#{object_id}/update", input_params, opts)
     end
 
+    # Invokes the /watermark/new API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/watermarks#api-method-watermark-new
+    def self.watermark_new(input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/watermark/new", input_params, opts)
+    end
+
     # Invokes the /workflow-xxxx/addStage API method.
     #
     # For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/workflows-and-analyses#api-method-workflow-xxxx-addstage
