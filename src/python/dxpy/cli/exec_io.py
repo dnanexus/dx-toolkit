@@ -130,7 +130,7 @@ def interactive_help(in_class, param_desc, prompt):
             print('Pick an option to find input data:')
             try:
                 opt_num = pick(['List and choose from available data in the current project',
-                                'List and choose from available data in the DNAnexus Reference Genomes project',
+                                'List and choose from available data in the DNAnexus Reference Genomes Files project',
                                 'Select another project to list and choose available data',
                                 'Select an output from a previously-run job (current project only)',
                                 'Return to original prompt (specify an ID or path directly)'])
@@ -139,7 +139,7 @@ def interactive_help(in_class, param_desc, prompt):
             if opt_num == 0:
                 query_project = dxpy.WORKSPACE_ID
             elif opt_num == 1:
-                query_project = dxpy.find_one_project(name="Reference Genome Files", public=True, billed_to="org-dnanexus", level="VIEW")['id']
+                query_project = dxpy.find_one_project(name="Reference Genome Files", public=True, billed_to="org-dnanexus_apps", level="VIEW")['id']
             elif opt_num == 2:
                 project_generator = dxpy.find_projects(level='VIEW', describe=True, explicit_perms=True)
                 print('\nProjects to choose from:')
@@ -249,7 +249,7 @@ def get_input_array(param_desc):
     print(fill(prompt))
 
     try:
-        
+
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
