@@ -1540,6 +1540,15 @@
         }
     ],
     [
+        "/watermark/describe",
+        "watermarkDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/watermarks#api-method-watermark-describe"
+        }
+    ],
+    [
         "/workflow-xxxx/addStage",
         "workflowAddStage(req, objectId)",
         {

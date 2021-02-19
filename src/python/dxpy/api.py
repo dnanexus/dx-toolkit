@@ -1394,6 +1394,14 @@ def watermark_new(input_params={}, always_retry=False, **kwargs):
     """
     return DXHTTPRequest('/watermark/new', input_params, always_retry=always_retry, **kwargs)
 
+def watermark_describe(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /watermark/describe API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/watermarks#api-method-watermark-describe
+    """
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def workflow_add_stage(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /workflow-xxxx/addStage API method.

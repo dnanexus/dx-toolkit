@@ -1537,6 +1537,14 @@ namespace dx {
     return watermarkNew(input_params.toString(), safe_to_retry);
   }
 
+  JSON watermarkDescribe(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, safe_to_retry);
+  }
+
+  JSON watermarkDescribe(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return watermarkDescribe(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON workflowAddStage(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/addStage"), input_params, safe_to_retry);
   }
