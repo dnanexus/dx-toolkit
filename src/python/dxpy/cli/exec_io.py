@@ -139,7 +139,10 @@ def interactive_help(in_class, param_desc, prompt):
             if opt_num == 0:
                 query_project = dxpy.WORKSPACE_ID
             elif opt_num == 1:
-                query_project = dxpy.find_one_project(name="Reference Genome Files", public=True, billed_to="org-dnanexus_apps", level="VIEW")['id']
+                region = None
+                if dxpy.PROJECT_CONTEXT_ID:
+                    region = dxpy.describe(dxpy.PROJECT_CONTEXT_ID).get("region")
+                query_project = dxpy.find_one_project(name="Reference Genome Files:*", public=True, billed_to="org-dnanexus_apps", level="VIEW", name_mode="glob", region=region)['id']
             elif opt_num == 2:
                 project_generator = dxpy.find_projects(level='VIEW', describe=True, explicit_perms=True)
                 print('\nProjects to choose from:')
