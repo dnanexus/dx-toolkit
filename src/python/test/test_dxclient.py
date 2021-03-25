@@ -967,7 +967,7 @@ class TestDXClient(DXTestCase):
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_ssh(self):
-        self._test_dx_ssh(self.project, "mem2_hdd2_x1")
+        self._test_dx_ssh(self.project, "mem2_ssd1_v2_x2")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_AZURE, "Skipping test that would run jobs in Azure")
     def test_dx_ssh_azure(self):
@@ -1101,7 +1101,7 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                          'skipping HTTP Proxy support test that needs squid3')
     def test_dx_ssh_proxy(self):
-        self._test_dx_ssh_proxy(self.project, "mem2_hdd2_x1")
+        self._test_dx_ssh_proxy(self.project, "mem2_ssd1_v2_x2")
 
     @unittest.skipIf(sys.platform.startswith("win"), "pexpect is not supported")
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
@@ -1123,7 +1123,8 @@ class TestDXClient(DXTestCase):
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
                                                              "distribution": "Ubuntu", "release": "14.04",
-                                                             "execDepends": [{"name": "dx-toolkit"}]},
+                                                             "execDepends": [{"name": "dx-toolkit"}],
+                                                             "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}}},
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
                                                     project=self.project))["id"]
