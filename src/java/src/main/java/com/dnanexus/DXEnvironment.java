@@ -580,7 +580,7 @@ public class DXEnvironment {
                 .build();
     }
 
-    public HttpClient getHttpClient() {
+    HttpClient getHttpClient() {
         return httpclient;
     }
 
