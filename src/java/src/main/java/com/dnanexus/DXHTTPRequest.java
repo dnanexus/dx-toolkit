@@ -158,62 +158,7 @@ public class DXHTTPRequest {
         this.securityContext = env.getSecurityContextJson();
         this.apiserver = env.getApiserverPath();
         this.disableRetry = env.isRetryDisabled();
-
-        // These timeouts prevent requests from getting stuck
-        RequestConfig.Builder reqBuilder = RequestConfig.custom()
-            .setConnectTimeout(env.getConnectionTimeout())
-            .setSocketTimeout(env.getSocketTimeout());
-
-        DXEnvironment.ProxyDesc proxyDesc = env.getProxy();
-        if (proxyDesc == null) {
-            RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).setDefaultRequestConfig(requestConfig).build();
-            return;
-        }
-
-          // Configure a proxy
-        if (!proxyDesc.authRequired) {
-            reqBuilder.setProxy(proxyDesc.host);
-            RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).setDefaultRequestConfig(requestConfig).build();
-            return;
-        }
-
-        // We need to authenticate with a username and password.
-        reqBuilder.setProxy(proxyDesc.host);
-
-        // specify the user/password in the configuration
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        if (proxyDesc.method != null && proxyDesc.method.equals("ntlm")) {
-            // NTLM: windows NT authentication, with Kerberos
-            String localHostname;
-            try {
-                localHostname = java.net.InetAddress.getLocalHost().getHostName();
-            } catch (java.net.UnknownHostException e) {
-                throw new RuntimeException(e);
-            }
-            credsProvider.setCredentials(
-                new AuthScope(proxyDesc.host.getHostName(),
-                              proxyDesc.host.getPort(),
-                              AuthScope.ANY_REALM,
-                              "ntlm"),
-                new NTCredentials(proxyDesc.username,
-                                  proxyDesc.password,
-                                  localHostname,
-                                  proxyDesc.domain));
-        } else {
-            // Default authentication
-            credsProvider.setCredentials(new AuthScope(proxyDesc.host),
-                                         new UsernamePasswordCredentials(proxyDesc.username,
-                                                                         proxyDesc.password));
-        }
-
-        RequestConfig requestConfig = reqBuilder.build();
-        this.httpclient = HttpClientBuilder.create()
-            .setDefaultCredentialsProvider(credsProvider)
-            .setUserAgent(USER_AGENT)
-            .setDefaultRequestConfig(requestConfig)
-            .build();
+        this.httpclient = env.getHttpClient();
     }
 
     /**

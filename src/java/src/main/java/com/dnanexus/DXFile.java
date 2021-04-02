@@ -16,32 +16,6 @@
 
 package com.dnanexus;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -53,6 +27,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.NoHttpResponseException;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ByteArrayEntity;
+
+import java.io.*;
+import java.util.*;
 
 /**
  * A file (an opaque sequence of bytes).
@@ -556,6 +544,12 @@ public class DXFile extends DXDataObject {
     }
 
     private static class HttpPartDownloader implements PartDownloader {
+        private final DXEnvironment env;
+
+        public HttpPartDownloader(DXEnvironment env) {
+            this.env = env;
+        }
+
         /**
          * HTTP GET request to download part of the file.
          *
@@ -574,7 +568,7 @@ public class DXFile extends DXDataObject {
         public byte[] get(String url, long start, long end) throws ClientProtocolException, IOException {
             Preconditions.checkState(end - start <= (long) 2 * 1024 * 1024 * 1024,
                     "Download chunk size cannot be larger than 2GB");
-            HttpClient httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).build();
+            HttpClient httpclient = env.getHttpClient();
 
             // HTTP GET request with bytes/_ge range header
             HttpGet request = new HttpGet(url);
@@ -870,7 +864,7 @@ public class DXFile extends DXDataObject {
      * @return stream containing file contents within range specified
      */
     public InputStream getDownloadStream(long start, long end) {
-        return new FileApiInputStream(start, end, new HttpPartDownloader());
+        return new FileApiInputStream(start, end, new HttpPartDownloader(env));
     }
 
     @VisibleForTesting
@@ -948,8 +942,7 @@ public class DXFile extends DXDataObject {
             request.setHeader(key, header.getValue());
         }
 
-        HttpClient httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).build();
-        executeRequestWithRetry(httpclient, request);
+        executeRequestWithRetry(env.getHttpClient(), request);
     }
 
     /**

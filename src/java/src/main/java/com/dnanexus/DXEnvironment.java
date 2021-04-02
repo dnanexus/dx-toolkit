@@ -20,6 +20,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.NTCredentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -458,6 +467,7 @@ public class DXEnvironment {
     private int socketTimeout;
     private int connectionTimeout;
     private final ProxyDesc proxy;
+    private final CloseableHttpClient httpclient;
 
     private static final JsonFactory jsonFactory = new MappingJsonFactory();
     /**
@@ -511,6 +521,67 @@ public class DXEnvironment {
         if (this.securityContext == null) {
             System.err.println("Warning: no DNAnexus security context found.");
         }
+
+        final String userAgent = DXUserAgent.getUserAgent();
+
+        // These timeouts prevent requests from getting stuck
+        RequestConfig.Builder reqBuilder = RequestConfig.custom()
+                .setConnectTimeout(connectionTimeout)
+                .setSocketTimeout(socketTimeout);
+
+        if (proxy == null) {
+            RequestConfig requestConfig = reqBuilder.build();
+            this.httpclient = HttpClientBuilder.create().setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            return;
+        }
+
+        // Configure a proxy
+        if (!proxy.authRequired) {
+            reqBuilder.setProxy(proxy.host);
+            RequestConfig requestConfig = reqBuilder.build();
+            this.httpclient = HttpClientBuilder.create().setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            return;
+        }
+
+        // We need to authenticate with a username and password.
+        reqBuilder.setProxy(proxy.host);
+
+        // specify the user/password in the configuration
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        if (proxy.method != null && proxy.method.equals("ntlm")) {
+            // NTLM: windows NT authentication, with Kerberos
+            String localHostname;
+            try {
+                localHostname = java.net.InetAddress.getLocalHost().getHostName();
+            } catch (java.net.UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
+            credsProvider.setCredentials(
+                    new AuthScope(proxy.host.getHostName(),
+                            proxy.host.getPort(),
+                            AuthScope.ANY_REALM,
+                            "ntlm"),
+                    new NTCredentials(proxy.username,
+                            proxy.password,
+                            localHostname,
+                            proxy.domain));
+        } else {
+            // Default authentication
+            credsProvider.setCredentials(new AuthScope(proxy.host),
+                    new UsernamePasswordCredentials(proxy.username,
+                            proxy.password));
+        }
+
+        RequestConfig requestConfig = reqBuilder.build();
+        this.httpclient = HttpClientBuilder.create()
+                .setDefaultCredentialsProvider(credsProvider)
+                .setUserAgent(userAgent)
+                .setDefaultRequestConfig(requestConfig)
+                .build();
+    }
+
+    public HttpClient getHttpClient() {
+        return httpclient;
     }
 
     /**
