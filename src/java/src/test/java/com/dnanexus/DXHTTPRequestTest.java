@@ -16,6 +16,22 @@
 
 package com.dnanexus;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.http.client.HttpClient;
+import org.apache.http.pool.ConnPoolControl;
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.dnanexus.exceptions.InternalErrorException;
 import com.dnanexus.exceptions.InvalidAuthenticationException;
@@ -28,16 +44,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import org.apache.http.client.HttpClient;
-import org.apache.http.pool.ConnPoolControl;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
 
 /**
  * Tests for DXHTTPRequest and DXEnvironment.
