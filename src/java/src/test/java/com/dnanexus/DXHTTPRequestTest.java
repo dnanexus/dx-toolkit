@@ -16,20 +16,6 @@
 
 package com.dnanexus;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.dnanexus.exceptions.InternalErrorException;
 import com.dnanexus.exceptions.InvalidAuthenticationException;
@@ -42,6 +28,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import org.apache.http.client.HttpClient;
+import org.apache.http.pool.ConnPoolControl;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * Tests for DXHTTPRequest and DXEnvironment.
@@ -195,8 +191,9 @@ public class DXHTTPRequestTest {
 
     /**
      * Test that we don't exhaust file handles even when GC is slow to free up the DXHTTPRequest
-     * objects. That is, we must be responsible for closing the connections as soon as we are done
-     * with them.
+     * objects. That is, we must be responsible for how much connections (sockets) we are using.
+     * By limiting ourselves to a single {@link HttpClient} we should have {@link ConnPoolControl#getMaxTotal()}
+     * connections (20 by default) at most.
      *
      * Note: this test doesn't seem to fail properly when the threads are unable to allocate more
      * file handles. Instead, it hangs, so a reasonable timeout on the test at the top level may be
