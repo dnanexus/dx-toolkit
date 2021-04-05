@@ -41,7 +41,7 @@ import com.google.common.base.Preconditions;
  * Immutable class storing configuration for selecting, authenticating to, and communicating with a
  * DNAnexus API server.
  */
-public class DXEnvironment {
+public class DXEnvironment implements AutoCloseable {
 
     /**
      * Builder class for creating DXEnvironment objects.
@@ -723,6 +723,11 @@ public class DXEnvironment {
      */
     public int getConnectionTimeout() {
         return this.connectionTimeout;
+    }
+
+    @Override
+    public void close() throws IOException {
+        httpclient.close();
     }
 
     private static final Logger LOG = LoggerFactory.getLogger(DXEnvironment.class);
