@@ -29,6 +29,8 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,6 +107,8 @@ public class DXEnvironment implements AutoCloseable {
         private boolean disableRetry;
         private int socketTimeout;
         private int connectionTimeout;
+        private int maxTotalConnections = 200;
+        private int maxDefaultConnectionsPerRoute = 50;
         private String httpProxy;
         private String httpProxyMethod;
         private String httpProxyDomain;
@@ -275,7 +279,7 @@ public class DXEnvironment implements AutoCloseable {
         public DXEnvironment build() {
             return new DXEnvironment(apiserverHost, apiserverPort, apiserverProtocol,
                                      securityContext, jobId, workspaceId, projectContextId, disableRetry,
-                                     socketTimeout, connectionTimeout,
+                                     socketTimeout, connectionTimeout, maxTotalConnections, maxDefaultConnectionsPerRoute,
                                      httpProxy, httpProxyMethod, httpProxyDomain);
         }
 
@@ -418,6 +422,30 @@ public class DXEnvironment implements AutoCloseable {
         }
 
         /**
+         * Sets maxTotalConnections for httpclient
+         *
+         * @param maxTotalConnections integer
+         *
+         * @return the same Builder object
+         */
+        public Builder maxTotalConnections(int maxTotalConnections) {
+            this.maxTotalConnections = maxTotalConnections;
+            return this;
+        }
+
+        /**
+         * Sets maxDefaultConnectionsPerRoute for httpClient
+         *
+         * @param maxDefaultConnectionsPerRoute integer
+         *
+         * @return the same Builder object
+         */
+        public Builder setMaxDefaultConnectionsPerRoute(int maxDefaultConnectionsPerRoute) {
+            this.maxDefaultConnectionsPerRoute = maxDefaultConnectionsPerRoute;
+            return this;
+        }
+
+        /**
          * Sets the HTTP proxy server
          *
          * @param httpProxy String
@@ -466,6 +494,8 @@ public class DXEnvironment implements AutoCloseable {
     private final boolean disableRetry;
     private int socketTimeout;
     private int connectionTimeout;
+    private int maxTotalConnections;
+    private int maxDefaultConnectionsPerRoute;
     private final ProxyDesc proxy;
     private final CloseableHttpClient httpclient;
 
@@ -501,7 +531,7 @@ public class DXEnvironment implements AutoCloseable {
 
     private DXEnvironment(String apiserverHost, String apiserverPort, String apiserverProtocol,
                           JsonNode securityContext, String jobId, String workspaceId, String projectContextId, boolean
-                          disableRetry, int socketTimeout, int connectionTimeout,
+                          disableRetry, int socketTimeout, int connectionTimeout, int maxTotalConnections, int maxDefaultConnectionsPerRoute,
                           String httpProxy, String httpProxyMethod, String httpProxyDomain) {
         this.apiserverHost = apiserverHost;
         this.apiserverPort = apiserverPort;
@@ -513,6 +543,8 @@ public class DXEnvironment implements AutoCloseable {
         this.disableRetry = disableRetry;
         this.socketTimeout = socketTimeout;
         this.connectionTimeout = connectionTimeout;
+        this.maxTotalConnections = maxTotalConnections;
+        this.maxDefaultConnectionsPerRoute = maxDefaultConnectionsPerRoute;
         this.proxy = parseProxyDefinition(httpProxy, httpProxyMethod, httpProxyDomain);
 
         // TODO: additional validation on the project/workspace, and check that
@@ -528,10 +560,14 @@ public class DXEnvironment implements AutoCloseable {
         RequestConfig.Builder reqBuilder = RequestConfig.custom()
                 .setConnectTimeout(connectionTimeout)
                 .setSocketTimeout(socketTimeout);
+        
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setMaxTotal(maxTotalConnections);
+        connManager.setDefaultMaxPerRoute(maxDefaultConnectionsPerRoute);
 
         if (proxy == null) {
             RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClientBuilder.create().setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
             return;
         }
 
@@ -539,7 +575,7 @@ public class DXEnvironment implements AutoCloseable {
         if (!proxy.authRequired) {
             reqBuilder.setProxy(proxy.host);
             RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClientBuilder.create().setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
             return;
         }
 
@@ -573,7 +609,7 @@ public class DXEnvironment implements AutoCloseable {
         }
 
         RequestConfig requestConfig = reqBuilder.build();
-        this.httpclient = HttpClientBuilder.create()
+        this.httpclient = HttpClients.custom().setConnectionManager(connManager)
                 .setDefaultCredentialsProvider(credsProvider)
                 .setUserAgent(userAgent)
                 .setDefaultRequestConfig(requestConfig)
