@@ -37,7 +37,10 @@ from ..compat import input, str, shlex, basestring, USING_PYTHON2
 try:
     import gnureadline as readline
 except ImportError:
-    import readline
+    try:
+        import readline
+    except ImportError:
+        pass
 ####################
 # -i Input Parsing #
 ####################
