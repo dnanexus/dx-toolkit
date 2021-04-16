@@ -967,7 +967,7 @@ class TestDXClient(DXTestCase):
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_ssh(self):
-        self._test_dx_ssh(self.project, "mem2_ssd1_x4")
+        self._test_dx_ssh(self.project, "mem2_ssd1_v2_x2")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_AZURE, "Skipping test that would run jobs in Azure")
     def test_dx_ssh_azure(self):
