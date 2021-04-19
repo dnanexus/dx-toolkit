@@ -902,7 +902,7 @@ class TestDXClient(DXTestCase):
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "14.04",
+                                                                 "distribution": "Ubuntu", "release": "20.04", "version":"0",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
@@ -930,7 +930,7 @@ class TestDXClient(DXTestCase):
                 # Check for terminal prompt and verify we're in the container
                 job = next(dxpy.find_jobs(name="sleep", project=project), None)
                 job_id = job['id']
-                dx.expect("OS version: Ubuntu 14.04", timeout=5)
+                dx.expect("OS version: Ubuntu 20.04", timeout=5)
 
                 # This doesn't work, because the shell color codes the text, and that
                 # results in characters that are NOT plain ascii.
