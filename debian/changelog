@@ -1,3 +1,10 @@
+dx-toolkit (0.308.0) trusty; urgency=medium
+
+  * Fixed: Search for reference genome project in region
+  * Fixed: Connection leak with httpclient in DXFile
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 19 Apr 2021 19:52:11 +0000
+
 dx-toolkit (0.307.0) trusty; urgency=medium
 
   * Added: '--brief' flag for `dx-clone-asset`
