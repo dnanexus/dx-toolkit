@@ -900,9 +900,9 @@ class TestDXClient(DXTestCase):
         for use_alternate_config_dir in [False, True]:
             with self.configure_ssh(use_alternate_config_dir=use_alternate_config_dir) as wd:
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
-                                                        runSpec={"code": "sleep 1200",
+                                                        runSpec={"code": "sudo rm -f /usr/lib/locale/locale-archive; sleep 1200",
                                                                  "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "20.04", "version":"0",
+                                                                 "distribution": "Ubuntu", "release": "14.04", "version":"0",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
