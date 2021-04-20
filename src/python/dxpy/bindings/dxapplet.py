@@ -211,6 +211,7 @@ class DXExecutable:
         print(" IMHERE ")
         print(priority)
         print(project)
+        print(dxpy.JOB_ID)
         run_input = self._get_run_input(executable_input,
                                         project=project,
                                         folder=folder,
