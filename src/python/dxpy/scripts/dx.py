@@ -2971,7 +2971,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     print(" run args priority ARGS : ")
     print(run_kwargs["priority"])
 
-    if run_kwargs["priority"] == "normal" and not args.brief:
+    if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
         executable_desc = executable_describe or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
@@ -2993,7 +2993,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
             check_for_special_access(executable_desc.get('access'))
         if special_access:
             print(fill(BOLD("WARNING") + ": You have requested that jobs be run under " +
-                       BOLD("normal") +
+                       BOLD(run_kwargs["priority"]) +
                        " priority, which may cause them to be restarted at any point, but " +
                        "the executable you are trying to run has " +
                        "requested extra permissions (" + ", ".join(sorted(special_access)) + ").  " +
