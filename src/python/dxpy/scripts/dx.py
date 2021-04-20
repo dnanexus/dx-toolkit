@@ -2944,8 +2944,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     if args.debug_on:
         if 'All' in args.debug_on:
             args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
-    print(" PRIORITY ARGS : ")
-    print(args.priority)
+
     run_kwargs = {
         "project": dest_proj,
         "folder": dest_path,
@@ -2968,8 +2967,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "detach": args.detach,
         "extra_args": args.extra_args
     }
-    print(" run args priority ARGS : ")
-    print(run_kwargs["priority"])
 
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
