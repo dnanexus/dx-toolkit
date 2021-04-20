@@ -1122,7 +1122,7 @@ class TestDXClient(DXTestCase):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
-                                                             "distribution": "Ubuntu", "release": "14.04",
+                                                             "distribution": "Ubuntu", "release": "20.04", "version": "0",
                                                              "execDepends": [{"name": "dx-toolkit"}],
                                                              "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}}},
                                                     inputSpec=[], outputSpec=[],
@@ -1153,7 +1153,7 @@ class TestDXClient(DXTestCase):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
-                                                         "distribution": "Ubuntu", "release": "14.04",
+                                                         "distribution": "Ubuntu", "release": "20.04", "version":"0",
                                                          "execDepends": [{"name": "dx-toolkit"}]},
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
@@ -4191,7 +4191,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             run("dx get {workflow_id}".format(workflow_id=workflow_01["id"]))
             self.assertTrue(os.path.exists(os.path.join(workflow_name, "dxworkflow.json")))
             self.assertTrue(os.path.exists(os.path.join(workflow_name, "Readme.md")))
-            workflow_metadata = open(os.path.join(workflow_name, "dxworkflow.json")).read()
+            with open(os.path.join(workflow_name, "dxworkflow.json")) as fh:
+                workflow_metadata = fh.read()
             output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
             self.assertEqual(output_json, workflow_spec)
 
@@ -7058,7 +7059,8 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             run("dx get " + app_id)
             self.assertTrue(os.path.exists("cluster_app"))
             self.assertTrue(os.path.exists(os.path.join("cluster_app", "dxapp.json")))
-            dxapp_json = json.loads(open(os.path.join("cluster_app", "dxapp.json")).read())
+            with open(os.path.join("cluster_app", "dxapp.json")) as fh:
+                dxapp_json = json.load(fh)
             aws_sys_reqs = dxapp_json["regionalOptions"]["aws:us-east-1"]["systemRequirements"]
             azure_sys_reqs = dxapp_json["regionalOptions"]["azure:westus"]["systemRequirements"]
 
@@ -7872,7 +7874,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         with chdir(tempfile.mkdtemp()):
             run("dx get app-update_app_code")
-            self.assertEqual(open(os.path.join("update_app_code", "src", "code.py")).read(), "'v1'\n")
+            with open(os.path.join("update_app_code", "src", "code.py")) as fh:
+                self.assertEqual(fh.read(), "'v1'\n")
 
         shutil.rmtree(app_dir)
 
@@ -7883,7 +7886,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         with chdir(tempfile.mkdtemp()):
             run("dx get app-update_app_code")
-            self.assertEqual(open(os.path.join("update_app_code", "src", "code.py")).read(), "'v2'\n")
+            with open(os.path.join("update_app_code", "src", "code.py")) as fh:
+                self.assertEqual(fh.read(), "'v2'\n")
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_and_pretend_to_update_devs(self):
@@ -9192,8 +9196,8 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
         with chdir(tempfile.mkdtemp()):
             run("dx get {workflow_id}".format(workflow_id=workflow_id))
             self.assertTrue(os.path.exists(os.path.join("get_workflow", "dxworkflow.json")))
-
-            workflow_metadata = open(os.path.join("get_workflow", "dxworkflow.json")).read()
+            with open(os.path.join("get_workflow", "dxworkflow.json")) as fh:
+                workflow_metadata = fh.read()
             output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
             self.assertEqual(output_workflow_spec, output_json)
 
@@ -9254,7 +9258,8 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
             with chdir(tempfile.mkdtemp()):
                 run("dx get {wfidentifier}".format(wfidentifier=identifier))
                 self.assertTrue(os.path.exists(os.path.join(gwf_name, "dxworkflow.json")))
-                workflow_metadata = open(os.path.join(gwf_name, "dxworkflow.json")).read()
+                with open(os.path.join(gwf_name, "dxworkflow.json")) as fh:
+                    workflow_metadata = fh.read()
                 output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
                 self.assertEqual(dxworkflow_json, output_json)
 
@@ -9272,7 +9277,8 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
         def _get_and_build(name, atype):
             with chdir(tempfile.mkdtemp()):
                 run("dx get {}".format('globalworkflow-' + name if atype == 'globalworkflow' else name))
-                dxworkflow_json = json.loads(open(os.path.join(name, "dxworkflow.json")).read())
+                with open(os.path.join(name, "dxworkflow.json")) as fh:
+                    dxworkflow_json = json.load(fh)
                 self.assertIn("name", dxworkflow_json)
 
                 # we need to stick in 'version' to dxworkflow.json to build an global workflow
@@ -9354,8 +9360,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet"))
             self.assertTrue(os.path.exists(os.path.join("get_applet", "dxapp.json")))
-
-            applet_metadata = open(os.path.join("get_applet", "dxapp.json")).read()
+            with  open(os.path.join("get_applet", "dxapp.json")) as fh:
+                applet_metadata = fh.read()
 
             # Checking inputSpec/outputSpec patterns arrays were flattened
             self.assertTrue(applet_metadata.find('"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]') >= 0)
@@ -9387,14 +9393,14 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             self.assertNotIn("description", output_json)
             self.assertNotIn("developerNotes", output_json)
-
-            self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
-            self.assertEqual("Developer notes\n",
-                             open(os.path.join("get_applet", "Readme.developer.md")).read())
-            self.assertEqual("import os\n", open(os.path.join("get_applet", "src", "code.py")).read())
-
-            self.assertEqual("content\n",
-                             open(os.path.join("get_applet", "resources", "resources_file")).read())
+            with open(os.path.join("get_applet", "Readme.md")) as fh:
+                self.assertEqual("Description\n", fh.read())
+            with open(os.path.join("get_applet", "Readme.developer.md")) as fh:
+                self.assertEqual("Developer notes\n", fh.read())
+            with open(os.path.join("get_applet", "src", "code.py")) as fh:
+                self.assertEqual("import os\n", fh.read())
+            with open(os.path.join("get_applet", "resources", "resources_file")) as fh:
+                self.assertEqual("content\n", fh.read())
 
             # Target applet does not exist
             with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
@@ -9543,9 +9549,10 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             self.assertEqual(output_app_spec, output_json)
             self.assertFalse(os.path.exists(os.path.join("get_applet_windows", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet_windows", "Readme.developer.md")))
-            self.assertEqual("import os\n", open(os.path.join("get_applet_windows", "src", "code.py")).read())
-            self.assertEqual("content\n",
-                             open(os.path.join("get_applet_windows", "resources", "resources_file")).read())
+            with open(os.path.join("get_applet_windows", "src", "code.py")) as fh:
+                self.assertEqual("import os\n", fh.read())
+            with open(os.path.join("get_applet_windows", "resources", "resources_file")) as fh:
+                self.assertEqual("content\n", fh.read())
 
     def make_app(self, name, open_source=True, published=True, authorized_users=[], regional_options=None):
         if regional_options is None:
@@ -9713,7 +9720,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         def _get_and_build(name, atype):
             with chdir(tempfile.mkdtemp()):
                 run("dx get {}".format('app-' + name if atype == 'app' else name))
-                dxapp_json = json.loads(open(os.path.join(name, "dxapp.json")).read())
+                with open(os.path.join(name, "dxapp.json")) as fh:
+                    dxapp_json = json.load(fh)
                 self.assertNotIn("systemRequirements", dxapp_json['runSpec'])
                 self.assertNotIn("systemRequirementsByRegion", dxapp_json['runSpec'])
                 self.assertEqual(dxapp_json["regionalOptions"], sysreq_spec)
