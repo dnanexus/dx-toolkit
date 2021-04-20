@@ -91,7 +91,7 @@ class DXExecutable:
         if kwargs.get('ignore_reuse') is not None:
             run_input["ignoreReuse"] = kwargs['ignore_reuse']
 
-        if dxpy.JOB_ID is None or not dxpy.WORKSPACE_ID.startswith("container"):
+        if dxpy.JOB_ID is None:
             run_input["project"] = project
 
         if kwargs.get('extra_args') is not None:
@@ -208,7 +208,6 @@ class DXExecutable:
         # only supported for workflows, but we include them
         # here. Applet-based executables should detect when they
         # receive a truthy workflow-specific value and raise an error.
-
         run_input = self._get_run_input(executable_input,
                                         project=project,
                                         folder=folder,
