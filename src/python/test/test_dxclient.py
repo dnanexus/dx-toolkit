@@ -1122,7 +1122,7 @@ class TestDXClient(DXTestCase):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
-                                                             "distribution": "Ubuntu", "release": "14.04",
+                                                             "distribution": "Ubuntu", "release": "20.04", "version": "0",
                                                              "execDepends": [{"name": "dx-toolkit"}],
                                                              "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}}},
                                                     inputSpec=[], outputSpec=[],
@@ -1153,7 +1153,7 @@ class TestDXClient(DXTestCase):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
-                                                         "distribution": "Ubuntu", "release": "14.04",
+                                                         "distribution": "Ubuntu", "release": "20.04", "version":"0",
                                                          "execDepends": [{"name": "dx-toolkit"}]},
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
