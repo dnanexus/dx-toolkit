@@ -4843,7 +4843,7 @@ parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
                         action='store_true')
 parser_run.add_argument('--priority',
-                        choices=['normal', 'high'],
+                        choices=['low', 'normal', 'high'],
                         help='Request a scheduling priority for all resulting jobs. Will be overriden (set to high) ' +
                              'when either --watch, --ssh, or --allow-ssh flags are used')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
