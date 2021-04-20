@@ -2968,6 +2968,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "detach": args.detach,
         "extra_args": args.extra_args
     }
+    print(" run args priority ARGS : ")
+    print(run_kwargs["priority"])
 
     if run_kwargs["priority"] == "normal" and not args.brief:
         special_access = set()
