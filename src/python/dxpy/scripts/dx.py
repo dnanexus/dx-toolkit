@@ -2944,7 +2944,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     if args.debug_on:
         if 'All' in args.debug_on:
             args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
-
+    print(" PRIORITY ARGS : ")
+    print(args.priority)
     run_kwargs = {
         "project": dest_proj,
         "folder": dest_path,
