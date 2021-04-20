@@ -210,6 +210,7 @@ class DXExecutable:
         # receive a truthy workflow-specific value and raise an error.
         print(" IMHERE ")
         print(priority)
+        print(project)
         run_input = self._get_run_input(executable_input,
                                         project=project,
                                         folder=folder,
