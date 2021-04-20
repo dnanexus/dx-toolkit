@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Added `low` option for `--priority` argument
+
 ## [307.0] - beta
 
 ### Added
