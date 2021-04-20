@@ -27,7 +27,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * xattr import in `dx-upload-all-outputs`
 
-## [306.0] - 2021.01.21 stable
+## [306.0] - 2021.01.21 
 
 ### Added
 
