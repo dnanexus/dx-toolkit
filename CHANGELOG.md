@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Added `low` option for `--priority` argument
+* Added `low` option for `--priority` argument for `dx run`
 
 ## [307.0] - beta
 
