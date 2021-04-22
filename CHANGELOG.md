@@ -10,7 +10,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Added `low` option for `--priority` argument for `dx run`
 
-## [307.0] - beta
+## [308.0] - beta
+
+### Fixed
+
+* Search for reference genome project in region
+* Connection leak with HttpClient in DXFile
+
+## [307.0] - 2021.04.19 stable
 
 ### Added
 
@@ -24,7 +31,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * xattr import in `dx-upload-all-outputs`
 
-## [306.0] - 2020.01.21 stable
+## [306.0] - 2021.01.21 
 
 ### Added
 
@@ -34,7 +41,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Symlink download retries when error 22 is thrown
 
-## [305.0] - 2020.01.12 
+## [305.0] - 2021.01.12 
 
 ### Added
 
@@ -48,7 +55,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Unused python-magic, beatifulsoup4 python dependencies
 
-## [304.1] - 2020.01.05 
+## [304.1] - 2021.01.05 
 
 ### Fixed
 
