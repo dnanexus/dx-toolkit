@@ -433,7 +433,10 @@ class DXExecDependencyInstaller(object):
     def _install_dep_bundle(self, bundle):
         if bundle["id"].get("$dnanexus_link", "").startswith("file-"):
             self.log("Downloading bundled file {name}".format(**bundle))
-            dxpy.download_dxfile(bundle["id"], bundle["name"])
+            try:
+                dxpy.download_dxfile(bundle["id"], bundle["name"], project=dxpy.WORKSPACE_ID)
+            except dxpy.exceptions.ResourceNotFound:
+                dxpy.download_dxfile(bundle["id"], bundle["name"])
             self.run("dx-unpack {}".format(pipes.quote(bundle["name"])))
         else:
             self.log('Skipping bundled dependency "{name}" because it does not refer to a file'.format(**bundle))
