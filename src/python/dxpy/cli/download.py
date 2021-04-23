@@ -232,9 +232,9 @@ def download(args):
         if len(matching_files) == 0 and len(matching_folders) == 0:
             err_exit(fill('Error: {path} is neither a file nor a folder name'.format(path=path)))
 
-        # If the user did not explicitly provide the project, don't pass any
+        # If the user did not explicitly provide the project and the resolver did not return one, don't pass any
         # project parameter to the API call but continue with the download.
-        if not path_has_explicit_proj:
+        if not path_has_explicit_proj and project is None:
             project = dxpy.DXFile.NO_PROJECT_HINT
 
         # If the user explicitly provided the project and it doesn't contain
