@@ -1,3 +1,12 @@
+dx-toolkit (0.309.0) trusty; urgency=medium
+
+  * Added: 'low' option for --priority argument for `dx run`
+  * Fixed: Provide job container-id when downloading bundledDepends in execution environment
+  * Changed: Upgrade to proot 5.2 from udocker2 fork for dx-docker
+  * Changed: `dx-app-wizard` default to Ubuntu 20.04
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 23 Apr 2021 18:11:18 +0000
+
 dx-toolkit (0.308.0) trusty; urgency=medium
 
   * Fixed: Search for reference genome project in region
