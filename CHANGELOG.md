@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Added `low` option for `--priority` argument for `dx run`
+
 ## [308.0] - beta
 
 ### Fixed
