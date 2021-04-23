@@ -153,8 +153,8 @@ class TestDXAppWizard(DXTestCase):
         self.assertEqual(dxapp_json['regionalOptions']['aws:us-east-1']['systemRequirements']['*']['instanceType'],
                          InstanceTypesCompleter.default_instance_type.Name)
         self.assertEqual(dxapp_json['runSpec']['distribution'], 'Ubuntu')
-        self.assertEqual(dxapp_json['runSpec']['release'], '16.04')
-        self.assertEqual(dxapp_json['runSpec']['version'], '1')
+        self.assertEqual(dxapp_json['runSpec']['release'], '20.04')
+        self.assertEqual(dxapp_json['runSpec']['version'], '0')
         self.assertEqual(dxapp_json['runSpec']['interpreter'], 'python3')
         self.assertEqual(dxapp_json['runSpec']['timeoutPolicy']['*']['hours'], 24)
 
