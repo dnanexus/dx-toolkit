@@ -8,7 +8,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Added `low` option for `--priority` argument for `dx run`
+* `low` option for `--priority` argument for `dx run`
+
+### Fixed
+
+* Provide job container-id when downloading bundledDepends in execution environment
+
+### Changed
+
+* Upgrade to proot 5.2 from udocker2 fork for `dx-docker`
+* `dx-app-wizard` default to Ubuntu 20.04
 
 ## [308.0] - beta
 
