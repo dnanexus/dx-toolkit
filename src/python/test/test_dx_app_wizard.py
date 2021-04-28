@@ -149,7 +149,8 @@ class TestDXAppWizard(DXTestCase):
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_CREATE_APP_WIZARD"])
     def test_dx_app_wizard(self):
         appdir = run_dx_app_wizard()
-        dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
+        with open(os.path.join(appdir, 'dxapp.json')) as fh:
+            dxapp_json = json.load(fh)
         self.assertEqual(dxapp_json['regionalOptions']['aws:us-east-1']['systemRequirements']['*']['instanceType'],
                          InstanceTypesCompleter.default_instance_type.Name)
         self.assertEqual(dxapp_json['runSpec']['distribution'], 'Ubuntu')
@@ -160,7 +161,8 @@ class TestDXAppWizard(DXTestCase):
 
     def test_dx_app_wizard_with_azure_instance_type(self):
         appdir = run_dx_app_wizard("azure:mem1_ssd1_x2")
-        dxapp_json = json.load(open(os.path.join(appdir, 'dxapp.json')))
+        with open(os.path.join(appdir, 'dxapp.json')) as fh:
+            dxapp_json = json.load(fh)
         self.assertEqual(dxapp_json['regionalOptions']['azure:westus']['systemRequirements']['*']['instanceType'],
                          "azure:mem1_ssd1_x2")
 
