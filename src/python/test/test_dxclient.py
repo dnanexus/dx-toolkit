@@ -1472,8 +1472,9 @@ class TestDXClientUploadDownload(DXTestCase):
                                                      project=temp_project.get_id(), folder='/', auth=token_callable)
                 self.assertEqual(remote_file.name, 'myfilename')
                 # Filename provided with file handle
-                remote_file2 = dxpy.upload_local_file(file=open(os.path.join(testdir, 'myfilename')),
-                                                      project=temp_project.get_id(), folder='/', auth=token_callable)
+                with open(os.path.join(testdir, 'myfilename')) as fh:
+                    remote_file2 = dxpy.upload_local_file(file=fh,
+                                                          project=temp_project.get_id(), folder='/', auth=token_callable)
                 self.assertEqual(remote_file2.name, 'myfilename')
             finally:
                 shutil.rmtree(testdir)
@@ -9521,7 +9522,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet_field_cleanup"))
             self.assertTrue(os.path.exists(os.path.join("get_applet_field_cleanup", "dxapp.json")))
-            output_json = json.load(open(os.path.join("get_applet_field_cleanup", "dxapp.json")))
+            with open(os.path.join("get_applet_field_cleanup", "dxapp.json")) as fh:
+                output_json = json.load(fh)
             self.assertEqual(output_app_spec, output_json)
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.developer.md")))
@@ -9545,7 +9547,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet_windows"))
             self.assertTrue(os.path.exists(os.path.join("get_applet_windows", "dxapp.json")))
-            output_json = json.load(open(os.path.join("get_applet_windows", "dxapp.json")))
+            with open(os.path.join("get_applet_windows", "dxapp.json")) as fh:
+                output_json = json.load(fh)
             self.assertEqual(output_app_spec, output_json)
             self.assertFalse(os.path.exists(os.path.join("get_applet_windows", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet_windows", "Readme.developer.md")))
