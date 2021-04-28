@@ -6,27 +6,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [309.0] - beta
+
 ### Added
 
 * `low` option for `--priority` argument for `dx run`
 
 ### Fixed
 
-* Provide job container-id when downloading bundledDepends in execution environment
+* Provide job container-id when downloading bundledDepends in job execution environment
 
 ### Changed
 
 * Upgrade to proot 5.2 from udocker2 fork for `dx-docker`
 * `dx-app-wizard` default to Ubuntu 20.04
 
-## [308.0] - beta
+## [308.0] - 2021.04.23 stable
 
 ### Fixed
 
 * Search for reference genome project in region
 * Connection leak with HttpClient in DXFile
 
-## [307.0] - 2021.04.19 stable
+## [307.0] - 2021.04.19 
 
 ### Added
 
