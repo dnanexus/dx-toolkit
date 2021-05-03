@@ -100,6 +100,9 @@ class DXExecutable:
         if kwargs.get('detach') is not None:
             run_input["detach"] = kwargs['detach']
 
+        if kwargs.get('costLimit') is not None:
+            run_input["costLimit"] = kwargs['costLimit']
+
         return run_input
 
     @staticmethod
@@ -161,7 +164,7 @@ class DXExecutable:
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
-            ignore_reuse=None, ignore_reuse_stages=None, detach=None, extra_args=None, **kwargs):
+            ignore_reuse=None, ignore_reuse_stages=None, detach=None, costLimit=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -228,6 +231,7 @@ class DXExecutable:
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
                                         detach=detach,
+                                        costLimit=costLimit,
                                         extra_args=extra_args)
         return self._run_impl(run_input, **kwargs)
 
