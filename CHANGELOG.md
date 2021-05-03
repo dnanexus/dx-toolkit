@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Added `--cost-limit` flag for `dx run`
+
 ## [307.0] - beta
 
 ### Added
