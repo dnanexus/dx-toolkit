@@ -2969,7 +2969,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "extra_args": args.extra_args
     }
 
-    if run_kwargs["priority"] == "normal" and not args.brief:
+    if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
         executable_desc = executable_describe or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
@@ -2991,7 +2991,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
             check_for_special_access(executable_desc.get('access'))
         if special_access:
             print(fill(BOLD("WARNING") + ": You have requested that jobs be run under " +
-                       BOLD("normal") +
+                       BOLD(run_kwargs["priority"]) +
                        " priority, which may cause them to be restarted at any point, but " +
                        "the executable you are trying to run has " +
                        "requested extra permissions (" + ", ".join(sorted(special_access)) + ").  " +
@@ -4844,7 +4844,7 @@ parser_run.add_argument('--delay-workspace-destruction',
                         help=fill('Whether to keep the job\'s temporary workspace around for debugging purposes for 3 days after it succeeds or fails', width_adjustment=-24),
                         action='store_true')
 parser_run.add_argument('--priority',
-                        choices=['normal', 'high'],
+                        choices=['low', 'normal', 'high'],
                         help='Request a scheduling priority for all resulting jobs. Will be overriden (set to high) ' +
                              'when either --watch, --ssh, or --allow-ssh flags are used')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
