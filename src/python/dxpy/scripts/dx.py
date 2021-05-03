@@ -2965,7 +2965,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "rerun_stages": args.rerun_stages,
         "cluster_spec": srd_cluster_spec.as_dict(),
         "detach": args.detach,
-        "costLimit": args.cost_limit,
+        "cost_limit": args.cost_limit,
         "extra_args": args.extra_args
     }
 
