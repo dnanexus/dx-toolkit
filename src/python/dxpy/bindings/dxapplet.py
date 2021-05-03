@@ -198,7 +198,7 @@ class DXExecutable:
         :type ignore_reuse_stages: list
         :param detach: If provided, job will not start as subjob if run inside of a different job.
         :type detach: boolean
-        :param cost_limit: Maximum cost of a job before termination.
+        :param cost_limit: Maximum cost of the job before termination.
         :type cost_limit: float
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict

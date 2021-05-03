@@ -4903,7 +4903,7 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
                                               "new job will appear as a typical root execution. Setting DX_RUN_DETACH "
                                               "environment variable to 1 causes this option to be set by default.",
                                               width_adjustment=-24), action='store_true')
-parser_run.add_argument('--cost-limit', help=fill("Maximum cost of a job before termination.",
+parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None)
