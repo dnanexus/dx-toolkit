@@ -6,7 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [309.0] - beta
+## [310.0] - beta
+
+* No significant changes
+
+## [309.0] - 2021.04.28 stable
 
 ### Added
 
@@ -21,7 +25,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Upgrade to proot 5.2 from udocker2 fork for `dx-docker`
 * `dx-app-wizard` default to Ubuntu 20.04
 
-## [308.0] - 2021.04.23 stable
+## [308.0] - 2021.04.23 
 
 ### Fixed
 
