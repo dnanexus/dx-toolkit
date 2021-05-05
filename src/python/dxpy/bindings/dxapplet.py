@@ -236,6 +236,7 @@ class DXExecutable:
                                         detach=detach,
                                         cost_limit=cost_limit,
                                         extra_args=extra_args)
+        print(run_input)
         return self._run_impl(run_input, **kwargs)
 
 
