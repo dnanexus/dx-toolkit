@@ -213,6 +213,7 @@ class DXExecutable:
         # only supported for workflows, but we include them
         # here. Applet-based executables should detect when they
         # receive a truthy workflow-specific value and raise an error.
+        print("IMHERE - run from dxapplet")
         run_input = self._get_run_input(executable_input,
                                         project=project,
                                         folder=folder,
