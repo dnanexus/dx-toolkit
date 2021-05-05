@@ -3001,7 +3001,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
 
     if not args.brief:
         if isinstance(executable, dxpy.DXWorkflow):
-            print("IMHERE1")
             try:
                 dry_run = dxpy.api.workflow_dry_run(executable.get_id(),
                                                     executable._get_run_input(input_json, **run_kwargs))
@@ -3029,7 +3028,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                 pass
 
     if args.batch_tsv is None:
-        print("IMHERE2")
         run_one(args, executable, dest_proj, dest_path, input_json, run_kwargs)
     else:
         run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_kwargs)
