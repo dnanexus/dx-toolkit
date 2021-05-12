@@ -86,7 +86,7 @@ class DXJobLogStreamClient:
         self.url = "{protocol}://{host}:{port}/{job_id}/getLog/websocket".format(
             protocol='wss' if dxpy.APISERVER_PROTOCOL == 'https' else 'ws',
             host=dxpy.APISERVER_HOST,
-            port=dxpy.APISERVER_PORT,
+            port=dxpy.WATCH_PORT if dxpy.WATCH_PORT is not None else dxpy.APISERVER_PORT,
             job_id=job_id
         )
         self._app = None
