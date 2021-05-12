@@ -6,11 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [310.0] - beta
+## [311.0] - beta
+
+### Added
+
+* `DX_WATCH_PORT` env var for supporting `dx watch` in the job execution environment
+
+## [310.0] - 2021.05.12 stable
 
 * No significant changes
 
-## [309.0] - 2021.04.28 stable
+## [309.0] - 2021.04.28 
 
 ### Added
 
