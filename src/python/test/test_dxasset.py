@@ -115,7 +115,8 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "14.04",
+            "release": "20.04",
+            "version": "0",
             "instanceType": "mem1_ssd1_x2",
             "execDepends": [{"name": "python-numpy"}]
         }
