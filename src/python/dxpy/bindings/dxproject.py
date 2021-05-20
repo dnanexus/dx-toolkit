@@ -282,8 +282,9 @@ class DXProject(DXContainer):
     _class = "project"
 
     def new(self, name, summary=None, description=None, protected=None,
-            restricted=None, download_restricted=None, contains_phi=None, tags=None,
-            properties=None, bill_to=None, **kwargs):
+            restricted=None, download_restricted=None, contains_phi=None, 
+            tags=None, properties=None, bill_to=None, database_ui_view_only=None,
+            **kwargs):
         """
         :param name: The name of the project
         :type name: string
@@ -299,6 +300,8 @@ class DXProject(DXContainer):
         :type download_restricted: boolean
         :param contains_phi: If provided, whether the project should be marked as containing protected health information (PHI)
         :type contains_phi: boolean
+        :param database_ui_view_only: If provided, whether the viewers on the project can access the database details directly
+        :type database_ui_view_only: boolean
         :param tags: If provided, tags to associate with the project
         :type tags: list of strings
         :param properties: If provided, properties to associate with the project
@@ -327,6 +330,8 @@ class DXProject(DXContainer):
             input_hash["downloadRestricted"] = download_restricted
         if contains_phi is not None:
             input_hash["containsPHI"] = contains_phi
+        if database_ui_view_only is not None:
+            input_hash["databaseUIViewOnly"] = database_ui_view_only
         if bill_to is not None:
             input_hash["billTo"] = bill_to
         if tags is not None:
