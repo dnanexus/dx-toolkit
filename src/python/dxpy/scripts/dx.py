@@ -4762,7 +4762,7 @@ parser_update_project.add_argument('--download-restricted', choices=["true", "fa
 parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
 parser_update_project.add_argument('--database-ui-view-only', choices=["true", "false"],
-                                   help="whether the viewers on the project can access the database details directly")
+                                   help="Whether the viewers on the project can access the database details directly")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
 allowed_executables_group = parser_update_project.add_mutually_exclusive_group()
 allowed_executables_group.add_argument('--allowed-executables', help='Executable ID(s) this project is allowed to run.  This operation overrides any existing list of executables.', type=str, nargs="+")
