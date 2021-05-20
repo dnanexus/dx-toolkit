@@ -281,6 +281,10 @@ contains_phi.add_argument('--phi', dest='containsPHI', choices=["true", "false"]
                           help='If set to true, only projects that contain PHI data will be retrieved. ' +
                           'If set to false, only projects that do not contain PHI data will be retrieved.')
 
+database_ui_view_only = argparse.ArgumentParser(add_help=False)
+database_ui_view_only.add_argument('--database-ui-view-only', dest='databaseUIViewOnly', choices=["true", "false"],
+                          help='If set to true, viewers of the project will not be able to access database details directly')
+
 def _parse_dictionary_or_string_input(thing, arg_name):
     if thing.strip().startswith('{'):
         # expects a map, e.g of entry point to instance type or instance count
@@ -343,6 +347,8 @@ def get_update_project_args(args):
         input_params["downloadRestricted"] = True if args.download_restricted == 'true' else False
     if args.containsPHI is not None:
         input_params["containsPHI"] = True if args.containsPHI == 'true' else False
+    if args.database_ui_view_only is not None:
+        input_params["databaseUIViewOnly"] = True if args.database_ui_view_only == 'true' else False
     if args.bill_to is not None:
         input_params["billTo"] = args.bill_to
     if args.allowed_executables is not None:

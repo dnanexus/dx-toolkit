@@ -48,7 +48,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
                            instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
-                           property_args, tag_args, contains_phi, process_phi_param)
+                           property_args, tag_args, contains_phi, database_ui_view_only, process_phi_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
                        find_orgs, org_find_members, org_find_projects, org_find_apps)
@@ -1397,6 +1397,8 @@ def new_project(args):
         inputs["region"] = args.region
     if args.phi:
         inputs["containsPHI"] = True
+    if args.database_ui_view_only:
+        inputs["databaseUIViewOnly"] = True
 
     try:
         resp = dxpy.api.project_new(inputs)
@@ -4759,6 +4761,8 @@ parser_update_project.add_argument('--download-restricted', choices=["true", "fa
                                    help="Whether the project should be DOWNLOAD RESTRICTED")
 parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
+parser_update_project.add_argument('--database-ui-view-only', choices=["true", "false"],
+                                   help="whether the viewers on the project can access the database details directly")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
 allowed_executables_group = parser_update_project.add_mutually_exclusive_group()
 allowed_executables_group.add_argument('--allowed-executables', help='Executable ID(s) this project is allowed to run.  This operation overrides any existing list of executables.', type=str, nargs="+")
@@ -5050,6 +5054,8 @@ parser_new_project.add_argument('-s', '--select', help='Select the new project a
                                 action='store_true')
 parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
 parser_new_project.add_argument('--phi', help='Add PHI protection to project', default=False,
+                                action='store_true')
+parser_new_project.add_argument('--database-ui-view-only', help='Restrict viewers on the project from accessing the database details directly', default=False,
                                 action='store_true')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
