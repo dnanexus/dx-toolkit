@@ -300,14 +300,14 @@ class DXProject(DXContainer):
         :type download_restricted: boolean
         :param contains_phi: If provided, whether the project should be marked as containing protected health information (PHI)
         :type contains_phi: boolean
-        :param database_ui_view_only: If provided, whether the viewers on the project can access the database details directly
-        :type database_ui_view_only: boolean
         :param tags: If provided, tags to associate with the project
         :type tags: list of strings
         :param properties: If provided, properties to associate with the project
         :type properties: dict
         :param bill_to: If provided, ID of the entity to which any costs associated with this project will be billed; must be the ID of the requesting user or an org of which the requesting user is a member with allowBillableActivities permission
         :type bill_to: string
+        :param database_ui_view_only: If provided, whether the viewers on the project can access the database data directly
+        :type database_ui_view_only: boolean
 
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
@@ -330,10 +330,10 @@ class DXProject(DXContainer):
             input_hash["downloadRestricted"] = download_restricted
         if contains_phi is not None:
             input_hash["containsPHI"] = contains_phi
-        if database_ui_view_only is not None:
-            input_hash["databaseUIViewOnly"] = database_ui_view_only
         if bill_to is not None:
             input_hash["billTo"] = bill_to
+        if database_ui_view_only is not None:
+            input_hash["databaseUIViewOnly"] = database_ui_view_only
         if tags is not None:
             input_hash["tags"] = tags
         if properties is not None:
@@ -345,7 +345,8 @@ class DXProject(DXContainer):
 
     def update(self, name=None, summary=None, description=None, protected=None,
                restricted=None, download_restricted=None, version=None, 
-               allowed_executables=None, unset_allowed_executables=None, **kwargs):
+               allowed_executables=None, unset_allowed_executables=None, 
+               database_ui_view_only=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -361,6 +362,8 @@ class DXProject(DXContainer):
         :type download_restricted: boolean
         :param allowed_executables: If provided, these are the only executable ID(s) allowed to run as root executions in this project
         :type allowed_executables: list
+        :param database_ui_view_only: If provided, whether the viewers on the project can access the database data directly
+        :type database_ui_view_only: boolean
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
 
@@ -390,6 +393,8 @@ class DXProject(DXContainer):
             update_hash["allowedExecutables"] = allowed_executables
         if unset_allowed_executables is not None:
             update_hash["allowedExecutables"] = None
+        if database_ui_view_only is not None:
+            input_hash["databaseUIViewOnly"] = database_ui_view_only
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):
