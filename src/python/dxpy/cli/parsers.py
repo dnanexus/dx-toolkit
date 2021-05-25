@@ -283,7 +283,7 @@ contains_phi.add_argument('--phi', dest='containsPHI', choices=["true", "false"]
 
 database_ui_view_only = argparse.ArgumentParser(add_help=False)
 database_ui_view_only.add_argument('--database-ui-view-only', dest='databaseUIViewOnly', choices=["true", "false"],
-                          help='If set to true, viewers of the project will not be able to access database details directly')
+                          help='If set to true, viewers of the project will not be able to access database data directly')
 
 def _parse_dictionary_or_string_input(thing, arg_name):
     if thing.strip().startswith('{'):
