@@ -6,11 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [311.0] - beta
+
 ### Added
 
 * Added `--cost-limit` flag for `dx run`
+* `DX_WATCH_PORT` env var for supporting `dx watch` in the job execution environment
 
-## [309.0] - beta
+## [310.0] - 2021.05.12 stable
+
+* No significant changes
+
+## [309.0] - 2021.04.28 
 
 ### Added
 
@@ -25,7 +32,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Upgrade to proot 5.2 from udocker2 fork for `dx-docker`
 * `dx-app-wizard` default to Ubuntu 20.04
 
-## [308.0] - 2021.04.23 stable
+## [308.0] - 2021.04.23 
 
 ### Fixed
 

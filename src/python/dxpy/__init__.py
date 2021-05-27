@@ -190,7 +190,7 @@ __version__ = TOOLKIT_VERSION
 
 API_VERSION = '1.0.0'
 AUTH_HELPER, SECURITY_CONTEXT = None, None
-JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
+JOB_ID, WATCH_PORT, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None, None
 
 DEFAULT_APISERVER_PROTOCOL = 'https'
 DEFAULT_APISERVER_HOST = 'api.dnanexus.com'
@@ -965,6 +965,22 @@ def set_project_context(dxid):
 
     global PROJECT_CONTEXT_ID
     PROJECT_CONTEXT_ID = dxid
+
+def set_watch_port(port=None):
+    """
+    :param port: port to use for streaming job logs
+    :type port: string
+
+    Sets the port to use for streaming job logs via `dx watch` inside the
+    Execution Environment
+
+    .. warning:: This function is only really useful if you are
+       developing code that will run in and interact with the Execution
+       Environment.
+
+    """
+    global WATCH_PORT
+    WATCH_PORT = port
 
 def get_auth_server_name(host_override=None, port_override=None, protocol='https'):
     """
