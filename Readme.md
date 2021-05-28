@@ -59,6 +59,14 @@ toolkit that doesn't require them.
       gcc g++ cmake libboost-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
       openssl libssl-dev autoconf
 
+If your locale is not configured properly, you might need to run following commands as well (i.e. when working from Cloud Workstation):
+    
+    export LC_ALL="en_US.UTF-8"
+    export LC_CTYPE="en_US.UTF-8"
+    sudo dpkg-reconfigure locales
+    
+in the `dpkg-reconfigure` command, select `en_US.UTF-8 locale`.
+
 ### Ubuntu 14.04
 
     sudo apt-get install make python-setuptools python-pip python-virtualenv python-dev \
