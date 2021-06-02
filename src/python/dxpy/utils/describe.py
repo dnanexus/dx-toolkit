@@ -380,7 +380,7 @@ def render_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp//1000).ctime()
 
 
-FIELD_NAME_WIDTH = 20
+FIELD_NAME_WIDTH = 22
 
 
 def print_field(label, value):
