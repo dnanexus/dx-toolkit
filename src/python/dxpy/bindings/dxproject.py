@@ -394,7 +394,7 @@ class DXProject(DXContainer):
         if unset_allowed_executables is not None:
             update_hash["allowedExecutables"] = None
         if database_ui_view_only is not None:
-            input_hash["databaseUIViewOnly"] = database_ui_view_only
+            update_hash["databaseUIViewOnly"] = database_ui_view_only
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):

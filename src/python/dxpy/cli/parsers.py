@@ -281,10 +281,6 @@ contains_phi.add_argument('--phi', dest='containsPHI', choices=["true", "false"]
                           help='If set to true, only projects that contain PHI data will be retrieved. ' +
                           'If set to false, only projects that do not contain PHI data will be retrieved.')
 
-database_ui_view_only = argparse.ArgumentParser(add_help=False)
-database_ui_view_only.add_argument('--database-ui-view-only', dest='databaseUIViewOnly', choices=["true", "false"],
-                          help='If set to true, viewers of the project will not be able to access database data directly')
-
 def _parse_dictionary_or_string_input(thing, arg_name):
     if thing.strip().startswith('{'):
         # expects a map, e.g of entry point to instance type or instance count

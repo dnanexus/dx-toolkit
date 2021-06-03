@@ -444,7 +444,7 @@ def print_project_desc(desc, verbose=False):
         print_json_field("Restricted", desc["restricted"])
     if 'containsPHI' in desc:
         print_json_field('Contains PHI', desc['containsPHI'])
-    if 'databaseUIViewOnly' in desc:
+    if 'databaseUIViewOnly' in desc and desc['databaseUIViewOnly']:
         print_json_field('Database UI View Only', desc['databaseUIViewOnly'])
 
     # Usage
