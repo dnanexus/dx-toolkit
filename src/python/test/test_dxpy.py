@@ -136,6 +136,7 @@ class TestDXProject(unittest.TestCase):
             self.assertEqual(desc["restricted"], False)
             self.assertEqual(desc["downloadRestricted"], False)
             self.assertEqual(desc["containsPHI"], False)
+            self.assertEqual(desc["databaseUIViewOnly"], False)
             self.assertEqual(desc["tags"], [])
             prop = dxpy.api.project_describe(dxproject.get_id(),
                                              {'fields': {'properties': True}})

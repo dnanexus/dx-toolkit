@@ -380,7 +380,7 @@ def render_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp//1000).ctime()
 
 
-FIELD_NAME_WIDTH = 20
+FIELD_NAME_WIDTH = 22
 
 
 def print_field(label, value):
@@ -410,7 +410,7 @@ def print_project_desc(desc, verbose=False):
         'id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified',
         'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties',
         'appCaches', 'billTo', 'version', 'createdBy', 'totalSponsoredEgressBytes', 'consumedSponsoredEgressBytes',
-        'containsPHI', 'region', 'storageCost', 'pendingTransfer','atSpendingLimit',
+        'containsPHI', 'databaseUIViewOnly', 'region', 'storageCost', 'pendingTransfer','atSpendingLimit',
         # Following are app container-specific
         'destroyAt', 'project', 'type', 'app', 'appName'
     ]
@@ -444,6 +444,8 @@ def print_project_desc(desc, verbose=False):
         print_json_field("Restricted", desc["restricted"])
     if 'containsPHI' in desc:
         print_json_field('Contains PHI', desc['containsPHI'])
+    if 'databaseUIViewOnly' in desc and desc['databaseUIViewOnly']:
+        print_json_field('Database UI View Only', desc['databaseUIViewOnly'])
 
     # Usage
     print_field("Created", render_timestamp(desc['created']))

@@ -1397,6 +1397,8 @@ def new_project(args):
         inputs["region"] = args.region
     if args.phi:
         inputs["containsPHI"] = True
+    if args.database_ui_view_only:
+        inputs["databaseUIViewOnly"] = True
 
     try:
         resp = dxpy.api.project_new(inputs)
@@ -4760,6 +4762,8 @@ parser_update_project.add_argument('--download-restricted', choices=["true", "fa
                                    help="Whether the project should be DOWNLOAD RESTRICTED")
 parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
+parser_update_project.add_argument('--database-ui-view-only', choices=["true", "false"],
+                                   help="Whether the viewers on the project can access the database data directly")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
 allowed_executables_group = parser_update_project.add_mutually_exclusive_group()
 allowed_executables_group.add_argument('--allowed-executables', help='Executable ID(s) this project is allowed to run.  This operation overrides any existing list of executables.', type=str, nargs="+")
@@ -5054,6 +5058,8 @@ parser_new_project.add_argument('-s', '--select', help='Select the new project a
                                 action='store_true')
 parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
 parser_new_project.add_argument('--phi', help='Add PHI protection to project', default=False,
+                                action='store_true')
+parser_new_project.add_argument('--database-ui-view-only', help='If set to true, viewers of the project will not be able to access database data directly', default=False,
                                 action='store_true')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
