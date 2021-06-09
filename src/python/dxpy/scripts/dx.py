@@ -5646,143 +5646,96 @@ register_parser(parser_publish)
 #####################################
 # archive
 #####################################
-# TODO: archive
-# [-h] [--env-help]
-#   [--folder]
-#   [--recurse]
-#   [--project PROJECT]
-#   [--all-copies]
-#   [-a, --all]
-#   [-q, --quite]
-#   [path  ...]
  
-# Requests for a set of files to be archived on the platform.
-# For each file, if this is the last copy of a file to have archival requested,
-# it will trigger the full archival of the object.
-# Otherwise, the file will be marked in an archival state denoting that archival has been requested.
- 
-# positional arguments:
-#   path         files to archive
- 
-# optional arguments:
-#   -h, --help   show this help message and exit
-#   --env-help   Display help message for overriding environment variables
- 
-#   --folder     see project-xxxx/archive api
-#   --recurse    see project-xxxx/archive api
-#   --project PROJECT All files or folder (if specified) must be present in this project. 
-#                     Defaults to the selected project.
-#   --all-copies see project-xxxx/archive api
-#   -a, --all    Apply to all paths with the same name without prompting
-#   -q, --quiet  Do not print purely informational messages
+parser_archive = subparsers.add_parser(
+    'archive', 
+    help='Requests for the specified set files or for the files in a single specified folder to be archived on the platform', 
+    description=fill('Requests for the specified set files or for the files in a single specified folder to be archived on the platform. \nFor each file, if this is the last copy of a file to have archival requested, the full archival of the object will be triggered. \nOtherwise, the files will be marked in an archival state denoting that archival has been requested.\nTo specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon.') + 
+    '''
   
-# Returns:
-#   If -q option is not specified, prints "Tagged <count> files for archival"
+EXAMPLES
  
-# Errors:
-# In addition to the errors returned by the project-xxx/archive api, "dx archive" also may return
-# * can not determine project to archive files in. Please select a project of specify a project with the --project argument
-# * expecting path <> to be in project <>, but it's in <>
-# * dxpy.utils.resolver.ResolutionError: Cannot parse "blah:blah:blah" as a path
+  ''' + 
+  fill('# archive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + 
+  '''
+  $ dx $ dx archive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
 
-parser_archive = subparsers.add_parser('archive', help='Requests for a set of files to be archived on the platform.',
-                                               description=fill(
-                                               '''For each file, if this is the last copy of a file to have archival requested,
-                                               it will trigger the full archival of the object.
-                                               Otherwise, the file will be marked in an archival state denoting that archival has been requested.'''),
+  ''' + 
+  fill('# archive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + '''
+  $ dx archive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
+  ''',
                                                formatter_class=argparse.RawTextHelpFormatter,
                                                parents=[stdout_args, env_args],
-                                               prog='dx archive')
+                                               prog='dx archive'
+                                               )
+parser_archive.add_argument('-a','--all', dest='prompt', help=fill('Apply to all paths with the same name without prompting', width_adjustment=-24), action='store_true')
 
-parser_archive_input_args = parser_archive.add_mutually_exclusive_group()
-parser_archive_input_args.add_argument('file(s)', help=fill('''A subset list of files that should be archived.
-                                                Mutually exclusive with --folder''', width_adjustment=-24),
-                                            default=[], nargs='*').completer = DXPathCompleter(classes=['file'])
-parser_archive_input_folder_args = parser_archive.add_argument_group()
-parser_archive_input_folder_args.add_argument('--folder', help=fill('''The folder which contains all files that should be archived.
-                                                Mutually exclusive with file(s)''', width_adjustment=-24),
-                                                default=None, nargs='?').completer = DXPathCompleter(classes=['folder'])
-parser_archive_input_folder_args.add_argument('-r', '--recursive', help=fill('(optional, default true) If true, archive all files in subfolders of folder. If false, only archive files in folder. folder must be set.', width_adjustment=-24), action='store_true')
-parser_archive_input_args.add_argument_group(parser_archive_input_folder_args)
-
-parser_archive.add_argument('--project', help=fill('PROJECT All files or folder (if specified) must be present in this project. Defaults to the selected project.', width_adjustment=-24),
-                                                default=dxpy.WORKSPACE_ID).completer = DXPathCompleter(expected='project', include_current_proj=True)
-parser_archive.add_argument('--all-copies', help=fill('(optional, default false) This flag is intended to force the transition of files into the archived state. \n'
-                                                'Requesting user must be the ADMIN of the project billTo org. \n'
-                                                'If true, archive all the copies of files in projects with the same billTo org. \n'
-                                                'If false, only the copy of the file in the current project is transitioned to the archival state, while other copies of the file in the rest projects with the same billTo org will stay in the live state.',
-                                                width_adjustment=-24),
-                                                default=False, action='store_true')
-parser_archive.add_argument('-a','--all', help='Apply to all paths with the same name without prompting', 
-                            default=False, action='store_true')
 parser_archive.add_argument('-q', '--quiet', help='Do not print extra info messages', 
                             action='store_true')
+parser_archive.add_argument('--all-copies', dest = "allCopies", help=fill('See project-xxxx/archive api [https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive]',width_adjustment=-24), 
+                            action='store_true')
+parser_archive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
+parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived.This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
+parser_archive.add_argument(
+    'path', 
+    help=fill('List of path(s) that should be archived. May refer to a single folder or specify one or more files in a single project.',width_adjustment=-24),
+    default=[], nargs='+').completer = DXPathCompleter() 
 parser_archive.set_defaults(func=archive)
 register_parser(parser_archive, categories='fs')
+
 #####################################
 # unarchive
 #####################################
-# TODO: unarchive
-# dx unarchive
-#   [-h] [--env-help]
-#   [--folder]
-#   [--recurse]
-#   [--project PROJECT]
-#   [--rate {Expedited, Standard, Bulk}]
-#   [--dry-run, -n]
-#   [-a, --all]
-#   [-q, --quiet]
-#   [path  ...]
  
-# Requests for a set of files to be unarchived on the platform.
-# This is an asynchronous command.
-# The requested copy will eventually be transitioned over to the live state
-# while all other copies will move over to the archival state.
+parser_unarchive = subparsers.add_parser(
+    'unarchive', 
+    help='Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.',    
+    description=fill('Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.' +
+    'The requested copy will eventually be transitioned over to the live state while all other copies will move over to the archival state.') + 
+    '''
  
-# positional arguments:
-#   path         files to unarchive.  Must be in the selected project or the project specified by the --project option.
+EXAMPLES
  
-# optional arguments:
-#   Similar to dx archive, with the additional
-#   --dry-run and --rate arguments that work as described in project-xxxx/unarchive api,
-#   and without --all-copies argument.
+  ''' + 
+  fill('# unarchive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + 
+  '''
+  $ dx archive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
  
-# Returns:
-#   If -q option is specified, prints nothing
-#   otherwise
-#     if --dry-run is not specified, "Tagged <> files for unarchival, totalling <> GB, costing $0.0071"
-#     if --dry-run is     specified, "Would tag <> files for unarchival, totalling <> GB, costing $0.0071"
- 
-# Errors: similar to "dx archive"
-parser_unarchive = subparsers.add_parser('unarchive', help='Requests for a set of files to be unarchived on the platform.',
-                                               description=fill(
-                                               'This is an asynchronous command. The requested copy will eventually be transitioned over to the live state while all other copies will move over to the archival state.'),
+  ''' + 
+  fill('# unarchive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + '''
+  $ dx unarchive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
+  ''',
                                                formatter_class=argparse.RawTextHelpFormatter,
                                                parents=[stdout_args, env_args],
-                                               prog='dx unarchive')
+                                               prog='dx unarchive'
+                                               )
 
-parser_unarchive_input_args = parser_unarchive.add_mutually_exclusive_group()
-parser_unarchive_input_args.add_argument('file(s)', help=fill('''A subset list of files that should be unarchived.
-                                                Mutually exclusive with --folder''', width_adjustment=-24),
-                                            default=[], nargs='*').completer = DXPathCompleter(classes=['file'])
-parser_unarchive_input_folder_args = parser_unarchive.add_argument_group()
-parser_unarchive_input_folder_args.add_argument('--folder', help=fill('''The folder which contains all files that should be unarchived.
-                                                Mutually exclusive with file(s)''', width_adjustment=-24),
-                                                default=None, nargs='?').completer = DXPathCompleter(classes=['folder'])
-parser_unarchive_input_folder_args.add_argument('-r', '--recursive', help=fill('(optional, default true) If true, unarchive all files in subfolders of folder. If false, only unarchive files in folder. folder must be set.', width_adjustment=-24), action='store_true')
-parser_unarchive_input_args.add_argument_group(parser_unarchive_input_folder_args)
+parser_unarchive.add_argument('-rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+ 
+fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
 
-parser_unarchive.add_argument('--project', help=fill('PROJECT All files or folder (if specified) must be present in this project. Defaults to the selected project.', width_adjustment=-24),
-                                                default=dxpy.WORKSPACE_ID).completer = DXPathCompleter(expected='project', include_current_proj=True)
-parser_unarchive.add_argument('-rate', help=fill('The speed at which all files in this request are unarchived. Azure regions: {Expedited, Standard} AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24), choices=["Expedited", "Standard", "Bulk"], default="Standard")
-parser_unarchive.add_argument('-n','--dry-run', help=fill('(optional, default false) If true, only display the output of the API call without executing the unarchival', width_adjustment=-24), 
+parser_unarchive.add_argument('-a','--all', dest='prompt', help=fill('Apply to all paths with the same name without prompting', width_adjustment=-24), action='store_true')
+
+parser_unarchive_output = parser_unarchive.add_argument_group(title='Returns').add_mutually_exclusive_group()
+parser_unarchive_output.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
+parser_unarchive_output.add_argument(
+    '-n','--dry-run', dest='dryRun',
+    help=fill('(Default)if --dry-run is not specified,',width_adjustment=-24) + '\n' + fill('"Tagged <> files for unarchival, totalling <> GB, costing <>"',width_adjustment=-24,initial_indent='  ')  + '\n' + 
+    fill('if --dry-run is     specified',width_adjustment=-24) + '\n' +
+    fill('"Would tag <> files for unarchival, totalling <> GB, costing <>"' , width_adjustment=-24,initial_indent='  '), 
                             default=False, action='store_true')
-parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', 
-                            action='store_true')
+
+parser_unarchive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
+parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived.This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+
+parser_unarchive.add_argument(
+    'path', 
+    help=fill('List of path(s) that should be unarchived. May refer to a single folder or specify one or more files in a single project.', width_adjustment=-24),
+    default=[], nargs='+').completer = DXPathCompleter() 
 
 parser_unarchive.set_defaults(func=unarchive)
 register_parser(parser_unarchive, categories='fs')
+
 #####################################
 # help
 #####################################
