@@ -3789,10 +3789,154 @@ def publish(args):
 
 # TODO: archive & unarchive
 def archive(args):
-    pass
+    '''
+
+    '''
+# TODO: 
+# - generate request list
+#         - files: make file list
+#         - folder: find files
+#         - recuse: boolean
+#         - get all copies
+#         - '-a'
+#         - '-y': print confirmation
+# - send to api 
+#           - '{"files": ["file-xxxx", "file-yyyy"], "allCopies": true}'
+#           - '{"folder" : "/folder1", "recurse": }' 
+# - return 
+#     - id of project
+#     - count of files
+#       TODO: how to count if it is as folder??
+    if args.confirm and INTERACTIVE_CLI:
+        if not prompt_for_yn('Confirm running the executable with this input', default=True):
+            parser.exit(0)
+
+    projects = {}
+    failed_path = {}
+
+    for path in args.path:
+        try: 
+            project, folderpath, entity_results = resolve_existing_path(path, expected_classes=["file"], allow_mult=True, all_mult=args.all)
+        except Exception as details:
+            print(fill('Could not resolve "' + path + '": ' + str(details)))
+            failed_path[path] = 'Could not resolve "' + path + '": ' + str(details)
+            had_error = True
+
+        if project is None:
+            had_error = True
+            print(fill('Could not resolve "' + path + '" to a project'))
+            failed_path[path] = 'Could not resolve "' + path + '" to a project'
+
+        if project not in projects:
+            projects[project] = {"folders": set(), "files": set()}
+        
+        # TODO: is there a situation where we have multiple entities matched??
+        if entity_results: # if the path refers to a file
+            projects[project]["files"].update(entity_results)
+        else: # if the path refers to a folder
+            projects[project]["folders"].add(folderpath)
+
+    total_count = 0
+    for project in projects:
+        try:
+            id, count = dxpy.api.project_archive(project, {"files": projects[project]["files"], "allCopies": args.allCopies, "recurse":args.recurse})
+            total_count+=count
+        except dxpy.exceptions.DXAPIError as e:
+            failed_path[project] = "APIError: Failed to archive files in {} : {} ".format(project, e.msg)
+            had_error = True
+            continue
+        except Exception as e:
+            failed_path[project] = "Failed to archive files in {} : {} ".format(project, e.msg)
+            had_error = True
+            continue
+
+        for folder in projects[project]["folder"]:
+            try:
+                id, count = dxpy.api.project_archive(project, {"folder": folder, "allCopies": args.allCopies, "recurse":args.recurse})
+                total_count+=count
+
+            except dxpy.exceptions.DXAPIError as e:
+                failed_path[project+":"+folder] = "AOIError: Failed to archive folder {}:{} : {} ".format(project, folder, e.msg)
+                had_error = True
+                continue
+            except Exception as e:
+                failed_path[project+":"+folder] = "Failed to archive folder {}:{} : {} ".format(project, folder, e.msg)
+                had_error = True
+                continue
+    
+        if not args.quiet:
+            print(f"Tagged {total_count} files as archived in project {project}")
+            
+    if had_error:
+        print(failed_path)
+        err_exit('', 3)
 
 def unarchive(args):
-    pass
+    projects = {}
+    failed_path = {}
+    had_error = False
+
+    for path in args.path:
+        try: 
+            project, folderpath, entity_results = resolve_existing_path(path, expected_classes=["file"], allow_mult=True, all_mult=args.all)
+        except Exception as details:
+            print(fill('Could not resolve "' + path + '": ' + str(details)))
+            failed_path[path] = 'Could not resolve "' + path + '": ' + str(details)
+            had_error = True
+            continue
+
+        if project is None:
+            had_error = True
+            print(fill('Could not resolve "' + path + '" to a project'))
+            failed_path[path] = 'Could not resolve "' + path + '" to a project'
+
+        if project not in projects:
+            projects[project] = {"folders": set(), "files": set()}
+        
+        # TODO: is there a situation where we have multiple entities matched??
+        if entity_results: # if the path refers to a file
+            projects[project]["files"].update(entity_results)
+        else: # if the path refers to a folder
+            projects[project]["folders"].add(folderpath)
+    
+    total_count, total_size, total_cost = 0,0,0
+
+    for project in projects:
+        try:
+            count, size, cost = dxpy.api.project_archive(project, {"files": projects[project]["files"], "dryRun": args.dryRun, "rate": args.rate, "recurse":args.recurse})
+            total_count+=count
+            total_size+=size
+            total_cost+=cost
+        except dxpy.exceptions.DXAPIError as e:
+            failed_path[project] = "APIError: Failed to unarchive files in {} : {} ".format(project, e.msg)
+            had_error = True
+            continue
+        except Exception as e:
+            failed_path[project] = "Failed to unarchive files in {} : {} ".format(project, e.msg)
+            had_error = True
+
+        for folder in projects[project]["folder"]:
+            try:
+                count, size, cost = dxpy.api.project_unarchive(project, {"folder": folder, "dryRun": args.dryRun, "rate": args.rate, "recurse":args.recurse})
+                total_count+=count
+                total_size+=size
+                total_cost+=cost
+            except dxpy.exceptions.DXAPIError as e:
+                failed_path[project+":"+folder] = "AOIError: Failed to unarchive folder {}:{} : {} ".format(project, folder, e.msg)
+                had_error = True
+            except Exception as e:
+                failed_path[project+":"+folder] = "Failed to unarchive folder {}:{} : {} ".format(project, folder, e.msg)
+                had_error = True
+
+    if not args.quiet:
+        if args.dryRun:
+            print(f" Would tag {total_count} files for unarchival, totalling {total_size} GB, costing {total_cost}")
+        else:
+            print(f"Tagged {total_count} files for unarchival, totalling {total_size} GB, costing {total_cost}")
+    
+    if had_error:
+        print(failed_path)
+        err_exit('', 3)
 
 def print_help(args):
     if args.command_or_category is None:
@@ -5646,15 +5790,15 @@ register_parser(parser_publish)
 #####################################
 # archive
 #####################################
- 
+                               
 parser_archive = subparsers.add_parser(
     'archive', 
     help='Requests for the specified set files or for the files in a single specified folder to be archived on the platform', 
     description=fill('Requests for the specified set files or for the files in a single specified folder to be archived on the platform. \nFor each file, if this is the last copy of a file to have archival requested, the full archival of the object will be triggered. \nOtherwise, the files will be marked in an archival state denoting that archival has been requested.\nTo specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon.') + 
     '''
-  
+
 EXAMPLES
- 
+
   ''' + 
   fill('# archive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + 
   '''
@@ -5681,27 +5825,27 @@ parser_archive.add_argument(
     'path', 
     help=fill('List of path(s) that should be archived. May refer to a single folder or specify one or more files in a single project.',width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
-parser_archive.set_defaults(func=archive)
+parser_archive.set_defaults(func=archive)  
 register_parser(parser_archive, categories='fs')
 
 #####################################
 # unarchive
 #####################################
- 
+
 parser_unarchive = subparsers.add_parser(
     'unarchive', 
     help='Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.',    
     description=fill('Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.' +
     'The requested copy will eventually be transitioned over to the live state while all other copies will move over to the archival state.') + 
     '''
- 
+
 EXAMPLES
- 
+
   ''' + 
   fill('# unarchive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + 
   '''
   $ dx archive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
- 
+
   ''' + 
   fill('# unarchive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + '''
   $ dx unarchive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
@@ -5723,7 +5867,7 @@ parser_unarchive_output.add_argument(
     help=fill('(Default)if --dry-run is not specified,',width_adjustment=-24) + '\n' + fill('"Tagged <> files for unarchival, totalling <> GB, costing <>"',width_adjustment=-24,initial_indent='  ')  + '\n' + 
     fill('if --dry-run is     specified',width_adjustment=-24) + '\n' +
     fill('"Would tag <> files for unarchival, totalling <> GB, costing <>"' , width_adjustment=-24,initial_indent='  '), 
-                            default=False, action='store_true')
+    default=False, action='store_true')
 
 parser_unarchive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
 parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived.This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
