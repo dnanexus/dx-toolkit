@@ -3882,13 +3882,13 @@ def archive(args):
                 failed_path[project_id] = format_exception(e)
                 had_error = True
                 continue
-            if res["count"] == 0:
-                print("Failed request: {} is not archiving any file.".format(request_input))
+            # if res["count"] == 0:
+            #     print("Failed request: {} is not archiving any file.".format(request_input))
 
         # print archive results
         if not args.quiet:
             print()
-            print(f"Tagged {total_count} files as archived in project {project_id}")
+            print(f"Tagged {total_count} files as archived/archival in project {project_id}")
             print()
 
     if had_error and not args.quiet:
@@ -3959,7 +3959,9 @@ def unarchive(args):
                     print("     [{}]:".format(fp))
                     for f in list(dxpy.find_data_objects(project=pid,
                                                folder=fp,
-                                               classname="file",describe=True)):
+                                               classname="file",
+                                               recurse=args.recurse,
+                                               describe=True)):
                         fdesc = f["describe"]
                         print("             [{}/{}]<{}>: {}".format(fdesc["folder"], fdesc["name"], fdesc["archivalState"], fdesc["id"]))
         
@@ -5875,14 +5877,12 @@ EXAMPLES
   $ dx archive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
   ''',
                                                formatter_class=argparse.RawTextHelpFormatter,
-                                               parents=[stdout_args, env_args],
+                                               parents=[all_arg],
                                                prog='dx archive'
                                                )
-parser_archive.add_argument('-a','--all', dest='all', help=fill('Apply to all paths with the same name without prompting', width_adjustment=-24), action='store_true')
-
 parser_archive.add_argument('-q', '--quiet', help='Do not print extra info messages', 
                             action='store_true')
-parser_archive.add_argument('--all-copies', dest = "all_copies", help=fill('See project-xxxx/archive api [https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive]',width_adjustment=-24), 
+parser_archive.add_argument('--all-copies', dest = "all_copies", help=fill('Force the transition of files into the archived state. If true, archive all the copies of files in projects with the same billTo org. Otherwise only the copy of the file in the current project is transitioned to the archival state, while other copies of the file in the rest projects with the same billTo org will stay in the live state.',width_adjustment=-24), 
                             default=False, action='store_true')
 parser_archive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
 parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived.This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
@@ -5917,21 +5917,19 @@ EXAMPLES
   $ dx unarchive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
   ''',
                                                formatter_class=argparse.RawTextHelpFormatter,
-                                               parents=[stdout_args, env_args],
+                                               parents=[all_arg],
                                                prog='dx unarchive'
                                                )
 
 parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+ 
 fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
 
-parser_unarchive.add_argument('-a','--all', dest='all', help=fill('Apply to all paths with the same name without prompting', width_adjustment=-24), action='store_true')
-
-parser_unarchive_output = parser_unarchive.add_argument_group(title='Returns').add_mutually_exclusive_group()
+parser_unarchive_output = parser_unarchive.add_argument_group(title='Output').add_mutually_exclusive_group()
 parser_unarchive_output.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_unarchive_output.add_argument(
     '-n','--dry-run', dest='dry_run',
-    help=fill('(Default)if --dry-run is not specified,',width_adjustment=-24) + '\n' + fill('"Tagged <> files for unarchival, totalling <> GB, costing <>"',width_adjustment=-24,initial_indent='  ')  + '\n' + 
-    fill('if --dry-run is     specified',width_adjustment=-24) + '\n' +
+    help=fill('(Default) if --dry-run is not specified,',width_adjustment=-24) + '\n' + fill('"Tagged <> files for unarchival, totalling <> GB, costing <>"',width_adjustment=-24,initial_indent='  ')  + '\n' + 
+    fill('if --dry-run is specified,',width_adjustment=-24) + '\n' +
     fill('"Would tag <> files for unarchival, totalling <> GB, costing <>"' , width_adjustment=-24,initial_indent='  '), 
     default=False, action='store_true')
 
