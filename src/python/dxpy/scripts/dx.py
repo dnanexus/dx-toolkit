@@ -5870,7 +5870,7 @@ EXAMPLES
   ''' + 
   fill('# archive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + 
   '''
-  $ dx $ dx archive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+$ dx archive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
 
   ''' + 
   fill('# archive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + '''
@@ -5882,14 +5882,14 @@ EXAMPLES
                                                )
 parser_archive.add_argument('-q', '--quiet', help='Do not print extra info messages', 
                             action='store_true')
-parser_archive.add_argument('--all-copies', dest = "all_copies", help=fill('Force the transition of files into the archived state. If true, archive all the copies of files in projects with the same billTo org. Otherwise only the copy of the file in the current project is transitioned to the archival state, while other copies of the file in the rest projects with the same billTo org will stay in the live state.',width_adjustment=-24), 
+parser_archive.add_argument('--all-copies', dest = "all_copies", help=fill('If true, archive all the copies of files in projects with the same billTo org.  See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24), 
                             default=False, action='store_true')
 parser_archive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
-parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived.This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived.  This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_archive.add_argument(
     'path', 
-    help=fill('List of path(s) that should be archived. May refer to a single folder or specify one or more files in a single project.',width_adjustment=-24),
+    help=fill('May refer to a single folder or specify one or more files in a single project.',width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
 parser_archive.set_defaults(func=archive)  
 register_parser(parser_archive, categories='fs')
@@ -5910,7 +5910,7 @@ EXAMPLES
   ''' + 
   fill('# unarchive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + 
   '''
-  $ dx archive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+  $ dx unarchive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
 
   ''' + 
   fill('# unarchive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + '''
@@ -5934,11 +5934,11 @@ parser_unarchive_output.add_argument(
     default=False, action='store_true')
 
 parser_unarchive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
-parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived.This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived.This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_unarchive.add_argument(
     'path', 
-    help=fill('List of path(s) that should be unarchived. May refer to a single folder or specify one or more files in a single project.', width_adjustment=-24),
+    help=fill('May refer to a single folder or specify one or more files in a single project.', width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
 
 parser_unarchive.set_defaults(func=unarchive)
