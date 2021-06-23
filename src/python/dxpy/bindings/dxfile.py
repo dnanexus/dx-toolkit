@@ -665,6 +665,7 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
+        print("HERE!")
         if not USING_PYTHON2:
             # In python3, the underlying system methods use the 'bytes' type, not 'string'
             assert(isinstance(data, bytes))
