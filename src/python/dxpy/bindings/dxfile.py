@@ -511,6 +511,7 @@ class DXFile(DXDataObject):
         self._ensure_write_bufsize(**kwargs)
 
         def write_request(data_for_write_req):
+            print(f"writing request....{len(data_for_write_req)}")
             if multithread:
                 self._async_upload_part_request(data_for_write_req, index=self._cur_part, **kwargs)
             else:
@@ -665,7 +666,7 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-        print("HERE!")
+        print(f"uploading part...! {index}" )
         if not USING_PYTHON2:
             # In python3, the underlying system methods use the 'bytes' type, not 'string'
             assert(isinstance(data, bytes))
