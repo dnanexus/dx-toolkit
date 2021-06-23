@@ -446,6 +446,7 @@ class DXFile(DXDataObject):
         '''
         Flushes the internal write buffer.
         '''
+        print("flushing ...")
         if self._write_buf.tell() > 0:
             data = self._write_buf.getvalue()
             self._write_buf = BytesIO()
@@ -511,7 +512,6 @@ class DXFile(DXDataObject):
         self._ensure_write_bufsize(**kwargs)
 
         def write_request(data_for_write_req):
-            print(f"writing request....{len(data_for_write_req)}")
             if multithread:
                 self._async_upload_part_request(data_for_write_req, index=self._cur_part, **kwargs)
             else:
