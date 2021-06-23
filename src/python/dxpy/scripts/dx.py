@@ -4266,6 +4266,19 @@ register_parser(parser_describe, categories=('data', 'metadata'))
 #####################################
 # upload
 #####################################
+def tracefunc(frame, event, arg, indent=[0]):
+    if event == "call":
+        indent[0] += 2
+        print("-" * indent[0] + "> call function", frame.f_code.co_name)
+    elif event == "return":
+        print("<" + "-" * indent[0], "exit function", frame.f_code.co_name)
+        indent[0] -= 2
+    return tracefunc
+
+
+import sys
+
+sys.setprofile(tracefunc)
 parser_upload = subparsers.add_parser('upload', help='Upload file(s) or directory',
                                       description='Upload local file(s) or directory.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If --path/--destination is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
                                       parents=[parser_dataobject_args, stdout_args, env_args],
