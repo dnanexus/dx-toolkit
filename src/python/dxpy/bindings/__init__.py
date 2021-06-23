@@ -643,8 +643,9 @@ class DXDataObject(DXObject):
         elapsed = 0
         i = 0
         while True:
-            print("test print")
             state = self._get_state(**kwargs)
+            print("test print")
+            print(state)
             if state == "closed":
                 break
             if state != "closing":
