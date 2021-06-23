@@ -2074,6 +2074,8 @@ def upload_one(args):
                                             parents=args.parents,
                                             show_progress=args.show_progress,
                                             multithread=args.multithread)
+            print("here upload file... args.wait")
+            print(args.wait)
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
@@ -4267,7 +4269,6 @@ register_parser(parser_describe, categories=('data', 'metadata'))
 # upload
 #####################################
 
-sys.setprofile(tracefunc)
 parser_upload = subparsers.add_parser('upload', help='Upload file(s) or directory',
                                       description='Upload local file(s) or directory.  If "-" is provided, stdin will be used instead.  By default, the filename will be used as its new name.  If --path/--destination is provided with a path ending in a slash, the filename will be used, and the folder path will be used as a destination.  If it does not end in a slash, then it will be used as the final name.',
                                       parents=[parser_dataobject_args, stdout_args, env_args],
