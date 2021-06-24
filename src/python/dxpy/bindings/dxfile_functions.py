@@ -541,10 +541,6 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     while True:
         buf = read(handler._write_bufsize)
-        print("________")
-        print(handler.describe())
-        print(handler._get_state())
-        print("________")
         offset += len(buf)
 
         if len(buf) == 0:
@@ -563,8 +559,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if show_progress:
         sys.stderr.write("\n")
         sys.stderr.flush()
-
+    print(handler.describe())
+    print(handler._get_state())
     if not keep_open:
+        # add check here
         handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
     return handler
