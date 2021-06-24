@@ -538,10 +538,13 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     if show_progress:
         report_progress(handler, 0)
-    print(handler.describe())
-    print(handler._get_state())
+
     while True:
         buf = read(handler._write_bufsize)
+        print("________")
+        print(handler.describe())
+        print(handler._get_state())
+        print("________")
         offset += len(buf)
 
         if len(buf) == 0:
