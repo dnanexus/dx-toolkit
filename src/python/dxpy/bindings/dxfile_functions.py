@@ -561,7 +561,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         sys.stderr.flush()
 
     if not keep_open:
-
+        handler.wait_until_parts_uploaded()
         # add check here
         handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 

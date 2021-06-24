@@ -613,9 +613,6 @@ class DXFile(DXDataObject):
            been fully uploaded. An exception will be thrown if this is
            not the case.
         '''
-        print("......")
-        print(self.describe())
-        print(self._get_state())
         self.flush(**kwargs)
 
         # Also populates emptyLastPartAllowed
@@ -730,6 +727,10 @@ class DXFile(DXDataObject):
 
         if report_progress_fn is not None:
             report_progress_fn(self, len(data))
+
+    def wait_until_parts_uploaded(self, **kwargs):
+        self._wait_until_parts_uploaded(self, **kwargs)
+
 
     def get_download_url(self, duration=None, preauthenticated=False, filename=None, project=None, **kwargs):
         """

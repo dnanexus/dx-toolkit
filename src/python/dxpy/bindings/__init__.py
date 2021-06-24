@@ -660,6 +660,34 @@ class DXDataObject(DXObject):
             i += 1
             elapsed += wait
 
+    def _wait_until_parts_uploaded(self, timeout=3600*24*1, **kwargs):
+        elapsed = 0
+        i = 0
+        while True:
+            print("here")
+            parts = self.describe(fields={'parts'}, **kwargs)["parts"]
+            state = self._get_state(**kwargs)
+            print(parts)
+            if state == "closed":
+                break
+            if not parts:
+                break
+            else:
+                is_uploaded = True
+                for key in parts:
+                    if parts[key].get(state, 'complete') != 'complete':
+                        is_uploaded = False
+                        break
+                if is_uploaded:
+                    break
+            if elapsed >= timeout or elapsed < 0:
+                raise DXError("Reached timeout while waiting for parts of the file ({}) to be uploaded".format(self.get_id()))
+
+            wait = min(2**7, 2**i)
+            time.sleep(wait)
+            i += 1
+            elapsed += wait
+
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .dxdatabase import DXDatabase, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .download_all_inputs import download_all_inputs
