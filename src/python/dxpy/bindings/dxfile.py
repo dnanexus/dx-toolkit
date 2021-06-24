@@ -613,6 +613,9 @@ class DXFile(DXDataObject):
            been fully uploaded. An exception will be thrown if this is
            not the case.
         '''
+        print("......")
+        print(self.describe())
+        print(self._get_state())
         self.flush(**kwargs)
 
         # Also populates emptyLastPartAllowed
