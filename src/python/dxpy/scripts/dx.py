@@ -5862,35 +5862,43 @@ register_parser(parser_publish)
 parser_archive = subparsers.add_parser(
     'archive', 
     help='Requests for the specified set files or for the files in a single specified folder to be archived on the platform', 
-    description=fill('Requests for the specified set files or for the files in a single specified folder to be archived on the platform. \nFor each file, if this is the last copy of a file to have archival requested, the full archival of the object will be triggered. \nOtherwise, the files will be marked in an archival state denoting that archival has been requested.\nTo specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon.') + 
+    description=
     '''
+Requests for the specified set files or for the files in a single specified folder to be archived on the platform. 
+For each file, if this is the last copy of a file to have archival requested, the full archival of the object will be triggered. 
+Otherwise, the files will be marked in an archival state denoting that archival has been requested.
 
-EXAMPLES
+To specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon.
 
-  ''' + 
-  fill('# archive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + 
-  '''
-$ dx archive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+EXAMPLES:
 
-  ''' + 
-  fill('# archive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + '''
+    # archive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q
+    $ dx archive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+
+    # archive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q
   $ dx archive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
   ''',
                                                formatter_class=argparse.RawTextHelpFormatter,
                                                parents=[all_arg],
-                                               prog='dx archive'
-                                               )
+  prog='dx archive')
+
 parser_archive.add_argument('-q', '--quiet', help='Do not print extra info messages', 
                             action='store_true')
-parser_archive.add_argument('--all-copies', dest = "all_copies", help=fill('If true, archive all the copies of files in projects with the same billTo org.  See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24), 
+parser_archive.add_argument(
+    '--all-copies', 
+    dest = "all_copies", 
+    help=fill('If true, archive all the copies of files in projects with the same billTo org.' ,width_adjustment=-24)+ '\n'+ fill('See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24), 
                             default=False, action='store_true')
 parser_archive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
-parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived.  This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_archive.add_argument(
     'path', 
     help=fill('May refer to a single folder or specify one or more files in a single project.',width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
+
+parser_archive_output = parser_archive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <count> files for archival"')
+
 parser_archive.set_defaults(func=archive)  
 register_parser(parser_archive, categories='fs')
 
@@ -5901,46 +5909,48 @@ register_parser(parser_archive, categories='fs')
 parser_unarchive = subparsers.add_parser(
     'unarchive', 
     help='Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.',    
-    description=fill('Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.' +
-    'The requested copy will eventually be transitioned over to the live state while all other copies will move over to the archival state.') + 
+    description=
     '''
+Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.
+The requested copy will eventually be transitioned over to the live state while all other copies will move over to the archival state.
 
-EXAMPLES
+EXAMPLES:
 
-  ''' + 
-  fill('# unarchive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + 
-  '''
-  $ dx unarchive  FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+    # unarchive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q 
+    $ dx unarchive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
 
-  ''' + 
-  fill('# unarchive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q', width_adjustment=-2, subsequent_indent='  ') + '''
+    # unarchive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q
   $ dx unarchive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
   ''',
                                                formatter_class=argparse.RawTextHelpFormatter,
                                                parents=[all_arg],
-                                               prog='dx unarchive'
-                                               )
+    prog='dx unarchive')
 
 parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+ 
 fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
 
-parser_unarchive_output = parser_unarchive.add_argument_group(title='Output').add_mutually_exclusive_group()
-parser_unarchive_output.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
-parser_unarchive_output.add_argument(
+parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
+parser_unarchive.add_argument(
     '-n','--dry-run', dest='dry_run',
-    help=fill('(Default) if --dry-run is not specified,',width_adjustment=-24) + '\n' + fill('"Tagged <> files for unarchival, totalling <> GB, costing <>"',width_adjustment=-24,initial_indent='  ')  + '\n' + 
-    fill('if --dry-run is specified,',width_adjustment=-24) + '\n' +
-    fill('"Would tag <> files for unarchival, totalling <> GB, costing <>"' , width_adjustment=-24,initial_indent='  '), 
+    help=fill('Only display the output of the API call without executing the unarchival' , width_adjustment=-24), 
     default=False, action='store_true')
 
 parser_unarchive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
-parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived.This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_unarchive.add_argument(
     'path', 
     help=fill('May refer to a single folder or specify one or more files in a single project.', width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
 
+parser_unarchive.add_argument_group(title='Output', description=
+'''
+  If -q option is specified, prints nothing
+  otherwise
+    if --dry-run is not specified, "Tagged <> files for unarchival, totalling <> GB, costing <> "
+    if --dry-run is     specified, "Would tag <> files for unarchival, totalling <> GB, costing <>"
+'''
+)
 parser_unarchive.set_defaults(func=unarchive)
 register_parser(parser_unarchive, categories='fs')
 
