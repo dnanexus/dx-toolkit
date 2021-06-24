@@ -485,7 +485,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         # ourselves later (if requested).
         handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=write_buffer_size,
                              expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
-
+    print(handler.describe())
+    print(handler._get_state())
     # For subsequent API calls, don't supply the dataobject metadata
     # parameters that are only needed at creation time.
     _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)

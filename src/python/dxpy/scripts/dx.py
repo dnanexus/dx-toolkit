@@ -2060,8 +2060,6 @@ def upload_one(args):
     else:
         try:
             print(" will process parts....")
-            print(dxfile.describe())
-            print(dxfile._get_state())
 
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
                                             file=(sys.stdin.buffer if args.filename == '-' else None),
