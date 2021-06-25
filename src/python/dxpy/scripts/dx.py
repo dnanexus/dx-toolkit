@@ -3787,7 +3787,6 @@ def publish(args):
     except:
         err_exit()
 
-# TODO: archive & unarchive
 def archive(args):
     dx_archive_errors = [InvalidState, ResourceNotFound, PermissionDenied]
 
@@ -3820,7 +3819,7 @@ def archive(args):
         if target_files and target_folder:
             err_exit('Expecting either a single folder or a list files for each request', code=3, arg_parser=parser_archive)
 
-    # show target paths and ask for confirmation
+    # show target paths 
     if not args.quiet:
         print('Trying to archive the following paths:')
         
@@ -3841,10 +3840,6 @@ def archive(args):
                 print("     [{}/{}]<{}>: {}".format(fdesc["folder"], fdesc["name"], fdesc["archivalState"], fdesc["id"]))
         print()
         
-    if args.confirm and INTERACTIVE_CLI:
-        if not prompt_for_yn('Confirm archiving all paths?', default=True):
-            parser.exit(0)
-    
     # send api request
     if target_files: 
         request_input = {"files": target_files, "allCopies": args.all_copies}
@@ -3900,7 +3895,7 @@ def unarchive(args):
         if target_files and target_folder:
             err_exit('Expecting either a single folder or a list files for each request', code=3, arg_parser=parser_unarchive)
 
-    # show target paths and ask for confirmation
+    # show target paths
     if not args.quiet:
         if args.dry_run:
             print('Dry run on unarchiving the following paths:')
@@ -3923,11 +3918,7 @@ def unarchive(args):
                 fdesc = f["describe"]
                 print("     [{}/{}]<{}>: {}".format(fdesc["folder"], fdesc["name"], fdesc["archivalState"], fdesc["id"]))
         print()
-        
-    if args.confirm and INTERACTIVE_CLI and not args.dry_run:
-        if not prompt_for_yn('Confirm unarchiving all paths?', default=True):
-            parser.exit(0)
-    
+            
     # send api request
     if target_files: 
         request_input = {"files": target_files, "dryRun": args.dry_run, "rate": args.rate}
@@ -5835,7 +5826,7 @@ parser_archive.add_argument(
     dest = "all_copies", 
     help=fill('If true, archive all the copies of files in projects with the same billTo org.' ,width_adjustment=-24)+ '\n'+ fill('See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24), 
                             default=False, action='store_true')
-parser_archive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
+
 parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_archive.add_argument(
@@ -5881,7 +5872,6 @@ parser_unarchive.add_argument(
     help=fill('Only display the output of the API call without executing the unarchival' , width_adjustment=-24), 
     default=False, action='store_true')
 
-parser_unarchive.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation',action='store_false')
 parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_unarchive.add_argument(
