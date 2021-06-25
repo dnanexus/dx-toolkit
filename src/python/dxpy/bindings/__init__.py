@@ -661,10 +661,8 @@ class DXDataObject(DXObject):
         elapsed = 0
         i = 0
         while True:
-            print("here")
             parts = self.describe(fields={'parts'}, **kwargs)["parts"]
             state = self._get_state(**kwargs)
-            print(parts)
             if state == "closed":
                 break
             if not parts:
