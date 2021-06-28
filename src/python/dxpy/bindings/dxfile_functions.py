@@ -530,60 +530,59 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     while retries <= max_retries:
         retries += 1
+
+        if use_existing_dxfile:
+            handler = use_existing_dxfile
+        else:
+            handler = get_new_handler(filename)
+
+        # For subsequent API calls, don't supply the dataobject metadata
+        # parameters that are only needed at creation time.
+        _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
+
+        num_ticks = 60
+        offset = 0
+
+        handler._ensure_write_bufsize(**remaining_kwargs)
+
+        handler._num_bytes_transmitted = 0
+
+        if show_progress:
+            report_progress(handler, 0)
+
+        while True:
+            buf = read(handler._write_bufsize)
+            offset += len(buf)
+
+            if len(buf) == 0:
+                break
+
+            handler.write(buf,
+                          report_progress_fn=report_progress if show_progress else None,
+                          multithread=multithread,
+                          **remaining_kwargs)
+
+        handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+
+        if show_progress:
+            sys.stderr.write("\n")
+            sys.stderr.flush()
         try:
-            if use_existing_dxfile:
-                handler = use_existing_dxfile
-            else:
-                handler = get_new_handler(filename)
-
-            # For subsequent API calls, don't supply the dataobject metadata
-            # parameters that are only needed at creation time.
-            _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
-
-            num_ticks = 60
-            offset = 0
-
-            handler._ensure_write_bufsize(**remaining_kwargs)
-
-            handler._num_bytes_transmitted = 0
-
-            if show_progress:
-                report_progress(handler, 0)
-
-            while True:
-                buf = read(handler._write_bufsize)
-                offset += len(buf)
-
-                if len(buf) == 0:
-                    break
-
-                handler.write(buf,
-                              report_progress_fn=report_progress if show_progress else None,
-                              multithread=multithread,
-                              **remaining_kwargs)
-
-            handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
-
-            if show_progress:
-                sys.stderr.write("\n")
-                sys.stderr.flush()
-            print(handler.describe())
             handler.wait_until_parts_uploaded()
             if filename is not None:
                 fd.close()
+
             break
-        except DXError as e:
+        except DXError:
             if show_progress:
                 logger.warning("File " + filename + " was not uploaded correctly...")
             if retries > max_retries:
-                raise e
+                raise
             if show_progress:
                 logger.warning("Retrying...")
-
     if not keep_open:
         # add check here
         handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
-
     return handler
 
 def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=False, **kwargs):
