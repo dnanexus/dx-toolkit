@@ -2059,8 +2059,6 @@ def upload_one(args):
                 upload_one(sub_args)
     else:
         try:
-            print(" will process parts....")
-
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
                                             file=(sys.stdin.buffer if args.filename == '-' else None),
                                             write_buffer_size=(None if args.write_buffer_size is None
@@ -2076,8 +2074,6 @@ def upload_one(args):
                                             parents=args.parents,
                                             show_progress=args.show_progress,
                                             multithread=args.multithread)
-            print("here upload file... args.wait")
-            print(args.wait)
             if args.wait:
                 dxfile._wait_on_close()
             if args.brief:
