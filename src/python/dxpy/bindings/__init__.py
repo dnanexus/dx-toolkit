@@ -658,8 +658,6 @@ class DXDataObject(DXObject):
             elapsed += wait
 
     def _wait_until_parts_uploaded(self, timeout=60, **kwargs):
-        if retry == 0:
-            raise DXError("test value")
         elapsed = 0
         i = 0
         while True:
