@@ -569,7 +569,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             handler.wait_until_parts_uploaded(retry=retries-1)
         except DXError:
             if show_progress:
-                logger.warning("File {} was not uploaded correctly...".format(filename))
+                logger.warning("File {} was not uploaded correctly!".format(filename))
             if retries > max_retries:
                 raise
             if show_progress:
