@@ -657,7 +657,7 @@ class DXDataObject(DXObject):
             i += 1
             elapsed += wait
 
-    def _wait_until_parts_uploaded(self, timeout=60):
+    def _wait_until_parts_uploaded(self, timeout=60, **kwargs):
         elapsed = 0
         i = 0
         while True:
