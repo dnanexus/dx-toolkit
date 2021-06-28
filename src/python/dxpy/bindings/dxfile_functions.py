@@ -410,7 +410,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
                       wait_on_close=False, use_existing_dxfile=None, show_progress=False,
-                      write_buffer_size=None, multithread=True, **kwargs):
+                      write_buffer_size=None, multithread=True, brief=False, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -428,8 +428,11 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     :type use_existing_dxfile: :class:`~dxpy.bindings.dxfile.DXFile`
     :param multithread: If True, sends multiple write requests asynchronously
     :type multithread: boolean
+    :param brief: If True, prints additional info in case of retry
+    :type brief: boolean
     :returns: Remote file handler
     :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
+
 
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
@@ -565,16 +568,17 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
                 sys.stderr.write("\n")
                 sys.stderr.flush()
             print(handler.describe())
-            handler.wait_until_parts_uploaded(retry=retries-1)
+            handler.wait_until_parts_uploaded()
             if filename is not None:
                 fd.close()
             break
         except DXError as e:
-            logger.warning("File " + filename + " was not uploaded correctly...")
+            if show_progress:
+                logger.warning("File " + filename + " was not uploaded correctly...")
             if retries > max_retries:
                 raise e
-            logger.warning("Retrying...")
-            continue
+            if show_progress:
+                logger.warning("Retrying...")
 
     if not keep_open:
         # add check here
