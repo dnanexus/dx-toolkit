@@ -38,7 +38,7 @@ from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..compat import open, USING_PYTHON2
-from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 import subprocess
 
@@ -452,47 +452,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     '''
     fd = file if filename is None else open(filename, 'rb')
-
     try:
         file_size = os.fstat(fd.fileno()).st_size
     except:
         file_size = 0
-
-    file_is_mmapd = hasattr(fd, "fileno")
-
-    if write_buffer_size is None:
-        write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE
-
-    if use_existing_dxfile:
-        handler = use_existing_dxfile
-    else:
-        # Set a reasonable name for the file if none has been set
-        # already
-        creation_kwargs = kwargs.copy()
-        if 'name' not in kwargs:
-            if filename is not None:
-                creation_kwargs['name'] = os.path.basename(filename)
-            else:
-                # Try to get filename from file-like object
-                try:
-                    local_file_name = file.name
-                except AttributeError:
-                    pass
-                else:
-                    creation_kwargs['name'] = os.path.basename(local_file_name)
-
-        # Use 'a' mode because we will be responsible for closing the file
-        # ourselves later (if requested).
-        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=write_buffer_size,
-                             expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
-    # For subsequent API calls, don't supply the dataobject metadata
-    # parameters that are only needed at creation time.
-    _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
-
-    num_ticks = 60
-    offset = 0
-
-    handler._ensure_write_bufsize(**remaining_kwargs)
 
     def can_be_mmapd(fd):
         if not hasattr(fd, "fileno"):
@@ -509,15 +472,13 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         # If file cannot be mmap'd (e.g. is stdin, or a fifo), fall back
         # to doing an actual read from the file.
         if not can_be_mmapd(fd):
-            return fd.read(handler._write_bufsize)
+            return fd.read(num_bytes)
 
         bytes_available = max(file_size - offset, 0)
         if bytes_available == 0:
             return b""
 
-        return mmap.mmap(fd.fileno(), min(handler._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
-
-    handler._num_bytes_transmitted = 0
+        return mmap.mmap(fd.fileno(), min(num_bytes, bytes_available), offset=offset, access=mmap.ACCESS_READ)
 
     def report_progress(handler, num_bytes):
         handler._num_bytes_transmitted += num_bytes
@@ -536,32 +497,87 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             sys.stderr.write("\r")
             sys.stderr.flush()
 
-    if show_progress:
-        report_progress(handler, 0)
+    def get_new_handler(filename):
+        # Set a reasonable name for the file if none has been set
+        # already
+        creation_kwargs = kwargs.copy()
+        if 'name' not in kwargs:
+            if filename is not None:
+                creation_kwargs['name'] = os.path.basename(filename)
+            else:
+                # Try to get filename from file-like object
+                try:
+                    local_file_name = file.name
+                except AttributeError:
+                    pass
+                else:
+                    creation_kwargs['name'] = os.path.basename(local_file_name)
 
-    while True:
-        buf = read(handler._write_bufsize)
-        offset += len(buf)
+        # Use 'a' mode because we will be responsible for closing the file
+        # ourselves later (if requested).
+        return new_dxfile(mode='a', media_type=media_type, write_buffer_size=write_buffer_size,
+                             expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
 
-        if len(buf) == 0:
+    retries = 0
+    max_retries = 2
+    file_is_mmapd = hasattr(fd, "fileno")
+
+    if write_buffer_size is None:
+        write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE
+
+    while retries <= max_retries:
+        retries += 1
+        try:
+            if use_existing_dxfile:
+                handler = use_existing_dxfile
+            else:
+                handler = get_new_handler(filename)
+
+            # For subsequent API calls, don't supply the dataobject metadata
+            # parameters that are only needed at creation time.
+            _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
+
+            num_ticks = 60
+            offset = 0
+
+            handler._ensure_write_bufsize(**remaining_kwargs)
+
+            handler._num_bytes_transmitted = 0
+
+            if show_progress:
+                report_progress(handler, 0)
+
+            while True:
+                buf = read(handler._write_bufsize)
+                offset += len(buf)
+
+                if len(buf) == 0:
+                    break
+
+                handler.write(buf,
+                              report_progress_fn=report_progress if show_progress else None,
+                              multithread=multithread,
+                              **remaining_kwargs)
+
+            if filename is not None:
+                fd.close()
+
+            handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+
+            if show_progress:
+                sys.stderr.write("\n")
+                sys.stderr.flush()
+
+            handler.wait_until_parts_uploaded()
             break
-
-        handler.write(buf,
-                      report_progress_fn=report_progress if show_progress else None,
-                      multithread=multithread,
-                      **remaining_kwargs)
-
-    if filename is not None:
-        fd.close()
-
-    handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
-
-    if show_progress:
-        sys.stderr.write("\n")
-        sys.stderr.flush()
+        except DXError as e:
+            logger.warning("File " + filename + " was not uploaded correctly...")
+            if retries > max_retries:
+                raise e
+            logger.warning("Retrying...")
+            continue
 
     if not keep_open:
-        handler.wait_until_parts_uploaded()
         # add check here
         handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 

@@ -657,13 +657,14 @@ class DXDataObject(DXObject):
             i += 1
             elapsed += wait
 
-    def _wait_until_parts_uploaded(self, timeout=3600*24*1, **kwargs):
+    def _wait_until_parts_uploaded(self, timeout=240, **kwargs):
         elapsed = 0
         i = 0
         while True:
             parts = self.describe(fields={'parts'}, **kwargs)["parts"]
             state = self._get_state(**kwargs)
             if state == "closed":
+                # parts of closed files must have been uploaded successfully
                 break
             if not parts:
                 break
