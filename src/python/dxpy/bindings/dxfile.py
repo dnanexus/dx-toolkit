@@ -446,7 +446,6 @@ class DXFile(DXDataObject):
         '''
         Flushes the internal write buffer.
         '''
-        print("flushing ...")
         if self._write_buf.tell() > 0:
             data = self._write_buf.getvalue()
             self._write_buf = BytesIO()
@@ -666,7 +665,6 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-        print(f"uploading part...! {index}" )
         if not USING_PYTHON2:
             # In python3, the underlying system methods use the 'bytes' type, not 'string'
             assert(isinstance(data, bytes))

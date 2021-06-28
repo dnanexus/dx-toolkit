@@ -657,7 +657,10 @@ class DXDataObject(DXObject):
             i += 1
             elapsed += wait
 
-    def _wait_until_parts_uploaded(self, timeout=240, **kwargs):
+    def _wait_until_parts_uploaded(self, timeout=240, retry=0, **kwargs):
+        if retry == 0:
+            raise DXError("mock error. ...ID: ".format(self.get_id()))
+
         elapsed = 0
         i = 0
         while True:
