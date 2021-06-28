@@ -559,9 +559,6 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
                               multithread=multithread,
                               **remaining_kwargs)
 
-            if filename is not None:
-                fd.close()
-
             handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
 
             if show_progress:
@@ -569,6 +566,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
                 sys.stderr.flush()
 
             handler.wait_until_parts_uploaded(retry=retries-1)
+            if filename is not None:
+                fd.close()
             break
         except DXError as e:
             logger.warning("File " + filename + " was not uploaded correctly...")
