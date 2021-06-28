@@ -564,7 +564,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             if show_progress:
                 sys.stderr.write("\n")
                 sys.stderr.flush()
-
+            print(handler.describe())
             handler.wait_until_parts_uploaded(retry=retries-1)
             if filename is not None:
                 fd.close()
