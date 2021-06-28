@@ -410,7 +410,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
 def upload_local_file(filename=None, file=None, media_type=None, keep_open=False,
                       wait_on_close=False, use_existing_dxfile=None, show_progress=False,
-                      write_buffer_size=None, multithread=True, brief=False, **kwargs):
+                      write_buffer_size=None, multithread=True, **kwargs):
     '''
     :param filename: Local filename
     :type filename: string
@@ -428,11 +428,8 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     :type use_existing_dxfile: :class:`~dxpy.bindings.dxfile.DXFile`
     :param multithread: If True, sends multiple write requests asynchronously
     :type multithread: boolean
-    :param brief: If True, prints additional info in case of retry
-    :type brief: boolean
     :returns: Remote file handler
     :rtype: :class:`~dxpy.bindings.dxfile.DXFile`
-
 
     Additional optional parameters not listed: all those under
     :func:`dxpy.bindings.DXDataObject.new`.
@@ -528,6 +525,7 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
     if write_buffer_size is None:
         write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE
 
+    # APPS-650 file upload would occasionally fail due to some parts not being uploaded correctly. This will try to re-upload in case this happens.
     while retries <= max_retries:
         retries += 1
 
@@ -569,10 +567,6 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             sys.stderr.flush()
         try:
             handler.wait_until_parts_uploaded()
-            if filename is not None:
-                fd.close()
-
-            break
         except DXError:
             if show_progress:
                 logger.warning("File " + filename + " was not uploaded correctly...")
@@ -580,9 +574,14 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
                 raise
             if show_progress:
                 logger.warning("Retrying...")
+            continue
+        if filename is not None:
+            fd.close()
+        break
+
     if not keep_open:
-        # add check here
         handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+
     return handler
 
 def upload_string(to_upload, media_type=None, keep_open=False, wait_on_close=False, **kwargs):
