@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* `Total price` for `dx describe` prints formatted currency based on `currency` metadata
+
 ## [311.0] - beta
 
 ### Added
