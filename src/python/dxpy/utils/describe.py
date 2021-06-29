@@ -908,7 +908,7 @@ def print_execution_desc(desc):
                 else:
                     print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
     if not desc.get('isFree') and desc.get('totalPrice') is not None:
-        print_field('Total Price', "$%.2f" % desc['totalPrice'])
+        print_field('Total Price', print_currency(desc['totalPrice'], desc['currency']))
     if desc.get('invoiceMetadata'):
         print_json_field("Invoice Metadata", desc['invoiceMetadata'])
     if desc.get('sshHostKey'):
@@ -917,6 +917,14 @@ def print_execution_desc(desc):
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])
+
+def print_currency(value, meta):
+    prefix = '-' if value < 0 else ''
+    prefix += meta['symbol'] if meta['symbolPosition'] == 'left' else ''
+    suffix = f' {meta["symbol"]}' if meta['symbolPosition'] == 'right' else ''
+    # .. TODO: take the group and decimal separators from meta into account (US & UK are the same, so far we're safe)
+    formattedValue = f'{value:,.2f}'
+    return prefix + formattedValue + suffix
 
 def print_user_desc(desc):
     print_field("ID", desc["id"])
