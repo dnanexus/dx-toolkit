@@ -3860,7 +3860,7 @@ def archive(args):
     # print archival results
     if not args.quiet:
         print()
-        print(f'Tagged {res["count"]} files for archival in {target_project}')
+        print(f'Tagged {res["count"]} file(s) for archival in {target_project}')
         print()
 
 def unarchive(args):
@@ -3939,9 +3939,9 @@ def unarchive(args):
     # print unarchival results
     if not args.quiet:
         if args.dry_run:
-            print(f'Would tag {res["files"]} files for unarchival, totalling {res["size"]} GB, costing ${res["cost"]/1000}')
+            print(f'Would tag {res["files"]} file(s) for unarchival, totalling {res["size"]} GB, costing ${res["cost"]/1000}')
         else:
-            print(f'Tagged {res["files"]} files for unarchival, totalling {res["size"]} GB, costing ${res["cost"]/1000}')
+            print(f'Tagged {res["files"]} file(s) for unarchival, totalling {res["size"]} GB, costing ${res["cost"]/1000}')
 
 def print_help(args):
     if args.command_or_category is None:
