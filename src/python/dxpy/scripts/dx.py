@@ -3818,27 +3818,6 @@ def archive(args):
         
         if target_files and target_folder:
             err_exit('Expecting either a single folder or a list files for each request', code=3, arg_parser=parser_archive)
-
-    # show target paths 
-    if not args.quiet:
-        print('Trying to archive the following paths:')
-        
-        print("Project: [{}]: {}".format(dxpy.describe(target_project)["name"],target_project))
-        if target_files:
-            print(" -- Files:")
-            for fid in target_files:
-                fdesc = dxpy.describe(fid)
-                print("     [{}/{}]<{}>: {}".format(fdesc["folder"], fdesc["name"], fdesc["archivalState"], fdesc["id"]))
-        if target_folder:    
-            print(" -- Folder:{}".format(target_folder))
-            for f in list(dxpy.find_data_objects(project=target_project,
-                                        folder=target_folder,
-                                        classname="file",
-                                        recurse=args.recurse,
-                                        describe=True)):
-                fdesc = f["describe"]
-                print("     [{}/{}]<{}>: {}".format(fdesc["folder"], fdesc["name"], fdesc["archivalState"], fdesc["id"]))
-        print()
         
     # send api request
     if target_files: 
@@ -3894,30 +3873,6 @@ def unarchive(args):
         
         if target_files and target_folder:
             err_exit('Expecting either a single folder or a list files for each request', code=3, arg_parser=parser_unarchive)
-
-    # show target paths
-    if not args.quiet:
-        if args.dry_run:
-            print('Dry run on unarchiving the following paths:')
-        else: 
-            print('Will try to unarchive the following paths:')
-        
-        print("Project: [{}]: {}".format(dxpy.describe(target_project)["name"],target_project))
-        if target_files:
-            print(" -- Files:")
-            for fid in target_files:
-                fdesc = dxpy.describe(fid)
-                print("     [{}/{}]<{}>: {}".format(fdesc["folder"], fdesc["name"], fdesc["archivalState"], fdesc["id"]))
-        if target_folder:    
-            print(" -- Folder:{}".format(target_folder))
-            for f in list(dxpy.find_data_objects(project=target_project,
-                                        folder=target_folder,
-                                        classname="file",
-                                        recurse=args.recurse,
-                                        describe=True)):
-                fdesc = f["describe"]
-                print("     [{}/{}]<{}>: {}".format(fdesc["folder"], fdesc["name"], fdesc["archivalState"], fdesc["id"]))
-        print()
             
     # send api request
     if target_files: 
