@@ -25,6 +25,7 @@ containers, dataobjects, apps, and jobs).
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import datetime, time, json, math, sys, copy
+import locale
 import subprocess
 from collections import defaultdict
 
@@ -908,7 +909,7 @@ def print_execution_desc(desc):
                 else:
                     print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
     if not desc.get('isFree') and desc.get('totalPrice') is not None:
-        print_field('Total Price', print_currency(desc['totalPrice'], desc['currency']))
+        print_field('Total Price', format_currency(desc['totalPrice'], meta=desc['currency']))
     if desc.get('invoiceMetadata'):
         print_json_field("Invoice Metadata", desc['invoiceMetadata'])
     if desc.get('sshHostKey'):
@@ -918,13 +919,60 @@ def print_execution_desc(desc):
         if field not in recognized_fields:
             print_json_field(field, desc[field])
 
-def print_currency(value, meta):
-    prefix = '-' if value < 0 else ''
+
+def locale_from_currency_code(dx_code):
+    """
+    This is a (temporary) hardcoded mapping between currency_list.json in nucleus and standard
+    locale string useful for further formatting
+
+    :param dx_code: An id of nucleus/commons/pricing_models/currency_list.json collection
+    :return: standardised locale, eg 'en_US'
+    """
+    currency_locale_map = {0: 'en_US', 1: 'en_GB'}
+    return currency_locale_map[dx_code]
+
+
+def format_currency_from_meta(value, meta):
+    """
+    Formats currency value into properly decorated currency string based on provided currency metadata.
+    Please note that this is very basic solution missing some of the localisation features (such as
+    negative symbol position and type.
+
+    Better option is to use 'locale' module to reflect currency string decorations more accurately.
+
+    See 'format_currency'
+
+    :param value:
+    :param meta:
+    :return:
+    """
+    prefix = '-' if value < 0 else ''  # .. TODO: some locales position neg symbol elsewhere, missing meta
     prefix += meta['symbol'] if meta['symbolPosition'] == 'left' else ''
-    suffix = f' {meta["symbol"]}' if meta['symbolPosition'] == 'right' else ''
+    suffix = ' %s' % meta["symbol"] if meta['symbolPosition'] == 'right' else ''
     # .. TODO: take the group and decimal separators from meta into account (US & UK are the same, so far we're safe)
-    formattedValue = f'{value:,.2f}'
-    return prefix + formattedValue + suffix
+    formatted_value = '{:,.2f}'.format(abs(value))
+    return prefix + formatted_value + suffix
+
+
+def format_currency(value, meta, currency_locale=None):
+    """
+    Formats currency value into properly decorated currency string based on either locale (preferred)
+    or if that is not available then currency metadata. Until locale is provided from the server
+    a crude mapping between `currency.dxCode` and a locale string is used instead (eg 0: 'en_US')
+
+    :param value: amount
+    :param meta: server metadata (`currency`)
+    :return: formatted currency string
+    """
+    try:
+        if currency_locale is None:
+            currency_locale = locale_from_currency_code(meta['dxCode'])
+        locale.setlocale(locale.LC_ALL, currency_locale)
+        return locale.currency(value, grouping=True)
+    except locale.Error:
+        # .. locale is probably not available -> fallback to format manually
+        return format_currency_from_meta(value, meta)
+
 
 def print_user_desc(desc):
     print_field("ID", desc["id"])
