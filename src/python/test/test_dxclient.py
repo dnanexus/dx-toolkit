@@ -10260,23 +10260,24 @@ class TestDXArchive(DXTestCase):
         # setup two projects
         cls.proj_archive_name = "dx_test_archive"
         cls.proj_unarchive_name = "dx_test_unarchive"
-        cls.bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
+        cls.usr = dxpy.whoami()
+        cls.bill_to = dxpy.api.user_describe(cls.usr)['billTo']
+        cls.is_admin = True if dxpy.api.org_describe(cls.bill_to)['level'] == 'ADMIN' else False
+
         cls.rootdir = '/test-folder'
-        cls.proj_archive_id = "project-FjKPyJ00xK155Z0q3fGzPJ0z"
-        cls.proj_unarchive_id = "project-FjKPyJ00xK155Z0q3fGzPJ0z"
-        # cls.proj_archive_id = dxpy.api.project_new({'name': cls.proj_archive_name, 'billTo': cls.bill_to})['id']
-        # cls.proj_unarchive_id = dxpy.api.project_new({'name': cls.proj_unarchive_name, 'billTo': cls.bill_to})['id']
+        cls.proj_archive_id = dxpy.api.project_new({'name': cls.proj_archive_name, 'billTo': cls.bill_to})['id']
+        cls.proj_unarchive_id = dxpy.api.project_new({'name': cls.proj_unarchive_name, 'billTo': cls.bill_to})['id']
         cls.counter = 1
         
         create_folder_in_project(cls.proj_archive_id, cls.rootdir)
-        #create_folder_in_project(cls.proj_unarchive_id, cls.rootdir)
+        create_folder_in_project(cls.proj_unarchive_id, cls.rootdir)
         
     @classmethod
     def tearDownClass(cls):
         dxpy.api.project_remove_folder(cls.proj_archive_id, {"folder": cls.rootdir, "recurse":True})
-        # dxpy.api.project_remove_folder(cls.proj_unarchive_id, {"folder": cls.rootdir,"recurse":True})
-        # rm_project(cls.proj_archive_id)
-        # rm_project(cls.proj_unarchive_id)
+        dxpy.api.project_remove_folder(cls.proj_unarchive_id, {"folder": cls.rootdir,"recurse":True})
+        rm_project(cls.proj_archive_id)
+        rm_project(cls.proj_unarchive_id)
 
     @classmethod
     def gen_uniq_fname(cls):
@@ -10315,7 +10316,7 @@ class TestDXArchive(DXTestCase):
         fid3 = create_file_in_project(fname_allmatch2, self.proj_archive_id,folder=self.rootdir)
         fid4 = create_file_in_project(fname_allmatch2, self.proj_archive_id,folder=self.rootdir)
         
-        dx_archive = pexpect.spawn(f"dx archive {self.proj_archive_id}:/{self.rootdir}/{fname_allmatch2}",
+        dx_archive = pexpect.spawn(f"dx archive {self.proj_archive_id}:{self.rootdir}/{fname_allmatch2}",
                                          logfile=sys.stderr,
                                          **spawn_extra_args)
         dx_archive.expect('for all: ')
@@ -10323,44 +10324,41 @@ class TestDXArchive(DXTestCase):
         
         dx_archive.expect(pexpect.EOF, timeout=None)
         dx_archive.close()
-        # run(f"dx archive {self.proj_archive_id}:/{fid1} {self.proj_archive_id}:/{fid2}", stdin="*")
+
         time.sleep(10)
         self.assertEqual(dxpy.describe(fid3)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid4)["archivalState"],"archived")
 
     def test_archive_folder(self):
-        subdir = '/subfolder1'
+        subdir = '/subfolder'
         dxpy.api.project_new_folder(self.proj_archive_id, {"folder": self.rootdir+subdir, "parents":True})
         
         fname_root = self.gen_uniq_fname()
-        fname_subdir = self.gen_uniq_fname()
+        fname_subdir1 = self.gen_uniq_fname()
         fid_root = create_file_in_project(fname_root, self.proj_archive_id, folder=self.rootdir)
-        fid_sub1 = create_file_in_project(fname_subdir, self.proj_archive_id, folder=self.rootdir+subdir)
+        fid_subdir1 = create_file_in_project(fname_subdir1, self.proj_archive_id, folder=self.rootdir+subdir)
 
         # archive sub 
         run(f"dx archive {self.proj_archive_id}:{self.rootdir+subdir}")
         time.sleep(10)
-        self.assertEqual(dxpy.describe(fid_sub1)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
 
 
-        fname_sub2 = self.gen_uniq_fname()
-        fid_sub2 = create_file_in_project(fname_sub2, self.proj_archive_id, folder=self.rootdir+subdir)
+        fname_subdir2 = self.gen_uniq_fname()
+        fid_subdir2 = create_file_in_project(fname_subdir2, self.proj_archive_id, folder=self.rootdir+subdir)
 
         # archive files in root dir only
         run(f"dx archive --no-recurse {self.proj_archive_id}:{self.rootdir}")
         time.sleep(10)
         self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
-        self.assertEqual(dxpy.describe(fid_sub2)["archivalState"],"live")
+        self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"live")
 
         # archive all files in root dir recursively
         run(f"dx archive {self.proj_archive_id}:{self.rootdir}")
         time.sleep(10)
-        self.assertEqual(dxpy.describe(fid_sub2)["archivalState"],"archived")
-
-        # archive root dir recursively again, no actual effect
-        archive_output = run(f"dx archive {self.proj_archive_id}:{self.rootdir}")
-        time.sleep(10)
-        self.assertIn("Tagged 0 files", archive_output)
+        self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"archived")
 
     def test_archive_invalid_paths(self):
         # mixed file and folder path        
@@ -10371,10 +10369,10 @@ class TestDXArchive(DXTestCase):
             run(f"dx archive {self.proj_archive_id}:{fid1} {self.proj_archive_id}:{self.rootdir}")
                 
         # more than one folder
-        subdir1 = '/subfolder1'
-        dxpy.api.project_new_folder(self.proj_archive_id, {"folder": self.rootdir+subdir1, "parent":True})
+        subdir = '/subfolder'
+        dxpy.api.project_new_folder(self.proj_archive_id, {"folder": self.rootdir+subdir, "parents":True})
         with self.assertSubprocessFailure(stderr_regexp="Expecting only one folder path to be archived", exit_code=3):
-            run(f"dx archive {self.proj_archive_id}:{self.rootdir+subdir1} {self.proj_archive_id}:{self.rootdir}")
+            run(f"dx archive {self.proj_archive_id}:{self.rootdir+subdir} {self.proj_archive_id}:{self.rootdir}")
 
         # files in different project
         with temporary_project("other_project",select=False) as temp_project:
@@ -10387,26 +10385,34 @@ class TestDXArchive(DXTestCase):
     def test_archive_allcopies(self):
         fname = self.gen_uniq_fname()
         fname_allcopies = self.gen_uniq_fname()
-        fid_copy1 = create_file_in_project(fname, self.proj_archive_id)
-        fid_allcopy1 = create_file_in_project(fname_allcopies, self.proj_archive_id,folder=self.rootdir)
+        fid = create_file_in_project(fname, self.proj_archive_id)
+        fid_allcopy = create_file_in_project(fname_allcopies, self.proj_archive_id,folder=self.rootdir)
         
         with temporary_project(name="other_project",select=False) as temp_project:
             test_projectid = temp_project.get_id()
             create_folder_in_project(test_projectid,self.rootdir)
-            print(dxpy.api.project_describe(test_projectid, {'fields': {'billTo': True}})['billTo'])
             # dxpy.api.project_update(test_projectid, {"billTo": self.bill_to})
-            fid_copy2 = dxpy.DXFile(dxid=fid_copy1, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir).get_id()
+            dxpy.DXFile(dxid=fid, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir)
             
-            run(f"dx archive {self.proj_archive_id}:{fid_copy1}")
-            self.assertEqual(dxpy.describe(fid_copy1, project=self.proj_archive_id)["archivalState"],"archival")
-            self.assertEqual(dxpy.describe(fid_copy2, project=test_projectid)["archivalState"],"live")
+            run(f"dx archive {self.proj_archive_id}:{fid}")
+            time.sleep(5)
+            self.assertEqual(dxpy.describe(fid)["archivalState"],"archival")
+            with select_project(test_projectid):
+                self.assertEqual(dxpy.describe(fid)["archivalState"],"live")
             
-            fid_allcopy2 = dxpy.DXFile(dxid=fid_allcopy1, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir).get_id()
+            dxpy.DXFile(dxid=fid_allcopy, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir).get_id()
             
-            run(f"dx archive --all-copies {self.proj_archive_id}:{fid_allcopy1}")
-            self.assertEqual(dxpy.describe(fid_allcopy1)["archivalState"],"archived")
-            self.assertEqual(dxpy.describe(fid_allcopy2)["archivalState"],"archived")
             
+            if self.is_admin:
+                run(f"dx archive --all-copies {self.proj_archive_id}:{fid_allcopy}")
+                time.sleep(20)
+                self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
+                with select_project(test_projectid):
+                    self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
+            else:
+                with self.assertSubprocessFailure(stderr_regexp="Must be an admin of {} to archive all copies".format(self.bill_to)):
+                    run(f"dx archive --all-copies {self.proj_archive_id}:{fid_allcopy}")
+
     def test_unarchive_dryrun(self):
         fname1 = self.gen_uniq_fname()
         fname2 = self.gen_uniq_fname()
@@ -10418,9 +10424,9 @@ class TestDXArchive(DXTestCase):
         output = run(f"dx unarchive -n {self.proj_unarchive_id}:/{fid1}")
         self.assertIn("Would tag 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
+        
         output = run(f"dx unarchive {self.proj_unarchive_id}:/{fid1}")
         time.sleep(10)
-
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"unarchiving")
         
