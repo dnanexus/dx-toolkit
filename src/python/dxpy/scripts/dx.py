@@ -5789,7 +5789,7 @@ parser_archive.add_argument(
     help=fill('May refer to a single folder or specify one or more files in a single project.',width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
 
-parser_archive_output = parser_archive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <count> files for archival"')
+parser_archive_output = parser_archive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <count> file(s) for archival"')
 
 parser_archive.set_defaults(func=archive)  
 register_parser(parser_archive, categories='fs')
@@ -5838,8 +5838,8 @@ parser_unarchive.add_argument_group(title='Output', description=
 '''
   If -q option is specified, prints nothing
   otherwise
-    if --dry-run is not specified, "Tagged <> files for unarchival, totalling <> GB, costing <> "
-    if --dry-run is     specified, "Would tag <> files for unarchival, totalling <> GB, costing <>"
+    if --dry-run is not specified, "Tagged <> file(s) for unarchival, totalling <> GB, costing <> "
+    if --dry-run is     specified, "Would tag <> file(s) for unarchival, totalling <> GB, costing <>"
 '''
 )
 parser_unarchive.set_defaults(func=unarchive)
