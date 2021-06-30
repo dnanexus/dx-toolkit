@@ -926,10 +926,10 @@ def locale_from_currency_code(dx_code):
     locale string useful for further formatting
 
     :param dx_code: An id of nucleus/commons/pricing_models/currency_list.json collection
-    :return: standardised locale, eg 'en_US'
+    :return: standardised locale, eg 'en_US'; None when no mapping found
     """
     currency_locale_map = {0: 'en_US', 1: 'en_GB'}
-    return currency_locale_map[dx_code]
+    return currency_locale_map[dx_code] if dx_code in currency_locale_map else None
 
 
 def format_currency_from_meta(value, meta):
@@ -967,8 +967,11 @@ def format_currency(value, meta, currency_locale=None):
     try:
         if currency_locale is None:
             currency_locale = locale_from_currency_code(meta['dxCode'])
-        locale.setlocale(locale.LC_ALL, currency_locale)
-        return locale.currency(value, grouping=True)
+        if currency_locale is None:
+            return format_currency_from_meta(value, meta)
+        else:
+            locale.setlocale(locale.LC_ALL, currency_locale)
+            return locale.currency(value, grouping=True)
     except locale.Error:
         # .. locale is probably not available -> fallback to format manually
         return format_currency_from_meta(value, meta)
