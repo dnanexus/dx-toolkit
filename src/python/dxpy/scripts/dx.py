@@ -3381,8 +3381,6 @@ def run(args):
                 'Please run "dx select" to set the working project, or use --folder=project:path'
             ))
 
-    is_workflow = isinstance(handler, dxpy.DXWorkflow)
-    is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
 
     # Get region from the project context
     args.region = None

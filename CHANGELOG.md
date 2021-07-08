@@ -17,6 +17,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `Total price` for `dx describe` prints formatted currency based on `currency` metadata
 
+### Fixed
+* `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
+
 ## [312.0] -  2021.07.06 
 
 * No significant changes
