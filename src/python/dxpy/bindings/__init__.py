@@ -663,6 +663,10 @@ class DXDataObject(DXObject):
         while True:
             parts = self.describe(fields={'parts'}, **kwargs)["parts"]
             state = self._get_state(**kwargs)
+            # describe = self.describe(fields={'parts', 'state'}, **kwargs)
+            # state, parts = describe['state'], describe['state']
+            print(state)
+            print(parts)
             if state == "closed" or not parts:
                 # parts of closed files must have been uploaded successfully
                 break
