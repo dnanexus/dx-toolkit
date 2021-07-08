@@ -1,3 +1,11 @@
+dx-toolkit (0.313.0) trusty; urgency=medium
+
+  * Added: '--cost-limit' arg for `dx run`
+  * Added: '--database-ui-view-only' flag for `dx new project`
+  * Added: Currency formatting in `dx describe`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 06 Jul 2021 20:07:00 +0000
+
 dx-toolkit (0.312.0) trusty; urgency=medium
 
   * No significant changes
