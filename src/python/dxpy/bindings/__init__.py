@@ -661,10 +661,10 @@ class DXDataObject(DXObject):
         elapsed = 0
         i = 0
         while True:
-            parts = self.describe(fields={'parts'}, **kwargs)["parts"]
-            state = self._get_state(**kwargs)
-            # describe = self.describe(fields={'parts', 'state'}, **kwargs)
-            # state, parts = describe['state'], describe['state']
+            # parts = self.describe(fields={'parts'}, **kwargs)["parts"]
+            # state = self._get_state(**kwargs)
+            describe = self.describe(fields={'parts', 'state'}, **kwargs)
+            state, parts = describe['state'], describe['state']
             print(state)
             print(parts)
             if state == "closed" or not parts:
