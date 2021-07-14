@@ -711,7 +711,7 @@ class DXFile(DXDataObject):
         # attempt an upload. Because DXHTTPRequest will retry requests under retryable conditions, we give it a callback
         # to ask us for a new upload URL every time it attempts a request (instead of giving them directly).
         retries = 3
-        for _ in range(retries):
+        for i in range(retries):
             dxpy.DXHTTPRequest(get_upload_url_and_headers,
                                data,
                                jsonify_data=False,
@@ -721,6 +721,7 @@ class DXFile(DXDataObject):
                                auth=None,
                                method='PUT')
             if self.describe(fields={'parts'}, **kwargs).get('parts', {}).get(index, {}).get('state', "cmplete") == 'complete':
+                print("breaking after.... " + str(i))
                 break
         print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs)['parts'][str(index)]['state'], flush=True)
 
