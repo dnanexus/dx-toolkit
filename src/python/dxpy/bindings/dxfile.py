@@ -720,6 +720,7 @@ class DXFile(DXDataObject):
                                timeout=FILE_REQUEST_TIMEOUT,
                                auth=None,
                                method='PUT')
+            print(str(index) + " ->>>>> " + str(self.describe(fields={'parts'}, **kwargs)))
             print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs).get('parts', {}).get(index, {}).get('state', "cmplete"))
             if self.describe(fields={'parts'}, **kwargs).get('parts', {}).get(index, {}).get('state', "cmplete") == 'complete':
                 print("breaking after.... " + str(i))
