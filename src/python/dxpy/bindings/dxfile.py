@@ -674,11 +674,14 @@ class DXFile(DXDataObject):
             req_input["index"] = int(index)
 
         md5 = hashlib.md5()
+        print("here1")
         if hasattr(data, 'seek') and hasattr(data, 'tell'):
             # data is a buffer; record initial position (so we can rewind back)
             rewind_input_buffer_offset = data.tell()
             while True:
                 bytes_read = data.read(MD5_READ_CHUNK_SIZE)
+                print("here-loop")
+
                 if bytes_read:
                     md5.update(bytes_read)
                 else:
@@ -687,6 +690,7 @@ class DXFile(DXDataObject):
             data.seek(rewind_input_buffer_offset)
         else:
             md5.update(data)
+        print("here2")
 
         req_input["md5"] = md5.hexdigest()
         req_input["size"] = len(data)
