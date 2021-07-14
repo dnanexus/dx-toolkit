@@ -722,9 +722,9 @@ class DXFile(DXDataObject):
                                method='PUT')
             # print(str(index) + " ->>>>> " + str(self.describe(fields={'parts'}, **kwargs)))
             # break
-            print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs).get('index', {}).get('state', "cmplete"))
+            print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs).get(str(index), {}).get('state', "cmplete"))
             break
-            if self.describe(fields={'parts'}, **kwargs).get(index, {}).get('state', "cmplete") == 'complete':
+            if self.describe(fields={'parts'}, **kwargs).get(str(index), {}).get('state', "cmplete") == 'complete':
                 print("breaking after.... " + str(i))
                 break
         # print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs)['parts'][str(index)]['state'], flush=True)
