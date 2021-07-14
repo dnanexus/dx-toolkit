@@ -718,8 +718,7 @@ class DXFile(DXDataObject):
                            timeout=FILE_REQUEST_TIMEOUT,
                            auth=None,
                            method='PUT')
-        print(index, flush=True)
-        print(self.describe(fields={'parts', 'state'}, **kwargs), flush=True)
+        print(str(index) + " ->>>>> " + self.describe(fields={'parts', 'state'}, **kwargs)['parts'][str(index)], flush=True)
 
         self._num_uploaded_parts += 1
 
