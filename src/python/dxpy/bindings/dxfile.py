@@ -720,14 +720,8 @@ class DXFile(DXDataObject):
                                timeout=FILE_REQUEST_TIMEOUT,
                                auth=None,
                                method='PUT')
-            # print(str(index) + " ->>>>> " + str(self.describe(fields={'parts'}, **kwargs)))
-            # break
-            print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs).get('parts', {}).get(str(index), {}).get('state', "cmplete"))
-            if self.describe(fields={'parts'}, **kwargs).get('parts', {}).get(str(index), {}).get('state', "cmplete") == 'complete':
-                print("breaking after.... " + str(i))
+            if self.describe(fields={'parts'}, **kwargs).get('parts', {}).get(str(index), {}).get('state', "complete") == 'complete':
                 break
-        # print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs)['parts'][str(index)]['state'], flush=True)
-
         self._num_uploaded_parts += 1
 
         if display_progress:
