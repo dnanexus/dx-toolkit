@@ -720,6 +720,15 @@ class DXFile(DXDataObject):
                            method='PUT')
         print(str(index) + " ->>>>> " + self.describe(fields={'parts', 'state'}, **kwargs)['parts'][str(index)]['state'], flush=True)
 
+        dxpy.DXHTTPRequest(get_upload_url_and_headers,
+                           data,
+                           jsonify_data=False,
+                           prepend_srv=False,
+                           always_retry=True,
+                           timeout=FILE_REQUEST_TIMEOUT,
+                           auth=None,
+                           method='PUT')
+
         self._num_uploaded_parts += 1
 
         if display_progress:
