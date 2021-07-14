@@ -722,6 +722,7 @@ class DXFile(DXDataObject):
                                method='PUT')
             # print(str(index) + " ->>>>> " + str(self.describe(fields={'parts'}, **kwargs)))
             # break
+            print(self.describe(fields={'parts'}, **kwargs))
             print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs).get(str(index), {}).get('state', "cmplete"))
             break
             if self.describe(fields={'parts'}, **kwargs).get(str(index), {}).get('state', "cmplete") == 'complete':
