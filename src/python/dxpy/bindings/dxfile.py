@@ -721,7 +721,7 @@ class DXFile(DXDataObject):
                            timeout=FILE_REQUEST_TIMEOUT,
                            auth=None,
                            method='PUT')
-
+        print(self.describe(fields={'parts', 'state'}, **kwargs))
         self._num_uploaded_parts += 1
 
         if display_progress:
