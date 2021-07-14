@@ -710,28 +710,19 @@ class DXFile(DXDataObject):
         # The file upload API requires us to get a pre-authenticated upload URL (and headers for it) every time we
         # attempt an upload. Because DXHTTPRequest will retry requests under retryable conditions, we give it a callback
         # to ask us for a new upload URL every time it attempts a request (instead of giving them directly).
-        value = dxpy.DXHTTPRequest(get_upload_url_and_headers,
-                           data,
-                           jsonify_data=False,
-                           prepend_srv=False,
-                           always_retry=True,
-                           timeout=FILE_REQUEST_TIMEOUT,
-                           auth=None,
-                           method='PUT')
-        print("________", flush=True)
-        import time
-        start_time = time.time()
+        retries = 3
+        for _ in range(retries):
+            dxpy.DXHTTPRequest(get_upload_url_and_headers,
+                               data,
+                               jsonify_data=False,
+                               prepend_srv=False,
+                               always_retry=True,
+                               timeout=FILE_REQUEST_TIMEOUT,
+                               auth=None,
+                               method='PUT')
+            if self.describe(fields={'parts'}, **kwargs).get('parts', {}).get(index, {}).get('state', "cmplete") == 'complete':
+                break
         print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs)['parts'][str(index)]['state'], flush=True)
-        print("--- %s seconds ---" % (time.time() - start_time))
-        print("________", flush=True)
-        # dxpy.DXHTTPRequest(get_upload_url_and_headers,
-        #                    data,
-        #                    jsonify_data=False,
-        #                    prepend_srv=False,
-        #                    always_retry=True,
-        #                    timeout=FILE_REQUEST_TIMEOUT,
-        #                    auth=None,
-        #                    method='PUT')
 
         self._num_uploaded_parts += 1
 
