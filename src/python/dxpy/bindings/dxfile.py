@@ -710,7 +710,7 @@ class DXFile(DXDataObject):
         # The file upload API requires us to get a pre-authenticated upload URL (and headers for it) every time we
         # attempt an upload. Because DXHTTPRequest will retry requests under retryable conditions, we give it a callback
         # to ask us for a new upload URL every time it attempts a request (instead of giving them directly).
-        dxpy.DXHTTPRequest(get_upload_url_and_headers,
+        value = dxpy.DXHTTPRequest(get_upload_url_and_headers,
                            data,
                            jsonify_data=False,
                            prepend_srv=False,
@@ -718,16 +718,17 @@ class DXFile(DXDataObject):
                            timeout=FILE_REQUEST_TIMEOUT,
                            auth=None,
                            method='PUT')
-        print(str(index) + " ->>>>> " + self.describe(fields={'parts', 'state'}, **kwargs)['parts'][str(index)]['state'], flush=True)
-
-        dxpy.DXHTTPRequest(get_upload_url_and_headers,
-                           data,
-                           jsonify_data=False,
-                           prepend_srv=False,
-                           always_retry=True,
-                           timeout=FILE_REQUEST_TIMEOUT,
-                           auth=None,
-                           method='PUT')
+        # print(str(index) + " ->>>>> " + self.describe(fields={'parts', 'state'}, **kwargs)['parts'][str(index)]['state'], flush=True)
+        print("________", flush=True)
+        print(value, flush=True)
+        # dxpy.DXHTTPRequest(get_upload_url_and_headers,
+        #                    data,
+        #                    jsonify_data=False,
+        #                    prepend_srv=False,
+        #                    always_retry=True,
+        #                    timeout=FILE_REQUEST_TIMEOUT,
+        #                    auth=None,
+        #                    method='PUT')
 
         self._num_uploaded_parts += 1
 
