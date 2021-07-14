@@ -718,9 +718,12 @@ class DXFile(DXDataObject):
                            timeout=FILE_REQUEST_TIMEOUT,
                            auth=None,
                            method='PUT')
-        # print(str(index) + " ->>>>> " + self.describe(fields={'parts', 'state'}, **kwargs)['parts'][str(index)]['state'], flush=True)
         print("________", flush=True)
-        print(value, flush=True)
+        import time
+        start_time = time.time()
+        print(str(index) + " ->>>>> " + self.describe(fields={'parts'}, **kwargs)['parts'][str(index)]['state'], flush=True)
+        print("--- %s seconds ---" % (time.time() - start_time))
+        print("________", flush=True)
         # dxpy.DXHTTPRequest(get_upload_url_and_headers,
         #                    data,
         #                    jsonify_data=False,
