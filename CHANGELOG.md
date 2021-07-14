@@ -10,14 +10,32 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Fixed `dx upload` issue where file would stay in an open state
 
-## [311.0] - beta
+## [313.0] -  beta
+
+### Added
+
+* '--cost-limit' arg for `dx run` 
+* '--database-ui-view-only' flag for `dx new project`
+
+### Fixed
+
+* `Total price` for `dx describe` prints formatted currency based on `currency` metadata
+
+### Fixed
+* `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
+
+## [312.0] -  2021.07.06 
+
+* No significant changes
+
+## [311.0] -  2021.05.21 
 
 ### Added
 
 * Added `--cost-limit` flag for `dx run`
 * `DX_WATCH_PORT` env var for supporting `dx watch` in the job execution environment
 
-## [310.0] - 2021.05.12 stable
+## [310.0] - 2021.05.12 
 
 * No significant changes
 
