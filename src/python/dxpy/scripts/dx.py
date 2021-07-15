@@ -5751,14 +5751,16 @@ register_parser(parser_publish)
                                
 parser_archive = subparsers.add_parser(
     'archive', 
-    help='Requests for the specified set files or for the files in a single specified folder to be archived on the platform', 
+    help='Requests for the specified set files or for the files in a single specified folder in one project to be archived on the platform', 
     description=
-    '''
-Requests for the specified set files or for the files in a single specified folder to be archived on the platform. 
-For each file, if this is the last copy of a file to have archival requested, the full archival of the object will be triggered. 
-Otherwise, the files will be marked in an archival state denoting that archival has been requested.
-
-To specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon.
+'''
+Requests for {} or for the files in {} in {} to be archived on the platform.
+For each file, if this is the last copy of a file to have archival requested, it will trigger the full archival of the object. 
+Otherwise, the file will be marked in an archival state denoting that archival has been requested.
+'''.format(BOLD('the specified set files'), BOLD('a single specified folder'), BOLD('ONE project')) +
+'''
+The input paths should be either 1 folder path or up to 1000 files, and all path(s) need to be in the same project. 
+To specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon. 
 
 EXAMPLES:
 
@@ -5784,7 +5786,7 @@ parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path
 
 parser_archive.add_argument(
     'path', 
-    help=fill('May refer to a single folder or specify one or more files in a single project.',width_adjustment=-24),
+    help=fill('May refer to a single folder or specify up to 1000 files inside a project.',width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
 
 parser_archive_output = parser_archive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <count> file(s) for archival"')
@@ -5798,11 +5800,15 @@ register_parser(parser_archive, categories='fs')
 
 parser_unarchive = subparsers.add_parser(
     'unarchive', 
-    help='Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.',    
+    help='Requests for the specified set files or for the files in a single specified folder in one project to be unarchived on the platform.',    
     description=
-    '''
-Requests for the specified set files or for the files in a single specified folder to be unarchived on the platform.
+'''
+Requests for {} or for the files in {} in {} to be unarchived on the platform.
 The requested copy will eventually be transitioned over to the live state while all other copies will move over to the archival state.
+'''.format(BOLD('a specified set files'), BOLD('a single specified folder'), BOLD('ONE project')) +
+'''
+The input paths should be either 1 folder path or up to 1000 files, and all path(s) need to be in the same project. 
+To specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon.
 
 EXAMPLES:
 
@@ -5829,7 +5835,7 @@ parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `pa
 
 parser_unarchive.add_argument(
     'path', 
-    help=fill('May refer to a single folder or specify one or more files in a single project.', width_adjustment=-24),
+    help=fill('May refer to a single folder or specify up to 1000 files inside a project.', width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
 
 parser_unarchive.add_argument_group(title='Output', description=
