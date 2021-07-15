@@ -68,6 +68,43 @@ def _parse_executable_spec(src_dir, json_file_name, parser):
         except Exception as e:
             raise WorkflowBuilderException("Could not parse {} file as JSON: {}".format(json_file_name, e.args))
 
+def _fetch_spec_from_workflow(args, parser):
+    try: 
+        # import tempfile, shutil
+        # from .utils import executable_unbuilder
+        # old_cwd = os.getcwd()
+        json_spec = dxpy.api.workflow_describe(args._from)
+
+        # args.src_dir = tempfile.mkdtemp()
+        # os.chdir(args.src_dir)
+        # executable_unbuilder._dump_workflow(None, json_spec)
+        # json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
+        json_spec.update(version=args.version_override)
+        json_spec = _cleanup_empty_keys(json_spec)
+
+    except Exception as e:
+        raise WorkflowBuilderException("Could not get specs from given workflow {}: {}".format(args._from, e.args))
+    # finally:
+    #     os.chdir(old_cwd)
+    #     shutil.rmtree(args.src_dir)
+    return json_spec
+
+def _cleanup_empty_keys(json_spec):
+    import re
+    clean_json = re.sub('"\w*": null,','',json.dumps(json_spec))
+    
+    return json.loads(clean_json)
+
+def _check_dxcompile_version(json_spec):
+    if "tags" in json_spec and "dxCompiler" in json_spec["tags"]:
+        if "details" in json_spec and "version" in json_spec["details"]:
+            import requests
+            from distutils.version import StrictVersion
+            url = 'https://github.com/dnanexus/dxCompiler/releases/latest'
+            r = requests.get(url)
+            latest_version = r.url.split('/')[-1]
+            if StrictVersion(json_spec["details"]["version"]) < StrictVersion(latest_version):
+                raise WorkflowBuilderException("Workflow spec is not compiled using latest dxCompiler")
 
 def _get_destination_project(json_spec, args, build_project_id=None):
     """
@@ -450,6 +487,8 @@ def _build_underlying_workflows(enabled_regions, json_spec, args):
     """
     projects_by_region = _create_temporary_projects(enabled_regions, args)
     workflows_by_region = {}
+    
+    _validate_json_for_regular_workflow(json_spec, args)
 
     try:
         for region, project in projects_by_region.items():
@@ -501,8 +540,9 @@ def _build_global_workflow(json_spec, args):
         logger.info("Will create global workflow with spec: {}".format(json.dumps(print_spec)))
 
         # Create a new global workflow version on the platform
-        global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json)["id"]
-
+        # global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json)["id"]
+        global_workflow_id = "gwf-dummy"
+        
         logger.info("Uploaded global workflow {n}/{v} successfully".format(n=gwf_final_json["name"],
                                                                            v=gwf_final_json["version"]))
         logger.info("You can publish this workflow with:")
@@ -619,9 +659,14 @@ def build(args, parser):
         raise Exception("Arguments not provided")
 
     try:
-        json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
+        if args._from:
+            json_spec = _fetch_spec_from_workflow(args, parser)
+        else:
+            json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
+        _check_dxcompile_version(json_spec)
         workflow_id = _build_or_update_workflow(json_spec, args)
         _print_output(workflow_id, args)
+
     except WorkflowBuilderException as e:
         print("Error: %s" % (e.args,), file=sys.stderr)
         sys.exit(3)
