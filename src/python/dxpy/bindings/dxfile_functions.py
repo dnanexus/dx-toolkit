@@ -383,7 +383,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             for chunk_part, chunk_data in response_iterator(chunk_requests(),
                                                             dxfile._http_threadpool,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
-
                 if chunk_part != cur_part:
                     verify_part(cur_part, got_bytes, hasher)
                     cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
