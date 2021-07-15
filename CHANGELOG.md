@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Occasional error during a large file download.
+
 ## [313.0] -  beta
 
 ### Added

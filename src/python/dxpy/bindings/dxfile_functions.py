@@ -32,6 +32,7 @@ from collections import defaultdict
 import multiprocessing
 from random import randint
 from time import sleep
+from requests import exceptions
 
 import dxpy
 from .. import logger
@@ -123,7 +124,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
 
     '''
     # retry the inner loop while there are retriable errors
-    part_retry_counter = defaultdict(lambda: 3)
+    part_retry_counter = defaultdict(lambda: 8)
     success = False
     while not success:
         success = _download_dxfile(dxid,
@@ -379,12 +380,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             # Main loop. In parallel: download chunks, verify them, and write them to disk.
             get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
             cur_part, got_bytes, hasher = None, None, None
-            from random import random
-            from requests import exceptions
-
-            if random() > 0.5:
-                print(" HERREEE")
-                raise exceptions.HTTPError("ermpty")
             for chunk_part, chunk_data in response_iterator(chunk_requests(),
                                                             dxfile._http_threadpool,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
@@ -400,7 +395,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             verify_part(cur_part, got_bytes, hasher)
             if show_progress:
                 print_progress(_bytes, file_size, action="Completed")
-        except DXFileError:
+        except DXFileError, exceptions.HTTPError:
             print(traceback.format_exc(), file=sys.stderr)
             part_retry_counter[cur_part] -= 1
             if part_retry_counter[cur_part] > 0:
