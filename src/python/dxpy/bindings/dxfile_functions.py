@@ -380,11 +380,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             # Main loop. In parallel: download chunks, verify them, and write them to disk.
             get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
             cur_part, got_bytes, hasher = None, None, None
-            from random import random
-
-            if random() > 0.3:
-                print(" HERREEE")
-                raise DXFileError("rtrror")
             for chunk_part, chunk_data in response_iterator(chunk_requests(),
                                                             dxfile._http_threadpool,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
