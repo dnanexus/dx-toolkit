@@ -383,6 +383,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             from requests import exceptions
 
             if random() > 0.5:
+                print(" HERREEE")
                 raise exceptions.HTTPError("ermpty")
             for chunk_part, chunk_data in response_iterator(chunk_requests(),
                                                             dxfile._http_threadpool,
