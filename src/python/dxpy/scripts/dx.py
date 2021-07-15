@@ -3796,7 +3796,7 @@ def archive(args):
         try: 
             project_id, folderpath, file_results = resolve_existing_path(path, expected_classes=None, allow_mult=True, all_mult=args.all)
         except ResolutionError as e:
-            err_exit('Could not resolve "' + path + '": ' + e.msg, code=3, arg_parser=parser_archive)
+            err_exit('Could not resolve "{}": {}'.format(path, e.msg), code=3, arg_parser=parser_archive)
         except Exception as details:
             err_exit(fill(str(details)), 3)
         
@@ -3851,7 +3851,7 @@ def unarchive(args):
         try: 
             project_id, folderpath, file_results = resolve_existing_path(path, expected_classes=None, allow_mult=True, all_mult=args.all)
         except ResolutionError as e:
-            err_exit('Could not resolve "' + path + '": ' + e.msg, code=3, arg_parser=parser_unarchive)
+            err_exit('Could not resolve "{}": {}'.format(path, e.msg), code=3, arg_parser=parser_unarchive)
         except Exception as details:
             err_exit(fill(str(details)), 3)
         
