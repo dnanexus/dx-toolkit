@@ -673,7 +673,7 @@ class DXFile(DXDataObject):
         if index is not None:
             req_input["index"] = int(index)
 
-        md5 = hashlib.md5()
+        md5 = hashlib.new('md5', usedforsecurity=False)
         if hasattr(data, 'seek') and hasattr(data, 'tell'):
             # data is a buffer; record initial position (so we can rewind back)
             rewind_input_buffer_offset = data.tell()
