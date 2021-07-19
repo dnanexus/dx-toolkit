@@ -62,7 +62,7 @@ from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, 
                               DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
                               tty_rows, tty_cols, pager, format_find_results, nostderr)
 from ..utils.pretty_print import format_tree, format_table
-from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
+from ..utils.resolver import (clean_folder_path, pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                               resolve_existing_path, get_app_from_path, resolve_app, resolve_global_executable, get_exec_handler,
                               split_unescaped, ResolutionError, resolve_to_objects_or_project, is_project_explicit,
@@ -3789,56 +3789,117 @@ def archive(args):
     dx_archive_errors = [InvalidState, ResourceNotFound, PermissionDenied]
 
     # resolve paths
-    target_project = None    
+    target_project = None
     target_folder = None
     target_files = []
-    for path in args.path:
-        try: 
-            project_id, folderpath, file_results = resolve_existing_path(path, expected_classes=None, allow_mult=True, all_mult=args.all)
-        except ResolutionError as e:
-            err_exit('Could not resolve "{}": {}'.format(path, e.msg), code=3, arg_parser=parser_archive)
-        except Exception as details:
-            err_exit(fill(str(details)), 3)
-        
-        if not target_project: 
-            target_project = project_id
-        elif project_id != target_project:
-            err_exit("Expecting path {} to be in project {}, but it's in project {}. All resolved paths must refer to file IDs in a single project".format(path, target_project, project_id), 
-                        code=3, arg_parser=parser_archive)
+    
+    paths = [split_unescaped(':', path, include_empty_strings=True) for path in args.path]
+    
+    for path in paths:
+        if len(path) > 2: 
+            continue
+        elif not path:
+            target_project = dxpy.WORKSPACE_ID
+            target_folder = '/'
+            break
 
-        if file_results: # resolved as files
-            target_files+=[f["id"] for f in file_results]
-        else: # resolved as a folder
-            if target_folder:
-                err_exit('Expecting only one folder path to be archived', code=3, arg_parser=parser_archive)
+        # expecting the input path is in the following format:
+        # file-xxxx
+        # /folderpath/filename or /folderpath/
+        elif len(path) == 1:
+            if not target_project:
+                target_project = dxpy.WORKSPACE_ID 
+        
+        # expecting the input path is in the following format:
+        # project-xxxx:file-xxxx
+        # project-xxxx:/folderpath/filename or project-xxxx:/folderpath/
+        elif len(path) == 2:
+            # resolve project id
+            # project id is given
+            if is_container_id(path[-2]): 
+                picked_project = path[-2]
+            # name is given
+            elif path[-2]:
+                project_results = dxpy.find_projects(name=path[-2],describe=True)
+                if project_results:
+                    picked_project = paginate_and_pick(project_results, 
+                                                        (lambda result: ':'.join([result['describe']['name'],result['id']])),
+                                                        )['id']
+            # empty string: current project
+            elif path[-2] == '':
+                picked_project = dxpy.WORKSPACE_ID
+
+            # check if only one project is set as the target project
+            if target_project and picked_project != target_project:
+                err_exit("Expecting path {} to be in project {}, but it's in project {}. All resolved paths must refer to file IDs in a single project".format(path, target_project, picked_project), 
+                        code=3, arg_parser=parser_archive)
             else:
+                target_project = picked_project    
+
+        #resolve target 
+        target_path = path[-1]
+        # is file
+        if is_data_obj_id(target_path) and target_path.startswith("file-"):
+            target_files.append(target_path)
+        # is folder or folderpath/filename
+        else:
+            folderpath, entity_name = clean_folder_path(target_path)
+            if not entity_name:
                 target_folder = folderpath
-        
-        if target_files and target_folder:
-            err_exit('Expecting either a single folder or a list files for each request', code=3, arg_parser=parser_archive)
-        
-    # send api request
-    if target_files: 
+                break
+            else:
+                file_results = list(dxpy.find_data_objects(classname="file",
+                                                        name=entity_name,
+                                                        project=target_project,
+                                                        folder=folderpath,
+                                                        recurse=args.recurse,
+                                                        describe=True,))
+                if file_results and not args.all:
+                    picked_file = pick([result['describe']['name'] + ' (' + result['id'] + ')' for result in file_results],allow_mult=True)
+                    if picked_file == "*" :
+                        target_files+=[file['id'] for file in file_results]
+                    else:
+                        target_files.append(file_results[picked_file]['id'])
+                else: 
+                    target_files+=[file['id'] for file in file_results]
+
+    # input check: only files or one folder should be specified                               
+    if target_files and target_folder:
+        err_exit('Expecting either a single folder or a list files for each API request', code=3, arg_parser=parser_archive)
+    elif target_files: 
         request_input = {"files": target_files, "allCopies": args.all_copies}
-    if target_folder:
+    elif target_folder:
         request_input = {"folder": target_folder, "allCopies": args.all_copies, "recurse":args.recurse}
+    else:
+        err_exit("No input file/folder is found in project {}".format(target_project), 
+                        code=3, arg_parser=parser_archive)
     
-    try:
-        res = dxpy.api.project_archive(target_project, request_input)
-    except Exception as e:            
-        eprint("Failed request: {}".format(request_input))
-        if type(e) in dx_archive_errors:
-            eprint("     API error: {}. {}".format(e.name, e.msg))
-        else: 
-            eprint("     Unexpected error: {}".format(format_exception(e)))
+    if args.count:
+        counts = len(target_files) or len(list(dxpy.find_data_objects(project=target_project,
+                                        folder=target_folder,
+                                        classname="file",
+                                        recurse=args.recurse)))
+        print()              
+        print('Will request {} file(s) for archival in {}'.format(counts,target_project))
+        print()              
+    
+    if not args.count:
+        try:
+            res = dxpy.api.project_archive(target_project, request_input)
+        except Exception as e:            
+            eprint("Failed request: {}".format(request_input))
+            if type(e) in dx_archive_errors:
+                eprint("     API error: {}. {}".format(e.name, e.msg))
+            else: 
+                eprint("     Unexpected error: {}".format(format_exception(e)))
+            
+            err_exit("Failed request: {}. {}".format(request_input, format_exception(e)), code=3, arg_parser=parser_archive)
         
-        err_exit("Failed request: {}. {}".format(request_input, format_exception(e)), code=3, arg_parser=parser_archive)
-    
-    # print archival results
-    if not args.quiet:
-        print()
-        print(f'Tagged {res["count"]} file(s) for archival in {target_project}')
-        print()
+        # print archival results
+        if not args.quiet:
+            print()
+            print('Tagged {} file(s) for archival in {}'.format(res["count"],target_project))
+            print()
 
 def unarchive(args):
     dx_unarchive_errors = [InvalidState, ResourceNotFound, PermissionDenied]
@@ -3886,15 +3947,14 @@ def unarchive(args):
             eprint("     API error: {}. {}".format(e.name, e.msg))
         else: 
             eprint("     Unexpected error: {}".format(format_exception(e)))
-        
         err_exit("Failed request: {}. {}".format(request_input, format_exception(e)), code=3, arg_parser=parser_unarchive)
 
     # print unarchival results
-    if not args.quiet:
-        if args.dry_run:
-            print(f'Would tag {res["files"]} file(s) for unarchival, totalling {res["size"]} GB, costing ${res["cost"]/1000}')
-        else:
-            print(f'Tagged {res["files"]} file(s) for unarchival, totalling {res["size"]} GB, costing ${res["cost"]/1000}')
+    if args.dry_run:
+        print('Would tag {} file(s) for unarchival, totalling {} GB, costing ${}'.format(res["files"], res["size"],res["cost"]/1000))
+    else:
+        if not args.quiet:
+            print('Tagged {} file(s) for unarchival, totalling {} GB, costing ${}'.format(res["files"], res["size"],res["cost"]/1000))
 
 def print_help(args):
     if args.command_or_category is None:
@@ -5781,7 +5841,10 @@ parser_archive.add_argument(
     dest = "all_copies", 
     help=fill('If true, archive all the copies of files in projects with the same billTo org.' ,width_adjustment=-24)+ '\n'+ fill('See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24), 
                             default=False, action='store_true')
-
+parser_archive.add_argument(
+    '-y','--confirm', dest='confirm',
+    help=fill('Do not ask for confirmation.' , width_adjustment=-24), 
+    default=False, action='store_true')
 parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_archive.add_argument(
@@ -5827,8 +5890,8 @@ fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_
 
 parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_unarchive.add_argument(
-    '-n','--dry-run', dest='dry_run',
-    help=fill('Only display the output of the API call without executing the unarchival' , width_adjustment=-24), 
+    '-y','--confirm', dest='confirm',
+    help=fill('Do not ask for confirmation. If not specified, dry run will be skipped' , width_adjustment=-24), 
     default=False, action='store_true')
 
 parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
@@ -5838,14 +5901,7 @@ parser_unarchive.add_argument(
     help=fill('May refer to a single folder or specify up to 1000 files inside a project.', width_adjustment=-24),
     default=[], nargs='+').completer = DXPathCompleter() 
 
-parser_unarchive.add_argument_group(title='Output', description=
-'''
-  If -q option is specified, prints nothing
-  otherwise
-    if --dry-run is not specified, "Tagged <> file(s) for unarchival, totalling <> GB, costing <> "
-    if --dry-run is     specified, "Would tag <> file(s) for unarchival, totalling <> GB, costing <>"
-'''
-)
+parser_unarchive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <> file(s) for unarchival, totalling <> GB, costing <> "')
 parser_unarchive.set_defaults(func=unarchive)
 register_parser(parser_unarchive, categories='fs')
 
