@@ -3822,24 +3822,22 @@ def archive(args):
 
         for path in paths:
             try: 
-                if len(path) > 2: 
+                if len(path) > 2: # ignore invalid path
                     continue
-                elif not path:
-                    target_project = dxpy.WORKSPACE_ID
-                    target_folder = '/'
-                    break
-                # expecting the input path is in the following format:
-                # file-xxxx
-                # /folderpath/filename or /folderpath/
+
+                # if the input path is in the following format:
+                #   file-xxxx
+                #   /folderpath/filename or /folderpath/
+                # set the target project to be the current one
                 elif len(path) == 1:
                     if not target_project:
                         target_project = dxpy.WORKSPACE_ID 
-                # expecting the input path is in the following format:
-                # project-xxxx:file-xxxx
-                # project-xxxx:/folderpath/filename or project-xxxx:/folderpath/
+                # if the input path is in the following format:
+                #   project-xxxx:file-xxxx
+                #   project-xxxx:/folderpath/filename or project-xxxx:/folderpath/
+                # resolve the given project id/name
                 elif len(path) == 2:
-                    # resolve project id
-                    # project id is given
+                    # id is given
                     if is_container_id(path[-2]): 
                         picked_project = path[-2]
                     # name is given
@@ -3852,14 +3850,15 @@ def archive(args):
                     # empty string: current project
                     elif path[-2] == '':
                         picked_project = dxpy.WORKSPACE_ID
+                    
                     # check if only one project is set as the target project
                     if target_project and picked_project != target_project:
-                        err_exit("Expecting path {} to be in project {}, but it's in project {}. All resolved paths must refer to file IDs in a single project".format(path, target_project, picked_project), 
+                        err_exit("Expecting path {} to be in project {}, but it's in project {}. All resolved paths must refer to files/folder in a single project".format(path, target_project, picked_project), 
                                 code=3, arg_parser=parser_archive)
                     else:
                         target_project = picked_project    
 
-                #resolve target 
+                #resolve target files/folder
                 target_path = path[-1]
                 # is a fileID
                 if is_data_obj_id(target_path) and target_path.startswith("file-"):
