@@ -3831,7 +3831,7 @@ def archive(args):
                 # set the target project to be the current one
                 elif len(path) == 1:
                     if not target_project:
-                        target_project = dxpy.WORKSPACE_ID 
+                        target_project = dxpy.PROJECT_CONTEXT_ID 
                 # if the input path is in the following format:
                 #   project-xxxx:file-xxxx
                 #   project-xxxx:/folderpath/filename or project-xxxx:/folderpath/
@@ -3849,7 +3849,7 @@ def archive(args):
                                                                 )['id']
                     # empty string: current project
                     elif path[-2] == '':
-                        picked_project = dxpy.WORKSPACE_ID
+                        picked_project = dxpy.PROJECT_CONTEXT_ID
                     
                     # check if only one project is set as the target project
                     if target_project and picked_project != target_project:
