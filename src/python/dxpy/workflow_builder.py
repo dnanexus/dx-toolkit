@@ -385,11 +385,27 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
     executables = [i.get("executable") for i in workflow_spec.get("stages")]
     requested_regions = list(workflow_enabled_regions)
 
+    if 'billTo' in workflow_spec:
+        billable_regions = set()
+        try:
+            if workflow_spec['billTo'].startswith('user-'):
+                billable_regions = set(dxpy.api.user_describe(workflow_spec['billTo'])['permittedRegions'])
+            elif workflow_spec['billTo'].startswith('org-'):
+                billable_regions = set(dxpy.api.org_describe(workflow_spec['billTo'])['permittedRegions'])
+        except:
+            pass
+        
+        if billable_regions:
+            workflow_enabled_regions.intersection_update(billable_regions)
+    
     for exect in executables:
-
         if exect.startswith("applet-"):
             if len(workflow_enabled_regions) > 1:
                 raise WorkflowBuilderException("Building a global workflow with applets in more than one region is not yet supported.")
+            
+            applet_region = dxpy.api.applet_describe(dxpy.api.applet_describe(exect)["project"])["region"]
+            if applet_region != workflow_enabled_regions:
+                raise WorkflowBuilderException("The applet {} is not avaibale in requested region {}".format(exect, workflow_enabled_regions))
 
         elif exect.startswith("app-"):
             app_regional_options = dxpy.api.app_describe(exect, input_params={"fields": {"regionalOptions": True}})
