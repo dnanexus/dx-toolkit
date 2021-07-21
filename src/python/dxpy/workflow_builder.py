@@ -305,8 +305,31 @@ def _validate_json_for_global_workflow(json_spec, args):
                 'The field "regionalOptions" must be a non-empty dictionary whose values are dictionaries')
 
     if args.bill_to:
-        json_spec["billTo"] = args.bill_to
+        if _validate_bill_to(args.bill_to):
+            json_spec["billTo"] = args.bill_to
 
+def _validate_bill_to(bill_to):
+    user_id = dxpy.whoami()
+    if bill_to.startswith('user-') and bill_to != user_id:
+        raise WorkflowBuilderException(
+            'Cannot use another user\'s account for key "billTo"')
+    elif bill_to.startswith('org-'):
+            user_billTo = dxpy.api.user_describe(user_id)
+            if bill_to != user_billTo:
+                try:
+                    member_access = dxpy.api.org_describe(bill_to)
+                except Exception as e:
+                    raise WorkflowBuilderException(
+                        'Cannot use {} for key "billTo. Please check the given org ID is valid."')
+
+                if member_access['level'] != 'ADMIN' or not member_access['allowBillableActivities']:
+                    raise WorkflowBuilderException(
+                        'Cannot use {} for key "billTo. Please check your access level and the org\'s billing policy."')
+                else: # either the user is ADMIN or the org allows members to set billTo
+                    pass
+    else:
+        raise WorkflowBuilderException(
+            'The field "billTo" must be a valid ID of a user/org')
 
 def _get_validated_json(json_spec, args):
     """
