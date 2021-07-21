@@ -70,23 +70,13 @@ def _parse_executable_spec(src_dir, json_file_name, parser):
 
 def _fetch_spec_from_workflow(args, parser):
     try: 
-        # import tempfile, shutil
-        # from .utils import executable_unbuilder
-        # old_cwd = os.getcwd()
         json_spec = dxpy.api.workflow_describe(args._from)
-
-        # args.src_dir = tempfile.mkdtemp()
-        # os.chdir(args.src_dir)
-        # executable_unbuilder._dump_workflow(None, json_spec)
-        # json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
         json_spec.update(version=args.version_override)
         json_spec = _cleanup_empty_keys(json_spec)
 
     except Exception as e:
         raise WorkflowBuilderException("Could not get specs from given workflow {}: {}".format(args._from, e.args))
-    # finally:
-    #     os.chdir(old_cwd)
-    #     shutil.rmtree(args.src_dir)
+
     return json_spec
 
 def _cleanup_empty_keys(json_spec):
@@ -314,7 +304,7 @@ def _validate_bill_to(bill_to):
         raise WorkflowBuilderException(
             'Cannot use another user\'s account for key "billTo"')
     elif bill_to.startswith('org-'):
-            user_billTo = dxpy.api.user_describe(user_id)
+            user_billTo = dxpy.api.user_describe(user_id)['billTo']
             if bill_to != user_billTo:
                 try:
                     member_access = dxpy.api.org_describe(bill_to)
@@ -585,8 +575,7 @@ def _build_global_workflow(json_spec, args):
         logger.info("Will create global workflow with spec: {}".format(json.dumps(print_spec)))
 
         # Create a new global workflow version on the platform
-        # global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json)["id"]
-        global_workflow_id = "gwf-dummy"
+        global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json)["id"]
         
         logger.info("Uploaded global workflow {n}/{v} successfully".format(n=gwf_final_json["name"],
                                                                            v=gwf_final_json["version"]))
