@@ -10354,12 +10354,13 @@ class TestDXArchive(DXTestCase):
         self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"live")
 
         # archive all files in root dir recursively
-        run("dx archive {}:{}".format(self.proj_archive_id,self.rootdir))
+        run("dx archive {}:{}/".format(self.proj_archive_id,self.rootdir))
         time.sleep(10)
         self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"archived")
-
+    
+    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
     def test_archive_invalid_paths(self):
         # mixed file and folder path        
         fname1 = self.gen_uniq_fname()
@@ -10368,18 +10369,58 @@ class TestDXArchive(DXTestCase):
         with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list files for each API request", exit_code=3):
             run("dx archive {}:{} {}:{}/".format(self.proj_archive_id,fid1,self.proj_archive_id,self.rootdir))
                 
+        # invalid project id
+        with self.assertSubprocessFailure(stderr_regexp="No target project has been set. Please check the input or check your permission to the given project.", exit_code=3):
+            run("dx archive {}:{}".format("project-B00000000000000000000000",fid1))
+        # invalid project name
+        with self.assertSubprocessFailure(stderr_regexp="No target project has been set. Please check the input or check your permission to the given project.", exit_code=3):
+            run("dx archive {}:{}".format("invalid_project_name",fid1))
+        # no project context       
+        with self.assertSubprocessFailure(stderr_regexp='No target project has been set. Please check the input or check your permission to the given project.',
+                                          exit_code=3), without_project_context():
+            run("dx archive {}".format(fid1))
+        # no project context       
+        with self.assertSubprocessFailure(stderr_regexp='No target project has been set. Please check the input or check your permission to the given project.',
+                                          exit_code=3), without_project_context():
+            run("dx archive :{}".format(fid1))
+
+        # invalid file name
+        with self.assertSubprocessFailure(stderr_regexp="No target project has been set. Please check the input or check your permission to the given project.", exit_code=3):
+            run("dx archive {}:{}".format(self.proj_archive_id,"invalid_file_name"))
+
+        # as long as there is a (valid project + file id)
+        with self.assertSubprocessFailure(stderr_regexp="InvalidInput", exit_code=3):
+            run("dx archive {}:{} {}:{}".format(
+                                        self.proj_archive_id,"invalid_file_name", 
+                                        self.proj_archive_id,"file-B00000000000000000000000"))
+
+        with self.assertSubprocessFailure(stderr_regexp="InvalidInput", exit_code=3):
+            run("dx archive {}:{} {}:{}".format(
+                                        self.proj_archive_id,"file-B00000000000000000000000", 
+                                        self.proj_archive_id,"invalid_file_name"))
+
+        with self.assertSubprocessFailure(stderr_regexp="InvalidInput", exit_code=3):
+            run("dx archive {}:{} {}:{}".format(
+                                        "project-B00000000000000000000000",fid1, 
+                                        self.proj_archive_id,"file-B00000000000000000000000"))
+
+        # skip the rest
+        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+            run("dx archive {}:{}/".format(self.proj_archive_id,self.rootdir+'invalid', self.proj_archive_id,fid1))
+
+        
         # more than one folder
         # subdir = '/subfolder'
         # dxpy.api.project_new_folder(self.proj_archive_id, {"folder": self.rootdir+subdir, "parents":True})
         # with self.assertSubprocessFailure(stderr_regexp="Expecting only one folder path to be archived", exit_code=3):
         #     run("dx archive {}:{} {}:{}".format(self.proj_archive_id,self.rootdir+subdir,self.proj_archive_id,self.rootdir))
-
+        
         # files in different project
         with temporary_project("other_project",select=False) as temp_project:
             test_projectid = temp_project.get_id()
             create_folder_in_project(test_projectid, self.rootdir)
             fid2 = create_file_in_project("temp_file", trg_proj_id=test_projectid,folder=self.rootdir)
-            with self.assertSubprocessFailure(stderr_regexp="All resolved paths must refer to file IDs in a single project", exit_code=3):
+            with self.assertSubprocessFailure(stderr_regexp="All resolved paths must refer to files/folder in a single project", exit_code=3):
                 run("dx archive {}:{} {}:{}".format(self.proj_archive_id,fid1,test_projectid,fid2))
 
     def test_archive_allcopies(self):
