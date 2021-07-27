@@ -34,7 +34,7 @@ from . import DXDataObject
 from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO, basestring, USING_PYTHON2
+from ..compat import BytesIO, basestring, USING_PYTHON2, md5_hasher
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -673,7 +673,7 @@ class DXFile(DXDataObject):
         if index is not None:
             req_input["index"] = int(index)
 
-        md5 = hashlib.md5()
+        md5 = md5_hasher()
         if hasattr(data, 'seek') and hasattr(data, 'tell'):
             # data is a buffer; record initial position (so we can rewind back)
             rewind_input_buffer_offset = data.tell()
