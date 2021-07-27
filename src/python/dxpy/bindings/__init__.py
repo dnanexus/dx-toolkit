@@ -660,23 +660,23 @@ class DXDataObject(DXObject):
     def _wait_until_parts_uploaded(self, timeout=255, **kwargs):
         elapsed = 0
         i = 0
-        while True:
-            describe = self.describe(fields={"parts", "state"}, **kwargs)
-            state, parts = describe["state"], describe["parts"]
-            if state == "closed" or not parts:
-                # parts of closed files must have been uploaded successfully
-                break
-            else:
-                is_uploaded = not any(parts[key].get("state", "complete") != "complete" for key in parts)
-                if is_uploaded:
-                    break
-            if elapsed >= timeout or elapsed < 0:
-                raise DXError("Reached timeout while waiting for parts of the file ({}) to be uploaded".format(self.get_id()))
-
-            wait = min(2**7, 2**i)
-            time.sleep(wait)
-            i += 1
-            elapsed += wait
+        # while True:
+        #     describe = self.describe(fields={"parts", "state"}, **kwargs)
+        #     state, parts = describe["state"], describe["parts"]
+        #     if state == "closed" or not parts:
+        #         # parts of closed files must have been uploaded successfully
+        #         break
+        #     else:
+        #         is_uploaded = not any(parts[key].get("state", "complete") != "complete" for key in parts)
+        #         if is_uploaded:
+        #             break
+        #     if elapsed >= timeout or elapsed < 0:
+        #         raise DXError("Reached timeout while waiting for parts of the file ({}) to be uploaded".format(self.get_id()))
+        #
+        #     wait = min(2**7, 2**i)
+        #     time.sleep(wait)
+        #     i += 1
+        #     elapsed += wait
 
 from .dxfile import DXFile, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
 from .dxdatabase import DXDatabase, DXFILE_HTTP_THREADS, DEFAULT_BUFFER_SIZE
