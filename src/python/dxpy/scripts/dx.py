@@ -3940,7 +3940,7 @@ def archive(args):
         elif mode == "unarchival":
             dryrun_request_input = dict(**request_input, dryRun=True)
             dryrun_res = send_archive_request(target_project, dryrun_request_input, request_func)
-            print('Would tag {} file(s) for unarchival, totalling {} GB, costing ${}'.format(dryrun_res["files"], dryrun_res["size"],dryrun_res["cost"]/1000))
+            print('Will tag {} file(s) for unarchival in {}, totalling {} GB, costing ${}'.format(dryrun_res["files"], target_project, dryrun_res["size"],dryrun_res["cost"]/1000))
 
         if not prompt_for_yn('Confirm all paths?', default=True):
             parser.exit(0)
