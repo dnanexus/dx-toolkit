@@ -3807,6 +3807,7 @@ def archive(args):
         if target_files and target_folder:
             err_exit('Expecting either a single folder or a list files for each API request', code=3)
         elif target_files: 
+            target_files = list(target_files)
             request_input = {"files": target_files}
         elif target_folder:
             request_input = {"folder": target_folder, "recurse":args.recurse}
@@ -3817,98 +3818,79 @@ def archive(args):
 
     def get_archival_paths(args):
         target_project = None
-        target_project_name = None
         target_folder = None
-        target_files = []
+        target_files = set()
         
         paths = [split_unescaped(':', path, include_empty_strings=True) for path in args.path]
+        possible_projects = set()
+        possible_objects = set()
+        for p in paths:
+            if len(p)>2: 
+                err_exit("Path '{}' is invalid. Please check the inputs or check --help for example inputs.".format(p), code=3)
+            elif len(p) == 2:
+                possible_projects.add(p[0])
+            possible_objects.add(p[-1])
 
-        for path in paths:
-                if len(path) > 2: # ignore invalid path
-                    continue
-                                
-                # resolve target project if haven't found one
-                if not target_project:
-                    try: 
-                        #   file-xxxx
-                        #   /folderpath/filename or /folderpath/
-                        # set the target project to be the current one
-                        if len(path) == 1:
-                            picked_project_desc = dxpy.describe(dxpy.PROJECT_CONTEXT_ID)
-                        
-                        # if the input path is in the following format:
-                        #   project-xxxx:file-xxxx
-                        #   project-xxxx:/folderpath/filename or project-xxxx:/folderpath/
-                        # resolve the given project id/name
-                        elif len(path) == 2:
-                            # id is given
-                            if is_container_id(path[-2]): 
-                                picked_project_desc = dxpy.describe(path[-2])
-                            # name is given
-                            elif path[-2]:
-                                project_results = list(dxpy.find_projects(name=path[-2],describe=True))
-                                if project_results:
-                                    picked_project = pick([ "{} ({})".format(result['describe']['name'], result['id']) for result in project_results],allow_mult=False)
-                                    picked_project_desc=project_results[picked_project]['describe']
-                                else:
-                                    raise
-                            # empty string: current project
-                            elif path[-2] == '':
-                                picked_project_desc =  dxpy.describe(dxpy.PROJECT_CONTEXT_ID)
-                    except Exception as e:
-                        warn("Input {} does not contain a valid project name".format(":".join(path)))
-                        continue
+        # get project ID
+        for proj in possible_projects:
+            # is project ID
+            if is_container_id(proj):
+                pass
+            # is "": use current project
+            elif proj == '':
+                if not dxpy.PROJECT_CONTEXT_ID:
+                    err_exit("Cannot find current project. Please check the environment.", code=3)
+                proj = dxpy.PROJECT_CONTEXT_ID
+            # name is given
+            else:
+                try:
+                    project_results = list(dxpy.find_projects(name=proj, describe=True))
+                    if project_results:
+                        choice = pick(["{} ({})".format(result['describe']['name'], result['id']) for result in project_results], allow_mult=False)
+                        proj = project_results[choice]['id']
+                except:
+                    err_exit("Cannot find project with name {}".format(proj), code=3)
 
-                    target_project = picked_project_desc['id']
-                    target_project_alias = [picked_project_desc['id'], picked_project_desc['name']]
-                    if target_project == dxpy.PROJECT_CONTEXT_ID:
-                        target_project_alias += ['']
-                
-                # if we already have a valid target project  
-                else:
-                    # assume the target files/folder exist in the same project as previous inputs
-                    if len(path) == 2 and path[-2] not in target_project_alias:
-                            err_exit("Expecting path '{}' to be in project {}, but it's in project {}. All resolved paths must refer to files/folder in a single project".format(
-                                ":".join(path), target_project, path[-2]), code=3)
+            if target_project and proj!= target_project:
+                err_exit("All paths must refer to files/folder in a single project, but two project ids: '{}' and '{}' are given. ".format(
+                                target_project, proj), code=3)
+            else:
+                target_project = proj
+        
+        # return None if cannot set a valid project
+        if not target_project:
+            return target_files, target_folder, target_project
 
-                # resolve target files/folder
-                target_path = path[-1]
-                # is a fileID
-                if is_data_obj_id(target_path) and target_path.startswith("file-"):
-                    target_files.append(target_path)
-                # is /folderpath/ or folderpath/filename
-                else:
-                    folderpath, entity_name = clean_folder_path(target_path)
-                    # find a folder
-                    if not entity_name:
-                        target_folder = folderpath
-                    # find a filename
-                    else:
-                        try: 
-                            file_results = list(dxpy.find_data_objects(classname="file", name=entity_name,project=target_project,folder=folderpath,describe=True,))
-                        except Exception as e:
-                            warn("Input '{}' is not valid: {}".format(":".join(path), e))
-                            continue
-                        
-                        if file_results and not args.all:
-                            picked_file = pick([ "{} ({})".format(result['describe']['name'], result['id']) for result in file_results],allow_mult=True)
-                            if picked_file == "*" :
-                                target_files+=[file['id'] for file in file_results]
-                            else:
-                                target_files.append(file_results[picked_file]['id'])
-                        else: 
-                            target_files+=[file['id'] for file in file_results]
-                
+        # get objects
+        for obj in possible_objects:
+            # is file ID
+            if is_data_obj_id(obj) and obj.startswith("file-"):
+                    target_files.add(obj)
+            # is /folderpath/ or folderpath/filename
+            else:
+                folderpath, entity_name = clean_folder_path(obj)
                 # once find a folder, skip the rest of inputs
-                if target_folder:
+                if not entity_name:
+                    target_folder = folderpath
                     break
-                # reset target project if all previous file paths failed
-                # otherwise, will keep using the target project id if any fileID is given, or filename is resolved
-                if not target_files:
-                    target_project = None
-                
+                # find a filename
+                else:
+                    try: 
+                        file_results = list(dxpy.find_data_objects(classname="file", name=entity_name,project=target_project,folder=folderpath,describe=True,))
+                    except:
+                        err_exit("Input '{}' is not found in project '{}'".format(obj, target_project), code=3)
+                    
+                    if file_results and not args.all:
+                        choice = pick([ "{} ({})".format(result['describe']['name'], result['id']) for result in file_results],allow_mult=True)
+                        if choice == "*" :
+                            target_files.update([file['id'] for file in file_results])
+                        else:
+                            target_files.add(file_results[choice]['id'])
+                    else: 
+                        target_files.update([file['id'] for file in file_results])
+        
         return target_files, target_folder, target_project
-    
+
     # resolve paths  
     target_files, target_folder, target_project = get_archival_paths(args)
 
@@ -3929,14 +3911,13 @@ def archive(args):
     
     # ask for confirmation if needed
     if args.confirm and INTERACTIVE_CLI:
-        print("Will send the request:")       
-        print("{:>10}: {}".format("project",target_project))
-        confirm_msg="\n".join(["{:>10}: {}".format(k,v) for k,v in request_input.items()])
-        print(confirm_msg)
         
         if mode == "archival":
-            counts = len(set(target_files)) or len(list(dxpy.find_data_objects(project=target_project,folder=target_folder,classname="file",recurse=args.recurse)))
-            print('Will tag {} file(s) for archival in {}'.format(counts,target_project))
+            if target_files:
+                counts = len(target_files)
+                print('Will tag {} file(s) for archival in {}'.format(counts,target_project))
+            else: 
+                print('Will tag file(s) for archival in folder {}:{} {}recursively'.format(target_project, target_folder, 'non' if not args.recurse else ''))
         elif mode == "unarchival":
             dryrun_request_input = dict(**request_input, dryRun=True)
             dryrun_res = send_archive_request(target_project, dryrun_request_input, request_func)
