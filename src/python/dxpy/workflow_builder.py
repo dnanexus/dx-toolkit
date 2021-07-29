@@ -374,19 +374,6 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
     """
     executables = [i.get("executable") for i in workflow_spec.get("stages")]
     requested_regions = list(workflow_enabled_regions)
-
-    if 'billTo' in workflow_spec:
-        billable_regions = set()
-        try:
-            if workflow_spec['billTo'].startswith('user-'):
-                billable_regions = set(dxpy.api.user_describe(workflow_spec['billTo'])['permittedRegions'])
-            elif workflow_spec['billTo'].startswith('org-'):
-                billable_regions = set(dxpy.api.org_describe(workflow_spec['billTo'])['permittedRegions'])
-        except:
-            pass
-        
-        if billable_regions:
-            workflow_enabled_regions.intersection_update(billable_regions)
     
     for exect in executables:
         if exect.startswith("applet-"):
@@ -456,6 +443,11 @@ def _get_validated_enabled_regions(json_spec, from_command_line):
 
         enabled_regions.append(region)
 
+    if 'billTo' in json_spec:
+        billable_regions = dxpy.executable_builder.get_permitted_regions(json_spec['billTo'])
+        if billable_regions:
+            enabled_regions.intersection_update(billable_regions)
+    
     if not enabled_regions:
         raise AssertionError("This workflow should be enabled in at least one region")
 

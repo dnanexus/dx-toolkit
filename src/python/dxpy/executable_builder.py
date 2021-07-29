@@ -123,6 +123,20 @@ def validate_bill_to(bill_to, builder_exception):
     
     return True
 
+def add_developer(prefixed_name):
+    assert(prefixed_name.startswith('app-') or prefixed_name.startswith('globalworkflow-'))
+
+    if prefixed_name.partition('-')[0] == 'app':
+        exception_type = dxpy.app_builder.AppBuilderException
+        describe_method = dxpy.api.app_add_developers
+        exception_msg = \
+            'An app with the given name already exists and you are not a developer of that app'
+    else:
+        exception_type = dxpy.workflow_builder.WorkflowBuilderException
+        describe_method = dxpy.api.global_workflow_add_developers
+        exception_msg = \
+            'A global workflow with the given name already exists and you are not a developer of that workflow'
+    
 def verify_developer_rights(prefixed_name):
     """
     Checks if the current user is a developer of the app or global workflow
@@ -142,7 +156,7 @@ def verify_developer_rights(prefixed_name):
         describe_method = dxpy.api.global_workflow_describe
         exception_msg = \
             'A global workflow with the given name already exists and you are not a developer of that workflow'
-
+     # TODO: add developer?
     name_already_exists = True
     is_developer = False
     version = None
@@ -222,6 +236,17 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exece
                 if key in json_spec.get('runSpec', {}):
                     raise executable_builder_exeception(
                     key + " cannot be given in both runSpec and in regional options for " + region)
+
+def get_permitted_regions(bill_to):
+    billable_regions = set()
+    try:
+        if bill_to.startswith('user-'):
+            billable_regions = set(dxpy.api.user_describe(bill_to)['permittedRegions'])
+        elif bill_to.startswith('org-'):
+            billable_regions = set(dxpy.api.org_describe(bill_to)['permittedRegions'])
+    except:
+        pass
+    return billable_regions
 
 def get_enabled_regions(exec_type, json_spec, from_command_line, executable_builder_exeception):
     """
