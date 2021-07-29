@@ -711,6 +711,8 @@ class DXFile(DXDataObject):
         # to ask us for a new upload URL every time it attempts a request (instead of giving them directly).
         # APPS-650 - retries are given because part would sometimes stay in non-complete state. We retry to reupload the part in case this happens.
         retries = 3
+        describe_input = {"fields": {"state": True}}
+
         for i in range(retries):
             dxpy.DXHTTPRequest(get_upload_url_and_headers,
                                data,
@@ -720,7 +722,7 @@ class DXFile(DXDataObject):
                                timeout=FILE_REQUEST_TIMEOUT,
                                auth=None,
                                method='PUT')
-            if self.describe(fields={'parts'}, **kwargs).get('parts', {}).get(str(index), {}).get('state', "complete") == 'complete':
+            if self._describe(self._dxid, describe_input, **kwargs).get('parts', {}).get(str(index), {}).get('state', "complete") == 'complete':
                 break
 
         self._num_uploaded_parts += 1
