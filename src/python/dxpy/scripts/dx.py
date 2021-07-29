@@ -3936,7 +3936,7 @@ def archive(args):
         
         if mode == "archival":
             counts = len(set(target_files)) or len(list(dxpy.find_data_objects(project=target_project,folder=target_folder,classname="file",recurse=args.recurse)))
-            print('Will request in total {} file(s) for archival in {}'.format(counts,target_project))
+            print('Will tag {} file(s) for archival in {}'.format(counts,target_project))
         elif mode == "unarchival":
             dryrun_request_input = dict(**request_input, dryRun=True)
             dryrun_res = send_archive_request(target_project, dryrun_request_input, request_func)
