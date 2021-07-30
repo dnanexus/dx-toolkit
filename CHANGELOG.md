@@ -16,6 +16,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * `Total price` for `dx describe` prints formatted currency based on `currency` metadata
+* Improvements to symlink downloading reliability by solely using `aria2c` and enhancing various options around its use
 
 ### Fixed
 * `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
