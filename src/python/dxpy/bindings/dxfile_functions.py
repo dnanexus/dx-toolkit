@@ -180,11 +180,6 @@ def _verify(filename, md5digest):
 # [dxid] is a symbolic link. Create a preauthenticated URL,
 # and download it
 def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_unlimited_retries=False):
-    dxfile = dxpy.DXFile(dxid)
-    url, _headers = dxfile.get_download_url(preauthenticated=True,
-                                            duration=6*3600,
-                                            project=project)
-
     # Check if aria2 present, if not, error.
     aria2c_exe = _which("aria2c")
 
@@ -192,6 +187,11 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_unl
         err_exit("aria2c must be installed on this system to download this data. " + \
                  "Please see the documentation at https://aria2.github.io/.")
         return
+
+    dxfile = dxpy.DXFile(dxid)
+    url, _headers = dxfile.get_download_url(preauthenticated=True,
+                                            duration=6*3600,
+                                            project=project)
 
     # aria2c does not allow more than 16 connections per server
     max_connections = min(16, multiprocessing.cpu_count())
