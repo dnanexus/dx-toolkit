@@ -97,7 +97,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected
 
 
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    project=None, describe_output=None, **kwargs):
+                    project=None, describe_output=None, symlink_unlimited_retries=False, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
@@ -114,6 +114,9 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             It should contain the default fields of the describe API call output and
             the "parts" field, not included in the output by default.
     :type describe_output: dict or None
+    :param symlink_unlimited_retries: when downloading a symlink, call aria2c with the 
+            unlimited retries parameter specified.
+    :type symlink_unlimited_retries: bool
 
     Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
@@ -134,6 +137,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
                                    show_progress=show_progress,
                                    project=project,
                                    describe_output=describe_output,
+                                   symlink_unlimited_retries=symlink_unlimited_retries,
                                    **kwargs)
 
 
@@ -175,65 +179,55 @@ def _verify(filename, md5digest):
 
 # [dxid] is a symbolic link. Create a preauthenticated URL,
 # and download it
-def _download_symbolic_link(dxid, md5digest, project, dest_filename):
+def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_unlimited_retries=False):
     dxfile = dxpy.DXFile(dxid)
     url, _headers = dxfile.get_download_url(preauthenticated=True,
                                             duration=6*3600,
                                             project=project)
 
-    def call_cmd(cmd, max_retries=6, num_attempts=0):
-        try:
-            if aria2c_exe is not None:
-                print("Downloading symbolic link with aria2c")
-            else:
-                print("Downloading symbolic link with wget")
-            subprocess.check_call(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            msg = ""
-            if e and e.output:
-                msg = e.output.strip()
-            if e.returncode == 22 and num_attempts <= max_retries:  # hotfix, DEVEX-1779
-                time_to_wait = 1 if num_attempts <= 2 else min(randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1)), 60)
-                print("Download failed with code 22. Retrying after {} seconds... Error details: cmd: {}\nmsg: {}\n".format(str(time_to_wait), str(cmd), msg))
-                sleep(time_to_wait)
-                call_cmd(cmd, max_retries, num_attempts + 1)
-            err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
-
-    # Follow the redirection
-    print('Following redirect for ' + url)
-
-    # Check if aria2 present
-    # Use that instead of wget
+    # Check if aria2 present, if not, error.
     aria2c_exe = _which("aria2c")
-    if aria2c_exe is None:
-        wget_exe = _which("wget")
-        if wget_exe is None:
-            err_exit("wget is not installed on this system")
 
-        cmd = ["wget", "--tries=20", "--quiet"]
-        if os.path.isfile(dxid):
-            # file already exists, resume upload.
-            cmd += ["--continue"]
-        cmd += ["-O", dest_filename, url]
+    if aria2c_exe is None:
+        err_exit("aria2c must be installed on this system to download this data. " + \
+                 "Please see the documentation at https://aria2.github.io/.")
+        return
+
+    # aria2c does not allow more than 16 connections per server
+    max_connections = min(16, multiprocessing.cpu_count())
+    cmd = [
+        "aria2c",
+        "-c",                        # continue downloading a partially downloaded file
+        "-s", str(max_connections),  # number of concurrent downloads (split file)
+        "-x", str(max_connections),  # maximum number of connections to one server for  each  download
+        "--retry-wait=10"            # time to wait before retrying
+    ]
+
+    if symlink_unlimited_retries:
+        # `-m` is the max number of tries parameter. 
+        # Specifying `0` means try infinitely.
+        cmd.extend(["-m", "0"]) 
     else:
-        print("aria2c found in path so using that instead of wget \n")
-        # aria2c does not allow more than 16 connections per server
-        max_connections = min(16, multiprocessing.cpu_count())
-        cmd = ["aria2c", "--check-certificate=false", "-s", str(max_connections), "-x", str(max_connections), "--retry-wait=10", "--max-tries=15"]
-        # Split path properly for aria2c
-        # If '-d' arg not provided, aria2c uses current working directory
-        cwd = os.getcwd()
-        directory, filename = os.path.split(dest_filename)
-        directory = cwd if directory in ["", cwd] else directory
-        cmd += ["-o", filename, "-d", os.path.abspath(directory), url]
-    call_cmd(cmd)
+        cmd.extend(["-m", "15"]) 
+
+    # Split path properly for aria2c
+    # If '-d' arg not provided, aria2c uses current working directory
+    cwd = os.getcwd()
+    directory, filename = os.path.split(dest_filename)
+    directory = cwd if directory in ["", cwd] else directory
+    cmd += ["-o", filename, "-d", os.path.abspath(directory), url]
+
+    try:
+        subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
 
     if md5digest is not None:
         _verify(dest_filename, md5digest)
 
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                     project=None, describe_output=None, **kwargs):
+                     project=None, describe_output=None, symlink_unlimited_retries=False, **kwargs):
     '''
     Core of download logic. Download file-id *dxid* and store it in
     a local file *filename*.
@@ -279,13 +273,14 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         dxfile_desc = describe_output
     else:
         dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
+
+    # handling of symlinked files.
     if 'drive' in dxfile_desc:
-        # A symbolic link. Get the MD5 checksum, if we have it
         if 'md5' in dxfile_desc:
             md5 = dxfile_desc['md5']
         else:
             md5 = None
-        _download_symbolic_link(dxid, md5, project, filename)
+        _download_symbolic_link(dxid, md5, project, filename, symlink_unlimited_retries=symlink_unlimited_retries)
         return True
 
     parts = dxfile_desc["parts"]
