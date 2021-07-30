@@ -37,8 +37,8 @@ import dxpy
 from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..compat import open, USING_PYTHON2
 from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..compat import open, md5_hasher, USING_PYTHON2
 from ..utils import response_iterator
 import subprocess
 
@@ -350,7 +350,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                     if "md5" not in part_info:
                         raise DXFileError("File {} does not contain part md5 checksums".format(dxfile.get_id()))
                     bytes_to_read = part_info["size"]
-                    hasher = hashlib.md5()
+                    hasher = md5_hasher()
                     while bytes_to_read > 0:
                         chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
                         if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
@@ -384,7 +384,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
                 if chunk_part != cur_part:
                     verify_part(cur_part, got_bytes, hasher)
-                    cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
+                    cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
                 fh.write(chunk_data)
