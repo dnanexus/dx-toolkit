@@ -3917,7 +3917,7 @@ def archive(args):
                 counts = len(target_files)
                 print('Will tag {} file(s) for archival in {}'.format(counts,target_project))
             else: 
-                print('Will tag file(s) for archival in folder {}:{} {}recursively'.format(target_project, target_folder, 'non' if not args.recurse else ''))
+                print('Will tag file(s) for archival in folder {}:{} {}recursively'.format(target_project, target_folder, 'non-' if not args.recurse else ''))
         elif mode == "unarchival":
             dryrun_request_input = dict(**request_input, dryRun=True)
             dryrun_res = send_archive_request(target_project, dryrun_request_input, request_func)
