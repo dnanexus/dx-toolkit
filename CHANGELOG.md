@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Fixed `dx upload` issue where file would stay in an open state
+
 ## [313.0] -  beta
 
 ### Added
