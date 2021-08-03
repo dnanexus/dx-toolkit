@@ -5812,6 +5812,11 @@ EXAMPLES:
 
     # archive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q
     $ dx archive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+    
+    # archive 2 files in current project. 
+    # Selecting the project ahead and specifying file ids saves time by avoiding path resolution.
+	$ dx select FirstProj
+	$ dx archive file-A00000ygpqGK8ZPjbk0Q000Q file-B00000ygpqGK8ZPjbk0Q000Q
 
     # archive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q
     $ dx archive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
@@ -5863,6 +5868,11 @@ EXAMPLES:
 
     # unarchive 3 files in project "FirstProj" with project id project-B0VK6F6gpqG6z7JGkbqQ000Q 
     $ dx unarchive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+ 
+    # unarchive 2 files in current project. 
+    # Selecting the project ahead and specifying file ids saves time by avoiding path resolution.
+	$ dx select FirstProj
+	$ dx archive file-A00000ygpqGK8ZPjbk0Q000Q file-B00000ygpqGK8ZPjbk0Q000Q
 
     # unarchive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q
     $ dx unarchive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
