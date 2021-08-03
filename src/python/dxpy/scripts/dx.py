@@ -3832,9 +3832,14 @@ def archive(args):
             possible_objects.add(p[-1])
 
         # get project ID
+        if not possible_projects:
+            if not dxpy.PROJECT_CONTEXT_ID:
+                    err_exit("Cannot find current project. Please check the environment.", code=3)
+            target_project = dxpy.PROJECT_CONTEXT_ID
+        
         for proj in possible_projects:
             # is project ID
-            if is_container_id(proj):
+            if is_container_id(proj) and proj.startswith('project-'):
                 pass
             # is "": use current project
             elif proj == '':
@@ -3854,7 +3859,7 @@ def archive(args):
             if target_project and proj!= target_project:
                 err_exit("All paths must refer to files/folder in a single project, but two project ids: '{}' and '{}' are given. ".format(
                                 target_project, proj), code=3)
-            else:
+            elif not target_project:
                 target_project = proj
         
         # return None if cannot set a valid project
