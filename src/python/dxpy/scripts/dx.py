@@ -5813,8 +5813,7 @@ EXAMPLES:
     # archive 3 files in project "FirstProj" with project ID project-B0VK6F6gpqG6z7JGkbqQ000Q
     $ dx archive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
     
-    # archive 2 files in current project. 
-    # (selecting the project ahead and specifying file IDs saves time by avoiding path resolution.)
+    # archive 2 files in current project. Specifying file ids saves time by avoiding file name resolution.
     $ dx select FirstProj
     $ dx archive file-A00000ygpqGK8ZPjbk0Q000Q file-B00000ygpqGK8ZPjbk0Q000Q
 
@@ -5869,8 +5868,7 @@ EXAMPLES:
     # unarchive 3 files in project "FirstProj" with project ID project-B0VK6F6gpqG6z7JGkbqQ000Q 
     $ dx unarchive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
  
-    # unarchive 2 files in current project. 
-    # (selecting the project ahead and specifying file IDs saves time by avoiding path resolution.)
+    # unarchive 2 files in current project. Specifying file ids saves time by avoiding file name resolution.
     $ dx select FirstProj
     $ dx unarchive file-A00000ygpqGK8ZPjbk0Q000Q file-B00000ygpqGK8ZPjbk0Q000Q
 
