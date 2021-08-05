@@ -3829,13 +3829,10 @@ def archive(args):
                 err_exit("Path '{}' is invalid. Please check the inputs or check --help for example inputs.".format(p), code=3)
             elif len(p) == 2:
                 possible_projects.add(p[0])
+            elif len(p) == 1:
+                possible_projects.add('')
+            
             possible_objects.add(p[-1])
-
-        # get project ID
-        if not possible_projects:
-            if not dxpy.PROJECT_CONTEXT_ID:
-                    err_exit("Cannot find current project. Please check the environment.", code=3)
-            target_project = dxpy.PROJECT_CONTEXT_ID
         
         for proj in possible_projects:
             # is project ID

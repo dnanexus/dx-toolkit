@@ -10410,6 +10410,14 @@ class TestDXArchive(DXTestCase):
                 run("dx archive {}:{} {}:{}".format(
                     self.proj_archive_id,fid1,
                     test_projectid,fid2))
+            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                run("dx archive {}:{} :{}".format(
+                    self.proj_archive_id,fid1,
+                    fid2))
+            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                run("dx archive {}:{} {}".format(
+                    self.proj_archive_id,fid1,
+                    fid2))
 
     def test_archive_allcopies(self):
         fname = self.gen_uniq_fname()
