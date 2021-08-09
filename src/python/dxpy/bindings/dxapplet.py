@@ -190,7 +190,7 @@ class DXExecutable:
         :type debug: dict
         :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
         :type delay_workspace_destruction: boolean
-        :param priority: Priority level to request for all jobs created in the execution tree, either "normal" or "high"
+        :param priority: Priority level to request for all jobs created in the execution tree, "low", "normal", or "high"
         :type priority: string
         :param ignore_reuse: Disable job reuse for this execution
         :type ignore_reuse: boolean
