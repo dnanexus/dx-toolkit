@@ -3843,7 +3843,7 @@ def archive(args):
             
             obj = p[-1]
             if obj[-1] == '/':
-                folder, entity_name = clean_folder_path(obj)
+                folder, entity_name = clean_folder_path(('' if obj.startswith('/') else '/') + obj)
                 if entity_name:
                     possible_files.add(obj)
                 else:
@@ -3900,7 +3900,7 @@ def archive(args):
                     target_files.add(fp)
                 # is folderpath/filename
                 else:
-                    folderpath, filename = clean_folder_path(fp)
+                    folderpath, filename = clean_folder_path(('' if obj.startswith('/') else '/') + fp)
                     try: 
                         file_results = list(dxpy.find_data_objects(classname="file", name=filename,project=target_project,folder=folderpath,describe=True,recurse=False))
                     except:
