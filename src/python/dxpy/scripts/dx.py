@@ -3802,19 +3802,25 @@ def archive(args):
 
     def get_valid_archival_input(args, target_files, target_folder, target_project):
         request_input = {}
-        if not target_project:
-            err_exit('No target project has been set. Please check the input or check your permission to the given project.', code=3)
-        if target_files and target_folder:
-            err_exit('Expecting either a single folder or a list files for each API request', code=3)
-        elif target_files: 
+        if target_files: 
             target_files = list(target_files)
             request_input = {"files": target_files}
         elif target_folder:
             request_input = {"folder": target_folder, "recurse":args.recurse}
         else:
-            err_exit("No input file/folder is found in project {}".format(target_project), 
-                            code=3)
-        return request_input
+            err_exit("No input file/folder is found in project {}".format(target_project), code=3)
+        
+        request_mode = args.request_mode    
+        options = {}
+        if request_mode == "archival":
+            options = {"allCopies": args.all_copies}
+            request_func = dxpy.api.project_archive
+        elif request_mode == "unarchival":
+            options = {"rate": args.rate}
+            request_func = dxpy.api.project_unarchive        
+        
+        request_input.update(options)
+        return request_mode, request_func, request_input
 
     def get_archival_paths(args):
         target_project = None
@@ -3823,17 +3829,26 @@ def archive(args):
         
         paths = [split_unescaped(':', path, include_empty_strings=True) for path in args.path]
         possible_projects = set()
-        possible_objects = set()
+        possible_folder = set()
+        possible_files = set()
+
+        # Step 0: parse input paths into projects and objects
         for p in paths:
             if len(p)>2: 
-                err_exit("Path '{}' is invalid. Please check the inputs or check --help for example inputs.".format(p), code=3)
+                err_exit("Path '{}' is invalid. Please check the inputs or check --help for example inputs.".format(":".join(p)), code=3)
             elif len(p) == 2:
                 possible_projects.add(p[0])
             elif len(p) == 1:
                 possible_projects.add('')
             
-            possible_objects.add(p[-1])
+            obj = p[-1]
+            if obj[-1] == '/':
+                folder, _ = clean_folder_path(obj)
+                possible_folder.add(folder)
+            else:
+                possible_files.add(obj)
         
+        # Step 1: find target project
         for proj in possible_projects:
             # is project ID
             if is_container_id(proj) and proj.startswith('project-'):
@@ -3847,10 +3862,13 @@ def archive(args):
             else:
                 try:
                     project_results = list(dxpy.find_projects(name=proj, describe=True))
-                    if project_results:
-                        choice = pick(["{} ({})".format(result['describe']['name'], result['id']) for result in project_results], allow_mult=False)
-                        proj = project_results[choice]['id']
                 except:
+                    err_exit("Cannot find project with name {}".format(proj), code=3)
+                
+                if project_results:
+                    choice = pick(["{} ({})".format(result['describe']['name'], result['id']) for result in project_results], allow_mult=False)
+                    proj = project_results[choice]['id']
+                else:
                     err_exit("Cannot find project with name {}".format(proj), code=3)
 
             if target_project and proj!= target_project:
@@ -3858,31 +3876,37 @@ def archive(args):
                                 target_project, proj), code=3)
             elif not target_project:
                 target_project = proj
-        
-        # return None if cannot set a valid project
-        if not target_project:
-            return target_files, target_folder, target_project
 
-        # get objects
-        for obj in possible_objects:
-            # is file ID
-            if is_data_obj_id(obj) and obj.startswith("file-"):
-                    target_files.add(obj)
-            # is /folderpath/ or folderpath/filename
-            else:
-                folderpath, entity_name = clean_folder_path(obj)
-                # once find a folder, skip the rest of inputs
-                if not entity_name:
-                    target_folder = folderpath
-                    break
+        # Step 2: check 1) target project
+        #               2) either one folder or a list of files
+        if not target_project:
+            err_exit('No target project has been set. Please check the input or check your permission to the given project.', code=3)
+        if len(possible_folder) >1:
+            err_exit("Only one folder is allowed for each request. Please check the inputs or check --help for example inputs.".format(p), code=3)
+        if possible_folder and possible_files:
+            err_exit('Expecting either a single folder or a list of files for each API request', code=3)
+        
+        # Step 3: assign target folder or target files
+        if possible_folder:
+            target_folder = possible_folder.pop()
+        else:
+            for fp in possible_files:
                 # find a filename
+                # is file ID
+                if is_data_obj_id(fp) and fp.startswith("file-"):
+                    target_files.add(fp)
+                # is folderpath/filename
                 else:
+                    folderpath, filename = clean_folder_path(fp)
                     try: 
-                        file_results = list(dxpy.find_data_objects(classname="file", name=entity_name,project=target_project,folder=folderpath,describe=True,))
+                        file_results = list(dxpy.find_data_objects(classname="file", name=filename,project=target_project,folder=folderpath,describe=True,recurse=False))
                     except:
-                        err_exit("Input '{}' is not found in project '{}'".format(obj, target_project), code=3)
+                        err_exit("Input '{}' is not found as a file in project '{}'".format(fp, target_project), code=3)
                     
-                    if file_results and not args.all:
+                    if not file_results:
+                        err_exit("Input '{}' is not found as a file in project '{}'".format(fp, target_project), code=3)
+                    # elif file_results
+                    if not args.all:
                         choice = pick([ "{} ({})".format(result['describe']['name'], result['id']) for result in file_results],allow_mult=True)
                         if choice == "*" :
                             target_files.update([file['id'] for file in file_results])
@@ -3895,32 +3919,19 @@ def archive(args):
 
     # resolve paths  
     target_files, target_folder, target_project = get_archival_paths(args)
-
-    # check input: project ID + either files or one folder should be specified                               
-    request_input = get_valid_archival_input(args, target_files, target_folder, target_project)
     
-    # set request mode: archive / unarchive
     # set request command and add additional options
-    mode = args.request_mode    
-    archival_options = {}
-    if mode == "archival":
-        archival_options = {"allCopies": args.all_copies}
-        request_func = dxpy.api.project_archive
-    elif mode == "unarchival":
-        archival_options = {"rate": args.rate}
-        request_func = dxpy.api.project_unarchive        
-    request_input.update(archival_options)         
-    
+    request_mode, request_func, request_input = get_valid_archival_input(args, target_files, target_folder, target_project)
+                 
     # ask for confirmation if needed
     if args.confirm and INTERACTIVE_CLI:
-        
-        if mode == "archival":
+        if request_mode == "archival":
             if target_files:
                 counts = len(target_files)
                 print('Will tag {} file(s) for archival in {}'.format(counts,target_project))
             else: 
                 print('Will tag file(s) for archival in folder {}:{} {}recursively'.format(target_project, target_folder, 'non-' if not args.recurse else ''))
-        elif mode == "unarchival":
+        elif request_mode == "unarchival":
             dryrun_request_input = dict(**request_input, dryRun=True)
             dryrun_res = send_archive_request(target_project, dryrun_request_input, request_func)
             print('Will tag {} file(s) for unarchival in {}, totalling {} GB, costing ${}'.format(dryrun_res["files"], target_project, dryrun_res["size"],dryrun_res["cost"]/1000))
@@ -3933,9 +3944,9 @@ def archive(args):
     
     if not args.quiet:
         print()
-        if mode == "archival":
+        if request_mode == "archival":
             print('Tagged {} file(s) for archival in {}'.format(res["count"],target_project))
-        elif mode == "unarchival":
+        elif request_mode == "unarchival":
             print('Tagged {} file(s) for unarchival, totalling {} GB, costing ${}'.format(res["files"], res["size"],res["cost"]/1000))
         print()    
 
