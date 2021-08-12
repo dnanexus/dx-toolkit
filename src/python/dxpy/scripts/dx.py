@@ -3842,8 +3842,6 @@ def archive(args):
                 possible_projects.add('')
             
             obj = p[-1]
-            wd = dxpy.config.get('DX_CLI_WD', u'/')
-
             if obj[-1] == '/':
                 folder, entity_name = clean_folder_path(obj)
                 if entity_name:
