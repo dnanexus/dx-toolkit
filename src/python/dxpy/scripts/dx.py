@@ -5843,9 +5843,9 @@ parser_archive.add_argument(
     help=fill('If true, archive all the copies of files in projects with the same billTo org.' ,width_adjustment=-24)+ '\n'+ fill('See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24), 
                             default=False, action='store_true')
 parser_archive.add_argument(
-    '-y','--confirm', dest='confirm',
+    '-y','--yes', dest='confirm',
     help=fill('Do not ask for confirmation.' , width_adjustment=-24), 
-    default=False, action='store_true')
+    default=True, action='store_false')
 parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_archive.add_argument(
@@ -5895,9 +5895,9 @@ fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_
 
 parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_unarchive.add_argument(
-    '-y','--confirm', dest='confirm',
-    help=fill('Do not ask for confirmation. If not specified, dry run will be skipped' , width_adjustment=-24), 
-    default=False, action='store_true')
+    '-y','--yes', dest='confirm',
+    help=fill('Do not ask for confirmation.' , width_adjustment=-24), 
+    default=True, action='store_false')
 parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_unarchive.add_argument(

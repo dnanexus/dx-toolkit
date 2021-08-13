@@ -10292,7 +10292,7 @@ class TestDXArchive(DXTestCase):
         fid1 = create_file_in_project(fname1, self.proj_archive_id,folder=self.rootdir)
         fid2 = create_file_in_project(fname2, self.proj_archive_id,folder=self.rootdir)
 
-        run("dx archive {}:{} {}:{}{}".format(
+        run("dx archive -y {}:{} {}:{}{}".format(
             self.proj_archive_id,fid1,
             self.proj_archive_id,self.rootdir,fname2))
         
@@ -10303,10 +10303,10 @@ class TestDXArchive(DXTestCase):
         # invalid project id or file id
         # error raises from API
         with self.assertSubprocessFailure(stderr_regexp="InvalidInput", exit_code=3):
-            run("dx archive {}:{}".format(
+            run("dx archive -y {}:{}".format(
                                         self.proj_archive_id, "file-B00000000000000000000000"))
         with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
-            run("dx archive {}:{}".format(
+            run("dx archive -y {}:{}".format(
                                         "project-B00000000000000000000000",fid1))
 
     def test_archive_files_allmatch(self):
@@ -10315,7 +10315,7 @@ class TestDXArchive(DXTestCase):
         fid1 = create_file_in_project(fname_allmatch, self.proj_archive_id,folder=self.rootdir)
         fid2 = create_file_in_project(fname_allmatch, self.proj_archive_id,folder=self.rootdir)
         
-        run("dx archive -a {}:{}{}".format(self.proj_archive_id,self.rootdir,fname_allmatch))
+        run("dx archive -y -a {}:{}{}".format(self.proj_archive_id,self.rootdir,fname_allmatch))
         time.sleep(10)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"archived")
@@ -10325,14 +10325,14 @@ class TestDXArchive(DXTestCase):
         fid3 = create_file_in_project(fname_allmatch2, self.proj_archive_id,folder=self.rootdir)
         fid4 = create_file_in_project(fname_allmatch2, self.proj_archive_id,folder=self.rootdir)
         
-        dx_archive = pexpect.spawn("dx archive {}:{}{}".format(self.proj_archive_id,self.rootdir,fname_allmatch2),
+        dx_archive_confirm = pexpect.spawn("dx archive -y {}:{}{}".format(self.proj_archive_id,self.rootdir,fname_allmatch2),
                                          logfile=sys.stderr,
                                          **spawn_extra_args)
-        dx_archive.expect('for all: ')
-        dx_archive.sendline("*")
+        dx_archive_confirm.expect('for all: ')
+        dx_archive_confirm.sendline("*")
         
-        dx_archive.expect(pexpect.EOF, timeout=None)
-        dx_archive.close()
+        dx_archive_confirm.expect(pexpect.EOF, timeout=30)
+        dx_archive_confirm.close()
 
         time.sleep(10)
         self.assertEqual(dxpy.describe(fid3)["archivalState"],"archived")
@@ -10348,7 +10348,7 @@ class TestDXArchive(DXTestCase):
         fid_subdir1 = create_file_in_project(fname_subdir1, self.proj_archive_id, folder=self.rootdir+subdir)
 
         # archive subfolder 
-        run("dx archive {}:{}".format(self.proj_archive_id,self.rootdir+subdir))
+        run("dx archive -y {}:{}".format(self.proj_archive_id,self.rootdir+subdir))
         time.sleep(10)
         self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
 
@@ -10357,21 +10357,42 @@ class TestDXArchive(DXTestCase):
         fid_subdir2 = create_file_in_project(fname_subdir2, self.proj_archive_id, folder=self.rootdir+subdir)
 
         # archive files in root dir only
-        run("dx archive --no-recurse {}:{}".format(self.proj_archive_id,self.rootdir))
+        run("dx archive -y --no-recurse {}:{}".format(self.proj_archive_id,self.rootdir))
         time.sleep(10)
         self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"live")
 
         # archive all files in root dir recursively
-        run("dx archive {}:{}".format(self.proj_archive_id,self.rootdir))
-        time.sleep(10)
+        run("dx archive -y {}:{}".format(self.proj_archive_id,self.rootdir))
+        time.sleep(20)
         self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"archived")
         
         # invalid folder path
         with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
-            run("dx archive {}:{}".format(self.proj_archive_id,self.rootdir+'invalid/'))
+            run("dx archive -y {}:{}".format(self.proj_archive_id,self.rootdir+'invalid/'))
+
+    # def test_archive_filename_with_forwardslash(self):
+    #     subdir = 'x/'
+    #     dxpy.api.project_new_folder(self.proj_archive_id, {"folder": self.rootdir+subdir, "parents":True})
+
+    #     fname = r'x\\/'
+    #     fid_root = create_file_in_project(fname, self.proj_archive_id, folder=self.rootdir)
+    #     fid_subdir1 = create_file_in_project(fname, self.proj_archive_id, folder=self.rootdir+subdir)     
+
+    #     # run("dx archive -y {}:{}".format(self.proj_archive_id,subdir))
+    #     # time.sleep(10)
+    #     # self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
+
+    #     run("dx archive -y {}:{}".format(self.proj_archive_id, subdir+fname))
+    #     time.sleep(10)
+    #     self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
+
+    #     with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
+    #         run("dx archive -y {}:{} {}:{}".format(
+    #             self.proj_archive_id, fname,
+    #             self.proj_archive_id, subdir))
 
     def test_archive_equivalent_paths(self):
         with temporary_project("other_project",select=True) as temp_project:
@@ -10386,13 +10407,13 @@ class TestDXArchive(DXTestCase):
                 for a in affix:
                     input += " {}{}{}".format(p,a,fname)
                     print(input)
-                    dx_confirm = pexpect.spawn("dx archive -y {}".format(input),
+                    dx_archive_confirm = pexpect.spawn("dx archive {}".format(input),
                                             logfile=sys.stderr,
                                             **spawn_extra_args)
-                    dx_confirm.expect('Will tag 1')
-                    dx_confirm.sendline("n")
-                    dx_confirm.expect(pexpect.EOF, timeout=None)
-                    dx_confirm.close()
+                    dx_archive_confirm.expect('Will tag 1')
+                    dx_archive_confirm.sendline("n")
+                    dx_archive_confirm.expect(pexpect.EOF, timeout=30)
+                    dx_archive_confirm.close()
 
             input = ""
             fp = create_folder_in_project(test_projectid,'/foo/')
@@ -10400,13 +10421,13 @@ class TestDXArchive(DXTestCase):
                 for a in affix:
                     input += " {}{}{}".format(p,a,'foo/')
                     print(input)
-                    dx_confirm = pexpect.spawn("dx archive -y {}".format(input),
+                    dx_archive_confirm = pexpect.spawn("dx archive {}".format(input),
                                             logfile=sys.stderr,
                                             **spawn_extra_args)
-                    dx_confirm.expect('{}:/foo'.format(test_projectid))
-                    dx_confirm.sendline("n")
-                    dx_confirm.expect(pexpect.EOF, timeout=None)
-                    dx_confirm.close()
+                    dx_archive_confirm.expect('{}:/foo'.format(test_projectid))
+                    dx_archive_confirm.sendline("n")
+                    dx_archive_confirm.expect(pexpect.EOF, timeout=30)
+                    dx_archive_confirm.close()
 
     def test_archive_invalid_paths(self):
         # mixed file and folder path        
@@ -10414,41 +10435,41 @@ class TestDXArchive(DXTestCase):
         fid1 = create_file_in_project(fname1, self.proj_archive_id,folder=self.rootdir)
         
         with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
-            run("dx archive {}:{} {}:{}".format(
+            run("dx archive -y {}:{} {}:{}".format(
                 self.proj_archive_id,fid1,
                 self.proj_archive_id,self.rootdir))
         
         with self.assertSubprocessFailure(stderr_regexp="is invalid. Please check the inputs or check --help for example inputs.", exit_code=3):
-            run("dx archive {}:{}:{}".format(
+            run("dx archive -y {}:{}:{}".format(
                 self.proj_archive_id,self.rootdir,fid1))
 
         # invalid project name
         with self.assertSubprocessFailure(stderr_regexp="Cannot find project with name {}".format("invalid_project_name"), exit_code=3):
-            run("dx archive {}:{}".format("invalid_project_name",fid1))
+            run("dx archive -y {}:{}".format("invalid_project_name",fid1))
         
         # no project context       
         with self.assertSubprocessFailure(stderr_regexp="Cannot find current project. Please check the environment.",
                                           exit_code=3), without_project_context():
-            run("dx archive {}".format(fid1))
+            run("dx archive -y {}".format(fid1))
         
         # invalid file name
         with self.assertSubprocessFailure(stderr_regexp="Input '{}' is not found as a file in project '{}'".format("invalid_file_name",self.proj_archive_id), exit_code=3):
-            run("dx archive {}:{}".format(self.proj_archive_id,"invalid_file_name"))
+            run("dx archive -y {}:{}".format(self.proj_archive_id,"invalid_file_name"))
 
         # files in different project
         with temporary_project("other_project",select=False) as temp_project:
             test_projectid = temp_project.get_id()
             fid2 = create_file_in_project("temp_file", trg_proj_id=test_projectid,folder=self.rootdir)
             with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive {}:{} {}:{}".format(
+                run("dx archive -y {}:{} {}:{}".format(
                     self.proj_archive_id,fid1,
                     test_projectid,fid2))
             with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive {}:{} :{}".format(
+                run("dx archive -y {}:{} :{}".format(
                     self.proj_archive_id,fid1,
                     fid2))
             with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive {}:{} {}".format(
+                run("dx archive -y {}:{} {}".format(
                     self.proj_archive_id,fid1,
                     fid2))
 
@@ -10457,7 +10478,7 @@ class TestDXArchive(DXTestCase):
         fp = create_folder_in_project(self.proj_archive_id,repeated_name)
          # invalid file name
         with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
-            run("dx archive {}:{} {}:{}/".format(self.proj_archive_id,repeated_name,
+            run("dx archive -y {}:{} {}:{}/".format(self.proj_archive_id,repeated_name,
                                                     self.proj_archive_id,repeated_name))
 
     def test_archive_allcopies(self):
@@ -10471,7 +10492,7 @@ class TestDXArchive(DXTestCase):
             # dxpy.api.project_update(test_projectid, {"billTo": self.bill_to})
             dxpy.DXFile(dxid=fid, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir)
             
-            run("dx archive {}:{}".format(self.proj_archive_id,fid))
+            run("dx archive -y {}:{}".format(self.proj_archive_id,fid))
             time.sleep(5)
             self.assertEqual(dxpy.describe(fid)["archivalState"],"archival")
             with select_project(test_projectid):
@@ -10480,14 +10501,14 @@ class TestDXArchive(DXTestCase):
             dxpy.DXFile(dxid=fid_allcopy, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir).get_id()
             
             if self.is_admin:
-                run("dx archive --all-copies {}:{}".format(self.proj_archive_id,fid_allcopy))
+                run("dx archive -y --all-copies {}:{}".format(self.proj_archive_id,fid_allcopy))
                 time.sleep(20)
                 self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
                 with select_project(test_projectid):
                     self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
             else:
                 with self.assertSubprocessFailure(stderr_regexp="Must be an admin of {} to archive all copies".format(self.bill_to)):
-                    run("dx archive --all-copies {}:{}".format(self.proj_archive_id, fid_allcopy))
+                    run("dx archive -y --all-copies {}:{}".format(self.proj_archive_id, fid_allcopy))
 
     def test_unarchive_dryrun(self):
         fname1 = self.gen_uniq_fname()
@@ -10497,22 +10518,22 @@ class TestDXArchive(DXTestCase):
         _ = dxpy.api.project_archive(self.proj_unarchive_id, {"folder": self.rootdir})
         time.sleep(10)
 
-        dx_confirm = pexpect.spawn("dx unarchive -y {}:{}".format(self.proj_unarchive_id,fid1),
+        dx_archive_confirm = pexpect.spawn("dx unarchive {}:{}".format(self.proj_unarchive_id,fid1),
                                          logfile=sys.stderr,
                                          **spawn_extra_args)
-        dx_confirm.expect('Will tag')
-        dx_confirm.sendline("n")
-        dx_confirm.expect(pexpect.EOF, timeout=None)
-        dx_confirm.close()
+        dx_archive_confirm.expect('Will tag')
+        dx_archive_confirm.sendline("n")
+        dx_archive_confirm.expect(pexpect.EOF, timeout=30)
+        dx_archive_confirm.close()
 
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         
-        output = run("dx unarchive {}:{}".format(self.proj_unarchive_id,fid1))
+        output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,fid1))
         time.sleep(10)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"unarchiving")
 
-        output = run("dx unarchive {}:{}".format(self.proj_unarchive_id,self.rootdir))
+        output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,self.rootdir))
         time.sleep(10)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"unarchiving")
