@@ -3935,7 +3935,8 @@ def archive(args):
             else: 
                 print('Will tag file(s) for archival in folder {}:{} {}recursively'.format(target_project, target_folder, 'non-' if not args.recurse else ''))
         elif request_mode == "unarchival":
-            dryrun_request_input = dict(**request_input, dryRun=True)
+            dryrun_request_input = copy.deepcopy(request_input)
+            dryrun_request_input.update(dryRun=True)
             dryrun_res = send_archive_request(target_project, dryrun_request_input, request_func)
             print('Will tag {} file(s) for unarchival in {}, totalling {} GB, costing ${}'.format(dryrun_res["files"], target_project, dryrun_res["size"],dryrun_res["cost"]/1000))
 
