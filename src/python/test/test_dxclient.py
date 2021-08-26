@@ -10298,7 +10298,7 @@ class TestDXArchive(DXTestCase):
             self.proj_archive_id,fid1,
             self.proj_archive_id,self.rootdir,fname2))
         
-        time.sleep(30)
+        time.sleep(20)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"archived")
         
@@ -10318,7 +10318,7 @@ class TestDXArchive(DXTestCase):
         fid2 = create_file_in_project(fname_allmatch, self.proj_archive_id,folder=self.rootdir)
         
         run("dx archive -y -a {}:{}{}".format(self.proj_archive_id,self.rootdir,fname_allmatch))
-        time.sleep(10)
+        time.sleep(20)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"archived")
 
@@ -10336,7 +10336,7 @@ class TestDXArchive(DXTestCase):
         dx_archive_confirm.expect(pexpect.EOF, timeout=30)
         dx_archive_confirm.close()
 
-        time.sleep(10)
+        time.sleep(20)
         self.assertEqual(dxpy.describe(fid3)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid4)["archivalState"],"archived")
 
@@ -10351,7 +10351,7 @@ class TestDXArchive(DXTestCase):
 
         # archive subfolder 
         run("dx archive -y {}:{}".format(self.proj_archive_id,self.rootdir+subdir))
-        time.sleep(10)
+        time.sleep(20)
         self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
 
 
@@ -10360,7 +10360,7 @@ class TestDXArchive(DXTestCase):
 
         # archive files in root dir only
         run("dx archive -y --no-recurse {}:{}".format(self.proj_archive_id,self.rootdir))
-        time.sleep(10)
+        time.sleep(30)
         self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"live")
 
@@ -10495,7 +10495,7 @@ class TestDXArchive(DXTestCase):
             dxpy.DXFile(dxid=fid, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir)
             
             run("dx archive -y {}:{}".format(self.proj_archive_id,fid))
-            time.sleep(5)
+            time.sleep(15)
             self.assertEqual(dxpy.describe(fid)["archivalState"],"archival")
             with select_project(test_projectid):
                 self.assertEqual(dxpy.describe(fid)["archivalState"],"live")
@@ -10504,7 +10504,7 @@ class TestDXArchive(DXTestCase):
             
             if self.archive_all_copies:
                 run("dx archive -y --all-copies {}:{}".format(self.proj_archive_id,fid_allcopy))
-                time.sleep(20)
+                time.sleep(30)
                 self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
                 with select_project(test_projectid):
                     self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
@@ -10518,7 +10518,7 @@ class TestDXArchive(DXTestCase):
         fid1 = create_file_in_project(fname1, self.proj_unarchive_id, folder=self.rootdir)
         fid2 = create_file_in_project(fname2, self.proj_unarchive_id, folder=self.rootdir)
         _ = dxpy.api.project_archive(self.proj_unarchive_id, {"folder": self.rootdir})
-        time.sleep(10)
+        time.sleep(20)
 
         dx_archive_confirm = pexpect.spawn("dx unarchive {}:{}".format(self.proj_unarchive_id,fid1),
                                          logfile=sys.stderr,
@@ -10531,12 +10531,12 @@ class TestDXArchive(DXTestCase):
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,fid1))
-        time.sleep(10)
+        time.sleep(20)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"unarchiving")
 
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,self.rootdir))
-        time.sleep(10)
+        time.sleep(20)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"unarchiving")
         
