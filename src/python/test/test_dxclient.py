@@ -10262,8 +10262,10 @@ class TestDXArchive(DXTestCase):
         cls.proj_unarchive_name = "dx_test_unarchive"
         cls.usr = dxpy.whoami()
         cls.bill_to = dxpy.api.user_describe(cls.usr)['billTo']
-        # cls.is_admin = True if dxpy.api.org_describe(cls.bill_to)['level'] == 'ADMIN' else False
-
+        if cls.usr == cls.bill_to: 
+            cls.archive_all_copies = True
+        else:
+            cls.archive_all_copies = True if dxpy.api.org_describe(cls.bill_to)['level'] == 'ADMIN' else False
         cls.rootdir = '/'
         cls.proj_archive_id = dxpy.api.project_new({'name': cls.proj_archive_name, 'billTo': cls.bill_to})['id']
         cls.proj_unarchive_id = dxpy.api.project_new({'name': cls.proj_unarchive_name, 'billTo': cls.bill_to})['id']
@@ -10500,7 +10502,7 @@ class TestDXArchive(DXTestCase):
             
             dxpy.DXFile(dxid=fid_allcopy, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir).get_id()
             
-            if self.is_admin:
+            if self.archive_all_copies:
                 run("dx archive -y --all-copies {}:{}".format(self.proj_archive_id,fid_allcopy))
                 time.sleep(20)
                 self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
