@@ -10298,7 +10298,7 @@ class TestDXArchive(DXTestCase):
             self.proj_archive_id,fid1,
             self.proj_archive_id,self.rootdir,fname2))
         
-        time.sleep(10)
+        time.sleep(30)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"archived")
         
