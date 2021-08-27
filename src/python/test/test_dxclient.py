@@ -10263,7 +10263,7 @@ class TestDXArchive(DXTestCase):
         cls.usr = dxpy.whoami()
         cls.bill_to = dxpy.api.user_describe(cls.usr)['billTo']
         if cls.usr == cls.bill_to: 
-            cls.archive_all_copies = True
+            cls.archive_all_copies = False
         else:
             cls.archive_all_copies = True if dxpy.api.org_describe(cls.bill_to)['level'] == 'ADMIN' else False
         cls.rootdir = '/'
