@@ -6,7 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [314.0] - beta
+## [315.0] - beta
+
+* No significant changes
+
+## [314.0] - 2021.08.27 stable
 
 ### Added
 
@@ -18,7 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx upload` part retry where file would stay in an open state
 * `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
 
-## [313.0] - 2021.08.18 stable
+## [313.0] - 2021.08.18 
 
 ### Added
 
