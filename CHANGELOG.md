@@ -41,7 +41,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Added `--cost-limit` flag for `dx run`
 * `DX_WATCH_PORT` env var for supporting `dx watch` in the job execution environment
 
 ## [310.0] - 2021.05.12 
