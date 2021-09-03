@@ -408,6 +408,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                     wait_on_close=True,
                     project=dest_project,
                     folder=target_folder,
+                    multithread=False,
                     hidden=True,
                     properties=properties_dict
                 )
