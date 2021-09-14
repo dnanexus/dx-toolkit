@@ -373,12 +373,13 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
             raise WorkflowBuilderException("Building a global workflow with nested global workflows is not yet supported")
 
 
-def _build_regular_workflow(json_spec):
+def _build_regular_workflow(json_spec, keep_open=False):
     """
     Precondition: json_spec must be validated
     """
     workflow_id = dxpy.api.workflow_new(json_spec)["id"]
-    dxpy.api.workflow_close(workflow_id)
+    if not keep_open:
+        dxpy.api.workflow_close(workflow_id)
     return workflow_id
 
 
@@ -576,7 +577,7 @@ def _build_or_update_workflow(json_spec, args):
     try:
         if args.mode == 'workflow':
             json_spec = _get_validated_json(json_spec, args)
-            workflow_id = _build_regular_workflow(json_spec)
+            workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
             # Verify if the global workflow already exists and if the user has developer rights to it
             # If the global workflow name doesn't exist, the user is free to build it
@@ -614,9 +615,8 @@ def build(args, parser):
     Validates workflow source directory and creates a new (global) workflow based on it.
     Raises: WorkflowBuilderException if the workflow cannot be created.
     """
-
     if args is None:
-        raise Exception("arguments not provided")
+        raise Exception("Arguments not provided")
 
     try:
         json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)

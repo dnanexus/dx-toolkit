@@ -90,7 +90,7 @@ ua: toolkit_version ua_deps
 dx-docker: bin/proot bin/docker2aci
 
 bin/proot:
-	curl -k -sL https://dl.dnanex.us/F/D/KbFY82vKV3Ppp4f95zYkYKKQx0GypBkF5bxzj4Q7/proot > $(DNANEXUS_HOME)/bin/proot && chmod 777 $(DNANEXUS_HOME)/bin/proot
+	curl -k -sL https://dl.dnanex.us/F/D/1Kp5v2fPqX8j3V02pQPB1j2v5v0fyb3PYyp57Qb8/proot > $(DNANEXUS_HOME)/bin/proot && chmod 777 $(DNANEXUS_HOME)/bin/proot
 
 bin/docker2aci:
 ifneq (DOCKER_ACI_URL, "")
@@ -298,7 +298,7 @@ CARES_PV=1.13.0
 CARES_SHA=dde50284cc3d505fb2463ff6276e61d5531b1d68
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
-	curl https://c-ares.haxx.se/download/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
+	curl https://c-ares.org/download/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
 	cd c-ares; ./configure --prefix=/

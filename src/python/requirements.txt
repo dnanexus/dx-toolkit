@@ -1,9 +1,9 @@
 argcomplete>=1.9.4
 websocket-client==0.53.0
 python-dateutil>=2.5
-python-magic==0.4.6
-beautifulsoup4==4.4.1
 psutil>=3.3.0
-requests>=2.8.0
-cryptography<=2.2.2
-xattr==0.9.6; sys_platform == 'linux2' or sys_platform == 'linux'
+requests>=2.8.0,<2.24.0
+cryptography>=2.3,<3.0
+gnureadline==8.0.0; sys_platform == "darwin" and python_version < "3.9"
+pyreadline==2.1; sys_platform == "win32" 
+colorama==0.2.4; sys_platform == "win32"

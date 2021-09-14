@@ -115,7 +115,8 @@ class TestDXBuildAsset(DXTestCase):
             "description": "A detailed description about the asset",
             "version": "0.0.1",
             "distribution": "Ubuntu",
-            "release": "14.04",
+            "release": "20.04",
+            "version": "0",
             "instanceType": "mem1_ssd1_x2",
             "execDepends": [{"name": "python-numpy"}]
         }
@@ -410,8 +411,8 @@ class TestDXBuildAsset(DXTestCase):
             self.assertTrue(os.path.exists("asset_depends"))
             self.assertFalse(os.path.exists(os.path.join("asset_depends", "resources")))
             self.assertTrue(os.path.exists(os.path.join("asset_depends", "dxapp.json")))
-
-            applet_spec = json.load(open(os.path.join("asset_depends", "dxapp.json")))
+            with open(os.path.join("asset_depends", "dxapp.json")) as fh:
+                applet_spec = json.load(fh)
             self.assertEqual([{"name": "asset-lib-test",
                                "project": self.project,
                                "folder": "/",

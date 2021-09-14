@@ -27,6 +27,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.pool.ConnPoolControl;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -195,8 +197,9 @@ public class DXHTTPRequestTest {
 
     /**
      * Test that we don't exhaust file handles even when GC is slow to free up the DXHTTPRequest
-     * objects. That is, we must be responsible for closing the connections as soon as we are done
-     * with them.
+     * objects. That is, we must be responsible for how much connections (sockets) we are using.
+     * By limiting ourselves to a single {@link HttpClient} we should have {@link ConnPoolControl#getMaxTotal()}
+     * connections (20 by default) at most.
      *
      * Note: this test doesn't seem to fail properly when the threads are unable to allocate more
      * file handles. Instead, it hangs, so a reasonable timeout on the test at the top level may be

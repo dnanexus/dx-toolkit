@@ -27,7 +27,7 @@ stage 'Build'
                     commit_hash=\"${env.commit_hash}\"
                     working_dir=\$(pwd)
                     mkdir \$commit_hash
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:14.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:16.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
                         git checkout \$commit_hash; make toolkit_version git_submodules; rm -rf .git src/jq/.git; cd ..; \\
                         tar -czf dx-toolkit-\$commit_hash-source.tar.gz dx-toolkit; \\
                         tar -C dx-toolkit/src/R -czf dxR_\$commit_hash.tar.gz dxR; \\
@@ -52,15 +52,15 @@ stage 'Build'
                 deleteDir()
             }
         },
-        "14.04-amd64" : { 
+        "20.04-amd64" : { 
             node('master'){
                 deleteDir()
                 sh  """
                     commit_hash=\"${env.commit_hash}\"
                     mkdir \$commit_hash
                     working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:14.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
-                        git checkout \$commit_hash; build/package.sh ubuntu-14.04-amd64; \\
+                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:20.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
+                        git checkout \$commit_hash; build/package.sh ubuntu-20.04-amd64; \\
                         mv dx-toolkit-*.tar.gz /\$commit_hash/\"
                     """
                 archive "${env.commit_hash}/dx-toolkit-*.tar.gz"
@@ -83,22 +83,6 @@ stage 'Build'
                 deleteDir()
             }
         },
-        "trusty-deb" : { 
-            node('master'){
-                deleteDir()
-                sh  """
-                    commit_hash=\"${env.commit_hash}\"
-                    working_dir=\$(pwd)
-                    mkdir -p \$working_dir/\$commit_hash/trusty
-                    docker run -v \$working_dir/\$commit_hash/trusty:/\$commit_hash/trusty --rm dnanexus/dx-toolkit:14.04 \\
-                        /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
-                        cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh; \\
-                        mv /*.{changes,deb,dsc,tar.gz} /\$commit_hash/trusty\"
-                    """
-                archive "${env.commit_hash}/trusty/dx*"
-                deleteDir()
-            }
-        },
         "xenial-deb" : { 
             node('master'){
                 deleteDir()
@@ -112,6 +96,22 @@ stage 'Build'
                         mv /*.{changes,deb,dsc,tar.xz} /\$commit_hash/xenial\"
                     """
                 archive "${env.commit_hash}/xenial/dx*"
+                deleteDir()
+            }
+        },
+        "focal-deb" : { 
+            node('master'){
+                deleteDir()
+                sh  """
+                    commit_hash=\"${env.commit_hash}\"
+                    working_dir=\$(pwd)
+                    mkdir -p \$working_dir/\$commit_hash/focal
+                    docker run -v \$working_dir/\$commit_hash/focal:/\$commit_hash/focal --rm dnanexus/dx-toolkit:20.04 \\
+                        /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
+                        cd dx-toolkit; git checkout \$commit_hash; build/build-focal-java-bindings.sh; \\
+                        mv /dx-java-bindings*.deb /\$commit_hash/focal\"
+                    """
+                archive "${env.commit_hash}/focal/dx*"
                 deleteDir()
             }
         },

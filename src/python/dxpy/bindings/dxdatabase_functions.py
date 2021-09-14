@@ -36,7 +36,7 @@ from .. import logger
 from . import dxfile, DXFile
 from . import dxdatabase, DXDatabase
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..compat import open, USING_PYTHON2
+from ..compat import open, USING_PYTHON2, md5_hasher
 from ..exceptions import DXFileError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 import subprocess
@@ -257,7 +257,8 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
                 if chunk_part != cur_part:
                     # TODO: remove permanently if we don't find use for this
                     # verify_part(cur_part, got_bytes, hasher)
-                    cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
+
+                    cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
                 fh.write(chunk_data)

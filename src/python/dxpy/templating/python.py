@@ -22,7 +22,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 from ..utils.printing import fill
 
 def get_interpreter():
-    return 'python2.7'
+    return 'python3'
 
 def get_path():
     return 'python'

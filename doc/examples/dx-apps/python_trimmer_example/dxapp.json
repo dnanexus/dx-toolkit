@@ -19,8 +19,9 @@
     }
   ],
   "runSpec": {
-    "interpreter": "python2.7",
-    "release": "14.04",
+    "interpreter": "python3",
+    "release": "16.04",
+    "version": "1",
     "distribution": "Ubuntu",
     "file": "src/python_trimmer_example.py"
   }

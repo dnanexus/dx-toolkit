@@ -54,9 +54,10 @@ def _transform_words_to_regexp(s):
 
 
 def host_is_centos_5():
-    distro = platform.linux_distribution()
-    if distro[0] == 'CentOS' and distro[1].startswith('5.'):
-        return True
+    if USING_PYTHON2:
+        distro = platform.linux_distribution()
+        if distro[0] == 'CentOS' and distro[1].startswith('5.'):
+            return True
     return False
 
 class DXCalledProcessError(subprocess.CalledProcessError):
@@ -98,8 +99,8 @@ def check_output(*popenargs, **kwargs):
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
     output, err = process.communicate()
     retcode = process.poll()
-    output = output.decode(sys.stdin.encoding)
-    err = err.decode(sys.stderr.encoding)
+    output = output.decode(locale.getpreferredencoding())
+    err = err.decode(locale.getpreferredencoding())
     if retcode:
         print(err)
         cmd = kwargs.get("args")
@@ -402,7 +403,7 @@ class DXTestCase(DXTestCaseCompat):
                 if not re.search(stderr_regexp, e.stderr):
                     print("stderr:")
                     print(e.stderr)
-                    self.fail("Expected stderr to match '%s' but it didn't" % (stderr_regexp,))
+                    self.fail("Expected stderr (%s) to match '%s' but it didn't".format(stderr_regexp, stderr_regexp))
             return
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
 

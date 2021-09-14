@@ -149,6 +149,11 @@ class DXConfig(MutableMapping):
         else:
             dxpy.set_job_id(None)
             dxpy.set_workspace_id(environ.get("DX_PROJECT_CONTEXT_ID"))
+        
+        if "DX_WATCH_PORT" in environ:
+            dxpy.set_watch_port(environ.get("DX_WATCH_PORT"))
+        else:
+            dxpy.set_watch_port(None)
 
         dxpy.set_project_context(environ.get("DX_PROJECT_CONTEXT_ID"))
 

@@ -71,6 +71,7 @@ Options::Options():
     ("project,p", po::value<vector<string> >(&projects), "Name or ID of the destination project")
     ("folder,f", po::value<vector<string> >(&folders)->default_value(defaultFolders, "/"), "Name of the destination folder")
     ("name,n", po::value<vector<string> >(&names), "Name of the remote file (Note: Extension \".gz\" will be appended if the file is compressed before uploading)")
+    ("manifest,m", po::bool_switch(&manifest)->default_value(false), "The first input file is a JSON manifest (Note: see documentation for file format)")
     ("visibility", po::value<string>(&visibility)->default_value("visible"), "Use \"--visibility hidden\" to set the file's visibility as hidden.")
     ("property", po::value<vector<string> >(&propertiesInput), "Key-value pair to add as a property; repeat as necessary, e.g. \"--property key1=val1 --property key2=val2\"")
     ("type", po::value<vector<string> >(&typeInput), "Type of the data object; repeat as necessary, e.g. \"--type type1 --type type2\"")
@@ -99,7 +100,6 @@ Options::Options():
     ("apiserver-host", po::value<string>(&apiserverHost), "API server host")
     ("apiserver-port", po::value<int>(&apiserverPort)->default_value(-1), "API server port")
     ("certificate-file", po::value<string>(&certificateFile)->default_value(""), "Certificate file (for verifying peer). Set to NOVERIFY for no check.")
-    ("no-round-robin-dns", po::bool_switch(&noRoundRobinDNS), "Disable explicit resolution of ip address by /UPLOAD calls (for round robin DNS)")
     ("override-file-limit", po::bool_switch(&overrideFileLimit), "Override the file number limit")
     // Options for running import apps
     ("reads", po::bool_switch(&reads), "After uploading is complete, run import app to convert file(s) to Reads object(s)")
@@ -609,8 +609,7 @@ ostream &operator<<(ostream &out, const Options &opt) {
         << "  mappings: " << opt.mappings << endl
         << "  variants: " << opt.variants << endl
         << "  ref-genome: " << opt.refGenome << endl
-        << "  certificate-file" << opt.certificateFile << endl
-        << "  no-round-robin-dns" << opt.noRoundRobinDNS << endl;
+        << "  certificate-file" << opt.certificateFile << endl;
   }
   return out;
 }

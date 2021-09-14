@@ -97,7 +97,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
 
     if info["runSpec"]["interpreter"] == "bash":
         suffix = "sh"
-    elif info["runSpec"]["interpreter"] in ["python2.7", "python3.5"]:
+    elif info["runSpec"]["interpreter"] in ["python2.7", "python3", "python3.5"]:
         suffix = "py"
     else:
         print('Sorry, I don\'t know how to get executables with interpreter ' +

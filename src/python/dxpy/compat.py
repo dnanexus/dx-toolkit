@@ -16,11 +16,15 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, io, locale, threading
+import os, sys, io, locale, threading, hashlib
 from io import TextIOWrapper
 from contextlib import contextmanager
-from collections import MutableMapping
-
+try:
+    # Python 3
+    from collections.abc import MutableMapping
+except ImportError:
+    # Python 2.7
+    from collections import MutableMapping
 try:
     sys_encoding = locale.getdefaultlocale()[1] or "UTF-8"
 except Exception:
@@ -229,3 +233,11 @@ def unwrap_stream(stream_name):
     finally:
         if wrapped_stream:
             setattr(sys, stream_name, wrapped_stream)
+
+# Support FIPS enabled Python
+def md5_hasher():
+    try:
+        md5_hasher = hashlib.new('md5', usedforsecurity=False)
+    except:
+        md5_hasher = hashlib.new('md5')
+    return md5_hasher

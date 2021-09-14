@@ -50,7 +50,7 @@ version = make_valid_pypi_version(version)
 
 # The readme file is used as the long-description of the package.
 # It will show up in the pypi site.
-with open("Readme.md", "r") as fh:
+with open(os.path.join(os.path.dirname(__file__), "Readme.md"), "r") as fh:
     readme_content = fh.read()
 
 # Grab all the scripts from dxpy/scripts and install them without their .py extension.
@@ -66,24 +66,12 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
 
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
-readline_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_readline.txt"))]
 backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_backports.txt"))]
 
 # If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
 if platform.system() == 'Windows':
     dependencies = [d for d in dependencies if not (d.startswith('distribute'))]
     dependencies.append("colorama==0.2.4")
-
-# If this is an OS X system where GNU readline is imitated by libedit, add the readline module from pypi to dependencies.
-# See also http://stackoverflow.com/questions/7116038
-# Warning: This may not work as intended in cross-compilation scenarios
-if platform.system() == 'Darwin':
-    try:
-        import readline
-        if 'libedit' in readline.__doc__:
-            dependencies.extend(readline_dependencies)
-    except ImportError:
-        dependencies.extend(readline_dependencies)
 
 if sys.version_info[0] < 3:
     dependencies.extend(backports_dependencies)
@@ -104,7 +92,7 @@ setup(
     long_description=readme_content,
     long_description_content_type="text/markdown",
     author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
-    author_email='expert-dev@dnanexus.com',
+    author_email='support@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
     zip_safe=False,
     license='Apache Software License',
@@ -115,6 +103,9 @@ setup(
         "console_scripts": scripts,
     },
     install_requires = dependencies,
+    extras_require={
+        'xattr': ["xattr==0.9.6; sys_platform == 'linux2' or sys_platform == 'linux'"]
+    },
     tests_require = test_dependencies,
     test_suite = "test",
     classifiers=[

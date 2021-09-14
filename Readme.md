@@ -53,11 +53,23 @@ toolkit that doesn't require them.
 
 **Note:** There is a known incompatibility (in compiling dxcpp) when using GCC 4.7 with Boost 1.49. Please either use the GCC 4.6 series, or Boost 1.50+.
 
+### Ubuntu 20.04
+
+    sudo apt install python-is-python3 python3-venv libssl-dev flex bison
+
 ### Ubuntu 16.04
 
     sudo apt install make python-setuptools python-pip python-virtualenv python-dev \
       gcc g++ cmake libboost-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
       openssl libssl-dev autoconf
+
+If your locale is not configured properly, you might need to run following commands as well (i.e. when working from Cloud Workstation):
+    
+    export LC_ALL="en_US.UTF-8"
+    export LC_CTYPE="en_US.UTF-8"
+    sudo dpkg-reconfigure locales
+    
+in the `dpkg-reconfigure` command, select `en_US.UTF-8 locale`.
 
 ### Ubuntu 14.04
 

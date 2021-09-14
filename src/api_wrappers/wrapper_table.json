@@ -1017,6 +1017,24 @@
         }
     ],
     [
+        "/project-xxxx/archive",
+        "projectArchive(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive"
+        }
+    ],
+    [
+        "/project-xxxx/unarchive",
+        "projectUnarchive(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-unarchive"
+        }
+    ],
+    [
         "/project-xxxx/clone",
         "projectClone(req, objectId)",
         {

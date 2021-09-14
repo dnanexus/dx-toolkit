@@ -136,6 +136,7 @@ class TestDXProject(unittest.TestCase):
             self.assertEqual(desc["restricted"], False)
             self.assertEqual(desc["downloadRestricted"], False)
             self.assertEqual(desc["containsPHI"], False)
+            self.assertEqual(desc["databaseUIViewOnly"], False)
             self.assertEqual(desc["tags"], [])
             prop = dxpy.api.project_describe(dxproject.get_id(),
                                              {'fields': {'properties': True}})
@@ -1574,6 +1575,7 @@ def main(number):
         # make initial analysis
         dxanalysis = dxworkflow.run({})
         job_ids = [dxanalysis.describe()['stages'][0]['execution']['id']]
+        dxanalysis.wait_on_done(timeout=500)
 
         # empty rerun_stages should reuse results
         rerun_analysis = dxworkflow.run({}, rerun_stages=[])

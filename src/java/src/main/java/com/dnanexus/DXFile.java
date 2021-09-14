@@ -556,6 +556,12 @@ public class DXFile extends DXDataObject {
     }
 
     private static class HttpPartDownloader implements PartDownloader {
+        private final DXEnvironment env;
+
+        public HttpPartDownloader(DXEnvironment env) {
+            this.env = env;
+        }
+
         /**
          * HTTP GET request to download part of the file.
          *
@@ -574,7 +580,7 @@ public class DXFile extends DXDataObject {
         public byte[] get(String url, long start, long end) throws ClientProtocolException, IOException {
             Preconditions.checkState(end - start <= (long) 2 * 1024 * 1024 * 1024,
                     "Download chunk size cannot be larger than 2GB");
-            HttpClient httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).build();
+            HttpClient httpclient = env.getHttpClient();
 
             // HTTP GET request with bytes/_ge range header
             HttpGet request = new HttpGet(url);
@@ -870,7 +876,7 @@ public class DXFile extends DXDataObject {
      * @return stream containing file contents within range specified
      */
     public InputStream getDownloadStream(long start, long end) {
-        return new FileApiInputStream(start, end, new HttpPartDownloader());
+        return new FileApiInputStream(start, end, new HttpPartDownloader(env));
     }
 
     @VisibleForTesting
@@ -948,8 +954,7 @@ public class DXFile extends DXDataObject {
             request.setHeader(key, header.getValue());
         }
 
-        HttpClient httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).build();
-        executeRequestWithRetry(httpclient, request);
+        executeRequestWithRetry(env.getHttpClient(), request);
     }
 
     /**

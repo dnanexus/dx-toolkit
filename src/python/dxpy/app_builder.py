@@ -192,7 +192,7 @@ def _fix_perm_filter(tar_obj):
     return tar_obj
 
 
-def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False):
+def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False):
     """
     :param ensure_upload: If True, will bypass checksum of resources directory
                           and upload resources bundle unconditionally;
@@ -370,8 +370,9 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                 )
 
             if existing_resources:
-                logger.info("Found existing resource bundle that matches local resources directory: " +
-                            existing_resources.get_id())
+                if not brief:
+                    logger.info("Found existing resource bundle that matches local resources directory: " +
+                                existing_resources.get_id())
 
                 dx_resource_archive = existing_resources
             else:
@@ -424,7 +425,9 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
         return []
 
 
-def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False, project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable", dry_run=False, **kwargs):
+def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False,
+                  project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable",
+                  dry_run=False, brief=False, **kwargs):
     """
     Creates a new applet object.
 
@@ -493,7 +496,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                 now = datetime.datetime.fromtimestamp(archived_applet.created/1000).ctime()
                 new_name = archived_applet.name + " ({d})".format(d=now)
                 archived_applet.rename(new_name)
-                logger.info("Archived applet %s to %s:\"%s/%s\"" % (result['id'], dest_project, archive_folder, new_name))
+                if not brief:
+                    logger.info("Archived applet %s to %s:\"%s/%s\"" % (result['id'], dest_project, archive_folder, new_name))
             else:
                 raise AppBuilderException("An applet already exists at %s (id %s) and the --overwrite (-f) or --archive (-a) options were not given" % (destination_path, result['id']))
 
@@ -660,7 +664,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # Now it is permissible to delete the old applet(s), if any
     if applets_to_overwrite:
-        logger.info("Deleting applet(s) %s" % (','.join(applets_to_overwrite)))
+        if not brief:
+            logger.info("Deleting applet(s) %s" % (','.join(applets_to_overwrite)))
         dxpy.DXProject(dest_project).remove_objects(applets_to_overwrite)
 
     return applet_id, applet_spec
@@ -707,7 +712,7 @@ def _update_version(app_name, version, app_spec, try_update=True):
 
 
 def create_app_multi_region(regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
-                            try_versions=None, try_update=True, confirm=True):
+                            try_versions=None, try_update=True, confirm=True, inherited_metadata={}, brief=False):
     """
     Creates a new app object from the specified applet(s).
 
@@ -721,7 +726,7 @@ def create_app_multi_region(regional_options, app_name, src_dir, publish=False, 
     """
     return _create_app(dict(regionalOptions=regional_options), app_name, src_dir, publish=publish,
                        set_default=set_default, billTo=billTo, try_versions=try_versions, try_update=try_update,
-                       confirm=confirm)
+                       confirm=confirm, inherited_metadata=inherited_metadata, brief=brief)
 
 
 def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False, billTo=None, try_versions=None,
@@ -741,14 +746,18 @@ def create_app(applet_id, applet_name, src_dir, publish=False, set_default=False
 
 
 def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, set_default=False, billTo=None,
-                try_versions=None, try_update=True, confirm=True):
-    app_spec = _get_app_spec(src_dir)
-    logger.info("Will create app with spec: %s" % (json.dumps(app_spec),))
+                try_versions=None, try_update=True, confirm=True, inherited_metadata={}, brief=False):
+
+    if src_dir:
+        app_spec = _get_app_spec(src_dir)
+        if not brief:
+            logger.info("Will create app with spec: %s" % (json.dumps(app_spec),))
+        # Inline Readme.md and Readme.developer.md
+        dxpy.executable_builder.inline_documentation_files(app_spec, src_dir)
+    else:
+        app_spec = inherited_metadata
 
     app_spec.update(applet_or_regional_options, name=app_name)
-
-    # Inline Readme.md and Readme.developer.md
-    dxpy.executable_builder.inline_documentation_files(app_spec, src_dir)
 
     if billTo:
         app_spec["billTo"] = billTo
@@ -758,6 +767,7 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
     for version in try_versions:
         logger.debug("Attempting to create version %s..." % (version,))
         app_spec['version'] = version
+
         app_describe = None
         try:
             # 404, which is rather likely in this app_describe request
@@ -785,7 +795,8 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
             app_id = _create_or_update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
-            logger.info("Created app " + app_id)
+            if not brief:
+                logger.info("Created app " + app_id)
             # Success!
             break
         elif app_describe.get("published", 0) == 0:
@@ -793,7 +804,8 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
             app_id = _update_version(app_spec['name'], app_spec['version'], app_spec, try_update=try_update)
             if app_id is None:
                 continue
-            logger.info("Updated existing app " + app_id)
+            if not brief:
+                logger.info("Updated existing app " + app_id)
             # Success!
             break
         else:
@@ -897,7 +909,7 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
         if authorized_users_to_remove:
             dxpy.api.app_remove_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_remove)})
 
-    elif not len(existing_authorized_users):
+    elif not len(existing_authorized_users) and not brief:
         # Apps that had authorized users added by any other means will
         # not have this message printed.
         logger.warn('authorizedUsers is missing from the dxapp.json. No one will be able to view or run the app except the app\'s developers.')

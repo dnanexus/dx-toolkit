@@ -30,13 +30,15 @@ import traceback
 import warnings
 from collections import defaultdict
 import multiprocessing
+from random import randint
+from time import sleep
 
 import dxpy
 from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..compat import open, USING_PYTHON2
-from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..compat import open, md5_hasher, USING_PYTHON2
 from ..utils import response_iterator
 import subprocess
 
@@ -179,6 +181,24 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
                                             duration=6*3600,
                                             project=project)
 
+    def call_cmd(cmd, max_retries=6, num_attempts=0):
+        try:
+            if aria2c_exe is not None:
+                print("Downloading symbolic link with aria2c")
+            else:
+                print("Downloading symbolic link with wget")
+            subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            msg = ""
+            if e and e.output:
+                msg = e.output.strip()
+            if e.returncode == 22 and num_attempts <= max_retries:  # hotfix, DEVEX-1779
+                time_to_wait = 1 if num_attempts <= 2 else min(randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1)), 60)
+                print("Download failed with code 22. Retrying after {} seconds... Error details: cmd: {}\nmsg: {}\n".format(str(time_to_wait), str(cmd), msg))
+                sleep(time_to_wait)
+                call_cmd(cmd, max_retries, num_attempts + 1)
+            err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
+
     # Follow the redirection
     print('Following redirect for ' + url)
 
@@ -190,7 +210,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         if wget_exe is None:
             err_exit("wget is not installed on this system")
 
-        cmd = ["wget", "--tries=5", "--quiet"]
+        cmd = ["wget", "--tries=20", "--quiet"]
         if os.path.isfile(dxid):
             # file already exists, resume upload.
             cmd += ["--continue"]
@@ -206,18 +226,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename):
         directory, filename = os.path.split(dest_filename)
         directory = cwd if directory in ["", cwd] else directory
         cmd += ["-o", filename, "-d", os.path.abspath(directory), url]
-
-    try:
-        if aria2c_exe is not None:
-            print("Downloading symbolic link with aria2c")
-        else:
-            print("Downloading symbolic link with wget")
-        subprocess.check_call(cmd, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        msg = ""
-        if e and e.output:
-            msg = e.output.strip()
-        err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
+    call_cmd(cmd)
 
     if md5digest is not None:
         _verify(dest_filename, md5digest)
@@ -270,7 +279,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         dxfile_desc = describe_output
     else:
         dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
-
     if 'drive' in dxfile_desc:
         # A symbolic link. Get the MD5 checksum, if we have it
         if 'md5' in dxfile_desc:
@@ -342,7 +350,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                     if "md5" not in part_info:
                         raise DXFileError("File {} does not contain part md5 checksums".format(dxfile.get_id()))
                     bytes_to_read = part_info["size"]
-                    hasher = hashlib.md5()
+                    hasher = md5_hasher()
                     while bytes_to_read > 0:
                         chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
                         if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
@@ -376,7 +384,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
                 if chunk_part != cur_part:
                     verify_part(cur_part, got_bytes, hasher)
-                    cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
+                    cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
                 fh.write(chunk_data)
@@ -444,48 +452,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     '''
     fd = file if filename is None else open(filename, 'rb')
-
     try:
         file_size = os.fstat(fd.fileno()).st_size
     except:
         file_size = 0
-
-    file_is_mmapd = hasattr(fd, "fileno")
-
-    if write_buffer_size is None:
-        write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE
-
-    if use_existing_dxfile:
-        handler = use_existing_dxfile
-    else:
-        # Set a reasonable name for the file if none has been set
-        # already
-        creation_kwargs = kwargs.copy()
-        if 'name' not in kwargs:
-            if filename is not None:
-                creation_kwargs['name'] = os.path.basename(filename)
-            else:
-                # Try to get filename from file-like object
-                try:
-                    local_file_name = file.name
-                except AttributeError:
-                    pass
-                else:
-                    creation_kwargs['name'] = os.path.basename(local_file_name)
-
-        # Use 'a' mode because we will be responsible for closing the file
-        # ourselves later (if requested).
-        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=write_buffer_size,
-                             expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
-
-    # For subsequent API calls, don't supply the dataobject metadata
-    # parameters that are only needed at creation time.
-    _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
-
-    num_ticks = 60
-    offset = 0
-
-    handler._ensure_write_bufsize(**remaining_kwargs)
 
     def can_be_mmapd(fd):
         if not hasattr(fd, "fileno"):
@@ -502,15 +472,13 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         # If file cannot be mmap'd (e.g. is stdin, or a fifo), fall back
         # to doing an actual read from the file.
         if not can_be_mmapd(fd):
-            return fd.read(handler._write_bufsize)
+            return fd.read(num_bytes)
 
         bytes_available = max(file_size - offset, 0)
         if bytes_available == 0:
             return b""
 
-        return mmap.mmap(fd.fileno(), min(handler._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
-
-    handler._num_bytes_transmitted = 0
+        return mmap.mmap(fd.fileno(), min(num_bytes, bytes_available), offset=offset, access=mmap.ACCESS_READ)
 
     def report_progress(handler, num_bytes):
         handler._num_bytes_transmitted += num_bytes
@@ -529,29 +497,87 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             sys.stderr.write("\r")
             sys.stderr.flush()
 
-    if show_progress:
-        report_progress(handler, 0)
+    def get_new_handler(filename):
+        # Set a reasonable name for the file if none has been set
+        # already
+        creation_kwargs = kwargs.copy()
+        if 'name' not in kwargs:
+            if filename is not None:
+                creation_kwargs['name'] = os.path.basename(filename)
+            else:
+                # Try to get filename from file-like object
+                try:
+                    local_file_name = file.name
+                except AttributeError:
+                    pass
+                else:
+                    creation_kwargs['name'] = os.path.basename(local_file_name)
 
-    while True:
-        buf = read(handler._write_bufsize)
-        offset += len(buf)
+        # Use 'a' mode because we will be responsible for closing the file
+        # ourselves later (if requested).
+        return new_dxfile(mode='a', media_type=media_type, write_buffer_size=write_buffer_size,
+                             expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
 
-        if len(buf) == 0:
-            break
+    retries = 0
+    max_retries = 2
+    file_is_mmapd = hasattr(fd, "fileno")
 
-        handler.write(buf,
-                      report_progress_fn=report_progress if show_progress else None,
-                      multithread=multithread,
-                      **remaining_kwargs)
+    if write_buffer_size is None:
+        write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE
 
-    if filename is not None:
-        fd.close()
+    # APPS-650 file upload would occasionally fail due to some parts not being uploaded correctly. This will try to re-upload in case this happens.
+    while retries <= max_retries:
+        retries += 1
 
-    handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+        if use_existing_dxfile:
+            handler = use_existing_dxfile
+        else:
+            handler = get_new_handler(filename)
 
-    if show_progress:
-        sys.stderr.write("\n")
-        sys.stderr.flush()
+        # For subsequent API calls, don't supply the dataobject metadata
+        # parameters that are only needed at creation time.
+        _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
+
+        num_ticks = 60
+        offset = 0
+
+        handler._ensure_write_bufsize(**remaining_kwargs)
+
+        handler._num_bytes_transmitted = 0
+
+        if show_progress:
+            report_progress(handler, 0)
+
+        while True:
+            buf = read(handler._write_bufsize)
+            offset += len(buf)
+
+            if len(buf) == 0:
+                break
+
+            handler.write(buf,
+                          report_progress_fn=report_progress if show_progress else None,
+                          multithread=multithread,
+                          **remaining_kwargs)
+
+        handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+
+        if show_progress:
+            sys.stderr.write("\n")
+            sys.stderr.flush()
+        try:
+            handler.wait_until_parts_uploaded()
+        except DXError:
+            if show_progress:
+                logger.warning("File {} was not uploaded correctly!".format(filename))
+            if retries > max_retries:
+                raise
+            if show_progress:
+                logger.warning("Retrying...({}/{})".format(retries, max_retries))
+            continue
+        if filename is not None:
+            fd.close()
+        break
 
     if not keep_open:
         handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)

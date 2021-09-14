@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
 #
@@ -68,7 +68,7 @@ app_object_method_template = '''
   JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const std::string &input_params="{{}}", const bool safe_to_retry={to_retry});
   JSON {method_name}WithAlias(const std::string &app_name, const std::string &app_alias, const dx::JSON &input_params, const bool safe_to_retry={to_retry});'''
 
-print preamble
+print(preamble)
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
@@ -77,10 +77,10 @@ for method in json.loads(sys.stdin.read()):
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name, to_retry=retry, method_route=method_route)
+            print(app_object_method_template.format(method_name=method_name, to_retry=retry, method_route=method_route))
         else:
-            print object_method_template.format(method_name=method_name, to_retry=retry, method_route=method_route)
+            print(object_method_template.format(method_name=method_name, to_retry=retry, method_route=method_route))
     else:
-        print class_method_template.format(method_name=method_name, to_retry=retry, route=route)
+        print(class_method_template.format(method_name=method_name, to_retry=retry, route=route))
 
-print postscript
+print(postscript)

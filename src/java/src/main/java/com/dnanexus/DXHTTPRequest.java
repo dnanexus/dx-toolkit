@@ -158,62 +158,7 @@ public class DXHTTPRequest {
         this.securityContext = env.getSecurityContextJson();
         this.apiserver = env.getApiserverPath();
         this.disableRetry = env.isRetryDisabled();
-
-        // These timeouts prevent requests from getting stuck
-        RequestConfig.Builder reqBuilder = RequestConfig.custom()
-            .setConnectTimeout(env.getConnectionTimeout())
-            .setSocketTimeout(env.getSocketTimeout());
-
-        DXEnvironment.ProxyDesc proxyDesc = env.getProxy();
-        if (proxyDesc == null) {
-            RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).setDefaultRequestConfig(requestConfig).build();
-            return;
-        }
-
-          // Configure a proxy
-        if (!proxyDesc.authRequired) {
-            reqBuilder.setProxy(proxyDesc.host);
-            RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClientBuilder.create().setUserAgent(USER_AGENT).setDefaultRequestConfig(requestConfig).build();
-            return;
-        }
-
-        // We need to authenticate with a username and password.
-        reqBuilder.setProxy(proxyDesc.host);
-
-        // specify the user/password in the configuration
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        if (proxyDesc.method != null && proxyDesc.method.equals("ntlm")) {
-            // NTLM: windows NT authentication, with Kerberos
-            String localHostname;
-            try {
-                localHostname = java.net.InetAddress.getLocalHost().getHostName();
-            } catch (java.net.UnknownHostException e) {
-                throw new RuntimeException(e);
-            }
-            credsProvider.setCredentials(
-                new AuthScope(proxyDesc.host.getHostName(),
-                              proxyDesc.host.getPort(),
-                              AuthScope.ANY_REALM,
-                              "ntlm"),
-                new NTCredentials(proxyDesc.username,
-                                  proxyDesc.password,
-                                  localHostname,
-                                  proxyDesc.domain));
-        } else {
-            // Default authentication
-            credsProvider.setCredentials(new AuthScope(proxyDesc.host),
-                                         new UsernamePasswordCredentials(proxyDesc.username,
-                                                                         proxyDesc.password));
-        }
-
-        RequestConfig requestConfig = reqBuilder.build();
-        this.httpclient = HttpClientBuilder.create()
-            .setDefaultCredentialsProvider(credsProvider)
-            .setUserAgent(USER_AGENT)
-            .setDefaultRequestConfig(requestConfig)
-            .build();
+        this.httpclient = env.getHttpClient();
     }
 
     /**
@@ -324,7 +269,6 @@ public class DXHTTPRequest {
         }
 
         request.setHeader("Content-Type", "application/json");
-        request.setHeader("Connection", "close");
         request.setHeader("Authorization", securityContext.get("auth_token_type").textValue() + " "
                 + securityContext.get("auth_token").textValue());
         request.setEntity(new StringEntity(data, Charset.forName("UTF-8")));
@@ -449,7 +393,16 @@ public class DXHTTPRequest {
                         }
                         throw new ServiceUnavailableException("503 Service Unavailable", statusCode, retryAfterSeconds);
                     }
-                    throw new IOException(EntityUtils.toString(entity));
+                    String entityStr = EntityUtils.toString(entity);
+                    String msg;
+                    if (entityStr == null || "".equals(entityStr)) {
+                        // This can happen if the server was unable to send response back to us,
+                        // as happened with TIP-1743. Make this more clear in the exception.
+                        msg = "No response entity received";
+                    } else {
+                        msg = String.format("Response entity: %s", entityStr);
+                    }
+                    throw new IOException(msg);
                 }
             } catch (ServiceUnavailableException e) {
                 int secondsToWait = retryAfterSeconds;

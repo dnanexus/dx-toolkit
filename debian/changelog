@@ -1,3 +1,177 @@
+dx-toolkit (0.315.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 27 Aug 2021 22:20:17 +0000
+
+dx-toolkit (0.314.0) trusty; urgency=medium
+
+  * Fixed: Retry failed part uploads
+  * Fixed: `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
+  * Added: Support FIPS enabled Python
+  * Added: `dx archive` and `dx unarchive` commands
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 18 Aug 2021 05:58:15 +0000
+
+dx-toolkit (0.313.0) trusty; urgency=medium
+
+  * Added: '--cost-limit' arg for `dx run`
+  * Added: '--database-ui-view-only' flag for `dx new project`
+  * Added: Currency formatting in `dx describe`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 06 Jul 2021 20:07:00 +0000
+
+dx-toolkit (0.312.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 21 May 2021 18:51:33 +0000
+
+dx-toolkit (0.311.0) trusty; urgency=medium
+
+  * Added: DX_WATCH_PORT for supporting `dx watch` in a job
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 12 May 2021 17:44:41 +0000
+
+dx-toolkit (0.310.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 28 Apr 2021 22:06:25 +0000
+
+dx-toolkit (0.309.0) trusty; urgency=medium
+
+  * Added: 'low' option for --priority argument for `dx run`
+  * Fixed: Provide job container-id when downloading bundledDepends in execution environment
+  * Changed: Upgrade to proot 5.2 from udocker2 fork for dx-docker
+  * Changed: `dx-app-wizard` default to Ubuntu 20.04
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 23 Apr 2021 18:11:18 +0000
+
+dx-toolkit (0.308.0) trusty; urgency=medium
+
+  * Fixed: Search for reference genome project in region
+  * Fixed: Connection leak with httpclient in DXFile
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 19 Apr 2021 19:52:11 +0000
+
+dx-toolkit (0.307.0) trusty; urgency=medium
+
+  * Added: '--brief' flag for `dx-clone-asset`
+  * Fixed: xattr import for dx-upload-all-outputs
+  * Changed: Bump jackson-databind from 2.9.10.5 to 2.9.10.7
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 21 Jan 2021 23:32:39 +0000
+
+dx-toolkit (0.306.0) trusty; urgency=medium
+
+  * Added: '--keep-open' flag for dx `build`
+  * Fixed: Symlink download retries when error 22 is thrown
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 12 Jan 2021 18:36:09 +0000
+
+dx-toolkit (0.305.0) trusty; urgency=medium
+
+  * Removed: Unused python-magic, beatifulsoup4 python dependencies
+  * Changed: Add xattr dependency to extras_require, only install if specified
+  * Added: '--detach' flag for `dx run`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 05 Jan 2021 20:26:43 +0000
+
+dx-toolkit (0.304.0) trusty; urgency=medium
+
+  * Changed: Increase wget retries to 20 for symlink downloads
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 13 Nov 2020 18:03:09 +0000
+
+dx-toolkit (0.303.0) trusty; urgency=medium
+
+  * Changed: gnureadline macos dependency to 8.0.0
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 13 Oct 2020 18:27:29 +0000
+
+dx-toolkit (0.302.0) trusty; urgency=medium
+
+  * Added: Remote builders for 16.04 v1, 20.04
+  * Added: Asset builder for 20.04
+  * Added: '--verbose' flag for `dx-mount-all-inputs`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 16 Sep 2020 19:16:14 +0000
+
+dx-toolkit (0.301.0) trusty; urgency=medium
+
+  * Changed: Provide project-id in batch tsv file
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 31 Aug 2020 15:35:07 +0000
+
+dx-toolkit (0.300.0) trusty; urgency=medium
+
+  * Added: Archival api wrappers
+  * Removed: `dx notebook` and `dx loupe-viewier`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 25 Aug 2020 03:37:23 +0000
+
+dx-toolkit (0.299.0) trusty; urgency=medium
+
+  * Fixed: Mac tarball build
+  * Fixed: DXJava DXDataObject.Rename()
+  * Fixed: `dx-clone-asset` when no project exists
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 29 Jul 2020 22:22:13 +0000
+
+dx-toolkit (0.298.0) trusty; urgency=medium
+
+  * Added: Ubuntu 20.04 build targets
+  * Changed: jackson-databind from 2.9.10.3 to 2.9.10.5
+  * Fixed: `dx-clone-asset` with Python 3
+  * Fixed: API wrapper generation with Python 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 22 Jul 2020 19:46:03 +0000
+
+dx-toolkit (0.297.0) trusty; urgency=medium
+
+  * Changed: Python cryptography version >= 2.3
+  * Removed: Ubuntu 14.04 builds
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 01 Jul 2020 18:14:48 +0000
+
+dx-toolkit (0.296.0) trusty; urgency=medium
+
+  * Added: Examples for `dx find` with negative timestamp
+  * Added: `dx build --from applet-xxx` for app
+  * Added: --brief option to dx build for apps and applets
+  * Fixed: Error handling during syntax check for dx build
+  * Fixed: gnureadline import for macOS
+  * Fixed: `dx-upload-all-outputs ---xattr-properties` parsing
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 19 May 2020 20:51:51 +0000
+
+dx-toolkit (0.295.0) trusty; urgency=medium
+
+  * Changed: Commit dxpy version during release
+  * Changed: Python 2.7 example applets to use Python 3
+  * Fixed: `dx get` for python3 interpreter
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 30 Apr 2020 18:25:52 +0000
+
+dx-toolkit (0.294.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 24 Apr 2020 16:08:42 +0000
+
+dx-toolkit (0.293.0) trusty; urgency=medium
+
+  * Added: Sci Linux compilation option for upload agent
+  * Added: Python 3 interpreter for dx-app-wizard
+  * Added: `dx-mount-all-inputs` for dxfuse 
+  * Fixed: `dx upload` retry for "SSL EOF" error
+  * Fixed: dxR build
+  * Fixed: Error out for dx run --clone with analysis and executable
+  
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 10 Apr 2020 01:27:20 +0000
+
 dx-toolkit (0.292.0) trusty; urgency=medium
 
   * Added: runSpec.version dxapp.json key for 16.04 applets

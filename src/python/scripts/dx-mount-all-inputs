@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+#
+# Copyright (C) 2014-2016 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+import argparse
+import dxpy
+from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
+
+description = BOLD('Note') + ''': this is a utility for use by bash apps
+running in the DNAnexus Platform.
+
+Mounts all files that were supplied as inputs to the app.  By
+convention, if an input parameter "FOO" has value
+
+    {"$dnanexus_link": "file-xxxx"}
+
+and filename INPUT.TXT, then the linked file will be mounted into the
+path:
+
+    $HOME/in/FOO/INPUT.TXT
+
+If an input is an array of files, then all files will be placed into
+numbered subdirectories under a parent directory named for the
+input. For example, if the input key is FOO, and the inputs are {A, B,
+C}.vcf then, the directory structure will be:
+
+    $HOME/in/FOO/0/A.vcf
+                 1/B.vcf
+                 2/C.vcf
+
+Zero padding is used to ensure argument order. For example, if there are
+12 input files {A, B, C, D, E, F, G, H, I, J, K, L}.txt, the directory
+structure will be:
+
+    $HOME/in/FOO/00/A.vcf
+                 ...
+                 11/L.vcf
+
+This allows using shell globbing (FOO/*/*.vcf) to get all the files in the input
+order.
+'''
+
+# Parse the command line
+#
+# exclude -- a list of arguments to skip over
+parser = argparse.ArgumentParser(
+    description=refill_paragraphs(description),
+    formatter_class=argparse.RawTextHelpFormatter)
+parser.add_argument('--except',
+                    help=fill('Do not mount the input with this name. (May be used multiple times.)',
+                              width_adjustment=-20),
+                    action="append",
+                    dest="exclude",
+                    default=[])
+parser.add_argument('--verbose',
+                    help=fill("Start dxfuse with '-verbose 2' logging",
+                              width_adjustment=-20),
+                    action="store_true",
+                    default=False)
+
+args = parser.parse_args()
+
+dxpy.mount_all_inputs(exclude=args.exclude, verbose=args.verbose)

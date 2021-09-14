@@ -6,6 +6,232 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [315.0] - beta
+
+* No significant changes
+
+## [314.0] - 2021.08.27 stable
+
+### Added
+
+* Support FIPS enabled Python
+* `dx archive` and `dx unarchive` commands
+
+### Fixed
+
+* `dx upload` part retry where file would stay in an open state
+* `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
+
+## [313.0] - 2021.08.18 
+
+### Added
+
+* '--cost-limit' arg for `dx run` 
+* '--database-ui-view-only' flag for `dx new project`
+
+### Fixed
+
+* `Total price` for `dx describe` prints formatted currency based on `currency` metadata
+
+## [312.0] - 2021.07.06 
+
+* No significant changes
+
+## [311.0] - 2021.05.21 
+
+### Added
+
+* `DX_WATCH_PORT` env var for supporting `dx watch` in the job execution environment
+
+## [310.0] - 2021.05.12 
+
+* No significant changes
+
+## [309.0] - 2021.04.28 
+
+### Added
+
+* `low` option for `--priority` argument for `dx run`
+
+### Fixed
+
+* Provide job container-id when downloading bundledDepends in job execution environment
+
+### Changed
+
+* Upgrade to proot 5.2 from udocker2 fork for `dx-docker`
+* `dx-app-wizard` default to Ubuntu 20.04
+
+## [308.0] - 2021.04.23 
+
+### Fixed
+
+* Search for reference genome project in region
+* Connection leak with HttpClient in DXFile
+
+## [307.0] - 2021.04.19 
+
+### Added
+
+* `--brief` flag to dx-clone-asset so that script results can be used downstream
+
+### Changed
+
+* Bump jackson-databind from 2.9.10.5 to 2.9.10.7
+
+### Fixed
+
+* xattr import in `dx-upload-all-outputs`
+
+## [306.0] - 2021.01.21 
+
+### Added
+
+* Added '--keep-open' flag for `dx build`
+
+### Fixed
+
+* Symlink download retries when error 22 is thrown
+
+## [305.0] - 2021.01.12 
+
+### Added
+
+* '--detach' flag for `dx run`
+
+### Changed
+
+* Add xattr dependency to extras_require, only install if specified
+
+### Removed
+
+* Unused python-magic, beatifulsoup4 python dependencies
+
+## [304.1] - 2021.01.05 
+
+### Fixed
+
+* Building assets for Ubuntu 20.04
+
+## [303.1] - 2020.11.13 
+
+### Changed
+
+* Increase wget retries to 20 for symlink downloads
+
+## [302.1] - 2020.10.13
+
+### Changed
+
+* gnureadline macos dependency to 8.0.0 for Python versions < 3.9
+
+## [301.1] - 2020.09.16
+
+### Added
+
+* Remote builders for 16.04 v1, 20.04
+* Asset builder for 20.04
+* '--verbose' flag for `dx-mount-all-inputs`
+
+### Changed
+
+* Provide project-id in batch tsv file
+
+## [300.1] - 2020.08.31
+
+### Added
+
+* Archival api wrappers
+
+### Changed
+
+* Hide `notebook` and `loupe-viewier` from `dx` help output
+
+## [299.0] - 2020.08.26
+
+### Fixed
+
+* Macos tarball build
+
+## [298.1] - 2020.07.29 
+
+### Added
+
+* Ubuntu 20.04 build targets
+
+### Changed
+
+* jackson-databind from 2.9.10.3 to 2.9.10.5
+
+### Fixed
+
+* API wrapper generation with Python 3
+* `dx-clone-asset` when no project exists
+* DXJava DXDataObject.Rename()
+
+## [297.1] - 2020.07.22 
+
+### Changed
+
+* Python cryptography version >= 2.3
+
+### Fixed
+
+* `dx-clone-asset` with Python 3
+
+### Removed
+
+* Ubuntu 14.04 builds
+
+## [296.0] - 2020.07.01 
+
+### Added
+
+* Examples for `dx find` with negative timestamp
+* `dx build --from applet-xxx` for app
+* --brief option to dx build for apps and applets
+
+### Fixed
+
+* Error handling during syntax check for dx build
+
+### Changed
+
+* Python 2.7 example applets to use Python 3
+* Commit dxpy version during release
+
+## [295.1] - 2020.05.19
+
+### Fixed
+
+* `dx get` for applets with `python3` interpreter
+* `dx-upload-all-outputs ---xattr-properties` parsing
+
+### Changed
+
+* Python 2.7 example applets to use Python 3
+* Commit dxpy version during release
+
+## [294.0] - 2020.04.30 
+
+* No significant changes
+
+## [293.0] - 2020.04.24 
+
+### Added
+
+* `dx-mount-all-inputs` for dxfuse 
+* Sci Linux compilation option for upload agent
+* Python 3 interpreter for `dx-app-wizard`
+
+### Fixed
+
+* dxR build
+* `dx upload` retry for "SSL EOF" error
+* Error out for dx run --clone with analysis and executable
+
+## [292.0] - 2020.04.09
+
 ### Added
 
 * runSpec.version dxapp.json key for 16.04 applets
@@ -16,7 +242,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python documentation build
 * dxpy tests in Python 3 
 
-## [291.1] - 2020.02.04 beta
+### Changed
+
+* Bump jackson-databind from 2.9.10 to 2.9.10.1 
+
+## [291.1] - 2020.03.10 
 
 ### Changed
 

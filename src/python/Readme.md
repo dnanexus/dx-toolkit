@@ -56,16 +56,18 @@ Other useful resources:
 
 Python version compatibility
 ----------------------------
+dxpy is supported on Python 2 (2.7+) and Python 3 (3.5+)
 
-Code going into the Python codebase should be written in Python 3.3 style, and should be compatible with Python 3.3, 3.4,
-and 2.7. To facilitate Python 2 compatibility, we have the compat module in https://github.com/dnanexus/dx-toolkit/blob/master/src/python/dxpy/compat.py. Also, the following boilerplate should be
+Code going into the Python codebase should be written in Python 3.5 style, and should be compatible with Python 2.7.  Python 2.7 support will end on March 1, 2021.
+
+To facilitate Python 2 compatibility, we have the compat module in https://github.com/dnanexus/dx-toolkit/blob/master/src/python/dxpy/compat.py. Also, the following boilerplate should be
 inserted into all Python source files:
 
 ```
 from __future__ import absolute_import, division, print_function, unicode_literals
 ```
 
-- `dxpy.compat` has some simple shims that mirror Python 3.3 builtins and redirect them to Python 2.7 equivalents when on 2.7. Most critically, `from dxpy.compat import str` will import the `unicode` builtin on 2.7 and the `str` builtin on 3.3. Use `str` wherever you would have used `unicode`. To convert unicode strings to bytes, use `.encode('utf-8')`.
+- `dxpy.compat` has some simple shims that mirror Python 3 builtins and redirect them to Python 2.7 equivalents when on 2.7. Most critically, `from dxpy.compat import str` will import the `unicode` builtin on 2.7 and the `str` builtin on python 3. Use `str` wherever you would have used `unicode`. To convert unicode strings to bytes, use `.encode('utf-8')`.
 - Use `from __future__ import print_function` and use print as a function. Instead of `print >>sys.stderr`, write `print(..., file=sys.stderr)`.
 - The next most troublesome gotcha after the bytes/unicode conversions is that many iterables operators return generators in Python 3. For example, `map()` returns a generator. This breaks places that expect a list, and requires either explicit casting with `list()`, or the use of list comprehensions (usually preferred).
 - Instead of `raw_input`, use `from dxpy.compat import input`.

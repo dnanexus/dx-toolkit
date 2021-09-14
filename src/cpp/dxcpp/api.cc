@@ -1072,6 +1072,22 @@ namespace dx {
     return projectAddTags(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON projectArchive(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/archive"), input_params, safe_to_retry);
+  }
+
+  JSON projectArchive(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return projectArchive(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON projectUnarchive(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/unarchive"), input_params, safe_to_retry);
+  }
+
+  JSON projectUnarchive(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return projectUnarchive(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON projectClone(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/clone"), input_params, safe_to_retry);
   }

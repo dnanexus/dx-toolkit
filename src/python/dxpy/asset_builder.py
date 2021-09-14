@@ -34,6 +34,8 @@ ASSET_BUILDER_PRECISE = "app-create_asset_precise"
 ASSET_BUILDER_TRUSTY = "app-create_asset_trusty"
 ASSET_BUILDER_XENIAL = "app-create_asset_xenial"
 ASSET_BUILDER_XENIAL_V1 = "app-create_asset_xenial_v1"
+ASSET_BUILDER_FOCAL = "app-create_asset_focal"
+
 
 
 class AssetBuilderException(Exception):
@@ -83,8 +85,8 @@ def validate_conf(asset_conf):
         raise AssetBuilderException('The asset configuration does not contain the required field "name".')
 
     # Validate runSpec
-    if 'release' not in asset_conf or asset_conf['release'] not in ["16.04", "14.04", "12.04"]:
-        raise AssetBuilderException('The "release" field value should be either "16.04", "14.04", or "12.04" (DEPRECATED)')
+    if 'release' not in asset_conf or asset_conf['release'] not in ["20.04", "16.04", "14.04", "12.04"]:
+        raise AssetBuilderException('The "release" field value should be either "20.04", "16.04", "14.04" (DEPRECATED), or "12.04" (DEPRECATED)')
     if 'runSpecVersion' in asset_conf:
         if asset_conf['runSpecVersion'] not in ["0", "1"]:
             raise AssetBuilderException('The "runSpecVersion" field should be either "0", or "1"')
@@ -104,7 +106,7 @@ def validate_conf(asset_conf):
         raise AssetBuilderException('The asset configuration does not contain the required field "title". ')
     if 'description' not in asset_conf:
         raise AssetBuilderException('The asset configuration does not contain the required field "description".')
-    
+
 
 
 def dx_upload(file_name, dest_project, target_folder, json_out):
@@ -234,6 +236,8 @@ def build_asset(args):
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_XENIAL_V1, input_params=builder_run_options)
         elif asset_conf['release'] == "16.04":
             app_run_result = dxpy.api.app_run(ASSET_BUILDER_XENIAL, input_params=builder_run_options)
+        elif asset_conf['release'] == "20.04":
+            app_run_result = dxpy.api.app_run(ASSET_BUILDER_FOCAL, input_params=builder_run_options)
 
         job_id = app_run_result["id"]
 

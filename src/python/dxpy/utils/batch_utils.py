@@ -75,10 +75,15 @@ def _type_convert_primitive(val, klass):
     elif klass == 'hash':
         retval = json.loads(val)
     elif klass == 'file':
-        if not val.startswith("file-"):
-            raise Exception("Malformed file {}, must start with 'file-'".format(val))
-        retval = dxpy.dxlink(val)
-        ref_files.append(retval)
+        if val.startswith("project-"):
+            val = val.split(":")
+            retval = dxpy.dxlink(object_id=val[1], project_id=val[0])
+            ref_files.append(retval)
+        elif val.startswith("file-"):
+            retval = dxpy.dxlink(val)
+            ref_files.append(retval)
+        else:
+            raise Exception("Malformed file {}, must start with 'file-' or 'project-'".format(val))
     else:
         raise Exception("class {} not currently supported".format(klass))
     return retval, ref_files

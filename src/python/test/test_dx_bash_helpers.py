@@ -51,6 +51,7 @@ def run(command, **kwargs):
     return output
 
 TEST_APPS = os.path.join(os.path.dirname(__file__), 'file_load')
+TEST_MOUNT_APPS = os.path.join(os.path.dirname(__file__), 'file_mount')
 LOCAL_SCRIPTS = os.path.join(os.path.dirname(__file__), '..', 'scripts')
 LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
 DUMMY_HASH = "123456789012345678901234"
@@ -85,18 +86,18 @@ def build_app_with_bash_helpers(app_dir, project_id):
         # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
         #preamble.append("cd {appdir}/resources && git clone https://github.com/dnanexus/dx-toolkit.git".format(appdir=updated_app_dir))
-        preamble.append('sudo pip install --upgrade virtualenv\n')
-        #preamble.append('make -C {toolkitdir} python\n'.format(toolkitdir=dxtoolkit_dir))
-        #preamble.append('source {toolkitdir}/environment\n'.format(toolkitdir=dxtoolkit_dir))
-        preamble.append('make -C /dxtoolkit clean python\n')
-        preamble.append('source /dxtoolkit/environment\n')
+        preamble.append('python3 /dxtoolkit/src/python/setup.py sdist\n')
+        preamble.append('DIST=$(ls /dxtoolkit/src/python/dist)\n')
+        preamble.append('python3 -m pip install -U /dxtoolkit/src/python/dist/$DIST\n')
         # Now find the applet entry point file and prepend the
         # operations above, overwriting it in place.
-        dxapp_json = json.load(open(os.path.join(app_dir, 'dxapp.json')))
+        with open(os.path.join(app_dir, 'dxapp.json')) as f:
+            dxapp_json = json.load(f)
         if dxapp_json['runSpec']['interpreter'] != 'bash':
             raise Exception('Sorry, I only know how to patch bash apps for remote testing')
         entry_point_filename = os.path.join(app_dir, dxapp_json['runSpec']['file'])
-        entry_point_data = ''.join(preamble) + open(entry_point_filename).read()
+        with open(entry_point_filename) as fh:
+            entry_point_data = ''.join(preamble) + fh.read()
         with open(os.path.join(updated_app_dir, dxapp_json['runSpec']['file']), 'w') as fh:
             fh.write(entry_point_data)
 
@@ -160,6 +161,24 @@ class TestDXBashHelpers(DXTestCase):
 
             # Run the applet
             applet_args = ['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt', "-ivalue=5", "-iages=4"]
+            cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
+            cmd_args.extend(applet_args)
+            run(cmd_args, env=env)
+
+    def test_mount_basic(self):
+        with temporary_project('TestDXBashHelpers.test_app1 temporary project') as dxproj:
+            env = update_environ(DX_PROJECT_CONTEXT_ID=dxproj.get_id())
+
+            # Upload some files for use by the applet
+            dxpy.upload_string("1234\n", project=dxproj.get_id(), name="A.txt")
+            dxpy.upload_string("ABCD\n", project=dxproj.get_id(), name="B.txt")
+
+            # Build the applet, patching in the bash helpers from the
+            # local checkout
+            applet_id = build_app_with_bash_helpers(os.path.join(TEST_MOUNT_APPS, 'basic'), dxproj.get_id())
+
+            # Run the applet
+            applet_args = ['-iseq1=A.txt', '-iseq2=B.txt', '-iref=A.txt', '-iref=B.txt']
             cmd_args = ['dx', 'run', '--yes', '--watch', applet_id]
             cmd_args.extend(applet_args)
             run(cmd_args, env=env)
