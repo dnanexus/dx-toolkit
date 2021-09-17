@@ -351,15 +351,15 @@ class Processes:
             with open(handle.name, "rt") as inp:
                 return inp.read()
 
-        if self._stdout == _FILE:
+        if self._stdout_type == _FILE:
             close_file(self._stdout)
         elif self._stdout_type == _BUFFER:
-            close_buffer(self._stdout)
+            self._out = close_buffer(self._stdout)
 
-        if self._stderr == _FILE:
+        if self._stderr_type == _FILE:
             close_file(self._stderr)
         elif self._stderr_type == _BUFFER:
-            close_buffer(self._stderr)
+            self._err = close_buffer(self._stderr)
 
         if self.capture_stderr:
             self._stderr_buffers = [

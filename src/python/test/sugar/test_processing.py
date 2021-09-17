@@ -32,3 +32,26 @@ class TestProc(unittest.TestCase):
                     ["gunzip -c foo.txt.gz", "cat"], block=True
                 ).output
             )
+
+    def test_stderr_stdout(self):
+        p = proc.Processes([["echo", "hi"]], stdout=False, stderr=False)
+        p.run(echo=True)
+        p.block()
+        assert p._stdout_type is proc._OTHER
+        assert p._stderr_type is proc._OTHER
+        assert p.stdout_stream is None
+        assert p.stderr_stream is None
+        with self.assertRaises(RuntimeError):
+            p.output
+        with self.assertRaises(RuntimeError):
+            p.error
+
+        p = proc.Processes([["echo", "hi"]], stdout=True, stderr=True)
+        p.run(echo=True)
+        p.block()
+        assert p._stdout_type is proc._BUFFER
+        assert p._stderr_type is proc._BUFFER
+        assert p.stdout_stream is not None
+        assert p.stderr_stream is not None
+        assert p.output == b"hi\n"
+        assert p.error == b""
