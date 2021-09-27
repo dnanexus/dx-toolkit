@@ -6,7 +6,23 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [313.0] -  beta
+## [315.0] - beta
+
+* No significant changes
+
+## [314.0] - 2021.08.27 stable
+
+### Added
+
+* Support FIPS enabled Python
+* `dx archive` and `dx unarchive` commands
+
+### Fixed
+
+* `dx upload` part retry where file would stay in an open state
+* `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
+
+## [313.0] - 2021.08.18 
 
 ### Added
 
@@ -17,18 +33,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `Total price` for `dx describe` prints formatted currency based on `currency` metadata
 
-### Fixed
-* `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
-
-## [312.0] -  2021.07.06 
+## [312.0] - 2021.07.06 
 
 * No significant changes
 
-## [311.0] -  2021.05.21 
+## [311.0] - 2021.05.21 
 
 ### Added
 
-* Added `--cost-limit` flag for `dx run`
 * `DX_WATCH_PORT` env var for supporting `dx watch` in the job execution environment
 
 ## [310.0] - 2021.05.12 

@@ -53,6 +53,10 @@ toolkit that doesn't require them.
 
 **Note:** There is a known incompatibility (in compiling dxcpp) when using GCC 4.7 with Boost 1.49. Please either use the GCC 4.6 series, or Boost 1.50+.
 
+### Ubuntu 20.04
+
+    sudo apt install python-is-python3 python3-venv libssl-dev flex bison
+
 ### Ubuntu 16.04
 
     sudo apt install make python-setuptools python-pip python-virtualenv python-dev \

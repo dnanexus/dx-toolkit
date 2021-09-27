@@ -1,3 +1,18 @@
+dx-toolkit (0.315.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 27 Aug 2021 22:20:17 +0000
+
+dx-toolkit (0.314.0) trusty; urgency=medium
+
+  * Fixed: Retry failed part uploads
+  * Fixed: `dx run <globalworkflow> --project/--destination/--folder` now submits analysis to given project or path
+  * Added: Support FIPS enabled Python
+  * Added: `dx archive` and `dx unarchive` commands
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 18 Aug 2021 05:58:15 +0000
+
 dx-toolkit (0.313.0) trusty; urgency=medium
 
   * Added: '--cost-limit' arg for `dx run`

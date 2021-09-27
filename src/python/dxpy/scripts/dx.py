@@ -34,9 +34,9 @@ wrap_stdio_in_codecs()
 decode_command_line_args()
 
 import dxpy
-from . import dx_build_app
-from .. import workflow_builder
-from dxpy.exceptions import PermissionDenied
+from dxpy.scripts import dx_build_app
+from dxpy import workflow_builder
+from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
@@ -62,7 +62,7 @@ from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, 
                               DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
                               tty_rows, tty_cols, pager, format_find_results, nostderr)
 from ..utils.pretty_print import format_tree, format_table
-from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
+from ..utils.resolver import (clean_folder_path, pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                               resolve_existing_path, get_app_from_path, resolve_app, resolve_global_executable, get_exec_handler,
                               split_unescaped, ResolutionError, resolve_to_objects_or_project, is_project_explicit,
@@ -3795,6 +3795,175 @@ def publish(args):
     except:
         err_exit()
 
+def archive(args):
+    def send_archive_request(target_project, request_input, request_func):
+        api_errors = [InvalidState, ResourceNotFound, PermissionDenied]
+        try:
+            res = request_func(target_project, request_input)
+        except Exception as e:            
+            eprint("Failed request: {}".format(request_input))
+            if type(e) in api_errors:
+                eprint("     API error: {}. {}".format(e.name, e.msg))
+            else: 
+                eprint("     Unexpected error: {}".format(format_exception(e)))
+            
+            err_exit("Failed request: {}. {}".format(request_input, format_exception(e)), code=3)
+        return res              
+
+    def get_valid_archival_input(args, target_files, target_folder, target_project):
+        request_input = {}
+        if target_files: 
+            target_files = list(target_files)
+            request_input = {"files": target_files}
+        elif target_folder:
+            request_input = {"folder": target_folder, "recurse":args.recurse}
+        else:
+            err_exit("No input file/folder is found in project {}".format(target_project), code=3)
+        
+        request_mode = args.request_mode    
+        options = {}
+        if request_mode == "archival":
+            options = {"allCopies": args.all_copies}
+            request_func = dxpy.api.project_archive
+        elif request_mode == "unarchival":
+            options = {"rate": args.rate}
+            request_func = dxpy.api.project_unarchive        
+        
+        request_input.update(options)
+        return request_mode, request_func, request_input
+
+    def get_archival_paths(args):
+        target_project = None
+        target_folder = None
+        target_files = set()
+        
+        paths = [split_unescaped(':', path, include_empty_strings=True) for path in args.path]
+        possible_projects = set()
+        possible_folder = set()
+        possible_files = set()
+
+        # Step 0: parse input paths into projects and objects
+        for p in paths:
+            if len(p)>2: 
+                err_exit("Path '{}' is invalid. Please check the inputs or check --help for example inputs.".format(":".join(p)), code=3)
+            elif len(p) == 2:
+                possible_projects.add(p[0])
+            elif len(p) == 1:
+                possible_projects.add('')
+            
+            obj = p[-1]
+            if obj[-1] == '/':
+                folder, entity_name = clean_folder_path(('' if obj.startswith('/') else '/') + obj)
+                if entity_name:
+                    possible_files.add(obj)
+                else:
+                    possible_folder.add(folder)
+            else:
+                possible_files.add(obj)
+        
+        # Step 1: find target project
+        for proj in possible_projects:
+            # is project ID
+            if is_container_id(proj) and proj.startswith('project-'):
+                pass
+            # is "": use current project
+            elif proj == '':
+                if not dxpy.PROJECT_CONTEXT_ID:
+                    err_exit("Cannot find current project. Please check the environment.", code=3)
+                proj = dxpy.PROJECT_CONTEXT_ID
+            # name is given
+            else:
+                try:
+                    project_results = list(dxpy.find_projects(name=proj, describe=True))
+                except:
+                    err_exit("Cannot find project with name {}".format(proj), code=3)
+                
+                if project_results:
+                    choice = pick(["{} ({})".format(result['describe']['name'], result['id']) for result in project_results], allow_mult=False)
+                    proj = project_results[choice]['id']
+                else:
+                    err_exit("Cannot find project with name {}".format(proj), code=3)
+
+            if target_project and proj!= target_project:
+                err_exit("All paths must refer to files/folder in a single project, but two project ids: '{}' and '{}' are given. ".format(
+                                target_project, proj), code=3)
+            elif not target_project:
+                target_project = proj
+
+        # Step 2: check 1) target project
+        #               2) either one folder or a list of files
+        if not target_project:
+            err_exit('No target project has been set. Please check the input or check your permission to the given project.', code=3)
+        if len(possible_folder) >1:
+            err_exit("Only one folder is allowed for each request. Please check the inputs or check --help for example inputs.".format(p), code=3)
+        if possible_folder and possible_files:
+            err_exit('Expecting either a single folder or a list of files for each API request', code=3)
+        
+        # Step 3: assign target folder or target files
+        if possible_folder:
+            target_folder = possible_folder.pop()
+        else:
+            for fp in possible_files:
+                # find a filename
+                # is file ID
+                if is_data_obj_id(fp) and fp.startswith("file-"):
+                    target_files.add(fp)
+                # is folderpath/filename
+                else:
+                    folderpath, filename = clean_folder_path(('' if obj.startswith('/') else '/') + fp)
+                    try: 
+                        file_results = list(dxpy.find_data_objects(classname="file", name=filename,project=target_project,folder=folderpath,describe=True,recurse=False))
+                    except:
+                        err_exit("Input '{}' is not found as a file in project '{}'".format(fp, target_project), code=3)
+                    
+                    if not file_results:
+                        err_exit("Input '{}' is not found as a file in project '{}'".format(fp, target_project), code=3)
+                    # elif file_results
+                    if not args.all:
+                        choice = pick([ "{} ({})".format(result['describe']['name'], result['id']) for result in file_results],allow_mult=True)
+                        if choice == "*" :
+                            target_files.update([file['id'] for file in file_results])
+                        else:
+                            target_files.add(file_results[choice]['id'])
+                    else: 
+                        target_files.update([file['id'] for file in file_results])
+        
+        return target_files, target_folder, target_project
+
+    # resolve paths  
+    target_files, target_folder, target_project = get_archival_paths(args)
+    
+    # set request command and add additional options
+    request_mode, request_func, request_input = get_valid_archival_input(args, target_files, target_folder, target_project)
+                 
+    # ask for confirmation if needed
+    if args.confirm and INTERACTIVE_CLI:
+        if request_mode == "archival":
+            if target_files:
+                counts = len(target_files)
+                print('Will tag {} file(s) for archival in {}'.format(counts,target_project))
+            else: 
+                print('Will tag file(s) for archival in folder {}:{} {}recursively'.format(target_project, target_folder, 'non-' if not args.recurse else ''))
+        elif request_mode == "unarchival":
+            dryrun_request_input = copy.deepcopy(request_input)
+            dryrun_request_input.update(dryRun=True)
+            dryrun_res = send_archive_request(target_project, dryrun_request_input, request_func)
+            print('Will tag {} file(s) for unarchival in {}, totalling {} GB, costing ${}'.format(dryrun_res["files"], target_project, dryrun_res["size"],dryrun_res["cost"]/1000))
+
+        if not prompt_for_yn('Confirm all paths?', default=True):
+            parser.exit(0)
+    
+    # send request and display final results
+    res = send_archive_request(target_project, request_input, request_func)
+    
+    if not args.quiet:
+        print()
+        if request_mode == "archival":
+            print('Tagged {} file(s) for archival in {}'.format(res["count"],target_project))
+        elif request_mode == "unarchival":
+            print('Tagged {} file(s) for unarchival, totalling {} GB, costing ${}'.format(res["files"], res["size"],res["cost"]/1000))
+        print()    
+
 def print_help(args):
     if args.command_or_category is None:
         parser_help.print_help()
@@ -5644,6 +5813,112 @@ parser_publish.add_argument('--no-default',
 parser_publish.set_defaults(func=publish)
 register_parser(parser_publish)
 
+#####################################
+# archive
+#####################################
+                               
+parser_archive = subparsers.add_parser(
+    'archive', 
+    help='Requests for the specified set files or for the files in a single specified folder in one project to be archived on the platform', 
+    description=
+'''
+Requests for {} or for the files in {} in {} to be archived on the platform.
+For each file, if this is the last copy of a file to have archival requested, it will trigger the full archival of the object. 
+Otherwise, the file will be marked in an archival state denoting that archival has been requested.
+'''.format(BOLD('the specified set files'), BOLD('a single specified folder'), BOLD('ONE project')) +
+'''
+The input paths should be either 1 folder path or up to 1000 files, and all path(s) need to be in the same project. 
+To specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon. 
+
+EXAMPLES:
+
+    # archive 3 files in project "FirstProj" with project ID project-B0VK6F6gpqG6z7JGkbqQ000Q
+    $ dx archive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+    
+    # archive 2 files in current project. Specifying file ids saves time by avoiding file name resolution.
+    $ dx select FirstProj
+    $ dx archive file-A00000ygpqGK8ZPjbk0Q000Q file-B00000ygpqGK8ZPjbk0Q000Q
+
+    # archive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q
+    $ dx archive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
+  ''',
+  formatter_class=argparse.RawTextHelpFormatter,
+  parents=[all_arg],
+  prog='dx archive')
+
+parser_archive.add_argument('-q', '--quiet', help='Do not print extra info messages', 
+                            action='store_true')
+parser_archive.add_argument(
+    '--all-copies', 
+    dest = "all_copies", 
+    help=fill('If true, archive all the copies of files in projects with the same billTo org.' ,width_adjustment=-24)+ '\n'+ fill('See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24), 
+                            default=False, action='store_true')
+parser_archive.add_argument(
+    '-y','--yes', dest='confirm',
+    help=fill('Do not ask for confirmation.' , width_adjustment=-24), 
+    default=True, action='store_false')
+parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+
+parser_archive.add_argument(
+    'path', 
+    help=fill('May refer to a single folder or specify up to 1000 files inside a project.',width_adjustment=-24),
+    default=[], nargs='+').completer = DXPathCompleter() 
+
+parser_archive_output = parser_archive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <count> file(s) for archival"')
+
+parser_archive.set_defaults(func=archive, request_mode = "archival")  
+register_parser(parser_archive, categories='fs')
+
+#####################################
+# unarchive
+#####################################
+
+parser_unarchive = subparsers.add_parser(
+    'unarchive', 
+    help='Requests for the specified set files or for the files in a single specified folder in one project to be unarchived on the platform.',    
+    description=
+'''
+Requests for {} or for the files in {} in {} to be unarchived on the platform.
+The requested copy will eventually be transitioned over to the live state while all other copies will move over to the archival state.
+'''.format(BOLD('a specified set files'), BOLD('a single specified folder'), BOLD('ONE project')) +
+'''
+The input paths should be either 1 folder path or up to 1000 files, and all path(s) need to be in the same project. 
+To specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon.
+
+EXAMPLES:
+
+    # unarchive 3 files in project "FirstProj" with project ID project-B0VK6F6gpqG6z7JGkbqQ000Q 
+    $ dx unarchive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+ 
+    # unarchive 2 files in current project. Specifying file ids saves time by avoiding file name resolution.
+    $ dx select FirstProj
+    $ dx unarchive file-A00000ygpqGK8ZPjbk0Q000Q file-B00000ygpqGK8ZPjbk0Q000Q
+
+    # unarchive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q
+    $ dx unarchive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
+  ''',
+    formatter_class=argparse.RawTextHelpFormatter,
+    parents=[all_arg],
+    prog='dx unarchive')
+
+parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+ 
+fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
+
+parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
+parser_unarchive.add_argument(
+    '-y','--yes', dest='confirm',
+    help=fill('Do not ask for confirmation.' , width_adjustment=-24), 
+    default=True, action='store_false')
+parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+
+parser_unarchive.add_argument(
+    'path', 
+    help=fill('May refer to a single folder or specify up to 1000 files inside a project.', width_adjustment=-24),
+    default=[], nargs='+').completer = DXPathCompleter() 
+
+parser_unarchive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <> file(s) for unarchival, totalling <> GB, costing <> "')
+parser_unarchive.set_defaults(func=archive, request_mode="unarchival")
+register_parser(parser_unarchive, categories='fs')
 
 #####################################
 # help
