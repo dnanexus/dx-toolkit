@@ -2749,8 +2749,28 @@ def render_timestamp(epochSeconds):
 
 def list_database_files(args):
     try:
+        # check if database was given as an object hash id
+        if is_hashid(args.database):
+            desc = dxpy.api.app_describe(args.database)
+            entity_result = {"id": desc["id"], "describe": desc}
+        else:
+        # otherwise it was provided as a path, so try and resolve
+            project, _folderpath, entity_result = try_call(resolve_existing_path,
+                                                       args.database,
+                                                       expected='entity')
+
+        # if we couldn't resolved the entity, fail
+        if entity_result is None:
+            err_exit('Could not resolve ' + args.database + ' to a data object', 3)
+        else:
+        # else check and verify that the found entity is a database object
+            entity_result_class = entity_result['describe']['class']
+            if entity_result_class != 'database':
+                err_exit('Error: The given object is of class ' + entity_result_class +
+                 ' but an object of class database was expected', 3)
+            
         results = dxpy.api.database_list_folder(
-            args.database,
+            entity_result['id'],
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
         for r in results["results"]:
             date_str = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
@@ -4778,7 +4798,7 @@ parser_list_database_files = subparsers_list_database.add_parser(
     parents=[env_args],
     prog='dx list database files'
 )
-parser_list_database_files.add_argument('database', help='ID of the database.')
+parser_list_database_files.add_argument('database', help='Data object ID or path of the database.')
 parser_list_database_files.add_argument('--folder', default='/', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. The default value is "/" which will start the search at the root folder of the database.')
 parser_list_database_files.add_argument("--recurse", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
 parser_list_database_files.add_argument("--csv", default=False, help='Write output as comma delimited fields, suitable as CSV format.', action='store_true')
