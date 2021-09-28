@@ -2751,7 +2751,7 @@ def list_database_files(args):
     try:
         # check if database was given as an object hash id
         if is_hashid(args.database):
-            desc = dxpy.api.app_describe(args.database)
+            desc = dxpy.api.database_describe(args.database)
             entity_result = {"id": desc["id"], "describe": desc}
         else:
         # otherwise it was provided as a path, so try and resolve
