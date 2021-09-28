@@ -2756,8 +2756,8 @@ def list_database_files(args):
         else:
         # otherwise it was provided as a path, so try and resolve
             project, _folderpath, entity_result = try_call(resolve_existing_path,
-                                                       args.database,
-                                                       expected='entity')
+                                                           args.database,
+                                                           expected='entity')
 
         # if we couldn't resolved the entity, fail
         if entity_result is None:
