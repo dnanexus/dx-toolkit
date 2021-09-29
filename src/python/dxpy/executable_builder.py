@@ -197,8 +197,9 @@ def assert_consistent_regions(from_spec, from_command_line, builder_exception):
     """
     if from_spec is None or from_command_line is None:
         return
-    if set(from_spec) != set(from_command_line):
-        raise builder_exception("--region and the 'regionalOptions' key in the JSON file do not agree")
+    if not set(from_command_line).issubset(set(from_spec)):
+        invalid_regions = set(from_command_line).difference(set(from_spec))
+        raise builder_exception("regionalOptions spec is not given in these requested regions: {}.".format(",".join(invalid_regions)))
 
 
 def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exeception):
