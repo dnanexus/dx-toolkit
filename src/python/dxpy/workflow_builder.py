@@ -83,7 +83,6 @@ def _fetch_spec_from_workflow(args, parser):
 def _cleanup_empty_keys(json_spec):
     import re
     clean_json = re.sub('"\w*": null,','',json.dumps(json_spec))
-    
     return json.loads(clean_json)
 
 def _check_dxcompiler_version(json_spec):
@@ -367,41 +366,45 @@ def _get_validated_json_for_build_or_update(json_spec, args):
 def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
     """
     Check if the global workflow regions and the regions of stages (apps) match.
-    If the workflow contains any applets, the workflow can be currently enabled
+    If the workflow contains any applets, then workflow can be currently enabled
     in only one region - the region in which the applets are stored.
     """
+    if not workflow_enabled_regions:
+        return workflow_enabled_regions
+    
     executables = [i.get("executable") for i in workflow_spec.get("stages")]
     requested_regions = list(workflow_enabled_regions)
     
-    for exect in executables:
-        if exect.startswith("applet-"):
+    for exec in executables:
+        if exec.startswith("applet-"):
             if len(workflow_enabled_regions) > 1:
                 raise WorkflowBuilderException("Building a global workflow with applets in more than one region is not yet supported.")
-            
-            applet_region = dxpy.api.applet_describe(dxpy.api.applet_describe(exect)["project"])["region"]
-            if applet_region != workflow_enabled_regions:
-                raise WorkflowBuilderException("The applet {} is not available in requested region {}".format(exect, workflow_enabled_regions))
+            else:
+                applet_region = dxpy.api.applet_describe(dxpy.api.applet_describe(exec)["project"])["region"]
+                if applet_region != workflow_enabled_regions:
+                    raise WorkflowBuilderException("The applet {} is not available in requested region {}".format(exec, workflow_enabled_regions))
 
-        elif exect.startswith("app-"):
-            app_regional_options = dxpy.api.app_describe(exect, input_params={"fields": {"regionalOptions": True}})
+        elif exec.startswith("app-"):
+            app_regional_options = dxpy.api.app_describe(exec, input_params={"fields": {"regionalOptions": True}})
             app_regions = set(app_regional_options['regionalOptions'].keys())
             if not workflow_enabled_regions.issubset(app_regions):
                 additional_workflow_regions = workflow_enabled_regions - app_regions
                 mesg = "The app {} is enabled in regions {} while the global workflow in {}.".format(
-                    exect, ", ".join(app_regions), ", ".join(workflow_enabled_regions))
+                    exec, ", ".join(app_regions), ", ".join(workflow_enabled_regions))
                 mesg += " The workflow will not be able to run in {}.".format(", ".join(additional_workflow_regions))
                 mesg += " If you are a developer of the app, you can enable the app in {} to run the workflow in that region(s).".format(
                     ", ".join(additional_workflow_regions))
-                logger.warn(mesg)
+                raise WorkflowBuilderException(mesg)
+            else:
                 workflow_enabled_regions.intersection_update(app_regions)
 
-        elif exect.startswith("workflow-"):
+        elif exec.startswith("workflow-"):
              # We recurse to check the regions of the executables of the inner workflow
-            inner_workflow_spec = dxpy.api.workflow_describe(exect)
+            inner_workflow_spec = dxpy.api.workflow_describe(exec)
             inner_workflow_enabled_regions = _assert_executable_regions_match(workflow_enabled_regions, inner_workflow_spec)
             workflow_enabled_regions.intersection_update(inner_workflow_enabled_regions)
 
-        elif exect.startswith("globalworkflow-"):
+        elif exec.startswith("globalworkflow-"):
             raise WorkflowBuilderException("Building a global workflow with nested global workflows is not yet supported")
 
         if not workflow_enabled_regions:
