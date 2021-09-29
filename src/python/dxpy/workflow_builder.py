@@ -85,16 +85,15 @@ def _cleanup_empty_keys(json_spec):
     
     return json.loads(clean_json)
 
-def _check_dxcompile_version(json_spec):
-    if "tags" in json_spec and "dxCompiler" in json_spec["tags"]:
-        if "details" in json_spec and "version" in json_spec["details"]:
-            import requests
+def _check_dxcompiler_version(json_spec):
+    if json_spec.get("tag") == "dxCompiler":
+        if  json_spec.get("details") and json_spec["details"].get("version"):
             from distutils.version import StrictVersion
-            url = 'https://github.com/dnanexus/dxCompiler/releases/latest'
-            r = requests.get(url)
-            latest_version = r.url.split('/')[-1]
-            if StrictVersion(json_spec["details"]["version"]) < StrictVersion(latest_version):
-                raise WorkflowBuilderException("Workflow spec is not compiled using latest dxCompiler")
+            supported_version = "2.5.0"
+            current_compiler_version = str.split(json_spec["details"].get("version"),"-")[0]
+            if StrictVersion(current_compiler_version) < StrictVersion(supported_version):
+                raise WorkflowBuilderException("Workflow spec is not compiled using dxCompiler (version>={}) that supports dependency annotation.".format(supported_version))
+
 
 def _get_destination_project(json_spec, args, build_project_id=None):
     """
@@ -616,6 +615,8 @@ def _build_or_update_workflow(json_spec, args):
             json_spec = _get_validated_json(json_spec, args)
             workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
+            
+            _check_dxcompiler_version(json_spec)
             # Verify if the global workflow already exists and if the user has developer rights to it
             # If the global workflow name doesn't exist, the user is free to build it
             # If the name does exist two things can be done:
@@ -661,7 +662,7 @@ def build(args, parser):
             json_spec = _fetch_spec_from_workflow(args, parser)
         else:
             json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
-        _check_dxcompile_version(json_spec)
+
         workflow_id = _build_or_update_workflow(json_spec, args)
         _print_output(workflow_id, args)
 
