@@ -68,10 +68,11 @@ def _parse_executable_spec(src_dir, json_file_name, parser):
         except Exception as e:
             raise WorkflowBuilderException("Could not parse {} file as JSON: {}".format(json_file_name, e.args))
 
+
 def _fetch_spec_from_workflow(args, parser):
-    try: 
-        json_spec = dxpy.api.workflow_describe(args._from)
-        json_spec.update(version=args.version_override)
+    try:
+        source_workflow = dxpy.DXWorkflow(args._from)
+        json_spec = source_workflow.describe(fields={"properties", "details"}, default_fields=True)
         json_spec = _cleanup_empty_keys(json_spec)
 
     except Exception as e:
@@ -623,6 +624,8 @@ def _build_or_update_workflow(json_spec, args):
             # * either update the requested version, if this version already exists
             # * or create the version if it doesn't exist
             existing_workflow = dxpy.executable_builder.verify_developer_rights('globalworkflow-' + json_spec['name'])
+            if args.version_override:
+                json_spec["version"] = args.version_override
             if existing_workflow and _version_exists(json_spec,
                                                      existing_workflow.name,
                                                      existing_workflow.version):
