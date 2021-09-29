@@ -112,7 +112,7 @@ def validate_bill_to(bill_to, builder_exception):
         try:
             member_access = dxpy.api.org_describe(bill_to)
             if not member_access['allowBillableActivities']:
-                exception_msg='YOu are not a member in {} with allowBillableActivities permission. Please check the org\'s billing policy.'.format(bill_to)
+                exception_msg='You are not a member in {} with allowBillableActivities permission. Please check the org\'s billing policy.'.format(bill_to)
         except:
             exception_msg='Cannot retrieve billing information for {}. Please check your access level and the org\'s billing policy.'.format(bill_to)
     else:
