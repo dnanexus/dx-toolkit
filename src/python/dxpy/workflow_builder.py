@@ -294,9 +294,7 @@ def _validate_json_for_global_workflow(json_spec, args):
             raise WorkflowBuilderException(
                 'The field "regionalOptions" must be a non-empty dictionary whose values are dictionaries')
 
-    if args.bill_to:
-        dxpy.executable_builder.validate_bill_to(args.bill_to)
-        json_spec["billTo"] = args.bill_to
+
 
 def _get_validated_json(json_spec, args):
     """
@@ -421,32 +419,35 @@ def _build_regular_workflow(json_spec, keep_open=False):
     return workflow_id
 
 
-def _get_validated_enabled_regions(json_spec, from_command_line):
+def _get_validated_enabled_regions(json_spec, args):
     """
     Returns a set of regions (region names) in which the global workflow
     should be enabled. Also validates and synchronizes the regions
     passed via CLI argument and in the regionalOptions field.
     """
+    # First determine in which regions the global workflow needs to be available
     enabled_regions = dxpy.executable_builder.get_enabled_regions('globalworkflow',
                                                                   json_spec,
-                                                                  from_command_line,
+                                                                  args.region,
                                                                   WorkflowBuilderException)
     if not enabled_regions:
         enabled_regions = []
-        if not dxpy.WORKSPACE_ID:
+        if not dxpy.PROJECT_CONTEXT_ID:
             msg = "A context project must be selected to enable a workflow in the project's region."
             msg += " You can use 'dx select' to select a project. Otherwise you can use --region option"
             msg += " to select a region in which the workflow should be enabled"
             raise(WorkflowBuilderException(msg))
-        region = dxpy.api.project_describe(dxpy.WORKSPACE_ID,
+        current_selected_region = dxpy.api.project_describe(dxpy.PROJECT_CONTEXT_ID,
                                            input_params={"fields": {"region": True}})["region"]
 
-        enabled_regions.append(region)
+        enabled_regions.append(current_selected_region)
 
-    if 'billTo' in json_spec:
-        billable_regions = dxpy.executable_builder.get_permitted_regions(json_spec['billTo'])
-        if billable_regions:
-            enabled_regions.intersection_update(billable_regions)
+    # Get billable regions
+    billable_regions = dxpy.executable_builder.get_permitted_regions(args.bill_to)
+    enabled_regions.intersection_update(billable_regions)
+    
+    # Verify all the stages are also enabled in these regions
+    enabled_regions = _assert_executable_regions_match(enabled_regions, json_spec)
     
     if not enabled_regions:
         raise AssertionError("This workflow should be enabled in at least one region")
@@ -509,18 +510,11 @@ def _build_underlying_workflows(enabled_regions, json_spec, args):
     return workflows_by_region, projects_by_region
 
 
-def _build_global_workflow(json_spec, args):
+def _build_global_workflow(json_spec, enabled_regions, args):
     """
     Creates a workflow in a temporary project for each enabled region
     and builds a global workflow on the platform based on these workflows.
     """
-    # First determine in which regions the global workflow needs to be available
-    enabled_regions = _get_validated_enabled_regions(json_spec, args.region)
-
-    # Verify all the stages are also enabled in these regions
-    # TODO: Add support for dx building multi-region global workflows with applets
-    enabled_regions = _assert_executable_regions_match(enabled_regions, json_spec)
-
     workflows_by_region, projects_by_region = {}, {}  # IDs by region
     try:
         # prepare "regionalOptions" field for the globalworkflow/new input
@@ -634,7 +628,8 @@ def _build_or_update_workflow(json_spec, args):
                 workflow_id = _update_global_workflow(json_spec, args, existing_workflow.id)
             else:
                 json_spec = _get_validated_json(json_spec, args)
-                workflow_id = _build_global_workflow(json_spec, args)
+                enabled_regions = _get_validated_enabled_regions(json_spec, args)
+                workflow_id = _build_global_workflow(json_spec, enabled_regions, args)
         else:
             raise WorkflowBuilderException("Unrecognized workflow type: {}".format(args.mode))
     except dxpy.exceptions.DXAPIError as e:
