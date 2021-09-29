@@ -103,25 +103,25 @@ def delete_temporary_projects(projects):
 
 def validate_bill_to(bill_to, builder_exception):
     user_id = dxpy.whoami()
+    if not bill_to:
+        bill_to = dxpy.api.user_describe(user_id)['billTo']
+
     if bill_to.startswith('user-') and bill_to != user_id:
         exception_msg = 'Cannot use another user\'s account for key "billTo"'
     elif bill_to.startswith('org-'):
         try:
-            user_billTo = dxpy.api.user_describe(user_id)['billTo']
-            if bill_to != user_billTo:
-                member_access = dxpy.api.org_describe(bill_to)
-                if member_access['level'] != 'ADMIN' or not member_access['allowBillableActivities']:
-                    exception_msg='Cannot use {} for key "billTo". Please check your access level and the org\'s billing policy.'.format(bill_to)
+            member_access = dxpy.api.org_describe(bill_to)
+            if not member_access['allowBillableActivities']:
+                exception_msg='YOu are not a member in {} with allowBillableActivities permission. Please check the org\'s billing policy.'.format(bill_to)
         except:
             exception_msg='Cannot retrieve billing information for {}. Please check your access level and the org\'s billing policy.'.format(bill_to)
-
     else:
         exception_msg='The field "billTo" must be a valid ID of a user/org'
     
     if exception_msg:
         raise builder_exception(exception_msg)
     
-    return True
+    return bill_to
 
 def add_developer(prefixed_name):
     assert(prefixed_name.startswith('app-') or prefixed_name.startswith('globalworkflow-'))
@@ -237,15 +237,13 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exece
                     raise executable_builder_exeception(
                     key + " cannot be given in both runSpec and in regional options for " + region)
 
-def get_permitted_regions(bill_to):
+def get_permitted_regions(bill_to, executable_builder_exeception):
     billable_regions = set()
     try:
-        if bill_to.startswith('user-'):
-            billable_regions = set(dxpy.api.user_describe(bill_to)['permittedRegions'])
-        elif bill_to.startswith('org-'):
-            billable_regions = set(dxpy.api.org_describe(bill_to)['permittedRegions'])
+        bill_to = validate_bill_to(bill_to, executable_builder_exeception)
+        billable_regions= dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions")
     except:
-        pass
+        raise executable_builder_exeception("Failed to get permitted regions of {}".format(bill_to))
     return billable_regions
 
 def get_enabled_regions(exec_type, json_spec, from_command_line, executable_builder_exeception):
