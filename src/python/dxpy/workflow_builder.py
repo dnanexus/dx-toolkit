@@ -86,14 +86,14 @@ def _cleanup_empty_keys(json_spec):
     return json.loads(clean_json)
 
 def _check_dxcompiler_version(json_spec):
-    if json_spec.get("tag") == "dxCompiler":
-        if  json_spec.get("details") and json_spec["details"].get("version"):
-            from distutils.version import StrictVersion
-            supported_version = "2.5.0"
-            current_compiler_version = str.split(json_spec["details"].get("version"),"-")[0]
-            if StrictVersion(current_compiler_version) < StrictVersion(supported_version):
-                raise WorkflowBuilderException("Workflow spec is not compiled using dxCompiler (version>={}) that supports dependency annotation.".format(supported_version))
-
+    if  json_spec.get("details") and json_spec["details"].get("version"):
+        from distutils.version import StrictVersion
+        supported_version = "2.5.0"
+        current_compiler_version = str.split(json_spec["details"].get("version"),"-")[0]
+        if StrictVersion(current_compiler_version) < StrictVersion(supported_version):
+            raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports dependency annotation.".format(json_spec["name"], supported_version))
+    else:
+        raise WorkflowBuilderException("Cannot find the dxCompiler version from the spec of the source workflow {}. Please specify the dxCompiler version in the 'details' field of the workflow spec.".format(json_spec["name"]))
 
 def _get_destination_project(json_spec, args, build_project_id=None):
     """
@@ -619,8 +619,8 @@ def _build_or_update_workflow(json_spec, args):
             json_spec = _get_validated_json(json_spec, args)
             workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
-            
-            _check_dxcompiler_version(json_spec)
+            if json_spec.get("tag") and "dxCompiler" in json_spec.get("tag"):
+                _check_dxcompiler_version(json_spec)
             # Verify if the global workflow already exists and if the user has developer rights to it
             # If the global workflow name doesn't exist, the user is free to build it
             # If the name does exist two things can be done:
