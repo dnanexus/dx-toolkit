@@ -445,7 +445,8 @@ def _get_validated_enabled_regions(json_spec, args):
         enabled_regions.append(current_selected_region)
 
     # Get billable regions
-    billable_regions = dxpy.executable_builder.get_permitted_regions(args.bill_to)
+    enabled_regions = set(enabled_regions)
+    billable_regions = dxpy.executable_builder.get_permitted_regions(args.bill_to, WorkflowBuilderException)
     enabled_regions.intersection_update(billable_regions)
     
     # Verify all the stages are also enabled in these regions
