@@ -106,6 +106,7 @@ def validate_bill_to(bill_to, builder_exception):
     if not bill_to:
         bill_to = dxpy.api.user_describe(user_id)['billTo']
 
+    exception_msg = None
     if bill_to.startswith('user-') and bill_to != user_id:
         exception_msg = 'Cannot use another user\'s account for key "billTo"'
     elif bill_to.startswith('org-'):
