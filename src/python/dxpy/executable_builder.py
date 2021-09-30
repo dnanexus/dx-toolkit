@@ -242,8 +242,7 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exece
 def get_permitted_regions(bill_to, executable_builder_exeception):
     billable_regions = set()
     try:
-        bill_to = validate_bill_to(bill_to, executable_builder_exeception)
-        billable_regions= dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions")
+        billable_regions= set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
     except:
         raise executable_builder_exeception("Failed to get permitted regions of {}".format(bill_to))
     return billable_regions
