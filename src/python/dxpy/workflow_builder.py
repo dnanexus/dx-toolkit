@@ -82,7 +82,7 @@ def _fetch_spec_from_workflow(args, parser):
 
 def _cleanup_empty_keys(json_spec):
     import re
-    clean_json = re.sub('"\w*": null,','',json.dumps(json_spec))
+    clean_json = re.sub('\"\w*\": (null|\{\}|\"\"|\[\])(\,|)\s*','',json.dumps(json_spec)).replace(", }","}")
     return json.loads(clean_json)
 
 def _check_dxcompiler_version(json_spec):
