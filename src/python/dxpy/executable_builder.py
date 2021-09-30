@@ -101,7 +101,7 @@ def delete_temporary_projects(projects):
         except Exception:
             pass
 
-def validate_bill_to(bill_to, builder_exception):
+def validate_bill_to(bill_to, executable_builder_exception):
     user_id = dxpy.whoami()
     if not bill_to:
         bill_to = dxpy.api.user_describe(user_id)['billTo']
@@ -120,7 +120,7 @@ def validate_bill_to(bill_to, builder_exception):
         exception_msg='The field "billTo" must be a valid ID of a user/org'
     
     if exception_msg:
-        raise builder_exception(exception_msg)
+        raise executable_builder_exception(exception_msg)
     
     return bill_to
 
@@ -191,7 +191,7 @@ def verify_developer_rights(prefixed_name):
     return FoundExecutable(name=name_without_prefix, version=version, id=executable_id)
 
 
-def assert_consistent_regions(from_spec, from_command_line, builder_exception):
+def assert_consistent_regions(from_spec, from_command_line, executable_builder_exception):
     """
     Verifies the regions passed with --region CLI argument and the ones
     specified in regionalOptions are the same (if both CLI and spec were used)
@@ -200,10 +200,10 @@ def assert_consistent_regions(from_spec, from_command_line, builder_exception):
         return
     if not set(from_command_line).issubset(set(from_spec)):
         invalid_regions = set(from_command_line).difference(set(from_spec))
-        raise builder_exception("regionalOptions spec is not given in these requested regions: {}.".format(",".join(invalid_regions)))
+        raise executable_builder_exception("regionalOptions spec is not given in these requested regions: {}.".format(",".join(invalid_regions)))
 
 
-def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exeception):
+def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exception):
     """
     Validates the "regionalOptions" field and verifies all the regions used
     in "regionalOptions" have the same options.
@@ -212,14 +212,14 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exece
     json_fn = 'dxapp.json' if exec_type == 'app' else 'dxworkflow.json'
 
     if not isinstance(reg_options_spec, dict):
-        raise executable_builder_exeception("The field 'regionalOptions' in  must be a mapping")
+        raise executable_builder_exception("The field 'regionalOptions' in  must be a mapping")
     if not reg_options_spec:
-        raise executable_builder_exeception(
+        raise executable_builder_exception(
             "The field 'regionalOptions' in " + json_fn + " must be a non-empty mapping")
     regional_options_list = list(reg_options_spec.items())
     for region, opts_for_region in regional_options_list:
         if not isinstance(opts_for_region, dict):
-            raise executable_builder_exeception("The field 'regionalOptions['" + region +
+            raise executable_builder_exception("The field 'regionalOptions['" + region +
                             "']' in " + json_fn + " must be a mapping")
         if set(opts_for_region.keys()) != set(regional_options_list[0][1].keys()):
             if set(opts_for_region.keys()) - set(regional_options_list[0][1].keys()):
@@ -228,7 +228,7 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exece
             else:
                 with_key, without_key = regional_options_list[0][0], region
                 key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
-            raise executable_builder_exeception(
+            raise executable_builder_exception(
                 "All regions in regionalOptions must specify the same options; " +
                 "%s was given for %s but not for %s" % (key_name, with_key, without_key)
             )
@@ -236,18 +236,19 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exece
         if exec_type == 'app':
             for key in opts_for_region:
                 if key in json_spec.get('runSpec', {}):
-                    raise executable_builder_exeception(
+                    raise executable_builder_exception(
                     key + " cannot be given in both runSpec and in regional options for " + region)
 
-def get_permitted_regions(bill_to, executable_builder_exeception):
+def get_permitted_regions(bill_to, executable_builder_exception):
     billable_regions = set()
     try:
+        bill_to = validate_bill_to(bill_to, executable_builder_exception)
         billable_regions= set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
     except:
-        raise executable_builder_exeception("Failed to get permitted regions of {}".format(bill_to))
+        raise executable_builder_exception("Failed to get permitted regions of {}".format(bill_to))
     return billable_regions
 
-def get_enabled_regions(exec_type, json_spec, from_command_line, executable_builder_exeception):
+def get_enabled_regions(exec_type, json_spec, from_command_line, executable_builder_exception):
     """
     Return a list of regions in which the global executable (app or global workflow)
     will be enabled, based on the "regionalOption" in their JSON specification
@@ -259,16 +260,16 @@ def get_enabled_regions(exec_type, json_spec, from_command_line, executable_buil
     :type json_spec: dict or None.
     :param from_command_line: The regional options specified on the command-line via --region.
     :type from_command_line: list or None.
-    :param builder_exception: Exception that will be thrown.
-    :type builder_exception: AppBuilderException or WorkflowBuilderException.
+    :param executable_builder_exception: Exception that will be thrown.
+    :type executable_builder_exception: AppBuilderException or WorkflowBuilderException.
     """
 
     from_spec = json_spec.get('regionalOptions')
 
     if from_spec is not None:
-        assert_consistent_reg_options(exec_type, json_spec, executable_builder_exeception)
+        assert_consistent_reg_options(exec_type, json_spec, executable_builder_exception)
 
-    assert_consistent_regions(from_spec, from_command_line, executable_builder_exeception)
+    assert_consistent_regions(from_spec, from_command_line, executable_builder_exception)
 
     enabled_regions = None
     if from_spec is not None:
