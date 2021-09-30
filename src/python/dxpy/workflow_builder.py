@@ -542,7 +542,7 @@ def _build_global_workflow(json_spec, enabled_regions, args):
 
         # Create a new global workflow version on the platform
         global_workflow_id = dxpy.api.global_workflow_new(gwf_final_json)["id"]
-        
+
         logger.info("Uploaded global workflow {n}/{v} successfully".format(n=gwf_final_json["name"],
                                                                            v=gwf_final_json["version"]))
         logger.info("You can publish this workflow with:")
@@ -671,7 +671,6 @@ def build(args, parser):
 
         workflow_id = _build_or_update_workflow(json_spec, args)
         _print_output(workflow_id, args)
-
     except WorkflowBuilderException as e:
         print("Error: %s" % (e.args,), file=sys.stderr)
         sys.exit(3)
