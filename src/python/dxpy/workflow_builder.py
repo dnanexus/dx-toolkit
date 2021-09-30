@@ -373,7 +373,6 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
         return workflow_enabled_regions
     
     executables = [i.get("executable") for i in workflow_spec.get("stages")]
-    requested_regions = list(workflow_enabled_regions)
     
     for exec in executables:
         if exec.startswith("applet-"):
@@ -381,8 +380,8 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
                 raise WorkflowBuilderException("Building a global workflow with applets in more than one region is not yet supported.")
             else:
                 applet_region = dxpy.api.applet_describe(dxpy.api.applet_describe(exec)["project"])["region"]
-                if applet_region != workflow_enabled_regions:
-                    raise WorkflowBuilderException("The applet {} is not available in requested region {}".format(exec, workflow_enabled_regions))
+                if applet_region not in workflow_enabled_regions:
+                    raise WorkflowBuilderException("The applet {} is not available in requested region {}".format(exec, workflow_enabled_regions.pop()))
 
         elif exec.startswith("app-"):
             app_regional_options = dxpy.api.app_describe(exec, input_params={"fields": {"regionalOptions": True}})
@@ -408,7 +407,7 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
             raise WorkflowBuilderException("Building a global workflow with nested global workflows is not yet supported")
 
         if not workflow_enabled_regions:
-            raise WorkflowBuilderException("No region is enabled to build the global workflow. Please check if the workflow can run in any of the requested regions: {}".format(requested_regions))
+            raise WorkflowBuilderException("No region is enabled to build the global workflow. Please check if the workflow can run in any of the requested regions: {}".format(",".join(workflow_enabled_regions)))
 
     return workflow_enabled_regions
 
