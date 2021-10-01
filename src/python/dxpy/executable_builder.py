@@ -107,7 +107,7 @@ def validate_bill_to(bill_to, executable_builder_exception):
     """
     user_id = dxpy.whoami()
     if not bill_to:
-        bill_to = dxpy.api.user_describe(user_id)['billTo']
+        return dxpy.api.user_describe(user_id)['billTo']
 
     exception_msg = None
     if bill_to.startswith('user-') and bill_to != user_id:

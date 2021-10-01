@@ -377,33 +377,33 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
     
     executables = [i.get("executable") for i in workflow_spec.get("stages")]
     
-    for exec in executables:
-        if exec.startswith("applet-"):
+    for exect in executables:
+        if exect.startswith("applet-"):
             if len(workflow_enabled_regions) > 1:
                 raise WorkflowBuilderException("Building a global workflow with applets in more than one region is not yet supported.")
             else:
-                applet_region = dxpy.api.applet_describe(dxpy.api.applet_describe(exec)["project"])["region"]
+                applet_region = dxpy.api.applet_describe(dxpy.api.applet_describe(exect)["project"])["region"]
                 if applet_region not in workflow_enabled_regions:
-                    raise WorkflowBuilderException("The applet {} is not available in requested region {}".format(exec, workflow_enabled_regions.pop()))
+                    raise WorkflowBuilderException("The applet {} is not available in requested region {}".format(exect, workflow_enabled_regions.pop()))
 
-        elif exec.startswith("app-"):
-            app_regional_options = dxpy.api.app_describe(exec, input_params={"fields": {"regionalOptions": True}})
+        elif exect.startswith("app-"):
+            app_regional_options = dxpy.api.app_describe(exect, input_params={"fields": {"regionalOptions": True}})
             app_regions = set(app_regional_options['regionalOptions'].keys())
             if not workflow_enabled_regions.issubset(app_regions):
                 additional_workflow_regions = workflow_enabled_regions - app_regions
                 mesg = "The app {} is enabled in regions {} while the global workflow in {}.".format(
-                    exec, ", ".join(app_regions), ", ".join(workflow_enabled_regions))
+                    exect, ", ".join(app_regions), ", ".join(workflow_enabled_regions))
                 mesg += " The workflow will not be able to run in {}.".format(", ".join(additional_workflow_regions))
                 mesg += " If you are a developer of the app, you can enable the app in {} to run the workflow in that region(s).".format(
                     ", ".join(additional_workflow_regions))
                 raise WorkflowBuilderException(mesg)
 
-        elif exec.startswith("workflow-"):
+        elif exect.startswith("workflow-"):
              # We recurse to check the regions of the executables of the inner workflow
-            inner_workflow_spec = dxpy.api.workflow_describe(exec)
+            inner_workflow_spec = dxpy.api.workflow_describe(exect)
             workflow_enabled_regions = _assert_executable_regions_match(workflow_enabled_regions, inner_workflow_spec)
 
-        elif exec.startswith("globalworkflow-"):
+        elif exect.startswith("globalworkflow-"):
             raise WorkflowBuilderException("Building a global workflow with nested global workflows is not yet supported")
 
     return workflow_enabled_regions
