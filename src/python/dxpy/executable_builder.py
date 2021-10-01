@@ -102,6 +102,9 @@ def delete_temporary_projects(projects):
             pass
 
 def validate_bill_to(bill_to, executable_builder_exception):
+    """
+    Check if the requesting user can perform billable activities on behalf of the bill_to
+    """
     user_id = dxpy.whoami()
     if not bill_to:
         bill_to = dxpy.api.user_describe(user_id)['billTo']
@@ -238,7 +241,7 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_excep
                 key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
             raise executable_builder_exception(
                 "All regions in regionalOptions must specify the same options; " +
-                "%s was given for %s but not for %s" % (key_name, with_key, without_key)
+                "{} was given for {} but not for {}" .format (key_name, with_key, without_key)
             )
 
         if exec_type == 'app':
@@ -248,6 +251,9 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_excep
                     key + " cannot be given in both runSpec and in regional options for " + region)
 
 def get_permitted_regions(bill_to, executable_builder_exception):
+    """
+    Validates requested bill_to and returns the set of its permitted regions.
+    """
     billable_regions = set()
     try:
         bill_to = validate_bill_to(bill_to, executable_builder_exception)
