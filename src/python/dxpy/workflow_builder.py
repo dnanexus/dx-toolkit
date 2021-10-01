@@ -271,7 +271,7 @@ def _validate_json_for_global_workflow(json_spec, args):
     # TODO: get a confirmation before building a workflow that may be costly
     if 'name' not in json_spec:
         raise WorkflowBuilderException(
-            "dxworkflow.json contains no 'name' field, but it is required to build a global workflow")
+            "Workflow spec contains no 'name' field, but it is required to build a global workflow")
     if not dxpy.executable_builder.GLOBAL_EXEC_NAME_RE.match(json_spec['name']):
         raise WorkflowBuilderException(
             "The name of your workflow must match /^[a-zA-Z0-9._-]+$/")
@@ -280,7 +280,7 @@ def _validate_json_for_global_workflow(json_spec, args):
 
     if 'version' not in json_spec:
         raise WorkflowBuilderException(
-            "dxworkflow.json contains no 'version' field, but it is required to build a global workflow")
+            "Workflow spec contains no 'version' field, but it is required to build a global workflow")
     if not dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match(json_spec['version']):
         logger.warn('"version" {} should be semver compliant (e.g. of the form X.Y.Z)'.format(json_spec['version']))
 
@@ -300,7 +300,7 @@ def _validate_json_for_global_workflow(json_spec, args):
 
 def _get_validated_json(json_spec, args):
     """
-    Validates dxworkflow.json and returns the json that can be sent with the
+    Validates workflow spec and returns the json that can be sent with the
     /workflow/new API or /globalworkflow/new request.
     """
     if not json_spec:
@@ -355,10 +355,10 @@ def _get_validated_json_for_build_or_update(json_spec, args):
     dxpy.executable_builder.inline_documentation_files(validated, args.src_dir)
 
     if 'title' not in json_spec:
-        logger.warn("dxworkflow.json is missing a title, please add one in the 'title' field")
+        logger.warn("workflow spec is missing a title, please add one in the 'title' field")
 
     if 'summary' not in json_spec:
-        logger.warn("dxworkflow.json is missing a summary, please add one in the 'summary' field")
+        logger.warn("workflow spec is missing a summary, please add one in the 'summary' field")
     else:
         if json_spec['summary'].endswith('.'):
             logger.warn("summary {} should be a short phrase not ending in a period".format(json_spec['summary'],))
