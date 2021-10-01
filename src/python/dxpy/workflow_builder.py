@@ -396,12 +396,12 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
                 mesg += " The workflow will not be able to run in {}.".format(", ".join(additional_workflow_regions))
                 mesg += " If you are a developer of the app, you can enable the app in {} to run the workflow in that region(s).".format(
                     ", ".join(additional_workflow_regions))
-                raise WorkflowBuilderException(mesg)
+                logger.warn(mesg)
 
         elif exect.startswith("workflow-"):
              # We recurse to check the regions of the executables of the inner workflow
             inner_workflow_spec = dxpy.api.workflow_describe(exect)
-            workflow_enabled_regions = _assert_executable_regions_match(workflow_enabled_regions, inner_workflow_spec)
+            _assert_executable_regions_match(workflow_enabled_regions, inner_workflow_spec)
 
         elif exect.startswith("globalworkflow-"):
             raise WorkflowBuilderException("Building a global workflow with nested global workflows is not yet supported")
