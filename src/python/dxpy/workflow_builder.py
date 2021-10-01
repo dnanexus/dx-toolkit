@@ -171,8 +171,11 @@ def _version_exists(json_spec, name=None, version=None):
     made a "describe" API call on the global workflow and so know the
     requested name and version already exists.
     """
-    requested_name = json_spec['name']
-    requested_version = json_spec['version']
+    try: 
+        requested_name = json_spec['name']
+        requested_version = json_spec['version']
+    except:
+        raise WorkflowBuilderException("Both 'name' and 'version' fields must be given in the workflow spec to build/update a global workflow.")
 
     if requested_name == name and requested_version == version:
         return True
