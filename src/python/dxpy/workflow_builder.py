@@ -397,20 +397,14 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
                 mesg += " If you are a developer of the app, you can enable the app in {} to run the workflow in that region(s).".format(
                     ", ".join(additional_workflow_regions))
                 raise WorkflowBuilderException(mesg)
-            else:
-                workflow_enabled_regions.intersection_update(app_regions)
 
         elif exec.startswith("workflow-"):
              # We recurse to check the regions of the executables of the inner workflow
             inner_workflow_spec = dxpy.api.workflow_describe(exec)
-            inner_workflow_enabled_regions = _assert_executable_regions_match(workflow_enabled_regions, inner_workflow_spec)
-            workflow_enabled_regions.intersection_update(inner_workflow_enabled_regions)
+            workflow_enabled_regions = _assert_executable_regions_match(workflow_enabled_regions, inner_workflow_spec)
 
         elif exec.startswith("globalworkflow-"):
             raise WorkflowBuilderException("Building a global workflow with nested global workflows is not yet supported")
-
-        if not workflow_enabled_regions:
-            raise WorkflowBuilderException("No region is enabled to build the global workflow. Please check if the workflow can run in any of the requested regions: {}".format(",".join(workflow_enabled_regions)))
 
     return workflow_enabled_regions
 
@@ -449,16 +443,19 @@ def _get_validated_enabled_regions(json_spec, args):
 
     # Get billable regions
     enabled_regions = set(enabled_regions)
-    billable_regions = dxpy.executable_builder.get_permitted_regions(args.bill_to, WorkflowBuilderException)
-    enabled_regions.intersection_update(billable_regions)
-    
-    # Verify all the stages are also enabled in these regions
+    billable_regions = dxpy.executable_builder.get_permitted_regions(
+        args.bill_to, WorkflowBuilderException)
+    if not enabled_regions.issubset(billable_regions):
+        raise WorkflowBuilderException("The global workflow cannot be enabled in regions {}, which are not among the permittedRegions of the billTo."
+                                       .format(",".join(enabled_regions.difference(billable_regions))))
+
+    # Verify dependencies in all the stages are also enabled in these regions
     enabled_regions = _assert_executable_regions_match(enabled_regions, json_spec)
     
     if not enabled_regions:
         raise AssertionError("This workflow should be enabled in at least one region")
 
-    return set(enabled_regions)
+    return enabled_regions
 
 
 def _create_temporary_projects(enabled_regions, args):
