@@ -324,7 +324,7 @@ def _get_validated_json(json_spec, args):
     if 'name' in validated_spec:
         if args.src_dir != validated_spec['name']:
             logger.warn(
-                'workflow name "%s" does not match containing directory "%s"' % (validated_spec['name'], args.src_dir))
+                'workflow name "{}" does not match containing directory "{}"'.format(validated_spec['name'], args.src_dir))
 
     if 'ignoreReuse' in validated_spec:
         validate_ignore_reuse(validated_spec['stages'], validated_spec['ignoreReuse'])
@@ -675,5 +675,5 @@ def build(args, parser):
         workflow_id = _build_or_update_workflow(json_spec, args)
         _print_output(workflow_id, args)
     except WorkflowBuilderException as e:
-        print("Error: %s" % (e.args,), file=sys.stderr)
+        print("Error: {}" .format(e.args,), file=sys.stderr)
         sys.exit(3)
