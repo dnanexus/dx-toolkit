@@ -603,7 +603,7 @@ def _update_global_workflow(json_spec, args, global_workflow_id):
     validated_spec = _get_validated_json_for_build_or_update(update_spec, args)
     non_empty_fields = dict((k, v) for k, v in validated_spec.items() if v)
 
-    if not skip_update():
+    if args.update and not skip_update():
         global_workflow_id = dxpy.api.global_workflow_update('globalworkflow-' + json_spec['name'],
                                                              alias=json_spec['version'],
                                                              input_params=non_empty_fields)['id']
@@ -612,26 +612,36 @@ def _update_global_workflow(json_spec, args, global_workflow_id):
     return global_workflow_id
 
 
-def _build_or_update_workflow(json_spec, args):
+def _build_or_update_workflow(args, parser):
     """
     Creates or updates a workflow on the platform.
     Returns the workflow ID, or None if the workflow cannot be created.
     """
     try:
         if args.mode == 'workflow':
+            json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
             json_spec = _get_validated_json(json_spec, args)
             workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
-            if json_spec.get("tag") and "dxCompiler" in json_spec.get("tag"):
+            if args._from:
+                json_spec = _fetch_spec_from_workflow(args, parser)
+            else:
+                json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
+            
+            # Check if the local or source workflow is compiled by dxCompiler that supported dependency annotation
+            if json_spec.get("tag") and "dxCompiler" in json_spec["tag"]:
                 _check_dxcompiler_version(json_spec)
+            
+            # version is optional for workflow, so `dx build` requires --version to be specified when using the --from
+            if args.version_override:
+                json_spec["version"] = args.version_override
+
             # Verify if the global workflow already exists and if the user has developer rights to it
             # If the global workflow name doesn't exist, the user is free to build it
             # If the name does exist two things can be done:
             # * either update the requested version, if this version already exists
             # * or create the version if it doesn't exist
             existing_workflow = dxpy.executable_builder.verify_developer_rights('globalworkflow-' + json_spec['name'])
-            if args.version_override:
-                json_spec["version"] = args.version_override
             if existing_workflow and _version_exists(json_spec,
                                                      existing_workflow.name,
                                                      existing_workflow.version):
@@ -667,12 +677,7 @@ def build(args, parser):
         raise Exception("Arguments not provided")
 
     try:
-        if args._from:
-            json_spec = _fetch_spec_from_workflow(args, parser)
-        else:
-            json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
-
-        workflow_id = _build_or_update_workflow(json_spec, args)
+        workflow_id = _build_or_update_workflow(args, parser)
         _print_output(workflow_id, args)
     except WorkflowBuilderException as e:
         print("Error: {}" .format(e.args,), file=sys.stderr)
