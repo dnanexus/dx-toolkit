@@ -421,10 +421,13 @@ def _build_regular_workflow(json_spec, keep_open=False):
 def _get_validated_enabled_regions(json_spec, args):
     """
     Returns a set of regions (region names) in which the global workflow
-    should be enabled. Also validates and synchronizes the regions
-    passed via CLI argument and in the regionalOptions field.
+    should be enabled. 
+    
+    1. validates and synchronizes the regions passed via CLI argument and in the regionalOptions field.
+    2. checks if these regions are included in the permitted regions of the bill_to
+    3. checks if the dependencies in all the stages are enabled in these regions
     """
-    # First determine in which regions the global workflow needs to be available
+    # Determine in which regions the global workflow are requested to be available
     enabled_regions = dxpy.executable_builder.get_enabled_regions('globalworkflow',
                                                                   json_spec,
                                                                   args.region,
@@ -465,10 +468,10 @@ def _create_temporary_projects(enabled_regions, args):
     and project IDs as values
 
     The regions in which projects will be created can be:
-    i. regions specified in dxworkflow.json "regionalOptions"
-    ii. regions specified as an argument to "dx build"
-    iii. current context project, if None of the above are set
-    If both args and dxworkflow.json specify regions, they must match.
+    i. regions specified in the workflow spec "regionalOptions"
+    ii. regions specified as the argument "--region" when calling "dx build"
+    iii. current context project, if none of the above are set
+    iv. the regions where dependent applets/apps/workflows are enabled
     """
     # Create one temp project in each region
     projects_by_region = {}  # Project IDs by region
