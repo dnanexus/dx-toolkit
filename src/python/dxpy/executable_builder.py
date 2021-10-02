@@ -69,9 +69,6 @@ def inline_documentation_files(json_spec, src_dir):
     "description" and the developer readme into "developerNotes".
     """
     # Inline description from a readme file
-    if not src_dir:
-        return
-        
     if 'description' not in json_spec:
         readme_filename = None
         for filename in 'README.md', 'Readme.md', 'readme.md':

@@ -376,7 +376,7 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
         return workflow_enabled_regions
     
     executables = [i.get("executable") for i in workflow_spec.get("stages")]
-    
+
     for exect in executables:
         if exect.startswith("applet-"):
             if len(workflow_enabled_regions) > 1:
