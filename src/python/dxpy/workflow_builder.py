@@ -265,10 +265,6 @@ def _validate_json_for_global_workflow(json_spec, args):
     Since building a global workflow is done after all the underlying workflows
     are built, which may be time-consuming, we validate as much as possible here.
     """
-    # TODO: verify the billTo can build the workflow
-    # TODO: if the global workflow build fails add an option to interactively change billto
-    # TODO: (or other simple fields) instead of failing altogether
-    # TODO: get a confirmation before building a workflow that may be costly
     if 'name' not in json_spec:
         raise WorkflowBuilderException(
             "Workflow spec contains no 'name' field, but it is required to build a global workflow")
