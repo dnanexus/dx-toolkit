@@ -135,7 +135,7 @@ def add_developer(prefixed_name, requested_developers):
         add_developer_method = dxpy.api.global_workflow_add_developers
     
     exception_msg = \
-            'You are not a developer of {} or you are not an administer of the billTo of it.'.format(prefixed_name, prefixed_name.partition('-')[0])
+            'You are not a developer of {} or you are not an administer of the billTo of this {}.'.format(prefixed_name, prefixed_name.partition('-')[0])
     
     try:
         add_developer_output = add_developer_method(prefixed_name,
