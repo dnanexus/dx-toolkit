@@ -150,7 +150,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 if asset_record:
                     try:
                         asset_json = {"name": asset_record.describe().get("name"),
-                                              "project": asset_record.get_proj_id(),
+                                              "project": asset_record.describe().get("project"),
                                               "folder": asset_record.describe().get("folder"),
                                               "version": asset_record.describe(fields={"properties": True}
                                                                                )["properties"]["version"]
@@ -170,7 +170,16 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # resources/ directory
     created_resources_directory = False
     if not omit_resources:
-        for dep in info["runSpec"]["bundledDepends"]:
+        bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
+        permitted_regions= set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
+        for region in info["runSpec"]["bundledDependsByRegion"]:
+            if region in permitted_regions:
+                source_region = region
+                break
+        if not source_region:
+            raise DXError("Cannot download bundledDepends of the requested executable since it is not available in your billable regions.")
+
+        for dep in info["runSpec"]["bundledDependsByRegion"][source_region]:
             if dep in deps_to_remove:
                 continue
             handler = get_handler(dep["id"])
@@ -216,6 +225,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     dxapp_json["runSpec"]["file"] = script
 
     # Remove resources from bundledDepends
+    dxapp_json["runSpec"]["bundledDepends"] = info["runSpec"]["bundledDependsByRegion"][source_region]
     for dep in deps_to_remove:
         dxapp_json["runSpec"]["bundledDepends"].remove(dep)
 
