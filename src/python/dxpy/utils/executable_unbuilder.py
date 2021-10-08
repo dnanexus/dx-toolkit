@@ -105,7 +105,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         sys.exit(1)
 
     # Entry point script
-    script = "src/code.%s" % (suffix,)
+    script = "src/code.{}".format(suffix)
     os.mkdir("src")
     with open(script, "w") as f:
         f.write(info["runSpec"]["code"])
@@ -115,7 +115,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         Writes the string `code` into a file at the relative path
         "src/<region>_<entry_point>_clusterBootstrap.<suffix>"
         """
-        script_name = "src/%s_%s_clusterBootstrap.%s" % (region, entry_point, suffix)
+        script_name = "src/{}_{}_clusterBootstrap.{}".format(region, entry_point, suffix)
         with open(script_name, "w") as f:
             f.write(code)
         return script_name
@@ -188,7 +188,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                     os.mkdir("resources")
                     created_resources_directory = True
                 handler_id = handler.get_id()
-                fname = "resources/%s.tar.gz" % (handler_id)
+                fname = "resources/{}.tar.gz" .format(handler_id)
                 download_dxfile(handler_id, fname)
                 print("Unpacking resources", file=sys.stderr)
 
