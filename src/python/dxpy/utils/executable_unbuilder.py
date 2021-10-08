@@ -119,6 +119,17 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         with open(script_name, "w") as f:
             f.write(code)
         return script_name
+    
+    # Get regions where the user's billTo are permitted
+    enabled_regions = set(info["runSpec"]["bundledDependsByRegion"].keys())
+    bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
+    permitted_regions = set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
+    if not enabled_regions.issubset(permitted_regions):
+        print("Region {} will not available to build {} since it is not available in your billable regions.".format(
+            ",".join(enabled_regions.difference(permitted_regions)),
+            info["name"]))
+        enabled_regions.intersection_update(permitted_regions)
+        print("Only dependencies in region: {} will be retrieved/downloaded.".format(",".join(enabled_regions)))
 
     # Get all the asset bundles
     asset_depends = []
@@ -170,15 +181,21 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # resources/ directory
     created_resources_directory = False
     if not omit_resources:
-        bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
-        permitted_regions= set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
-        for region in info["runSpec"]["bundledDependsByRegion"]:
-            if region in permitted_regions:
-                source_region = region
-                break
-        if not source_region:
-            raise DXError("Cannot download bundledDepends of the requested executable since it is not available in your billable regions.")
+        if not enabled_regions:
+            raise DXError("Cannot download resources of the requested executable {} since it is not available in any of the billable regions.".format(info["name"]))
+        
+        # Pick a source region. The current selected region is preferred
+        try:
+            current_region = dxpy.api.project_describe(dxpy.WORKSPACE_ID, input_params={"fields": {"region": True}})["region"]
+        except:
+            current_region = None
 
+        if current_region and current_region in enabled_regions:
+            source_region = current_region
+        else:
+            source_region = list(enabled_regions)[0]
+
+        # Download resources from source region
         for dep in info["runSpec"]["bundledDependsByRegion"][source_region]:
             if dep in deps_to_remove:
                 continue
