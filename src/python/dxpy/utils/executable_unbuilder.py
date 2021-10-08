@@ -158,12 +158,13 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 asset_record_id = file_handle.get_properties().get("AssetBundle")
                 if asset_record_id:
                     try:
-                        asset_desc = dxpy.api.record_describe(asset_record_id, {"properties": True})
-                        asset_json = {"name": asset_desc.get("name"),
-                                    "project": asset_desc.get("project"),
-                                    "folder": asset_desc.get("folder"),
-                                    "version": asset_desc.get("properties", {}).get("version")
-                                    }
+                        # asset_desc = dxpy.api.record_describe(asset_record_id, {"properties": True})
+                        # asset_json = {"name": asset_desc.get("name"),
+                        #             "project": asset_desc.get("project"),
+                        #             "folder": asset_desc.get("folder"),
+                        #             "version": asset_desc.get("properties", {}).get("version")
+                        #             }
+                        asset_json={"id": asset_record_id}
                         if dep.get("stages"):
                             asset_json["stages"] = dep["stages"]
                         asset_depends[region].append(asset_json)
