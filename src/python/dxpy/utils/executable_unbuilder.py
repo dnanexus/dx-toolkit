@@ -132,8 +132,8 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         print("Only dependencies in region: {} will be retrieved/downloaded.".format(",".join(enabled_regions)))
 
     # Get all the asset bundles
-    asset_depends = []
-    deps_to_remove = []
+    asset_depends = collections.defaultdict(list)
+    deps_to_remove = set()
 
     # When an applet is built bundledDepends are added in the following order:
     # 1. bundledDepends explicitly specified in the dxapp.json
@@ -151,33 +151,31 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
     # when the wrapper record object is no more accessible.
 
-    for dep in reversed(info["runSpec"]["bundledDepends"]):
-        file_handle = get_handler(dep["id"])
-        if isinstance(file_handle, dxpy.DXFile):
-            asset_record_id = file_handle.get_properties().get("AssetBundle")
-            asset_record = None
-            if asset_record_id:
-                asset_record = dxpy.DXRecord(asset_record_id)
-                if asset_record:
+    for region in info["runSpec"]["bundledDependsByRegion"]:
+        for dep in reversed(info["runSpec"]["bundledDependsByRegion"][region]):
+            file_handle = get_handler(dep["id"])
+            if isinstance(file_handle, dxpy.DXFile):
+                asset_record_id = file_handle.get_properties().get("AssetBundle")
+                if asset_record_id:
                     try:
-                        asset_json = {"name": asset_record.describe().get("name"),
-                                              "project": asset_record.describe().get("project"),
-                                              "folder": asset_record.describe().get("folder"),
-                                              "version": asset_record.describe(fields={"properties": True}
-                                                                               )["properties"]["version"]
-                                              }
+                        asset_desc = dxpy.api.record_describe(asset_record_id, {"properties": True})
+                        asset_json = {"name": asset_desc.get("name"),
+                                    "project": asset_desc.get("project"),
+                                    "folder": asset_desc.get("folder"),
+                                    "version": asset_desc.get("properties", {}).get("version")
+                                    }
                         if dep.get("stages"):
                             asset_json["stages"] = dep["stages"]
-                        asset_depends.append(asset_json)
-                        deps_to_remove.append(dep)
+                        asset_depends[region].append(asset_json)
+                        deps_to_remove.add(dep["name"])
                     except DXError:
-                        print("Describe failed on the assetDepends record object with ID - " +
-                              asset_record_id + "\n", file=sys.stderr)
+                        print("Describe failed on the assetDepends record object with ID {} in region {}.\n".format(asset_record_id, region),
+                        file=sys.stderr)
                         pass
-            else:
-                break
-    # Reversing the order of the asset_depends[] so that original order is maintained
-    asset_depends.reverse()
+                else:
+                    break
+        # Reversing the order of the asset_depends[] so that original order is maintained
+        asset_depends[region].reverse()
     # resources/ directory
     created_resources_directory = False
     if not omit_resources:
@@ -197,7 +195,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
 
         # Download resources from source region
         for dep in info["runSpec"]["bundledDependsByRegion"][source_region]:
-            if dep in deps_to_remove:
+            if dep["name"] in deps_to_remove:
                 continue
             handler = get_handler(dep["id"])
             if isinstance(handler, dxpy.DXFile):
@@ -219,7 +217,8 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
 
                 untar_strip_leading_slash(fname, "resources")
                 os.unlink(fname)
-                deps_to_remove.append(dep)
+
+                deps_to_remove.add(dep["name"])
 
     # TODO: if output directory is not the same as executable name we
     # should print a warning and/or offer to rewrite the "name"
@@ -240,15 +239,6 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # Un-inline code
     del dxapp_json["runSpec"]["code"]
     dxapp_json["runSpec"]["file"] = script
-
-    # Remove resources from bundledDepends
-    dxapp_json["runSpec"]["bundledDepends"] = info["runSpec"]["bundledDependsByRegion"][source_region]
-    for dep in deps_to_remove:
-        dxapp_json["runSpec"]["bundledDepends"].remove(dep)
-
-    # Add assetDepends to dxapp.json
-    if len(asset_depends) > 0:
-        dxapp_json["runSpec"]["assetDepends"] = asset_depends
 
     # Ordering input/output spec keys
     ordered_spec_keys = ("name", "label", "help", "class", "type", "patterns", "optional", "default", "choices",
@@ -273,12 +263,6 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     if dx_toolkit in dxapp_json["runSpec"].get("execDepends", ()):
         dxapp_json["runSpec"]["execDepends"].remove(dx_toolkit)
 
-    # Remove "bundledDependsByRegion" field from "runSpec". This utility
-    # will reconstruct the resources directory based on the
-    # "bundledDepends" field, which should be equivalent to
-    # "bundledDependsByRegion".
-    dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
-
     # "dx build" parses the "regionalOptions" key from dxapp.json into the
     # "runSpec.systemRequirements" field of applet/new.
     # "dx get" should parse the "systemRequirementsByRegion" field from
@@ -302,15 +286,32 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                     # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
                     continue
 
-            dxapp_json["regionalOptions"][region] = \
-                dict(systemRequirements=region_sys_reqs)
+            # Remove asset and downloaded resources from regional bundledDepends
+            # Add regional bundledDepends to regionalOptions
+            region_depends = dxapp_json["runSpec"]["bundledDependsByRegion"][region]
+            region_bundle_depends = []
+            for d in region_depends:
+                    if d["name"] not in deps_to_remove:
+                        region_bundle_depends.append(d)
 
+            # Add regional assetDepends to regionalOptions
+            region_asset_depends = []
+            if len(asset_depends[region]) > 0:
+                region_asset_depends = asset_depends[region]
+
+            dxapp_json["regionalOptions"][region] = \
+                dict(systemRequirements=region_sys_reqs,
+                assetDepends=region_asset_depends,
+                bundledDepends=region_bundle_depends
+                )
+    # Remove "bundledDependsByRegion" and "bundledDepends" field from "runSpec".
+    # assetDepends and bundledDepends data are stroed in regionalOptions instead.
+    dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
+    dxapp_json["runSpec"].pop("bundledDepends", None)
     # systemRequirementsByRegion data is stored in regionalOptions,
     # systemRequirements is ignored
-    if 'systemRequirementsByRegion' in dxapp_json["runSpec"]:
-        del dxapp_json["runSpec"]["systemRequirementsByRegion"]
-    if 'systemRequirements' in dxapp_json["runSpec"]:
-        del dxapp_json["runSpec"]["systemRequirements"]
+    dxapp_json["runSpec"].pop(["systemRequirementsByRegion"],None)
+    dxapp_json["runSpec"].pop(["systemRequirements"],None)
 
     # Cleanup of empty elements. Be careful not to let this step
     # introduce any semantic changes to the app specification. For
