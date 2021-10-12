@@ -2541,7 +2541,6 @@ def build(args):
             if args._from.startswith("applet"):
                 return "app"
             elif args._from.startswith("workflow"):
-                ## build_parser.error('--from option with a workflow is not supported')
                 return "globalworkflow"
             else:
                 build_parser.error('--from option only accepts a DNAnexus applet ID')
@@ -2591,9 +2590,6 @@ def build(args):
 
         # conflicts and incompatibilities with --from
 
-        # if args._from is not None and args.region:
-        #     build_parser.error("Options --from and --region cannot be specified together. The app will be enabled only in the region of the project in which the applet is stored")
-
         if args._from is not None and args.ensure_upload:
             build_parser.error("Options --from and --ensure-upload cannot be specified together")
 
@@ -2608,12 +2604,6 @@ def build(args):
 
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
-
-        # if args._from is not None and args.mode == "globalworkflow":
-        #     build_parser.error("building a global workflow using --from is not supported")
-
-        # if args._from is not None and args.mode != "app":
-        #     build_parser.error("--from can only be used to build an app from an applet")
 
         if args.mode == "app" and args._from is not None and not args._from.startswith("applet"):
             build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
