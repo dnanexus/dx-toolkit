@@ -311,8 +311,8 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     dxapp_json["runSpec"].pop("bundledDepends", None)
     # systemRequirementsByRegion data is stored in regionalOptions,
     # systemRequirements is ignored
-    dxapp_json["runSpec"].pop(["systemRequirementsByRegion"],None)
-    dxapp_json["runSpec"].pop(["systemRequirements"],None)
+    dxapp_json["runSpec"].pop("systemRequirementsByRegion",None)
+    dxapp_json["runSpec"].pop("systemRequirements",None)
 
     # Cleanup of empty elements. Be careful not to let this step
     # introduce any semantic changes to the app specification. For
