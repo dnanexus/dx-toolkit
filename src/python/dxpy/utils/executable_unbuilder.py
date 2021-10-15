@@ -174,83 +174,82 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
     # when the wrapper record object is no more accessible.
 
+    download_completed = omit_resources
     deps_downloaded = set()
     deps_assets = set()
     created_resources_directory = False
-    completed_download = False
-    # Download resources from source region
-    if not omit_resources:
-        for region in enabled_regions:
-            # check if downloading has already completed in previous region 
-            if completed_download:
-                break
-            
-            print("Trying to download resources from region {}...".format(region))
+    # Download resources
+    for region in enabled_regions:
+        # check if downloading has already completed
+        # already True if omits resources 
+        if download_completed:
+            break
+        
+        print("Trying to download resources from region {}...".format(region))
 
-            for dep in reversed(info["runSpec"]["bundledDependsByRegion"][region]):
+        for dep in info["runSpec"]["bundledDependsByRegion"][region]:
+            try: 
                 # if retrying another region, skip the ones identified as assets
                 if dep.get("name") in deps_assets:
                     continue
 
                 file_handle = get_handler(dep["id"])
                 handler_id = file_handle.get_id()
-                # if the dependency is not a file
+                # if dep is not a file (record etc.), check the next dep
                 if not isinstance(file_handle, dxpy.DXFile):
-                    completed_download = True
-                    break
-
-                # if the file is an asset dependency, skip downloading
-                # if failed to describe it, try the next region
-                try: 
-                    if file_handle.get_properties().get("AssetBundle"):
-                        deps_assets.add(dep["name"])
-                        continue   
-                except DXError:
-                    print("Describe failed on dependent file with ID {} in region {}. Will try the next permitted region.".format(handler_id, region),
-                    file=sys.stderr)
-                    break
+                    continue
                 
-                # if the file is a bundled dependency, try downloading
-                # if failed, remove the resources directory and try the next region
+                # check if the file is an asset dependency
+                # if so, skip downloading
+                # if failed to describe it, will try the next region
+                if file_handle.get_properties().get("AssetBundle"):
+                    deps_assets.add(dep.get("name"))
+                    continue   
+
+                # if the file is a bundled dependency, try downloading it
+                # if failed, will try the next region
                 if not created_resources_directory:
                     os.mkdir("resources")
                     created_resources_directory = True
                 
                 fname = "resources/{}.tar.gz" .format(handler_id)
-                try:
-                    download_dxfile(handler_id, fname)
-                    print("Unpacking resource ", file=sys.stderr)
+                download_dxfile(handler_id, fname)
+                print("Unpacking resource", file=sys.stderr)
 
-                    def untar_strip_leading_slash(tarfname, path):
-                        t = tarfile.open(tarfname)
-                        for m in t.getmembers():
-                            if m.name.startswith("/"):
-                                m.name = m.name[1:]
-                            t.extract(m, path)
-                        t.close()
+                def untar_strip_leading_slash(tarfname, path):
+                    t = tarfile.open(tarfname)
+                    for m in t.getmembers():
+                        if m.name.startswith("/"):
+                            m.name = m.name[1:]
+                        t.extract(m, path)
+                    t.close()
 
-                    untar_strip_leading_slash(fname, "resources")
-                    os.unlink(fname)
-
-                    deps_downloaded.add(dep["name"])
-                except DXError:
-                    print("Download failed on dependent file with ID {} from region {}. Will try the next permitted region.\n".format(handler_id, region),
-                    file=sys.stderr)
-                    shutil.rmtree("resources")
-                    created_resources_directory = False
-
-                    break
+                untar_strip_leading_slash(fname, "resources")
+                os.unlink(fname)
+                # add dep name to deps_downloaded set
+                deps_downloaded.add(dep.get("name"))
+                
+            except DXError:
+                print("Download failed on dependent file with ID {} from region {}. Will try the next permitted region.\n".format(handler_id, region),
+                        file=sys.stderr)
+                # clean up deps already downloaded
+                deps_downloaded.clear()
+                created_resources_directory = False
+                shutil.rmtree("resources")
+                break
             
-            # if all deps have been checked without error, mark downloading as completed
-            else:
-                completed_download = True                    
-        
-        # Check if downloading is completed in one of the enabled regions
-        # if so, files in deps_downloaded will not be dumped to dxapp.json
-        # if not, deps_downloaded is an empty set. So all bundleDependsByRegion will be in dxapp.json
-        if not completed_download:
-            print("Downloading resources failed in all enabled regions. Please try downloading with their IDs in dxapp.json.")
+        # if all deps have been checked without an error, mark downloading as completed
+        else:
+            download_completed = True                    
     
+    # Check if downloading is completed in one of the enabled regions
+    # if so, files in deps_downloaded will not shown in dxapp.json
+    # if not, deps_downloaded is an empty set. So ID of all deps will be in dxapp.json
+    if not download_completed:
+        print("Downloading resources failed in all enabled regions. Please try downloading with their IDs in dxapp.json.")
+    # if anything has been downloaded
+    if deps_downloaded:
+        print("Resources downloaded: {}".format(", ".join(deps_downloaded)))
 
     # TODO: if output directory is not the same as executable name we
     # should print a warning and/or offer to rewrite the "name"
