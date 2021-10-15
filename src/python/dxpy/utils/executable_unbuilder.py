@@ -101,8 +101,8 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     elif info["runSpec"]["interpreter"].startswith("python"):
         suffix = "py"
     else:
-        print('Sorry, I don\'t know how to get executables with interpreter ' +
-              info["runSpec"]["interpreter"] + '\n', file=sys.stderr)
+        print("Sorry, I don\'t know how to get executables with interpreter {}.\n".format(
+            info["runSpec"]["interpreter"]), file=sys.stderr)
         sys.exit(1)
 
     # Entry point script
@@ -122,13 +122,18 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         return script_name
     
     # Get regions where the user's billTo are permitted
+    try:
+        bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
+        permitted_regions = set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
+    except DXError:
+        print("Failed to get permmited regions where {} can perform billable activities./n".format(bill_to), file=sys.stderr)
+        sys.exit(1)    
+    
     enabled_regions = set(info["runSpec"]["bundledDependsByRegion"].keys())
-    bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
-    permitted_regions = set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
     if not enabled_regions.issubset(permitted_regions):
-        print("Region: {} will not available to build {} since it is not available in your billable regions.".format(
+        print("Region: {} are not in the permitted regions of {}. Resources from these regions will not available.".format(
             ", ".join(enabled_regions.difference(permitted_regions)),
-            info["name"]))
+            bill_to))
     # Update enabled regions
     enabled_regions.intersection_update(permitted_regions)
     # Check if at least one region is enabled when not omitting resources
@@ -144,12 +149,12 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
             except:
                 current_region = None
 
-            if current_region and current_region in enabled_regions:
+            if current_region in enabled_regions:
                 enabled_regions = [current_region] + [r for r in enabled_regions if r != current_region]
             
-            print("Dependencies in region: {} could be retrieved. Resources will be downloaded from region {}.".format(", ".join(enabled_regions), enabled_regions[0]))
+            print("Dependencies could be retrieved from region: {}. ".format(", ".join(enabled_regions)))
     else:
-        print("Dependencies in region: {} could be retrieved.".format(", ".join(enabled_regions)))
+        print("Dependencies should be accessible to {} in region: {}.".format(", ".join(enabled_regions), bill_to))
 
 
 
@@ -313,16 +318,17 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                     # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
                     continue
 
-            # Add regional bundledDepends to regionalOptions
+            # remove dep downloaded from bundledDependsByRegion
             region_depends = dxapp_json["runSpec"]["bundledDependsByRegion"][region]
             region_bundle_depends = [d for d in region_depends if d["name"] not in deps_downloaded]
 
+            # add systemRequirements and bundledDepends to this region
             dxapp_json["regionalOptions"][region] = \
                 dict(systemRequirements=region_sys_reqs,
                 bundledDepends=region_bundle_depends
                 )
     # Remove "bundledDependsByRegion" and "bundledDepends" field from "runSpec".
-    # assetDepends and bundledDepends data are stroed in regionalOptions instead.
+    # assetDepends and bundledDepends data are stored in regionalOptions instead.
     dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
     dxapp_json["runSpec"].pop("bundledDepends", None)
     # systemRequirementsByRegion data is stored in regionalOptions,
