@@ -141,19 +141,20 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
             raise DXError(
                 "Cannot download resources of the requested executable {} since it is not available in any of the billable regions. "
                 "You can use the --omit-resources flag to skip downloading the resources. ".format(info["name"]))
+        
+        print("Dependencies could be retrieved from region: {}. ".format(", ".join(enabled_regions)))
+        # Pick a source region. The current selected region is preferred
+        try:
+            current_region = dxpy.api.project_describe(dxpy.WORKSPACE_ID, input_params={"fields": {"region": True}})["region"]
+        except:
+            current_region = None
+
+        if current_region in enabled_regions:
+            source_region  = current_region
+            print("Trying to download resources from the current region {}...".format(source_region))
         else:
-            # Pick a source region. The current selected region is preferred
-            try:
-                current_region = dxpy.api.project_describe(dxpy.WORKSPACE_ID, input_params={"fields": {"region": True}})["region"]
-            except:
-                current_region = None
-
-            if current_region in enabled_regions:
-                enabled_regions = [current_region] + [r for r in enabled_regions if r != current_region]
-            
-            print("Dependencies could be retrieved from region: {}. ".format(", ".join(enabled_regions)))
-
-
+            source_region = enabled_regions.pop()
+            print("Trying to download resources from one of the enabled region {}...".format(source_region))
 
     # When an applet is built bundledDepends are added in the following order:
     # 1. bundledDepends explicitly specified in the dxapp.json
@@ -171,25 +172,13 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
     # when the wrapper record object is no more accessible.
 
-    download_completed = omit_resources
-    deps_downloaded = set()
-    deps_assets = set()
-    created_resources_directory = False
-    # Download resources
-    for region in enabled_regions:
-        # check if downloading has already completed
-        # already True if omits resources 
-        if download_completed:
-            break
-        
-        print("Trying to download resources from region {}...".format(region))
+        download_completed = omit_resources
+        deps_downloaded = set()
+        created_resources_directory = False
 
-        for dep in info["runSpec"]["bundledDependsByRegion"][region]:
+        # Download resources from the source region      
+        for dep in info["runSpec"]["bundledDependsByRegion"][source_region]:
             try: 
-                # if retrying another region, skip the ones identified as assets
-                if dep.get("name") in deps_assets:
-                    continue
-
                 file_handle = get_handler(dep["id"])
                 handler_id = file_handle.get_id()
                 # if dep is not a file (record etc.), check the next dep
@@ -198,20 +187,17 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 
                 # check if the file is an asset dependency
                 # if so, skip downloading
-                # if failed to describe it, will try the next region
                 if file_handle.get_properties().get("AssetBundle"):
-                    deps_assets.add(dep.get("name"))
-                    continue   
+                    continue
 
                 # if the file is a bundled dependency, try downloading it
-                # if failed, will try the next region
                 if not created_resources_directory:
                     os.mkdir("resources")
                     created_resources_directory = True
                 
                 fname = "resources/{}.tar.gz" .format(handler_id)
                 download_dxfile(handler_id, fname)
-                print("Unpacking resource", file=sys.stderr)
+                print("Unpacking resource {}".format(dep.get("name")))
 
                 def untar_strip_leading_slash(tarfname, path):
                     t = tarfile.open(tarfname)
@@ -227,16 +213,14 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 deps_downloaded.add(dep.get("name"))
                 
             except DXError:
-                print("Download failed on dependent file with ID {} from region {}. Will try the next permitted region.\n".format(handler_id, region),
+                print("Failed to download {} from region {}.".format(handler_id, source_region),
                         file=sys.stderr)
-                # clean up deps already downloaded
+                # clean up deps already downloaded and quit downloading
                 deps_downloaded.clear()
-                created_resources_directory = False
                 shutil.rmtree("resources")
                 break
-            
         # if all deps have been checked without an error, mark downloading as completed
-        else:
+        else: # for loop finished with no break
             download_completed = True                    
     
     # Check if downloading is completed in one of the enabled regions
