@@ -126,14 +126,13 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
         permitted_regions = set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
     except DXError:
-        print("Failed to get permmited regions where {} can perform billable activities./n".format(bill_to), file=sys.stderr)
+        print("Failed to get permitted regions where {} can perform billable activities.\n".format(bill_to), file=sys.stderr)
         sys.exit(1)    
     
     enabled_regions = set(info["runSpec"]["bundledDependsByRegion"].keys())
     if not enabled_regions.issubset(permitted_regions):
-        print("Region: {} are not in the permitted regions of {}. Resources from these regions will not available.".format(
-            ", ".join(enabled_regions.difference(permitted_regions)),
-            bill_to))
+        print("Region(s) {} are not among the permitted regions of {}. Resources from these regions will not be available.".format(
+            ", ".join(enabled_regions.difference(permitted_regions)), bill_to))
     # Update enabled regions
     enabled_regions.intersection_update(permitted_regions)
     # Check if at least one region is enabled when not omitting resources
@@ -141,7 +140,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         if not enabled_regions:
             raise DXError(
                 "Cannot download resources of the requested executable {} since it is not available in any of the billable regions. "
-                "You can use the --omit-resources flag to skip downloading the resources".format(info["name"]))
+                "You can use the --omit-resources flag to skip downloading the resources. ".format(info["name"]))
         else:
             # Pick a source region. The current selected region is preferred
             try:
@@ -153,8 +152,6 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 enabled_regions = [current_region] + [r for r in enabled_regions if r != current_region]
             
             print("Dependencies could be retrieved from region: {}. ".format(", ".join(enabled_regions)))
-    else:
-        print("Dependencies should be accessible to {} in region: {}.".format(", ".join(enabled_regions), bill_to))
 
 
 
@@ -246,7 +243,9 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # if so, files in deps_downloaded will not shown in dxapp.json
     # if not, deps_downloaded is an empty set. So ID of all deps will be in dxapp.json
     if not download_completed:
-        print("Downloading resources failed in all enabled regions. Please try downloading with their IDs in dxapp.json.")
+        print("Downloading resources from region {} failed. "
+              "Please try downloading with their IDs in dxapp.json, "
+              "or skip downloading resources entirely by using the --omit-resources flag.".format(source_region))
     # if anything has been downloaded
     if deps_downloaded:
         print("Resources downloaded: {}".format(", ".join(deps_downloaded)))
