@@ -91,7 +91,7 @@ def _check_dxcompiler_version(json_spec):
         supported_version = "2.5.0"
         current_compiler_version = str.split(json_spec["details"].get("version"),"-")[0]
         if StrictVersion(current_compiler_version) < StrictVersion(supported_version):
-            raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports dependency annotation.".format(json_spec["name"], supported_version))
+            raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["name"], supported_version))
     else:
         raise WorkflowBuilderException("Cannot find the dxCompiler version from the spec of the source workflow {}. Please specify the dxCompiler version in the 'details' field of the workflow spec.".format(json_spec["name"]))
 
