@@ -2537,13 +2537,13 @@ def build(args):
         """
         if args._from is not None:
             if not is_hashid(args._from):
-                build_parser.error('--from option only accepts a DNAnexus applet ID')
+                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
             if args._from.startswith("applet"):
                 return "app"
             elif args._from.startswith("workflow"):
                 return "globalworkflow"
             else:
-                build_parser.error('--from option only accepts a DNAnexus applet ID')
+                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
 
         if not os.path.isdir(args.src_dir):
             parser.error("{} is not a directory".format(args.src_dir))
@@ -2605,12 +2605,15 @@ def build(args):
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
 
+        if args._from is not None and (args.mode != "app"  or args.mode != "globalworkflow"):
+            build_parser.error("--from can only be used to build an app from an applet or a global workflow from a project-based workflow")
+
+        if args._from is not None and not args.version_override:
+            build_parser.error("--version must be specified when using the --from option")
+
         if args.mode == "app" and args._from is not None and not args._from.startswith("applet"):
             build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
 
-        if args.mode == "app" and args._from is not None and not args.version_override:
-            build_parser.error("--version must be specified when using the --from option")
-        
         if args.mode == "globalworkflow" and args._from is not None and not args._from.startswith("workflow"):
             build_parser.error("globalworkflow can only be built from an workflow (--from should be set to an workflow ID)")
 
