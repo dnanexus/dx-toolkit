@@ -492,11 +492,16 @@ class TestDXFile(testutil.DXTestCaseCompat):
     def test_upload_file_with_custom_auth(self):
         tempdir = tempfile.mkdtemp()
         try:
+            print("whoami() before reauth: '{}'".format(dxpy.whoami()))
             second_user_auth = dxpy.DXHTTPOAuth2(json.loads(testutil.as_second_user()['DX_SECURITY_CONTEXT']))
+            from pprint import pprint
+            print("second_user_auth is:")
+            pprint(second_user_auth)
             templocalfile = os.path.join(tempdir, "foo.txt")
             with open(templocalfile, "w") as f:
                 f.write("mydata")
             with testutil.temporary_project(auth=second_user_auth) as p1:
+                print("whoami() AFTER reauth: '{}'".format(dxpy.whoami()))
                 fh = dxpy.upload_local_file(filename=templocalfile, project=p1.get_id(), wait_on_close=True,
                                             auth=second_user_auth)
                 self.assertEqual(fh.describe(auth=second_user_auth)['project'], p1.get_id())
