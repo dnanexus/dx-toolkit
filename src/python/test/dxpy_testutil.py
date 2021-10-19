@@ -41,6 +41,7 @@ TEST_FUSE = _run_all_tests or 'DXTEST_FUSE' in os.environ
 TEST_HTTP_PROXY = _run_all_tests or 'DXTEST_HTTP_PROXY' in os.environ
 TEST_ISOLATED_ENV = _run_all_tests or 'DXTEST_ISOLATED_ENV' in os.environ
 TEST_MULTIPLE_USERS = _run_all_tests or 'DXTEST_SECOND_USER' in os.environ
+print("TEST_MULTIPLE_USERS is {}".format(TEST_MULTIPLE_USERS))
 TEST_NO_RATE_LIMITS = _run_all_tests or 'DXTEST_NO_RATE_LIMITS' in os.environ
 TEST_ONLY_MASTER = 'DX_RUN_NEXT_TESTS' in os.environ
 TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
