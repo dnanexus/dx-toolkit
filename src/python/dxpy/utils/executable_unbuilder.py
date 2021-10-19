@@ -156,21 +156,21 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
             source_region = enabled_regions.pop()
             print("Trying to download resources from one of the enabled region {}...".format(source_region))
 
-    # When an applet is built bundledDepends are added in the following order:
-    # 1. bundledDepends explicitly specified in the dxapp.json
-    # 2. resources (contents of resources directory added as bundledDepends)
-    # 3. assetDepends (translated into bundledDepends)
-    #
-    # Therefore while translating bundledDepends to assetDepends, we are traversing the
-    # list in reverse order and exiting when we can't find the "AssetBundle" property
-    # with the tarball file.
-    #
-    # NOTE: If last item (and contiguous earlier items) of bundledDepends (#1 above) refers to an
-    # AssetBundle tarball, those items will be converted to assetDepends.
-    #
-    # TODO: The bundledDepends should be annotated with another field called {"asset": true}
-    # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
-    # when the wrapper record object is no more accessible.
+        # When an applet is built bundledDepends are added in the following order:
+        # 1. bundledDepends explicitly specified in the dxapp.json
+        # 2. resources (contents of resources directory added as bundledDepends)
+        # 3. assetDepends (translated into bundledDepends)
+        #
+        # Therefore while translating bundledDepends to assetDepends, we are traversing the
+        # list in reverse order and exiting when we can't find the "AssetBundle" property
+        # with the tarball file.
+        #
+        # NOTE: If last item (and contiguous earlier items) of bundledDepends (#1 above) refers to an
+        # AssetBundle tarball, those items will be converted to assetDepends.
+        #
+        # TODO: The bundledDepends should be annotated with another field called {"asset": true}
+        # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
+        # when the wrapper record object is no more accessible.
 
         def untar_strip_leading_slash(tarfname, path):
             t = tarfile.open(tarfname)
@@ -183,7 +183,6 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         download_completed = omit_resources
         deps_downloaded = set()
         created_resources_directory = False
-
         # Download resources from the source region      
         for dep in info["runSpec"]["bundledDependsByRegion"][source_region]:
             try: 
