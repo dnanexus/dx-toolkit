@@ -230,9 +230,6 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         print("Downloading resources from region {} failed. "
               "Please try downloading with their IDs in dxapp.json, "
               "or skip downloading resources entirely by using the --omit-resources flag.".format(source_region))
-    # if anything has been downloaded
-    if deps_downloaded:
-        print("Resources downloaded: {}".format(", ".join(deps_downloaded)))
 
     # TODO: if output directory is not the same as executable name we
     # should print a warning and/or offer to rewrite the "name"
