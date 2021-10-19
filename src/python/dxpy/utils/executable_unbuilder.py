@@ -172,6 +172,14 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
     # when the wrapper record object is no more accessible.
 
+        def untar_strip_leading_slash(tarfname, path):
+            t = tarfile.open(tarfname)
+            for m in t.getmembers():
+                if m.name.startswith("/"):
+                    m.name = m.name[1:]
+                t.extract(m, path)
+            t.close()
+
         download_completed = omit_resources
         deps_downloaded = set()
         created_resources_directory = False
@@ -198,14 +206,6 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 fname = "resources/{}.tar.gz" .format(handler_id)
                 download_dxfile(handler_id, fname)
                 print("Unpacking resource {}".format(dep.get("name")))
-
-                def untar_strip_leading_slash(tarfname, path):
-                    t = tarfile.open(tarfname)
-                    for m in t.getmembers():
-                        if m.name.startswith("/"):
-                            m.name = m.name[1:]
-                        t.extract(m, path)
-                    t.close()
 
                 untar_strip_leading_slash(fname, "resources")
                 os.unlink(fname)
