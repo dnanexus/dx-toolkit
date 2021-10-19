@@ -124,28 +124,6 @@ def validate_bill_to(bill_to, executable_builder_exception):
     
     return bill_to
 
-def add_developer(prefixed_name, requested_developers):
-    assert(prefixed_name.startswith('app-') or prefixed_name.startswith('globalworkflow-'))
-
-    if prefixed_name.partition('-')[0] == 'app':
-        exception_type = dxpy.app_builder.AppBuilderException
-        add_developer_method = dxpy.api.app_add_developers
-    else:
-        exception_type = dxpy.workflow_builder.WorkflowBuilderException
-        add_developer_method = dxpy.api.global_workflow_add_developers
-    
-    exception_msg = \
-            'You are not a developer of {} or you are not an administer of the billTo of this {}.'.format(prefixed_name, prefixed_name.partition('-')[0])
-    
-    try:
-        add_developer_output = add_developer_method(prefixed_name,
-                                                    input_params={"developers": requested_developers})
-    except dxpy.exceptions.DXAPIError as e:
-        if e.name == 'PermissionDenied':
-            raise exception_type(exception_msg)
-        else:
-            raise e
-
 def verify_developer_rights(prefixed_name):
     """
     Checks if the current user is a developer of the app or global workflow
