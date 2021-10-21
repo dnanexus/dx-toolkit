@@ -156,21 +156,15 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
             source_region = enabled_regions.pop()
             print("Trying to download resources from one of the enabled region {}...".format(source_region))
 
-        # When an applet is built bundledDepends are added in the following order:
+        # When an app(let) is built the following dependencies are added as bundledDepends:
         # 1. bundledDepends explicitly specified in the dxapp.json
         # 2. resources (contents of resources directory added as bundledDepends)
-        # 3. assetDepends (translated into bundledDepends)
+        # 3. assetDepends in the dxapp.json (with their record IDs translated into file IDs)
         #
-        # Therefore while translating bundledDepends to assetDepends, we are traversing the
-        # list in reverse order and exiting when we can't find the "AssetBundle" property
-        # with the tarball file.
-        #
-        # NOTE: If last item (and contiguous earlier items) of bundledDepends (#1 above) refers to an
-        # AssetBundle tarball, those items will be converted to assetDepends.
-        #
-        # TODO: The bundledDepends should be annotated with another field called {"asset": true}
-        # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
-        # when the wrapper record object is no more accessible.
+        # To get the resources, we will tranverse the bundleDepends list in the source region and do the following:
+        # - If an file ID refers to an AssetBundle tarball (a file with the "AssetBundle" property), 
+        #   skip downloading the file, and keep this file ID as a bundledDepends in the final dxapp.json
+        # - Otherwise, download the file and remove this ID from the bundledDepends list in the final dxapp.json
 
         def untar_strip_leading_slash(tarfname, path):
             t = tarfile.open(tarfname)
@@ -204,7 +198,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 
                 fname = "resources/{}.tar.gz" .format(handler_id)
                 download_dxfile(handler_id, fname)
-                print("Unpacking resource {}".format(dep.get("name")))
+                print("Unpacking resource {}".format(dep.get("name")), file=sys.stderr)
 
                 untar_strip_leading_slash(fname, "resources")
                 os.unlink(fname)
