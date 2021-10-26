@@ -100,8 +100,6 @@ if '_ARGCOMPLETE' not in os.environ:
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
-        if readline.__doc__ and 'libedit' in readline.__doc__:
-            print('Warning: incompatible readline module detected (libedit), tab completion disabled', file=sys.stderr)
     except ImportError:
         if os.name != 'nt':
             print('Warning: readline module is not available, tab completion disabled', file=sys.stderr)

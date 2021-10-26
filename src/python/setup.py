@@ -68,11 +68,6 @@ dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__fi
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
 backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_backports.txt"))]
 
-# If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
-if platform.system() == 'Windows':
-    dependencies = [d for d in dependencies if not (d.startswith('distribute'))]
-    dependencies.append("colorama==0.2.4")
-
 if sys.version_info[0] < 3:
     dependencies.extend(backports_dependencies)
 
