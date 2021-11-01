@@ -167,11 +167,11 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         # - Otherwise, download the file and remove this ID from the bundledDepends list in the final dxapp.json
 
         def untar_strip_leading_slash(tarfname, path):
-            t = tarfile.open(tarfname)
-            for m in t.getmembers():
-                if m.name.startswith("/"):
-                    m.name = m.name[1:]
-                t.extract(m, path)
+            with tarfile.open(tarfname) as t:
+                for m in t.getmembers():
+                    if m.name.startswith("/"):
+                        m.name = m.name[1:]
+                    t.extract(m, path)
             t.close()
 
         download_completed = omit_resources
