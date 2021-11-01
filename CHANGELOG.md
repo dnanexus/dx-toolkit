@@ -6,11 +6,27 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [315.0] - beta
+
+## [316.0] - beta
+
+### Added
+
+* Support for dxpy on macOS arm64
+* Path input for `dx list database files`
+
+### Fixed
+
+* Python 3 SSH Host key output in `dx describe job-xxxx`
+
+### Changed
+
+* dxpy dependencies cryptography, websocket-client, colorama, requests
+
+## [315.0] - 2021.10.28 stable
 
 * No significant changes
 
-## [314.0] - 2021.08.27 stable
+## [314.0] - 2021.08.27 
 
 ### Added
 
