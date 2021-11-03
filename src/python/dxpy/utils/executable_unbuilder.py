@@ -135,8 +135,13 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
             ", ".join(enabled_regions.difference(permitted_regions)), bill_to))
     # Update enabled regions
     enabled_regions.intersection_update(permitted_regions)
-    # Check if at least one region is enabled when not omitting resources
+    
+    # Start downloading when not omitting resources
+    deps_downloaded = set()
     if not omit_resources:
+        download_completed = False
+        
+        # Check if at least one region is enabled 
         if not enabled_regions:
             raise DXError(
                 "Cannot download resources of the requested executable {} since it is not available in any of the billable regions. "
@@ -174,13 +179,11 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                     t.extract(m, path)
             t.close()
 
-        download_completed = omit_resources
-        deps_downloaded = set()
         created_resources_directory = False
         # Download resources from the source region      
         for dep in info["runSpec"]["bundledDependsByRegion"][source_region]:
             try: 
-                file_handle = get_handler(dep["id"])
+                file_handle = get_handler(dep["id"], project=None)
                 handler_id = file_handle.get_id()
                 # if dep is not a file (record etc.), check the next dep
                 if not isinstance(file_handle, dxpy.DXFile):
@@ -216,13 +219,13 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         else: # for loop finished with no break
             download_completed = True                    
     
-    # Check if downloading is completed in one of the enabled regions
-    # if so, files in deps_downloaded will not shown in dxapp.json
-    # if not, deps_downloaded is an empty set. So ID of all deps will be in dxapp.json
-    if not download_completed:
-        print("Downloading resources from region {} failed. "
-              "Please try downloading with their IDs in dxapp.json, "
-              "or skip downloading resources entirely by using the --omit-resources flag.".format(source_region))
+        # Check if downloading is completed in one of the enabled regions
+        # if so, files in deps_downloaded will not shown in dxapp.json
+        # if not, deps_downloaded is an empty set. So ID of all deps will be in dxapp.json
+        if not download_completed:
+            print("Downloading resources from region {} failed. "
+                "Please try downloading with their IDs in dxapp.json, "
+                "or skip downloading resources entirely by using the --omit-resources flag.".format(source_region))
 
     # TODO: if output directory is not the same as executable name we
     # should print a warning and/or offer to rewrite the "name"
