@@ -9581,7 +9581,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v)
-                               for (k, v) in app_spec.iteritems()
+                               for (k, v) in app_spec.items()
                                if k not in ('description', 'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
@@ -9905,8 +9905,42 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             with open(path_to_dxapp_json, "r") as fh:
                 app_spec = json.load(fh)
                 self.assertEqual(app_spec["regionalOptions"], regional_options)
-                
 
+    # @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+    #                      'skipping test that would create apps')                
+    def test_get_permitted_regions(self):
+
+        app_name = "app_{t}_multi_region_app_from_permitted_region".format(t=int(time.time()))
+
+        aws_cn_north_system_requirements = dict(main=dict(instanceType="mem1_ssd1_v2_x4"))
+        azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
+        regional_options = {"aws:cn-north-1": dict(systemRequirements=aws_cn_north_system_requirements),
+                            "azure:westus": dict(systemRequirements=azure_westus_system_requirements)}
+        
+        app_id, app_desc = self.make_app(app_name, regional_options=regional_options)
+
+        with patch("dxpy.api.user_describe", return_value={"billTo": "org-nonexist"}):
+            # with self.assertSubprocessFailure(stderr_regexp='Failed to get permitted regions where org-nonexist can perform billable activities.'):
+            #     run("dx get " + app_id)
+            (stdout, stderr) = run(f"dx get {app_id}", also_return_stderr=True)
+            self.assertIn("Failed to get permitted regions where org-nonexist can perform billable activities.", stderr)
+        
+        with patch("dxpy.api.user_describe", return_value={"billTo": "org-piratelabs"}):
+            (stdout, stderr) = run(f"dx get {app_id}", also_return_stderr=True)
+            self.assertIn("it is not available in any of the billable regions.", stderr)
+        
+        with chdir(tempfile.mkdtemp()), without_project_context(), patch("dxpy.api.user_describe", return_value={"billTo": "user-bob"}):# permittedRegions: ['aws:us-east-1', 'azure:westus'],
+            (stdout, stderr) = run(f"dx get {app_id}", also_return_stderr=True)
+            self.assertIn(f"Trying to download resources from one of the enabled region azure:westus", stdout)
+            self.assert_app_get_initialized(app_name, app_desc)
+
+        with chdir(tempfile.mkdtemp()), \
+            patch("dxpy.api.user_describe", return_value={"billTo": "user-alice"}):
+            run(f"dx get {app_id}")
+            path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
+            with open(path_to_dxapp_json, "r") as fh:
+                app_spec = json.load(fh)
+                self.assertEqual(app_spec["regionalOptions"], regional_options)
 @unittest.skipUnless(testutil.TEST_TCSH, 'skipping tests that require tcsh to be installed')
 class TestTcshEnvironment(unittest.TestCase):
     def test_tcsh_dash_c(self):
