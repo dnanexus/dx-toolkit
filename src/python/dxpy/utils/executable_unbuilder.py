@@ -134,7 +134,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     enabled_regions = set(info["runSpec"]["bundledDependsByRegion"].keys())
     if not enabled_regions.issubset(permitted_regions):
         print("Region(s) {} are not among the permitted regions of {}. Resources from these regions will not be available.".format(
-            ", ".join(enabled_regions.difference(permitted_regions)), bill_to))
+            ", ".join(enabled_regions.difference(permitted_regions)), bill_to), file=sys.stderr )
     # Update enabled regions
     enabled_regions.intersection_update(permitted_regions)
     
@@ -149,7 +149,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 "Cannot download resources of the requested executable {} since it is not available in any of the billable regions. "
                 "You can use the --omit-resources flag to skip downloading the resources. ".format(info["name"]))
         
-        print("Dependencies could be retrieved from region: {}. ".format(", ".join(enabled_regions)))
+        print("Dependencies could be retrieved from region: {}. ".format(", ".join(enabled_regions)), file=sys.stderr)
         # Pick a source region. The current selected region is preferred
         try:
             current_region = dxpy.api.project_describe(dxpy.WORKSPACE_ID, input_params={"fields": {"region": True}})["region"]
@@ -158,10 +158,10 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
 
         if current_region in enabled_regions:
             source_region  = current_region
-            print("Trying to download resources from the current region {}...".format(source_region))
+            print("Trying to download resources from the current region {}...".format(source_region), file=sys.stderr)
         else:
             source_region = list(enabled_regions)[0]
-            print("Trying to download resources from one of the enabled region {}...".format(source_region))
+            print("Trying to download resources from one of the enabled region {}...".format(source_region), file=sys.stderr)
 
         # When an app(let) is built the following dependencies are added as bundledDepends:
         # 1. bundledDepends explicitly specified in the dxapp.json
@@ -227,7 +227,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         if not download_completed:
             print("Downloading resources from region {} failed. "
                 "Please try downloading with their IDs in dxapp.json, "
-                "or skip downloading resources entirely by using the --omit-resources flag.".format(source_region))
+                "or skip downloading resources entirely by using the --omit-resources flag.".format(source_region), file=sys.stderr)
 
     # TODO: if output directory is not the same as executable name we
     # should print a warning and/or offer to rewrite the "name"
