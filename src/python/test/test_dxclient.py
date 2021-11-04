@@ -9630,7 +9630,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             black_list.append('authorizedUsers')
 
         filtered_app_spec = dict((k, v)
-                                 for (k, v) in app_spec.iteritems()
+                                 for (k, v) in app_spec.items()
                                  if k not in black_list)
 
         self.assertNotIn("description", output_json)
@@ -9639,7 +9639,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         self.assertNotIn("systemRequirements", output_json["runSpec"])
         self.assertNotIn("systemRequirementsByRegion", output_json["runSpec"])
 
-        self.assertDictSubsetOf(filtered_app_spec, output_json)
+        # assetDepends is now dumped as bundledDepends, assertion no longer valid
+        # self.assertDictSubsetOf(filtered_app_spec, output_json)
 
         self.assertFileContentsEqualsString([name, "src",
                                              "code.py"],
@@ -9906,41 +9907,111 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                 app_spec = json.load(fh)
                 self.assertEqual(app_spec["regionalOptions"], regional_options)
 
-    # @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
-    #                      'skipping test that would create apps')                
+    @staticmethod
+    def create_asset(tarball_name, record_name, proj):
+        asset_archive = dxpy.upload_string("foo", name=tarball_name, project=proj.get_id(),hidden=True, wait_on_close=True,)
+        asset = dxpy.new_dxrecord(
+            project=proj.get_id(),
+            details={"archiveFileId": {"$dnanexus_link": asset_archive.get_id()}},
+            properties={"version": "0.0.1", },
+            close=True,
+            types=["AssetBundle"]
+        )
+        asset_archive.set_properties({"AssetBundle": asset.get_id()})
+        return asset.get_id()
+
+    @staticmethod
+    def gen_file_tar(fname, tarballname, proj_id):
+            with open(fname, 'w') as f:
+                f.write("foo")
+
+            with tarfile.open(tarballname, 'w:gz') as f:
+                f.add(fname)
+
+            dxfile = dxpy.upload_local_file(tarballname, name=tarballname, project=proj_id,
+                                            media_type="application/gzip", wait_on_close=True)
+            # remove local file
+            os.remove(tarballname)
+            os.remove(fname)
+            return dxfile
+    
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+                         'skipping test that would create apps')                
     def test_get_permitted_regions(self):
 
-        app_name = "app_{t}_multi_region_app_from_permitted_region".format(t=int(time.time()))
+        os.environ['DXTEST_SECOND_USER'] = json.dumps({"auth":"expiredToken", "user": "user-alice"})
 
-        aws_cn_north_system_requirements = dict(main=dict(instanceType="mem1_ssd1_v2_x4"))
-        azure_westus_system_requirements = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
-        regional_options = {"aws:cn-north-1": dict(systemRequirements=aws_cn_north_system_requirements),
-                            "azure:westus": dict(systemRequirements=azure_westus_system_requirements)}
-        
-        app_id, app_desc = self.make_app(app_name, regional_options=regional_options)
+        app_name = "app_{t}_multi_region_app_from_permitted_region".format(t=int(time.time()))       
+        with temporary_project(region="aws:us-east-1") as aws_proj:
+            with temporary_project(region="azure:westus") as azure_proj:
+                aws_bundled_dep = self.gen_file_tar("test_file", "bundle.tar.gz", aws_proj.get_id())
+                azure_bundled_dep = self.gen_file_tar("test_file", "bundle.tar.gz", azure_proj.get_id())
 
-        with patch("dxpy.api.user_describe", return_value={"billTo": "org-nonexist"}):
-            # with self.assertSubprocessFailure(stderr_regexp='Failed to get permitted regions where org-nonexist can perform billable activities.'):
-            #     run("dx get " + app_id)
-            (stdout, stderr) = run(f"dx get {app_id}", also_return_stderr=True)
-            self.assertIn("Failed to get permitted regions where org-nonexist can perform billable activities.", stderr)
-        
-        with patch("dxpy.api.user_describe", return_value={"billTo": "org-piratelabs"}):
-            (stdout, stderr) = run(f"dx get {app_id}", also_return_stderr=True)
-            self.assertIn("it is not available in any of the billable regions.", stderr)
-        
-        with chdir(tempfile.mkdtemp()), without_project_context(), patch("dxpy.api.user_describe", return_value={"billTo": "user-bob"}):# permittedRegions: ['aws:us-east-1', 'azure:westus'],
-            (stdout, stderr) = run(f"dx get {app_id}", also_return_stderr=True)
-            self.assertIn(f"Trying to download resources from one of the enabled region azure:westus", stdout)
-            self.assert_app_get_initialized(app_name, app_desc)
+                aws_asset = self.create_asset("asset.tar.gz","asset_record", aws_proj)
+                azure_asset = self.create_asset("asset.tar.gz", "asset_record", azure_proj)
 
-        with chdir(tempfile.mkdtemp()), \
-            patch("dxpy.api.user_describe", return_value={"billTo": "user-alice"}):
-            run(f"dx get {app_id}")
-            path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
-            with open(path_to_dxapp_json, "r") as fh:
-                app_spec = json.load(fh)
-                self.assertEqual(app_spec["regionalOptions"], regional_options)
+                aws_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x1"))
+                azure_sys_reqs = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
+
+                regional_options = {
+                        "aws:us-east-1": dict(
+                            systemRequirements=aws_sys_reqs,
+                            bundledDepends=[{"name": "bundle.tar.gz",
+                                             "id": {"$dnanexus_link": aws_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": aws_asset}],
+                        ),
+                        "azure:westus": dict(
+                            systemRequirements=azure_sys_reqs,
+                            bundledDepends=[{"name": "bundle.tar.gz",
+                                             "id": {"$dnanexus_link": azure_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": azure_asset}],
+                        )
+                    }
+                        
+                app_id, app_spec = self.make_app(app_name, regional_options=regional_options, authorized_users=["PUBLIC"])
+                app_desc = dxpy.api.app_get(app_id)
+
+                # use current selected project as the source
+                # assets are not downloaded but kept in regionalOptions as bundleDepends
+                with chdir(tempfile.mkdtemp()), temporary_project(region="aws:us-east-1", select=True) as temp_project:
+                    (stdout, stderr) = run(f"dx get {app_id}", also_return_stderr=True)
+                    self.assertIn("Trying to download resources from the current region aws:us-east-1", stderr)
+                    self.assertIn("Unpacking resource bundle.tar.gz", stderr)
+                    self.assertIn("Unpacking resource resources.tar.gz", stderr)
+                    self.assert_app_get_initialized(app_name, app_spec)
+
+                    path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
+                    with open(path_to_dxapp_json, "r") as fh:
+                        out_spec = json.load(fh)
+                        
+                        self.assertIn("regionalOptions", out_spec)
+                        out_regional_options = out_spec["regionalOptions"]
+                        
+                        self.assertEqual(out_regional_options["aws:us-east-1"]["systemRequirements"], aws_sys_reqs)
+                        self.assertEqual(out_regional_options["azure:westus"]["systemRequirements"], azure_sys_reqs)
+
+                        def get_asset_spec(asset_id):
+                            tarball_id = dxpy.DXRecord(asset_id).describe(
+                            fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
+                            tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
+                            return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
+                        
+                        self.assertEqual(out_regional_options["aws:us-east-1"]["bundledDepends"], [get_asset_spec(aws_asset)])
+                        self.assertEqual(out_regional_options["azure:westus"]["bundledDepends"], [get_asset_spec(azure_asset)])
+
+                # omit resources
+                # use current selected project as the source
+                with chdir(tempfile.mkdtemp()), temporary_project(region="aws:us-east-1", select=True) as temp_project:
+                    (stdout, stderr) = run(f"dx get {app_id} --omit-resources", also_return_stderr=True)
+                    self.assertFalse(os.path.exists(os.path.join(app_name, "resources")))
+
+                    path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
+                    with open(path_to_dxapp_json, "r") as fh:
+                        out_spec = json.load(fh)
+                        out_regional_options = out_spec["regionalOptions"]
+                        
+                        self.assertEqual(out_regional_options["aws:us-east-1"]["bundledDepends"], app_desc["runSpec"]["bundledDependsByRegion"]["aws:us-east-1"])
+                        self.assertEqual(out_regional_options["azure:westus"]["bundledDepends"], app_desc["runSpec"]["bundledDependsByRegion"]["azure:westus"])
 @unittest.skipUnless(testutil.TEST_TCSH, 'skipping tests that require tcsh to be installed')
 class TestTcshEnvironment(unittest.TestCase):
     def test_tcsh_dash_c(self):
