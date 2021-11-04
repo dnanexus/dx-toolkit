@@ -129,6 +129,8 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         print("Failed to get permitted regions where {} can perform billable activities.\n".format(bill_to), file=sys.stderr)
         sys.exit(1)    
     
+    # when applet/app is built, the runSpec is initialized with fields "interpreter" and "bundledDependsByRegion"
+    # even when we don't have any bundledDepends in dxapp.json
     enabled_regions = set(info["runSpec"]["bundledDependsByRegion"].keys())
     if not enabled_regions.issubset(permitted_regions):
         print("Region(s) {} are not among the permitted regions of {}. Resources from these regions will not be available.".format(
@@ -158,7 +160,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
             source_region  = current_region
             print("Trying to download resources from the current region {}...".format(source_region))
         else:
-            source_region = enabled_regions.pop()
+            source_region = list(enabled_regions)[0]
             print("Trying to download resources from one of the enabled region {}...".format(source_region))
 
         # When an app(let) is built the following dependencies are added as bundledDepends:
@@ -183,7 +185,7 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         # Download resources from the source region      
         for dep in info["runSpec"]["bundledDependsByRegion"][source_region]:
             try: 
-                file_handle = get_handler(dep["id"], project=None)
+                file_handle = get_handler(dep["id"])
                 handler_id = file_handle.get_id()
                 # if dep is not a file (record etc.), check the next dep
                 if not isinstance(file_handle, dxpy.DXFile):
@@ -275,9 +277,10 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # "dx get" should parse the "systemRequirementsByRegion" field from
     # the response of /app-x/get or /applet-x/get into the "regionalOptions"
     # key in dxapp.json.
-    if "systemRequirementsByRegion" in dxapp_json['runSpec']:
-        dxapp_json["regionalOptions"] = {}
-        for region in enabled_regions:
+    dxapp_json["regionalOptions"] = {}
+    for region in enabled_regions:
+        dxapp_json["regionalOptions"][region] = {}
+        if "systemRequirementsByRegion" in dxapp_json['runSpec']:
             region_sys_reqs = dxapp_json['runSpec']['systemRequirementsByRegion'][region]
 
             # handle cluster bootstrap scripts if any are present
@@ -293,15 +296,13 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                     # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
                     continue
 
-            # remove dep downloaded from bundledDependsByRegion
-            region_depends = dxapp_json["runSpec"]["bundledDependsByRegion"][region]
-            region_bundle_depends = [d for d in region_depends if d["name"] not in deps_downloaded]
+            dxapp_json["regionalOptions"][region]["systemRequirements"]=region_sys_reqs
 
-            # add systemRequirements and bundledDepends to this region
-            dxapp_json["regionalOptions"][region] = \
-                dict(systemRequirements=region_sys_reqs,
-                bundledDepends=region_bundle_depends
-                )
+        region_depends = dxapp_json["runSpec"]["bundledDependsByRegion"][region]
+        region_bundle_depends = [d for d in region_depends if d["name"] not in deps_downloaded]
+        if region_bundle_depends:
+            dxapp_json["regionalOptions"][region]["bundledDepends"]=region_bundle_depends
+            
     # Remove "bundledDependsByRegion" and "bundledDepends" field from "runSpec".
     # assetDepends and bundledDepends data are stored in regionalOptions instead.
     dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
