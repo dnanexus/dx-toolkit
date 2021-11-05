@@ -149,7 +149,6 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                 "Cannot download resources of the requested executable {} since it is not available in any of the billable regions. "
                 "You can use the --omit-resources flag to skip downloading the resources. ".format(info["name"]))
         
-        print("Dependencies could be retrieved from region: {}. ".format(", ".join(enabled_regions)), file=sys.stderr)
         # Pick a source region. The current selected region is preferred
         try:
             current_region = dxpy.api.project_describe(dxpy.WORKSPACE_ID, input_params={"fields": {"region": True}})["region"]
