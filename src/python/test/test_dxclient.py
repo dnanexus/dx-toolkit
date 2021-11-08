@@ -3335,7 +3335,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn('foo', analysis_desc)
         analysis_desc = json.loads(run("dx describe --json " + analysis_id ))
         self.assertTrue(analysis_desc["runInput"], {"foo": 747})
-        time.sleep(2) # May need to wait for job to be created in the system
+        time.sleep(20) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 474', job_desc)
 
