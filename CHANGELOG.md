@@ -6,6 +6,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* `dx get` uses a region compatible with user's billTo when downloading resources 
 
 ## [316.0] - beta
 
@@ -17,7 +20,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Python 3 SSH Host key output in `dx describe job-xxxx`
-* `dx get` uses a region compatible with user's billTo when downloading resources 
 
 ### Changed
 
