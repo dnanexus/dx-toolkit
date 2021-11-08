@@ -9939,8 +9939,6 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                          'skipping test that would create apps')                
     def test_get_permitted_regions(self):
 
-        os.environ['DXTEST_SECOND_USER'] = json.dumps({"auth":"expiredToken", "user": "user-alice"})
-
         app_name = "app_{t}_multi_region_app_from_permitted_region".format(t=int(time.time()))       
         with temporary_project(region="aws:us-east-1") as aws_proj:
             with temporary_project(region="azure:westus") as azure_proj:
