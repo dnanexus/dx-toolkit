@@ -20,7 +20,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Python 3 SSH Host key output in `dx describe job-xxxx`
-* `dx get` uses a region compatible with user's billTo when downloading resources 
 
 ### Changed
 
