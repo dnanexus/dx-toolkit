@@ -5034,19 +5034,18 @@ parser_run.add_argument('--delay-workspace-destruction',
                         action='store_true')
 parser_run.add_argument('--priority',
                         choices=['low', 'normal', 'high'],
-                        help='Request a scheduling priority for all resulting jobs. Will be overriden (set to high) ' +
-                             'when either --watch, --ssh, or --allow-ssh flags are used')
+                        help='Request a scheduling priority for all resulting jobs.  Defaults to high when --watch, --ssh, or --allow-ssh flags are used.')
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
-parser_run.add_argument('--watch', help="Watch the job after launching it; sets --priority high", action='store_true')
+parser_run.add_argument('--watch', help="Watch the job after launching it. Defaults --priority to high.", action='store_true')
 parser_run.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
-                        help=fill('Configure the job to allow SSH access; sets --priority high. If an argument is ' +
+                        help=fill('Configure the job to allow SSH access. Defaults --priority to high. If an argument is ' +
                                   'supplied, it is interpreted as an IP or hostname mask to allow connections from, ' +
                                   'e.g. "--allow-ssh 1.2.3.4 --allow-ssh berkeley.edu"',
                                   width_adjustment=-24))
 parser_run.add_argument('--ssh',
-                        help=fill("Configure the job to allow SSH access and connect to it after launching; " +
-                                  "sets --priority high",
+                        help=fill("Configure the job to allow SSH access and connect to it after launching. " +
+                                  "Defaults --priority to high.",
                                   width_adjustment=-24),
                         action='store_true')
 parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
