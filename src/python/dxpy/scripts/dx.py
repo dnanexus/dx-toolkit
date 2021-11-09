@@ -5040,7 +5040,9 @@ parser_run.add_argument('--delay-workspace-destruction',
                         action='store_true')
 parser_run.add_argument('--priority',
                         choices=['low', 'normal', 'high'],
-                        help='Request a scheduling priority for all resulting jobs.  Defaults to high when --watch, --ssh, or --allow-ssh flags are used.')
+                        help=fill('Request a scheduling priority for all resulting jobs. ' +
+                                  'Defaults to high when --watch, --ssh, or --allow-ssh flags are used.', 
+                                  width_adjustment=-24))
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it. Defaults --priority to high.", action='store_true')
