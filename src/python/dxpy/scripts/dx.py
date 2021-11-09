@@ -2978,7 +2978,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "ignore_reuse_stages": args.ignore_reuse_stages or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
-        "priority": args.priority or "high",
+        "priority": args.priority,
         "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
