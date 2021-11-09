@@ -2989,11 +2989,14 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "extra_args": args.extra_args
     }
 
-    if run_kwargs["priority"] in ["low", "normal"] and any([args.watch or args.ssh or args.allow_ssh]):
-        print(fill(BOLD("WARNING") + ": You have requested that jobs be run under " +
-                   BOLD(run_kwargs["priority"]) +
-                   " priority, which may cause them to be restarted at any point, interrupting interactive work."))
-        print()
+    if any([args.watch or args.ssh or args.allow_ssh]):
+        if run_kwargs["priority"] in ["low", "normal"]:
+            print(fill(BOLD("WARNING") + ": You have requested that jobs be run under " +
+                    BOLD(run_kwargs["priority"]) +
+                    " priority, which may cause them to be restarted at any point, interrupting interactive work."))
+            print()
+        else:
+            run_kwargs["priority"] = "high"
     
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
