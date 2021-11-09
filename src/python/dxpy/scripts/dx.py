@@ -5006,7 +5006,7 @@ parser_run.add_argument('-h', '--help', help='show this help message and exit', 
 parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments. When using an analysis with --clone a workflow executable cannot be overriden and should not be provided.)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', dest='alias',
                         help=fill('Alias (tag) or version of the app to run (default: "default" if an app)', width_adjustment=-24))
-parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results. By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--batch-folders', dest='batch_folders',
                         help=fill('Output results to separate folders, one per batch, using batch ID as the name of the output folder. The batch output folder location will be relative to the path set in --destination', width_adjustment=-24),
                         action='store_true')
