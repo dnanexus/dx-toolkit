@@ -2978,7 +2978,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "ignore_reuse_stages": args.ignore_reuse_stages or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
-        "priority": ("high" if args.watch or args.ssh or args.allow_ssh else args.priority),
+        "priority": args.priority or "high",
         "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
@@ -2989,6 +2989,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "extra_args": args.extra_args
     }
 
+    if run_kwargs["priority"] in ["low", "normal"] and any([run_kwargs["watch"], run_kwargs["ssh"], run_kwargs["allow_ssh"]]):
+        print(fill(BOLD("WARNING") + ": You have requested that jobs be run under" +
+                   BOLD(run_kwargs["priority"]) +
+                   " priority, which may cause them to be restarted at any point, interrupting interactive work."))
+        print()
+    
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
         executable_desc = executable_describe or executable.describe()
