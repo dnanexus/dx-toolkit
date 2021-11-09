@@ -2749,7 +2749,8 @@ dx-jobutil-add-output record_array $second_record --array
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
-                                                     "release": "14.04",
+                                                     "release": "20.04",
+                                                     "version": "0",
                                                      "code": ""},
                                          "access": {"project": "VIEW",
                                                     "allProjects": "VIEW",
@@ -2813,51 +2814,54 @@ dx-jobutil-add-output record_array $second_record --array
 
         # warning when --priority is normal/low with --watch
         try:
-            dx_run_output = run("dx run myapplet -y --watch --priority normal")
+            dx_run_output = run("dx run myapplet -y --watch --priority normal --brief")
         except subprocess.CalledProcessError:
             # ignore any watch errors; just want to test requested
             # priority
             pass
-        watched_job_id = dx_run_output.split('\n')[0]
+        expected_warning = dx_run_output.split('\n\n')[0]
+        watched_job_id = dx_run_output.split('\n\n')[1].strip()
         watched_job_desc = dxpy.describe(watched_job_id)
         self.assertEqual(watched_job_desc['applet'], applet_id)
         self.assertEqual(watched_job_desc['priority'], 'normal')
-        for string in ["WARNING", "interrupting interactive work"]:
-            self.assertIn(string, dx_run_output)
+        for string in ["WARNING", "normal", "interrupting interactive work"]:
+            self.assertIn(string, expected_warning)
 
         # don't actually need it to run
         run("dx terminate " + watched_job_id)
 
         # warning when --priority is normal/low with --ssh
         try:
-            dx_run_output = run("dx run myapplet -y --ssh --priority low")
+            dx_run_output = run("dx run myapplet -y --ssh --priority low --brief")
         except subprocess.CalledProcessError:
             # ignore any ssh errors; just want to test requested
             # priority
             pass
-        ssh_job_id = dx_run_output.split('\n')[0]
+        expected_warning = dx_run_output.split('\n\n')[0]
+        ssh_job_id = dx_run_output.split('\n\n')[1].strip()
         ssh_job_desc = dxpy.describe(ssh_job_id)
         self.assertEqual(ssh_job_desc['applet'], applet_id)
         self.assertEqual(ssh_job_desc['priority'], 'low')
-        for string in ["WARNING", "interrupting interactive work"]:
-            self.assertIn(string, dx_run_output)
+        for string in ["WARNING", "low", "interrupting interactive work"]:
+            self.assertIn(string, expected_warning)
 
         # don't actually need it to run
         run("dx terminate " + ssh_job_id)
 
         # warning when --priority is normal/low with --allow-ssh
         try:
-            dx_run_output = run("dx run myapplet -y --allow-ssh --priority low")
+            dx_run_output = run("dx run myapplet -y --allow-ssh --priority low --brief")
         except subprocess.CalledProcessError:
             # ignore any ssh errors; just want to test requested
             # priority
             pass
-        allow_ssh_job_id = dx_run_output.split('\n')[0]
+        expected_warning = dx_run_output.split('\n\n')[0]
+        allow_ssh_job_id = dx_run_output.split('\n\n')[1].strip()
         allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
         self.assertEqual(allow_ssh_job_desc['applet'], applet_id)
         self.assertEqual(allow_ssh_job_desc['priority'], 'low')
-        for string in ["WARNING", "interrupting interactive work"]:
-            self.assertIn(string, dx_run_output)
+        for string in ["WARNING", "low", "interrupting interactive work"]:
+            self.assertIn(string, expected_warning)
 
         # don't actually need it to run
         run("dx terminate " + allow_ssh_job_id)
