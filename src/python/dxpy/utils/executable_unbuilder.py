@@ -30,6 +30,7 @@ import json
 import os
 import sys
 import tarfile
+import shutil
 
 import dxpy
 from .. import get_handler, download_dxfile
@@ -97,15 +98,15 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
 
     if info["runSpec"]["interpreter"] == "bash":
         suffix = "sh"
-    elif info["runSpec"]["interpreter"] in ["python2.7", "python3", "python3.5"]:
+    elif info["runSpec"]["interpreter"].startswith("python"):
         suffix = "py"
     else:
-        print('Sorry, I don\'t know how to get executables with interpreter ' +
-              info["runSpec"]["interpreter"] + '\n', file=sys.stderr)
+        print("Sorry, I don\'t know how to get executables with interpreter {}.\n".format(
+            info["runSpec"]["interpreter"]), file=sys.stderr)
         sys.exit(1)
 
     # Entry point script
-    script = "src/code.%s" % (suffix,)
+    script = "src/code.{}".format(suffix)
     os.mkdir("src")
     with open(script, "w") as f:
         f.write(info["runSpec"]["code"])
@@ -115,85 +116,117 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
         Writes the string `code` into a file at the relative path
         "src/<region>_<entry_point>_clusterBootstrap.<suffix>"
         """
-        script_name = "src/%s_%s_clusterBootstrap.%s" % (region, entry_point, suffix)
+        script_name = "src/{}_{}_clusterBootstrap.{}".format(region, entry_point, suffix)
         with open(script_name, "w") as f:
             f.write(code)
         return script_name
-
-    # Get all the asset bundles
-    asset_depends = []
-    deps_to_remove = []
-
-    # When an applet is built bundledDepends are added in the following order:
-    # 1. bundledDepends explicitly specified in the dxapp.json
-    # 2. resources (contents of resources directory added as bundledDepends)
-    # 3. assetDepends (translated into bundledDepends)
-    #
-    # Therefore while translating bundledDepends to assetDepends, we are traversing the
-    # list in reverse order and exiting when we can't find the "AssetBundle" property
-    # with the tarball file.
-    #
-    # NOTE: If last item (and contiguous earlier items) of bundledDepends (#1 above) refers to an
-    # AssetBundle tarball, those items will be converted to assetDepends.
-    #
-    # TODO: The bundledDepends should be annotated with another field called {"asset": true}
-    # to distinguish it from non assets. It will be needed to annotate the bundleDepends,
-    # when the wrapper record object is no more accessible.
-
-    for dep in reversed(info["runSpec"]["bundledDepends"]):
-        file_handle = get_handler(dep["id"])
-        if isinstance(file_handle, dxpy.DXFile):
-            asset_record_id = file_handle.get_properties().get("AssetBundle")
-            asset_record = None
-            if asset_record_id:
-                asset_record = dxpy.DXRecord(asset_record_id)
-                if asset_record:
-                    try:
-                        asset_json = {"name": asset_record.describe().get("name"),
-                                              "project": asset_record.get_proj_id(),
-                                              "folder": asset_record.describe().get("folder"),
-                                              "version": asset_record.describe(fields={"properties": True}
-                                                                               )["properties"]["version"]
-                                              }
-                        if dep.get("stages"):
-                            asset_json["stages"] = dep["stages"]
-                        asset_depends.append(asset_json)
-                        deps_to_remove.append(dep)
-                    except DXError:
-                        print("Describe failed on the assetDepends record object with ID - " +
-                              asset_record_id + "\n", file=sys.stderr)
-                        pass
-            else:
-                break
-    # Reversing the order of the asset_depends[] so that original order is maintained
-    asset_depends.reverse()
-    # resources/ directory
-    created_resources_directory = False
+    
+    # Get regions where the user's billTo are permitted
+    try:
+        bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
+        permitted_regions = set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
+    except DXError:
+        print("Failed to get permitted regions where {} can perform billable activities.\n".format(bill_to), file=sys.stderr)
+        sys.exit(1)    
+    
+    # when applet/app is built, the runSpec is initialized with fields "interpreter" and "bundledDependsByRegion"
+    # even when we don't have any bundledDepends in dxapp.json
+    enabled_regions = set(info["runSpec"]["bundledDependsByRegion"].keys())
+    if not enabled_regions.issubset(permitted_regions):
+        print("Region(s) {} are not among the permitted regions of {}. Resources from these regions will not be available.".format(
+            ", ".join(enabled_regions.difference(permitted_regions)), bill_to), file=sys.stderr )
+    # Update enabled regions
+    enabled_regions.intersection_update(permitted_regions)
+    
+    # Start downloading when not omitting resources
+    deps_downloaded = set()
     if not omit_resources:
-        for dep in info["runSpec"]["bundledDepends"]:
-            if dep in deps_to_remove:
-                continue
-            handler = get_handler(dep["id"])
-            if isinstance(handler, dxpy.DXFile):
+        download_completed = False
+        
+        # Check if at least one region is enabled 
+        if not enabled_regions:
+            raise DXError(
+                "Cannot download resources of the requested executable {} since it is not available in any of the billable regions. "
+                "You can use the --omit-resources flag to skip downloading the resources. ".format(info["name"]))
+        
+        # Pick a source region. The current selected region is preferred
+        try:
+            current_region = dxpy.api.project_describe(dxpy.WORKSPACE_ID, input_params={"fields": {"region": True}})["region"]
+        except:
+            current_region = None
+
+        if current_region in enabled_regions:
+            source_region  = current_region
+            print("Trying to download resources from the current region {}...".format(source_region), file=sys.stderr)
+        else:
+            source_region = list(enabled_regions)[0]
+            print("Trying to download resources from one of the enabled region {}...".format(source_region), file=sys.stderr)
+
+        # When an app(let) is built the following dependencies are added as bundledDepends:
+        # 1. bundledDepends explicitly specified in the dxapp.json
+        # 2. resources (contents of resources directory added as bundledDepends)
+        # 3. assetDepends in the dxapp.json (with their record IDs translated into file IDs)
+        #
+        # To get the resources, we will tranverse the bundleDepends list in the source region and do the following:
+        # - If an file ID refers to an AssetBundle tarball (a file with the "AssetBundle" property), 
+        #   skip downloading the file, and keep this file ID as a bundledDepends in the final dxapp.json
+        # - Otherwise, download the file and remove this ID from the bundledDepends list in the final dxapp.json
+
+        def untar_strip_leading_slash(tarfname, path):
+            with tarfile.open(tarfname) as t:
+                for m in t.getmembers():
+                    if m.name.startswith("/"):
+                        m.name = m.name[1:]
+                    t.extract(m, path)
+            t.close()
+
+        created_resources_directory = False
+        # Download resources from the source region      
+        for dep in info["runSpec"]["bundledDependsByRegion"][source_region]:
+            try: 
+                file_handle = get_handler(dep["id"])
+                handler_id = file_handle.get_id()
+                # if dep is not a file (record etc.), check the next dep
+                if not isinstance(file_handle, dxpy.DXFile):
+                    continue
+                
+                # check if the file is an asset dependency
+                # if so, skip downloading
+                if file_handle.get_properties().get("AssetBundle"):
+                    continue
+
+                # if the file is a bundled dependency, try downloading it
                 if not created_resources_directory:
                     os.mkdir("resources")
                     created_resources_directory = True
-                handler_id = handler.get_id()
-                fname = "resources/%s.tar.gz" % (handler_id)
+                
+                fname = "resources/{}.tar.gz" .format(handler_id)
                 download_dxfile(handler_id, fname)
-                print("Unpacking resources", file=sys.stderr)
-
-                def untar_strip_leading_slash(tarfname, path):
-                    t = tarfile.open(tarfname)
-                    for m in t.getmembers():
-                        if m.name.startswith("/"):
-                            m.name = m.name[1:]
-                        t.extract(m, path)
-                    t.close()
+                print("Unpacking resource {}".format(dep.get("name")), file=sys.stderr)
 
                 untar_strip_leading_slash(fname, "resources")
                 os.unlink(fname)
-                deps_to_remove.append(dep)
+                # add dep name to deps_downloaded set
+                deps_downloaded.add(dep.get("name"))
+                
+            except DXError:
+                print("Failed to download {} from region {}.".format(handler_id, source_region),
+                        file=sys.stderr)
+                # clean up deps already downloaded and quit downloading
+                deps_downloaded.clear()
+                shutil.rmtree("resources")
+                break
+        # if all deps have been checked without an error, mark downloading as completed
+        else: # for loop finished with no break
+            download_completed = True                    
+    
+        # Check if downloading is completed in one of the enabled regions
+        # if so, files in deps_downloaded will not shown in dxapp.json
+        # if not, deps_downloaded is an empty set. So ID of all deps will be in dxapp.json
+        if not download_completed:
+            print("Downloading resources from region {} failed. "
+                "Please try downloading with their IDs in dxapp.json, "
+                "or skip downloading resources entirely by using the --omit-resources flag.".format(source_region), file=sys.stderr)
 
     # TODO: if output directory is not the same as executable name we
     # should print a warning and/or offer to rewrite the "name"
@@ -214,14 +247,6 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     # Un-inline code
     del dxapp_json["runSpec"]["code"]
     dxapp_json["runSpec"]["file"] = script
-
-    # Remove resources from bundledDepends
-    for dep in deps_to_remove:
-        dxapp_json["runSpec"]["bundledDepends"].remove(dep)
-
-    # Add assetDepends to dxapp.json
-    if len(asset_depends) > 0:
-        dxapp_json["runSpec"]["assetDepends"] = asset_depends
 
     # Ordering input/output spec keys
     ordered_spec_keys = ("name", "label", "help", "class", "type", "patterns", "optional", "default", "choices",
@@ -246,20 +271,15 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
     if dx_toolkit in dxapp_json["runSpec"].get("execDepends", ()):
         dxapp_json["runSpec"]["execDepends"].remove(dx_toolkit)
 
-    # Remove "bundledDependsByRegion" field from "runSpec". This utility
-    # will reconstruct the resources directory based on the
-    # "bundledDepends" field, which should be equivalent to
-    # "bundledDependsByRegion".
-    dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
-
     # "dx build" parses the "regionalOptions" key from dxapp.json into the
     # "runSpec.systemRequirements" field of applet/new.
     # "dx get" should parse the "systemRequirementsByRegion" field from
     # the response of /app-x/get or /applet-x/get into the "regionalOptions"
     # key in dxapp.json.
-    if "systemRequirementsByRegion" in dxapp_json['runSpec']:
-        dxapp_json["regionalOptions"] = {}
-        for region in dxapp_json['runSpec']["systemRequirementsByRegion"]:
+    dxapp_json["regionalOptions"] = {}
+    for region in enabled_regions:
+        dxapp_json["regionalOptions"][region] = {}
+        if "systemRequirementsByRegion" in dxapp_json['runSpec']:
             region_sys_reqs = dxapp_json['runSpec']['systemRequirementsByRegion'][region]
 
             # handle cluster bootstrap scripts if any are present
@@ -275,15 +295,21 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
                     # either no "clusterSpec" or no "bootstrapScript" within "clusterSpec"
                     continue
 
-            dxapp_json["regionalOptions"][region] = \
-                dict(systemRequirements=region_sys_reqs)
+            dxapp_json["regionalOptions"][region]["systemRequirements"]=region_sys_reqs
 
+        region_depends = dxapp_json["runSpec"]["bundledDependsByRegion"][region]
+        region_bundle_depends = [d for d in region_depends if d["name"] not in deps_downloaded]
+        if region_bundle_depends:
+            dxapp_json["regionalOptions"][region]["bundledDepends"]=region_bundle_depends
+            
+    # Remove "bundledDependsByRegion" and "bundledDepends" field from "runSpec".
+    # assetDepends and bundledDepends data are stored in regionalOptions instead.
+    dxapp_json["runSpec"].pop("bundledDependsByRegion", None)
+    dxapp_json["runSpec"].pop("bundledDepends", None)
     # systemRequirementsByRegion data is stored in regionalOptions,
     # systemRequirements is ignored
-    if 'systemRequirementsByRegion' in dxapp_json["runSpec"]:
-        del dxapp_json["runSpec"]["systemRequirementsByRegion"]
-    if 'systemRequirements' in dxapp_json["runSpec"]:
-        del dxapp_json["runSpec"]["systemRequirements"]
+    dxapp_json["runSpec"].pop("systemRequirementsByRegion",None)
+    dxapp_json["runSpec"].pop("systemRequirements",None)
 
     # Cleanup of empty elements. Be careful not to let this step
     # introduce any semantic changes to the app specification. For

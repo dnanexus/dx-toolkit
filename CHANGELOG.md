@@ -8,7 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* Reduced API load on the server during `dx upload`
+* Reduced API load during `dx upload`
+* `dx get` uses a region compatible with user's billTo when downloading resources 
 
 ## [316.0] - beta
 
