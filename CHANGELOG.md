@@ -6,6 +6,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Reduced API load on the server during `dx upload`
 
 ## [316.0] - beta
 
