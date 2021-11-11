@@ -2832,13 +2832,13 @@ dx-jobutil-add-output record_array $second_record --array
 
         # warning when --priority is normal/low with --ssh
         try:
-            dx_run_output = run("dx run myapplet -y --ssh --priority low --brief")
+            dx_run_output = run("dx run myapplet -y --ssh --priority low")
         except subprocess.CalledProcessError:
             # ignore any ssh errors; just want to test requested
             # priority
             pass
         expected_warning = dx_run_output.split('\n\n')[0]
-        ssh_job_id = dx_run_output.split('\n\n')[1].strip()
+        ssh_job_id = dx_run_output.split('\n\n')[3].split(": ")[1].strip()
         ssh_job_desc = dxpy.describe(ssh_job_id)
         self.assertEqual(ssh_job_desc['applet'], applet_id)
         self.assertEqual(ssh_job_desc['priority'], 'low')
