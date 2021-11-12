@@ -2996,7 +2996,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                         BOLD(run_kwargs["priority"]) +
                         " priority, which may cause them to be restarted at any point, interrupting interactive work."))
                 print()
-        else: # if run_kwargs["priority"] is None as args.priority is not specified
+        else: # if run_kwargs["priority"] is None
             run_kwargs["priority"] = "high"
     
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:

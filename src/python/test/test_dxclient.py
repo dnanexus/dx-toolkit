@@ -2769,12 +2769,12 @@ dx-jobutil-add-output record_array $second_record --array
 
         # --watch implies high priority when --priority is not specified
         try:
-            watched_run_output = run("dx run myapplet -y --watch --brief")
+            dx_run_output = run("dx run myapplet -y --watch --brief")
         except subprocess.CalledProcessError:
             # ignore any watching errors; just want to test requested
             # priority
             pass
-        watched_job_id = watched_run_output.split('\n')[0]
+        watched_job_id = dx_run_output.split('\n')[0]
         watched_job_desc = dxpy.describe(watched_job_id)
         self.assertEqual(watched_job_desc['applet'], applet_id)
         self.assertEqual(watched_job_desc['priority'], 'high')
@@ -2784,12 +2784,12 @@ dx-jobutil-add-output record_array $second_record --array
 
         # --ssh implies high priority when --priority is not specified
         try:
-            ssh_run_output = run("dx run myapplet -y --ssh --brief")
+            dx_run_output = run("dx run myapplet -y --ssh --brief")
         except subprocess.CalledProcessError:
             # ignore any ssh errors; just want to test requested
             # priority
             pass
-        ssh_job_id = ssh_run_output.split('\n')[0]
+        ssh_job_id = dx_run_output.split('\n')[0]
         ssh_job_desc = dxpy.describe(ssh_job_id)
         self.assertEqual(ssh_job_desc['applet'], applet_id)
         self.assertEqual(ssh_job_desc['priority'], 'high')
@@ -2799,12 +2799,12 @@ dx-jobutil-add-output record_array $second_record --array
 
         # --allow-ssh implies high priority when --priority is not specified
         try:
-            allow_ssh_run_output = run("dx run myapplet -y --allow-ssh --brief")
+            dx_run_output = run("dx run myapplet -y --allow-ssh --brief")
         except subprocess.CalledProcessError:
             # ignore any ssh errors; just want to test requested
             # priority
             pass
-        allow_ssh_job_id = allow_ssh_run_output.split('\n')[0]
+        allow_ssh_job_id = dx_run_output.split('\n')[0]
         allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
         self.assertEqual(allow_ssh_job_desc['applet'], applet_id)
         self.assertEqual(allow_ssh_job_desc['priority'], 'high')
@@ -2832,11 +2832,9 @@ dx-jobutil-add-output record_array $second_record --array
         # no warning when --brief and --priority is normal/low with --allow-ssh
         try:
             allow_ssh_run_output = run("dx run myapplet -y --allow-ssh --priority normal --brief")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             # ignore any ssh errors; just want to test requested
             # priority
-            print(e.stdout)
-            print(e.stderr)
             pass
         allow_ssh_job_id = re.search('job-[A-Za-z0-9]{24}', allow_ssh_run_output).group(0)
         allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
