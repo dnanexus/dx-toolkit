@@ -160,6 +160,8 @@ def assert_consistent_regions(from_spec, from_command_line, builder_exception):
     if from_spec is None or from_command_line is None:
         return
     if set(from_spec) != set(from_command_line):
+        print(from_spec)
+        print(from_command_line)
         raise builder_exception("--region and the 'regionalOptions' key in the JSON file do not agree")
 
 
