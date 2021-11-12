@@ -2846,9 +2846,9 @@ dx-jobutil-add-output record_array $second_record --array
         # don't actually need it to run
         run("dx terminate " + allow_ssh_job_id)
 
-        # warning when --priority is normal/low with --ssh
+        # no warning when --priority is high with --ssh
         try:
-            ssh_run_output = run("dx run myapplet -y --ssh --priority normal")
+            ssh_run_output = run("dx run myapplet -y --ssh --priority high")
         except subprocess.CalledProcessError:
             # ignore any ssh errors; just want to test requested
             # priority
@@ -2856,9 +2856,9 @@ dx-jobutil-add-output record_array $second_record --array
         ssh_job_id = re.search('job-[A-Za-z0-9]{24}', ssh_run_output).group(0)
         ssh_job_desc = dxpy.describe(ssh_job_id)
         self.assertEqual(ssh_job_desc['applet'], applet_id)
-        self.assertEqual(ssh_job_desc['priority'], 'normal')
-        for string in ["WARNING", "normal", "interrupting interactive work"]:
-            self.assertIn(string, ssh_run_output)
+        self.assertEqual(ssh_job_desc['priority'], 'high')
+        for string in ["interrupting interactive work"]:
+            self.assertNotIn(string, ssh_run_output)
 
         # don't actually need it to run
         run("dx terminate " + ssh_job_id)
