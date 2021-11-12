@@ -808,7 +808,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         using_temp_project = True
     elif mode == "app" and not dry_run:
-        print(region)
         # If we are not using temporary project(s) to build the executable,
         # then we should have a project context somewhere.
         try:
