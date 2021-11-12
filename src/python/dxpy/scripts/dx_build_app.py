@@ -212,7 +212,7 @@ def _lint(dxapp_json_filename, mode):
             if not re.match("^[a-zA-Z_][0-9a-zA-Z_]*$", input_field['name']):
                 logger.error('input %d has illegal name "%s" (must match ^[a-zA-Z_][0-9a-zA-Z_]*$)' % (i, input_field['name']))
     else:
-        logger.warn("dxapp.json contains no input specification (inputSpec). Your applet will not be usable as an " +
+        logger.warn("  dxapp.json contains no input specification (inputSpec). Your applet will not be usable as an " +
                     "app, runnable from the GUI, or composable using workflows.")
     if 'outputSpec' in app_spec:
         for i, output_field in enumerate(app_spec['outputSpec']):
@@ -761,7 +761,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     enabled_regions = dxpy.app_builder.get_enabled_regions(app_json, region)
 
-    # Cannot build multi-region app if `use_temp_build_project` is falsy.
+    # Cannot build multi-region app if `use_temp_build_project` is false.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
         raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
 
@@ -808,6 +808,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
         using_temp_project = True
     elif mode == "app" and not dry_run:
+        print(region)
         # If we are not using temporary project(s) to build the executable,
         # then we should have a project context somewhere.
         try:
