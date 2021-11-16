@@ -9,7 +9,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Reduced API load during `dx upload`
-* `dx get` uses a region compatible with user's billTo when downloading resources 
+* `dx get` uses a region compatible with user's billTo when downloading resources
+
+### Changed
+ 
+* `dx run` warns users if priority is specified as low/normal when using '--watch/ssh/allow-ssh'
 
 ## [316.0] - beta
 
