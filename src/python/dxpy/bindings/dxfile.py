@@ -713,17 +713,14 @@ class DXFile(DXDataObject):
         retries = 3
         describe_input = {"fields": {"state": True}}
 
-        for i in range(retries):
-            dxpy.DXHTTPRequest(get_upload_url_and_headers,
-                               data,
-                               jsonify_data=False,
-                               prepend_srv=False,
-                               always_retry=True,
-                               timeout=FILE_REQUEST_TIMEOUT,
-                               auth=None,
-                               method='PUT')
-            if self._describe(self._dxid, describe_input, **kwargs).get('parts', {}).get(str(index), {}).get('state', "complete") == 'complete':
-                break
+        dxpy.DXHTTPRequest(get_upload_url_and_headers,
+                           data,
+                           jsonify_data=False,
+                           prepend_srv=False,
+                           always_retry=True,
+                           timeout=FILE_REQUEST_TIMEOUT,
+                           auth=None,
+                           method='PUT')
 
         self._num_uploaded_parts += 1
 
