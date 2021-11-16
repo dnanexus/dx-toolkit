@@ -9543,9 +9543,11 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             with open(os.path.join("get_applet", "dxapp.json")) as f2:
                 output_json = json.load(f2)
-            self.assertIn("bundledDepends", output_json["runSpec"])
+            current_region = dxpy.describe(self.project).get("region")
+            regional_options = output_json["regionalOptions"][current_region]
+            self.assertIn("bundledDepends", regional_options)
             seenResources = False
-            for bd in output_json["runSpec"]["bundledDepends"]:
+            for bd in regional_options["bundledDepends"]:
                 if bd["name"] == "resources.tar.gz":
                     seenResources = True
                     break
@@ -9869,9 +9871,11 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             self.assertFalse(os.path.exists(os.path.join(app_name, "resources")))
 
             output_json = json.load(open(os.path.join(app_name, "dxapp.json")))
-            self.assertTrue("bundledDepends" in output_json["runSpec"])
+            current_region = dxpy.describe(self.project).get("region")
+            regional_options = output_json["regionalOptions"][current_region]
+            self.assertIn("bundledDepends", regional_options)
             seenResources = False
-            for bd in output_json["runSpec"]["bundledDepends"]:
+            for bd in regional_options["bundledDepends"]:
                 if bd["name"] == "resources.tar.gz":
                     seenResources = True
                     break
