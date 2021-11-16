@@ -2780,7 +2780,7 @@ dx-jobutil-add-output record_array $second_record --array
         except subprocess.CalledProcessError as e:
             # ignore any watching errors; just want to test requested
             # priority
-            print(e.stderr)
+            print(e.output)
             pass
 
         # --ssh implies high priority when --priority is not specified
@@ -2796,7 +2796,7 @@ dx-jobutil-add-output record_array $second_record --array
         except subprocess.CalledProcessError as e:
             # ignore any ssh errors; just want to test requested
             # priority
-            print(e.stderr)            
+            print(e.output)            
             pass
 
         # --allow-ssh implies high priority when --priority is not specified
@@ -2812,7 +2812,7 @@ dx-jobutil-add-output record_array $second_record --array
         except subprocess.CalledProcessError as e:
             # ignore any ssh errors; just want to test requested
             # priority
-            print(e.stderr)
+            print(e.output)
             pass
 
         # warning when --priority is normal/low with --watch
@@ -2830,7 +2830,7 @@ dx-jobutil-add-output record_array $second_record --array
         except subprocess.CalledProcessError as e:
             # ignore any watch errors; just want to test requested
             # priority
-            print(e.stderr)
+            print(e.output)
             pass
 
         # no warning when --brief and --priority is normal/low with --allow-ssh
@@ -2848,7 +2848,7 @@ dx-jobutil-add-output record_array $second_record --array
         except subprocess.CalledProcessError as e:
             # ignore any ssh errors; just want to test requested
             # priority
-            print(e.stderr)
+            print(e.output)
             pass
 
         # no warning when --priority is high with --ssh
@@ -2866,7 +2866,7 @@ dx-jobutil-add-output record_array $second_record --array
         except subprocess.CalledProcessError as e:
             # ignore any ssh errors; just want to test requested
             # priority
-            print(e.stderr)
+            print(e.output)
             pass
 
         # errors
