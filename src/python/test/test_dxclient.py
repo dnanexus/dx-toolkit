@@ -2770,98 +2770,104 @@ dx-jobutil-add-output record_array $second_record --array
         # --watch implies high priority when --priority is not specified
         try:
             dx_run_output = run("dx run myapplet -y --watch --brief")
-        except subprocess.CalledProcessError:
+            watched_job_id = dx_run_output.split('\n')[0]
+            watched_job_desc = dxpy.describe(watched_job_id)
+            self.assertEqual(watched_job_desc['applet'], applet_id)
+            self.assertEqual(watched_job_desc['priority'], 'high')
+
+            # don't actually need it to run
+            run("dx terminate " + watched_job_id)
+        except subprocess.CalledProcessError as e:
             # ignore any watching errors; just want to test requested
             # priority
+            print(e.stderr)
             pass
-        watched_job_id = dx_run_output.split('\n')[0]
-        watched_job_desc = dxpy.describe(watched_job_id)
-        self.assertEqual(watched_job_desc['applet'], applet_id)
-        self.assertEqual(watched_job_desc['priority'], 'high')
-
-        # don't actually need it to run
-        run("dx terminate " + watched_job_id)
 
         # --ssh implies high priority when --priority is not specified
         try:
             dx_run_output = run("dx run myapplet -y --ssh --brief")
-        except subprocess.CalledProcessError:
+            ssh_job_id = dx_run_output.split('\n')[0]
+            ssh_job_desc = dxpy.describe(ssh_job_id)
+            self.assertEqual(ssh_job_desc['applet'], applet_id)
+            self.assertEqual(ssh_job_desc['priority'], 'high')
+
+            # don't actually need it to run
+            run("dx terminate " + ssh_job_id)
+        except subprocess.CalledProcessError as e:
             # ignore any ssh errors; just want to test requested
             # priority
+            print(e.stderr)            
             pass
-        ssh_job_id = dx_run_output.split('\n')[0]
-        ssh_job_desc = dxpy.describe(ssh_job_id)
-        self.assertEqual(ssh_job_desc['applet'], applet_id)
-        self.assertEqual(ssh_job_desc['priority'], 'high')
-
-        # don't actually need it to run
-        run("dx terminate " + ssh_job_id)
 
         # --allow-ssh implies high priority when --priority is not specified
         try:
             dx_run_output = run("dx run myapplet -y --allow-ssh --brief")
-        except subprocess.CalledProcessError:
+            allow_ssh_job_id = dx_run_output.split('\n')[0]
+            allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
+            self.assertEqual(allow_ssh_job_desc['applet'], applet_id)
+            self.assertEqual(allow_ssh_job_desc['priority'], 'high')
+
+            # don't actually need it to run
+            run("dx terminate " + allow_ssh_job_id)
+        except subprocess.CalledProcessError as e:
             # ignore any ssh errors; just want to test requested
             # priority
+            print(e.stderr)
             pass
-        allow_ssh_job_id = dx_run_output.split('\n')[0]
-        allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
-        self.assertEqual(allow_ssh_job_desc['applet'], applet_id)
-        self.assertEqual(allow_ssh_job_desc['priority'], 'high')
-
-        # don't actually need it to run
-        run("dx terminate " + allow_ssh_job_id)
 
         # warning when --priority is normal/low with --watch
         try:
             watched_run_output = run("dx run myapplet -y --watch --priority normal")
-        except subprocess.CalledProcessError:
+            watched_job_id = re.search('job-[A-Za-z0-9]{24}', watched_run_output).group(0)
+            watched_job_desc = dxpy.describe(watched_job_id)
+            self.assertEqual(watched_job_desc['applet'], applet_id)
+            self.assertEqual(watched_job_desc['priority'], 'normal')
+            for string in ["WARNING", "normal", "interrupting interactive work"]:
+                self.assertIn(string, watched_run_output)
+
+            # don't actually need it to run
+            run("dx terminate " + watched_job_id)
+        except subprocess.CalledProcessError as e:
             # ignore any watch errors; just want to test requested
             # priority
+            print(e.stderr)
             pass
-        watched_job_id = re.search('job-[A-Za-z0-9]{24}', watched_run_output).group(0)
-        watched_job_desc = dxpy.describe(watched_job_id)
-        self.assertEqual(watched_job_desc['applet'], applet_id)
-        self.assertEqual(watched_job_desc['priority'], 'normal')
-        for string in ["WARNING", "normal", "interrupting interactive work"]:
-            self.assertIn(string, watched_run_output)
-
-        # don't actually need it to run
-        run("dx terminate " + watched_job_id)
 
         # no warning when --brief and --priority is normal/low with --allow-ssh
         try:
             allow_ssh_run_output = run("dx run myapplet -y --allow-ssh --priority normal --brief")
-        except subprocess.CalledProcessError:
+            allow_ssh_job_id = re.search('job-[A-Za-z0-9]{24}', allow_ssh_run_output).group(0)
+            allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
+            self.assertEqual(allow_ssh_job_desc['applet'], applet_id)
+            self.assertEqual(allow_ssh_job_desc['priority'], 'normal')
+            for string in ["WARNING", "normal", "interrupting interactive work"]:
+                self.assertNotIn(string, allow_ssh_run_output)
+
+            # don't actually need it to run
+            run("dx terminate " + allow_ssh_job_id)
+        except subprocess.CalledProcessError as e:
             # ignore any ssh errors; just want to test requested
             # priority
+            print(e.stderr)
             pass
-        allow_ssh_job_id = re.search('job-[A-Za-z0-9]{24}', allow_ssh_run_output).group(0)
-        allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
-        self.assertEqual(allow_ssh_job_desc['applet'], applet_id)
-        self.assertEqual(allow_ssh_job_desc['priority'], 'normal')
-        for string in ["WARNING", "normal", "interrupting interactive work"]:
-            self.assertNotIn(string, allow_ssh_run_output)
-
-        # don't actually need it to run
-        run("dx terminate " + allow_ssh_job_id)
 
         # no warning when --priority is high with --ssh
         try:
             ssh_run_output = run("dx run myapplet -y --ssh --priority high")
-        except subprocess.CalledProcessError:
+            ssh_job_id = re.search('job-[A-Za-z0-9]{24}', ssh_run_output).group(0)
+            ssh_job_desc = dxpy.describe(ssh_job_id)
+            self.assertEqual(ssh_job_desc['applet'], applet_id)
+            self.assertEqual(ssh_job_desc['priority'], 'high')
+            for string in ["interrupting interactive work"]:
+                self.assertNotIn(string, ssh_run_output)
+
+            # don't actually need it to run
+            run("dx terminate " + ssh_job_id)
+        except subprocess.CalledProcessError as e:
             # ignore any ssh errors; just want to test requested
             # priority
+            print(e.stderr)
             pass
-        ssh_job_id = re.search('job-[A-Za-z0-9]{24}', ssh_run_output).group(0)
-        ssh_job_desc = dxpy.describe(ssh_job_id)
-        self.assertEqual(ssh_job_desc['applet'], applet_id)
-        self.assertEqual(ssh_job_desc['priority'], 'high')
-        for string in ["interrupting interactive work"]:
-            self.assertNotIn(string, ssh_run_output)
-
-        # don't actually need it to run
-        run("dx terminate " + ssh_job_id)
 
         # errors
         with self.assertSubprocessFailure(exit_code=2):
