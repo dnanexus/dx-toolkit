@@ -9582,9 +9582,11 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             with open(os.path.join("get_applet", "dxapp.json")) as f2:
                 output_json = json.load(f2)
-            self.assertIn("bundledDepends", output_json["runSpec"])
+            current_region = dxpy.describe(self.project).get("region")
+            regional_options = output_json["regionalOptions"][current_region]
+            self.assertIn("bundledDepends", regional_options)
             seenResources = False
-            for bd in output_json["runSpec"]["bundledDepends"]:
+            for bd in regional_options["bundledDepends"]:
                 if bd["name"] == "resources.tar.gz":
                     seenResources = True
                     break
@@ -9908,9 +9910,11 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             self.assertFalse(os.path.exists(os.path.join(app_name, "resources")))
 
             output_json = json.load(open(os.path.join(app_name, "dxapp.json")))
-            self.assertTrue("bundledDepends" in output_json["runSpec"])
+            current_region = dxpy.describe(self.project).get("region")
+            regional_options = output_json["regionalOptions"][current_region]
+            self.assertIn("bundledDepends", regional_options)
             seenResources = False
-            for bd in output_json["runSpec"]["bundledDepends"]:
+            for bd in regional_options["bundledDepends"]:
                 if bd["name"] == "resources.tar.gz":
                     seenResources = True
                     break
@@ -10063,7 +10067,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                 # use current selected project as the source
                 # assets are not downloaded but kept in regionalOptions as bundleDepends
                 with chdir(tempfile.mkdtemp()), temporary_project(region="aws:us-east-1", select=True) as temp_project:
-                    (stdout, stderr) = run(f"dx get {app_id}", also_return_stderr=True)
+                    (stdout, stderr) = run("dx get {app_id}".format(app_id=app_id), also_return_stderr=True)
                     self.assertIn("Trying to download resources from the current region aws:us-east-1", stderr)
                     self.assertIn("Unpacking resource bundle.tar.gz", stderr)
                     self.assertIn("Unpacking resource resources.tar.gz", stderr)
@@ -10091,7 +10095,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                 # omit resources
                 # use current selected project as the source
                 with chdir(tempfile.mkdtemp()), temporary_project(region="aws:us-east-1", select=True) as temp_project:
-                    (stdout, stderr) = run(f"dx get {app_id} --omit-resources", also_return_stderr=True)
+                    (stdout, stderr) = run("dx get {app_id} --omit-resources".format(app_id=app_id), also_return_stderr=True)
                     self.assertFalse(os.path.exists(os.path.join(app_name, "resources")))
 
                     path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
