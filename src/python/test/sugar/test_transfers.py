@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 import gzip
 import os
+from pathlib import Path
 import subprocess
 import unittest
 
@@ -72,7 +73,7 @@ class TestUpload(unittest.TestCase):
                 folder=self.folder,
                 project=self.project.get_id(),
                 return_handler=True,
-                wait_on_close=True
+                wait_on_close=True,
             )
 
             self.assertIsInstance(handler, dxpy.DXFile)
@@ -91,7 +92,7 @@ class TestUpload(unittest.TestCase):
                     folder=self.folder,
                     project=self.project.get_id(),
                     return_handler=True,
-                    wait_on_close=True
+                    wait_on_close=True,
                 )
             except subprocess.CalledProcessError as cpe:
                 print(cpe.output)
@@ -114,7 +115,7 @@ class TestUpload(unittest.TestCase):
                 folder=self.folder,
                 return_handler=True,
                 project=self.project.get_id(),
-                wait_on_close=True
+                wait_on_close=True,
             )
 
             self.assertIsInstance(handler, dxpy.DXFile)
@@ -130,14 +131,15 @@ class TestUpload(unittest.TestCase):
             plain_file = make_random_files(1)[0]
             to_zip_file = make_random_files(1)[0]
             to_tar_filenames = make_random_files(2)
-            dict_files = dict(zip(
-                ("dict_file_{}".format(i) for i in range(2)),
-                make_random_files(2)
-            ))
+            dict_files = dict(
+                zip(("dict_file_{}".format(i) for i in range(2)), make_random_files(2))
+            )
 
             with xfer.Uploader(
-                max_parallel=1, project=self.project.get_id(), wait_on_close=True,
-                return_handler=True
+                max_parallel=1,
+                project=self.project.get_id(),
+                wait_on_close=True,
+                return_handler=True,
             ) as up:
                 up.enqueue_file("plain_file", plain_file, skip_compress=True)
                 up.enqueue_file("zip_file", to_zip_file)
@@ -150,7 +152,7 @@ class TestUpload(unittest.TestCase):
             self.assertEqual(5, len(result))
             self.assertEqual(
                 {"plain_file", "zip_file", "tar_file", "dict_file_0", "dict_file_1"},
-                set(result.keys())
+                set(result.keys()),
             )
             for key, val in result.items():
                 self.assertIsInstance(val, dxpy.DXFile)
@@ -159,8 +161,7 @@ class TestUpload(unittest.TestCase):
 
             for i in range(2):
                 self.assertEqual(
-                    "test{}".format(i),
-                    result["dict_file_{}".format(i)].read()
+                    "test{}".format(i), result["dict_file_{}".format(i)].read()
                 )
 
             self._assert_tar_equal(result["tar_file"], to_tar_filenames)
@@ -190,7 +191,7 @@ class TestDownload(unittest.TestCase):
             filename,
             wait_on_close=True,
             project=self.project.get_id(),
-            folder=self.folder
+            folder=self.folder,
         )
 
     def _upload_simple_file(self, filename="test.txt"):
@@ -214,7 +215,7 @@ class TestDownload(unittest.TestCase):
             opts = "cf"
         with isolated_dir():
             filenames = make_random_files(2)
-            run("tar {} {} {}".format(opts, tar_filename, " ".join(filenames)))
+            run("tar {} {} {}".format(opts, tar_filename, " ".join(str(f) for f in filenames)))
             return filenames, self._upload_file(tar_filename)
 
     def test_simple_download_file(self):
@@ -238,8 +239,8 @@ class TestDownload(unittest.TestCase):
                 unpacked_filenames = xfer.download_and_unpack_archive(handler)
                 self.assertEqual(2, len(unpacked_filenames))
                 self.assertSetEqual(
-                    set(os.path.abspath(path) for path in tar_filenames),
-                    set(unpacked_filenames)
+                    set(Path(path).absolute() for path in tar_filenames),
+                    set(unpacked_filenames),
                 )
                 for i, fname in enumerate(tar_filenames):
                     with open(fname, "rt") as inp:
@@ -254,10 +255,7 @@ class TestDownload(unittest.TestCase):
         with isolated_dir():
             with xfer.Downloader(max_parallel=1, project=self.project.get_id()) as down:
                 down.enqueue_list("simple", [simple_handler1, simple_handler2])
-                down.enqueue_dict({
-                    "zip": zip_handler,
-                    "tar": tar_handler
-                })
+                down.enqueue_dict({"zip": zip_handler, "tar": tar_handler})
                 result = down.wait()
 
             self.assertIn("zip", result)
@@ -273,8 +271,8 @@ class TestDownload(unittest.TestCase):
             unpacked_filenames = result["tar"]
             self.assertEqual(2, len(unpacked_filenames))
             self.assertSetEqual(
-                set(os.path.abspath(path) for path in tar_filenames),
-                set(unpacked_filenames)
+                set(Path(path).absolute() for path in tar_filenames),
+                set(unpacked_filenames),
             )
             for i, fname in enumerate(tar_filenames):
                 with open(fname, "rt") as inp:

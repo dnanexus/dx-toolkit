@@ -1,4 +1,4 @@
-from __future__ import print_function, unicode_literals, division, absolute_import
+from pathlib import Path
 import unittest
 from . import isolated_dir
 
@@ -13,9 +13,10 @@ class TestUpload(unittest.TestCase):
 
         # Use a mock /proc/meminfo
         with isolated_dir():
-            with open("meminfo", "w") as out:
-                out.write("MemTotal: 1048576 kB")
+            meminfo = Path("meminfo")
+            with open(meminfo, "w") as out:
+                out.write("MemAvailable: 1048576 kB")
 
-            assert available_memory("K", "meminfo") == 1048576.0
-            assert available_memory("M", "meminfo") == 1024.0
-            assert available_memory("G", "meminfo") == 1.0
+            assert available_memory("K", meminfo) == 1048576.0
+            assert available_memory("M", meminfo) == 1024.0
+            assert available_memory("G", meminfo) == 1.0

@@ -18,15 +18,13 @@ APPLET_FOLDER = "/gatk3/2017_04_27_22_51_39/Applets"
 TAG = "sugar-test"
 APP_ID = "app-FYzxFq09ZZYPKkfp05027F5g"
 APP_NAME = "bwa_mem_fastq_read_mapper"
+APP_VERSION = "2.0.3"
 
 
 def random_name(name_len, prefix=None):
     if prefix:
         name_len -= len(prefix)
-    name = "".join(
-        random.choice(string.ascii_letters)
-        for _ in range(name_len)
-    )
+    name = "".join(random.choice(string.ascii_letters) for _ in range(name_len))
     if prefix:
         name = "{}{}".format(prefix, name)
     return name
@@ -75,13 +73,13 @@ class TestObjects(unittest.TestCase):
             self.assertEqual(newproj.describe()["region"], "azure:westus")
             self.assertEqual(
                 newproj.describe()["name"],
-                objects.get_project(newproj.get_id()).describe()["name"]
+                objects.get_project(newproj.get_id()).describe()["name"],
             )
             self.assertEqual(
                 newproj.get_id(),
                 objects.get_project(
                     newproj.describe()["name"], region="azure:westus"
-                ).get_id()
+                ).get_id(),
             )
         finally:
             if newproj:
@@ -130,7 +128,7 @@ class TestObjects(unittest.TestCase):
                 project=proj.get_id(),
                 name=file_name,
                 folder=folder_name,
-                wait_on_close=True
+                wait_on_close=True,
             )
 
             self.assertEqual(
@@ -138,7 +136,8 @@ class TestObjects(unittest.TestCase):
             )
             with self.assertRaises(dxpy.DXSearchError):
                 objects.get_data_object(
-                    file_name, proj, classname="record", exists=True)
+                    file_name, proj, classname="record", exists=True
+                )
             with self.assertRaises(dxpy.DXSearchError):
                 objects.get_data_object(file_name, proj, exists=False)
         except dxpy.AppError as err:
@@ -160,7 +159,7 @@ class TestObjects(unittest.TestCase):
         proj = objects.get_project(PROJECT_ID)
         self.assertIsInstance(
             objects.get_data_object(WORKFLOW_ID, proj, classname="workflow"),
-            dxpy.DXWorkflow
+            dxpy.DXWorkflow,
         )
         with self.assertRaises(dxpy.DXSearchError):
             # Should be multiple workflows with the same name
@@ -176,29 +175,22 @@ class TestObjects(unittest.TestCase):
             objects.get_data_object(
                 WORKFLOW_NAME, proj, classname="workflow", folder=WORKFLOW_FOLDER
             ).get_id(),
-            WORKFLOW_ID
+            WORKFLOW_ID,
         )
         workflow_path = "{}/{}".format(WORKFLOW_FOLDER, WORKFLOW_NAME)
         self.assertEqual(
             objects.get_data_object(workflow_path, proj, classname="workflow").get_id(),
-            WORKFLOW_ID
+            WORKFLOW_ID,
         )
 
     def test_get_app(self):
-        self.assertIsInstance(
-            objects.get_app(APP_ID),
-            dxpy.DXApp
-        )
-        self.assertEqual(
-            objects.get_app(APP_NAME).get_id(),
-            APP_ID
-        )
+        self.assertIsInstance(objects.get_app(APP_ID), dxpy.DXApp)
+        self.assertEqual(objects.get_app(APP_NAME, APP_VERSION).get_id(), APP_ID)
 
     def test_get_applet(self):
         proj = objects.get_project(PROJECT_ID)
         self.assertIsInstance(
-            objects.get_data_object(APPLET_ID, proj, classname="applet"),
-            dxpy.DXApplet
+            objects.get_data_object(APPLET_ID, proj, classname="applet"), dxpy.DXApplet
         )
         with self.assertRaises(dxpy.DXSearchError):
             # Should be multiple workflows with the same name
@@ -209,16 +201,16 @@ class TestObjects(unittest.TestCase):
             objects.get_data_object(
                 APPLET_NAME, proj, classname="applet", tag=TAG
             ).get_id(),
-            APPLET_ID
+            APPLET_ID,
         )
         self.assertEqual(
             objects.get_data_object(
                 APPLET_NAME, proj, classname="applet", folder=APPLET_FOLDER
             ).get_id(),
-            APPLET_ID
+            APPLET_ID,
         )
         workflow_path = "{}/{}".format(APPLET_FOLDER, APPLET_NAME)
         self.assertEqual(
             objects.get_data_object(workflow_path, proj, classname="applet").get_id(),
-            APPLET_ID
+            APPLET_ID,
         )

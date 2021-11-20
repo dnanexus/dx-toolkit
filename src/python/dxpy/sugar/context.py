@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2019 DNAnexus, Inc.
+# Copyright (C) 2013-2021 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -13,26 +13,26 @@
 #   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #   License for the specific language governing permissions and limitations
 #   under the License.
-
-from __future__ import print_function, unicode_literals, division, absolute_import
-import contextlib
+from contextlib import contextmanager
 import json
-import logging
 import os
-import subprocess
+from pathlib import Path
+import shutil
 import tempfile
+from typing import Optional
 
-import dxpy.sugar
+import dxpy
+
+from . import get_log, requires_worker_context
 
 
-LOG = logging.getLogger()
+LOG = get_log(__name__)
 
 
-class UserContext(object):
+class UserContext:
     """
-    Context manager for switching to a user context when inside of a job context. All
-    functions of this class require for the context to be a worker context and can
-    only be run on a DNAnexus job.
+    Context manager for switching to a user context when inside of a job context. All functions of
+    this class require for the context to be a worker context and can only be run on a DNAnexus job.
 
     Args:
         api_token: DNAnexus user token
@@ -45,30 +45,30 @@ class UserContext(object):
         Upon exit, job context is restored.
     """
 
-    @dxpy.sugar.requires_worker_context
-    def __init__(self, api_token):
+    @requires_worker_context
+    def __init__(self, api_token: str):
         api_token = api_token.strip("\n")  # Python adds \n when reading from a file
         self.user_secure_token = {"auth_token": api_token, "auth_token_type": "Bearer"}
         self.job_id = os.environ["DX_JOB_ID"]
         self.job_security_context = json.loads(os.environ["DX_SECURITY_CONTEXT"])
         self.job_workspace_id = os.environ["DX_WORKSPACE_ID"]
 
-    @dxpy.sugar.requires_worker_context
+    @requires_worker_context
     def __enter__(self):
         proj = os.environ["DX_PROJECT_CONTEXT_ID"]
         dxpy.set_job_id(None)
         dxpy.set_security_context(self.user_secure_token)
         dxpy.set_workspace_id(proj)
         try:
-            dna_config_file = os.path.join(os.environ["HOME"], ".dnanexus_config")
-            os.remove(dna_config_file)
+            dx_config_file = Path(os.environ["HOME"]) / ".dnanexus_config"
+            dx_config_file.unlink()
         except OSError:
             LOG.info("As expected, .dnanexus_config not present.")
         else:
             LOG.error("Could not remove .dnanexus_config file.")
         return self
 
-    @dxpy.sugar.requires_worker_context
+    @requires_worker_context
     def __exit__(self, type, value, traceback):
         LOG.info("Restoring original Job context")
         dxpy.set_job_id(self.job_id)
@@ -76,16 +76,15 @@ class UserContext(object):
         dxpy.set_workspace_id(self.job_workspace_id)
 
 
-@contextlib.contextmanager
-def set_env(environ, override=False):
+@contextmanager
+def set_env(environ: dict, override: bool = False):
     """
     Context manager generator to temporarily set the subprocess environment variables.
 
     Args:
-        environ (dict): Environment variable(s) to set
-        override (boolean): Whether the environment should be updated or overwritten.
-        If the environment is overwritten, no env variables are set except for those
-        explicitly specified.
+        environ: Environment variable(s) to set
+        override: Whether the environment should be updated or overwritten. If the environment is
+            overridden, no env variables are set except for those explicitly specified.
 
     Yields:
         An environment with environment variables set as specified.
@@ -129,16 +128,15 @@ def set_env(environ, override=False):
 
 class cd:
     """
-    Context manager for changing the current working directory
+    Context manager for changing the current working directory.
 
     Args:
-        target_path (string): Optional, specify path to cd to
-        cleanup (boolean): Optional, specify if directory should be deleted after
-        exiting context. Default is true if the directory is newly created. Existing
-        directories are never deleted.
+        target_path: Optional, specify path to cd to.
+        cleanup: Optional, specify if directory should be deleted after exiting context. Default is
+            true if the directory is newly created. Existing directories are never deleted.
 
     Note:
-        If no args specified, cd() will create an arbitary temp dir and cd to it
+        If no args specified, cd() will create an arbitary temp dir and cd to it.
 
     Yields:
         Upon entry, context will be set to the specified directory.
@@ -163,39 +161,92 @@ class cd:
            # then delete the temp dir
     """
 
-    def __init__(self, target_path=None, cleanup=True):
-        if target_path is not None and os.path.exists(target_path):
-            self.newPath = target_path
-            self.removeFolder = False
+    def __init__(self, target_path: Optional[Path] = None, cleanup: bool = True):
+        if target_path is not None and target_path.exists():
+            self.new_path = target_path
+            self.remove_folder = False
         else:
-            self.newPath = tempfile.mkdtemp(dir=target_path)
-            self.removeFolder = cleanup
+            self.new_path = Path(tempfile.mkdtemp(dir=target_path))
+            self.remove_folder = cleanup
 
     def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
+        self.saved_path = Path.cwd()
+        os.chdir(self.new_path)
 
     def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
-        if self.removeFolder:
-            subprocess.check_call(["rm", "-rf", self.newPath], shell=False)
+        os.chdir(self.saved_path)
+        if self.remove_folder:
+            try:
+                shutil.rmtree(self.new_path)
+            except:
+                LOG.error("error deleting directory %s", self.new_path, exc_info=True)
 
 
-@contextlib.contextmanager
-def fifo(name=None):
+@contextmanager
+def fifo(path: Optional[Path] = None):
     """
-    Create a FIFO, yield it, and delete it before exiting.
+    Creates a FIFO, yield it, and deletes it before exiting.
+
     Args:
-        name: The name of the FIFO, or None to use a temp name.
+        path: The path of the FIFO, or `None` to use a temp name.
+
     Yields:
-        The name of the FIFO
+        The path of the FIFO.
     """
-    if name is None:
-        temp = tempfile.NamedTemporaryFile(delete=False)
-        name = temp.name
+    if path is None:
+        path = Path(tempfile.mkstemp()[1])
 
-    os.mkfifo(name)
-    yield name
+    os.mkfifo(path)
 
-    if os.path.exists(name):
-        os.remove(name)
+    try:
+        yield path
+    finally:
+        if path.exists():
+            path.unlink()
+
+
+@contextmanager
+def tmpfile(*args, **kwargs):
+    """
+    Creates a temporary file, yields it, and deletes it before returning.
+
+    Yields:
+        A path to a temporary file.
+
+    Notes:
+        This method is needed distinct from :class:`tempfile.TemporaryFile` in the case where
+        python needs to write to the file and then a subprocess needs to read from the file. For
+        now, keep this private to transfers module rather than expose it via the context module.
+    """
+    path = Path(tempfile.mkstemp(*args, **kwargs)[1])
+    try:
+        yield path
+    finally:
+        if path.exists():
+            path.unlink()
+
+
+@contextmanager
+def tmpdir(
+    change_dir: bool = False,
+    tmproot: Optional[Path] = None,
+    cleanup: Optional[bool] = True,
+) -> Path:
+    """
+    Context manager that creates a temporary directory, yields it, and then
+    deletes it after return from the yield.
+    Args:
+        change_dir: Whether to temporarily change to the temp dir.
+        tmproot: Root directory in which to create temporary directories.
+        cleanup: Whether to delete the temporary directory before exiting the context.
+    """
+    temp = Path(tempfile.mkdtemp(dir=tmproot))
+    try:
+        if change_dir:
+            with cd(temp):
+                yield temp
+        else:
+            yield temp
+    finally:
+        if cleanup:
+            shutil.rmtree(temp)

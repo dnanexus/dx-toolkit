@@ -1,37 +1,57 @@
-from __future__ import print_function, unicode_literals, division, absolute_import
+# Copyright (C) 2013-2021 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
 import os
+from typing import Optional, Tuple, Union
 
 import dxpy
 import dxpy.api
-from dxpy.sugar import get_log
 from dxpy.utils import resolver
+
+from . import get_log
 
 
 LOG = get_log(__name__)
 
 
 def get_project(
-    project_desc, level="VIEW", exists=None, create=False, region=None, **kwargs
-):
-    """Gets a project by name or ID. Creates a new project if there is no existing
-    project with the given name and `create is True`.
+    project_desc: Union[str, dxpy.DXProject],
+    level: str = "VIEW",
+    exists: Optional[bool] = None,
+    create: bool = False,
+    region: Optional[str] = None,
+    **kwargs,
+) -> dxpy.DXProject:
+    """
+    Gets a project by name or ID. Creates a new project if there is no existing project with the
+    given name and `create is True`.
 
     Args:
         project_desc: Project ID (project-XXX), name, or DXProject object. If this is a
-            DXProject object, it is validated and returned. If None, defaults to the
-            PROJECT_CONTEXT_ID.
+            `dxpy.DXProject` object, it is validated and returned. If `None`, defaults to
+            `dxpy.PROJECT_CONTEXT_ID`.
         level: Minimum access level to search.
-        exists: Assert whether the project exists (True) or does not exist (False). If
-            None, existance is not checked.
-        create: Whether to create the project if it does not exist. Ignored if
-            `project_desc` is a DXProject object.
+        exists: Assert whether the project exists (`True`) or does not exist (`False`). If `None`,
+            existance is not checked.
+        create: Whether to create the project if it does not exist. Ignored if `project_desc` is a
+            `dxpy.DXProject` object.
         region: Region in which to create the project.
-        **kwargs: Additional keyword arguments to pass to both
-            `find_projects()` and `project_new()`.
+        **kwargs: Additional keyword arguments to pass to `find_projects()` and `project_new()`.
 
     Returns:
-        A DXProject object, or None if the project does not exist and
-        `create is False`.
+        A `dxpy.DXProject` object, or `None` if the project does not exist and `create` is `False`.
 
     Raises:
         * dxpy.DXSearchError if the project is not in the expected region, or if the
@@ -85,7 +105,7 @@ def get_project(
             zero_ok=True,
             more_ok=False,
             return_handler=True,
-            **find_args
+            **find_args,
         )
 
     if project:
@@ -109,14 +129,19 @@ def get_project(
         return dxpy.DXProject(project_id)
 
 
-def ensure_folder(folder, project=None, exists=None, create=False):
-    """Checks that the given project contains (or does not contain) the given folder.
-    The folder is created if it does not exist and `create is True`.
+def ensure_folder(
+    folder: str,
+    project: Optional[Union[str, dxpy.DXProject]] = None,
+    exists: Optional[bool] = None,
+    create: bool = False,
+) -> dict:
+    """Checks that the given project contains (or does not contain) the given folder. The folder is
+    created if it does not exist and `create is True`.
 
     Args:
         folder: The folder to validate.
-        project: Project ID, name, or DXProject object. The project in which to look
-            for the folder. Defaults to the current project.
+        project: Project ID, name, or DXProject object. The project in which to look for the
+            folder. Defaults to the current project.
         exists: Assert whether the folder exists (True) or does not exist (False).
         create: Whether to create the folder if it does not exist.
 
@@ -124,8 +149,8 @@ def ensure_folder(folder, project=None, exists=None, create=False):
         A listing of the objects in the folder.
 
     Raises:
-        dxpy.DXSearchError if the folder does exist and `exists is False` or if the
-        folder does not exist and `exists is True`.
+        dxpy.DXSearchError if the folder does exist and `exists` is `False` or if the folder does
+        not exist and `exists` is `True`.
     """
     if folder is None:
         raise ValueError("'folder' cannot be None.")
@@ -144,13 +169,12 @@ def ensure_folder(folder, project=None, exists=None, create=False):
     if ls is None:
         if exists is True:
             LOG.error(
-                "Folder %s not found in project %s", folder, project.get_id(),
-                exc_info=True
+                "Folder %s not found in project %s",
+                folder,
+                project.get_id(),
             )
             raise dxpy.DXSearchError(
-                "Folder {} does not exist in project {}".format(
-                    folder, project.get_id()
-                )
+                f"Folder {folder} does not exist in project {project.get_id()}"
             )
         elif create:
             LOG.info("Creating new folder %s in project %s", folder, project.get_id())
@@ -158,41 +182,41 @@ def ensure_folder(folder, project=None, exists=None, create=False):
             return []
     elif exists is False:
         raise dxpy.DXSearchError(
-            "Folder {} exists in project {} but was expected not to exist".format(
-                folder, project.get_id()
-            )
+            f"Folder {folder} exists in project {project.get_id()} but was expected not to exist"
         )
     else:
         return ls
 
 
 def get_data_object(
-    data_obj_desc, project=None, classname=None, exists=None, **kwargs
-):
-    """Gets a data object by name or ID.
+    data_obj_desc: Union[str, dxpy.DXDataObject],
+    project: Optional[str] = None,
+    classname: Optional[str] = None,
+    exists: Optional[bool] = None,
+    **kwargs,
+) -> dxpy.DXDataObject:
+    """
+    Gets a data object by name or ID.
 
     Args:
         data_obj_desc: ID or name of the data object, or an instance of DXDataObject.
-        project: The project in which to get the data object. Defaults to the current
-            project.
-        classname: Classname of the data object; can be any data object class (e.g.
-            "file", "record", or "database"), "*", or `None`. If either "*" or `None`
-            is specified, the class of the data object is not validated when
-            `data_obj_desc` is an ID or a `dxpy.DXDataObject` instance; the
-            difference between the two is that when searching by name, "*" means
-            don't specify the `classname` parameter and `None` means specify "file"
+        project: The project in which to get the data object. Defaults to the current project.
+        classname: Classname of the data object; can be any data object class (e.g. "file",
+            "record", or "database"), "*", or `None`. If either "*" or `None` is specified, the
+            class of the data object is not validated when `data_obj_desc` is an ID or a `dxpy.
+            DXDataObject` instance; the difference between the two is that when searching by name,
+            "*" means don't specify the `classname` parameter and `None` means specify "file"
             as the `classname` parameter.
-        exists: Assert whether the data object exists (True) or does not exist (
-            False). If None, existance is not checked.
-        **kwargs: Additional keyword arguments to use when searching for the data
-            object.
+        exists: Assert whether the data object exists (`True`) or does not exist (`False`). If
+            `None`, existance is not checked.
+        **kwargs: Additional keyword arguments to use when searching for the data object.
 
     Returns:
         A DXDataObject object.
 
     Raises:
-        dxpy.DXSearchError if the data object does exist and `exists is False` or if
-        the data object does not exist and `exists is True`.
+        dxpy.DXSearchError if the data object does exist and `exists is False` or if the data
+        object does not exist and `exists is True`.
     """
     if data_obj_desc is None:
         raise ValueError("'data_obj_desc' cannot be None")
@@ -227,10 +251,7 @@ def get_data_object(
         elif classname != "*":
             kwargs["classname"] = classname
         data_obj = dxpy.find_one_data_object(
-            zero_ok=True,
-            more_ok=False,
-            name=name,
-            **kwargs
+            zero_ok=True, more_ok=False, name=name, **kwargs
         )
 
     if not data_obj and exists is True:
@@ -243,17 +264,20 @@ def get_data_object(
     return data_obj
 
 
-def get_workflow(workflow_desc, project=None):
+def get_workflow(
+    workflow_desc: Union[str, dxpy.DXWorkflow, dxpy.DXGlobalWorkflow],
+    project: Optional[str] = None,
+) -> Union[dxpy.DXWorkflow, dxpy.DXGlobalWorkflow]:
     """
-    Search for a project workflow or global workflow with the given ID or name. This
-    is a convenience method for resolving a workflow when, for example, a user can
-    provide either a project workflow or a global workflow as a paramter to an app.
+    Searches for a project workflow or global workflow with the given ID or name. This is a
+    convenience method for resolving a workflow when, for example, a user can provide either a
+    project workflow or a global workflow as a paramter to an app.
 
     Args:
-        workflow_desc: A workflow ID (either 'workflow-xxx' or
-            'globalworkflow-xxx'), name, or DXWorkflow or DXGlobalWorkflow object.
-        project: Project ID or DXProject object. The project to search for the
-            workflow; if not found here it is expected to be a global workflow.
+        workflow_desc: A workflow ID (either 'workflow-xxx' or 'globalworkflow-xxx'), name, or
+            DXWorkflow or DXGlobalWorkflow object.
+        project: Project ID or DXProject object. The project to search for the workflow; if not
+            found here it is expected to be a global workflow.
 
     Returns:
         A DXWorkflow or DXGlobalWorkflow object.
@@ -274,12 +298,14 @@ def get_workflow(workflow_desc, project=None):
     return workflow
 
 
-def get_globalworkflow(workflow_desc, **kwargs):
-    """Gets the app with the given ID or name.
+def get_globalworkflow(
+    workflow_desc: Union[str, dxpy.DXGlobalWorkflow], **kwargs
+) -> dxpy.DXGlobalWorkflow:
+    """
+    Gets the global workflow with the given ID or name.
 
     Args:
-        workflow_desc: The globalworkflow ID or name, or a `dxpy.DXGlobalWorkflow`
-            instance.
+        workflow_desc: The globalworkflow ID or name, or a `dxpy.DXGlobalWorkflow` instance.
         kwargs: Additional kwargs to use when looking up the globalworkflow by name.
 
     Returns:
@@ -309,25 +335,24 @@ def get_globalworkflow(workflow_desc, **kwargs):
     candidates = dxpy.find_global_workflows(**kwargs)
     workflow = next(candidates, None)
     if workflow is None:
-        raise dxpy.DXSearchError(
-            "Expected one result, but found none: {}".format(str(kwargs))
-        )
+        raise dxpy.DXSearchError(f"Expected one result, but found none: {kwargs}")
     if next(candidates, None) is not None:
-        raise dxpy.DXSearchError(
-            "Expected one result, but found more: {}".format(str(kwargs))
-        )
+        raise dxpy.DXSearchError(f"Expected one result, but found more: {kwargs}")
 
     return workflow
 
 
-def get_app_or_applet(app_or_applet_desc, project=None):
-    """Gets an app(let) by its ID or name. This is a convenience method for resolving
-    an a app(let) when, for example, a user can provide either an applet or an app
-    ID/name as a paramter to an app.
+def get_app_or_applet(
+    app_or_applet_desc: Union[str, dxpy.DXApp, dxpy.DXApplet],
+    project: Optional[str] = None,
+) -> Union[dxpy.DXApp, dxpy.DXApplet]:
+    """
+    Gets an app(let) by its ID or name. This is a convenience method for resolving an a app(let)
+    when, for example, a user can provide either an applet or an app ID/name as a paramter to an
+    app.
 
     Args:
-        app_or_applet_desc: ID or name of the app/applet, or an instance of
-            DXApp or DXApplet.
+        app_or_applet_desc: ID or name of the app/applet, or an instance of DXApp or DXApplet.
         project: name, ID, or DXProject object of project containing applet.
 
     Returns:
@@ -342,31 +367,31 @@ def get_app_or_applet(app_or_applet_desc, project=None):
         return app_or_applet_desc
 
     if app_or_applet_desc.startswith("applet-"):
-        app = get_data_object(
-            app_or_applet_desc, project, classname="applet"
-        )
+        app = get_data_object(app_or_applet_desc, project, classname="applet")
         if app is None:
             app = get_app(app_or_applet_desc)
     else:
         app = get_app(app_or_applet_desc)
         if app is None:
-            app = get_data_object(
-                app_or_applet_desc, project, classname="applet"
-            )
+            app = get_data_object(app_or_applet_desc, project, classname="applet")
 
     if app is None:
         raise dxpy.DXSearchError(
-            "Did not find exactly one app(let): {}".format(str(app_or_applet_desc))
+            f"Did not find exactly one app(let): {app_or_applet_desc}"
         )
 
     return app
 
 
-def get_app(app_desc, **kwargs):
-    """Gets the app with the given ID or name.
+def get_app(
+    app_desc: Union[str, dxpy.DXApp], version: Optional[str] = None, **kwargs
+) -> dxpy.DXApp:
+    """
+    Gets the app with the given ID or name.
 
     Args:
         app_desc: The app ID or name, or a DXApp instance.
+        version: App version.
         kwargs: Additional kwargs to use when looking up the app by name.
 
     Returns:
@@ -374,8 +399,7 @@ def get_app(app_desc, **kwargs):
 
     Raises:
         * dxpy.DXSearchError if the app does not exist.
-        * dxpy.exceptions.PermissionDenied if user does not have proper permissions
-            to access the app.
+        * dxpy.exceptions.PermissionDenied if user does not have permissions to access the app.
     """
     if isinstance(app_desc, dxpy.DXApp):
         return app_desc
@@ -389,27 +413,41 @@ def get_app(app_desc, **kwargs):
         except dxpy.DXError:
             pass
 
-    LOG.info("Searching for app by name %s", app_desc)
     if app_desc.startswith("app-"):
         app_desc = app_desc[4:]
-    return dxpy.find_one_app(
-        zero_ok=False,
-        more_ok=False,
-        name=app_desc,
-        return_handler=True,
-        **kwargs
-    )
+
+    if "/" in app_desc:
+        slash_index = app_desc.index("/")
+        if version is None:
+            version = app_desc[slash_index + 1 :]
+        app_desc = app_desc[:slash_index]
+
+    if version:
+        LOG.info("Searching for app by name %s version %s", app_desc, version)
+        kwargs.update(dict(all_versions=True, describe=True, return_handler=True))
+        for app in dxpy.find_apps(name=app_desc, **kwargs):
+            if app.describe()["version"] == version:
+                return app
+        else:
+            raise ValueError(f"no app with name {app_desc} and version {version}")
+    else:
+        if kwargs.get("all_versions"):
+            raise ValueError("cannot specify all_versions=True")
+        LOG.info("Searching for app by name %s", app_desc)
+        kwargs["return_handler"] = True
+        return dxpy.find_one_app(name=app_desc, zero_ok=False, more_ok=False, **kwargs)
 
 
-def _parse_object_name(name):
-    """Parse a name that might include a path component.
+def _parse_object_name(name: str) -> Tuple[str, str, bool]:
+    """
+    Parses a name that might include a path component.
 
     Args:
         name: The name to parse.
 
     Returns:
-        Tuple (folder, filename, recurse), where `recurse` is whether a search should
-        by default be recursive.
+        Tuple (folder, filename, recurse), where `recurse` is whether a search should by default be
+        recursive.
     """
     if name.startswith("/"):
         return os.path.split(name) + (False,)

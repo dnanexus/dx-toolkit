@@ -1,6 +1,6 @@
-from __future__ import print_function, unicode_literals, division, absolute_import
 import logging
 import os
+from pathlib import Path
 import shutil
 import tempfile
 import unittest
@@ -106,7 +106,7 @@ class TestContext(unittest.TestCase):
 
     def test_cd_targetpath(self):
         prev_dir = os.getcwd()
-        temp_dir = tempfile.mkdtemp()
+        temp_dir = Path(tempfile.mkdtemp())
         try:
             with context.cd(temp_dir, cleanup=False):
                 curr_dir = os.getcwd()

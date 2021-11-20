@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2019 DNAnexus, Inc.
+# Copyright (C) 2013-2021 DNAnexus, Inc.
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #
@@ -16,26 +16,25 @@
 import dxpy
 from functools import wraps
 import logging
+from pathlib import Path
 import re
 import sys
 
+from . import processing
 
-MEM_RE = re.compile(r"^MemAvailable:[\s]*([0-9]*) kB")
-MEM_KiB_CONVERSIONS = {
-    "K": 1,
-    "M": 1 << 10,
-    "G": 1 << 20
-}
+
+MEMINFO_RE = re.compile(r"^MemAvailable:[\s]*([0-9]*) kB")
+MEM_KiB_CONVERSIONS = {"K": 1, "M": 1 << 10, "G": 1 << 20}
 """Conversions between KiB and other units."""
 
 
-def in_worker_context():
+def in_worker_context() -> bool:
     return dxpy.JOB_ID is not None
 
 
 def requires_worker_context(func):
-    """Decorator that checks a given function is running within a DNAnexus job context.
-    """
+    """Decorator that checks a given function is running within a DNAnexus job context."""
+
     @wraps(func)
     def check_job_id(*args, **kwargs):
         if in_worker_context():
@@ -50,8 +49,9 @@ def requires_worker_context(func):
 
 
 def get_log(name, level=logging.INFO):
-    """Gets a logger with the given name and level. Uses a different handler
-    depending on whether this function is called from within a job context.
+    """
+    Gets a logger with the given name and level. Uses a different handler depending on whether this 
+    function is called from within a job context.
 
     Args:
         name: Log name
@@ -73,37 +73,82 @@ def get_log(name, level=logging.INFO):
     return log
 
 
-@requires_worker_context
-def available_memory(suffix="M", meminfo_path="/proc/meminfo"):
-    """Queries a worker's /proc/meminfo for available memory and returns a float
-    of the specified suffix size.
+def run_cmd(cmds, internal: bool = False, **kwargs):
+    """
+    Convenience wrapper around `processing.run` that raises `dxpy.AppError` (or
+    `dxpy.AppInternalError` if `internal` is `True`) and includes the command stdout and stderr in
+    the error message.
+    """
+    try:
+        return processing.run(cmds, **kwargs)
+    except processing.CalledProcessError as e:
+        msg = f"{str(e)}\n{e.output}"
+        if internal:
+            raise dxpy.AppInternalError(msg) from e
+        else:
+            raise dxpy.AppError(msg) from e
 
-    Note that this function doesn't necessarily require to be run on a DNAnexus worker,
-    but depends on /proc/meminfo, which only exists on Linux systems.
+
+def sub_cmd(cmds, internal: bool = False, **kwargs):
+    """
+    Convenience wrapper around processing.sub that raises `dxpy.AppError` (or
+    `dxpy.AppInternalError` if `internal` is `True`) and includes the command stdout and stderr in
+    the error message.
+    """
+    try:
+        return processing.sub(cmds, **kwargs)
+    except processing.CalledProcessError as e:
+        msg = f"{str(e)}\n{e.output}"
+        if internal:
+            raise dxpy.AppInternalError(msg) from e
+        else:
+            raise dxpy.AppError(msg) from e
+
+
+@requires_worker_context
+def available_memory(suffix="M", meminfo_path=Path("/proc/meminfo")):
+    """Queries a worker's /proc/meminfo for available memory and returns a float of the specified
+    suffix size.
+
+    Note that this function doesn't necessarily require to be run on a DNAnexus worker, but depends
+    on /proc/meminfo, which only exists on Linux systems.
 
     Args:
-        suffix (str): One of 'M', 'K' or 'G' to return memory in Mib, KiB or
-            GiB, respectively.
-        meminfo_path: Path to /proc/meminfo, or a file that contains compatible
-            output.
+        suffix (str): One of 'M', 'K' or 'G' to return memory in Mib, KiB or GiB, respectively.
+        meminfo_path: Path to /proc/meminfo, or a file that contains compatible output.
 
     Returns:
-        float: total_memory read from meminfo in KiB, MiB, or GiB
-            depending on specified suffix.
+        float: total_memory read from meminfo in KiB, MiB, or GiB depending on specified suffix.
 
     Raises:
         ValueError if `suffix` is not a valid suffix.
-        dxpy.DXError is raised if suffix is not recognized or system memory
-            cannot be read.
+        dxpy.AppInternalError is raised if `meminfo_path` cannot be read or is not of the expected
+        format.
     """
     suffix = suffix.upper()
     if suffix not in MEM_KiB_CONVERSIONS:
         raise ValueError(
-            "Unknown memory suffix {0}. Please choose from K, M, or G.".format(suffix)
+            f"Unknown memory suffix {suffix}. Please choose from "
+            f"{','.join(MEM_KiB_CONVERSIONS.keys())}."
         )
 
-    total_mem = MEM_RE.findall(open(meminfo_path).read())
-    if len(total_mem) != 1:
-        raise dxpy.DXError("Problem reading system memory from {}".format(meminfo_path))
+    try:
+        # first try free
+        available_mem = processing.sub("free -b").splitlines()[1].split()[6]
+    except:
+        # fallback to /proc/meminfo
+        try:
+            with open(meminfo_path) as inp:
+                meminfo = inp.read()
+        except Exception as e:
+            raise dxpy.AppInternalError(
+                f"Problem reading system memory from {meminfo_path}"
+            ) from e
 
-    return float(total_mem[0]) / MEM_KiB_CONVERSIONS[suffix]
+        total_mem = MEMINFO_RE.findall(meminfo)
+        if len(total_mem) != 1:
+            raise dxpy.AppInternalError("Format of /proc/meminfo is unrecognized")
+
+        available_mem = total_mem[0]
+
+    return float(available_mem) / MEM_KiB_CONVERSIONS[suffix]

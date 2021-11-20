@@ -1,5 +1,4 @@
-from __future__ import print_function, unicode_literals, division, absolute_import
-import os
+from pathlib import Path
 import unittest
 
 from . import isolated_dir
@@ -10,25 +9,16 @@ from dxpy.sugar import processing as proc
 class TestProc(unittest.TestCase):
     def test_run(self):
         with isolated_dir():
-            proc.run_cmd(
-                "echo -n 'foo'",
-                stdout="foo.txt",
-                echo=True,
-                block=True
-            )
-            self.assertTrue(os.path.exists("foo.txt"))
-            self.assertEqual(
-                "foo",
-                proc.run_cmd("cat foo.txt", block=True).output
-            )
+            foo = Path("foo.txt")
+            proc.run("echo -n 'foo'", stdout=foo, echo=True, block=True)
+            self.assertTrue(foo.exists())
+            self.assertEqual("foo", proc.sub(f"cat {foo}", block=True))
 
     def test_chain(self):
         with isolated_dir():
-            proc.chain_cmds(
-                ["echo -n 'foo'", "gzip"], stdout="foo.txt.gz", block=True
-            )
+            foo = Path("foo.txt.gz")
+            proc.run(["echo -n 'foo'", "gzip"], stdout=foo, block=True)
             self.assertEqual(
-                "foo", proc.chain_cmds(
-                    ["gunzip -c foo.txt.gz", "cat"], block=True
-                ).output
+                "foo",
+                proc.sub([f"gunzip -c {foo}", "cat"], block=True),
             )

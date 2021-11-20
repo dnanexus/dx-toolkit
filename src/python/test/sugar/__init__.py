@@ -1,12 +1,14 @@
-from __future__ import print_function, unicode_literals, division, absolute_import
 import contextlib
 import os
+from pathlib import Path
 import shutil
 import tempfile
+from typing import List
 from uuid import uuid4
 
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -18,10 +20,10 @@ def random_name(fmt_str=None):
         return rndstr
 
 
-def make_random_files(n, fmt_str=None):
+def make_random_files(n, fmt_str=None) -> List[Path]:
     filenames = []
     for i in range(n):
-        fname = random_name(fmt_str)
+        fname = Path(random_name(fmt_str))
         filenames.append(fname)
         with open(fname, "wt") as out:
             out.write("test{}".format(i))
