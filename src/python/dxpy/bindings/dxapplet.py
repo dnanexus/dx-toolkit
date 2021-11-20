@@ -36,8 +36,9 @@ from ..compat import basestring
 class DXExecutable:
     '''Methods in :class:`!DXExecutable` are used by
     :class:`~dxpy.bindings.dxapp.DXApp`,
-    :class:`~dxpy.bindings.dxapplet.DXApplet`, and
-    :class:`~dxpy.bindings.dxworkflow.DXWorkflow`
+    :class:`~dxpy.bindings.dxapplet.DXApplet`,
+    :class:`~dxpy.bindings.dxworkflow.DXWorkflow`, and
+    :class:`~dxpy.bindings.dxworkflow.DXGlobalWorkflow`
     '''
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")

@@ -91,9 +91,23 @@ def _check_dxcompiler_version(json_spec):
         supported_version = "2.5.0"
         current_compiler_version = str.split(json_spec["details"].get("version"),"-")[0]
         if StrictVersion(current_compiler_version) < StrictVersion(supported_version):
-            raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["name"], supported_version))
+            raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["id"], supported_version))
     else:
-        raise WorkflowBuilderException("Cannot find the dxCompiler version from the spec of the source workflow {}. Please specify the dxCompiler version in the 'details' field of the workflow spec.".format(json_spec["name"]))
+        raise WorkflowBuilderException("Cannot find the dxCompiler version from the spec of the source workflow {}. Please specify the dxCompiler version in the 'details' field of the workflow spec.".format(json_spec["id"]))
+
+def _notify_instance_type_selection(json_spec):
+    is_static = json_spec["details"].get("staticInstanceTypeSelection", False)
+    if is_static:
+        print("Note: {workflow} was compiled with -instanceTypeSelection=static "
+              "and will produce a global workflow that relies on instance types that may not be available to all users."
+              .format(workflow=json_spec["id"]))
+
+def _notify_dependencies(json_spec):
+     dependency_list = json_spec.get(["description"])
+     if dependency_list:
+         print("Note: {workflow} was compiled with unbundled dependencies. "
+              "Please check the workflow description and make sure access to these dependencies is provided to all authorized users."
+              .format(workflow=json_spec["id"]))
 
 def _get_destination_project(json_spec, args, build_project_id=None):
     """
@@ -627,7 +641,9 @@ def _build_or_update_workflow(args, parser):
             # Check if the local or source workflow is compiled by dxCompiler that supported dependency annotation
             if json_spec.get("tag") and "dxCompiler" in json_spec["tag"]:
                 _check_dxcompiler_version(json_spec)
-            
+                if not args.brief:
+                    _notify_instance_type_selection(json_spec)
+                    _notify_dependencies(json_spec)
             # version is optional for workflow, so `dx build` requires --version to be specified when using the --from
             if args.version_override:
                 json_spec["version"] = args.version_override
