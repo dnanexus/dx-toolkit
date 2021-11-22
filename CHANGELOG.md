@@ -6,16 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [317.0] - beta
+
 ### Fixed
 
-* Reduced API load during `dx upload`
+* Reduce file-xxxx/describe API load during `dx upload`
 * `dx get` uses a region compatible with user's billTo when downloading resources
 
 ### Changed
  
 * `dx run` warns users if priority is specified as low/normal when using '--watch/ssh/allow-ssh'
 
-## [316.0] - beta
+## [316.0] - 2021.11.17 stable
 
 ### Added
 
@@ -30,7 +32,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dxpy dependencies cryptography, websocket-client, colorama, requests
 
-## [315.0] - 2021.10.28 stable
+## [315.0] - 2021.10.28 
 
 * No significant changes
 
