@@ -44,21 +44,18 @@ TODO: switch to using dxpy vs calls to dx whenever possible
 #   License for the specific language governing permissions and limitations
 #   under the License.
 import concurrent.futures
-import contextlib
 import copy
-import errno
 import multiprocessing
 import os
 from pathlib import Path
 import psutil
 import re
-import tempfile
 from typing import Dict, Generic, Iterable, List, Optional, Tuple, TypeVar, Union
 
 import dxpy
 from dxpy.utils.resolver import data_obj_pattern
 
-from . import context, get_log, processing
+from dxpy.sugar import context, get_log, processing
 
 
 LOG = get_log(__name__)

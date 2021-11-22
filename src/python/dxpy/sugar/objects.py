@@ -20,7 +20,7 @@ import dxpy
 import dxpy.api
 from dxpy.utils import resolver
 
-from . import get_log
+from dxpy.sugar import get_log
 
 
 LOG = get_log(__name__)

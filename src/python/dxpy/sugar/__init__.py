@@ -20,7 +20,7 @@ from pathlib import Path
 import re
 import sys
 
-from . import processing
+from dxpy.sugar import processing
 
 
 MEMINFO_RE = re.compile(r"^MemAvailable:[\s]*([0-9]*) kB")

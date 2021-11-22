@@ -23,7 +23,7 @@ from typing import Optional
 
 import dxpy
 
-from . import get_log, requires_worker_context
+from dxpy.sugar import get_log, requires_worker_context
 
 
 LOG = get_log(__name__)
