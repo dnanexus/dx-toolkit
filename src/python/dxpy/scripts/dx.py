@@ -2572,7 +2572,7 @@ def build(args):
             build_parser.error("--destination cannot be used when creating an app (only an applet)")
         
         if args.mode == "globalworkflow" and args.destination != '.':
-            build_parser.error("--destination cannot be used when creating an global workflow (only an workflow)")
+            build_parser.error("--destination cannot be used when creating a global workflow (only a workflow)")
 
         if args.mode == "applet" and args.region:
             build_parser.error("--region cannot be used when creating an applet (only an app)")
@@ -2614,9 +2614,6 @@ def build(args):
 
         if args.mode == "globalworkflow" and args._from is not None and not args._from.startswith("workflow"):
             build_parser.error("globalworkflow can only be built from an workflow (--from should be set to an workflow ID)")
-
-        if args.mode == "globalworkflow" and args._from is not None and not args.version_override:
-            build_parser.error("--version must be specified when using the --from option")
 
         if args._from and args.dry_run:
             build_parser.error("Options --dry-run and --from cannot be specified together")
