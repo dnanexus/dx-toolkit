@@ -4651,7 +4651,7 @@ build_parser.add_argument("--no-parallel-build", help="Build with " + BOLD("make
 
 app_and_globalworkflow_options.set_defaults(use_temp_build_project=True)
 # Original help: "When building an app, build its applet in the current project instead of a temporary project".
-app_and_globalworkflow_options.add_argument("--no-temp-build-project", help=argparse.SUPPRESS, action="store_false", dest="use_temp_build_project")
+app_and_globalworkflow_options.add_argument("--no-temp-build-project", help="When building an app in a single region, build its applet in the current project instead of a temporary project.", action="store_false", dest="use_temp_build_project")
 
 # --yes
 app_and_globalworkflow_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
