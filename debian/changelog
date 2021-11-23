@@ -1,3 +1,11 @@
+dx-toolkit (0.317.0) trusty; urgency=medium
+
+  * Fixed: Reduce file-xxxx/describe API load during dx upload
+  * Fixed: `dx get` uses a region compatible with user's billTo when downloading resources
+  * Changed: `dx run` warns users if priority is specified as low/normal when using '--watch/ssh/allow-ssh'
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 17 Nov 2021 23:41:19 +0000
+
 dx-toolkit (0.316.0) trusty; urgency=medium
 
   * Fixed: Python 3 SSH Host key output in `dx describe job-xxxx`
