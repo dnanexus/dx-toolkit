@@ -65,6 +65,8 @@ MAX_READ_SIZE = (1024 * 1024 * 1024 * 2) - 1
 """Maximum number of bytes that can be read from a file at once. The limit here is due to a known 
 bug in some versions of python on macOS: https://bugs.python.org/issue24658.
 """
+NUM_CPU = multiprocessing.cpu_count()
+MAX_PARALLEL = min(NUM_CPU, 8)  # this is the limit imposed by dxpy
 
 
 def upload_file(
@@ -95,7 +97,6 @@ def simple_upload_file(
     project: Optional[str] = None,
     wait_on_close: bool = False,
     max_part_size: Optional[int] = None,
-    max_parallel: int = 1,
 ) -> Union[dict, dxpy.DXFile]:
     """
     Uploads a file and return a link.
@@ -109,8 +110,6 @@ def simple_upload_file(
         wait_on_close: Whether to block until the file has closed.
         max_part_size: Optional, maximum file part size, defaults to project value. Maybe limited
             by the amount of available memory.
-        max_parallel: Max number of parallel download threads; this is used to limit memory
-            usage, and thus may cause max_part_size to be reduced.
 
     Returns:
         DNAnexus link or DXFile pointing to the uploaded file (depending on
@@ -118,7 +117,7 @@ def simple_upload_file(
     """
     kwargs = {
         "wait_on_close": wait_on_close,
-        "write_buffer_size": _get_max_part_size(max_part_size, max_parallel, project),
+        "write_buffer_size": _get_max_part_size(max_part_size, MAX_PARALLEL, project),
     }
 
     if name:
@@ -148,7 +147,6 @@ def compress_and_upload_file(
     wait_on_close: bool = False,
     compression_type: str = "gz",
     max_part_size: Optional[int] = None,
-    max_parallel: int = 1,
 ) -> Union[dict, dxpy.DXFile]:
     """
     Gzip and upload a local file.
@@ -167,8 +165,6 @@ def compress_and_upload_file(
         compression_type: Compression method; one of 'gz', 'bz2'.
         max_part_size: Optional, maximum file part size, defaults to project value. Maybe limited
             by the amount of available memory.
-        max_parallel: Max number of parallel download threads; this is used to limit memory usage,
-            and thus may cause max_part_size to be reduced.
 
     Returns:
         DNAnexus link or DXFile pointing to the uploaded file (depending on the value of
@@ -196,7 +192,7 @@ def compress_and_upload_file(
     if compression_level < 1 or compression_level > 9:
         raise ValueError("Compression level must be between 1 and 9")
 
-    max_part_size = _get_max_part_size(max_part_size, max_parallel, project)
+    max_part_size = _get_max_part_size(max_part_size, MAX_PARALLEL, project)
 
     if local_path.name.endswith(ext):
         cmd = f"dx upload --brief --buffer-size {max_part_size} --path {name} {local_path}"
@@ -224,7 +220,6 @@ def tar_and_upload_files(
     wait_on_close: bool = False,
     method: str = "gz",
     max_part_size: Optional[int] = None,
-    max_parallel: int = 1,
 ) -> Union[dict, dxpy.DXFile]:
     """
     Archive and upload one or more files.
@@ -246,8 +241,6 @@ def tar_and_upload_files(
         method: Compression method; one of 'gz', 'bz2'.
         max_part_size: Optional, maximum file part size, defaults to project value. Maybe limited
             by the amount of available memory.
-        max_parallel: Max number of parallel download threads; this is used to limit memory usage,
-            and thus may cause max_part_size to be reduced.
 
     Returns:
         DNAnexus link or DXFile pointing to the uploaded tar archive (depending on the value of
@@ -287,7 +280,7 @@ def tar_and_upload_files(
     if project:
         remote_path = f"{project}:{remote_path}"
 
-    max_part_size = _get_max_part_size(max_part_size, max_parallel, project)
+    max_part_size = _get_max_part_size(max_part_size, MAX_PARALLEL, project)
 
     with context.tmpfile() as names_file:
         with open(names_file, "wt") as out:
@@ -317,7 +310,7 @@ def _get_max_part_size(
 ) -> int:
     # Determine the absolute maximum value we can use
     # TODO: cache value by project ID
-    container = dxpy.get_handler(project_id)
+    container = dxpy.get_handler(project_id or dxpy.WORKSPACE_ID)
     desc = container.describe(input_params={"fields": {"fileUploadParameters": True}})
     abs_max_part_size = min(
         desc["fileUploadParameters"]["maximumPartSize"], MAX_READ_SIZE
@@ -700,16 +693,7 @@ class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor, Generic[F, R])
     def __init__(
         self, io_function, max_parallel: Optional[int] = None, **default_kwargs
     ):
-        super(DataTransferExecutor, self).__init__(
-            # TODO: A question for discussion: often times clients just make API calls
-            #  and use bandwidth. A lot of the work performed is Network I/O bound. In
-            #  practice, people use a heuristic of 2 * num_cores when dealing with
-            #  network I/O bound task. For this scenario, uploading/downloading data,
-            #  what are good heuristics for ThreadPoolExecutor worker count?
-            max_workers=min(multiprocessing.cpu_count(), max_parallel)
-            if max_parallel
-            else None
-        )
+        super(DataTransferExecutor, self).__init__(max_parallel)
         self._io_function = io_function
         self._default_kwargs = default_kwargs
         self._queue = None
@@ -786,11 +770,10 @@ class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor, Generic[F, R])
             * dict with Future keys and values of tuple (file index, file).
             * boolean, whether the result should be considered a list
         """
+        submit_kwargs = self._get_submit_kwargs(kwargs)
         return (
             {
-                self.submit(
-                    self._io_function, _file, **self._get_submit_kwargs(kwargs)
-                ): (i, _file)
+                self.submit(self._io_function, _file, **submit_kwargs): (i, _file)
                 for i, _file in enumerate(files, _start_index)
             },
             _is_list,
@@ -886,21 +869,18 @@ class Uploader(DataTransferExecutor[Path, dxpy.DXFile]):
         files: Iterable[Path],
         _is_list: bool,
         _start_index: int = 0,
-        skip_compress: bool = False,
-        archive: bool = False,
         **kwargs,
     ):
-        if "max_parallel" not in kwargs:
-            kwargs["max_parallel"] = self._max_workers
-        if archive:
-            compression_level = None if skip_compress else 1
+        submit_kwargs = self._get_submit_kwargs(kwargs)
+        if submit_kwargs.pop("archive", False):
+            compression_level = None if submit_kwargs.get("skip_compress") else 1
             return (
                 {
                     self.submit(
                         tar_and_upload_files,
                         files,
                         compression_level=compression_level,
-                        **self._get_submit_kwargs(kwargs),
+                        **submit_kwargs,
                     ): (0, ",".join(str(f) for f in files))
                 },
                 False,
@@ -910,7 +890,6 @@ class Uploader(DataTransferExecutor[Path, dxpy.DXFile]):
                 files,
                 _is_list,
                 _start_index=_start_index,
-                skip_compress=skip_compress,
                 **kwargs,
             )
 

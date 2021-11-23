@@ -251,7 +251,7 @@ def get_data_object(
         elif classname != "*":
             kwargs["classname"] = classname
         data_obj = dxpy.find_one_data_object(
-            zero_ok=True, more_ok=False, name=name, **kwargs
+            zero_ok=True, more_ok=False, project=project.get_id(), name=name, **kwargs
         )
 
     if not data_obj and exists is True:

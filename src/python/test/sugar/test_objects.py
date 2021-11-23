@@ -7,18 +7,18 @@ import dxpy
 from dxpy.sugar import objects
 
 
-PROJECT_ID = "project-BzQf6k80V3bJk7x0yv6z82j7"
-PROJECT_NAME = "DNAnexus Regression Testing Project AWS US east"
-WORKFLOW_ID = "workflow-F417G8Q0V3bGVjG642Zjx1Gv"
-WORKFLOW_FOLDER = "/gatk3/2017_04_27_22_51_39"
-WORKFLOW_NAME = "GATK3 best practices"
-APPLET_ID = "applet-F417G0j0V3b6bxQG68KF3j2q"
-APPLET_NAME = "gatk3_bqsr_parallel"
-APPLET_FOLDER = "/gatk3/2017_04_27_22_51_39/Applets"
+PROJECT_ID = "project-G6Kf8Bj0JFK78YzZ5FGB7P17"
+PROJECT_NAME = "dxpy_sugar_test_data"
+WORKFLOW_ID = "workflow-FBZjVpj085XzQBV3GbJfJPPb"
+WORKFLOW_FOLDER = "/wf"
+WORKFLOW_NAME = "BWA MEM and GATK Workflow"
+APPLET_ID = "applet-G1JYY2Q0q4v5vkK8KzKkZY9b"
+APPLET_NAME = "slice_file"
+APPLET_FOLDER = "/"
 TAG = "sugar-test"
-APP_ID = "app-FYzxFq09ZZYPKkfp05027F5g"
+APP_ID = "app-G4gBQJj2Vb38pZpP1VPjjX2b"
 APP_NAME = "bwa_mem_fastq_read_mapper"
-APP_VERSION = "2.0.3"
+APP_VERSION = "2.0.5"
 
 
 def random_name(name_len, prefix=None):
@@ -63,27 +63,28 @@ class TestObjects(unittest.TestCase):
             if newproj and cleanup:
                 newproj.destroy()
 
-        newproj = None
-        try:
-            newproj = objects.get_project(
-                newproj_name, create=True, region="azure:westus"
-            )
-            self.assertIsInstance(proj, dxpy.DXProject)
-            self.assertEqual(newproj.describe()["name"], newproj_name)
-            self.assertEqual(newproj.describe()["region"], "azure:westus")
-            self.assertEqual(
-                newproj.describe()["name"],
-                objects.get_project(newproj.get_id()).describe()["name"],
-            )
-            self.assertEqual(
-                newproj.get_id(),
-                objects.get_project(
-                    newproj.describe()["name"], region="azure:westus"
-                ).get_id(),
-            )
-        finally:
-            if newproj:
-                newproj.destroy()
+        # TODO: the org for the test project in staging only allows us-east region
+        # newproj = None
+        # try:
+        #     newproj = objects.get_project(
+        #         newproj_name, create=True, region="azure:westus"
+        #     )
+        #     self.assertIsInstance(proj, dxpy.DXProject)
+        #     self.assertEqual(newproj.describe()["name"], newproj_name)
+        #     self.assertEqual(newproj.describe()["region"], "azure:westus")
+        #     self.assertEqual(
+        #         newproj.describe()["name"],
+        #         objects.get_project(newproj.get_id()).describe()["name"],
+        #     )
+        #     self.assertEqual(
+        #         newproj.get_id(),
+        #         objects.get_project(
+        #             newproj.describe()["name"], region="azure:westus"
+        #         ).get_id(),
+        #     )
+        # finally:
+        #     if newproj:
+        #         newproj.destroy()
 
     def test_ensure_folder(self):
         proj = objects.get_project(PROJECT_ID)
@@ -130,10 +131,10 @@ class TestObjects(unittest.TestCase):
                 folder=folder_name,
                 wait_on_close=True,
             )
-
-            self.assertEqual(
-                dxfile.get_id(), objects.get_data_object(file_name, proj).get_id()
-            )
+            self.assertIsNotNone(dxfile)
+            dxfile_by_name = objects.get_data_object(file_name, proj)
+            self.assertIsNotNone(dxfile_by_name)
+            self.assertEqual(dxfile.get_id(), dxfile_by_name.get_id())
             with self.assertRaises(dxpy.DXSearchError):
                 objects.get_data_object(
                     file_name, proj, classname="record", exists=True
@@ -167,7 +168,7 @@ class TestObjects(unittest.TestCase):
                 WORKFLOW_NAME, proj, classname="workflow", exists=True
             )
         workflow = objects.get_data_object(
-            WORKFLOW_NAME, proj, classname="workflow", tag=TAG
+            WORKFLOW_NAME, proj, classname="workflow", tags=[TAG]
         )
         self.assertIsNotNone(workflow)
         self.assertEqual(workflow.get_id(), WORKFLOW_ID)
@@ -197,12 +198,11 @@ class TestObjects(unittest.TestCase):
             objects.get_data_object(
                 APPLET_NAME, proj, classname="workflow", exists=True
             )
-        self.assertEqual(
-            objects.get_data_object(
-                APPLET_NAME, proj, classname="applet", tag=TAG
-            ).get_id(),
-            APPLET_ID,
+        applet_by_name = objects.get_data_object(
+            APPLET_NAME, proj, classname="applet", tags=[TAG]
         )
+        self.assertIsNotNone(applet_by_name)
+        self.assertEqual(applet_by_name.get_id(), APPLET_ID)
         self.assertEqual(
             objects.get_data_object(
                 APPLET_NAME, proj, classname="applet", folder=APPLET_FOLDER

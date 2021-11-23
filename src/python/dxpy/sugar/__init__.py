@@ -20,6 +20,8 @@ from pathlib import Path
 import re
 import sys
 
+import psutil
+
 from dxpy.sugar import processing
 
 
@@ -50,7 +52,7 @@ def requires_worker_context(func):
 
 def get_log(name, level=logging.INFO):
     """
-    Gets a logger with the given name and level. Uses a different handler depending on whether this 
+    Gets a logger with the given name and level. Uses a different handler depending on whether this
     function is called from within a job context.
 
     Args:
@@ -132,23 +134,33 @@ def available_memory(suffix="M", meminfo_path=Path("/proc/meminfo")):
             f"{','.join(MEM_KiB_CONVERSIONS.keys())}."
         )
 
+    available_mem = None
+
     try:
-        # first try free
-        available_mem = processing.sub("free -b").splitlines()[1].split()[6]
+        available_mem = psutil.virtual_memory().available
     except:
-        # fallback to /proc/meminfo
+        pass
+
+    if available_mem is None:
+        try:
+            available_mem = processing.sub("free -b").splitlines()[1].split()[6]
+        except:
+            pass
+
+    if available_mem is None:
         try:
             with open(meminfo_path) as inp:
                 meminfo = inp.read()
-        except Exception as e:
-            raise dxpy.AppInternalError(
-                f"Problem reading system memory from {meminfo_path}"
-            ) from e
 
-        total_mem = MEMINFO_RE.findall(meminfo)
-        if len(total_mem) != 1:
-            raise dxpy.AppInternalError("Format of /proc/meminfo is unrecognized")
+            total_mem = MEMINFO_RE.findall(meminfo)
+            if len(total_mem) != 1:
+                raise dxpy.AppInternalError("Format of /proc/meminfo is unrecognized")
 
-        available_mem = total_mem[0]
+            available_mem = total_mem[0]
+        except:
+            pass
+
+    if available_mem is None:
+        raise dxpy.AppInternalError("cannot determine available memory")
 
     return float(available_mem) / MEM_KiB_CONVERSIONS[suffix]
