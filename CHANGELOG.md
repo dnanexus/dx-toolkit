@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Added `--no-temp-build-project` for single region app builds.
+
 ## [317.0] - beta
 
 ### Fixed

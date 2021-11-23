@@ -55,7 +55,7 @@ toolkit that doesn't require them.
 
 ### Ubuntu 20.04
 
-    sudo apt install python-is-python3 python3-venv libssl-dev flex bison
+    sudo apt install python-is-python3 python3-venv libssl-dev flex bison libffi-dev
 
 ### Ubuntu 16.04
 
