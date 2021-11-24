@@ -652,6 +652,7 @@ def _build_or_update_workflow(args, parser):
             # so `dx build` requires --version to be specified when using the --from
             if args.version_override:
                 json_spec["version"] = args.version_override
+            json_spec = _get_validated_json(json_spec, args)
 
             # Verify if the global workflow already exists and if the user has developer rights to it
             # If the global workflow name doesn't exist, the user is free to build it
