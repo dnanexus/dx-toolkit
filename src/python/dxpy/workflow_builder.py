@@ -459,7 +459,7 @@ def _get_validated_enabled_regions(json_spec, args):
     # Get billable regions
     enabled_regions = set(enabled_regions)
     billable_regions = dxpy.executable_builder.get_permitted_regions(
-        args.bill_to, WorkflowBuilderException)
+        json_spec["billTo"], WorkflowBuilderException)
     if not enabled_regions.issubset(billable_regions):
         raise WorkflowBuilderException("The global workflow cannot be enabled in regions {}, which are not among the permittedRegions of the billTo."
                                        .format(",".join(enabled_regions.difference(billable_regions))))
@@ -468,12 +468,12 @@ def _get_validated_enabled_regions(json_spec, args):
     enabled_regions = _assert_executable_regions_match(enabled_regions, json_spec)
     
     if not enabled_regions:
-        raise AssertionError("This workflow should be enabled in at least one region")
+        raise AssertionError("This workflow should be enabled in at least one region.")
 
     return enabled_regions
 
 
-def _create_temporary_projects(enabled_regions, args):
+def _create_temporary_projects(enabled_regions, bill_to):
     """
     Creates a temporary project needed to build an underlying workflow
     for a global workflow. Returns a dictionary with region names as keys
@@ -490,9 +490,8 @@ def _create_temporary_projects(enabled_regions, args):
     for region in enabled_regions:
         try:
             project_input = {"name": "Temporary build project for dx build global workflow",
-                             "region": region}
-            if args.bill_to:
-                project_input["billTo"] = args.bill_to
+                             "region": region,
+                             "billTo": bill_to}
             temp_project = dxpy.api.project_new(project_input)["id"]
             projects_by_region[region] = temp_project
             logger.debug("Created temporary project {} to build in".format(temp_project))
@@ -510,7 +509,7 @@ def _build_underlying_workflows(enabled_regions, json_spec, args):
     Returns a tuple of dictionaries: workflow IDs by region and project IDs by region.
     The caller is responsible for destroying the projects if this method returns properly.
     """
-    projects_by_region = _create_temporary_projects(enabled_regions, args)
+    projects_by_region = _create_temporary_projects(enabled_regions, json_spec["billTo"])
     workflows_by_region = {}
 
     try:
