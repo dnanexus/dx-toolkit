@@ -88,7 +88,7 @@ def _cleanup_empty_keys(json_spec):
 def _check_dxcompiler_version(json_spec):
     if  json_spec.get("details") and json_spec["details"].get("version"):
         from distutils.version import StrictVersion
-        supported_version = "2.5.0"
+        supported_version = "2.8.0"
         current_compiler_version = str.split(json_spec["details"].get("version"),"-")[0]
         if StrictVersion(current_compiler_version) < StrictVersion(supported_version):
             raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["id"], supported_version))
@@ -641,7 +641,7 @@ def _build_or_update_workflow(args, parser):
                 json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
             
             # Check if the local or source workflow is compiled by dxCompiler that supported dependency annotation
-            if json_spec.get("tag") and "dxCompiler" in json_spec["tag"]:
+            if json_spec.get("tags") and "dxCompiler" in json_spec["tags"]:
                 _check_dxcompiler_version(json_spec)
                 if not args.brief:
                     _notify_instance_type_selection(json_spec)
