@@ -3,7 +3,7 @@ import unittest
 
 from . import isolated_dir
 
-from dxpy.sugar import processing as proc
+import dxpy.sugar.processing as proc
 
 
 class TestProc(unittest.TestCase):

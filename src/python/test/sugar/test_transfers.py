@@ -6,10 +6,10 @@ import subprocess
 import unittest
 
 from . import isolated_dir, make_random_files, random_name
-from ..dxpy_testutil import run
+from dxpy_testutil import run
 
 import dxpy
-from dxpy.sugar import transfers as xfer
+import dxpy.sugar.transfers as xfer
 
 
 class TestUpload(unittest.TestCase):
@@ -215,7 +215,11 @@ class TestDownload(unittest.TestCase):
             opts = "cf"
         with isolated_dir():
             filenames = make_random_files(2)
-            run("tar {} {} {}".format(opts, tar_filename, " ".join(str(f) for f in filenames)))
+            run(
+                "tar {} {} {}".format(
+                    opts, tar_filename, " ".join(str(f) for f in filenames)
+                )
+            )
             return filenames, self._upload_file(tar_filename)
 
     def test_simple_download_file(self):
