@@ -334,7 +334,7 @@ def _get_validated_json(json_spec, args):
         validated_spec['stages'] = _get_validated_stages(validated_spec['stages'])
 
     if 'name' in validated_spec:
-        if args.src_dir != validated_spec['name']:
+        if not args._from and args.src_dir != validated_spec['name']:
             logger.warn(
                 'workflow name "{}" does not match containing directory "{}"'.format(validated_spec['name'], args.src_dir))
 
@@ -364,7 +364,8 @@ def _get_validated_json_for_build_or_update(json_spec, args):
     """
     validated = copy.deepcopy(json_spec)
 
-    dxpy.executable_builder.inline_documentation_files(validated, args.src_dir)
+    if not args._from:
+        dxpy.executable_builder.inline_documentation_files(validated, args.src_dir)
 
     if 'title' not in json_spec:
         logger.warn("workflow spec is missing a title, please add one in the 'title' field")
