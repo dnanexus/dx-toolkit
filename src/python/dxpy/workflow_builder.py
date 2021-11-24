@@ -665,7 +665,7 @@ def _build_or_update_workflow(args, parser):
                                                      existing_workflow.version):
                 workflow_id = _update_global_workflow(json_spec, args, existing_workflow.id)
             else:
-                json_spec = _get_validated_json(json_spec, args)
+                json_spec["billTo"] = dxpy.executable_builder.get_valid_bill_to(args.bill_to, WorkflowBuilderException)
                 enabled_regions = _get_validated_enabled_regions(json_spec, args)
                 workflow_id = _build_global_workflow(json_spec, enabled_regions, args)
         else:

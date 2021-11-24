@@ -233,7 +233,6 @@ def get_permitted_regions(bill_to, executable_builder_exception):
     """
     billable_regions = set()
     try:
-        bill_to = validate_bill_to(bill_to, executable_builder_exception)
         billable_regions= set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
     except:
         raise executable_builder_exception("Failed to get permitted regions of {}".format(bill_to))
