@@ -2603,7 +2603,7 @@ def build(args):
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
 
-        if args._from is not None and (args.mode != "app"  or args.mode != "globalworkflow"):
+        if args._from is not None and (args.mode != "app" and args.mode != "globalworkflow"):
             build_parser.error("--from can only be used to build an app from an applet or a global workflow from a project-based workflow")
 
         if args._from is not None and not args.version_override:
