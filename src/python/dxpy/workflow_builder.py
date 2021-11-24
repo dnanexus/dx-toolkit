@@ -37,7 +37,7 @@ from . import logger
 
 UPDATABLE_GLOBALWF_FIELDS = {'title', 'summary', 'description', 'developerNotes', 'details'}
 GLOBALWF_SUPPORTED_KEYS = UPDATABLE_GLOBALWF_FIELDS.union({"name", "version", "regionalOptions",
-                                                           "categories", "billTo", "dxapi"})
+                                                           "categories", "billTo", "dxapi", "tags"})
 SUPPORTED_KEYS = GLOBALWF_SUPPORTED_KEYS.union({"project", "folder", "outputFolder", "stages",
                                                 "inputs", "outputs", "ignoreReuse"})
 
