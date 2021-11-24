@@ -22,8 +22,6 @@ import sys
 
 import psutil
 
-from dxpy.sugar import processing
-
 
 MEMINFO_RE = re.compile(r"^MemAvailable:[\s]*([0-9]*) kB")
 MEM_KiB_CONVERSIONS = {"K": 1, "M": 1 << 10, "G": 1 << 20}
@@ -75,38 +73,6 @@ def get_log(name, level=logging.INFO):
     return log
 
 
-def run_cmd(cmds, internal: bool = False, **kwargs):
-    """
-    Convenience wrapper around `processing.run` that raises `dxpy.AppError` (or
-    `dxpy.AppInternalError` if `internal` is `True`) and includes the command stdout and stderr in
-    the error message.
-    """
-    try:
-        return processing.run(cmds, **kwargs)
-    except processing.CalledProcessError as e:
-        msg = f"{str(e)}\n{e.output}"
-        if internal:
-            raise dxpy.AppInternalError(msg) from e
-        else:
-            raise dxpy.AppError(msg) from e
-
-
-def sub_cmd(cmds, internal: bool = False, **kwargs):
-    """
-    Convenience wrapper around processing.sub that raises `dxpy.AppError` (or
-    `dxpy.AppInternalError` if `internal` is `True`) and includes the command stdout and stderr in
-    the error message.
-    """
-    try:
-        return processing.sub(cmds, **kwargs)
-    except processing.CalledProcessError as e:
-        msg = f"{str(e)}\n{e.output}"
-        if internal:
-            raise dxpy.AppInternalError(msg) from e
-        else:
-            raise dxpy.AppError(msg) from e
-
-
 @requires_worker_context
 def available_memory(suffix="M", meminfo_path=Path("/proc/meminfo")):
     """Queries a worker's /proc/meminfo for available memory and returns a float of the specified
@@ -134,33 +100,5 @@ def available_memory(suffix="M", meminfo_path=Path("/proc/meminfo")):
             f"{','.join(MEM_KiB_CONVERSIONS.keys())}."
         )
 
-    available_mem = None
-
-    try:
-        available_mem = psutil.virtual_memory().available
-    except:
-        pass
-
-    if available_mem is None:
-        try:
-            available_mem = processing.sub("free -b").splitlines()[1].split()[6]
-        except:
-            pass
-
-    if available_mem is None:
-        try:
-            with open(meminfo_path) as inp:
-                meminfo = inp.read()
-
-            total_mem = MEMINFO_RE.findall(meminfo)
-            if len(total_mem) != 1:
-                raise dxpy.AppInternalError("Format of /proc/meminfo is unrecognized")
-
-            available_mem = total_mem[0]
-        except:
-            pass
-
-    if available_mem is None:
-        raise dxpy.AppInternalError("cannot determine available memory")
-
+    available_mem = psutil.virtual_memory().available
     return float(available_mem) / MEM_KiB_CONVERSIONS[suffix]

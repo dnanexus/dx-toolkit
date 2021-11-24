@@ -19,7 +19,6 @@ from typing import Optional, Tuple, Union
 import dxpy
 import dxpy.api
 from dxpy.utils import resolver
-
 from dxpy.sugar import get_log
 
 

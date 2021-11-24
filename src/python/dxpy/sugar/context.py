@@ -22,7 +22,6 @@ import tempfile
 from typing import Optional
 
 import dxpy
-
 from dxpy.sugar import get_log, requires_worker_context
 
 

@@ -54,7 +54,6 @@ from typing import Dict, Generic, Iterable, List, Optional, Tuple, TypeVar, Unio
 
 import dxpy
 from dxpy.utils.resolver import data_obj_pattern
-
 from dxpy.sugar import context, get_log, processing
 
 
