@@ -98,9 +98,12 @@ def delete_temporary_projects(projects):
         except Exception:
             pass
 
-def validate_bill_to(bill_to, executable_builder_exception):
+def get_valid_bill_to(bill_to, executable_builder_exception):
     """
-    Check if the requesting user can perform billable activities on behalf of the bill_to
+    Check if the requesting user can perform billable activities on behalf of the billTo
+    If not specified, default to the billTo of the requesting user
+    otherwise it must be either the ID of the requesting user, 
+    or an org of which the requesting user is a member with 'allowBillableActivities' permission
     """
     user_id = dxpy.whoami()
     if not bill_to:
@@ -108,7 +111,7 @@ def validate_bill_to(bill_to, executable_builder_exception):
 
     exception_msg = None
     if bill_to.startswith('user-') and bill_to != user_id:
-        exception_msg = 'Cannot use another user\'s account for key "billTo"'
+        exception_msg = 'Cannot use another user\'s account for key "billTo".'
     elif bill_to.startswith('org-'):
         try:
             member_access = dxpy.api.org_describe(bill_to)
@@ -117,7 +120,7 @@ def validate_bill_to(bill_to, executable_builder_exception):
         except:
             exception_msg='Cannot retrieve billing information for {}. Please check your access level and the org\'s billing policy.'.format(bill_to)
     else:
-        exception_msg='The field "billTo" must be a valid ID of a user/org'
+        exception_msg='The field "billTo" must be a valid ID of a user/org.'
     
     if exception_msg:
         raise executable_builder_exception(exception_msg)
