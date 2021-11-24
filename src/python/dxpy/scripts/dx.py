@@ -4571,7 +4571,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="App, applet, or workflow source directory (default: current directory)", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json or dxworkflow.json. (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4615,7 +4615,7 @@ applet_and_workflow_options.add_argument("-f", "--overwrite", help="Remove exist
                             action="store_true", default=False)
 applet_and_workflow_options.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
                             action="store_true", default=False)
-build_parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None,
+build_parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest. This option need to be specified when using --from option.", default=None,
                     dest="version_override", metavar='VERSION')
 app_and_globalworkflow_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app/globalworkflow.",
                          default=None, dest="bill_to", metavar='USER_OR_ORG')
