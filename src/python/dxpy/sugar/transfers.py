@@ -181,10 +181,13 @@ def compress_and_upload_file(
 
     if not folder:
         folder = "/"
-    elif not folder.startswith("/"):
-        folder = f"/{folder}"
+    else:
+        if not folder.startswith("/"):
+            folder = f"/{folder}"
+        if not folder.endswith("/"):
+            folder = f"{folder}/"
 
-    remote_path = f"{folder}/{name}"
+    remote_path = f"{folder}{name}"
     if project:
         remote_path = f"{project}:{remote_path}"
 
@@ -260,8 +263,11 @@ def tar_and_upload_files(
 
     if not folder:
         folder = "/"
-    elif not folder.startswith("/"):
-        folder = f"/{folder}"
+    else:
+        if not folder.startswith("/"):
+            folder = f"/{folder}"
+        if not folder.endswith("/"):
+            folder = f"{folder}/"
 
     if compression_level == 0:
         compression_level = None
@@ -275,7 +281,7 @@ def tar_and_upload_files(
     else:
         ext = "tar"
 
-    remote_path = f"{folder}/{prefix}.{ext}"
+    remote_path = f"{folder}{prefix}.{ext}"
     if project:
         remote_path = f"{project}:{remote_path}"
 
@@ -831,8 +837,10 @@ class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor, Generic[F, R])
             self._queue = None
 
         def _get_result(name, futures, is_list) -> Union[R, List[R]]:
-            if not futures:
+            if futures is None:
                 raise RuntimeError(f"No futures for {name}")
+            if len(futures) == 0:
+                return [] if is_list else None
 
             future_results = [None] * len(futures)
 

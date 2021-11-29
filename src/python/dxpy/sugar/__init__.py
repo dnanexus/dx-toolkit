@@ -24,7 +24,7 @@ import psutil
 
 
 MEMINFO_RE = re.compile(r"^MemAvailable:[\s]*([0-9]*) kB")
-MEM_KiB_CONVERSIONS = {"K": 1, "M": 1 << 10, "G": 1 << 20}
+MEM_CONVERSIONS = {"K": 1 << 10, "M": 1 << 20, "G": 1 << 30}
 """Conversions between KiB and other units."""
 
 
@@ -74,7 +74,7 @@ def get_log(name, level=logging.INFO):
 
 
 @requires_worker_context
-def available_memory(suffix="M", meminfo_path=Path("/proc/meminfo")):
+def available_memory(suffix="M"):
     """Queries a worker's /proc/meminfo for available memory and returns a float of the specified
     suffix size.
 
@@ -94,11 +94,11 @@ def available_memory(suffix="M", meminfo_path=Path("/proc/meminfo")):
         format.
     """
     suffix = suffix.upper()
-    if suffix not in MEM_KiB_CONVERSIONS:
+    if suffix not in MEM_CONVERSIONS:
         raise ValueError(
             f"Unknown memory suffix {suffix}. Please choose from "
-            f"{','.join(MEM_KiB_CONVERSIONS.keys())}."
+            f"{','.join(MEM_CONVERSIONS.keys())}."
         )
 
     available_mem = psutil.virtual_memory().available
-    return float(available_mem) / MEM_KiB_CONVERSIONS[suffix]
+    return float(available_mem) / MEM_CONVERSIONS[suffix]
