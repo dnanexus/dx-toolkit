@@ -6917,7 +6917,66 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
                                                      json.dumps(dxworkflow_json))
         new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
         self.assertEqual(new_gwf["billTo"], org_id)
+    
+    def test_build_workflow_with_invalid_bill_to(self):
+        alice_id = "user-alice"
+        other_user_id = "user-bob"
+        unbillable_org_id = "org-members_without_billing_rights"
+        nonexist_org_id = "org-not_exist"
 
+        # --bill-to is set to another user
+        gwf_name = "globalworkflow_build_bill_to_another_user"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp='Cannot use another user\'s account for key "billTo".', exit_code=3):
+            run("dx build --globalworkflow --bill-to {} --json {}".format(other_user_id, workflow_dir))
+
+        # --bill-to is set to org-members_without_billing_rights with dx build
+        gwf_name = "globalworkflow_build_to_org_without_billing_rights"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp='You are not a member in {} with allowBillableActivities permission.'.format(unbillable_org_id), exit_code=3):
+            run("dx build --globalworkflow --bill-to {} --json {}".format(unbillable_org_id, workflow_dir))
+        
+        # --bill-to is set to an non exist org
+        gwf_name = "globalworkflow_build_to_nonexist_org"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp='Cannot retrieve billing information for {}.'.format(unbillable_org_id), exit_code=3):
+            run("dx build --globalworkflow --bill-to {} --json {}".format(unbillable_org_id, workflow_dir))
+
+    def test_build_globalworkflow_from_nonexist_workflow(self):
+        # build global workflow from nonexist workflow
+        source_wf = "workflow-0000000000000000000000NA"
+        with self.assertSubprocessFailure(stderr_regexp="Could not get specs from given workflow", exit_code=3):
+            run("dx build --globalworkflow --from {} --version 0.0.1".format(source_wf))
+
+    def test_build_globalworkflow_without_version_override(self):
+        # build global workflow without specified version
+        source_wf = "workflow-0000000000000000000000NA"
+        with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
+            run("dx build --globalworkflow --from {}".format(source_wf))
+    
+    def test_build_globalworkflow_from_old_WDL_workflow(self):
+        SUPPORTED_DXCOMPILER_VERSION = "2.8.0"
+        # build global workflow from wdl workflows
+        gwf_name = "globalworkflow_build_from_wdl_workflow"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        dxworkflow_json["tags"]="dxCompiler"
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp="Cannot find the dxCompiler version from the spec of the source workflow", exit_code=3):
+            run("dx build --globalworkflow --version 0.0.1 {}".format(workflow_dir))
+        
+        dxworkflow_json.update({"details": {"version":"0.0.1"}})
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp="Source workflow {} is not compiled using dxCompiler \(version>={}\) that supports creating global workflows.".format(dxworkflow_json["name"], SUPPORTED_DXCOMPILER_VERSION), exit_code=3):
+            run("dx build --globalworkflow {}".format(workflow_dir))
+        
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
     @pytest.mark.TRACEABILITY_MATRIX
