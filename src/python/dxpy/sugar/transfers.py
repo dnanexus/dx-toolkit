@@ -713,7 +713,7 @@ class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor, Generic[F, R])
         self._default_kwargs = default_kwargs
         self._queue = None
 
-    def enqueue_file(self, param_name: str, file: F, **kwargs):
+    def enqueue_file(self, param_name: str, file: Optional[F], **kwargs):
         """
         Add a file to the queue associated with `name`.
 
@@ -722,7 +722,8 @@ class DataTransferExecutor(concurrent.futures.ThreadPoolExecutor, Generic[F, R])
             file: File to upload/download.
             **kwargs: Additional kwargs to pass to `self._io_function`.
         """
-        self._enqueue(param_name, [file], _is_list=False, **kwargs)
+        files = [file] if file else []
+        self._enqueue(param_name, files, _is_list=False, **kwargs)
 
     def enqueue_list(self, param_name: str, files: Iterable[F], **kwargs):
         """
