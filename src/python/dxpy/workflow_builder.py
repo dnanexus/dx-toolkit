@@ -91,7 +91,7 @@ def _check_dxcompiler_version(json_spec):
         supported_version = "2.8.0"
         current_compiler_version = str.split(json_spec["details"].get("version"),"-")[0]
         if StrictVersion(current_compiler_version) < StrictVersion(supported_version):
-            raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["id"], supported_version))
+            raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["name"], supported_version))
     else:
         raise WorkflowBuilderException("Cannot find the dxCompiler version from the spec of the source workflow {}. Please specify the dxCompiler version in the 'details' field of the workflow spec.".format(json_spec["id"]))
 
@@ -641,6 +641,13 @@ def _build_or_update_workflow(args, parser):
             else:
                 json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
             
+            # Override version number in json_spec if --version is specified
+            # version is required when building global workflow but is optional for workflow
+            # so `dx build` requires --version to be specified when using the --from
+            if args.version_override:
+                json_spec["version"] = args.version_override
+            json_spec = _get_validated_json(json_spec, args)
+            
             # Check if the local or source workflow is compiled by dxCompiler that supported dependency annotation
             if json_spec.get("tags") and "dxCompiler" in json_spec["tags"]:
                 _check_dxcompiler_version(json_spec)
@@ -648,13 +655,6 @@ def _build_or_update_workflow(args, parser):
                     _notify_instance_type_selection(json_spec)
                     _notify_dependencies(json_spec)
             
-            # Override version number in json_spec if --version is specified
-            # version is required when building global workflow but is optional for workflow
-            # so `dx build` requires --version to be specified when using the --from
-            if args.version_override:
-                json_spec["version"] = args.version_override
-            json_spec = _get_validated_json(json_spec, args)
-
             # Verify if the global workflow already exists and if the user has developer rights to it
             # If the global workflow name doesn't exist, the user is free to build it
             # If the name does exist two things can be done:
@@ -699,5 +699,5 @@ def build(args, parser):
         workflow_id = _build_or_update_workflow(args, parser)
         _print_output(workflow_id, args)
     except WorkflowBuilderException as e:
-        print("Error: {}" .format(e.args,), file=sys.stderr)
+        print("Error: {}".format(e.args,), file=sys.stderr)
         sys.exit(3)
