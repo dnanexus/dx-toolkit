@@ -388,7 +388,8 @@ def download_file(
     output_dir: Optional[Path] = None,
     project: Optional[str] = None,
     block: bool = True,
-) -> Union[Path, Tuple[Path, processing.Processes]]:
+    list_contents: bool = True,
+) -> Union[Path, List[Path], Tuple[Path, processing.Processes]]:
     """
     Downloads a file.
 
@@ -407,6 +408,7 @@ def download_file(
         project: The ID of the project that contains the file, if it is not the currently selected
             project and is not specified in the remote file object/link.
         block: Wait for the download to complete before returning.
+        list_contents: If the file is an archive, whether to return a list of files unpacked from the archive.
 
     Notes:
         Supported filetypes: *.tar.gz, *.tgz, *.tar, *.tar.bz2, *.tbz2, *.gz, *.bz2.
@@ -442,7 +444,12 @@ def download_file(
 
     if unpack:
         return download_and_unpack_archive(
-            remote_file, remote_filename, local_filename, output_dir, block
+            remote_file,
+            remote_filename,
+            local_filename,
+            output_dir,
+            block,
+            list_contents,
         )
     elif unzip:
         return download_and_decompress_file(
@@ -505,7 +512,8 @@ def download_and_unpack_archive(
     output_dir: Optional[Path] = None,
     project: Optional[str] = None,
     block: bool = True,
-) -> Union[List[Path], Tuple[Path, processing.Processes],]:
+    list_contents: bool = True,
+) -> Union[Path, List[Path], Tuple[Path, processing.Processes]]:
     """
     Downloads and unpacks a tar file, which may optionally be gzip-compressed.
 
@@ -519,13 +527,14 @@ def download_and_unpack_archive(
         project: The ID of the project that contains the file, if it is not the currently selected
             project and is not specified in the remote file object/link.
         block: Wait for the download to complete before returning.
+        list_contents: Return contents of the archive (True) or its path (False)
 
     Returns:
-        The list of unpacked filenames, if `block is True`, otherwise a :class:`dxpy.sugar.
-        processing.Processes` object.
+        The return value depends on the values of `block` and `list_contents`.
 
-        If `local_filename` is provided and `block is False`, the list of unpacked filenames has a
-        single element, which is the `local_filename`, converted to an absolute path if necessary.
+        * `block=True, list_contents=True`: a list of `Path`s of the unpacked files.
+        * `block=True, list_contents=False`: a `Path` to the output directory.
+        * `block=False`: a tuple with the first element being a `Path` to a file that will contain a list of the unpacked files after the process completes and a :class:`dxpy.sugar.processing.Processes` object that can be polled for the status of the process. `list_contents` is ignored.
     """
     dxfile = _as_dxfile(dx_file_or_link, project)
 
@@ -579,7 +588,10 @@ def download_and_unpack_archive(
 
     LOG.info("Completed downloading file %s", dxfile.get_id())
 
-    if local_path:
+    if list_contents:
+        with open(file_list_path, "rt") as inp:
+            return [output_dir / filename.rstrip() for filename in inp]
+    elif local_path:
         # If a local_filename was provided, make sure it exists
         if not local_path.is_absolute():
             local_path = output_dir / local_path
@@ -587,11 +599,9 @@ def download_and_unpack_archive(
             raise ValueError(
                 f"Expected file {local_path} does not exist after untarring file {dxfile.get_id()}"
             )
-        return [local_path]
+        return local_path
     else:
-        # Otherwise return the list of files that were unpacked from the tar file
-        with open(file_list_path, "rt") as inp:
-            return [output_dir / filename.rstrip() for filename in inp]
+        return output_dir / suffix
 
 
 def download_and_decompress_file(
