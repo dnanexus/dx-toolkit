@@ -379,9 +379,10 @@ def _get_validated_json_for_build_or_update(json_spec, args):
     return validated
 
 
-def _assert_executable_regions_match(workflow_enabled_regions: set, workflow_spec):
+def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
     """
-    Check if the global workflow regions and the regions of stages (apps) match.
+    Check if the dependent apps/applets/subworkflows in the workflow are enabled in requested regions
+    Returns the subset of requested regions where all the dependent executables are enabled
     If the workflow contains any applets, then the workflow can be currently enabled
     in only one region - the region in which the applets are stored.
     """
