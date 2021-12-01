@@ -397,6 +397,7 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
             applet_region = dxpy.DXProject(applet_project).region
             if applet_region in workflow_enabled_regions:                
                 workflow_enabled_regions = {applet_region} # only one region is allowed when using applet
+                break
             else:
                 raise WorkflowBuilderException("The applet {} is not available in requested region(s) {}"
                                                .format(exect, ','.join(workflow_enabled_regions)))
