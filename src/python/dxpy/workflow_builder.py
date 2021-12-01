@@ -93,7 +93,7 @@ def _check_dxcompiler_version(json_spec):
         if StrictVersion(current_compiler_version) < StrictVersion(SUPPORTED_DXCOMPILER_VERSION):
             raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["name"], SUPPORTED_DXCOMPILER_VERSION))
     else:
-        raise WorkflowBuilderException("Cannot find the dxCompiler version from the spec of the source workflow {}. Please specify the dxCompiler version in the 'details' field of the workflow spec using the 'version' key.".format(json_spec["name"]))
+        raise WorkflowBuilderException("Cannot find the dxCompiler version from the spec of the source workflow {}. Please specify the dxCompiler version by updating the details field of the dxworkflow.json/source workflow spec using the 'version' key.".format(json_spec["name"]))
 
 def _notify_instance_type_selection(json_spec):
     is_static = json_spec["details"].get("staticInstanceTypeSelection", False)
@@ -191,7 +191,7 @@ def _version_exists(json_spec, name=None, version=None):
         requested_name = json_spec['name']
         requested_version = json_spec['version']
     except:
-        raise WorkflowBuilderException("Both 'name' and 'version' fields must be given in the workflow spec to build/update a global workflow.")
+        raise WorkflowBuilderException("Both 'name' and 'version' fields must be given in the dxworkflow.json/source workflow spec to build/update a global workflow.")
 
     if requested_name == name and requested_version == version:
         return True
@@ -283,7 +283,7 @@ def _validate_json_for_global_workflow(json_spec, args):
     """
     if 'name' not in json_spec:
         raise WorkflowBuilderException(
-            "Workflow spec contains no 'name' field, but it is required to build a global workflow")
+            "dxworkflow.json/source workflow spec contains no 'name' field, but it is required to build a global workflow")
     if not dxpy.executable_builder.GLOBAL_EXEC_NAME_RE.match(json_spec['name']):
         raise WorkflowBuilderException(
             "The name of your workflow must match /^[a-zA-Z0-9._-]+$/")
@@ -292,7 +292,7 @@ def _validate_json_for_global_workflow(json_spec, args):
 
     if 'version' not in json_spec:
         raise WorkflowBuilderException(
-            "Workflow spec contains no 'version' field, but it is required to build a global workflow")
+            "dxworkflow.json/source workflow spec contains no 'version' field, but it is required to build a global workflow")
     if not dxpy.executable_builder.GLOBAL_EXEC_VERSION_RE.match(json_spec['version']):
         logger.warn('"version" {} should be semver compliant (e.g. of the form X.Y.Z)'.format(json_spec['version']))
 
@@ -368,10 +368,10 @@ def _get_validated_json_for_build_or_update(json_spec, args):
         dxpy.executable_builder.inline_documentation_files(validated, args.src_dir)
 
     if 'title' not in json_spec:
-        logger.warn("workflow spec is missing a title, please add one in the 'title' field")
+        logger.warn("dxworkflow.json/source workflow spec is missing a title, please add one in the 'title' field")
 
     if 'summary' not in json_spec:
-        logger.warn("workflow spec is missing a summary, please add one in the 'summary' field")
+        logger.warn("dxworkflow.json/source workflow spec is missing a summary, please add one in the 'summary' field")
     else:
         if json_spec['summary'].endswith('.'):
             logger.warn("summary {} should be a short phrase not ending in a period".format(json_spec['summary'],))
@@ -485,7 +485,7 @@ def _create_temporary_projects(enabled_regions, bill_to):
     and project IDs as values
 
     The regions in which projects will be created can be:
-    i. regions specified in the workflow spec "regionalOptions"
+    i. regions specified in the dxworkflow.json/source workflow spec "regionalOptions"
     ii. regions specified as the argument "--region" when calling "dx build"
     iii. current context project, if none of the above are set
     iv. the regions where dependent applets/apps/workflows are enabled
