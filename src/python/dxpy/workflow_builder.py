@@ -93,7 +93,7 @@ def _check_dxcompiler_version(json_spec):
         if StrictVersion(current_compiler_version) < StrictVersion(SUPPORTED_DXCOMPILER_VERSION):
             raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["name"], SUPPORTED_DXCOMPILER_VERSION))
     else:
-        raise WorkflowBuilderException("Cannot find the dxCompiler version from the spec of the source workflow {}. Please specify the dxCompiler version by updating the details field of the dxworkflow.json/source workflow spec using the 'version' key.".format(json_spec["name"]))
+        raise WorkflowBuilderException("Cannot find the dxCompiler version from the dxworkflow.json/source workflow spec. Please specify it by updating the details field of the dxworkflow.json/source workflow spec using the 'version' key.")
 
 def _notify_instance_type_selection(json_spec):
     is_static = json_spec["details"].get("staticInstanceTypeSelection", False)
