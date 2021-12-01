@@ -146,6 +146,7 @@ def verify_developer_rights(prefixed_name):
         describe_method = dxpy.api.global_workflow_describe
         exception_msg = \
             'A global workflow with the given name already exists and you are not a developer of that workflow'
+    
     name_already_exists = True
     is_developer = False
     version = None
