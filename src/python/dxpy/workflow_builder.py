@@ -49,7 +49,7 @@ class WorkflowBuilderException(Exception):
     pass
 
 
-def _parse_executable_spec(src_dir, json_file_name, parser):
+def _fetch_spec_from_dxworkflowjson(src_dir, json_file_name, parser):
     """
     Returns the parsed contents of a json specification.
     Raises WorkflowBuilderException (exit code 3) if this cannot be done.
@@ -632,14 +632,14 @@ def _build_or_update_workflow(args, parser):
     """
     try:
         if args.mode == 'workflow':
-            json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
+            json_spec = _fetch_spec_from_dxworkflowjson(args.src_dir, "dxworkflow.json", parser)
             json_spec = _get_validated_json(json_spec, args)
             workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
             if args._from:
                 json_spec = _fetch_spec_from_workflow(args, parser)
             else:
-                json_spec = _parse_executable_spec(args.src_dir, "dxworkflow.json", parser)
+                json_spec = _fetch_spec_from_dxworkflowjson(args.src_dir, "dxworkflow.json", parser)
             
             # Override version number in json_spec if --version is specified
             # version is required when building global workflow but is optional for workflow
