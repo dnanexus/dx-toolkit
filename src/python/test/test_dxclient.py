@@ -6962,18 +6962,23 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
     
     def test_build_globalworkflow_from_old_WDL_workflow(self):
         SUPPORTED_DXCOMPILER_VERSION = "2.8.0"
-        # build global workflow from wdl workflows
+        # build global workflow from WDL workflows
         gwf_name = "globalworkflow_build_from_wdl_workflow"
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        
+        # Here we are using a non-WDL workflow to attempt to build a global workflow and only mock a WDL workflow by adding a dxCompiler tag
         dxworkflow_json["tags"]="dxCompiler"
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json))
+        # reject building gwf if the WDL workflow spec doesn't have the dxCompiler version in its details
         with self.assertSubprocessFailure(stderr_regexp="Cannot find the dxCompiler version from the spec of the source workflow", exit_code=3):
             run("dx build --globalworkflow --version 0.0.1 {}".format(workflow_dir))
         
+        # mock the dxCompiler version that built the workflow
         dxworkflow_json.update({"details": {"version":"0.0.1"}})
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json))
+        # reject building gwf if the source WDL workflow is built by unsupported dxCompiler
         with self.assertSubprocessFailure(stderr_regexp="Source workflow {} is not compiled using dxCompiler \(version>={}\) that supports creating global workflows.".format(dxworkflow_json["name"], SUPPORTED_DXCOMPILER_VERSION), exit_code=3):
             run("dx build --globalworkflow {}".format(workflow_dir))
         
