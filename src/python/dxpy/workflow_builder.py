@@ -100,7 +100,7 @@ def _notify_instance_type_selection(json_spec):
     if is_static:
         print("Note: {workflow} was compiled with -instanceTypeSelection=static "
               "and will produce a global workflow that relies on instance types that may not be available to all users."
-              .format(workflow=json_spec["id"]))
+              .format(workflow=json_spec["name"]))
 
 def _notify_dependencies(json_spec):
     # APPS-622: A textual representation of all the dependencies is appended to 
@@ -109,7 +109,7 @@ def _notify_dependencies(json_spec):
      if dependency_list:
          print("Note: {workflow} was compiled with unbundled dependencies. "
               "Please check the workflow description and make sure access to these dependencies is provided to all authorized users."
-              .format(workflow=json_spec["id"]))
+              .format(workflow=json_spec["name"]))
 
 def _get_destination_project(json_spec, args, build_project_id=None):
     """
