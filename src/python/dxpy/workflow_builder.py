@@ -389,7 +389,8 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
     if not workflow_enabled_regions: # empty set
         return workflow_enabled_regions
     
-    executables = [i.get("executable") for i in workflow_spec.get("stages")]
+    # get executable from all stages and sort them in the order app/applet/globalworkflow/workflow
+    executables = sorted([i.get("executable") for i in workflow_spec.get("stages")])
 
     for exect in executables:
         if exect.startswith("applet-"):
