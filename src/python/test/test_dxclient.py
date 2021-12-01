@@ -6971,7 +6971,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json))
         # reject building gwf if the WDL workflow spec doesn't have the dxCompiler version in its details
-        with self.assertSubprocessFailure(stderr_regexp="Cannot find the dxCompiler version from the spec of the source workflow", exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="Cannot find the dxCompiler version", exit_code=3):
             run("dx build --globalworkflow --version 0.0.1 {}".format(workflow_dir))
         
         # mock the dxCompiler version that built the workflow
