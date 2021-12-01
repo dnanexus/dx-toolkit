@@ -392,7 +392,8 @@ def _assert_executable_regions_match(workflow_enabled_regions: set, workflow_spe
 
     for exect in executables:
         if exect.startswith("applet-"):
-            applet_region = dxpy.api.applet_describe(dxpy.api.applet_describe(exect)["project"])["region"]
+            applet_project = dxpy.DXApplet(exect).project
+            applet_region = dxpy.DXProject(applet_project).region
             if applet_region in workflow_enabled_regions:                
                 workflow_enabled_regions = {applet_region} # only one region is allowed when using applet
             else:
