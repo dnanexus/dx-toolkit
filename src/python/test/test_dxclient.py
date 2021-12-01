@@ -4377,6 +4377,8 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         # The ID should not be updated
         self.assertEqual(gwf_id, updated_desc["id"])
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
     def test_build_multi_region_workflow_with_applet(self):
         gwf_name = "gwf_{t}_multi_region".format(t=int(time.time()))
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
@@ -4385,10 +4387,22 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json),
                                                      readme_content="Workflow Readme Please")
+       
+        gwf_desc = json.loads(run('dx build --globalworkflow ' + workflow_dir + ' --json'))
+        gwf_regional_options = gwf_desc["regionalOptions"]
+        self.assertIn("aws:us-east-1", gwf_regional_options)
+        self.assertNotIn("azure:westus",gwf_regional_options)
 
-        error_msg = "Building a global workflow with applets in more than one region is not yet supported"
+    def test_build_workflow_in_invalid_multi_regions(self):
+        gwf_name = "gwf_{t}_multi_region".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme Please")
+
+        error_msg = "The applet {} is not available".format(self.test_applet_id)
         with self.assertRaisesRegexp(DXCalledProcessError, error_msg):
-            run("dx build --globalworkflow --json " + workflow_dir)
+            run("dx build --globalworkflow --region azure:westus --json " + workflow_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
@@ -6929,7 +6943,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json))
-        with self.assertSubprocessFailure(stderr_regexp='Cannot use another user\'s account for key "billTo".', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp='Cannot request another user to be the "billTo"', exit_code=3):
             run("dx build --globalworkflow --bill-to {} --json {}".format(other_user_id, workflow_dir))
 
         # --bill-to is set to org-members_without_billing_rights with dx build
