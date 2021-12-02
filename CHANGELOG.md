@@ -8,7 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Added `--no-temp-build-project` for single region app builds.
+* `--no-temp-build-project` for single region app builds.
+* `--from` option to `dx build` for building a global workflow from a project-based workflow, including a workflow built using WDL
 
 ## [317.0] - beta
 
