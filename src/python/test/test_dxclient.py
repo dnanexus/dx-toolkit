@@ -6932,6 +6932,20 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
         self.assertEqual(new_gwf["billTo"], org_id)
     
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that requires presence of test org')
+    def test_build_workflow_with_without_bill_to_rights(self):
+        alice_id = "user-alice"
+        unbillable_org_id = "org-members_without_billing_rights"
+        
+        # --bill-to is set to org-members_without_billing_rights with dx build
+        gwf_name = "globalworkflow_build_to_org_without_billing_rights"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp='You are not a member in {} with allowBillableActivities permission.'.format(unbillable_org_id), exit_code=3):
+            run("dx build --globalworkflow --bill-to {} --json {}".format(unbillable_org_id, workflow_dir))
+
     def test_build_workflow_with_invalid_bill_to(self):
         alice_id = "user-alice"
         other_user_id = "user-bob"
@@ -6946,14 +6960,6 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         with self.assertSubprocessFailure(stderr_regexp='Cannot request another user to be the "billTo"', exit_code=3):
             run("dx build --globalworkflow --bill-to {} --json {}".format(other_user_id, workflow_dir))
 
-        # --bill-to is set to org-members_without_billing_rights with dx build
-        gwf_name = "globalworkflow_build_to_org_without_billing_rights"
-        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
-        workflow_dir = self.write_workflow_directory(gwf_name,
-                                                     json.dumps(dxworkflow_json))
-        with self.assertSubprocessFailure(stderr_regexp='You are not a member in {} with allowBillableActivities permission.'.format(unbillable_org_id), exit_code=3):
-            run("dx build --globalworkflow --bill-to {} --json {}".format(unbillable_org_id, workflow_dir))
-        
         # --bill-to is set to an non exist org
         gwf_name = "globalworkflow_build_to_nonexist_org"
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
