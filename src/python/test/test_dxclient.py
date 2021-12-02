@@ -6934,7 +6934,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
     
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
-    def test_build_workflow_with_without_bill_to_rights(self):
+    def test_build_workflow_without_bill_to_rights(self):
         alice_id = "user-alice"
         unbillable_org_id = "org-members_without_billing_rights"
         
@@ -6947,9 +6947,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
             run("dx build --globalworkflow --bill-to {} --json {}".format(unbillable_org_id, workflow_dir))
 
     def test_build_workflow_with_invalid_bill_to(self):
-        alice_id = "user-alice"
         other_user_id = "user-bob"
-        unbillable_org_id = "org-members_without_billing_rights"
         nonexist_org_id = "org-not_exist"
 
         # --bill-to is set to another user
@@ -6965,8 +6963,8 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json))
-        with self.assertSubprocessFailure(stderr_regexp='Cannot retrieve billing information for {}.'.format(unbillable_org_id), exit_code=3):
-            run("dx build --globalworkflow --bill-to {} --json {}".format(unbillable_org_id, workflow_dir))
+        with self.assertSubprocessFailure(stderr_regexp='Cannot retrieve billing information for {}.'.format(nonexist_org_id), exit_code=3):
+            run("dx build --globalworkflow --bill-to {} --json {}".format(nonexist_org_id, workflow_dir))
 
     def test_build_globalworkflow_from_nonexist_workflow(self):
         # build global workflow from nonexist workflow
