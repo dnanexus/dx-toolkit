@@ -2425,6 +2425,11 @@ def find_global_workflows(args):
     except:
         err_exit()
 
+def update_job(args):
+    allow_ssh =  [i for i in args.allow_ssh if i is not None]
+    input_params = {"allowSSH": allow_ssh}
+    dxpy.api.job_update(object_id = args.job_id, input_params=input_params)
+
 def update_project(args):
     input_params = get_update_project_args(args)
 
@@ -3253,7 +3258,7 @@ def run(args):
     if args.allow_ssh is not None:
         args.allow_ssh = [i for i in args.allow_ssh if i is not None]
     if args.allow_ssh == [] or ((args.ssh or args.debug_on) and not args.allow_ssh):
-        args.allow_ssh = ['*']
+        args.allow_ssh = [get_client_ip()]
     if args.ssh_proxy and not args.ssh:
         err_exit(exception=DXCLIError("Option --ssh-proxy cannot be specified without --ssh"))
     if args.ssh or args.allow_ssh or args.debug_on:
@@ -3507,6 +3512,9 @@ def watch(args):
         log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
+
+def get_client_ip():
+    return dxpy.api.system_whoami({"fields": {"clientIp": True}}).get('clientIp')
 
 def ssh_config(args):
     user_id = try_call(dxpy.whoami)
@@ -4967,6 +4975,19 @@ allowed_executables_group.add_argument('--unset-allowed-executables', help='Remo
 parser_update_project.set_defaults(func=update_project)
 register_parser(parser_update_project, subparsers_action=subparsers_update, categories="metadata")
 
+parser_update_job = subparsers_update.add_parser('job',
+                                                 help='Update allowSSH IP ranges for a job',
+                                                 description='Update allowSSH IP ranges for a job',
+                                                 parents=[stdout_args, env_args],
+                                                 prog='dx update org')
+parser_update_job.add_argument('job_id', help='ID of the job')
+parser_update_job.add_argument('--allow-ssh', required=True, action='append', nargs='?', metavar='ADDRESS',
+                        help=fill('Configure the job to allow SSH access from an IP range ' +
+                                  'e.g. "--allow-ssh 1.2.3.4"',
+                                  width_adjustment=-24))
+parser_update_job.set_defaults(func=update_job)
+register_parser(parser_update_job, subparsers_action=subparsers_update, categories='exec')
+
 #####################################
 # install
 #####################################
@@ -5052,8 +5073,8 @@ parser_run.add_argument('--wait', help='Wait until the job is done before return
 parser_run.add_argument('--watch', help="Watch the job after launching it. Defaults --priority to high.", action='store_true')
 parser_run.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
                         help=fill('Configure the job to allow SSH access. Defaults --priority to high. If an argument is ' +
-                                  'supplied, it is interpreted as an IP or hostname mask to allow connections from, ' +
-                                  'e.g. "--allow-ssh 1.2.3.4 --allow-ssh berkeley.edu"',
+                                  'supplied, it is interpreted as an IP range, e.g. "--allow-ssh 1.2.3.4". ' +
+                                  'If no argument is supplied then the client IP visible to the DNAnexus API server will be used by default',
                                   width_adjustment=-24))
 parser_run.add_argument('--ssh',
                         help=fill("Configure the job to allow SSH access and connect to it after launching. " +
