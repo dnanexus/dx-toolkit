@@ -6,12 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [318.0] - beta
+
+### Fixed
+
+* Python 3.10 MutableMapping import
+
 ### Added
 
 * `--no-temp-build-project` for single region app builds.
 * `--from` option to `dx build` for building a global workflow from a project-based workflow, including a workflow built using WDL
 
-## [317.0] - beta
+## [317.0] - 2021.12.8 stable
 
 ### Fixed
 
@@ -22,7 +28,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
  
 * `dx run` warns users if priority is specified as low/normal when using '--watch/ssh/allow-ssh'
 
-## [316.0] - 2021.11.17 stable
+## [316.0] - 2021.11.17 
 
 ### Added
 
