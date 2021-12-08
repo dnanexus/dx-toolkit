@@ -81,7 +81,7 @@ def _schedule_lpt(jobs: Union[dict, list], num_bins: int) -> List[list]:
             output['output_files'].append(job.get_output_ref('output_files'))
     """
     # We expect a list of tuples, with the first value the name of the job and the second value the
-    # weight. If we are given a dict hen convert keys to job names and values to weights.
+    # weight. If we are given a dict then convert keys to job names and values to weights.
     num_bins = min(num_bins, len(jobs))
     indexes = range(num_bins)
     groups = [[] for _ in indexes]
