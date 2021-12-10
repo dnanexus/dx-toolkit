@@ -100,8 +100,6 @@ if '_ARGCOMPLETE' not in os.environ:
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
-        if readline.__doc__ and 'libedit' in readline.__doc__:
-            print('Warning: incompatible readline module detected (libedit), tab completion disabled', file=sys.stderr)
     except ImportError:
         if os.name != 'nt':
             print('Warning: readline module is not available, tab completion disabled', file=sys.stderr)
@@ -2537,13 +2535,13 @@ def build(args):
         """
         if args._from is not None:
             if not is_hashid(args._from):
-                build_parser.error('--from option only accepts a DNAnexus applet ID')
+                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
             if args._from.startswith("applet"):
                 return "app"
             elif args._from.startswith("workflow"):
-                build_parser.error('--from option with a workflow is not supported')
+                return "globalworkflow"
             else:
-                build_parser.error('--from option only accepts a DNAnexus applet ID')
+                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
 
         if not os.path.isdir(args.src_dir):
             parser.error("{} is not a directory".format(args.src_dir))
@@ -2572,6 +2570,9 @@ def build(args):
         """
         if args.mode == "app" and args.destination != '.':
             build_parser.error("--destination cannot be used when creating an app (only an applet)")
+        
+        if args.mode == "globalworkflow" and args.destination != '.':
+            build_parser.error("--destination cannot be used when creating a global workflow (only a workflow)")
 
         if args.mode == "applet" and args.region:
             build_parser.error("--region cannot be used when creating an applet (only an app)")
@@ -2586,9 +2587,6 @@ def build(args):
             build_parser.error("Options --remote, --app, and --run cannot all be specified together. Try removing --run and then separately invoking dx run.")
 
         # conflicts and incompatibilities with --from
-
-        if args._from is not None and args.region:
-            build_parser.error("Options --from and --region cannot be specified together. The app will be enabled only in the region of the project in which the applet is stored")
 
         if args._from is not None and args.ensure_upload:
             build_parser.error("Options --from and --ensure-upload cannot be specified together")
@@ -2605,17 +2603,17 @@ def build(args):
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
 
-        if args._from is not None and args.mode == "globalworkflow":
-            build_parser.error("building a global workflow using --from is not supported")
+        if args._from is not None and (args.mode != "app" and args.mode != "globalworkflow"):
+            build_parser.error("--from can only be used to build an app from an applet or a global workflow from a project-based workflow")
 
-        if args._from is not None and args.mode != "app":
-            build_parser.error("--from can only be used to build an app from an applet")
+        if args._from is not None and not args.version_override:
+            build_parser.error("--version must be specified when using the --from option")
 
         if args.mode == "app" and args._from is not None and not args._from.startswith("applet"):
             build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
 
-        if args.mode == "app" and args._from is not None and not args.version_override:
-            build_parser.error("--version must be specified when using the --from option")
+        if args.mode == "globalworkflow" and args._from is not None and not args._from.startswith("workflow"):
+            build_parser.error("globalworkflow can only be built from an workflow (--from should be set to an workflow ID)")
 
         if args._from and args.dry_run:
             build_parser.error("Options --dry-run and --from cannot be specified together")
@@ -2749,8 +2747,28 @@ def render_timestamp(epochSeconds):
 
 def list_database_files(args):
     try:
+        # check if database was given as an object hash id
+        if is_hashid(args.database):
+            desc = dxpy.api.database_describe(args.database)
+            entity_result = {"id": desc["id"], "describe": desc}
+        else:
+        # otherwise it was provided as a path, so try and resolve
+            project, _folderpath, entity_result = try_call(resolve_existing_path,
+                                                           args.database,
+                                                           expected='entity')
+
+        # if we couldn't resolved the entity, fail
+        if entity_result is None:
+            err_exit('Could not resolve ' + args.database + ' to a data object', 3)
+        else:
+        # else check and verify that the found entity is a database object
+            entity_result_class = entity_result['describe']['class']
+            if entity_result_class != 'database':
+                err_exit('Error: The given object is of class ' + entity_result_class +
+                 ' but an object of class database was expected', 3)
+            
         results = dxpy.api.database_list_folder(
-            args.database,
+            entity_result['id'],
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
         for r in results["results"]:
             date_str = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
@@ -2960,7 +2978,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "ignore_reuse_stages": args.ignore_reuse_stages or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
-        "priority": ("high" if args.watch or args.ssh or args.allow_ssh else args.priority),
+        "priority": args.priority,
         "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
@@ -2971,6 +2989,16 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "extra_args": args.extra_args
     }
 
+    if any([args.watch or args.ssh or args.allow_ssh]):
+        if run_kwargs["priority"] in ["low", "normal"]:
+            if not args.brief:
+                print(fill(BOLD("WARNING") + ": You have requested that jobs be run under " +
+                        BOLD(run_kwargs["priority"]) +
+                        " priority, which may cause them to be restarted at any point, interrupting interactive work."))
+                print()
+        else: # if run_kwargs["priority"] is None
+            run_kwargs["priority"] = "high"
+    
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
         executable_desc = executable_describe or executable.describe()
@@ -4525,8 +4553,8 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
                                      prog='dx build',
                                      parents=[env_args, stdout_args])
 
-app_options = build_parser.add_argument_group('options for creating apps', '(Only valid when --app/--create-app is specified)')
-applet_and_workflow_options = build_parser.add_argument_group('options for creating applets or workflows', '(Only valid when --app/--create-app is NOT specified)')
+app_and_globalworkflow_options = build_parser.add_argument_group('options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
+applet_and_workflow_options = build_parser.add_argument_group('options for creating applets or workflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is NOT specified)')
 
 # COMMON OPTIONS
 build_parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
@@ -4543,7 +4571,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="App, applet, or workflow source directory (default: current directory)", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json or dxworkflow.json. (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4569,12 +4597,12 @@ build_parser.add_argument("--dry-run", "-n", help="Do not create an app(let): on
 build_parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
 
 # --[no-]publish
-app_options.set_defaults(publish=False)
-app_options.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
+app_and_globalworkflow_options.set_defaults(publish=False)
+app_and_globalworkflow_options.add_argument("--publish", help="Publish the resulting app/globalworkflow and make it the default.", action="store_true",
                          dest="publish")
-app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
-app_options.add_argument("--from", help="ID of an applet to create an app from. Source directory cannot be given with this option",
-                          dest="_from").completer = DXPathCompleter(classes=['applet'])
+app_and_globalworkflow_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
+app_and_globalworkflow_options.add_argument("--from", help="ID of the source applet/workflow to create an app/globalworkflow from. Source directory cannot be given with this option",
+                          dest="_from").completer = DXPathCompleter(classes=['applet','workflow'])
 
 
 # --[no-]remote
@@ -4587,9 +4615,9 @@ applet_and_workflow_options.add_argument("-f", "--overwrite", help="Remove exist
                             action="store_true", default=False)
 applet_and_workflow_options.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
                             action="store_true", default=False)
-build_parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None,
+build_parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest. This option needs to be specified when using --from option.", default=None,
                     dest="version_override", metavar='VERSION')
-app_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.",
+app_and_globalworkflow_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app/globalworkflow.",
                          default=None, dest="bill_to", metavar='USER_OR_ORG')
 
 # --[no-]check-syntax
@@ -4598,13 +4626,13 @@ build_parser.add_argument("--check-syntax", help=argparse.SUPPRESS, action="stor
 build_parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors)", action="store_false", dest="check_syntax")
 
 # --[no-]version-autonumbering
-app_options.set_defaults(version_autonumbering=True)
-app_options.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
-app_options.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
+app_and_globalworkflow_options.set_defaults(version_autonumbering=True)
+app_and_globalworkflow_options.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
+app_and_globalworkflow_options.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
 # --[no-]update
-app_options.set_defaults(update=True)
-app_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
-app_options.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
+app_and_globalworkflow_options.set_defaults(update=True)
+app_and_globalworkflow_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
+app_and_globalworkflow_options.add_argument("--no-update", help="Never update an existing unpublished app/globalworkflow in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
 build_parser.set_defaults(dx_toolkit_autodep="stable")
 build_parser.add_argument("--dx-toolkit-legacy-git-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="git")
@@ -4618,12 +4646,12 @@ build_parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="st
 build_parser.add_argument("--no-parallel-build", help="Build with " + BOLD("make") + " instead of " + BOLD("make -jN") + ".", action="store_false",
                     dest="parallel_build")
 
-app_options.set_defaults(use_temp_build_project=True)
+app_and_globalworkflow_options.set_defaults(use_temp_build_project=True)
 # Original help: "When building an app, build its applet in the current project instead of a temporary project".
-app_options.add_argument("--no-temp-build-project", help=argparse.SUPPRESS, action="store_false", dest="use_temp_build_project")
+app_and_globalworkflow_options.add_argument("--no-temp-build-project", help="When building an app in a single region, build its applet in the current project instead of a temporary project.", action="store_false", dest="use_temp_build_project")
 
 # --yes
-app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
+app_and_globalworkflow_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
 
 # --[no-]json (undocumented): dumps the JSON describe of the app or
 # applet that was created. Useful for tests.
@@ -4634,7 +4662,7 @@ build_parser.add_argument("--extra-args", help="Arguments (in JSON format) to pa
 build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 
 # --region
-app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
+app_and_globalworkflow_options.add_argument("--region", action="append", help="Enable the app/globalworkflow in this region. This flag can be specified multiple times to enable the app/globalworkflow in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
 
 # --keep-open
 build_parser.add_argument('--keep-open', help=fill("Do not close workflow after building it. Cannot be used when building apps, applets or global workflows.",
@@ -4778,7 +4806,7 @@ parser_list_database_files = subparsers_list_database.add_parser(
     parents=[env_args],
     prog='dx list database files'
 )
-parser_list_database_files.add_argument('database', help='ID of the database.')
+parser_list_database_files.add_argument('database', help='Data object ID or path of the database.')
 parser_list_database_files.add_argument('--folder', default='/', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. The default value is "/" which will start the search at the root folder of the database.')
 parser_list_database_files.add_argument("--recurse", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
 parser_list_database_files.add_argument("--csv", default=False, help='Write output as comma delimited fields, suitable as CSV format.', action='store_true')
@@ -4988,7 +5016,7 @@ parser_run.add_argument('-h', '--help', help='show this help message and exit', 
 parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments. When using an analysis with --clone a workflow executable cannot be overriden and should not be provided.)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', dest='alias',
                         help=fill('Alias (tag) or version of the app to run (default: "default" if an app)', width_adjustment=-24))
-parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results. By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--batch-folders', dest='batch_folders',
                         help=fill('Output results to separate folders, one per batch, using batch ID as the name of the output folder. The batch output folder location will be relative to the path set in --destination', width_adjustment=-24),
                         action='store_true')
@@ -5016,19 +5044,20 @@ parser_run.add_argument('--delay-workspace-destruction',
                         action='store_true')
 parser_run.add_argument('--priority',
                         choices=['low', 'normal', 'high'],
-                        help='Request a scheduling priority for all resulting jobs. Will be overriden (set to high) ' +
-                             'when either --watch, --ssh, or --allow-ssh flags are used')
+                        help=fill('Request a scheduling priority for all resulting jobs. ' +
+                                  'Defaults to high when --watch, --ssh, or --allow-ssh flags are used.', 
+                                  width_adjustment=-24))
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
-parser_run.add_argument('--watch', help="Watch the job after launching it; sets --priority high", action='store_true')
+parser_run.add_argument('--watch', help="Watch the job after launching it. Defaults --priority to high.", action='store_true')
 parser_run.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
-                        help=fill('Configure the job to allow SSH access; sets --priority high. If an argument is ' +
+                        help=fill('Configure the job to allow SSH access. Defaults --priority to high. If an argument is ' +
                                   'supplied, it is interpreted as an IP or hostname mask to allow connections from, ' +
                                   'e.g. "--allow-ssh 1.2.3.4 --allow-ssh berkeley.edu"',
                                   width_adjustment=-24))
 parser_run.add_argument('--ssh',
-                        help=fill("Configure the job to allow SSH access and connect to it after launching; " +
-                                  "sets --priority high",
+                        help=fill("Configure the job to allow SSH access and connect to it after launching. " +
+                                  "Defaults --priority to high.",
                                   width_adjustment=-24),
                         action='store_true')
 parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),

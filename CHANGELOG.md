@@ -6,11 +6,48 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [315.0] - beta
+## [318.0] - beta
+
+### Fixed
+
+* Python 3.10 MutableMapping import
+
+### Added
+
+* `--no-temp-build-project` for single region app builds.
+* `--from` option to `dx build` for building a global workflow from a project-based workflow, including a workflow built using WDL
+
+## [317.0] - 2021.12.8 stable
+
+### Fixed
+
+* Reduce file-xxxx/describe API load during `dx upload`
+* `dx get` uses a region compatible with user's billTo when downloading resources
+
+### Changed
+ 
+* `dx run` warns users if priority is specified as low/normal when using '--watch/ssh/allow-ssh'
+
+## [316.0] - 2021.11.17 
+
+### Added
+
+* Support for dxpy on macOS arm64
+* Path input for `dx list database files`
+
+### Fixed
+
+* Python 3 SSH Host key output in `dx describe job-xxxx`
+
+### Changed
+
+* dxpy dependencies cryptography, websocket-client, colorama, requests
+
+## [315.0] - 2021.10.28 
 
 * No significant changes
 
-## [314.0] - 2021.08.27 stable
+## [314.0] - 2021.08.27 
 
 ### Added
 

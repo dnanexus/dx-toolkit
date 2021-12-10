@@ -55,13 +55,13 @@ toolkit that doesn't require them.
 
 ### Ubuntu 20.04
 
-    sudo apt install python-is-python3 python3-venv libssl-dev flex bison
+    sudo apt install python-is-python3 python3-venv libssl-dev flex bison libffi-dev
 
 ### Ubuntu 16.04
 
     sudo apt install make python-setuptools python-pip python-virtualenv python-dev \
       gcc g++ cmake libboost-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
-      openssl libssl-dev autoconf
+      openssl libssl-dev autoconf git curl
 
 If your locale is not configured properly, you might need to run following commands as well (i.e. when working from Cloud Workstation):
     

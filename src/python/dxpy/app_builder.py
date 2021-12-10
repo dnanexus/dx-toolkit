@@ -904,7 +904,7 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
         if authorized_users_to_add:
             dxpy.api.app_add_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_add)})
         if skip_adding_public:
-            logger.warn('the app was NOT made public as requested in the dxapp.json. To make it so, run "dx add users app-%s PUBLIC".' % (app_spec["name"],))
+            logger.warn('the app was NOT made public as requested in the app spec. To make it so, run "dx add users app-%s PUBLIC".' % (app_spec["name"],))
 
         if authorized_users_to_remove:
             dxpy.api.app_remove_authorized_users(app_id, input_params={'authorizedUsers': list(authorized_users_to_remove)})
@@ -912,7 +912,7 @@ def _create_app(applet_or_regional_options, app_name, src_dir, publish=False, se
     elif not len(existing_authorized_users) and not brief:
         # Apps that had authorized users added by any other means will
         # not have this message printed.
-        logger.warn('authorizedUsers is missing from the dxapp.json. No one will be able to view or run the app except the app\'s developers.')
+        logger.warn('authorizedUsers is missing from the app spec. No one will be able to view or run the app except the app\'s developers.')
 
     if publish:
         dxpy.api.app_publish(app_id, input_params={'makeDefault': set_default})
