@@ -3253,9 +3253,13 @@ def run(args):
     if args.allow_ssh is not None:
         args.allow_ssh = [i for i in args.allow_ssh if i is not None]
     if args.allow_ssh == [] or ((args.ssh or args.debug_on) and not args.allow_ssh):
-        args.allow_ssh = [get_client_ip()] 
+        client_ip = get_client_ip()
+        args.allow_ssh = [client_ip]
+        print("Opening ssh firewall to your IP, detected as '{}'. To change the permitted IP, use --allow-ssh".format(client_ip))
     if args.ssh_proxy and not args.ssh:
         err_exit(exception=DXCLIError("Option --ssh-proxy cannot be specified without --ssh"))
+    if args.ssh_proxy:
+        args.allow_ssh.append(args.ssh_proxy.split(':'[0]))
     if args.ssh or args.allow_ssh or args.debug_on:
         verify_ssh_config()
 
@@ -3613,9 +3617,11 @@ def ssh(args, ssh_config_verified=False):
         if args.allow_ssh is not None:
             args.allow_ssh = [i for i in args.allow_ssh if i is not None]
         else:
-            # Get client IP from backedn if --allow-ssh not provided
+            # Get client IP from API if --allow-ssh not provided
             args.allow_ssh = [get_client_ip()]
-        # If client IP or args.allow-ssh already exist in job's allowSSH, skip firewall update
+        if args.ssh_proxy:
+            args.allow_ssh.append(args.ssh_proxy.split(':')[0])
+        # If client IP or args.allow_ssh already exist in job's allowSSH, skip firewall update
         if not all(ip in job_allow_ssh for ip in args.allow_ssh):
             # Append new IPs to existing job allowSSH
             for ip in args.allow_ssh:
