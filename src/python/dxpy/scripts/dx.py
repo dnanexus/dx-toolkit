@@ -3249,19 +3249,26 @@ SPECIFYING JSON INPUT
 def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
-
+    client_ip = None
     if args.allow_ssh is not None:
-        args.allow_ssh = [i for i in args.allow_ssh if i is not None]
-    if args.allow_ssh == [] or ((args.ssh or args.debug_on) and not args.allow_ssh):
+        for i, ip in enumerate(args.allow_ssh):
+            if ip is None:
+                if client_ip is not None:
+                    del args.allow_ssh[i]
+                else:
+                    client_ip = get_client_ip()  
+                    args.allow_ssh[i] = client_ip
+    if args.allow_ssh is None or ((args.ssh or args.debug_on) and not args.allow_ssh):
         client_ip = get_client_ip()
         args.allow_ssh = [client_ip]
-        print("Opening ssh firewall to your IP, detected as '{}'. To change the permitted IP, use --allow-ssh".format(client_ip))
     if args.ssh_proxy and not args.ssh:
         err_exit(exception=DXCLIError("Option --ssh-proxy cannot be specified without --ssh"))
     if args.ssh_proxy:
         args.allow_ssh.append(args.ssh_proxy.split(':'[0]))
     if args.ssh or args.allow_ssh or args.debug_on:
         verify_ssh_config()
+    if not args.brief:
+        print("Setting allowed IP ranges for SSH to '{}'. Detected client IP as '{}'".format(', '.join(args.allow_ssh), client_ip))
 
     try_call(process_extra_args, args)
     try_call(process_properties_args, args)
