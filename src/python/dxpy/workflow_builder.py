@@ -39,7 +39,7 @@ UPDATABLE_GLOBALWF_FIELDS = {'title', 'summary', 'description', 'developerNotes'
 GLOBALWF_SUPPORTED_KEYS = UPDATABLE_GLOBALWF_FIELDS.union({"name", "version", "regionalOptions",
                                                            "categories", "billTo", "dxapi", "tags"})
 SUPPORTED_KEYS = GLOBALWF_SUPPORTED_KEYS.union({"project", "folder", "outputFolder", "stages",
-                                                "inputs", "outputs", "ignoreReuse"})
+                                                "inputs", "outputs", "ignoreReuse", "properties"})
 
 class WorkflowBuilderException(Exception):
     """
