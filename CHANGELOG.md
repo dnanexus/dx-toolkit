@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Incorrect setting of the `folder` input option when building global workflows
+
+### Added
+
+* Setting properties when building global workflows
+
 ## [318.0] - beta
 
 ### Fixed
