@@ -39,7 +39,7 @@ UPDATABLE_GLOBALWF_FIELDS = {'title', 'summary', 'description', 'developerNotes'
 GLOBALWF_SUPPORTED_KEYS = UPDATABLE_GLOBALWF_FIELDS.union({"name", "version", "regionalOptions",
                                                            "categories", "billTo", "dxapi", "tags"})
 SUPPORTED_KEYS = GLOBALWF_SUPPORTED_KEYS.union({"project", "folder", "outputFolder", "stages",
-                                                "inputs", "outputs", "ignoreReuse"})
+                                                "inputs", "outputs", "ignoreReuse", "properties"})
 
 class WorkflowBuilderException(Exception):
     """
@@ -520,7 +520,10 @@ def _build_underlying_workflows(enabled_regions, json_spec, args):
 
     try:
         for region, project in projects_by_region.items():
+            # Override workflow project ID and folder in workflow spec 
+            # when building underlying workflow in temporary project
             json_spec['project'] = project
+            json_spec['folder'] = '/'
             workflow_id = _build_regular_workflow(json_spec)
             logger.debug("Created workflow " + workflow_id + " successfully")
             workflows_by_region[region] = workflow_id
