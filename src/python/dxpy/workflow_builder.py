@@ -520,7 +520,10 @@ def _build_underlying_workflows(enabled_regions, json_spec, args):
 
     try:
         for region, project in projects_by_region.items():
+            # Override workflow project ID and folder in workflow spec 
+            # when building underlying workflow in temporary project
             json_spec['project'] = project
+            json_spec['folder'] = '/'
             workflow_id = _build_regular_workflow(json_spec)
             logger.debug("Created workflow " + workflow_id + " successfully")
             workflows_by_region[region] = workflow_id
