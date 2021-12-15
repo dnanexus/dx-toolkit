@@ -380,11 +380,11 @@ def _file_handler_as_link(dxfile: dxpy.DXFile) -> dict:
 
 
 def download_file(
-    remote_file: Union[str, dict],
+    remote_file: Union[str, dict, dxpy.DXFile],
     skip_decompress: bool = False,
     skip_unpack: bool = False,
     remote_filename: Optional[str] = None,
-    local_filename: Optional[str] = None,
+    local_path: Optional[Path] = None,
     output_dir: Optional[Path] = None,
     project: Optional[str] = None,
     block: bool = True,
@@ -403,7 +403,7 @@ def download_file(
             input_file. If not provided, platform filename is used.
         skip_decompress: Whether to skip decompressing files of type *.gz.
         skip_unpack: Whether to skip unpacking archive files (.tar.*).
-        local_filename: Local file where the data is to be saved.
+        local_path: Local file where the data is to be saved.
         output_dir: Download file to a specific directory (default is the current directory).
         project: The ID of the project that contains the file, if it is not the currently selected
             project and is not specified in the remote file object/link.
@@ -446,17 +446,17 @@ def download_file(
         return download_and_unpack_archive(
             remote_file,
             remote_filename,
-            local_filename,
+            local_path,
             output_dir,
             block,
             list_contents,
         )
     elif unzip:
         return download_and_decompress_file(
-            remote_file, remote_filename, local_filename, output_dir, block
+            remote_file, remote_filename, local_path, output_dir, block
         )
     else:
-        return simple_download_file(remote_file, local_filename, output_dir, block)
+        return simple_download_file(remote_file, local_path, output_dir, block)
 
 
 def simple_download_file(
