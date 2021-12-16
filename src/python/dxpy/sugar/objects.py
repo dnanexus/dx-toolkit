@@ -330,6 +330,9 @@ def get_globalworkflow(
         except dxpy.DXError:
             pass
 
+    if workflow_desc.startswith("globalworkflow-"):
+        workflow_desc = workflow_desc[15:]
+    
     kwargs["limit"] = 2
     candidates = dxpy.find_global_workflows(**kwargs)
     workflow = next(candidates, None)
