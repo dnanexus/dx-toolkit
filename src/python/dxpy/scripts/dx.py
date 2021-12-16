@@ -3268,7 +3268,7 @@ def run(args):
     if args.ssh or args.allow_ssh or args.debug_on:
         verify_ssh_config()
     if not args.brief and client_ip is not None:
-        print("Detected client IP as '{}'. Setting allowed IP ranges to '{}'. To change the permitted IP addresses, use --allow-ssh.".format(client_ip, ', '.join(args.allow_ssh)))
+        print("Detected client IP as '{}'. Setting allowed IP ranges to '{}'. To change the permitted IP addresses use --allow-ssh.".format(client_ip, ', '.join(args.allow_ssh)))
 
     try_call(process_extra_args, args)
     try_call(process_properties_args, args)
