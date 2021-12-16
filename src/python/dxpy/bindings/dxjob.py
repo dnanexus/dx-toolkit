@@ -245,7 +245,7 @@ class DXJob(DXObject):
     def update(self, allow_ssh, **kwargs):
         """
         :param allow_ssh: Allowable IP ranges to set for SSH access to the job
-        :type allow_ssh: list of IP ranges
+        :type allow_ssh: list of strings
 
         Updates a job's allowSSH field, overwrites existing values
 

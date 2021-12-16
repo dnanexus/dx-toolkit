@@ -3256,7 +3256,7 @@ def run(args):
                 if client_ip is not None:
                     del args.allow_ssh[i]
                 else:
-                    client_ip = get_client_ip()  
+                    client_ip = get_client_ip()
                     args.allow_ssh[i] = client_ip
     if args.allow_ssh is None or ((args.ssh or args.debug_on) and not args.allow_ssh):
         client_ip = get_client_ip()
@@ -3267,8 +3267,8 @@ def run(args):
         args.allow_ssh.append(args.ssh_proxy.split(':'[0]))
     if args.ssh or args.allow_ssh or args.debug_on:
         verify_ssh_config()
-    if not args.brief:
-        print("Setting allowed IP ranges for SSH to '{}'. Detected client IP as '{}'".format(', '.join(args.allow_ssh), client_ip))
+    if not args.brief and client_ip is not None:
+        print("Detected client IP as '{}'. Setting allowed IP ranges to '{}'. To change the permitted IP addresses, use --allow-ssh.".format(client_ip, ', '.join(args.allow_ssh)))
 
     try_call(process_extra_args, args)
     try_call(process_properties_args, args)
