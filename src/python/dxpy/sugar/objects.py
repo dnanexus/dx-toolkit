@@ -20,6 +20,7 @@ import dxpy
 import dxpy.api
 from dxpy.utils import resolver
 from dxpy.sugar import get_log
+from python.dxpy.bindings.dxproject import DXProject
 
 
 LOG = get_log(__name__)
@@ -133,7 +134,7 @@ def ensure_folder(
     project: Optional[Union[str, dxpy.DXProject]] = None,
     exists: Optional[bool] = None,
     create: bool = False,
-) -> dict:
+) -> list:
     """Checks that the given project contains (or does not contain) the given folder. The folder is
     created if it does not exist and `create is True`.
 
@@ -188,8 +189,8 @@ def ensure_folder(
 
 
 def get_data_object(
-    data_obj_desc: Union[str, dxpy.DXDataObject],
-    project: Optional[str] = None,
+    data_obj_desc: Union[str, dict, dxpy.DXDataObject],
+    project: Optional[Union[str, dxpy.DXProject]] = None,
     classname: Optional[str] = None,
     exists: Optional[bool] = None,
     **kwargs,
@@ -198,7 +199,8 @@ def get_data_object(
     Gets a data object by name or ID.
 
     Args:
-        data_obj_desc: ID or name of the data object, or an instance of DXDataObject.
+        data_obj_desc: ID or name of the data object, a dxlink, or an instance of
+            `dxpy.DXDataObject`.
         project: The project in which to get the data object. Defaults to the current project.
         classname: Classname of the data object; can be any data object class (e.g. "file",
             "record", or "database"), "*", or `None`. If either "*" or `None` is specified, the
@@ -211,7 +213,7 @@ def get_data_object(
         **kwargs: Additional keyword arguments to use when searching for the data object.
 
     Returns:
-        A DXDataObject object.
+        A `dxpy.DXDataObject` object.
 
     Raises:
         dxpy.DXSearchError if the data object does exist and `exists is False` or if the data
@@ -227,6 +229,8 @@ def get_data_object(
     if isinstance(data_obj_desc, dxpy.DXDataObject):
         data_obj = data_obj_desc
         search = False
+    elif isinstance(data_obj_desc, dict):
+        data_obj = dxpy.get_handler(data_obj_desc, project.get_id())
     elif resolver.is_data_obj_id(data_obj_desc):
         data_obj = dxpy.get_handler(data_obj_desc, project.get_id())
 
@@ -264,8 +268,8 @@ def get_data_object(
 
 
 def get_workflow(
-    workflow_desc: Union[str, dxpy.DXWorkflow, dxpy.DXGlobalWorkflow],
-    project: Optional[str] = None,
+    workflow_desc: Union[str, dict, dxpy.DXWorkflow, dxpy.DXGlobalWorkflow],
+    project: Optional[Union[str, dxpy.DXProject]] = None,
 ) -> Union[dxpy.DXWorkflow, dxpy.DXGlobalWorkflow]:
     """
     Searches for a project workflow or global workflow with the given ID or name. This is a
@@ -273,13 +277,13 @@ def get_workflow(
     project workflow or a global workflow as a paramter to an app.
 
     Args:
-        workflow_desc: A workflow ID (either 'workflow-xxx' or 'globalworkflow-xxx'), name, or
-            DXWorkflow or DXGlobalWorkflow object.
-        project: Project ID or DXProject object. The project to search for the workflow; if not
-            found here it is expected to be a global workflow.
+        workflow_desc: A workflow ID (either 'workflow-xxx' or 'globalworkflow-xxx') or name,
+            a dxlink, or a `dxpy.DXWorkflow` or `dxpy.DXGlobalWorkflow` object.
+        project: Project ID or `dxpy.DXProject` object. The project to search for the workflow; if
+            not found here it is expected to be a global workflow.
 
     Returns:
-        A DXWorkflow or DXGlobalWorkflow object.
+        A `dxpy.DXWorkflow` or `dxpy.DXGlobalWorkflow    object.
 
     Raises:
         * dxpy.DXSearchError if the workflow does not exist.
@@ -298,17 +302,18 @@ def get_workflow(
 
 
 def get_globalworkflow(
-    workflow_desc: Union[str, dxpy.DXGlobalWorkflow], **kwargs
+    workflow_desc: Union[str, dict, dxpy.DXGlobalWorkflow], **kwargs
 ) -> dxpy.DXGlobalWorkflow:
     """
     Gets the global workflow with the given ID or name.
 
     Args:
-        workflow_desc: The globalworkflow ID or name, or a `dxpy.DXGlobalWorkflow` instance.
+        workflow_desc: The globalworkflow ID or name, a dxlink, or a `dxpy.DXGlobalWorkflow`
+            instance.
         kwargs: Additional kwargs to use when looking up the globalworkflow by name.
 
     Returns:
-        A DXGlobalWorkflow object.
+        A `dxpy.DXGlobalWorkflow` object.
 
     Raises:
         * dxpy.DXSearchError if the globalworkflow does not exist.
@@ -321,6 +326,9 @@ def get_globalworkflow(
     if isinstance(workflow_desc, dxpy.DXGlobalWorkflow):
         return workflow_desc
 
+    if isinstance(workflow_desc, dict):
+        return dxpy.get_handler(workflow_desc)
+
     if resolver.is_hashid(workflow_desc):
         try:
             LOG.info("Checking if globalworkflow with ID %s exists", workflow_desc)
@@ -332,7 +340,7 @@ def get_globalworkflow(
 
     if workflow_desc.startswith("globalworkflow-"):
         workflow_desc = workflow_desc[15:]
-    
+
     kwargs["limit"] = 2
     candidates = dxpy.find_global_workflows(**kwargs)
     workflow = next(candidates, None)
@@ -345,8 +353,8 @@ def get_globalworkflow(
 
 
 def get_app_or_applet(
-    app_or_applet_desc: Union[str, dxpy.DXApp, dxpy.DXApplet],
-    project: Optional[str] = None,
+    app_or_applet_desc: Union[str, dict, dxpy.DXApp, dxpy.DXApplet],
+    project: Optional[Union[str, dxpy.DXProject]] = None,
 ) -> Union[dxpy.DXApp, dxpy.DXApplet]:
     """
     Gets an app(let) by its ID or name. This is a convenience method for resolving an a app(let)
@@ -354,11 +362,12 @@ def get_app_or_applet(
     app.
 
     Args:
-        app_or_applet_desc: ID or name of the app/applet, or an instance of DXApp or DXApplet.
-        project: name, ID, or DXProject object of project containing applet.
+        app_or_applet_desc: ID or name of the app/applet, a dxlink, or an instance of `dxpy.DXApp`
+            or `dxpy.DXApplet`.
+        project: name, ID, or `dxpy.DXProject` object of project containing applet.
 
     Returns:
-        DXApp or DXApplet object.
+        `dxpy.DXApp  or `dxpy.DXApplet` object.
 
     Raises:
         * dxpy.DXSearchError if the app(let) does not exist.
@@ -367,6 +376,9 @@ def get_app_or_applet(
     """
     if isinstance(app_or_applet_desc, (dxpy.DXApp, dxpy.DXApplet)):
         return app_or_applet_desc
+
+    if isinstance(app_or_applet_desc, dict):
+        return dxpy.get_handler(app_or_applet_desc)
 
     if app_or_applet_desc.startswith("applet-"):
         app = get_data_object(app_or_applet_desc, project, classname="applet")
@@ -386,7 +398,7 @@ def get_app_or_applet(
 
 
 def get_app(
-    app_desc: Union[str, dxpy.DXApp], version: Optional[str] = None, **kwargs
+    app_desc: Union[str, dict, dxpy.DXApp], version: Optional[str] = None, **kwargs
 ) -> dxpy.DXApp:
     """
     Gets the app with the given ID or name.
@@ -405,6 +417,9 @@ def get_app(
     """
     if isinstance(app_desc, dxpy.DXApp):
         return app_desc
+
+    if isinstance(app_desc, dict):
+        return dxpy.get_handler(app_desc)
 
     if resolver.is_hashid(app_desc):
         try:

@@ -16,9 +16,9 @@
 import dxpy
 from functools import wraps
 import logging
-from pathlib import Path
 import re
 import sys
+from typing import Callable, Optional
 
 import psutil
 
@@ -32,7 +32,7 @@ def in_worker_context() -> bool:
     return dxpy.JOB_ID is not None
 
 
-def requires_worker_context(func):
+def requires_worker_context(func: Callable) -> Callable:
     """Decorator that checks a given function is running within a DNAnexus job context."""
 
     @wraps(func)
@@ -48,7 +48,7 @@ def requires_worker_context(func):
     return check_job_id
 
 
-def get_log(name, level=logging.INFO):
+def get_log(name: str, level: int = logging.INFO) -> logging.Logger:
     """
     Gets a logger with the given name and level. Uses a different handler depending on whether this
     function is called from within a job context.
@@ -74,7 +74,7 @@ def get_log(name, level=logging.INFO):
 
 
 @requires_worker_context
-def available_memory(suffix="M"):
+def available_memory(scale: Optional[str] = "M") -> float:
     """Queries a worker's /proc/meminfo for available memory and returns a float of the specified
     suffix size.
 
@@ -82,23 +82,25 @@ def available_memory(suffix="M"):
     on /proc/meminfo, which only exists on Linux systems.
 
     Args:
-        suffix (str): One of 'M', 'K' or 'G' to return memory in Mib, KiB or GiB, respectively.
-        meminfo_path: Path to /proc/meminfo, or a file that contains compatible output.
+        scale: One of 'K', 'M', or 'G' to return memory in KiB, Mib, or GiB, respectively. If
+        `None`, then the size is returned in bytes.
 
     Returns:
-        float: total_memory read from meminfo in KiB, MiB, or GiB depending on specified suffix.
+        float: available memory in bytes, KiB, MiB, or GiB depending on specified scale.
 
     Raises:
-        ValueError if `suffix` is not a valid suffix.
-        dxpy.AppInternalError is raised if `meminfo_path` cannot be read or is not of the expected
-        format.
+        ValueError if `scale` is not a valid scale.
     """
-    suffix = suffix.upper()
-    if suffix not in MEM_CONVERSIONS:
-        raise ValueError(
-            f"Unknown memory suffix {suffix}. Please choose from "
-            f"{','.join(MEM_CONVERSIONS.keys())}."
-        )
+    available_mem = float(psutil.virtual_memory().available)
 
-    available_mem = psutil.virtual_memory().available
-    return float(available_mem) / MEM_CONVERSIONS[suffix]
+    if scale is None:
+        return available_mem
+    else:
+        scale = scale.upper()
+        if scale not in MEM_CONVERSIONS:
+            raise ValueError(
+                f"Unknown memory suffix {scale}. Please choose from "
+                f"{','.join(MEM_CONVERSIONS.keys())}."
+            )
+
+        return available_mem / MEM_CONVERSIONS[scale]

@@ -76,7 +76,7 @@ class UserContext:
 
 
 @contextmanager
-def set_env(environ: dict, override: bool = False):
+def set_env(environ: dict, override: bool = False) -> None:
     """
     Context manager generator to temporarily set the subprocess environment variables.
 
@@ -161,28 +161,35 @@ class cd:
     """
 
     def __init__(self, target_path: Optional[Path] = None, cleanup: bool = True):
+        self._saved_path = None
         if target_path is not None and target_path.exists():
-            self.new_path = target_path
-            self.remove_folder = False
+            self._new_path = target_path
+            self._remove_folder = False
         else:
-            self.new_path = Path(tempfile.mkdtemp(dir=target_path))
-            self.remove_folder = cleanup
+            self._new_path = Path(tempfile.mkdtemp(dir=target_path))
+            self._remove_folder = cleanup
 
     def __enter__(self):
-        self.saved_path = Path.cwd()
-        os.chdir(self.new_path)
+        self._saved_path = Path.cwd()
+        os.chdir(self._new_path)
 
     def __exit__(self, etype, value, traceback):
-        os.chdir(self.saved_path)
-        if self.remove_folder:
+        os.chdir(self._saved_path)
+        if self._remove_folder:
             try:
-                shutil.rmtree(self.new_path)
+                shutil.rmtree(self._new_path)
             except:
-                LOG.error("error deleting directory %s", self.new_path, exc_info=True)
+                LOG.error("error deleting directory %s", self._new_path, exc_info=True)
+
+    @property
+    def path(self) -> Path:
+        if self._new_path is None:
+            raise RuntimeError("cannot call 'path' outside of context manager")
+        return self._new_path
 
 
 @contextmanager
-def fifo(path: Optional[Path] = None):
+def fifo(path: Optional[Path] = None) -> Path:
     """
     Creates a FIFO, yield it, and deletes it before exiting.
 
@@ -205,7 +212,7 @@ def fifo(path: Optional[Path] = None):
 
 
 @contextmanager
-def tmpfile(*args, **kwargs):
+def tmpfile(*args, **kwargs) -> Path:
     """
     Creates a temporary file, yields it, and deletes it before returning.
 
