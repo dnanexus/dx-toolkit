@@ -40,14 +40,12 @@ def run(
     Runs several commands that pipe to each other in a python-aware way.
 
     Args:
-        cmds: Any number of commands (lists or strings) to pipe together. This may be
-            a string, in which case it will be split on the pipe ('|') character to
-            get the component commands.
-        shell: Can be a boolean specifying whether to execute the command
-            using the shell, or a string value specifying the shell executable to use
-            (which also implies shell=True). If None, the value is auto-detected: `False` if `cmds`
-            is a string or an array of strings, otherwise `True`. If False, the command is executed
-            via the default shell (which, according to the subprocess docs, is /bin/sh).
+        cmds: Any number of commands (lists or strings) to pipe together. This may be a string, in
+            which case it will be split on the pipe ('|') character to get the component commands.
+        shell: Can be a boolean specifying whether to execute the command using the shell, or a
+            string value specifying the shell executable to use (which also implies `shell=True`).
+            If `None`, the value is auto-detected - `True` if `cmds` is a string otherwise `False. If `true` the command is executed via the default shell (which, according to the
+            `subprocess` docs, is `/bin/sh`).
         mode: I/O mode; can be str (text) or bytes (raw).
         block: Whether to block until all processes have completed.
         kwargs: Additional keyword arguments to pass to :class:`Processes` constructor.
