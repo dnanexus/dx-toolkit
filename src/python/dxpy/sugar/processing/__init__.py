@@ -93,13 +93,13 @@ def run(
     if isinstance(cmds, str):
         cmds = [c.strip() for c in cmds.split("|")]
         if shell is None:
-            shell = False
+            shell = True
     else:
         cmds = list(cmds)
         if len(cmds) == 0:
             raise ValueError("'cmds' cannot be an empty list")
         if shell is None:
-            shell = not isinstance(cmds[0], str)
+            shell = False
 
     if shell:
         cmds = utils.command_lists_to_strings(cmds)
