@@ -304,7 +304,6 @@ def tar_and_upload_files(
             f"dx upload --brief --buffer-size {max_part_size} --path {remote_path} "
             f"{'--wait' if wait_on_close else ''} -"
         )
-
         file_id = processing.sub(cmds)
 
     return _wrap_file_id(file_id, return_handler)

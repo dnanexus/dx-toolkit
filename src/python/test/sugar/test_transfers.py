@@ -1,4 +1,3 @@
-from __future__ import print_function, unicode_literals, division, absolute_import
 import gzip
 import os
 from pathlib import Path
@@ -6,7 +5,7 @@ import subprocess
 import unittest
 
 from . import isolated_dir, make_random_files, random_name
-from dxpy_testutil import run
+from ..dxpy_testutil import run
 
 import dxpy
 import dxpy.sugar.transfers as xfer
@@ -54,8 +53,14 @@ class TestUpload(unittest.TestCase):
             run("tar -xzf {}".format(local_name))
             run("rm {}".format(local_name))
 
-            untarred_files = os.listdir(".")
-            self.assertEqual(len(filenames), len(untarred_files))
+            untarred_files = [
+                os.path.join(dp, f) for dp, _, fn in os.walk(".") for f in fn
+            ]
+            self.assertEqual(
+                len(filenames),
+                len(untarred_files),
+                f"files are different: expected {filenames}, actual {untarred_files}",
+            )
 
             for i, fname in enumerate(filenames):
                 self.assertTrue(os.path.exists(fname))
@@ -130,7 +135,8 @@ class TestUpload(unittest.TestCase):
         with isolated_dir():
             plain_file = make_random_files(1)[0]
             to_zip_file = make_random_files(1)[0]
-            to_tar_filenames = make_random_files(2)
+            foo_dir = Path("foo")
+            to_tar_filenames = make_random_files(2, subdir=foo_dir)
             dict_files = dict(
                 zip(("dict_file_{}".format(i) for i in range(2)), make_random_files(2))
             )
@@ -143,9 +149,7 @@ class TestUpload(unittest.TestCase):
             ) as up:
                 up.enqueue_file("plain_file", plain_file, skip_compress=True)
                 up.enqueue_file("zip_file", to_zip_file)
-                up.enqueue_list(
-                    "tar_file", to_tar_filenames, archive=True, prefix="test"
-                )
+                up.enqueue_list("tar_file", [foo_dir], archive=True, prefix="test")
                 up.enqueue_dict(dict_files, skip_compress=True)
                 result = up.wait()
 
@@ -154,7 +158,7 @@ class TestUpload(unittest.TestCase):
                 {"plain_file", "zip_file", "tar_file", "dict_file_0", "dict_file_1"},
                 set(result.keys()),
             )
-            for key, val in result.items():
+            for _, val in result.items():
                 self.assertIsInstance(val, dxpy.DXFile)
 
             self.assertEqual("test0", result["plain_file"].read())
