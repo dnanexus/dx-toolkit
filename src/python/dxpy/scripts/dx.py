@@ -2535,13 +2535,13 @@ def build(args):
         """
         if args._from is not None:
             if not is_hashid(args._from):
-                build_parser.error('--from option only accepts a DNAnexus applet ID')
+                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
             if args._from.startswith("applet"):
                 return "app"
             elif args._from.startswith("workflow"):
-                build_parser.error('--from option with a workflow is not supported')
+                return "globalworkflow"
             else:
-                build_parser.error('--from option only accepts a DNAnexus applet ID')
+                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
 
         if not os.path.isdir(args.src_dir):
             parser.error("{} is not a directory".format(args.src_dir))
@@ -2570,6 +2570,9 @@ def build(args):
         """
         if args.mode == "app" and args.destination != '.':
             build_parser.error("--destination cannot be used when creating an app (only an applet)")
+        
+        if args.mode == "globalworkflow" and args.destination != '.':
+            build_parser.error("--destination cannot be used when creating a global workflow (only a workflow)")
 
         if args.mode == "applet" and args.region:
             build_parser.error("--region cannot be used when creating an applet (only an app)")
@@ -2584,9 +2587,6 @@ def build(args):
             build_parser.error("Options --remote, --app, and --run cannot all be specified together. Try removing --run and then separately invoking dx run.")
 
         # conflicts and incompatibilities with --from
-
-        if args._from is not None and args.region:
-            build_parser.error("Options --from and --region cannot be specified together. The app will be enabled only in the region of the project in which the applet is stored")
 
         if args._from is not None and args.ensure_upload:
             build_parser.error("Options --from and --ensure-upload cannot be specified together")
@@ -2603,17 +2603,17 @@ def build(args):
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
 
-        if args._from is not None and args.mode == "globalworkflow":
-            build_parser.error("building a global workflow using --from is not supported")
+        if args._from is not None and (args.mode != "app" and args.mode != "globalworkflow"):
+            build_parser.error("--from can only be used to build an app from an applet or a global workflow from a project-based workflow")
 
-        if args._from is not None and args.mode != "app":
-            build_parser.error("--from can only be used to build an app from an applet")
+        if args._from is not None and not args.version_override:
+            build_parser.error("--version must be specified when using the --from option")
 
         if args.mode == "app" and args._from is not None and not args._from.startswith("applet"):
             build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
 
-        if args.mode == "app" and args._from is not None and not args.version_override:
-            build_parser.error("--version must be specified when using the --from option")
+        if args.mode == "globalworkflow" and args._from is not None and not args._from.startswith("workflow"):
+            build_parser.error("globalworkflow can only be built from an workflow (--from should be set to an workflow ID)")
 
         if args._from and args.dry_run:
             build_parser.error("Options --dry-run and --from cannot be specified together")
@@ -4587,8 +4587,8 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
                                      prog='dx build',
                                      parents=[env_args, stdout_args])
 
-app_options = build_parser.add_argument_group('options for creating apps', '(Only valid when --app/--create-app is specified)')
-applet_and_workflow_options = build_parser.add_argument_group('options for creating applets or workflows', '(Only valid when --app/--create-app is NOT specified)')
+app_and_globalworkflow_options = build_parser.add_argument_group('options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
+applet_and_workflow_options = build_parser.add_argument_group('options for creating applets or workflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is NOT specified)')
 
 # COMMON OPTIONS
 build_parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
@@ -4605,7 +4605,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="App, applet, or workflow source directory (default: current directory)", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json or dxworkflow.json. (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4631,12 +4631,12 @@ build_parser.add_argument("--dry-run", "-n", help="Do not create an app(let): on
 build_parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
 
 # --[no-]publish
-app_options.set_defaults(publish=False)
-app_options.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
+app_and_globalworkflow_options.set_defaults(publish=False)
+app_and_globalworkflow_options.add_argument("--publish", help="Publish the resulting app/globalworkflow and make it the default.", action="store_true",
                          dest="publish")
-app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
-app_options.add_argument("--from", help="ID of an applet to create an app from. Source directory cannot be given with this option",
-                          dest="_from").completer = DXPathCompleter(classes=['applet'])
+app_and_globalworkflow_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
+app_and_globalworkflow_options.add_argument("--from", help="ID of the source applet/workflow to create an app/globalworkflow from. Source directory cannot be given with this option",
+                          dest="_from").completer = DXPathCompleter(classes=['applet','workflow'])
 
 
 # --[no-]remote
@@ -4649,9 +4649,9 @@ applet_and_workflow_options.add_argument("-f", "--overwrite", help="Remove exist
                             action="store_true", default=False)
 applet_and_workflow_options.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
                             action="store_true", default=False)
-build_parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None,
+build_parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest. This option needs to be specified when using --from option.", default=None,
                     dest="version_override", metavar='VERSION')
-app_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.",
+app_and_globalworkflow_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app/globalworkflow.",
                          default=None, dest="bill_to", metavar='USER_OR_ORG')
 
 # --[no-]check-syntax
@@ -4660,13 +4660,13 @@ build_parser.add_argument("--check-syntax", help=argparse.SUPPRESS, action="stor
 build_parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors)", action="store_false", dest="check_syntax")
 
 # --[no-]version-autonumbering
-app_options.set_defaults(version_autonumbering=True)
-app_options.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
-app_options.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
+app_and_globalworkflow_options.set_defaults(version_autonumbering=True)
+app_and_globalworkflow_options.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
+app_and_globalworkflow_options.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
 # --[no-]update
-app_options.set_defaults(update=True)
-app_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
-app_options.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
+app_and_globalworkflow_options.set_defaults(update=True)
+app_and_globalworkflow_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
+app_and_globalworkflow_options.add_argument("--no-update", help="Never update an existing unpublished app/globalworkflow in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
 build_parser.set_defaults(dx_toolkit_autodep="stable")
 build_parser.add_argument("--dx-toolkit-legacy-git-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="git")
@@ -4680,12 +4680,12 @@ build_parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="st
 build_parser.add_argument("--no-parallel-build", help="Build with " + BOLD("make") + " instead of " + BOLD("make -jN") + ".", action="store_false",
                     dest="parallel_build")
 
-app_options.set_defaults(use_temp_build_project=True)
+app_and_globalworkflow_options.set_defaults(use_temp_build_project=True)
 # Original help: "When building an app, build its applet in the current project instead of a temporary project".
-app_options.add_argument("--no-temp-build-project", help="When building an app in a single region, build its applet in the current project instead of a temporary project.", action="store_false", dest="use_temp_build_project")
+app_and_globalworkflow_options.add_argument("--no-temp-build-project", help="When building an app in a single region, build its applet in the current project instead of a temporary project.", action="store_false", dest="use_temp_build_project")
 
 # --yes
-app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
+app_and_globalworkflow_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
 
 # --[no-]json (undocumented): dumps the JSON describe of the app or
 # applet that was created. Useful for tests.
@@ -4696,7 +4696,7 @@ build_parser.add_argument("--extra-args", help="Arguments (in JSON format) to pa
 build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
 
 # --region
-app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
+app_and_globalworkflow_options.add_argument("--region", action="append", help="Enable the app/globalworkflow in this region. This flag can be specified multiple times to enable the app/globalworkflow in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
 
 # --keep-open
 build_parser.add_argument('--keep-open', help=fill("Do not close workflow after building it. Cannot be used when building apps, applets or global workflows.",

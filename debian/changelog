@@ -1,3 +1,11 @@
+dx-toolkit (0.318.0) trusty; urgency=medium
+
+  * Fixed: Python 3.10 MutableMapping import
+  * Added: '--no-temp-build-project' for single region app builds
+  * Added: '--from' option to `dx build`  for building a global workflow from a project-based workflow, including a workflow built using WDL
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 07 Dec 2021 23:54:38 +0000
+
 dx-toolkit (0.317.0) trusty; urgency=medium
 
   * Fixed: Reduce file-xxxx/describe API load during dx upload
