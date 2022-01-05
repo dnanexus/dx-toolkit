@@ -154,9 +154,9 @@ class TestDXExecDependsUtils(testutil.DXTestCaseCompat):
                            job_desc={"region": "azure:westus"})
         with self.assertRaisesRegex(DXError, 'file-assetwest'):
             edi.install()
-        with self.assertRaisesRegex(KeyError, 'aws:cn-north-1'):
+        with self.assertRaisesRegex(KeyError, 'aws:eu-central-1'):
             self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
-                         job_desc={"region": "aws:cn-north-1"})
+                         job_desc={"region": "aws:eu-central-1"})
 
     def test_dx_execdepends_installer(self):
         def assert_cmd_ran(edi, regexp):
