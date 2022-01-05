@@ -815,6 +815,14 @@ module DX
       return DX::http_request("/#{object_id}/terminate", input_params, opts)
     end
 
+    # Invokes the /job-xxxx/update API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-update
+    def self.job_update(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/update", input_params, opts)
+    end
+
     # Invokes the /job/new API method.
     #
     # For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-new

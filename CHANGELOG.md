@@ -13,6 +13,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Setting properties when building global workflows
+* '--allow-ssh' parameter to `dx ssh`
+* '--no-firewall-update' parameter to `dx ssh`
+
+### Changed
+
+* Detect client IP for SSH access to job instead of `*`
 
 ## [318.0] - beta
 

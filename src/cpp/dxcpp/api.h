@@ -363,6 +363,9 @@ namespace dx {
   JSON jobTerminate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON jobTerminate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON jobUpdate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON jobUpdate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON jobNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON jobNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 

@@ -841,6 +841,14 @@ def job_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def job_update(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /job-xxxx/update API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-update
+    """
+    return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def job_new(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /job/new API method.
