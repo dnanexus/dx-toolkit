@@ -3258,7 +3258,7 @@ def run(args):
                 else:
                     client_ip = get_client_ip()
                     args.allow_ssh[i] = client_ip
-    if args.allow_ssh is None or ((args.ssh or args.debug_on) and not args.allow_ssh):
+    if args.allow_ssh is None and ((args.ssh or args.debug_on) and not args.allow_ssh):
         client_ip = get_client_ip()
         args.allow_ssh = [client_ip]
     if args.ssh_proxy and not args.ssh:
