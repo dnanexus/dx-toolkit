@@ -1,4 +1,5 @@
 # Copyright (C) 2013-2016 DNAnexus, Inc.
+# -*- coding: utf-8 -*-
 #
 # This file is part of dx-toolkit (DNAnexus platform client libraries).
 #

@@ -966,6 +966,14 @@ namespace dx {
     return jobTerminate(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON jobUpdate(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/update"), input_params, safe_to_retry);
+  }
+
+  JSON jobUpdate(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return jobUpdate(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON jobNew(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/job/new", input_params, safe_to_retry);
   }

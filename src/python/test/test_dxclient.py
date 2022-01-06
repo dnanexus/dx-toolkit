@@ -1164,6 +1164,121 @@ class TestDXClient(DXTestCase):
             job_desc = dxpy.describe(job_id)
             self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'ExecutionError'])
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_run_allow_ssh(self):
+        with self.configure_ssh() as wd:
+            applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "20.04",
+                                                     "version": "0",
+                                                     "code": "sleep 60"}
+                                         })['id']
+            # Single IP
+            allow_ssh = {"1.2.3.4"}
+            job_id = run("dx run {} --yes --brief --allow-ssh 1.2.3.4".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            job_allow_ssh = job_desc['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
+            # Multiple IPs
+            allow_ssh = {"1.2.3.4", "5.6.7.8"}
+            job_id = run("dx run {} --yes --brief --allow-ssh 1.2.3.4 --allow-ssh 5.6.7.8".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            job_allow_ssh = job_desc['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
+            # Get client IP from system/whoami
+            client_ip = dxpy.api.system_whoami({"fields": {"clientIp": True}}).get('clientIp')
+
+            # dx run --ssh automatically retrieves and adds client IP 
+            allow_ssh = {client_ip}
+            job_id = run("dx run {} --yes --brief --allow-ssh ".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            job_allow_ssh = job_desc['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
+             # dx run --allow-ssh --allow-ssh 1.2.3.4 automatically retrieves and adds client IP 
+            allow_ssh = {"1.2.3.4", client_ip}
+            job_id = run("dx run {} --yes --brief --allow-ssh 1.2.3.4 --allow-ssh ".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            job_allow_ssh = job_desc['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+    
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_ssh_allow_ssh(self):
+        with self.configure_ssh() as wd:
+            applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "20.04",
+                                                     "version": "0",
+                                                     "code": "sleep 60"}
+                                         })['id']
+            job_id = run("dx run {} --yes --brief".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            # No SSH access by default
+            self.assertIsNone(job_desc.get('allowSSH', None))
+
+            client_ip = dxpy.api.system_whoami({"fields": {"clientIp": True}}).get('clientIp')
+            allow_ssh = {client_ip}
+            # dx ssh retrieves client IP and adds it with job-xxxx/update
+            dx = pexpect.spawn("dx ssh " + job_id,
+                            env=override_environment(HOME=wd),
+                            **spawn_extra_args)
+            time.sleep(3)
+            dx.close()
+            job_allow_ssh = dxpy.describe(job_id)['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+
+            allow_ssh = {client_ip, "1.2.3.4"}
+            # dx ssh --allow-ssh 1.2.3.4 adds IP with job-xxxx/update
+            dx1 = pexpect.spawn("dx ssh --allow-ssh 1.2.3.4 " + job_id,
+                            env=override_environment(HOME=wd),
+                            **spawn_extra_args)
+            time.sleep(3)
+            dx1.close()
+            job_allow_ssh = dxpy.describe(job_id)['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+                
+            # dx ssh --no-firewall-update does not add client IP
+            allow_ssh = {"1.2.3.4"}
+            job_id = run("dx run {} --yes --brief --allow-ssh 1.2.3.4".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            dx2 = pexpect.spawn("dx ssh --no-firewall-update " + job_id,
+                            env=override_environment(HOME=wd),
+                            **spawn_extra_args)
+            time.sleep(3)
+            dx2.close()
+            job_allow_ssh = dxpy.describe(job_id)['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
+            # dx ssh --ssh-proxy adds client IP and proxy IP
+            allow_ssh = {client_ip, "5.6.7.8"}
+            job_id = run("dx run {} --yes --brief".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            dx3 = pexpect.spawn("dx ssh --ssh-proxy 5.6.7.8:22 " + job_id,
+                            env=override_environment(HOME=wd),
+                            **spawn_extra_args)
+            time.sleep(3)
+            dx3.close()
+            job_allow_ssh = dxpy.describe(job_id)['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_JUPYTER_NOTEBOOK"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")

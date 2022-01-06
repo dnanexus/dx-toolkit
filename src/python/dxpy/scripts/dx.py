@@ -3274,15 +3274,26 @@ SPECIFYING JSON INPUT
 def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
-
+    client_ip = None
     if args.allow_ssh is not None:
-        args.allow_ssh = [i for i in args.allow_ssh if i is not None]
-    if args.allow_ssh == [] or ((args.ssh or args.debug_on) and not args.allow_ssh):
-        args.allow_ssh = ['*']
+        for i, ip in enumerate(args.allow_ssh):
+            if ip is None:
+                if client_ip is not None:
+                    del args.allow_ssh[i]
+                else:
+                    client_ip = get_client_ip()
+                    args.allow_ssh[i] = client_ip
+    if args.allow_ssh is None and ((args.ssh or args.debug_on) and not args.allow_ssh):
+        client_ip = get_client_ip()
+        args.allow_ssh = [client_ip]
     if args.ssh_proxy and not args.ssh:
         err_exit(exception=DXCLIError("Option --ssh-proxy cannot be specified without --ssh"))
+    if args.ssh_proxy:
+        args.allow_ssh.append(args.ssh_proxy.split(':'[0]))
     if args.ssh or args.allow_ssh or args.debug_on:
         verify_ssh_config()
+    if not args.brief and client_ip is not None:
+        print("Detected client IP as '{}'. Setting allowed IP ranges to '{}'. To change the permitted IP addresses use --allow-ssh.".format(client_ip, ', '.join(args.allow_ssh)))
 
     try_call(process_extra_args, args)
     try_call(process_properties_args, args)
@@ -3533,6 +3544,9 @@ def watch(args):
     except Exception as details:
         err_exit(fill(str(details)), 3)
 
+def get_client_ip():
+    return dxpy.api.system_whoami({"fields": {"clientIp": True}}).get('clientIp')
+
 def ssh_config(args):
     user_id = try_call(dxpy.whoami)
 
@@ -3628,6 +3642,26 @@ def ssh(args, ssh_config_verified=False):
     if not ssh_config_verified:
         verify_ssh_config()
 
+    job_allow_ssh = job_desc.get('allowSSH', [])
+
+    # Check requested IPs (--allow-ssh or client IP) against job's allowSSH field and update if necessary
+    if not args.no_firewall_update:
+        if args.allow_ssh is not None:
+            args.allow_ssh = [i for i in args.allow_ssh if i is not None]
+        else:
+            # Get client IP from API if --allow-ssh not provided
+            args.allow_ssh = [get_client_ip()]
+        if args.ssh_proxy:
+            args.allow_ssh.append(args.ssh_proxy.split(':')[0])
+        # If client IP or args.allow_ssh already exist in job's allowSSH, skip firewall update
+        if not all(ip in job_allow_ssh for ip in args.allow_ssh):
+            # Append new IPs to existing job allowSSH
+            for ip in args.allow_ssh:
+                if ip not in job_allow_ssh:
+                    job_allow_ssh.append(ip)
+            sys.stdout.write("Updating allowed IP ranges for SSH to '{}'\n".format(', '.join(job_allow_ssh)))
+            dxpy.api.job_update(object_id=args.job_id, input_params={"allowSSH": job_allow_ssh})
+
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
@@ -3669,7 +3703,7 @@ def ssh(args, ssh_config_verified=False):
         sys.stdout.write(" through proxy {}".format(proxy_args[0]))
     sys.stdout.write("...")
     sys.stdout.flush()
-    for i in range(12):
+    for i in range(20):
         try:
             if args.ssh_proxy:
             # Test connecting to host through proxy
@@ -3683,7 +3717,7 @@ def ssh(args, ssh_config_verified=False):
             connected = True
             break
         except Exception:
-            time.sleep(2)
+            time.sleep(3)
             sys.stdout.write(".")
             sys.stdout.flush()
     if args.ssh_proxy:
@@ -3699,8 +3733,8 @@ def ssh(args, ssh_config_verified=False):
     if connected:
         sys.stdout.write(GREEN("OK") + "\n")
     else:
-        msg = "Failed to connect to {h}. Please check your connectivity and try {cmd} again."
-        err_exit(msg.format(h=host, cmd=BOLD("dx ssh {}".format(args.job_id))),
+        msg = "Failed to connect to {h}. Please check the allowed IP ranges for ssh in the job's describe output and if needed update with 'dx update job {job_id} --allow-ssh ADDRESS'. Then try {cmd} again."
+        err_exit(msg.format(h=host, job_id=args.job_id, cmd=BOLD("dx ssh {}".format(args.job_id))),
                  exception=DXCLIError())
 
     print("Connecting to {}:{}".format(host, ssh_port))
@@ -4992,6 +5026,7 @@ allowed_executables_group.add_argument('--unset-allowed-executables', help='Remo
 parser_update_project.set_defaults(func=update_project)
 register_parser(parser_update_project, subparsers_action=subparsers_update, categories="metadata")
 
+
 #####################################
 # install
 #####################################
@@ -5077,8 +5112,8 @@ parser_run.add_argument('--wait', help='Wait until the job is done before return
 parser_run.add_argument('--watch', help="Watch the job after launching it. Defaults --priority to high.", action='store_true')
 parser_run.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
                         help=fill('Configure the job to allow SSH access. Defaults --priority to high. If an argument is ' +
-                                  'supplied, it is interpreted as an IP or hostname mask to allow connections from, ' +
-                                  'e.g. "--allow-ssh 1.2.3.4 --allow-ssh berkeley.edu"',
+                                  'supplied, it is interpreted as an IP range, e.g. "--allow-ssh 1.2.3.4". ' +
+                                  'If no argument is supplied then the client IP visible to the DNAnexus API server will be used by default',
                                   width_adjustment=-24))
 parser_run.add_argument('--ssh',
                         help=fill("Configure the job to allow SSH access and connect to it after launching. " +
@@ -5190,6 +5225,12 @@ parser_ssh.add_argument('job_id', help='Name of job to connect to')
 parser_ssh.add_argument('ssh_args', help='Command-line arguments to pass to the SSH client', nargs=argparse.REMAINDER)
 parser_ssh.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
                         help='SSH connect via proxy, argument supplied is used as the proxy address and port')
+parser_ssh_firewall = parser_ssh.add_mutually_exclusive_group()
+parser_ssh_firewall.add_argument('--no-firewall-update', help='Do not update the allowSSH allowed IP ranges before connecting with ssh', action='store_true', default=False)
+parser_ssh_firewall.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
+                        help=fill('Configure the job to allow SSH access. from an IP range, e.g. "--allow-ssh 1.2.3.4". ' +
+                                  'If no argument is supplied then the client IP visible to the DNAnexus API server will be used by default',
+                                  width_adjustment=-24))
 # If ssh is run with the  supress-running-check flag, then dx won't prompt
 # the user whether they would like to terminate the currently running job
 # after they exit ssh.  Among other things, this will allow users to setup

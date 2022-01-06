@@ -898,6 +898,15 @@
         }
     ],
     [
+        "/job-xxxx/update",
+        "jobUpdate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-update"
+        }
+    ],
+    [
         "/job/new",
         "jobNew(req)",
         {

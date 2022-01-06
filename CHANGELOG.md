@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [319.0] - beta
+
 ### Fixed
 
 * Incorrect setting of the `folder` input option when building global workflows
@@ -13,8 +15,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Setting properties when building global workflows
+* '--allow-ssh' parameter to `dx ssh`
+* '--no-firewall-update' parameter to `dx ssh`
 
-## [318.0] - beta
+### Changed
+
+* Detect client IP for SSH access to job instead of `*`
+
+## [318.0] - 2022.1.6 stable
 
 ### Fixed
 
@@ -25,7 +33,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `--no-temp-build-project` for single region app builds.
 * `--from` option to `dx build` for building a global workflow from a project-based workflow, including a workflow built using WDL
 
-## [317.0] - 2021.12.8 stable
+## [317.0] - 2021.12.8 
 
 ### Fixed
 

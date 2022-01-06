@@ -242,6 +242,18 @@ class DXJob(DXObject):
 
         dxpy.api.job_remove_tags(self._dxid, {"tags": tags}, **kwargs)
 
+    def update(self, allow_ssh, **kwargs):
+        """
+        :param allow_ssh: Allowable IP ranges to set for SSH access to the job
+        :type allow_ssh: list of strings
+
+        Updates a job's allowSSH field, overwrites existing values
+
+        """
+
+        dxpy.api.job_update(self._dxid, {"allowSSH": allow_ssh}, **kwargs)
+
+
     def set_properties(self, properties, **kwargs):
         """
         :param properties: Property names and values given as key-value pairs of strings
