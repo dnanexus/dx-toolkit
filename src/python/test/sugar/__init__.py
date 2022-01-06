@@ -19,10 +19,14 @@ def random_name(fmt_str=None):
         return rndstr
 
 
-def make_random_files(n, fmt_str=None) -> List[Path]:
+def make_random_files(n, fmt_str=None, subdir=None) -> List[Path]:
+    if subdir:
+        os.makedirs(subdir, exist_ok=True)
     filenames = []
     for i in range(n):
         fname = Path(random_name(fmt_str))
+        if subdir:
+            fname = subdir / fname
         filenames.append(fname)
         with open(fname, "wt") as out:
             out.write("test{}".format(i))

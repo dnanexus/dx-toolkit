@@ -15,7 +15,7 @@
 #   under the License.
 import os
 import re
-from typing import Optional, Tuple
+from typing import Optional, Sequence, Tuple
 
 
 COMPRESSED_EXTS = {"gz", "zip", "bz2", "xz", "tar", "tgz"}
@@ -23,13 +23,10 @@ FASTQ_EXTS = {"fq", "fastq"}
 FASTQ_RE = re.compile(r"(.*)([-_][12])")
 
 
-def extract_prefix(*names):
-    """Extracts the prefix from one or more filenames."""
-    prefix, _, _ = get_file_parts(*names)
-    return prefix
+FileParts = Tuple[str, Tuple[str, ...], Optional[Tuple[str, ...]]]
 
 
-def get_file_parts(*names) -> Tuple[str, Tuple[str, ...], Optional[Tuple[str, ...]]]:
+def get_file_parts(*names: str) -> FileParts:
     """
     Splits filenames into parts (prefix, extension, and (optionally) fastq mate).
 
@@ -66,17 +63,19 @@ def get_file_parts(*names) -> Tuple[str, Tuple[str, ...], Optional[Tuple[str, ..
         return _extract_multi_file_parts(names)
 
 
-def _extract_single_file_parts(
-    name,
-) -> Tuple[str, Tuple[str, ...], Optional[Tuple[str, ...]]]:
+def extract_prefix(*names: str) -> FileParts:
+    """Extracts the prefix from one or more filenames."""
+    prefix, _, _ = get_file_parts(*names)
+    return prefix
+
+
+def _extract_single_file_parts(name: str) -> FileParts:
     parts = name.split(os.path.extsep)
     exts, mate = _extract_parts(parts)
     return os.path.extsep.join(parts), exts, (mate,) if mate else None
 
 
-def _extract_multi_file_parts(
-    names,
-) -> Tuple[str, Tuple[str, ...], Optional[Tuple[str, ...]]]:
+def _extract_multi_file_parts(names: Sequence[str]) -> FileParts:
     end = _max_common_prefix(names)
 
     while end > 0:
@@ -116,7 +115,7 @@ def _extract_multi_file_parts(
     return prefix, (shared_exts.pop(),), mates
 
 
-def _extract_parts(parts) -> Tuple[Tuple[str, ...], str]:
+def _extract_parts(parts: Sequence[str]) -> Tuple[Tuple[str, ...], str]:
     exts = []
     mate = None
 
@@ -141,7 +140,7 @@ def _extract_parts(parts) -> Tuple[Tuple[str, ...], str]:
     return tuple(reversed(exts)), mate
 
 
-def _max_common_prefix(names) -> int:
+def _max_common_prefix(names: Sequence[str]) -> int:
     i = 0
     n = len(names)
     maxlen = min(len(name) for name in names)
