@@ -1,3 +1,13 @@
+dx-toolkit (0.319.0) trusty; urgency=medium
+
+  * Fixed: Incorrect setting of the folder input option when building global workflows
+  * Added: Setting properties when building global workflows
+  * Added: '--allow-ssh' parameter to dx ssh
+  * Added: '--no-firewall-update' parameter to dx ssh
+  * Changed: Detect client IP for SSH access to job instead of'*'
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 06 Jan 2022 19:14:57 +0000
+
 dx-toolkit (0.318.0) trusty; urgency=medium
 
   * Fixed: Python 3.10 MutableMapping import
