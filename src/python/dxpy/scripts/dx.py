@@ -2554,20 +2554,16 @@ def build(args):
         the source directory contains dxapp.json or dxworkflow.json.
 
         If --from option is used, it will set it to:
-        app if --from=applet-xxxx
-        globalworkflow if --from=workflow-xxxx
+        app if --from has been resolved to applet-xxxx
+        globalworkflow if --from has been resolved to workflow-xxxx
         Note: dictionaries of regional options that can replace optionally
         ID strings will be supported in the future
         """
         if args._from is not None:
-            if not is_hashid(args._from):
-                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
-            if args._from.startswith("applet"):
+            if args._from["id"].startswith("applet"):
                 return "app"
-            elif args._from.startswith("workflow"):
+            elif args._from["id"].startswith("workflow"):
                 return "globalworkflow"
-            else:
-                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
 
         if not os.path.isdir(args.src_dir):
             parser.error("{} is not a directory".format(args.src_dir))
