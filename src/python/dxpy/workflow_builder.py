@@ -644,7 +644,7 @@ def _build_or_update_workflow(args, parser):
             workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
             if args._from:
-                json_spec = _fetch_spec_from_workflow(args, parser)
+                json_spec = args._from
             else:
                 json_spec = _fetch_spec_from_dxworkflowjson(args.src_dir, "dxworkflow.json", parser)
             
