@@ -2522,6 +2522,32 @@ def wait(args):
 def build(args):
     sys.argv = ['dx build'] + sys.argv[2:]
 
+    def get_from_exec_desc(args):
+        """
+        Return source executable description when --from option is used
+        
+        """
+        exec_describe_fields={'fields':{"properties":True, "details":True},'defaultFields':True}
+        _, _, exec_result = try_call(resolve_existing_path,
+                                     args._from,
+                                     expected='entity',
+                                     ask_to_resolve=False,
+                                     expected_classes=["applet", "workflow"],
+                                     all_mult=False,
+                                     allow_mult=False,
+                                     describe=exec_describe_fields)
+
+        if exec_result is None:
+            err_exit('Could not resolve {} to an applet or workflow'.format(args._from), 3)
+        elif len(exec_result)>1:
+            err_exit('More than one match found for {}. Please use an applet/workflow ID instead.', 3)
+
+        else:
+            if exec_result[0]["id"].startswith("applet"):
+                return exec_result[0]["describe"]
+            elif exec_result[0]["id"].startswith("workflow"):
+                return exec_result[0]["describe"]
+
     def get_mode(args):
         """
         Returns an applet or a workflow mode based on whether
@@ -2609,10 +2635,10 @@ def build(args):
         if args._from is not None and not args.version_override:
             build_parser.error("--version must be specified when using the --from option")
 
-        if args.mode == "app" and args._from is not None and not args._from.startswith("applet"):
+        if args.mode == "app" and args._from is not None and not args._from["id"].startswith("applet"):
             build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
 
-        if args.mode == "globalworkflow" and args._from is not None and not args._from.startswith("workflow"):
+        if args.mode == "globalworkflow" and args._from is not None and not args._from["id"].startswith("workflow"):
             build_parser.error("globalworkflow can only be built from an workflow (--from should be set to an workflow ID)")
 
         if args._from and args.dry_run:
@@ -2656,7 +2682,10 @@ def build(args):
     try:
         args.src_dir = get_validated_source_dir(args)
 
-        # If mode is not specified, determine it by the json file
+        if args._from is not None:
+            args._from = get_from_exec_desc(args)
+
+        # If mode is not specified, determine it by the json file or by --from
         if args.mode is None:
             args.mode = get_mode(args)
 
