@@ -2538,15 +2538,16 @@ def build(args):
                                      describe=exec_describe_fields)
 
         if exec_result is None:
-            err_exit('Could not resolve {} to an applet or workflow'.format(args._from), 3)
+            err_exit('Could not resolve {} to an existing applet or workflow.'.format(args._from), 3)
         elif len(exec_result)>1:
-            err_exit('More than one match found for {}. Please use an applet/workflow ID instead.', 3)
-
+            err_exit('More than one match found for {}. Please use an applet/workflow ID instead.'.format(args._from), 3)
         else:
             if exec_result[0]["id"].startswith("applet"):
                 return exec_result[0]["describe"]
             elif exec_result[0]["id"].startswith("workflow"):
                 return exec_result[0]["describe"]
+            else:
+                err_exit('Could not resolve {} to a valid applet/workflow ID'.format(args._from), 3)
 
     def get_mode(args):
         """
