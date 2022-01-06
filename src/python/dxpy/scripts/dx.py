@@ -2635,7 +2635,7 @@ def build(args):
             build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
 
         if args.mode == "globalworkflow" and args._from is not None and not args._from["id"].startswith("workflow"):
-            build_parser.error("globalworkflow can only be built from an workflow (--from should be set to an workflow ID)")
+            build_parser.error("globalworkflow can only be built from an workflow (--from should be set to a workflow ID)")
 
         if args._from and args.dry_run:
             build_parser.error("Options --dry-run and --from cannot be specified together")
