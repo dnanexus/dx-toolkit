@@ -6968,13 +6968,13 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
 
     def test_build_globalworkflow_from_nonexist_workflow(self):
         # build global workflow from nonexist workflow
-        source_wf = "workflow-0000000000000000000000NA"
-        with self.assertSubprocessFailure(stderr_regexp="Could not get specs from given workflow", exit_code=3):
+        source_wf = "workflow-B00000000000000000000000"
+        with self.assertSubprocessFailure(stderr_regexp="The entity {} could not be found".format(source_wf), exit_code=3):
             run("dx build --globalworkflow --from {} --version 0.0.1".format(source_wf))
 
     def test_build_globalworkflow_without_version_override(self):
         # build global workflow without specified version
-        source_wf = "workflow-0000000000000000000000NA"
+        source_wf = self.create_workflow(project_id=self.project).get_id()
         with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
             run("dx build --globalworkflow --from {}".format(source_wf))
     
