@@ -6977,7 +6977,11 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         source_wf = self.create_workflow(project_id=self.project).get_id()
         with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
             run("dx build --globalworkflow --from {}".format(source_wf))
-    
+        with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
+            run("dx build --globalworkflow --from :{}".format(source_wf))
+        with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
+            run("dx build --globalworkflow --from {}:{}".format(self.project, source_wf))
+
     def test_build_globalworkflow_from_old_WDL_workflow(self):
         SUPPORTED_DXCOMPILER_VERSION = "2.8.0"
         # build global workflow from WDL workflows
