@@ -7089,13 +7089,24 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
 
     def test_build_globalworkflow_without_version_override(self):
         # build global workflow without specified version
-        source_wf = self.create_workflow(project_id=self.project).get_id()
+        source_wf_id = self.create_workflow(project_id=self.project).get_id()
         with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
-            run("dx build --globalworkflow --from {}".format(source_wf))
+            run("dx build --globalworkflow --from {}".format(source_wf_id))
+
+    def test_build_globalworkflow_with_workflow_path(self):
+        # build global workflow without specified version
+        source_wf_name = "globalworkflow_build_from_workflow"
+        source_wf_dir = "/source_wf_dir/"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=source_wf_name, folder=source_wf_dir)
+        source_wf_id = self.create_workflow(project_id=self.project,workflow_spec=dxworkflow_json).get_id()
+
+        # after resolving the path, force exiting the building process by forcing args conflict
         with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
-            run("dx build --globalworkflow --from :{}".format(source_wf))
+            run("dx build --globalworkflow --from :{}".format(source_wf_id))
         with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
-            run("dx build --globalworkflow --from {}:{}".format(self.project, source_wf))
+            run("dx build --globalworkflow --from {}:{}".format(self.project, source_wf_id))
+        with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
+            run("dx build --globalworkflow --from {}:{}{}".format(self.project, source_wf_dir, source_wf_name))
 
     def test_build_globalworkflow_from_old_WDL_workflow(self):
         SUPPORTED_DXCOMPILER_VERSION = "2.8.0"
