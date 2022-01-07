@@ -2522,26 +2522,57 @@ def wait(args):
 def build(args):
     sys.argv = ['dx build'] + sys.argv[2:]
 
+    def get_source_exec_desc(source_exec_path):
+        """
+        Return source executable description when --from option is used
+
+        Accecptable format of source_exec_path:
+            - applet-ID/workflow-ID
+            - project-ID-or-name:applet-ID/workflow-ID
+            - project-ID-or-name:folder/path/to/exec-name
+              where exec-name must be the name of only one applet or workflow
+
+        :param source_exec_path: applet/workflow path given using --from
+        :type source_exec_path: string
+        :return: applet/workflow description
+        :rtype: dict
+        """
+        exec_describe_fields={'fields':{"properties":True, "details":True},'defaultFields':True}
+        _, _, exec_result = try_call(resolve_existing_path,
+                                     source_exec_path,
+                                     expected='entity',
+                                     ask_to_resolve=False,
+                                     expected_classes=["applet", "workflow"],
+                                     all_mult=False,
+                                     allow_mult=False,
+                                     describe=exec_describe_fields)
+
+        if exec_result is None:
+            err_exit('Could not resolve {} to an existing applet or workflow.'.format(source_exec_path), 3)
+        elif len(exec_result)>1:
+            err_exit('More than one match found for {}. Please use an applet/workflow ID instead.'.format(source_exec_path), 3)
+        else:
+            if exec_result[0]["id"].startswith("applet") or exec_result[0]["id"].startswith("workflow"):
+                return exec_result[0]["describe"]
+            else:
+                err_exit('Could not resolve {} to a valid applet/workflow ID'.format(source_exec_path), 3)
+
     def get_mode(args):
         """
         Returns an applet or a workflow mode based on whether
         the source directory contains dxapp.json or dxworkflow.json.
 
         If --from option is used, it will set it to:
-        app if --from=applet-xxxx
-        globalworkflow if --from=workflow-xxxx
+        app if --from has been resolved to applet-xxxx
+        globalworkflow if --from has been resolved to workflow-xxxx
         Note: dictionaries of regional options that can replace optionally
         ID strings will be supported in the future
         """
         if args._from is not None:
-            if not is_hashid(args._from):
-                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
-            if args._from.startswith("applet"):
+            if args._from["id"].startswith("applet"):
                 return "app"
-            elif args._from.startswith("workflow"):
+            elif args._from["id"].startswith("workflow"):
                 return "globalworkflow"
-            else:
-                build_parser.error('--from option only accepts a DNAnexus applet/workflow ID')
 
         if not os.path.isdir(args.src_dir):
             parser.error("{} is not a directory".format(args.src_dir))
@@ -2609,11 +2640,11 @@ def build(args):
         if args._from is not None and not args.version_override:
             build_parser.error("--version must be specified when using the --from option")
 
-        if args.mode == "app" and args._from is not None and not args._from.startswith("applet"):
+        if args.mode == "app" and args._from is not None and not args._from["id"].startswith("applet"):
             build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
 
-        if args.mode == "globalworkflow" and args._from is not None and not args._from.startswith("workflow"):
-            build_parser.error("globalworkflow can only be built from an workflow (--from should be set to an workflow ID)")
+        if args.mode == "globalworkflow" and args._from is not None and not args._from["id"].startswith("workflow"):
+            build_parser.error("globalworkflow can only be built from an workflow (--from should be set to a workflow ID)")
 
         if args._from and args.dry_run:
             build_parser.error("Options --dry-run and --from cannot be specified together")
@@ -2656,7 +2687,10 @@ def build(args):
     try:
         args.src_dir = get_validated_source_dir(args)
 
-        # If mode is not specified, determine it by the json file
+        if args._from is not None:
+            args._from = get_source_exec_desc(args._from)
+
+        # If mode is not specified, determine it by the json file or by --from
         if args.mode is None:
             args.mode = get_mode(args)
 
@@ -4633,7 +4667,7 @@ app_and_globalworkflow_options.set_defaults(publish=False)
 app_and_globalworkflow_options.add_argument("--publish", help="Publish the resulting app/globalworkflow and make it the default.", action="store_true",
                          dest="publish")
 app_and_globalworkflow_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
-app_and_globalworkflow_options.add_argument("--from", help="ID of the source applet/workflow to create an app/globalworkflow from. Source directory cannot be given with this option",
+app_and_globalworkflow_options.add_argument("--from", help="ID or path of the source applet/workflow to create an app/globalworkflow from. Source directory src_dir cannot be given when using this option",
                           dest="_from").completer = DXPathCompleter(classes=['applet','workflow'])
 
 

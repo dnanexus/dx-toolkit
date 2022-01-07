@@ -681,10 +681,10 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         shutil.rmtree(temp_dir)
 
 
-def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_to_override=None,
+def build_app_from(applet_desc, version, publish=False, do_try_update=True, bill_to_override=None,
                    return_object_dump=False, confirm=True, brief=False, **kwargs):
 
-    applet_desc = dxpy.api.applet_describe(applet_id)
+    applet_id = applet_desc["id"]
     app_name = applet_desc["name"]
     dxpy.executable_builder.verify_developer_rights('app-' + app_name)
     if not brief:
