@@ -70,22 +70,6 @@ def _fetch_spec_from_dxworkflowjson(src_dir, json_file_name, parser):
             raise WorkflowBuilderException("Could not parse {} file as JSON: {}".format(json_file_name, e.args))
 
 
-def _fetch_spec_from_workflow(args, parser):
-    try:
-        source_workflow = dxpy.DXWorkflow(args._from)
-        json_spec = source_workflow.describe(fields={"properties", "details"}, default_fields=True)
-        json_spec = _cleanup_empty_keys(json_spec)
-
-    except Exception as e:
-        raise WorkflowBuilderException("Could not get specs from given workflow {}: {}".format(args._from, e.args))
-
-    return json_spec
-
-def _cleanup_empty_keys(json_spec):
-    import re
-    clean_json = re.sub('\"\w*\": (null|\{\}|\"\"|\[\])(\,|)\s*','',json.dumps(json_spec)).replace(", }","}")
-    return json.loads(clean_json)
-
 def _check_dxcompiler_version(json_spec):
     SUPPORTED_DXCOMPILER_VERSION = "2.8.0"
     if  json_spec.get("details") and json_spec["details"].get("version"):
@@ -645,7 +629,7 @@ def _build_or_update_workflow(args, parser):
             workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
             if args._from:
-                json_spec = _fetch_spec_from_workflow(args, parser)
+                json_spec = args._from
             else:
                 json_spec = _fetch_spec_from_dxworkflowjson(args.src_dir, "dxworkflow.json", parser)
             
