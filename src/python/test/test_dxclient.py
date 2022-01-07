@@ -7097,7 +7097,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         # build global workflow without specified version
         source_wf_name = "globalworkflow_build_from_workflow"
         source_wf_dir = "/source_wf_dir/"
-        dxworkflow_json = dict(self.dxworkflow_spec, name=source_wf_name, folder=source_wf_dir)
+        dxworkflow_json = dict(self.create_workflow_spec(self.project), name=source_wf_name, folder=source_wf_dir,parents=True)
         source_wf_id = self.create_workflow(project_id=self.project,workflow_spec=dxworkflow_json).get_id()
 
         # after resolving the path, force exiting the building process by forcing args conflict
