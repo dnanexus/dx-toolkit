@@ -2522,14 +2522,14 @@ def wait(args):
 def build(args):
     sys.argv = ['dx build'] + sys.argv[2:]
 
-    def get_from_exec_desc(args):
+    def get_source_exec_desc(source_exec_path):
         """
         Return source executable description when --from option is used
         
         """
         exec_describe_fields={'fields':{"properties":True, "details":True},'defaultFields':True}
         _, _, exec_result = try_call(resolve_existing_path,
-                                     args._from,
+                                     source_exec_path,
                                      expected='entity',
                                      ask_to_resolve=False,
                                      expected_classes=["applet", "workflow"],
@@ -2538,16 +2538,14 @@ def build(args):
                                      describe=exec_describe_fields)
 
         if exec_result is None:
-            err_exit('Could not resolve {} to an existing applet or workflow.'.format(args._from), 3)
+            err_exit('Could not resolve {} to an existing applet or workflow.'.format(source_exec_path), 3)
         elif len(exec_result)>1:
-            err_exit('More than one match found for {}. Please use an applet/workflow ID instead.'.format(args._from), 3)
+            err_exit('More than one match found for {}. Please use an applet/workflow ID instead.'.format(source_exec_path), 3)
         else:
-            if exec_result[0]["id"].startswith("applet"):
-                return exec_result[0]["describe"]
-            elif exec_result[0]["id"].startswith("workflow"):
+            if exec_result[0]["id"].startswith("applet") or exec_result[0]["id"].startswith("workflow"):
                 return exec_result[0]["describe"]
             else:
-                err_exit('Could not resolve {} to a valid applet/workflow ID'.format(args._from), 3)
+                err_exit('Could not resolve {} to a valid applet/workflow ID'.format(source_exec_path), 3)
 
     def get_mode(args):
         """
