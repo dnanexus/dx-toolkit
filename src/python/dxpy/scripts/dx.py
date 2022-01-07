@@ -2525,7 +2525,17 @@ def build(args):
     def get_source_exec_desc(source_exec_path):
         """
         Return source executable description when --from option is used
-        
+
+        Accecptable format of source_exec_path:
+            - applet-ID/workflow-ID
+            - project-ID-or-name:applet-ID/workflow-ID
+            - project-ID-or-name:folder/path/to/exec-name
+              where exec-name must be the name of only one applet or workflow
+
+        :param source_exec_path: applet/workflow path given using --from
+        :type source_exec_path: string
+        :return: applet/workflow description
+        :rtype: dict
         """
         exec_describe_fields={'fields':{"properties":True, "details":True},'defaultFields':True}
         _, _, exec_result = try_call(resolve_existing_path,
