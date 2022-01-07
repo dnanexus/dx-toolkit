@@ -4669,7 +4669,7 @@ app_and_globalworkflow_options.set_defaults(publish=False)
 app_and_globalworkflow_options.add_argument("--publish", help="Publish the resulting app/globalworkflow and make it the default.", action="store_true",
                          dest="publish")
 app_and_globalworkflow_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
-app_and_globalworkflow_options.add_argument("--from", help="ID of the source applet/workflow to create an app/globalworkflow from. Source directory cannot be given with this option",
+app_and_globalworkflow_options.add_argument("--from", help="ID or path of the source applet/workflow to create an app/globalworkflow from. Source directory src_dir cannot be given when using this option",
                           dest="_from").completer = DXPathCompleter(classes=['applet','workflow'])
 
 
