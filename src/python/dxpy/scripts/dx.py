@@ -2688,7 +2688,7 @@ def build(args):
         args.src_dir = get_validated_source_dir(args)
 
         if args._from is not None:
-            args._from = get_from_exec_desc(args)
+            args._from = get_source_exec_desc(args._from)
 
         # If mode is not specified, determine it by the json file or by --from
         if args.mode is None:
