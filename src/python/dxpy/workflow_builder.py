@@ -69,6 +69,10 @@ def _fetch_spec_from_dxworkflowjson(src_dir, json_file_name, parser):
         except Exception as e:
             raise WorkflowBuilderException("Could not parse {} file as JSON: {}".format(json_file_name, e.args))
 
+def _cleanup_empty_keys(json_spec):
+    import re
+    clean_json = re.sub('\"\w*\": (\{\}|\"\"|\[\])(\,|)\s*','',json.dumps(json_spec)).replace(", }","}")
+    return json.loads(clean_json)
 
 def _check_dxcompiler_version(json_spec):
     SUPPORTED_DXCOMPILER_VERSION = "2.8.0"
@@ -647,6 +651,7 @@ def _build_or_update_workflow(args, parser):
                     _notify_instance_type_selection(json_spec)
                     _notify_dependencies(json_spec)
             
+            json_spec = _cleanup_empty_keys(json_spec)
             # Verify if the global workflow already exists and if the user has developer rights to it
             # If the global workflow name doesn't exist, the user is free to build it
             # If the name does exist two things can be done:
