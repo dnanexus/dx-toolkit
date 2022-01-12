@@ -3740,7 +3740,7 @@ def ssh(args, ssh_config_verified=False):
     if connected:
         sys.stdout.write(GREEN("OK") + "\n")
     else:
-        msg = "Failed to connect to {h}. Please check the allowed IP ranges for ssh in the job's describe output and if needed update with 'dx update job {job_id} --allow-ssh ADDRESS'. Then try {cmd} again."
+        msg = "Failed to connect to {h}. Please check the allowed IP ranges for ssh in the job's describe output and if needed update with 'dx ssh --allow-ssh ADDRESS {job_id} '. Then try {cmd} again."
         err_exit(msg.format(h=host, job_id=args.job_id, cmd=BOLD("dx ssh {}".format(args.job_id))),
                  exception=DXCLIError())
 
