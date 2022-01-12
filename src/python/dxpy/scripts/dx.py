@@ -3548,7 +3548,7 @@ def watch(args):
     # If this changes, some refactoring may be needed below
     try:
         if not args.quiet:
-            print("Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+            print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
         log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)

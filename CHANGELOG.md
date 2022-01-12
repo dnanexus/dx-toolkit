@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Support for qualified workflow & applet IDs and paths when using `dx build --from` with an applet/workflow
+
 ## [319.0] - beta
 
 ### Fixed
