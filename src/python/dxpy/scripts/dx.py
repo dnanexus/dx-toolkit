@@ -3285,13 +3285,11 @@ def run(args):
         print_run_help(args.executable, args.alias)
     client_ip = None
     if args.allow_ssh is not None:
-        for i, ip in enumerate(args.allow_ssh):
-            if ip is None:
-                if client_ip is not None:
-                    del args.allow_ssh[i]
-                else:
-                    client_ip = get_client_ip()
-                    args.allow_ssh[i] = client_ip
+        # --allow-ssh without IP retrieves client IP
+        if any(ip is None for ip in args.allow_ssh):
+            args.allow_ssh = list(filter(None, args.allow_ssh))
+            client_ip = get_client_ip()
+            args.allow_ssh.append(client_ip)
     if args.allow_ssh is None and ((args.ssh or args.debug_on) and not args.allow_ssh):
         client_ip = get_client_ip()
         args.allow_ssh = [client_ip]
