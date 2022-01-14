@@ -640,7 +640,7 @@ def list_subfolders(project, path, recurse=True):
     # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
     # return pathmatch.filter(project_folders, os.path.join(path, '*'))
     if recurse:
-        return (f for f in project_folders if f.startswith(path))
+        return (f for f in project_folders if f == path or f.startswith(os.path.join(path, '/')))
     else:
         return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
 
