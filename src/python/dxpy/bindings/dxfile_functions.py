@@ -638,7 +638,7 @@ def list_subfolders(project, path, recurse=True):
     '''
     project_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
     # If path is '/', return all folders
-    # If path is '/foo', return '/foo' and all subfolders of '/foo/
+    # If path is '/foo', return '/foo' and all subfolders of '/foo/'
     if recurse:
         return (f for f in project_folders if path == '/' or (f == path or f.startswith(path + '/')))
     else:
