@@ -3251,13 +3251,11 @@ def run(args):
         print_run_help(args.executable, args.alias)
     client_ip = None
     if args.allow_ssh is not None:
-        for i, ip in enumerate(args.allow_ssh):
-            if ip is None:
-                if client_ip is not None:
-                    del args.allow_ssh[i]
-                else:
-                    client_ip = get_client_ip()
-                    args.allow_ssh[i] = client_ip
+        # --allow-ssh without IP retrieves client IP
+        if any(ip is None for ip in args.allow_ssh):
+            args.allow_ssh = list(filter(None, args.allow_ssh))
+            client_ip = get_client_ip()
+            args.allow_ssh.append(client_ip)
     if args.allow_ssh is None and ((args.ssh or args.debug_on) and not args.allow_ssh):
         client_ip = get_client_ip()
         args.allow_ssh = [client_ip]
@@ -3708,7 +3706,7 @@ def ssh(args, ssh_config_verified=False):
     if connected:
         sys.stdout.write(GREEN("OK") + "\n")
     else:
-        msg = "Failed to connect to {h}. Please check the allowed IP ranges for ssh in the job's describe output and if needed update with 'dx update job {job_id} --allow-ssh ADDRESS'. Then try {cmd} again."
+        msg = "Failed to connect to {h}. Please check your connectivity, verify your ssh client IP is added to job's allowedSSH list by describing the job and if needed, retry the command with additional --allow-ssh ADDRESS argument."
         err_exit(msg.format(h=host, job_id=args.job_id, cmd=BOLD("dx ssh {}".format(args.job_id))),
                  exception=DXCLIError())
 
