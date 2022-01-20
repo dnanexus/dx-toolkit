@@ -71,7 +71,7 @@ def _fetch_spec_from_dxworkflowjson(src_dir, json_file_name, parser):
 
 def _cleanup_empty_keys(json_spec):
     import re
-    clean_json = re.sub('\"\w*\": (\{\}|\"\"|\[\])(\,|)\s*','',json.dumps(json_spec)).replace(", }","}")
+    clean_json = re.sub('\"\w*\": (null|\{\}|\"\"|\[\])(\,|)\s*','',json.dumps(json_spec)).replace(", }","}")
     return json.loads(clean_json)
 
 def _check_dxcompiler_version(json_spec):
