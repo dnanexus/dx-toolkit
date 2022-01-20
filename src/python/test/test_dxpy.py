@@ -918,6 +918,9 @@ class TestFolder(unittest.TestCase):
             self.assertTrue(os.path.isfile(filename))
             self.assertEqual("{}-th\n file\n content\n".format(i + 3), self.read_entire_file(filename))
 
+        # DEVEX-2023 Do not create incorrect empty folders that share the same prefix for recursive download
+        # Check that /a/lpha does not exist
+        dxproject.new_folder("/alpha", parents=True)
         # Checking download to existing structure
         dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True)
         path = []
@@ -926,6 +929,8 @@ class TestFolder(unittest.TestCase):
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
             self.assertTrue(os.path.isfile(filename))
             self.assertEqual("{}-th\n file\n content\n".format(i + 2), self.read_entire_file(filename))
+        self.assertFalse(os.path.isdir(os.path.join(a_dest_dir, 'pha')))
+        
 
         # Checking download to existing structure fails w/o overwrite flag
         with self.assertRaises(DXFileError):
