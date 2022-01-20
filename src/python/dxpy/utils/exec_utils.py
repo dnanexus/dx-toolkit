@@ -26,7 +26,7 @@ from collections import namedtuple
 import pipes
 
 import dxpy
-from ..compat import USING_PYTHON2, open
+from ..compat import USING_PYTHON2, open, Mapping
 from ..exceptions import AppInternalError
 
 ENTRY_POINT_TABLE = {}
@@ -191,7 +191,7 @@ def save_error(e, working_dir, error_type="AppInternalError"):
 def convert_handlers_to_dxlinks(x):
     if isinstance(x, dxpy.DXObject):
         x = dxpy.dxlink(x)
-    elif isinstance(x, collections.Mapping):
+    elif isinstance(x, Mapping):
         for key, value in x.items():
             x[key] = convert_handlers_to_dxlinks(value)
     elif isinstance(x, list):
