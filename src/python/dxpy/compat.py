@@ -36,8 +36,10 @@ _stdio_wrapped = False
 
 if USING_PYTHON2:
     from cStringIO import StringIO
+    import errno
     from httplib import BadStatusLine
     from repr import Repr
+    import pipes
     BytesIO = StringIO
     builtin_str = str
     bytes = str
@@ -46,6 +48,7 @@ if USING_PYTHON2:
     builtin_int = int
     int = long
     open = io.open
+    quote = pipes.quote
     THREAD_TIMEOUT_MAX = sys.maxint
     def input(prompt=None):
         encoded_prompt = prompt.encode(sys_encoding)
@@ -77,6 +80,14 @@ if USING_PYTHON2:
             userhome = pwent.pw_dir
         userhome = userhome.rstrip('/')
         return (userhome + path[i:]) or '/'
+    def makedirs(path, mode=0o777, exist_ok=False):
+        try:
+            os.makedirs(path, mode)
+        except OSError as exc:  # Python >2.5
+            if exist_ok and exc.errno == errno.EEXIST and os.path.isdir(path):
+                pass
+            else:
+                raise
     if os.name == 'nt':
         # The POSIX os.path.expanduser doesn't work on NT, so just leave it be
         expanduser = os.path.expanduser
@@ -98,6 +109,8 @@ else:
     builtin_int = int
     int = int
     open = open
+    quote = shlex.quote
+    makedirs = os.makedirs
     expanduser = os.path.expanduser
     THREAD_TIMEOUT_MAX = threading.TIMEOUT_MAX
 
