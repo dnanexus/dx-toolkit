@@ -38,6 +38,7 @@ if USING_PYTHON2:
     from cStringIO import StringIO
     from httplib import BadStatusLine
     from repr import Repr
+    from collections import Mapping
     BytesIO = StringIO
     builtin_str = str
     bytes = str
@@ -90,6 +91,7 @@ else:
     from http.client import BadStatusLine
     from reprlib import Repr
     import shlex
+    from collections.abc import Mapping
     builtin_str = str
     str = str
     bytes = bytes

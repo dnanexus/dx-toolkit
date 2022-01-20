@@ -21,7 +21,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import re, collections
 from .printing import (GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC)
-from ..compat import str
+from ..compat import str, Mapping
 
 REPLACEMENT_TABLE = (
     '\\x00',    #  0x00 -> NULL
@@ -101,7 +101,7 @@ def format_tree(tree, root=None):
                     formatted_tree.append(my_multiline_prefix + line)
                 n += 1
 
-            if isinstance(tree[node], collections.Mapping):
+            if isinstance(tree[node], Mapping):
                 subprefix = prefix
                 if i < len(nodes)-1 and len(prefix) > 1 and prefix[-4:] == '    ':
                     subprefix = prefix[:-4] + '│   '
