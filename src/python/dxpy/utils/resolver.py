@@ -681,9 +681,11 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
     elif is_hashid(entity_name):
         entity_class = str.split(entity_name,"-")[0]
         found_valid_class = True
-        if expected_classes is not None and entity_class not in expected_classes:
+        if expected_classes is not None:
             found_valid_class = False
-
+            for klass in expected_classes:
+                if entity_class == klass:
+                    found_valid_class = True
         if not found_valid_class:
             return False, None, None, None
 
