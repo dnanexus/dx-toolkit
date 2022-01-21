@@ -687,6 +687,10 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
                 if entity_class == klass:
                     found_valid_class = True
         if not found_valid_class:
+            print("ENTITY")
+            print(entity_name)
+            print(entity_class)
+            print(expected_classes)
             return False, None, None, None
 
         if describe is True:
