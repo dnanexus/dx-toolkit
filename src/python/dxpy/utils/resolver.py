@@ -679,12 +679,11 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
         # TODO: find a good way to check if folder exists and expected=folder
         return False, project, folderpath, None
     elif is_hashid(entity_name):
+        entity_class = str.split(entity_name,"-")[0]
         found_valid_class = True
-        if expected_classes is not None:
+        if expected_classes is not None and entity_class not in expected_classes:
             found_valid_class = False
-            for klass in expected_classes:
-                if entity_name.startswith(klass):
-                    found_valid_class = True
+
         if not found_valid_class:
             return False, None, None, None
 
