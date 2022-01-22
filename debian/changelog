@@ -1,3 +1,9 @@
+dx-toolkit (0.319.2) trusty; urgency=medium
+
+  * Added: Support for qualified workflow & applet IDs and paths when using `dx build --from` with an applet/workflow
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 22 Jan 2022 00:47:00 +0000
+
 dx-toolkit (0.319.1) trusty; urgency=medium
 
   * Fixed: Remove unused match_hostname urllib3 import 
