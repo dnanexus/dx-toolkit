@@ -1,3 +1,10 @@
+dx-toolkit (0.320.0) trusty; urgency=medium
+
+  * Fixed: Python 3.10 collections imports
+  * Fixed: Recursive folder download `dx download -r` of folders with matching prefix 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 22 Jan 2022 00:44:30 +0000
+
 dx-toolkit (0.319.0) trusty; urgency=medium
 
   * Fixed: Incorrect setting of the folder input option when building global workflows
