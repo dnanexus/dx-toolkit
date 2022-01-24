@@ -6,18 +6,23 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Added
+## [320.0] - beta
 
-* Support for qualified workflow & applet IDs and paths when using `dx build --from` with an applet/workflow
+### Fixed
 
-## [319.0] - beta
+* Python 3.10 collections imports
+* Recursive folder download `dx download -r` of folders with matching prefix
+
+## [319.2] - 2022.1.21 stable
 
 ### Fixed
 
 * Incorrect setting of the `folder` input option when building global workflows
+* Remove unused match_hostname urllib3 import 
 
 ### Added
 
+* Support for qualified workflow & applet IDs and paths when using `dx build --from` with an applet/workflow
 * Setting properties when building global workflows
 * '--allow-ssh' parameter to `dx ssh`
 * '--no-firewall-update' parameter to `dx ssh`
@@ -26,7 +31,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Detect client IP for SSH access to job instead of `*`
 
-## [318.0] - 2022.1.6 stable
+## [318.0] - 2022.1.6
 
 ### Fixed
 
