@@ -573,7 +573,7 @@ class DXTestCaseBuildWorkflows(DXTestCase):
                             "executable": self.test_applet_id,
                             "input": {"number": 777},
                             "folder": "/stage_0_output",
-                            "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
+                            "executionPolicy": {"onNonRestartableFailure": "failStage"},
                             "systemRequirements": {"main": {"instanceType": "mem1_ssd1_x2"}}},
                            {"id": "stage_1",
                             "executable": self.test_applet_id,
