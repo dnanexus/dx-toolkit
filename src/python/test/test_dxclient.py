@@ -10607,8 +10607,8 @@ class TestDXRun(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_API_APP_RUN"])
     def test_dx_run_app(self):
-        app_name = "app-dnanexus_smoke_test"
-        run("dx run {} -isubjobs=1 --yes --wait --watch".format(app_name))
+        app_name = "app-url_fetcher"
+        run("dx run {} -iurl='http://hgdownload.cse.ucsc.edu/goldenPath/hg19/encodeDCC/wgEncodeGencodeV11/supplemental/gencode.v11.tRNAs.gtf.gz' --yes --wait --watch".format(app_name))
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_specific_project(self):
