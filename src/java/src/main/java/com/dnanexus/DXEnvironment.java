@@ -766,7 +766,7 @@ public class DXEnvironment implements AutoCloseable {
         httpclient.close();
     }
 
-    private static final Logger LOG = LoggerManager.getLogger(DXEnvironment.class);
+    private static final Logger LOG = LogManager.getLogger(DXEnvironment.class);
 
     private static boolean isDebug() {
         return LOG.isDebugEnabled();
