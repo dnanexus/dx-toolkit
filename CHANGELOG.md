@@ -6,14 +6,24 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [320.0] - beta
+## [321.0] - beta
+
+### Fixed
+
+* KeyError in `dx-app-wizard --json`
+
+### Changed
+
+* dxjava dependencies log4j2, jackson-databind
+
+## [320.0] - 2022.2.1 stable
 
 ### Fixed
 
 * Python 3.10 collections imports
 * Recursive folder download `dx download -r` of folders with matching prefix
 
-## [319.2] - 2022.1.21 stable
+## [319.2] - 2022.1.21 
 
 ### Fixed
 
