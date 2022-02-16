@@ -249,6 +249,21 @@ namespace dx {
   JSON databaseListFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON databaseListFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON dbclusterDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterNew(const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON dbclusterNew(const dx::JSON &input_params, const bool safe_to_retry=false);
+
+  JSON dbclusterStart(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterStart(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterStop(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterStop(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterTerminate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterTerminate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 

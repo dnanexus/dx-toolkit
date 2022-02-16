@@ -1,0 +1,27 @@
+- many apps enhancements and new interactive apps (e.g. LocusZoom, Stata)
+- adding data and apps to the new London region
+- dxCompiler enhancements
+- hiring SciProd team
+
+- multiple apps enhancements and new interactive apps (e.g. LocusZoom, Stata)
+- creating global workflows using WDL
+- adding data and apps to the new London region
+- dxCompiler enhancements
+- hiring SciProd team
+
+-- remove break
+-- --region:
+
+-> replace the order of checking the region
+-> change equality chaeck to subset check
+-> mention in helpstring
+-> Workflow Spec (dxworklof.json) doesn't ...
+
+
+RStudio allows to be loaded in an iframe but there are some considerations:
+
+1. Setting the frame origin:
+
+https://docs.rstudio.com/ide/server-pro/latest/access_and_security/security_considerations.html#frame-origin
+
+
