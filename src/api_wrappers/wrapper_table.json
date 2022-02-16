@@ -553,6 +553,51 @@
         }
     ],
     [
+        "/dbcluster-xxxx/describe",
+        "dbclusterDescribe(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe"
+        }
+    ],
+    [
+        "/dbcluster/new",
+        "dbclusterNew(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/start",
+        "dbclusterStart(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/stop",
+        "dbclusterStop(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/terminate",
+        "dbclusterTerminate(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate"
+        }
+    ],
+    [
         "/file-xxxx/addTags",
         "fileAddTags(req, objectId)",
         {

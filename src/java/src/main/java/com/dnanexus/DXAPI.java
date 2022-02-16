@@ -11317,6 +11317,925 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the dbclusterDescribe method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterDescribe(String objectId, Class<T> outputClass) {
+        return dbclusterDescribe(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the dbclusterDescribe method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterDescribe(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "describe",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the dbclusterDescribe method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterDescribe(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return dbclusterDescribe(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the dbclusterDescribe method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterDescribe(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "describe",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the dbclusterDescribe method.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterDescribe(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterDescribe(String objectId) {
+        return dbclusterDescribe(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the dbclusterDescribe method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterDescribe(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterDescribe(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the dbclusterDescribe method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterDescribe(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterDescribe(String objectId, DXEnvironment env) {
+        return dbclusterDescribe(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the dbclusterDescribe method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterDescribe(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterDescribe(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "describe", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the dbclusterNew method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new">API specification</a>.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterNew(Class<T> outputClass) {
+        return dbclusterNew(mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the dbclusterNew method with an empty input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new">API specification</a>.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterNew(Class<T> outputClass, DXEnvironment env) {
+        return dbclusterNew(mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the dbclusterNew method with the specified input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new">API specification</a>.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterNew(Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/dbcluster/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                outputClass);
+    }
+    /**
+     * Invokes the dbclusterNew method with the specified input using the specified environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new">API specification</a>.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterNew(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest(env).request("/dbcluster/new", input, RetryStrategy.UNSAFE_TO_RETRY),
+                outputClass);
+    }
+
+    /**
+     * Invokes the dbclusterNew method.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new">API specification</a>.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterNew(Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterNew() {
+        return dbclusterNew(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the dbclusterNew method with the specified input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterNew(Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterNew(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/dbcluster/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the dbclusterNew method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new">API specification</a>.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterNew(Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterNew(DXEnvironment env) {
+        return dbclusterNew(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the dbclusterNew method with the specified environment and input parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new">API specification</a>.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterNew(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterNew(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/dbcluster/new", inputParams, RetryStrategy.UNSAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the dbclusterStart method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterStart(String objectId, Class<T> outputClass) {
+        return dbclusterStart(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the dbclusterStart method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterStart(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "start",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the dbclusterStart method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterStart(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return dbclusterStart(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the dbclusterStart method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterStart(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "start",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the dbclusterStart method.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterStart(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterStart(String objectId) {
+        return dbclusterStart(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the dbclusterStart method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterStart(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterStart(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "start", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the dbclusterStart method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterStart(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterStart(String objectId, DXEnvironment env) {
+        return dbclusterStart(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the dbclusterStart method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterStart(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterStart(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "start", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the dbclusterStop method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterStop(String objectId, Class<T> outputClass) {
+        return dbclusterStop(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the dbclusterStop method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterStop(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "stop",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the dbclusterStop method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterStop(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return dbclusterStop(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the dbclusterStop method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterStop(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "stop",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the dbclusterStop method.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterStop(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterStop(String objectId) {
+        return dbclusterStop(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the dbclusterStop method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterStop(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterStop(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "stop", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the dbclusterStop method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterStop(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterStop(String objectId, DXEnvironment env) {
+        return dbclusterStop(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the dbclusterStop method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterStop(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterStop(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "stop", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
+     * Invokes the dbclusterTerminate method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterTerminate(String objectId, Class<T> outputClass) {
+        return dbclusterTerminate(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the dbclusterTerminate method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterTerminate(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "terminate",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the dbclusterTerminate method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterTerminate(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return dbclusterTerminate(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the dbclusterTerminate method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T dbclusterTerminate(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the dbclusterTerminate method.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterTerminate(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterTerminate(String objectId) {
+        return dbclusterTerminate(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the dbclusterTerminate method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterTerminate(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterTerminate(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "terminate", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the dbclusterTerminate method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterTerminate(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterTerminate(String objectId, DXEnvironment env) {
+        return dbclusterTerminate(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the dbclusterTerminate method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #dbclusterTerminate(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode dbclusterTerminate(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "terminate", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
      * Invokes the fileAddTags method with an empty input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags">API specification</a>.

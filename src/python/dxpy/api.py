@@ -518,6 +518,46 @@ def database_list_folder(object_id, input_params={}, always_retry=True, **kwargs
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def dbcluster_describe(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/describe API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe
+    """
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_new(input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /dbcluster/new API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new
+    """
+    return DXHTTPRequest('/dbcluster/new', input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_start(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/start API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start
+    """
+    return DXHTTPRequest('/%s/start' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_stop(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/stop API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop
+    """
+    return DXHTTPRequest('/%s/stop' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_terminate(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/terminate API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate
+    """
+    return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTags API method.

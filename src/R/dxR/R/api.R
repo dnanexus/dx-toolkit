@@ -2163,6 +2163,165 @@ databaseListFolder <- function(objectID,
                 alwaysRetry=alwaysRetry)
 }
 
+##' dbclusterDescribe API wrapper
+##'
+##' This function makes an API call to the \code{/dbcluster-xxxx/describe} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe}
+dbclusterDescribe <- function(objectID,
+                              inputParams=emptyNamedList,
+                              jsonifyData=TRUE,
+                              alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'describe', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' dbclusterNew API wrapper
+##'
+##' This function makes an API call to the \code{/dbcluster/new} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new}
+dbclusterNew <- function(inputParams=emptyNamedList,
+                         jsonifyData=TRUE,
+                         alwaysRetry=FALSE) {
+  dxHTTPRequest('/dbcluster/new', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
+}
+
+##' dbclusterStart API wrapper
+##'
+##' This function makes an API call to the \code{/dbcluster-xxxx/start} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start}
+dbclusterStart <- function(objectID,
+                           inputParams=emptyNamedList,
+                           jsonifyData=TRUE,
+                           alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'start', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' dbclusterStop API wrapper
+##'
+##' This function makes an API call to the \code{/dbcluster-xxxx/stop} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop}
+dbclusterStop <- function(objectID,
+                          inputParams=emptyNamedList,
+                          jsonifyData=TRUE,
+                          alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'stop', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
+##' dbclusterTerminate API wrapper
+##'
+##' This function makes an API call to the \code{/dbcluster-xxxx/terminate} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param objectID DNAnexus object ID
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+##' @references API spec documentation: \url{https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate}
+dbclusterTerminate <- function(objectID,
+                               inputParams=emptyNamedList,
+                               jsonifyData=TRUE,
+                               alwaysRetry=TRUE) {
+  resource <- paste('/', objectID, '/', 'terminate', sep='')
+  dxHTTPRequest(resource,
+                inputParams,
+                jsonifyData=jsonifyData,
+                alwaysRetry=alwaysRetry)
+}
+
 ##' fileAddTags API wrapper
 ##'
 ##' This function makes an API call to the \code{/file-xxxx/addTags} API

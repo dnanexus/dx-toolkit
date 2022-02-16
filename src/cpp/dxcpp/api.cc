@@ -659,6 +659,46 @@ namespace dx {
     return databaseListFolder(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON dbclusterDescribe(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterDescribe(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterDescribe(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterNew(const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest("/dbcluster/new", input_params, safe_to_retry);
+  }
+
+  JSON dbclusterNew(const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterNew(input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterStart(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/start"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterStart(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterStart(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterStop(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/stop"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterStop(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterStop(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterTerminate(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/terminate"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterTerminate(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterTerminate(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON fileAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, safe_to_retry);
   }
