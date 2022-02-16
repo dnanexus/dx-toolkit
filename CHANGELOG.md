@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* API wrappers for `dbcluster`
+
 ## [321.0] - beta
 
 ### Fixed
