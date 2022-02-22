@@ -659,6 +659,22 @@ namespace dx {
     return databaseListFolder(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON dbclusterAddTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTags"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterAddTags(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterAddTags(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterAddTypes(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/addTypes"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterAddTypes(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterAddTypes(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON dbclusterDescribe(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest(std::string("/") + object_id + std::string("/describe"), input_params, safe_to_retry);
   }
@@ -667,12 +683,68 @@ namespace dx {
     return dbclusterDescribe(object_id, input_params.toString(), safe_to_retry);
   }
 
+  JSON dbclusterGetDetails(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/getDetails"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterGetDetails(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterGetDetails(object_id, input_params.toString(), safe_to_retry);
+  }
+
   JSON dbclusterNew(const std::string &input_params, const bool safe_to_retry) {
     return DXHTTPRequest("/dbcluster/new", input_params, safe_to_retry);
   }
 
   JSON dbclusterNew(const JSON &input_params, const bool safe_to_retry) {
     return dbclusterNew(input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterRemoveTags(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTags"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterRemoveTags(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterRemoveTags(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterRemoveTypes(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/removeTypes"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterRemoveTypes(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterRemoveTypes(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterRename(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/rename"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterRename(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterRename(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterSetDetails(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setDetails"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterSetDetails(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterSetDetails(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterSetProperties(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setProperties"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterSetProperties(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterSetProperties(object_id, input_params.toString(), safe_to_retry);
+  }
+
+  JSON dbclusterSetVisibility(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {
+    return DXHTTPRequest(std::string("/") + object_id + std::string("/setVisibility"), input_params, safe_to_retry);
+  }
+
+  JSON dbclusterSetVisibility(const std::string &object_id, const JSON &input_params, const bool safe_to_retry) {
+    return dbclusterSetVisibility(object_id, input_params.toString(), safe_to_retry);
   }
 
   JSON dbclusterStart(const std::string &object_id, const std::string &input_params, const bool safe_to_retry) {

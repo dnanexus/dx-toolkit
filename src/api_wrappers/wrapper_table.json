@@ -553,6 +553,24 @@
         }
     ],
     [
+        "/dbcluster-xxxx/addTags",
+        "dbclusterAddTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/addTypes",
+        "dbclusterAddTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes"
+        }
+    ],
+    [
         "/dbcluster-xxxx/describe",
         "dbclusterDescribe(req, objectId)",
         {
@@ -562,12 +580,75 @@
         }
     ],
     [
+        "/dbcluster-xxxx/getDetails",
+        "dbclusterGetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails"
+        }
+    ],
+    [
         "/dbcluster/new",
         "dbclusterNew(req)",
         {
             "objectMethod": false,
             "retryable": false,
             "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/removeTags",
+        "dbclusterRemoveTags(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/removeTypes",
+        "dbclusterRemoveTypes(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/rename",
+        "dbclusterRename(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/setDetails",
+        "dbclusterSetDetails(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/setProperties",
+        "dbclusterSetProperties(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties"
+        }
+    ],
+    [
+        "/dbcluster-xxxx/setVisibility",
+        "dbclusterSetVisibility(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility"
         }
     ],
     [
