@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [322.0] - beta
+
 ### Added
 
 * API wrappers for `dbcluster`
 
-## [321.0] - beta
+## [321.0] - 2022.2.23 - stable
 
 ### Fixed
 
@@ -20,7 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dxjava dependencies log4j2, jackson-databind
 
-## [320.0] - 2022.2.1 stable
+## [320.0] - 2022.2.1 
 
 ### Fixed
 
