@@ -1,3 +1,9 @@
+dx-toolkit (0.322.0) trusty; urgency=medium
+
+  * Added: API wrappers for dbcluster
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 23 Feb 2022 18:24:26 +0000
+
 dx-toolkit (0.321.0) trusty; urgency=medium
 
   * Fixed: KeyError in `dx-app-wizard --json`
