@@ -714,7 +714,7 @@ def cd(args):
 
     try:
         dxproj = dxpy.get_handler(dxpy.WORKSPACE_ID)
-        dxproj.list_folder(folder=folderpath)
+        dxproj.list_folder(folder=folderpath, only='folders')
     except:
         err_exit(fill(folderpath + ': No such file or directory found in project ' + dxpy.WORKSPACE_ID), 3)
 
