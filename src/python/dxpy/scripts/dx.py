@@ -4221,8 +4221,32 @@ def register_parser(parser, subparsers_action=None, categories=('other', ), add_
         for category in categories:
             parser_categories[category]['cmds'].append((name, _help))
 
+def compare_versions(v1, v2):
+    v1_dev = "+" in v1
+    if v1_dev:
+        v1 = v1[:v1.index("+")]
+    v2_dev = "+" in v2
+    if v2_dev:
+        v2 = v2[:v2.index("+")]
 
-parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://documentation.dnanexus.com/getting-started/tutorials/cli-quickstart#quickstart-for-cli\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
+    v1_ints = map(int, v1.split("."))
+    v2_ints = map(int, v2.split("."))
+    for part1, part2 in zip(v1_ints, v2_ints):
+        if part1 < part2:
+            return -1
+        elif part1 > part2:
+            return 1
+    if v1_dev and not v2_dev:
+        return -1
+    if v2_dev and not v1_dev:
+        return 1
+    return 0
+
+version_message = ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION)
+latest_version = dxpy.get_latest_version()
+if latest_version and compare_versions(latest_version, dxpy.TOOLKIT_VERSION) > 0:
+    version_message += "\nAn updated version of dx-toolkit (v%s) is available. To install it, please run:\n  $ pip install --upgrade dxpy" % latest_version
+parser = DXArgumentParser(description=DNANEXUS_LOGO() + version_message + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://documentation.dnanexus.com/getting-started/tutorials/cli-quickstart#quickstart-for-cli\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
                           formatter_class=argparse.RawTextHelpFormatter,
                           parents=[env_args],
                           usage='%(prog)s [-h] [--version] command ...')

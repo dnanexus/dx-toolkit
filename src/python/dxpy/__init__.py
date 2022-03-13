@@ -1037,6 +1037,18 @@ def append_underlying_workflow_describe(globalworkflow_desc):
         globalworkflow_desc['regionalOptions'][region]['workflowDescribe'] = workflow_desc
     return globalworkflow_desc
 
+def get_latest_version():
+    tags_url = "https://api.github.com/repos/dnanexus/dx-toolkit/tags"
+    try:
+        tags_list = requests.get(tags_url, timeout=1).json()
+        if tags_list:
+            latest = tags_list[0]
+            # Tags are of the form v0.200.0 - remove the 'v'
+            return latest["name"][1:]
+    except:
+        logger.debug("Error fetching latest dx-toolkit version from GitHub",
+                     exc_info=True)
+        return None
 
 from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()
