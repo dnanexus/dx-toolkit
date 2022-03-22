@@ -41,6 +41,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
+from ..cli.dataset_utilities import extract_dataset
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -5991,6 +5992,16 @@ parser_unarchive.add_argument(
 parser_unarchive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <> file(s) for unarchival, totalling <> GB, costing <> "')
 parser_unarchive.set_defaults(func=archive, request_mode="unarchival")
 register_parser(parser_unarchive, categories='fs')
+
+#####################################
+# extract_dataset
+#####################################
+parser_extract_dataset = subparsers.add_parser('extract_dataset', help='TODO:',
+                                   description='TODO:',
+                                   prog='dx extract_dataset')
+# TODO: add all flags
+parser_extract_dataset.set_defaults(func=publish)
+register_parser(parser_extract_dataset)
 
 #####################################
 # help
