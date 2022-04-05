@@ -6,13 +6,24 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [322.0] - beta
+## [323.0] - beta
+
+### Changed
+
+* Do not list folder contents to speed up `dx cd` 
+
+## [322.1] - 2022.4.5 - stable
 
 ### Added
 
 * API wrappers for `dbcluster`
 
-## [321.0] - 2022.2.23 - stable
+### Fixed
+
+* Pin websocket-client to 0.54.0 to fix `dx watch` output to include job output
+* Do not install pyreadline on Windows with Python 3.10
+
+## [321.0] - 2022.2.23
 
 ### Fixed
 
