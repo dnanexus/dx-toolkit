@@ -1,3 +1,10 @@
+dx-toolkit (0.322.1) trusty; urgency=medium
+
+  * Fixed: Pin websocket-client to 0.54.0 to fix `dx watch` output to include job output
+  * Fixed: Do not install pyreadline on Windows with Python 3.10 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 05 Apr 2022 20:11:56 +0000
+
 dx-toolkit (0.322.0) trusty; urgency=medium
 
   * Added: API wrappers for dbcluster
