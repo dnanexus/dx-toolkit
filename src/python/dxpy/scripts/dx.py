@@ -5235,7 +5235,7 @@ parser_ssh.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
 parser_ssh_firewall = parser_ssh.add_mutually_exclusive_group()
 parser_ssh_firewall.add_argument('--no-firewall-update', help='Do not update the allowSSH allowed IP ranges before connecting with ssh', action='store_true', default=False)
 parser_ssh_firewall.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
-                        help=fill('Configure the job to allow SSH access. from an IP range, e.g. "--allow-ssh 1.2.3.4". ' +
+                        help=fill('Configure the job to allow SSH access from an IP range, e.g. "--allow-ssh 1.2.3.4". ' +
                                   'If no argument is supplied then the client IP visible to the DNAnexus API server will be used by default',
                                   width_adjustment=-24))
 # If ssh is run with the  supress-running-check flag, then dx won't prompt
