@@ -10,7 +10,7 @@ import json
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
     rec = DXDataset(entity_result['id'],project=project)
-    rec.get_dxdescriptor()
+    rec_json = rec.get_descriptor()
 
 class DXDataset(DXRecord):
     """
@@ -26,22 +26,22 @@ class DXDataset(DXRecord):
         assert DXDataset._record_type in self.types
         assert 'descriptor' in self.details
         if is_dxlink(self.details['descriptor']):
-           self.descriptor = DXFile(self.details['descriptor'], mode='rb')
+           self.descriptor_dxfile = DXFile(self.details['descriptor'], mode='rb')
         # else:
         #     raise DXError(TODO: )
-        self.dxdescriptor = None
+        self.descriptor = None
         self.name = self.details.get('name')
         self.description = self.details.get('description')
         self.schema = self.details.get('schema')
         self.version = self.details.get('version')
     
-    def get_dxdescriptor(self):
-        if self.dxdescriptor is None:
-            self.dxdescriptor = DXDescriptor(self.descriptor,schema=self.schema)
+    def get_descriptor(self):
+        if self.descriptor is None:
+            self.descriptor = DXDatasetDescriptor(self.descriptor_dxfile,schema=self.schema)
 
-        return self.dxdescriptor
+        return self.descriptor
 
-class DXDescriptor():
+class DXDatasetDescriptor():
 
     def __init__(self, dxfile, **kwargs):
         python3_5_x = sys.version_info.major == 3 and sys.version_info.minor == 5
@@ -55,5 +55,17 @@ class DXDescriptor():
                 obj = json.loads(jsonstr, object_pairs_hook=collections.OrderedDict)
             else:
                 obj = json.load(f, object_pairs_hook=collections.OrderedDict)
-
+ 
+        for key in obj:
+            setattr(self,key, obj[key])
         self.schema = kwargs.get('schema')
+
+    def get_dictionary(self):
+        return DXDatasetDictionary(self)
+
+class DXDatasetDictionary():
+    def __init__(self, descriptor):
+        self.data_dictionary =  self.load_data_dictionary(descriptor)
+
+    def load_data_dictionary(self,descriptor):
+        pass
