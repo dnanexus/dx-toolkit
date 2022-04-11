@@ -11,6 +11,7 @@ def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
     rec = DXDataset(entity_result['id'],project=project)
     rec_json = rec.get_descriptor()
+    rec_dict = rec.get_dictionary()
 
 class DXDataset(DXRecord):
     """
@@ -41,6 +42,12 @@ class DXDataset(DXRecord):
 
         return self.descriptor
 
+    def get_dictionary(self):
+        if self.descriptor is None:
+            self.get_descriptor()
+
+        return self.descriptor.get_dictionary()
+
 class DXDatasetDescriptor():
 
     def __init__(self, dxfile, **kwargs):
@@ -55,7 +62,7 @@ class DXDatasetDescriptor():
                 obj = json.loads(jsonstr, object_pairs_hook=collections.OrderedDict)
             else:
                 obj = json.load(f, object_pairs_hook=collections.OrderedDict)
- 
+        
         for key in obj:
             setattr(self,key, obj[key])
         self.schema = kwargs.get('schema')
@@ -66,6 +73,20 @@ class DXDatasetDescriptor():
 class DXDatasetDictionary():
     def __init__(self, descriptor):
         self.data_dictionary =  self.load_data_dictionary(descriptor)
-
+        self.entity_dictionary = self.load_entity_dictionary(descriptor)
+    
     def load_data_dictionary(self,descriptor):
         pass
+
+    def load_entity_dictionary(self, descriptor):
+        entity_dictionary = collections.OrderedDict()
+        for entity_name in descriptor.model['entities']:
+            entity = descriptor.model['entities'][entity_name]
+            entity_dictionary[entity_name] = {
+                "entity": entity_name,
+                "entity_title": entity.get('entity_title'),
+                "entity_label_singular": entity.get('entity_label_singular'),
+                "entity_label_plural": entity.get('entity_label_plural'),
+                "entity_description": entity.get('entity_description')
+            }
+        return entity_dictionary
