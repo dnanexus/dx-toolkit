@@ -7,12 +7,13 @@ import sys
 import collections
 import json
 import pandas as pd
+import os
 
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
     rec = DXDataset(entity_result['id'],project=project)
     rec_json = rec.get_descriptor()
-    rec_dict = rec.get_dictionary()
+    rec_dict = rec.get_dictionary().write(output_path="")
     
 class DXDataset(DXRecord):
     """
@@ -94,7 +95,6 @@ class DXDatasetDictionary():
         return cblocks
 
     def create_coding_name_dframe(self, model, entity, field, code):
-        print(field)
         dcols = {}
         if model['entities'][entity]["fields"][field]["is_hierarchical"]:
             def unpack_hierarchy(nodes, parent_code):
@@ -140,11 +140,34 @@ class DXDatasetDictionary():
         entity_dictionary = collections.OrderedDict()
         for entity_name in descriptor.model['entities']:
             entity = descriptor.model['entities'][entity_name]
-            entity_dictionary[entity_name] = {
+            entity_dictionary[entity_name] = pd.DataFrame.from_dict([{
                 "entity": entity_name,
                 "entity_title": entity.get('entity_title'),
                 "entity_label_singular": entity.get('entity_label_singular'),
                 "entity_label_plural": entity.get('entity_label_plural'),
                 "entity_description": entity.get('entity_description')
-            }
+            }])
         return entity_dictionary
+
+    def write(self, output_path="", sep=","):
+        """Create CSV files with the contents of the dictionaries.
+        """
+        csv_opts = dict(
+            sep=sep,
+            header=True,
+            index=False,
+            na_rep="",
+        )
+        
+        def as_dataframe(ord_dict_of_df):
+            """Join all blocks into a pandas DataFrame."""
+            df = pd.concat([b for b in ord_dict_of_df.values()], sort=False)
+            return df
+
+        coding_dframe = as_dataframe(self.coding_dictionary)
+        output_file = os.path.join(output_path,"coding_dictionary.csv")
+        coding_dframe.to_csv(output_file, **csv_opts)
+        
+        entity_dframe = as_dataframe(self.entity_dictionary)
+        output_file = os.path.join(output_path,"entity_dictionary.csv")
+        entity_dframe.to_csv(output_file, **csv_opts)
