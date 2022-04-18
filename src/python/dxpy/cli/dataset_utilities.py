@@ -81,15 +81,17 @@ class DXDatasetDictionary():
     def load_data_dictionary(self, descriptor):
         eblocks = collections.OrderedDict()
         for entity_name in descriptor.model['entities']:
-            eblocks[entity_name] = self.create_entity_dframe(descriptor.model['entities'][entity_name])
+            eblocks[entity_name] = self.create_entity_dframe(descriptor.model['entities'][entity_name], 
+                                        is_primary_entity=(entity_name==descriptor.model["global_primary_key"]["entity"]),
+                                        global_primary_key=(descriptor.model["global_primary_key"]))
         print(eblocks)
 
-    def create_entity_dframe(self, entity):
+    def create_entity_dframe(self, entity, is_primary_entity, global_primary_key):
         required_columns = [
             "entity", 
             "name", 
-            "type" 
-            #"primary_key_type"
+            "type", 
+            "primary_key_type"
         ]
 
         extra_cols = [
@@ -100,7 +102,7 @@ class DXDatasetDictionary():
             "is_multi_select",
             "is_sparse_coding",
             "linkout",
-            #"longitudinal_axis_type",
+            "longitudinal_axis_type",
             #"referenced_entity_field",
             #"relationship",
             "title",
@@ -114,7 +116,10 @@ class DXDatasetDictionary():
             # Field-level parameters
             dcols["name"].append(entity["fields"][field]["name"])
             dcols["type"].append(entity["fields"][field]["type"])
-            
+            dcols["primary_key_type"].append(
+                ("global" if is_primary_entity else "local")
+                if (global_primary_key["field"] and entity["fields"][field]["name"] == global_primary_key["field"])
+                else "")
             # Optional cols to be filled in with blanks regardless
             dcols["coding_name"].append(entity["fields"][field]["coding_name"] if entity["fields"][field]["coding_name"] else "")
             dcols["concept"].append(entity["fields"][field]["concept"])
@@ -126,6 +131,8 @@ class DXDatasetDictionary():
             dcols["is_multi_select"].append("yes" if entity["fields"][field]["is_multi_select"] else "")
             dcols["is_sparse_coding"].append("yes" if entity["fields"][field]["is_sparse_coding"] else "")
             dcols["linkout"].append(entity["fields"][field]["linkout"])
+            dcols["longitudinal_axis_type"].append(entity["fields"][field]["longitudinal_axis_type"] 
+                                                    if entity["fields"][field]["longitudinal_axis_type"] else "")
             dcols["title"].append(entity["fields"][field]["title"])
             dcols["units"].append(entity["fields"][field]["units"])
 
@@ -135,7 +142,7 @@ class DXDatasetDictionary():
             print({key: len(vals) for key, vals in dcols.items()},
                   file=sys.stderr)
             raise exc
-        
+            
         return dframe
 
     def load_coding_dictionary(self, descriptor):
