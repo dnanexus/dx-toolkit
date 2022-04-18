@@ -81,7 +81,62 @@ class DXDatasetDictionary():
     def load_data_dictionary(self, descriptor):
         eblocks = collections.OrderedDict()
         for entity_name in descriptor.model['entities']:
-            pass
+            eblocks[entity_name] = self.create_entity_dframe(descriptor.model['entities'][entity_name])
+        print(eblocks)
+
+    def create_entity_dframe(self, entity):
+        required_columns = [
+            "entity", 
+            "name", 
+            "type" 
+            #"primary_key_type"
+        ]
+
+        extra_cols = [
+            "coding_name",
+            "concept",
+            "description",
+            "folder_path",
+            "is_multi_select",
+            "is_sparse_coding",
+            "linkout",
+            #"longitudinal_axis_type",
+            #"referenced_entity_field",
+            #"relationship",
+            "title",
+            "units",
+        ]
+        dcols = {col: [] for col in required_columns + extra_cols}
+        dcols["entity"] = [entity["name"]] * len(entity["fields"])
+        dcols["referenced_entity_field"] = [""] * len(entity["fields"])
+
+        for field in entity["fields"]:
+            # Field-level parameters
+            dcols["name"].append(entity["fields"][field]["name"])
+            dcols["type"].append(entity["fields"][field]["type"])
+            
+            # Optional cols to be filled in with blanks regardless
+            dcols["coding_name"].append(entity["fields"][field]["coding_name"] if entity["fields"][field]["coding_name"] else "")
+            dcols["concept"].append(entity["fields"][field]["concept"])
+            dcols["description"].append(entity["fields"][field]["description"])
+            dcols["folder_path"].append(
+                " > ".join(entity["fields"][field]["folder_path"])
+                if ("folder_path" in entity["fields"][field].keys() and entity["fields"][field]["folder_path"])
+                else "")
+            dcols["is_multi_select"].append("yes" if entity["fields"][field]["is_multi_select"] else "")
+            dcols["is_sparse_coding"].append("yes" if entity["fields"][field]["is_sparse_coding"] else "")
+            dcols["linkout"].append(entity["fields"][field]["linkout"])
+            dcols["title"].append(entity["fields"][field]["title"])
+            dcols["units"].append(entity["fields"][field]["units"])
+
+        try:
+            dframe = pd.DataFrame(dcols)
+        except ValueError as exc:
+            print({key: len(vals) for key, vals in dcols.items()},
+                  file=sys.stderr)
+            raise exc
+        
+        return dframe
 
     def load_coding_dictionary(self, descriptor):
         cblocks = collections.OrderedDict()
