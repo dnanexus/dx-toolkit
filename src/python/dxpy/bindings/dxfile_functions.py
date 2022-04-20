@@ -176,6 +176,7 @@ def _verify(filename, md5digest):
         err_exit("Checksum doesn't match " + str(actual_md5) + "  expected:" + str(md5digest))
     print("Checksum correct")
 
+
 # [dxid] is a symbolic link. Create a preauthenticated URL,
 # and download it
 def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max_tries=15):
