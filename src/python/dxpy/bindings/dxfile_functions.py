@@ -217,7 +217,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max
     try:
         subprocess.check_call(cmd, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
+        err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=e))
 
     if md5digest is not None:
         _verify(dest_filename, md5digest)
