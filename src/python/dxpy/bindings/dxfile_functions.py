@@ -97,7 +97,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected
 
 
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    project=None, describe_output=None, symlink_unlimited_retries=False, **kwargs):
+                    project=None, describe_output=None, symlink_max_tries=False, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
@@ -114,9 +114,8 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             It should contain the default fields of the describe API call output and
             the "parts" field, not included in the output by default.
     :type describe_output: dict or None
-    :param symlink_unlimited_retries: when downloading a symlink, call aria2c with the 
-            unlimited retries parameter specified.
-    :type symlink_unlimited_retries: bool
+    :param symlink_max_tries: Maximum amount of tries when downloading a symlink with aria2c.
+    :type symlink_max_tries: int or None
 
     Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
@@ -137,7 +136,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
                                    show_progress=show_progress,
                                    project=project,
                                    describe_output=describe_output,
-                                   symlink_unlimited_retries=symlink_unlimited_retries,
+                                   symlink_max_tries=symlink_max_tries,
                                    **kwargs)
 
 
@@ -179,7 +178,10 @@ def _verify(filename, md5digest):
 
 # [dxid] is a symbolic link. Create a preauthenticated URL,
 # and download it
-def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_unlimited_retries=False):
+def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max_tries=15):
+    if symlink_max_tries < 1:
+        raise dxpy.exceptions.DXError("symlink_max_tries argument has to be positive integer")
+
     # Check if aria2 present, if not, error.
     aria2c_exe = _which("aria2c")
 
@@ -202,13 +204,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_unl
         "-x", str(max_connections),  # maximum number of connections to one server for  each  download
         "--retry-wait=10"            # time to wait before retrying
     ]
-
-    if symlink_unlimited_retries:
-        # `-m` is the max number of tries parameter. 
-        # Specifying `0` means try infinitely.
-        cmd.extend(["-m", "0"]) 
-    else:
-        cmd.extend(["-m", "15"]) 
+    cmd.extend(["-m", str(symlink_max_tries)])
 
     # Split path properly for aria2c
     # If '-d' arg not provided, aria2c uses current working directory
@@ -227,7 +223,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_unl
 
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                     project=None, describe_output=None, symlink_unlimited_retries=False, **kwargs):
+                     project=None, describe_output=None, symlink_max_tries=15, **kwargs):
     '''
     Core of download logic. Download file-id *dxid* and store it in
     a local file *filename*.
@@ -280,7 +276,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             md5 = dxfile_desc['md5']
         else:
             md5 = None
-        _download_symbolic_link(dxid, md5, project, filename, symlink_unlimited_retries=symlink_unlimited_retries)
+        _download_symbolic_link(dxid, md5, project, filename, symlink_max_tries=symlink_max_tries)
         return True
 
     parts = dxfile_desc["parts"]

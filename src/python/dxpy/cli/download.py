@@ -95,7 +95,7 @@ def download_one_file(project, file_desc, dest_filename, args):
                             show_progress=show_progress,
                             project=project,
                             describe_output=file_desc,
-                            symlink_unlimited_retries=args.symlink_unlimited_retries)
+                            symlink_max_tries=args.symlink_max_tries)
         return
     except:
         err_exit()
