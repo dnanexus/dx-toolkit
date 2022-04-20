@@ -219,16 +219,21 @@ class DXDatasetDictionary():
             index=False,
             na_rep="",
         )
+        def sort_dataframe_columns(dframe, required_columns):
+            """Sort dataframe columns alphabetically but with `required_columns` first."""
+            extra_cols = dframe.columns.difference(required_columns)
+            sorted_cols = list(required_columns) + extra_cols.sort_values().tolist()
+            return dframe.loc[:, sorted_cols]
         
-        def as_dataframe(ord_dict_of_df):
+        def as_dataframe(ord_dict_of_df, required_columns):
             """Join all blocks into a pandas DataFrame."""
             df = pd.concat([b for b in ord_dict_of_df.values()], sort=False)
-            return df
+            return sort_dataframe_columns(df, required_columns)
 
-        coding_dframe = as_dataframe(self.coding_dictionary)
+        coding_dframe = as_dataframe(self.coding_dictionary, required_columns=["coding_name", "code", "meaning"])
         output_file = os.path.join(output_path,"coding_dictionary.csv")
         coding_dframe.to_csv(output_file, **csv_opts)
         
-        entity_dframe = as_dataframe(self.entity_dictionary)
+        entity_dframe = as_dataframe(self.entity_dictionary, required_columns=["entity", "entity_title"])
         output_file = os.path.join(output_path,"entity_dictionary.csv")
         entity_dframe.to_csv(output_file, **csv_opts)
