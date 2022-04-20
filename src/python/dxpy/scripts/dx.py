@@ -4566,9 +4566,8 @@ parser_download.add_argument('--no-progress', help='Do not show a progress bar',
                              action='store_false', default=sys.stderr.isatty())
 parser_download.add_argument('--lightweight', help='Skip some validation steps to make fewer API calls',
                              action='store_true')
-parser_download.add_argument('--symlink-max-tries', help='Set maximum tries for downloading symlinked files using aria2c.',
-                             action='store_true',
-                             default=False)
+parser_download.add_argument('--symlink-max-tries', help='Set maximum tries for downloading symlinked files using aria2c',
+                             default=15)
 parser_download.add_argument('--unicode', help='Display the characters as text/unicode when writing to stdout',
                              dest="unicode_text", action='store_true')
 parser_download.set_defaults(func=download_or_cat)
