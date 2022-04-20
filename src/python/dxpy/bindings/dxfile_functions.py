@@ -179,7 +179,6 @@ def _verify(filename, md5digest):
 # [dxid] is a symbolic link. Create a preauthenticated URL,
 # and download it
 def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max_tries=15):
-    print(symlink_max_tries)
     if symlink_max_tries < 1:
         raise dxpy.exceptions.DXError("symlink_max_tries argument has to be positive integer")
 
