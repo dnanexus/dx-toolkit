@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## Fixed
+
+* Improvements to symlink downloading reliability by solely using `aria2c` and enhancing options around its use
+
 ## [323.0] - beta
 
 ### Changed
