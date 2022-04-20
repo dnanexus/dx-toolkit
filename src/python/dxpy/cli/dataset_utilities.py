@@ -24,7 +24,7 @@ class DXDataset(DXRecord):
     _record_type = "Dataset"
 
     def __init__(self, dxid=None, project=None):
-        DXRecord.__init__(self,dxid=dxid)
+        super(DXDataset, self).__init__(dxid, project)
         self.describe(default_fields=True, fields={'properties', 'details'})
         assert DXDataset._record_type in self.types
         assert 'descriptor' in self.details
@@ -114,27 +114,28 @@ class DXDatasetDictionary():
 
         for field in entity["fields"]:
             # Field-level parameters
-            dcols["name"].append(entity["fields"][field]["name"])
-            dcols["type"].append(entity["fields"][field]["type"])
+            field_dict = entity["fields"][field]
+            dcols["name"].append(field_dict["name"])
+            dcols["type"].append(field_dict["type"])
             dcols["primary_key_type"].append(
                 ("global" if is_primary_entity else "local")
-                if (global_primary_key["field"] and entity["fields"][field]["name"] == global_primary_key["field"])
+                if (global_primary_key["field"] and field_dict["name"] == global_primary_key["field"])
                 else "")
             # Optional cols to be filled in with blanks regardless
-            dcols["coding_name"].append(entity["fields"][field]["coding_name"] if entity["fields"][field]["coding_name"] else "")
-            dcols["concept"].append(entity["fields"][field]["concept"])
-            dcols["description"].append(entity["fields"][field]["description"])
+            dcols["coding_name"].append(field_dict["coding_name"] if field_dict["coding_name"] else "")
+            dcols["concept"].append(field_dict["concept"])
+            dcols["description"].append(field_dict["description"])
             dcols["folder_path"].append(
-                " > ".join(entity["fields"][field]["folder_path"])
-                if ("folder_path" in entity["fields"][field].keys() and entity["fields"][field]["folder_path"])
+                " > ".join(field_dict["folder_path"])
+                if ("folder_path" in field_dict.keys() and field_dict["folder_path"])
                 else "")
-            dcols["is_multi_select"].append("yes" if entity["fields"][field]["is_multi_select"] else "")
-            dcols["is_sparse_coding"].append("yes" if entity["fields"][field]["is_sparse_coding"] else "")
-            dcols["linkout"].append(entity["fields"][field]["linkout"])
-            dcols["longitudinal_axis_type"].append(entity["fields"][field]["longitudinal_axis_type"] 
-                                                    if entity["fields"][field]["longitudinal_axis_type"] else "")
-            dcols["title"].append(entity["fields"][field]["title"])
-            dcols["units"].append(entity["fields"][field]["units"])
+            dcols["is_multi_select"].append("yes" if field_dict["is_multi_select"] else "")
+            dcols["is_sparse_coding"].append("yes" if field_dict["is_sparse_coding"] else "")
+            dcols["linkout"].append(field_dict["linkout"])
+            dcols["longitudinal_axis_type"].append(field_dict["longitudinal_axis_type"] 
+                                                    if field_dict["longitudinal_axis_type"] else "")
+            dcols["title"].append(field_dict["title"])
+            dcols["units"].append(field_dict["units"])
 
         try:
             dframe = pd.DataFrame(dcols)
@@ -142,18 +143,16 @@ class DXDatasetDictionary():
             print({key: len(vals) for key, vals in dcols.items()},
                   file=sys.stderr)
             raise exc
-            
+
         return dframe
 
     def load_coding_dictionary(self, descriptor):
         cblocks = collections.OrderedDict()
         for entity in descriptor.model['entities']:
             for field in descriptor.model['entities'][entity]["fields"]:
-                if descriptor.model['entities'][entity]["fields"][field]["coding_name"] and \
-                   descriptor.model['entities'][entity]["fields"][field]["coding_name"] not in cblocks:
-                    cblocks[descriptor.model['entities'][entity]["fields"][field]["coding_name"]] = \
-                        self.create_coding_name_dframe(descriptor.model, entity, field, \
-                                                       descriptor.model['entities'][entity]["fields"][field]["coding_name"])
+                coding_name_value = descriptor.model['entities'][entity]["fields"][field]["coding_name"]
+                if coding_name_value and coding_name_value not in cblocks:
+                    cblocks[coding_name_value] = self.create_coding_name_dframe(descriptor.model, entity, field, coding_name_value)
         return cblocks
 
     def create_coding_name_dframe(self, model, entity, field, code):
