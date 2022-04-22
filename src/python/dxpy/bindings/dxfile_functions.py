@@ -97,7 +97,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected
 
 
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    project=None, describe_output=None, symlink_max_tries=False, **kwargs):
+                    project=None, describe_output=None, symlink_max_tries=15, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
