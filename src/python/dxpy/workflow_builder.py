@@ -324,9 +324,10 @@ def _get_validated_json(json_spec, args):
         validated_spec['stages'] = _get_validated_stages(validated_spec['stages'])
 
     if 'name' in validated_spec:
-        if not args._from and args.src_dir != validated_spec['name']:
+        dir_name = os.path.basename(os.path.normpath(args.src_dir))
+        if not args._from and dir_name != validated_spec['name']:
             logger.warn(
-                'workflow name "{}" does not match containing directory "{}"'.format(validated_spec['name'], args.src_dir))
+                'workflow name "{}" does not match containing directory "{}"'.format(validated_spec['name'], dir_name))
 
     if 'ignoreReuse' in validated_spec:
         validate_ignore_reuse(validated_spec['stages'], validated_spec['ignoreReuse'])
