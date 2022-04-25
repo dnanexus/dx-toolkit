@@ -1,3 +1,4 @@
+from typing import OrderedDict
 from ..bindings import DXRecord
 from ..utils.resolver import resolve_existing_path
 from ..bindings.dxdataobject_functions import is_dxlink
@@ -8,12 +9,46 @@ import collections
 import json
 import pandas as pd
 import os
+import re
+import logging
+
+_logger = logging.getLogger(__name__)
 
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
     rec = DXDataset(entity_result['id'],project=project)
     rec_json = rec.get_descriptor()
     rec_dict = rec.get_dictionary().write(output_path="")
+
+def get_join_path_to_entity_field_map(entity):
+    """
+        Returns map with "database$table$column", "unique_database$table$column",
+        as keys and values are (entity, field)
+    """
+    join_path_to_entity_field = collections.OrderedDict()
+    for field in entity["fields"]:
+        field_value = entity["fields"][field]["mapping"]
+        db_tb_col_path = "{}${}${}".format(field_value["database_name"], field_value["table"], field_value["column"])
+        join_path_to_entity_field[db_tb_col_path] = (entity["name"],field)
+
+        database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
+        if field_value["database_unique_name"] and database_unique_name_regex.match(field_value["database_unique_name"]):  
+            unique_db_tb_col_path = "{}${}${}".format(field_value["database_unique_name"], field_value["table"], field_value["column"])
+            join_path_to_entity_field[unique_db_tb_col_path] = (entity["name"], field)
+    return join_path_to_entity_field
+
+def create_edges(join_info_joins, join_path_to_entity_field):
+    """
+     Convert join_info to Edge[]
+    """
+    edge = collections.OrderedDict()
+    column_to = join_info_joins["joins"][0]["to"]
+    column_from = join_info_joins["joins"][0]["from"]
+    edge["source_entity"], edge["source_field"] = join_path_to_entity_field[column_to]
+    edge["destination_entity"], edge["destination_field"] = join_path_to_entity_field[column_from]
+    edge["relationship"] = join_info_joins["relationship"]
+    return edge
+
     
 class DXDataset(DXRecord):
     """
@@ -41,13 +76,11 @@ class DXDataset(DXRecord):
     def get_descriptor(self):
         if self.descriptor is None:
             self.descriptor = DXDatasetDescriptor(self.descriptor_dxfile,schema=self.schema)
-
         return self.descriptor
 
     def get_dictionary(self):
         if self.descriptor is None:
             self.get_descriptor()
-
         return self.descriptor.get_dictionary()
 
 class DXDatasetDescriptor():
@@ -80,11 +113,53 @@ class DXDatasetDictionary():
     
     def load_data_dictionary(self, descriptor):
         eblocks = collections.OrderedDict()
+        join_path_to_entity_field = collections.OrderedDict()
         for entity_name in descriptor.model['entities']:
             eblocks[entity_name] = self.create_entity_dframe(descriptor.model['entities'][entity_name], 
                                         is_primary_entity=(entity_name==descriptor.model["global_primary_key"]["entity"]),
                                         global_primary_key=(descriptor.model["global_primary_key"]))
-        print(eblocks)
+
+            join_path_to_entity_field.update(get_join_path_to_entity_field_map(descriptor.model['entities'][entity_name]))
+
+        _EXCLUDE_EDGES_FOR_TABLES = ("raw_file_metadata")
+        edges = []
+        for ji in descriptor.join_info:
+            skip_edge = False
+            
+            for path in [ji["joins"][0]["to"], ji["joins"][0]["from"]]:
+                if path not in join_path_to_entity_field:
+                    skip_edge = True
+                    db_name,table_name,col_name = path.split("$")
+                    if table_name in _EXCLUDE_EDGES_FOR_TABLES:
+                        continue
+                    db_tb_name = "{}${}".format(db_name, table_name)
+                    if db_tb_name not in join_path_to_entity_field:
+                        _logger.warning("Skipping edge for : " + db_tb_name)
+                        continue
+                    else:
+                        logging.debug("{} present in join_path_to_entity_field. But skip adding corresponding {} \
+                                      to join_path_to_entity_field".format(db_tb_name, path))
+                        continue
+
+            if not skip_edge:
+                edges.append(create_edges(ji, join_path_to_entity_field))
+
+        for edge in edges:
+            source_eblock = eblocks.get(edge["source_entity"])
+            if not source_eblock.empty:
+                eb_row_idx = (source_eblock["name"] == edge["source_field"])
+                if eb_row_idx.sum() != 1:
+                    raise ValueError("Invalid edge: " + str(edge))
+
+                ref = source_eblock["referenced_entity_field"].values
+                rel = source_eblock["relationship"].values
+                ref[eb_row_idx] = "{}:{}".format(edge["destination_entity"], edge["destination_field"])
+                rel[eb_row_idx] = edge["relationship"]
+
+                source_eblock = source_eblock.assign(relationship=rel, referenced_entity_field=ref)
+            else:
+                print("No entity for: ", edge["source_entity"], " for edge: ", edge)
+        return eblocks
 
     def create_entity_dframe(self, entity, is_primary_entity, global_primary_key):
         required_columns = [
@@ -103,14 +178,15 @@ class DXDatasetDictionary():
             "is_sparse_coding",
             "linkout",
             "longitudinal_axis_type",
-            #"referenced_entity_field",
-            #"relationship",
+            "referenced_entity_field",
+            "relationship",
             "title",
             "units",
         ]
         dcols = {col: [] for col in required_columns + extra_cols}
         dcols["entity"] = [entity["name"]] * len(entity["fields"])
         dcols["referenced_entity_field"] = [""] * len(entity["fields"])
+        dcols["relationship"] = [""] * len(entity["fields"])
 
         for field in entity["fields"]:
             # Field-level parameters
@@ -229,6 +305,10 @@ class DXDatasetDictionary():
             """Join all blocks into a pandas DataFrame."""
             df = pd.concat([b for b in ord_dict_of_df.values()], sort=False)
             return sort_dataframe_columns(df, required_columns)
+
+        coding_dframe = as_dataframe(self.data_dictionary, required_columns = ["entity", "name", "type", "primary_key_type"])
+        output_file = os.path.join(output_path,"data_dictionary.csv")
+        coding_dframe.to_csv(output_file, **csv_opts)
 
         coding_dframe = as_dataframe(self.coding_dictionary, required_columns=["coding_name", "code", "meaning"])
         output_file = os.path.join(output_path,"coding_dictionary.csv")
