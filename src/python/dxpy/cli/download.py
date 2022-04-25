@@ -87,13 +87,15 @@ def download_one_file(project, file_desc, dest_filename, args):
     except AttributeError:
         show_progress = False
 
+
     try:
         dxpy.download_dxfile(
                             file_desc['id'],
                             dest_filename,
                             show_progress=show_progress,
                             project=project,
-                            describe_output=file_desc)
+                            describe_output=file_desc,
+                            symlink_max_tries=args.symlink_max_tries)
         return
     except:
         err_exit()

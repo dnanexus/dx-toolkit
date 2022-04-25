@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## Fixed
+
+* Improvements to symlink downloading reliability by solely using `aria2c` and enhancing options around its use (removes `wget` option for downloading symlinked files, adds the ability to set max tries for aria2c, adds `-c` flag for continuing downloads, removes the `--check-certificate=false` option).
+
 ## [323.0] - beta
 
 ### Changed
