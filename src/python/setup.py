@@ -86,7 +86,7 @@ setup(
     description='DNAnexus Platform API bindings for Python',
     long_description=readme_content,
     long_description_content_type="text/markdown",
-    author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
+    author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Marek Hrvol, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
     author_email='support@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
     zip_safe=False,
