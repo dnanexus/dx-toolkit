@@ -1,9 +1,3 @@
-from typing import OrderedDict
-from ..bindings import DXRecord
-from ..utils.resolver import resolve_existing_path
-from ..bindings.dxdataobject_functions import is_dxlink
-from ..bindings.dxfile import DXFile
-from ..utils.file_handle import as_handle
 import sys
 import collections
 import json
@@ -11,8 +5,16 @@ import pandas as pd
 import os
 import re
 import logging
+from ..bindings import DXRecord
+from ..bindings.dxdataobject_functions import is_dxlink
+from ..bindings.dxfile import DXFile
+from ..utils.resolver import resolve_existing_path
+from ..utils.file_handle import as_handle
+from ..exceptions import DXError
 
 _logger = logging.getLogger(__name__)
+
+database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
@@ -20,34 +22,7 @@ def extract_dataset(args):
     rec_json = rec.get_descriptor()
     rec_dict = rec.get_dictionary().write(output_path="")
 
-def get_join_path_to_entity_field_map(entity):
-    """
-        Returns map with "database$table$column", "unique_database$table$column",
-        as keys and values are (entity, field)
-    """
-    join_path_to_entity_field = collections.OrderedDict()
-    for field in entity["fields"]:
-        field_value = entity["fields"][field]["mapping"]
-        db_tb_col_path = "{}${}${}".format(field_value["database_name"], field_value["table"], field_value["column"])
-        join_path_to_entity_field[db_tb_col_path] = (entity["name"],field)
 
-        database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
-        if field_value["database_unique_name"] and database_unique_name_regex.match(field_value["database_unique_name"]):  
-            unique_db_tb_col_path = "{}${}${}".format(field_value["database_unique_name"], field_value["table"], field_value["column"])
-            join_path_to_entity_field[unique_db_tb_col_path] = (entity["name"], field)
-    return join_path_to_entity_field
-
-def create_edges(join_info_joins, join_path_to_entity_field):
-    """
-     Convert join_info to Edge[]
-    """
-    edge = collections.OrderedDict()
-    column_to = join_info_joins["joins"][0]["to"]
-    column_from = join_info_joins["joins"][0]["from"]
-    edge["source_entity"], edge["source_field"] = join_path_to_entity_field[column_to]
-    edge["destination_entity"], edge["destination_field"] = join_path_to_entity_field[column_from]
-    edge["relationship"] = join_info_joins["relationship"]
-    return edge
 
     
 class DXDataset(DXRecord):
@@ -61,12 +36,12 @@ class DXDataset(DXRecord):
     def __init__(self, dxid=None, project=None):
         super(DXDataset, self).__init__(dxid, project)
         self.describe(default_fields=True, fields={'properties', 'details'})
-        assert DXDataset._record_type in self.types
+        assert self._record_type in self.types
         assert 'descriptor' in self.details
         if is_dxlink(self.details['descriptor']):
            self.descriptor_dxfile = DXFile(self.details['descriptor'], mode='rb')
-        # else:
-        #     raise DXError(TODO: )
+        else:
+            raise DXError('Invalid link: %r' % self.details['descriptor'])
         self.descriptor = None
         self.name = self.details.get('name')
         self.description = self.details.get('description')
@@ -106,12 +81,20 @@ class DXDatasetDescriptor():
         return DXDatasetDictionary(self)
 
 class DXDatasetDictionary():
+    """
+        A class to represent data, coding and entity dictionaries based on the descriptor. 
+        All 3 dictionaries will have the same internal representation as dictionaries of string to pandas dataframe.
+        Write function writes the 3 dataframes to output.
+    """
     def __init__(self, descriptor):
         self.data_dictionary =  self.load_data_dictionary(descriptor)
         self.coding_dictionary = self.load_coding_dictionary(descriptor)
         self.entity_dictionary = self.load_entity_dictionary(descriptor)
     
     def load_data_dictionary(self, descriptor):
+        """
+            Processes data dictionary from descriptor
+        """
         eblocks = collections.OrderedDict()
         join_path_to_entity_field = collections.OrderedDict()
         for entity_name in descriptor.model['entities']:
@@ -119,7 +102,7 @@ class DXDatasetDictionary():
                                         is_primary_entity=(entity_name==descriptor.model["global_primary_key"]["entity"]),
                                         global_primary_key=(descriptor.model["global_primary_key"]))
 
-            join_path_to_entity_field.update(get_join_path_to_entity_field_map(descriptor.model['entities'][entity_name]))
+            join_path_to_entity_field.update(self.get_join_path_to_entity_field_map(descriptor.model['entities'][entity_name]))
 
         _EXCLUDE_EDGES_FOR_TABLES = ("raw_file_metadata")
         edges = []
@@ -133,6 +116,7 @@ class DXDatasetDictionary():
                     if table_name in _EXCLUDE_EDGES_FOR_TABLES:
                         continue
                     db_tb_name = "{}${}".format(db_name, table_name)
+                    print("ji:", ji)
                     if db_tb_name not in join_path_to_entity_field:
                         _logger.warning("Skipping edge for : " + db_tb_name)
                         continue
@@ -142,7 +126,7 @@ class DXDatasetDictionary():
                         continue
 
             if not skip_edge:
-                edges.append(create_edges(ji, join_path_to_entity_field))
+                edges.append(self.create_edge(ji, join_path_to_entity_field))
 
         for edge in edges:
             source_eblock = eblocks.get(edge["source_entity"])
@@ -162,6 +146,9 @@ class DXDatasetDictionary():
         return eblocks
 
     def create_entity_dframe(self, entity, is_primary_entity, global_primary_key):
+        """
+            Returns DataDictionary pandas DataFrame for an entity.
+        """
         required_columns = [
             "entity", 
             "name", 
@@ -216,13 +203,42 @@ class DXDatasetDictionary():
         try:
             dframe = pd.DataFrame(dcols)
         except ValueError as exc:
-            print({key: len(vals) for key, vals in dcols.items()},
-                  file=sys.stderr)
             raise exc
 
         return dframe
 
+    def get_join_path_to_entity_field_map(self, entity):
+        """
+            Returns map with "database$table$column", "unique_database$table$column",
+            as keys and values are (entity, field)
+        """
+        join_path_to_entity_field = collections.OrderedDict()
+        for field in entity["fields"]:
+            field_value = entity["fields"][field]["mapping"]
+            db_tb_col_path = "{}${}${}".format(field_value["database_name"], field_value["table"], field_value["column"])
+            join_path_to_entity_field[db_tb_col_path] = (entity["name"],field)
+
+            if field_value["database_unique_name"] and database_unique_name_regex.match(field_value["database_unique_name"]):  
+                unique_db_tb_col_path = "{}${}${}".format(field_value["database_unique_name"], field_value["table"], field_value["column"])
+                join_path_to_entity_field[unique_db_tb_col_path] = (entity["name"], field)
+        return join_path_to_entity_field
+
+    def create_edge(self, join_info_joins, join_path_to_entity_field):
+        """
+        Convert join_info to Edge[]
+        """
+        edge = collections.OrderedDict()
+        column_to = join_info_joins["joins"][0]["to"]
+        column_from = join_info_joins["joins"][0]["from"]
+        edge["source_entity"], edge["source_field"] = join_path_to_entity_field[column_to]
+        edge["destination_entity"], edge["destination_field"] = join_path_to_entity_field[column_from]
+        edge["relationship"] = join_info_joins["relationship"]
+        return edge
+
     def load_coding_dictionary(self, descriptor):
+        """
+            Processes coding dictionary from descriptor
+        """
         cblocks = collections.OrderedDict()
         for entity in descriptor.model['entities']:
             for field in descriptor.model['entities'][entity]["fields"]:
@@ -267,13 +283,14 @@ class DXDatasetDictionary():
         try:
             dframe = pd.DataFrame(dcols)
         except ValueError as exc:
-            print({key: len(vals) for key, vals in dcols.items()},
-                  file=sys.stderr)
             raise exc
 
         return dframe
 
     def load_entity_dictionary(self, descriptor):
+        """
+            Processes entity dictionary from descriptor
+        """
         entity_dictionary = collections.OrderedDict()
         for entity_name in descriptor.model['entities']:
             entity = descriptor.model['entities'][entity_name]
