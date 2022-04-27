@@ -21,9 +21,6 @@ def extract_dataset(args):
     rec = DXDataset(entity_result['id'],project=project)
     rec_json = rec.get_descriptor()
     rec_dict = rec.get_dictionary().write(output_path="")
-
-
-
     
 class DXDataset(DXRecord):
     """
@@ -168,7 +165,7 @@ class DXDatasetDictionary():
             "referenced_entity_field",
             "relationship",
             "title",
-            "units",
+            "units"
         ]
         dcols = {col: [] for col in required_columns + extra_cols}
         dcols["entity"] = [entity["name"]] * len(entity["fields"])
@@ -225,7 +222,7 @@ class DXDatasetDictionary():
 
     def create_edge(self, join_info_joins, join_path_to_entity_field):
         """
-        Convert join_info to Edge[]
+        Convert an item join_info to an edge. Returns ordereddict.
         """
         edge = collections.OrderedDict()
         column_to = join_info_joins["joins"][0]["to"]
@@ -248,6 +245,9 @@ class DXDatasetDictionary():
         return cblocks
 
     def create_coding_name_dframe(self, model, entity, field, code):
+        """
+            Returns CodingDictionary pandas DataFrame for an coding_name.
+        """
         dcols = {}
         if model['entities'][entity]["fields"][field]["is_hierarchical"]:
             def unpack_hierarchy(nodes, parent_code):
