@@ -12,7 +12,6 @@
 /src/.setup_doc_virtualenv
 /src/java/target/
 /src/java/src/main/java/com/dnanexus/DXToolkitVersion.java
-/src/python/dxpy/toolkit_version.py
 /src/python/coverage-reports/
 /src/R/install_dxR_deps.Rout
 /src/R/dxR*.tar.gz
@@ -53,6 +52,7 @@ dxR.Rcheck
 /bin/dx-jobutil-*
 /bin/dx-log-stream
 /bin/dx-mount
+/bin/dx-mount-all-inputs
 /bin/dx-notebook-reconnect
 /bin/dx-verify-file
 /bin/dx-print-bash-vars

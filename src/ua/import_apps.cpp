@@ -32,15 +32,15 @@ string findRefGenomeProjID() {
     params["level"] = "VIEW";
     params["public"] = true;
     params["describe"] = false;
-    params["billTo"] = "org-dnanexus";
+    params["billTo"] = "org-dnanexus_apps";
     JSON findResult = systemFindProjects(params);
     if (findResult["results"].size() != 1)
-      throw runtime_error("Expected name = 'Reference Genomes', and, billTo = 'org-dnanexus', to return exactly one public project, but instead received " +
+      throw runtime_error("Expected name = 'Reference Genome Files', and, billTo = 'org-dnanexus_apps', to return exactly one public project, but instead received " +
                           boost::lexical_cast<string>(findResult["results"].size()) + " projects instead. Unable to resolve --ref-genome parameter.");
     return findResult["results"][0]["id"].get<string>();
   } catch (DXAPIError &e) {
     DXLOG(logINFO) << "Call to findProjects failed." << endl;
-    throw;  
+    throw;
   }
 }
 
@@ -61,7 +61,7 @@ string getRefGenomeID(const string &refGenome) {
   if (findResult["results"].size() == 0)
     throw runtime_error("Unable to find any reference genome with name: '" + refGenome + "'");
   if (findResult["results"].size() > 1) {
-    // This case should not happen with a 'Reference Genomes' project with billTo: 'user-dnanexus'
+    // This case should not happen with a 'Reference Genome Files' project with billTo: 'user-dnanexus'
     // But just adding this "if" clause for sanity check
     throw runtime_error("Too many matches for reference genome with name: '" + refGenome + "' (Number of matches : " \
                         + boost::lexical_cast<string>(findResult["results"].size()) + ")");
@@ -120,9 +120,9 @@ void runImportApps(const Options &opt, vector<File> &files) {
       continue;
     }
     JSON input(JSON_OBJECT);
-    
+
     if (opt.reads) {
-      input["file"] = getDnanexusLinkFormat(files[i].fileID); 
+      input["file"] = getDnanexusLinkFormat(files[i].fileID);
       files[i].jobID =  runApp_helper(readsImporter, "import_reads", input, files[i].projectID, files[i].folder);
     }
     if (opt.pairedReads) {

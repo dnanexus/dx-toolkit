@@ -249,6 +249,48 @@ namespace dx {
   JSON databaseListFolder(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON databaseListFolder(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON dbclusterAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterAddTypes(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterAddTypes(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterDescribe(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterDescribe(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterGetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterGetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterNew(const std::string &input_params="{}", const bool safe_to_retry=false);
+  JSON dbclusterNew(const dx::JSON &input_params, const bool safe_to_retry=false);
+
+  JSON dbclusterRemoveTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterRemoveTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterRemoveTypes(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterRemoveTypes(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterRename(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterRename(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterSetDetails(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterSetDetails(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterSetProperties(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterSetProperties(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterSetVisibility(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterSetVisibility(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterStart(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterStart(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterStop(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterStop(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON dbclusterTerminate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON dbclusterTerminate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON fileAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON fileAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
@@ -363,6 +405,9 @@ namespace dx {
   JSON jobTerminate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON jobTerminate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
+  JSON jobUpdate(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON jobUpdate(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
   JSON jobNew(const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON jobNew(const dx::JSON &input_params, const bool safe_to_retry=false);
 
@@ -401,6 +446,12 @@ namespace dx {
 
   JSON projectAddTags(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
   JSON projectAddTags(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON projectArchive(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON projectArchive(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
+
+  JSON projectUnarchive(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=true);
+  JSON projectUnarchive(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=true);
 
   JSON projectClone(const std::string &object_id, const std::string &input_params="{}", const bool safe_to_retry=false);
   JSON projectClone(const std::string &object_id, const dx::JSON &input_params, const bool safe_to_retry=false);

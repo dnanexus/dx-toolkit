@@ -1,4 +1,4 @@
-Building on OS X 10.9
+Building on OS X 10.9 & 11.4
 =====================
 
 **NOTE:** This document is intended for developers who wish to build the dx-toolkit SDK and command-line tools from source.
@@ -11,6 +11,7 @@ https://documentation.dnanexus.com/downloads
 ---------------
 
 1. Install Xcode and the [Command Line Tools for XCode](https://developer.apple.com/downloads/). (Free registration required with Apple)
+   Make sure you accept the license (either via UI or command line: `sudo xcodebuild -license`).
 
 1. Install [MacPorts](http://www.macports.org/) for your version of OS X:
 
@@ -33,12 +34,16 @@ https://documentation.dnanexus.com/downloads
     sudo port install py27-pip py27-virtualenv
     sudo port select --set pip pip27
     sudo port select --set virtualenv virtualenv27
+    sudo port install gcc11
+    sudo port select --set gcc mp-gcc11
     ```
 
 1. Clone the dx-toolkit repo, and build the SDK:
     ```
     cd dx-toolkit
     export CPATH=/opt/local/include
+    # add following export on MacOS 11.4 (workaround for Boost lib dependency on icu4c):
+    export LIBRARY_PATH=${LIBRARY_PATH}:/usr/local/opt/icu4c/lib
     make
     ```
 

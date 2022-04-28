@@ -53,6 +53,10 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
 
     At most one of allow_mult and more_choices should be set to True.
     '''
+    if len(choices) == 1:
+        choice = 0
+        return choice
+    
     for i in range(len(choices)):
         prefix = str(i) + ') '
         lines = choices[i].split("\n")
@@ -111,7 +115,7 @@ def paginate_and_pick(generator, render_fn=str, filter_fn=None, page_len=10, **p
             else:
                 if filter_fn(possible_next):
                     results.append(possible_next)
-                any_results = True
+            any_results = True
         if not any_results:
             return "none found"
         elif len(results) == 0:
@@ -675,13 +679,11 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
         # TODO: find a good way to check if folder exists and expected=folder
         return False, project, folderpath, None
     elif is_hashid(entity_name):
-
+        entity_class = entity_name.split("-")[0]
         found_valid_class = True
-        if expected_classes is not None:
+        if expected_classes is not None and entity_class not in expected_classes:
             found_valid_class = False
-            for klass in expected_classes:
-                if entity_name.startswith(klass):
-                    found_valid_class = True
+
         if not found_valid_class:
             return False, None, None, None
 

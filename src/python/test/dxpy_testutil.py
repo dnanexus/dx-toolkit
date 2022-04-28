@@ -54,9 +54,10 @@ def _transform_words_to_regexp(s):
 
 
 def host_is_centos_5():
-    distro = platform.linux_distribution()
-    if distro[0] == 'CentOS' and distro[1].startswith('5.'):
-        return True
+    if USING_PYTHON2:
+        distro = platform.linux_distribution()
+        if distro[0] == 'CentOS' and distro[1].startswith('5.'):
+            return True
     return False
 
 class DXCalledProcessError(subprocess.CalledProcessError):
@@ -98,8 +99,8 @@ def check_output(*popenargs, **kwargs):
                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
     output, err = process.communicate()
     retcode = process.poll()
-    output = output.decode(sys.stdin.encoding)
-    err = err.decode(sys.stderr.encoding)
+    output = output.decode(locale.getpreferredencoding())
+    err = err.decode(locale.getpreferredencoding())
     if retcode:
         print(err)
         cmd = kwargs.get("args")
@@ -572,7 +573,7 @@ class DXTestCaseBuildWorkflows(DXTestCase):
                             "executable": self.test_applet_id,
                             "input": {"number": 777},
                             "folder": "/stage_0_output",
-                            "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
+                            "executionPolicy": {"onNonRestartableFailure": "failStage"},
                             "systemRequirements": {"main": {"instanceType": "mem1_ssd1_x2"}}},
                            {"id": "stage_1",
                             "executable": self.test_applet_id,

@@ -148,7 +148,6 @@ from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 from random import randint
 from requests.auth import AuthBase
 from requests.packages import urllib3
-from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from threading import Lock
 from . import ssh_tunnel_app_support
 
@@ -175,14 +174,6 @@ def configure_urllib3():
     urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
     logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
 
-    # Trust DNAnexus S3 upload tunnel
-    def _match_hostname(cert, hostname):
-        if hostname == "ul.cn.dnanexus.com":
-            hostname = "s3.amazonaws.com"
-        match_hostname(cert, hostname)
-
-    urllib3.connection.match_hostname = _match_hostname
-
 configure_urllib3()
 
 from .toolkit_version import version as TOOLKIT_VERSION
@@ -190,7 +181,7 @@ __version__ = TOOLKIT_VERSION
 
 API_VERSION = '1.0.0'
 AUTH_HELPER, SECURITY_CONTEXT = None, None
-JOB_ID, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None
+JOB_ID, WATCH_PORT, WORKSPACE_ID, PROJECT_CONTEXT_ID = None, None, None, None
 
 DEFAULT_APISERVER_PROTOCOL = 'https'
 DEFAULT_APISERVER_HOST = 'api.dnanexus.com'
@@ -965,6 +956,22 @@ def set_project_context(dxid):
 
     global PROJECT_CONTEXT_ID
     PROJECT_CONTEXT_ID = dxid
+
+def set_watch_port(port=None):
+    """
+    :param port: port to use for streaming job logs
+    :type port: string
+
+    Sets the port to use for streaming job logs via `dx watch` inside the
+    Execution Environment
+
+    .. warning:: This function is only really useful if you are
+       developing code that will run in and interact with the Execution
+       Environment.
+
+    """
+    global WATCH_PORT
+    WATCH_PORT = port
 
 def get_auth_server_name(host_override=None, port_override=None, protocol='https'):
     """

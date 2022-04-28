@@ -20,8 +20,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import org.apache.http.HttpHost;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.NTCredentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -32,7 +43,7 @@ import com.google.common.base.Preconditions;
  * Immutable class storing configuration for selecting, authenticating to, and communicating with a
  * DNAnexus API server.
  */
-public class DXEnvironment {
+public class DXEnvironment implements AutoCloseable {
 
     /**
      * Builder class for creating DXEnvironment objects.
@@ -96,6 +107,8 @@ public class DXEnvironment {
         private boolean disableRetry;
         private int socketTimeout;
         private int connectionTimeout;
+        private int maxTotalConnections = 200;
+        private int maxDefaultConnectionsPerRoute = 50;
         private String httpProxy;
         private String httpProxyMethod;
         private String httpProxyDomain;
@@ -266,7 +279,7 @@ public class DXEnvironment {
         public DXEnvironment build() {
             return new DXEnvironment(apiserverHost, apiserverPort, apiserverProtocol,
                                      securityContext, jobId, workspaceId, projectContextId, disableRetry,
-                                     socketTimeout, connectionTimeout,
+                                     socketTimeout, connectionTimeout, maxTotalConnections, maxDefaultConnectionsPerRoute,
                                      httpProxy, httpProxyMethod, httpProxyDomain);
         }
 
@@ -409,6 +422,30 @@ public class DXEnvironment {
         }
 
         /**
+         * Sets maxTotalConnections for httpclient
+         *
+         * @param maxTotalConnections integer
+         *
+         * @return the same Builder object
+         */
+        public Builder maxTotalConnections(int maxTotalConnections) {
+            this.maxTotalConnections = maxTotalConnections;
+            return this;
+        }
+
+        /**
+         * Sets maxDefaultConnectionsPerRoute for httpClient
+         *
+         * @param maxDefaultConnectionsPerRoute integer
+         *
+         * @return the same Builder object
+         */
+        public Builder setMaxDefaultConnectionsPerRoute(int maxDefaultConnectionsPerRoute) {
+            this.maxDefaultConnectionsPerRoute = maxDefaultConnectionsPerRoute;
+            return this;
+        }
+
+        /**
          * Sets the HTTP proxy server
          *
          * @param httpProxy String
@@ -457,7 +494,10 @@ public class DXEnvironment {
     private final boolean disableRetry;
     private int socketTimeout;
     private int connectionTimeout;
+    private int maxTotalConnections;
+    private int maxDefaultConnectionsPerRoute;
     private final ProxyDesc proxy;
+    private final CloseableHttpClient httpclient;
 
     private static final JsonFactory jsonFactory = new MappingJsonFactory();
     /**
@@ -491,7 +531,7 @@ public class DXEnvironment {
 
     private DXEnvironment(String apiserverHost, String apiserverPort, String apiserverProtocol,
                           JsonNode securityContext, String jobId, String workspaceId, String projectContextId, boolean
-                          disableRetry, int socketTimeout, int connectionTimeout,
+                          disableRetry, int socketTimeout, int connectionTimeout, int maxTotalConnections, int maxDefaultConnectionsPerRoute,
                           String httpProxy, String httpProxyMethod, String httpProxyDomain) {
         this.apiserverHost = apiserverHost;
         this.apiserverPort = apiserverPort;
@@ -503,6 +543,8 @@ public class DXEnvironment {
         this.disableRetry = disableRetry;
         this.socketTimeout = socketTimeout;
         this.connectionTimeout = connectionTimeout;
+        this.maxTotalConnections = maxTotalConnections;
+        this.maxDefaultConnectionsPerRoute = maxDefaultConnectionsPerRoute;
         this.proxy = parseProxyDefinition(httpProxy, httpProxyMethod, httpProxyDomain);
 
         // TODO: additional validation on the project/workspace, and check that
@@ -511,6 +553,71 @@ public class DXEnvironment {
         if (this.securityContext == null) {
             System.err.println("Warning: no DNAnexus security context found.");
         }
+
+        final String userAgent = DXUserAgent.getUserAgent();
+
+        // These timeouts prevent requests from getting stuck
+        RequestConfig.Builder reqBuilder = RequestConfig.custom()
+                .setConnectTimeout(connectionTimeout)
+                .setSocketTimeout(socketTimeout);
+        
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setMaxTotal(maxTotalConnections);
+        connManager.setDefaultMaxPerRoute(maxDefaultConnectionsPerRoute);
+
+        if (proxy == null) {
+            RequestConfig requestConfig = reqBuilder.build();
+            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            return;
+        }
+
+        // Configure a proxy
+        if (!proxy.authRequired) {
+            reqBuilder.setProxy(proxy.host);
+            RequestConfig requestConfig = reqBuilder.build();
+            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            return;
+        }
+
+        // We need to authenticate with a username and password.
+        reqBuilder.setProxy(proxy.host);
+
+        // specify the user/password in the configuration
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        if (proxy.method != null && proxy.method.equals("ntlm")) {
+            // NTLM: windows NT authentication, with Kerberos
+            String localHostname;
+            try {
+                localHostname = java.net.InetAddress.getLocalHost().getHostName();
+            } catch (java.net.UnknownHostException e) {
+                throw new RuntimeException(e);
+            }
+            credsProvider.setCredentials(
+                    new AuthScope(proxy.host.getHostName(),
+                            proxy.host.getPort(),
+                            AuthScope.ANY_REALM,
+                            "ntlm"),
+                    new NTCredentials(proxy.username,
+                            proxy.password,
+                            localHostname,
+                            proxy.domain));
+        } else {
+            // Default authentication
+            credsProvider.setCredentials(new AuthScope(proxy.host),
+                    new UsernamePasswordCredentials(proxy.username,
+                            proxy.password));
+        }
+
+        RequestConfig requestConfig = reqBuilder.build();
+        this.httpclient = HttpClients.custom().setConnectionManager(connManager)
+                .setDefaultCredentialsProvider(credsProvider)
+                .setUserAgent(userAgent)
+                .setDefaultRequestConfig(requestConfig)
+                .build();
+    }
+
+    HttpClient getHttpClient() {
+        return httpclient;
     }
 
     /**
@@ -654,7 +761,12 @@ public class DXEnvironment {
         return this.connectionTimeout;
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(DXEnvironment.class);
+    @Override
+    public void close() throws IOException {
+        httpclient.close();
+    }
+
+    private static final Logger LOG = LogManager.getLogger(DXEnvironment.class);
 
     private static boolean isDebug() {
         return LOG.isDebugEnabled();

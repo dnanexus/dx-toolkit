@@ -38,10 +38,10 @@ import stat
 import sys
 import json
 import argparse
-import xattr
 import dxpy
 from dxpy.utils import file_load_utils
 from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
+from dxpy.compat import USING_PYTHON2
 
 description = BOLD('Note') + ''': this is a utility for use by bash apps
 running in the DNAnexus Platform.
@@ -292,10 +292,17 @@ def create_entry(subdir_desc, local_path, target_path, basename):
             'dxlink': None}
 
 def return_xattr_as_properties(file):
+    try:
+        import xattr
+    except ImportError:
+        return {}
     properties = {}
     for attribute in xattr.listxattr(file):
         if attribute.startswith('user.'):
-            properties[attribute.lstrip('user.')] = xattr.getxattr(file, attribute)
+            value = xattr.getxattr(file, attribute)
+            if not USING_PYTHON2:
+                value = value.decode()
+            properties[attribute[5:]] = value
     return properties
 
 def upload_one_file(entry, wait_on_close, xattr_properties):

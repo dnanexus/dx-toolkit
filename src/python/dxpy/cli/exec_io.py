@@ -34,7 +34,10 @@ from ..utils.resolver import (parse_input_keyval, is_hashid, is_job_id, is_local
                               resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex, basestring, USING_PYTHON2
-
+try:
+    import gnureadline as readline
+except ImportError:
+    import readline
 ####################
 # -i Input Parsing #
 ####################
@@ -127,7 +130,7 @@ def interactive_help(in_class, param_desc, prompt):
             print('Pick an option to find input data:')
             try:
                 opt_num = pick(['List and choose from available data in the current project',
-                                'List and choose from available data in the DNAnexus Reference Genomes project',
+                                'List and choose from available data in the DNAnexus Reference Genomes Files project',
                                 'Select another project to list and choose available data',
                                 'Select an output from a previously-run job (current project only)',
                                 'Return to original prompt (specify an ID or path directly)'])
@@ -136,7 +139,10 @@ def interactive_help(in_class, param_desc, prompt):
             if opt_num == 0:
                 query_project = dxpy.WORKSPACE_ID
             elif opt_num == 1:
-                query_project = dxpy.find_one_project(name="Reference Genome Files", public=True, billed_to="org-dnanexus", level="VIEW")['id']
+                region = None
+                if dxpy.WORKSPACE_ID:
+                    region = dxpy.describe(dxpy.WORKSPACE_ID).get("region")
+                query_project = dxpy.find_one_project(name="Reference Genome Files:*", public=True, billed_to="org-dnanexus_apps", level="VIEW", name_mode="glob", region=region)['id']
             elif opt_num == 2:
                 project_generator = dxpy.find_projects(level='VIEW', describe=True, explicit_perms=True)
                 print('\nProjects to choose from:')
@@ -246,7 +252,7 @@ def get_input_array(param_desc):
     print(fill(prompt))
 
     try:
-        import readline
+
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
@@ -351,7 +357,6 @@ def get_input_single(param_desc):
     print(fill(prompt))
 
     try:
-        import readline
         if in_class in dx_data_classes:
             from dxpy.utils.completer import DXPathCompleter
             readline.set_completer(DXPathCompleter(classes=[in_class],
@@ -670,7 +675,6 @@ class ExecutableInputs(object):
 
     def init_completer(self):
         try:
-            import readline
             import rlcompleter
             readline.parse_and_bind("tab: complete")
 
@@ -684,7 +688,6 @@ class ExecutableInputs(object):
 
     def uninit_completer(self):
         try:
-            import readline
             readline.set_completer()
             readline.clear_history()
         except:

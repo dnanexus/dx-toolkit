@@ -25,7 +25,12 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, json, time
 import platform
-from collections import MutableMapping
+try:
+    # Python 3
+    from collections.abc import MutableMapping
+except ImportError:
+    # Python 2.7
+    from collections import MutableMapping
 from shutil import rmtree
 
 import dxpy
@@ -149,6 +154,11 @@ class DXConfig(MutableMapping):
         else:
             dxpy.set_job_id(None)
             dxpy.set_workspace_id(environ.get("DX_PROJECT_CONTEXT_ID"))
+        
+        if "DX_WATCH_PORT" in environ:
+            dxpy.set_watch_port(environ.get("DX_WATCH_PORT"))
+        else:
+            dxpy.set_watch_port(None)
 
         dxpy.set_project_context(environ.get("DX_PROJECT_CONTEXT_ID"))
 

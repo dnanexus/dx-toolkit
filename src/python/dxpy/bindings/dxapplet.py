@@ -36,8 +36,9 @@ from ..compat import basestring
 class DXExecutable:
     '''Methods in :class:`!DXExecutable` are used by
     :class:`~dxpy.bindings.dxapp.DXApp`,
-    :class:`~dxpy.bindings.dxapplet.DXApplet`, and
-    :class:`~dxpy.bindings.dxworkflow.DXWorkflow`
+    :class:`~dxpy.bindings.dxapplet.DXApplet`,
+    :class:`~dxpy.bindings.dxworkflow.DXWorkflow`, and
+    :class:`~dxpy.bindings.dxworkflow.DXGlobalWorkflow`
     '''
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This class is a mix-in. Use DXApp or DXApplet instead.")
@@ -91,11 +92,17 @@ class DXExecutable:
         if kwargs.get('ignore_reuse') is not None:
             run_input["ignoreReuse"] = kwargs['ignore_reuse']
 
-        if dxpy.JOB_ID is None:
+        if dxpy.JOB_ID is None or kwargs.get('detach') is True:
             run_input["project"] = project
 
         if kwargs.get('extra_args') is not None:
             merge(run_input, kwargs['extra_args'])
+
+        if kwargs.get('detach') is not None:
+            run_input["detach"] = kwargs['detach']
+
+        if kwargs.get('cost_limit') is not None:
+            run_input["costLimit"] = kwargs['cost_limit']
 
         return run_input
 
@@ -158,7 +165,7 @@ class DXExecutable:
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
-            ignore_reuse=None, ignore_reuse_stages=None, extra_args=None, **kwargs):
+            ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -184,12 +191,16 @@ class DXExecutable:
         :type debug: dict
         :param delay_workspace_destruction: Whether to keep the job's temporary workspace around for debugging purposes for 3 days after it succeeds or fails
         :type delay_workspace_destruction: boolean
-        :param priority: Priority level to request for all jobs created in the execution tree, either "normal" or "high"
+        :param priority: Priority level to request for all jobs created in the execution tree, "low", "normal", or "high"
         :type priority: string
         :param ignore_reuse: Disable job reuse for this execution
         :type ignore_reuse: boolean
         :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
         :type ignore_reuse_stages: list
+        :param detach: If provided, job will not start as subjob if run inside of a different job.
+        :type detach: boolean
+        :param cost_limit: Maximum cost of the job before termination.
+        :type cost_limit: float
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
@@ -222,8 +233,9 @@ class DXExecutable:
                                         debug=debug,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
+                                        detach=detach,
+                                        cost_limit=cost_limit,
                                         extra_args=extra_args)
-
         return self._run_impl(run_input, **kwargs)
 
 

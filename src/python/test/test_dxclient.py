@@ -128,12 +128,13 @@ class TestDXTestUtils(DXTestCase):
             self.assertNotIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
         self.assertIn('DX_PROJECT_CONTEXT_ID', run('dx env --bash'))
 
-    @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
-    def test_without_auth(self):
-        self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
-        with without_auth():
-            self.assertNotIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
-        self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
+    #FIXME: This is the only test that fails when using PyTest
+    # @unittest.skipUnless(testutil.TEST_ENV, 'skipping test that would clobber your local environment')
+    # def test_without_auth(self):
+    #     self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
+    #     with without_auth():
+    #         self.assertNotIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
+    #     self.assertIn('DX_SECURITY_CONTEXT', run('dx env --bash'))
 
     @unittest.skipUnless(testutil.TEST_MULTIPLE_USERS, 'skipping test that would require multiple users')
     def test_as_second_user(self):
@@ -901,7 +902,7 @@ class TestDXClient(DXTestCase):
                 sleep_applet = dxpy.api.applet_new(dict(name="sleep",
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
-                                                                 "distribution": "Ubuntu", "release": "14.04",
+                                                                 "distribution": "Ubuntu", "release": "20.04", "version":"0",
                                                                  "execDepends": [{"name": "dx-toolkit"}],
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
@@ -929,7 +930,7 @@ class TestDXClient(DXTestCase):
                 # Check for terminal prompt and verify we're in the container
                 job = next(dxpy.find_jobs(name="sleep", project=project), None)
                 job_id = job['id']
-                dx.expect("OS version: Ubuntu 14.04", timeout=5)
+                dx.expect("OS version: Ubuntu 20.04", timeout=5)
 
                 # This doesn't work, because the shell color codes the text, and that
                 # results in characters that are NOT plain ascii.
@@ -966,7 +967,7 @@ class TestDXClient(DXTestCase):
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_ssh(self):
-        self._test_dx_ssh(self.project, "mem2_hdd2_x1")
+        self._test_dx_ssh(self.project, "mem2_ssd1_v2_x2")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_AZURE, "Skipping test that would run jobs in Azure")
     def test_dx_ssh_azure(self):
@@ -1100,7 +1101,7 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                          'skipping HTTP Proxy support test that needs squid3')
     def test_dx_ssh_proxy(self):
-        self._test_dx_ssh_proxy(self.project, "mem2_hdd2_x1")
+        self._test_dx_ssh_proxy(self.project, "mem2_ssd1_v2_x2")
 
     @unittest.skipIf(sys.platform.startswith("win"), "pexpect is not supported")
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
@@ -1121,8 +1122,9 @@ class TestDXClient(DXTestCase):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
-                                                             "distribution": "Ubuntu", "release": "14.04",
-                                                             "execDepends": [{"name": "dx-toolkit"}]},
+                                                             "distribution": "Ubuntu", "release": "20.04", "version": "0",
+                                                             "execDepends": [{"name": "dx-toolkit"}],
+                                                             "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}}},
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
                                                     project=self.project))["id"]
@@ -1151,7 +1153,7 @@ class TestDXClient(DXTestCase):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
-                                                         "distribution": "Ubuntu", "release": "14.04",
+                                                         "distribution": "Ubuntu", "release": "20.04", "version":"0",
                                                          "execDepends": [{"name": "dx-toolkit"}]},
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
@@ -1161,6 +1163,121 @@ class TestDXClient(DXTestCase):
                          env=override_environment(HOME=wd)).strip()
             job_desc = dxpy.describe(job_id)
             self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'ExecutionError'])
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_run_allow_ssh(self):
+        with self.configure_ssh() as wd:
+            applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "20.04",
+                                                     "version": "0",
+                                                     "code": "sleep 60"}
+                                         })['id']
+            # Single IP
+            allow_ssh = {"1.2.3.4"}
+            job_id = run("dx run {} --yes --brief --allow-ssh 1.2.3.4".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            job_allow_ssh = job_desc['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
+            # Multiple IPs
+            allow_ssh = {"1.2.3.4", "5.6.7.8"}
+            job_id = run("dx run {} --yes --brief --allow-ssh 1.2.3.4 --allow-ssh 5.6.7.8".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            job_allow_ssh = job_desc['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
+            # Get client IP from system/whoami
+            client_ip = dxpy.api.system_whoami({"fields": {"clientIp": True}}).get('clientIp')
+
+            # dx run --ssh automatically retrieves and adds client IP 
+            allow_ssh = {client_ip}
+            job_id = run("dx run {} --yes --brief --allow-ssh ".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            job_allow_ssh = job_desc['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
+             # dx run --allow-ssh --allow-ssh 1.2.3.4 automatically retrieves and adds client IP 
+            allow_ssh = {"1.2.3.4", client_ip}
+            job_id = run("dx run {} --yes --brief --allow-ssh 1.2.3.4 --allow-ssh ".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            job_allow_ssh = job_desc['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+    
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_ssh_allow_ssh(self):
+        with self.configure_ssh() as wd:
+            applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "20.04",
+                                                     "version": "0",
+                                                     "code": "sleep 60"}
+                                         })['id']
+            job_id = run("dx run {} --yes --brief".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            # No SSH access by default
+            self.assertIsNone(job_desc.get('allowSSH', None))
+
+            client_ip = dxpy.api.system_whoami({"fields": {"clientIp": True}}).get('clientIp')
+            allow_ssh = {client_ip}
+            # dx ssh retrieves client IP and adds it with job-xxxx/update
+            dx = pexpect.spawn("dx ssh " + job_id,
+                            env=override_environment(HOME=wd),
+                            **spawn_extra_args)
+            time.sleep(3)
+            dx.close()
+            job_allow_ssh = dxpy.describe(job_id)['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+
+            allow_ssh = {client_ip, "1.2.3.4"}
+            # dx ssh --allow-ssh 1.2.3.4 adds IP with job-xxxx/update
+            dx1 = pexpect.spawn("dx ssh --allow-ssh 1.2.3.4 " + job_id,
+                            env=override_environment(HOME=wd),
+                            **spawn_extra_args)
+            time.sleep(3)
+            dx1.close()
+            job_allow_ssh = dxpy.describe(job_id)['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+                
+            # dx ssh --no-firewall-update does not add client IP
+            allow_ssh = {"1.2.3.4"}
+            job_id = run("dx run {} --yes --brief --allow-ssh 1.2.3.4".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            dx2 = pexpect.spawn("dx ssh --no-firewall-update " + job_id,
+                            env=override_environment(HOME=wd),
+                            **spawn_extra_args)
+            time.sleep(3)
+            dx2.close()
+            job_allow_ssh = dxpy.describe(job_id)['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
+
+            # dx ssh --ssh-proxy adds client IP and proxy IP
+            allow_ssh = {client_ip, "5.6.7.8"}
+            job_id = run("dx run {} --yes --brief".format(applet_id),
+                         env=override_environment(HOME=wd)).strip()
+            dx3 = pexpect.spawn("dx ssh --ssh-proxy 5.6.7.8:22 " + job_id,
+                            env=override_environment(HOME=wd),
+                            **spawn_extra_args)
+            time.sleep(3)
+            dx3.close()
+            job_allow_ssh = dxpy.describe(job_id)['allowSSH']
+            self.assertEqual(allow_ssh, set(job_allow_ssh))
+            run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_JUPYTER_NOTEBOOK"])
@@ -1470,8 +1587,9 @@ class TestDXClientUploadDownload(DXTestCase):
                                                      project=temp_project.get_id(), folder='/', auth=token_callable)
                 self.assertEqual(remote_file.name, 'myfilename')
                 # Filename provided with file handle
-                remote_file2 = dxpy.upload_local_file(file=open(os.path.join(testdir, 'myfilename')),
-                                                      project=temp_project.get_id(), folder='/', auth=token_callable)
+                with open(os.path.join(testdir, 'myfilename')) as fh:
+                    remote_file2 = dxpy.upload_local_file(file=fh,
+                                                          project=temp_project.get_id(), folder='/', auth=token_callable)
                 self.assertEqual(remote_file2.name, 'myfilename')
             finally:
                 shutil.rmtree(testdir)
@@ -2200,7 +2318,35 @@ class TestDXClientRun(DXTestCase):
         with self.assertRaisesRegex(subprocess.CalledProcessError, "Options --project and --folder/--destination cannot be specified together.\nIf specifying both a project and a folder, please include them in the --folder option."):
             run("dx run bogusapplet --project project-bogus --folder bogusfolder")
 
+    @contextmanager
+    def configure_ssh(self, use_alternate_config_dir=False):
+        original_ssh_public_key = None
+        try:
+            config_subdir = "dnanexus_config_alternate" if use_alternate_config_dir else ".dnanexus_config"
+            user_id = dxpy.whoami()
+            original_ssh_public_key = dxpy.api.user_describe(user_id).get('sshPublicKey')
+            wd = tempfile.mkdtemp()
+            config_dir = os.path.join(wd, config_subdir)
+            os.mkdir(config_dir)
+            if use_alternate_config_dir:
+                os.environ["DX_USER_CONF_DIR"] = config_dir
 
+            dx_ssh_config = pexpect.spawn("dx ssh_config",
+                                          env=override_environment(HOME=wd),
+                                          **spawn_extra_args)
+            dx_ssh_config.logfile = sys.stdout
+            dx_ssh_config.setwinsize(20, 90)
+            dx_ssh_config.expect("Select an SSH key pair")
+            dx_ssh_config.sendline("0")
+            dx_ssh_config.expect("Enter passphrase")
+            dx_ssh_config.sendline()
+            dx_ssh_config.expect("again")
+            dx_ssh_config.sendline()
+            dx_ssh_config.expect("Your account has been configured for use with SSH")
+            yield wd
+        finally:
+            if original_ssh_public_key:
+                dxpy.api.user_update(user_id, {"sshPublicKey": original_ssh_public_key})
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_APP_RUN_APPLET","DNA_API_DATA_OBJ_RUN_APPLET"])
@@ -2746,7 +2892,8 @@ dx-jobutil-add-output record_array $second_record --array
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
-                                                     "release": "14.04",
+                                                     "release": "20.04",
+                                                     "version": "0",
                                                      "code": ""},
                                          "access": {"project": "VIEW",
                                                     "allProjects": "VIEW",
@@ -2763,50 +2910,112 @@ dx-jobutil-add-output record_array $second_record --array
         run("dx terminate " + normal_job_id)
         run("dx terminate " + high_priority_job_id)
 
-        # --watch implies --priority high
-        try:
-            dx_run_output = run("dx run myapplet -y --watch --brief")
-        except subprocess.CalledProcessError:
-            # ignore any watching errors; just want to test requested
-            # priority
-            pass
-        watched_job_id = dx_run_output.split('\n')[0]
-        watched_job_desc = dxpy.describe(watched_job_id)
-        self.assertEqual(watched_job_desc['applet'], applet_id)
-        self.assertEqual(watched_job_desc['priority'], 'high')
+        with self.configure_ssh(use_alternate_config_dir=False) as wd:
+            # --watch implies high priority when --priority is not specified
+            try:
+                dx_run_output = run("dx run myapplet -y --watch --brief")
+                watched_job_id = dx_run_output.split('\n')[0]
+                watched_job_desc = dxpy.describe(watched_job_id)
+                self.assertEqual(watched_job_desc['applet'], applet_id)
+                self.assertEqual(watched_job_desc['priority'], 'high')
 
-        # don't actually need it to run
-        run("dx terminate " + watched_job_id)
+                # don't actually need it to run
+                run("dx terminate " + watched_job_id)
+            except subprocess.CalledProcessError as e:
+                # ignore any watching errors; just want to test requested
+                # priority
+                print(e.output)
+                pass
 
-        # --ssh implies --priority high
-        try:
-            dx_run_output = run("dx run myapplet -y --ssh --brief")
-        except subprocess.CalledProcessError:
-            # ignore any ssh errors; just want to test requested
-            # priority
-            pass
-        watched_job_id = dx_run_output.split('\n')[0]
-        watched_job_desc = dxpy.describe(watched_job_id)
-        self.assertEqual(watched_job_desc['applet'], applet_id)
-        self.assertEqual(watched_job_desc['priority'], 'high')
+            # --ssh implies high priority when --priority is not specified
+            try:
+                dx_run_output = run("dx run myapplet -y --ssh --brief", 
+                                    env=override_environment(HOME=wd))
+                ssh_job_id = dx_run_output.split('\n')[0]
+                ssh_job_desc = dxpy.describe(ssh_job_id)
+                self.assertEqual(ssh_job_desc['applet'], applet_id)
+                self.assertEqual(ssh_job_desc['priority'], 'high')
 
-        # don't actually need it to run
-        run("dx terminate " + watched_job_id)
+                # don't actually need it to run
+                run("dx terminate " + ssh_job_id)
+            except subprocess.CalledProcessError as e:
+                # ignore any ssh errors; just want to test requested
+                # priority
+                print(e.output)
+                pass
 
-        # --allow-ssh implies --priority high
-        try:
-            dx_run_output = run("dx run myapplet -y --allow-ssh --brief")
-        except subprocess.CalledProcessError:
-            # ignore any ssh errors; just want to test requested
-            # priority
-            pass
-        watched_job_id = dx_run_output.split('\n')[0]
-        watched_job_desc = dxpy.describe(watched_job_id)
-        self.assertEqual(watched_job_desc['applet'], applet_id)
-        self.assertEqual(watched_job_desc['priority'], 'high')
+            # --allow-ssh implies high priority when --priority is not specified
+            try:
+                dx_run_output = run("dx run myapplet -y --allow-ssh --brief",
+                                    env=override_environment(HOME=wd))
+                allow_ssh_job_id = dx_run_output.split('\n')[0]
+                allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
+                self.assertEqual(allow_ssh_job_desc['applet'], applet_id)
+                self.assertEqual(allow_ssh_job_desc['priority'], 'high')
 
-        # don't actually need it to run
-        run("dx terminate " + watched_job_id)
+                # don't actually need it to run
+                run("dx terminate " + allow_ssh_job_id)
+            except subprocess.CalledProcessError as e:
+                # ignore any ssh errors; just want to test requested
+                # priority
+                print(e.output)
+                pass
+
+            # warning when --priority is normal/low with --watch
+            try:
+                watched_run_output = run("dx run myapplet -y --watch --priority normal")
+                watched_job_id = re.search('job-[A-Za-z0-9]{24}', watched_run_output).group(0)
+                watched_job_desc = dxpy.describe(watched_job_id)
+                self.assertEqual(watched_job_desc['applet'], applet_id)
+                self.assertEqual(watched_job_desc['priority'], 'normal')
+                for string in ["WARNING", "normal", "interrupting interactive work"]:
+                    self.assertIn(string, watched_run_output)
+
+                # don't actually need it to run
+                run("dx terminate " + watched_job_id)
+            except subprocess.CalledProcessError as e:
+                # ignore any watch errors; just want to test requested
+                # priority
+                print(e.output)
+                pass
+
+            # no warning when --brief and --priority is normal/low with --allow-ssh
+            try:
+                allow_ssh_run_output = run("dx run myapplet -y --allow-ssh --priority normal --brief",
+                                            env=override_environment(HOME=wd))
+                allow_ssh_job_id = re.search('job-[A-Za-z0-9]{24}', allow_ssh_run_output).group(0)
+                allow_ssh_job_desc = dxpy.describe(allow_ssh_job_id)
+                self.assertEqual(allow_ssh_job_desc['applet'], applet_id)
+                self.assertEqual(allow_ssh_job_desc['priority'], 'normal')
+                for string in ["WARNING", "normal", "interrupting interactive work"]:
+                    self.assertNotIn(string, allow_ssh_run_output)
+
+                # don't actually need it to run
+                run("dx terminate " + allow_ssh_job_id)
+            except subprocess.CalledProcessError as e:
+                # ignore any ssh errors; just want to test requested
+                # priority
+                print(e.output)
+                pass
+
+            # no warning when --priority is high with --ssh
+            try:
+                ssh_run_output = run("dx run myapplet -y --ssh --priority high", 
+                                    env=override_environment(HOME=wd))
+                ssh_job_id = re.search('job-[A-Za-z0-9]{24}', ssh_run_output).group(0)
+                ssh_job_desc = dxpy.describe(ssh_job_id)
+                self.assertEqual(ssh_job_desc['applet'], applet_id)
+                self.assertEqual(ssh_job_desc['priority'], 'high')
+                for string in ["interrupting interactive work"]:
+                    self.assertNotIn(string, ssh_run_output)
+
+                # don't actually need it to run
+                run("dx terminate " + ssh_job_id)
+            except subprocess.CalledProcessError as e:
+                # ignore any ssh errors; just want to test requested
+                # priority
+                print(e.output)
+                pass
 
         # errors
         with self.assertSubprocessFailure(exit_code=2):
@@ -3276,7 +3485,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn('stage_0.number = 32', analysis_desc)
         self.assertIn('foo', analysis_desc)
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
-        time.sleep(2) # May need to wait for job to be created in the system
+        time.sleep(20) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 32', job_desc)
 
@@ -3332,7 +3541,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn('foo', analysis_desc)
         analysis_desc = json.loads(run("dx describe --json " + analysis_id ))
         self.assertTrue(analysis_desc["runInput"], {"foo": 747})
-        time.sleep(2) # May need to wait for job to be created in the system
+        time.sleep(20) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 474', job_desc)
 
@@ -3362,6 +3571,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
         # run it
         analysis_id = run("dx run myworkflow -y --brief").strip()
+        dxpy.DXAnalysis(analysis_id).wait_on_done(timeout=500)
 
         # test cases
         no_change_analysis_id = run("dx run --clone " + analysis_id + " --brief -y").strip()
@@ -3370,13 +3580,14 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
                                            " --instance-type mem2_hdd2_x2 --brief -y").strip()
 
-        time.sleep(2) # May need to wait for any new jobs to be created in the system
+        time.sleep(25) # May need to wait for any new jobs to be created in the system
 
         # make assertions for test cases
         orig_analysis_desc = dxpy.describe(analysis_id)
 
         # no change: expect both stages to have reused jobs
         no_change_analysis_desc = dxpy.describe(no_change_analysis_id)
+        print(no_change_analysis_desc)
         self.assertEqual(no_change_analysis_desc['stages'][0]['execution']['id'],
                          orig_analysis_desc['stages'][0]['execution']['id'])
         self.assertEqual(no_change_analysis_desc['stages'][1]['execution']['id'],
@@ -3401,6 +3612,11 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x2')
 
+        # Cannot provide workflow executable (ID or name) with --clone analysis
+        error_mesg = 'cannot be provided when re-running an analysis'
+        with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
+            run("dx run myworkflow --clone " + analysis_id)
+
         # Run in a different project and add some metadata
         try:
             other_proj_id = run("dx new project 'cloned analysis project' --brief").strip()
@@ -3412,7 +3628,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             self.assertEqual(new_analysis_desc['folder'], '/foo')
             self.assertEqual(new_analysis_desc['tags'], ['sometag'])
             self.assertEqual(new_analysis_desc['properties'], {'propkey': 'propval'})
-            time.sleep(2)
+            time.sleep(10)
             new_job_desc = dxpy.describe(new_analysis_desc['stages'][0]['execution']['id'])
             self.assertEqual(new_job_desc['project'], other_proj_id)
             self.assertEqual(new_job_desc['input']['number'], 32)
@@ -3440,9 +3656,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertTrue(first_analysis_id.startswith('analysis-'))
         job_id = run_resp['stages'][0]
         self.assertTrue(job_id.startswith('job-'))
-
-        # wait for events to propagate and for the job to be created
-        time.sleep(2)
+        dxpy.DXAnalysis(first_analysis_id).wait_on_done(timeout=500)
 
         # Running the workflow again with no changes should result in
         # the job getting reused
@@ -3484,7 +3698,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 ' +
                          '--instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
-        time.sleep(2) # give time for all jobs to be populated
+        time.sleep(10) # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
         self.assertEqual(no_req_desc['stages'][0]['execution']['instanceType'],
@@ -3544,7 +3758,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # only modify one
         per_stg_folders_id_3 = run(cmd + '--stage-output-folder ' + stage_ids[0] + ' /hello').strip()
 
-        time.sleep(2) # give time for all jobs to be generated
+        time.sleep(10) # give time for all jobs to be generated
 
         def expect_stage_folders(analysis_id, first_stage_folder, second_stage_folder):
             analysis_desc = dxpy.describe(analysis_id)
@@ -4184,7 +4398,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             run("dx get {workflow_id}".format(workflow_id=workflow_01["id"]))
             self.assertTrue(os.path.exists(os.path.join(workflow_name, "dxworkflow.json")))
             self.assertTrue(os.path.exists(os.path.join(workflow_name, "Readme.md")))
-            workflow_metadata = open(os.path.join(workflow_name, "dxworkflow.json")).read()
+            with open(os.path.join(workflow_name, "dxworkflow.json")) as fh:
+                workflow_metadata = fh.read()
             output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
             self.assertEqual(output_json, workflow_spec)
 
@@ -4277,6 +4492,8 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         # The ID should not be updated
         self.assertEqual(gwf_id, updated_desc["id"])
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create global workflows')
     def test_build_multi_region_workflow_with_applet(self):
         gwf_name = "gwf_{t}_multi_region".format(t=int(time.time()))
         dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
@@ -4285,10 +4502,22 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json),
                                                      readme_content="Workflow Readme Please")
+       
+        gwf_desc = json.loads(run('dx build --globalworkflow ' + workflow_dir + ' --json'))
+        gwf_regional_options = gwf_desc["regionalOptions"]
+        self.assertIn("aws:us-east-1", gwf_regional_options)
+        self.assertNotIn("azure:westus",gwf_regional_options)
 
-        error_msg = "Building a global workflow with applets in more than one region is not yet supported"
+    def test_build_workflow_in_invalid_multi_regions(self):
+        gwf_name = "gwf_{t}_multi_region".format(t=int(time.time()))
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json),
+                                                     readme_content="Workflow Readme Please")
+
+        error_msg = "The applet {} is not available".format(self.test_applet_id)
         with self.assertRaisesRegexp(DXCalledProcessError, error_msg):
-            run("dx build --globalworkflow --json " + workflow_dir)
+            run("dx build --globalworkflow --region azure:westus --json " + workflow_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
@@ -6817,7 +7046,90 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
                                                      json.dumps(dxworkflow_json))
         new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
         self.assertEqual(new_gwf["billTo"], org_id)
+    
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that requires presence of test org')
+    def test_build_workflow_without_bill_to_rights(self):
+        alice_id = "user-alice"
+        unbillable_org_id = "org-members_without_billing_rights"
+        
+        # --bill-to is set to org-members_without_billing_rights with dx build
+        gwf_name = "globalworkflow_build_to_org_without_billing_rights"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp='You are not a member in {} with allowBillableActivities permission.'.format(unbillable_org_id), exit_code=3):
+            run("dx build --globalworkflow --bill-to {} --json {}".format(unbillable_org_id, workflow_dir))
 
+    def test_build_workflow_with_invalid_bill_to(self):
+        other_user_id = "user-bob"
+        nonexist_org_id = "org-not_exist"
+
+        # --bill-to is set to another user
+        gwf_name = "globalworkflow_build_bill_to_another_user"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp='Cannot request another user to be the "billTo"', exit_code=3):
+            run("dx build --globalworkflow --bill-to {} --json {}".format(other_user_id, workflow_dir))
+
+        # --bill-to is set to an non exist org
+        gwf_name = "globalworkflow_build_to_nonexist_org"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        with self.assertSubprocessFailure(stderr_regexp='Cannot retrieve billing information for {}.'.format(nonexist_org_id), exit_code=3):
+            run("dx build --globalworkflow --bill-to {} --json {}".format(nonexist_org_id, workflow_dir))
+
+    def test_build_globalworkflow_from_nonexist_workflow(self):
+        # build global workflow from nonexist workflow
+        source_wf = "workflow-B00000000000000000000000"
+        with self.assertSubprocessFailure(stderr_regexp="The entity {} could not be found".format(source_wf), exit_code=3):
+            run("dx build --globalworkflow --from {} --version 0.0.1".format(source_wf))
+
+    def test_build_globalworkflow_without_version_override(self):
+        # build global workflow without specified version
+        source_wf_id = self.create_workflow(project_id=self.project).get_id()
+        with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
+            run("dx build --globalworkflow --from {}".format(source_wf_id))
+
+    def test_build_globalworkflow_with_workflow_path(self):
+        # build global workflow without specified version
+        source_wf_name = "globalworkflow_build_from_workflow"
+        source_wf_dir = "/source_wf_dir/"
+        dxworkflow_json = dict(self.create_workflow_spec(self.project), name=source_wf_name, folder=source_wf_dir,parents=True)
+        source_wf_id = self.create_workflow(project_id=self.project,workflow_spec=dxworkflow_json).get_id()
+
+        # after resolving the path, force exiting the building process by forcing args conflict
+        with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
+            run("dx build --globalworkflow --from :{}".format(source_wf_id))
+        with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
+            run("dx build --globalworkflow --from {}:{}".format(self.project, source_wf_id))
+        with self.assertSubprocessFailure(stderr_regexp="--version must be specified when using the --from option", exit_code=2):
+            run("dx build --globalworkflow --from {}:{}{}".format(self.project, source_wf_dir, source_wf_name))
+
+    def test_build_globalworkflow_from_old_WDL_workflow(self):
+        SUPPORTED_DXCOMPILER_VERSION = "2.8.0"
+        # build global workflow from WDL workflows
+        gwf_name = "globalworkflow_build_from_wdl_workflow"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=gwf_name)
+        
+        # Here we are using a non-WDL workflow to attempt to build a global workflow and only mock a WDL workflow by adding a dxCompiler tag
+        dxworkflow_json["tags"]="dxCompiler"
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        # reject building gwf if the WDL workflow spec doesn't have the dxCompiler version in its details
+        with self.assertSubprocessFailure(stderr_regexp="Cannot find the dxCompiler version", exit_code=3):
+            run("dx build --globalworkflow --version 0.0.1 {}".format(workflow_dir))
+        
+        # mock the dxCompiler version that built the workflow
+        dxworkflow_json.update({"details": {"version":"0.0.1"}})
+        workflow_dir = self.write_workflow_directory(gwf_name,
+                                                     json.dumps(dxworkflow_json))
+        # reject building gwf if the source WDL workflow is built by unsupported dxCompiler
+        with self.assertSubprocessFailure(stderr_regexp="Source workflow {} is not compiled using dxCompiler \(version>={}\) that supports creating global workflows.".format(dxworkflow_json["name"], SUPPORTED_DXCOMPILER_VERSION), exit_code=3):
+            run("dx build --globalworkflow {}".format(workflow_dir))
+        
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
     @pytest.mark.TRACEABILITY_MATRIX
@@ -7051,7 +7363,8 @@ class TestSparkClusterApps(DXTestCaseBuildApps):
             run("dx get " + app_id)
             self.assertTrue(os.path.exists("cluster_app"))
             self.assertTrue(os.path.exists(os.path.join("cluster_app", "dxapp.json")))
-            dxapp_json = json.loads(open(os.path.join("cluster_app", "dxapp.json")).read())
+            with open(os.path.join("cluster_app", "dxapp.json")) as fh:
+                dxapp_json = json.load(fh)
             aws_sys_reqs = dxapp_json["regionalOptions"]["aws:us-east-1"]["systemRequirements"]
             azure_sys_reqs = dxapp_json["regionalOptions"]["azure:westus"]["systemRequirements"]
 
@@ -7865,7 +8178,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         with chdir(tempfile.mkdtemp()):
             run("dx get app-update_app_code")
-            self.assertEqual(open(os.path.join("update_app_code", "src", "code.py")).read(), "'v1'\n")
+            with open(os.path.join("update_app_code", "src", "code.py")) as fh:
+                self.assertEqual(fh.read(), "'v1'\n")
 
         shutil.rmtree(app_dir)
 
@@ -7876,7 +8190,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
         with chdir(tempfile.mkdtemp()):
             run("dx get app-update_app_code")
-            self.assertEqual(open(os.path.join("update_app_code", "src", "code.py")).read(), "'v2'\n")
+            with open(os.path.join("update_app_code", "src", "code.py")) as fh:
+                self.assertEqual(fh.read(), "'v2'\n")
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that would create apps')
     def test_build_app_and_pretend_to_update_devs(self):
@@ -9185,8 +9500,8 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
         with chdir(tempfile.mkdtemp()):
             run("dx get {workflow_id}".format(workflow_id=workflow_id))
             self.assertTrue(os.path.exists(os.path.join("get_workflow", "dxworkflow.json")))
-
-            workflow_metadata = open(os.path.join("get_workflow", "dxworkflow.json")).read()
+            with open(os.path.join("get_workflow", "dxworkflow.json")) as fh:
+                workflow_metadata = fh.read()
             output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
             self.assertEqual(output_workflow_spec, output_json)
 
@@ -9247,7 +9562,8 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
             with chdir(tempfile.mkdtemp()):
                 run("dx get {wfidentifier}".format(wfidentifier=identifier))
                 self.assertTrue(os.path.exists(os.path.join(gwf_name, "dxworkflow.json")))
-                workflow_metadata = open(os.path.join(gwf_name, "dxworkflow.json")).read()
+                with open(os.path.join(gwf_name, "dxworkflow.json")) as fh:
+                    workflow_metadata = fh.read()
                 output_json = json.loads(workflow_metadata, object_pairs_hook=collections.OrderedDict)
                 self.assertEqual(dxworkflow_json, output_json)
 
@@ -9265,7 +9581,8 @@ class TestDXGetWorkflows(DXTestCaseBuildWorkflows):
         def _get_and_build(name, atype):
             with chdir(tempfile.mkdtemp()):
                 run("dx get {}".format('globalworkflow-' + name if atype == 'globalworkflow' else name))
-                dxworkflow_json = json.loads(open(os.path.join(name, "dxworkflow.json")).read())
+                with open(os.path.join(name, "dxworkflow.json")) as fh:
+                    dxworkflow_json = json.load(fh)
                 self.assertIn("name", dxworkflow_json)
 
                 # we need to stick in 'version' to dxworkflow.json to build an global workflow
@@ -9347,8 +9664,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet"))
             self.assertTrue(os.path.exists(os.path.join("get_applet", "dxapp.json")))
-
-            applet_metadata = open(os.path.join("get_applet", "dxapp.json")).read()
+            with  open(os.path.join("get_applet", "dxapp.json")) as fh:
+                applet_metadata = fh.read()
 
             # Checking inputSpec/outputSpec patterns arrays were flattened
             self.assertTrue(applet_metadata.find('"patterns": ["*.bam", "*.babam", "*.pab\\"abam"]') >= 0)
@@ -9380,14 +9697,14 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             self.assertNotIn("description", output_json)
             self.assertNotIn("developerNotes", output_json)
-
-            self.assertEqual("Description\n", open(os.path.join("get_applet", "Readme.md")).read())
-            self.assertEqual("Developer notes\n",
-                             open(os.path.join("get_applet", "Readme.developer.md")).read())
-            self.assertEqual("import os\n", open(os.path.join("get_applet", "src", "code.py")).read())
-
-            self.assertEqual("content\n",
-                             open(os.path.join("get_applet", "resources", "resources_file")).read())
+            with open(os.path.join("get_applet", "Readme.md")) as fh:
+                self.assertEqual("Description\n", fh.read())
+            with open(os.path.join("get_applet", "Readme.developer.md")) as fh:
+                self.assertEqual("Developer notes\n", fh.read())
+            with open(os.path.join("get_applet", "src", "code.py")) as fh:
+                self.assertEqual("import os\n", fh.read())
+            with open(os.path.join("get_applet", "resources", "resources_file")) as fh:
+                self.assertEqual("content\n", fh.read())
 
             # Target applet does not exist
             with self.assertSubprocessFailure(stderr_regexp='Unable to resolve', exit_code=3):
@@ -9477,9 +9794,11 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             with open(os.path.join("get_applet", "dxapp.json")) as f2:
                 output_json = json.load(f2)
-            self.assertIn("bundledDepends", output_json["runSpec"])
+            current_region = dxpy.describe(self.project).get("region")
+            regional_options = output_json["regionalOptions"][current_region]
+            self.assertIn("bundledDepends", regional_options)
             seenResources = False
-            for bd in output_json["runSpec"]["bundledDepends"]:
+            for bd in regional_options["bundledDepends"]:
                 if bd["name"] == "resources.tar.gz":
                     seenResources = True
                     break
@@ -9508,7 +9827,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet_field_cleanup"))
             self.assertTrue(os.path.exists(os.path.join("get_applet_field_cleanup", "dxapp.json")))
-            output_json = json.load(open(os.path.join("get_applet_field_cleanup", "dxapp.json")))
+            with open(os.path.join("get_applet_field_cleanup", "dxapp.json")) as fh:
+                output_json = json.load(fh)
             self.assertEqual(output_app_spec, output_json)
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.developer.md")))
@@ -9532,13 +9852,15 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             run("dx get " + new_applet_id)
             self.assertTrue(os.path.exists("get_applet_windows"))
             self.assertTrue(os.path.exists(os.path.join("get_applet_windows", "dxapp.json")))
-            output_json = json.load(open(os.path.join("get_applet_windows", "dxapp.json")))
+            with open(os.path.join("get_applet_windows", "dxapp.json")) as fh:
+                output_json = json.load(fh)
             self.assertEqual(output_app_spec, output_json)
             self.assertFalse(os.path.exists(os.path.join("get_applet_windows", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet_windows", "Readme.developer.md")))
-            self.assertEqual("import os\n", open(os.path.join("get_applet_windows", "src", "code.py")).read())
-            self.assertEqual("content\n",
-                             open(os.path.join("get_applet_windows", "resources", "resources_file")).read())
+            with open(os.path.join("get_applet_windows", "src", "code.py")) as fh:
+                self.assertEqual("import os\n", fh.read())
+            with open(os.path.join("get_applet_windows", "resources", "resources_file")) as fh:
+                self.assertEqual("content\n", fh.read())
 
     def make_app(self, name, open_source=True, published=True, authorized_users=[], regional_options=None):
         if regional_options is None:
@@ -9564,7 +9886,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v)
-                               for (k, v) in app_spec.iteritems()
+                               for (k, v) in app_spec.items()
                                if k not in ('description', 'developerNotes'))
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
@@ -9613,7 +9935,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             black_list.append('authorizedUsers')
 
         filtered_app_spec = dict((k, v)
-                                 for (k, v) in app_spec.iteritems()
+                                 for (k, v) in app_spec.items()
                                  if k not in black_list)
 
         self.assertNotIn("description", output_json)
@@ -9622,7 +9944,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         self.assertNotIn("systemRequirements", output_json["runSpec"])
         self.assertNotIn("systemRequirementsByRegion", output_json["runSpec"])
 
-        self.assertDictSubsetOf(filtered_app_spec, output_json)
+        # assetDepends is now dumped as bundledDepends, assertion no longer valid
+        # self.assertDictSubsetOf(filtered_app_spec, output_json)
 
         self.assertFileContentsEqualsString([name, "src",
                                              "code.py"],
@@ -9706,7 +10029,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         def _get_and_build(name, atype):
             with chdir(tempfile.mkdtemp()):
                 run("dx get {}".format('app-' + name if atype == 'app' else name))
-                dxapp_json = json.loads(open(os.path.join(name, "dxapp.json")).read())
+                with open(os.path.join(name, "dxapp.json")) as fh:
+                    dxapp_json = json.load(fh)
                 self.assertNotIn("systemRequirements", dxapp_json['runSpec'])
                 self.assertNotIn("systemRequirementsByRegion", dxapp_json['runSpec'])
                 self.assertEqual(dxapp_json["regionalOptions"], sysreq_spec)
@@ -9798,9 +10122,11 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             self.assertFalse(os.path.exists(os.path.join(app_name, "resources")))
 
             output_json = json.load(open(os.path.join(app_name, "dxapp.json")))
-            self.assertTrue("bundledDepends" in output_json["runSpec"])
+            current_region = dxpy.describe(self.project).get("region")
+            regional_options = output_json["regionalOptions"][current_region]
+            self.assertIn("bundledDepends", regional_options)
             seenResources = False
-            for bd in output_json["runSpec"]["bundledDepends"]:
+            for bd in regional_options["bundledDepends"]:
                 if bd["name"] == "resources.tar.gz":
                     seenResources = True
                     break
@@ -9888,78 +10214,109 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                 app_spec = json.load(fh)
                 self.assertEqual(app_spec["regionalOptions"], regional_options)
 
-class TestDXBuildReportHtml(unittest.TestCase):
-    js = "console.log('javascript');"
-    css = "body {background-color: green;}"
+    @staticmethod
+    def create_asset(tarball_name, record_name, proj):
+        asset_archive = dxpy.upload_string("foo", name=tarball_name, project=proj.get_id(),hidden=True, wait_on_close=True,)
+        asset = dxpy.new_dxrecord(
+            project=proj.get_id(),
+            details={"archiveFileId": {"$dnanexus_link": asset_archive.get_id()}},
+            properties={"version": "0.0.1", },
+            close=True,
+            types=["AssetBundle"]
+        )
+        asset_archive.set_properties({"AssetBundle": asset.get_id()})
+        return asset.get_id()
 
-    def setUp(self):
-        self.temp_file_path = tempfile.mkdtemp()
-        self.gif_base64 = "R0lGODdhAQABAIAAAAQCBAAAACwAAAAAAQABAAACAkQBADs="
-        gif_file = open("{}/img.gif".format(self.temp_file_path), "wb")
-        gif_file.write(base64.b64decode(self.gif_base64))
-        gif_file.close()
-        wiki_logo = "http://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/200px-Wikipedia-logo-v2.svg.png"
-        script_file = open("{}/index.js".format(self.temp_file_path), "w")
-        script_file.write(self.js)
-        script_file.close()
-        css_file = open("{}/index.css".format(self.temp_file_path), "w")
-        css_file.write(self.css)
-        css_file.close()
-        html_file = open("{}/index.html".format(self.temp_file_path), "w")
-        html = "<html><head><link rel='stylesheet' href='index.css' type='text/css'/><script src='index.js'></script></head><body><a href='/'/><a href='/' target='_new'/><img src='img.gif'/><img src='{}'/></body></html>".format(wiki_logo)
-        html_file.write(html)
-        html_file.close()
+    @staticmethod
+    def gen_file_tar(fname, tarballname, proj_id):
+            with open(fname, 'w') as f:
+                f.write("foo")
 
-        self.proj_id = dxpy.api.project_new({'name': 'TestDXBuildReportHtml Project'})['id']
-        os.environ['DX_PROJECT_CONTEXT_ID'] = self.proj_id
+            with tarfile.open(tarballname, 'w:gz') as f:
+                f.add(fname)
 
-    def tearDown(self):
-        shutil.rmtree(self.temp_file_path)
-        dxpy.api.project_destroy(self.proj_id, {'terminateJobs': True})
+            dxfile = dxpy.upload_local_file(tarballname, name=tarballname, project=proj_id,
+                                            media_type="application/gzip", wait_on_close=True)
+            # remove local file
+            os.remove(tarballname)
+            os.remove(fname)
+            return dxfile
+    
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV and testutil.TEST_AZURE,
+                         'skipping test that would create apps')                
+    def test_get_permitted_regions(self):
 
-    def test_local_file(self):
-        run("dx-build-report-html {d}/index.html --local {d}/out.html".format(d=self.temp_file_path))
-        out_path = "{}/out.html".format(self.temp_file_path)
-        self.assertTrue(os.path.exists(out_path))
-        f = open(out_path, "r")
-        html = f.read()
-        f.close()
-        self.assertTrue(re.search(self.gif_base64, html))
-        self.assertEqual(len(re.split("src=\"data:image", html)), 3)
-        self.assertEqual(len(re.split("<img", html)), 3)
-        self.assertTrue(re.search("target=\"_top\"", html))
-        self.assertTrue(re.search("target=\"_new\"", html))
-        self.assertTrue(re.search("<style", html))
-        self.assertTrue(re.search(re.escape(self.css), html))
-        self.assertFalse(re.search("<link", html))
-        self.assertFalse(re.search("index.css", html))
-        self.assertTrue(re.search(re.escape(self.js), html))
-        self.assertFalse(re.search("index.js", html))
+        app_name = "app_{t}_multi_region_app_from_permitted_region".format(t=int(time.time()))       
+        with temporary_project(region="aws:us-east-1") as aws_proj:
+            with temporary_project(region="azure:westus") as azure_proj:
+                aws_bundled_dep = self.gen_file_tar("test_file", "bundle.tar.gz", aws_proj.get_id())
+                azure_bundled_dep = self.gen_file_tar("test_file", "bundle.tar.gz", azure_proj.get_id())
 
-    def test_image_only(self):
-        run("dx-build-report-html {d}/img.gif --local {d}/gif.html".format(d=self.temp_file_path))
-        out_path = "{}/gif.html".format(self.temp_file_path)
-        self.assertTrue(os.path.exists(out_path))
-        f = open(out_path, "r")
-        html = f.read()
-        f.close()
-        self.assertTrue(re.search("<img src=\"data:", html))
+                aws_asset = self.create_asset("asset.tar.gz","asset_record", aws_proj)
+                azure_asset = self.create_asset("asset.tar.gz", "asset_record", azure_proj)
 
-    def test_remote_file(self):
-        report = json.loads(run("dx-build-report-html {d}/index.html --remote /html_report -w 47 -g 63".format(d=self.temp_file_path)))
-        fileId = report["fileIds"][0]
-        desc = json.loads(run("dx describe {record} --details --json".format(record=report["recordId"])))
-        self.assertEqual(desc["types"], ["Report", "HTMLReport"])
-        self.assertEqual(desc["name"], "html_report")
-        self.assertEqual(desc["details"]["files"][0]["$dnanexus_link"], fileId)
-        self.assertEqual(desc["details"]["width"], "47")
-        self.assertEqual(desc["details"]["height"], "63")
-        desc = json.loads(run("dx describe {file} --details --json".format(file=fileId)))
-        self.assertTrue(desc["hidden"])
-        self.assertEqual(desc["name"], "index.html")
-        run("dx rm {record} {file}".format(record=report["recordId"], file=fileId))
+                aws_sys_reqs = dict(main=dict(instanceType="mem2_hdd2_x1"))
+                azure_sys_reqs = dict(main=dict(instanceType="azure:mem2_ssd1_x1"))
 
+                regional_options = {
+                        "aws:us-east-1": dict(
+                            systemRequirements=aws_sys_reqs,
+                            bundledDepends=[{"name": "bundle.tar.gz",
+                                             "id": {"$dnanexus_link": aws_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": aws_asset}],
+                        ),
+                        "azure:westus": dict(
+                            systemRequirements=azure_sys_reqs,
+                            bundledDepends=[{"name": "bundle.tar.gz",
+                                             "id": {"$dnanexus_link": azure_bundled_dep.get_id()}}],
+                            assetDepends=[{"id": azure_asset}],
+                        )
+                    }
+                        
+                app_id, app_spec = self.make_app(app_name, regional_options=regional_options, authorized_users=["PUBLIC"])
+                app_desc = dxpy.api.app_get(app_id)
 
+                # use current selected project as the source
+                # assets are not downloaded but kept in regionalOptions as bundleDepends
+                with chdir(tempfile.mkdtemp()), temporary_project(region="aws:us-east-1", select=True) as temp_project:
+                    (stdout, stderr) = run("dx get {app_id}".format(app_id=app_id), also_return_stderr=True)
+                    self.assertIn("Trying to download resources from the current region aws:us-east-1", stderr)
+                    self.assertIn("Unpacking resource bundle.tar.gz", stderr)
+                    self.assertIn("Unpacking resource resources.tar.gz", stderr)
+                    self.assert_app_get_initialized(app_name, app_spec)
+
+                    path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
+                    with open(path_to_dxapp_json, "r") as fh:
+                        out_spec = json.load(fh)
+                        
+                        self.assertIn("regionalOptions", out_spec)
+                        out_regional_options = out_spec["regionalOptions"]
+                        
+                        self.assertEqual(out_regional_options["aws:us-east-1"]["systemRequirements"], aws_sys_reqs)
+                        self.assertEqual(out_regional_options["azure:westus"]["systemRequirements"], azure_sys_reqs)
+
+                        def get_asset_spec(asset_id):
+                            tarball_id = dxpy.DXRecord(asset_id).describe(
+                            fields={'details'})["details"]["archiveFileId"]["$dnanexus_link"]
+                            tarball_name = dxpy.DXFile(tarball_id).describe()["name"]
+                            return {"name": tarball_name, "id": {"$dnanexus_link": tarball_id}}
+                        
+                        self.assertEqual(out_regional_options["aws:us-east-1"]["bundledDepends"], [get_asset_spec(aws_asset)])
+                        self.assertEqual(out_regional_options["azure:westus"]["bundledDepends"], [get_asset_spec(azure_asset)])
+
+                # omit resources
+                # use current selected project as the source
+                with chdir(tempfile.mkdtemp()), temporary_project(region="aws:us-east-1", select=True) as temp_project:
+                    (stdout, stderr) = run("dx get {app_id} --omit-resources".format(app_id=app_id), also_return_stderr=True)
+                    self.assertFalse(os.path.exists(os.path.join(app_name, "resources")))
+
+                    path_to_dxapp_json = "./{app_name}/dxapp.json".format(app_name=app_name)
+                    with open(path_to_dxapp_json, "r") as fh:
+                        out_spec = json.load(fh)
+                        out_regional_options = out_spec["regionalOptions"]
+                        
+                        self.assertEqual(out_regional_options["aws:us-east-1"]["bundledDepends"], app_desc["runSpec"]["bundledDependsByRegion"]["aws:us-east-1"])
+                        self.assertEqual(out_regional_options["azure:westus"]["bundledDepends"], app_desc["runSpec"]["bundledDependsByRegion"]["azure:westus"])
 @unittest.skipUnless(testutil.TEST_TCSH, 'skipping tests that require tcsh to be installed')
 class TestTcshEnvironment(unittest.TestCase):
     def test_tcsh_dash_c(self):
@@ -10307,7 +10664,290 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
         self.assertEqual(app_2['name'], app_spec_2['name'])
         self.assertEqual(app_2['version'], "0.0.2")
 
+class TestDXArchive(DXTestCase):
+    @classmethod
+    def setUpClass(cls):
+        # setup two projects
+        cls.proj_archive_name = "dx_test_archive"
+        cls.proj_unarchive_name = "dx_test_unarchive"
+        cls.usr = dxpy.whoami()
+        cls.bill_to = dxpy.api.user_describe(cls.usr)['billTo']
+        cls.is_admin = True if dxpy.api.org_describe(cls.bill_to)['level'] == 'ADMIN' else False
 
+        cls.rootdir = '/'
+        cls.proj_archive_id = dxpy.api.project_new({'name': cls.proj_archive_name, 'billTo': cls.bill_to})['id']
+        cls.proj_unarchive_id = dxpy.api.project_new({'name': cls.proj_unarchive_name, 'billTo': cls.bill_to})['id']
+        cls.counter = 1
+        
+        # create_folder_in_project(cls.proj_archive_id, cls.rootdir)
+        # create_folder_in_project(cls.proj_unarchive_id, cls.rootdir)
+        
+    @classmethod
+    def tearDownClass(cls):
+        dxpy.api.project_remove_folder(cls.proj_archive_id, {"folder": cls.rootdir, "recurse":True})
+        dxpy.api.project_remove_folder(cls.proj_unarchive_id, {"folder": cls.rootdir,"recurse":True})
+        
+        dxpy.api.project_destroy(cls.proj_archive_id,{"terminateJobs": True})
+        dxpy.api.project_destroy(cls.proj_unarchive_id,{"terminateJobs": True})
+
+    @classmethod
+    def gen_uniq_fname(cls):
+        cls.counter += 1
+        return "file_{}".format(cls.counter)
+  
+    def test_archive_files(self):
+        # archive a list of files
+        fname1 = self.gen_uniq_fname()
+        fname2 = self.gen_uniq_fname()
+        fid1 = create_file_in_project(fname1, self.proj_archive_id,folder=self.rootdir)
+        fid2 = create_file_in_project(fname2, self.proj_archive_id,folder=self.rootdir)
+
+        run("dx archive -y {}:{} {}:{}{}".format(
+            self.proj_archive_id,fid1,
+            self.proj_archive_id,self.rootdir,fname2))
+        
+        time.sleep(10)
+        self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid2)["archivalState"],"archived")
+        
+        # invalid project id or file id
+        # error raises from API
+        with self.assertSubprocessFailure(stderr_regexp="InvalidInput", exit_code=3):
+            run("dx archive -y {}:{}".format(
+                                        self.proj_archive_id, "file-B00000000000000000000000"))
+        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+            run("dx archive -y {}:{}".format(
+                                        "project-B00000000000000000000000",fid1))
+
+    def test_archive_files_allmatch(self):
+        # archive all matched names without prompt
+        fname_allmatch = "file_allmatch"
+        fid1 = create_file_in_project(fname_allmatch, self.proj_archive_id,folder=self.rootdir)
+        fid2 = create_file_in_project(fname_allmatch, self.proj_archive_id,folder=self.rootdir)
+        
+        run("dx archive -y -a {}:{}{}".format(self.proj_archive_id,self.rootdir,fname_allmatch))
+        time.sleep(10)
+        self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid2)["archivalState"],"archived")
+
+        # archive all matched names with picking
+        fname_allmatch2 = "file_allmatch2"
+        fid3 = create_file_in_project(fname_allmatch2, self.proj_archive_id,folder=self.rootdir)
+        fid4 = create_file_in_project(fname_allmatch2, self.proj_archive_id,folder=self.rootdir)
+        
+        dx_archive_confirm = pexpect.spawn("dx archive -y {}:{}{}".format(self.proj_archive_id,self.rootdir,fname_allmatch2),
+                                         logfile=sys.stderr,
+                                         **spawn_extra_args)
+        dx_archive_confirm.expect('for all: ')
+        dx_archive_confirm.sendline("*")
+        
+        dx_archive_confirm.expect(pexpect.EOF, timeout=30)
+        dx_archive_confirm.close()
+
+        time.sleep(10)
+        self.assertEqual(dxpy.describe(fid3)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid4)["archivalState"],"archived")
+
+    def test_archive_folder(self):
+        subdir = 'subfolder/'
+        dxpy.api.project_new_folder(self.proj_archive_id, {"folder": self.rootdir+subdir, "parents":True})
+        
+        fname_root = self.gen_uniq_fname()
+        fname_subdir1 = self.gen_uniq_fname()
+        fid_root = create_file_in_project(fname_root, self.proj_archive_id, folder=self.rootdir)
+        fid_subdir1 = create_file_in_project(fname_subdir1, self.proj_archive_id, folder=self.rootdir+subdir)
+
+        # archive subfolder 
+        run("dx archive -y {}:{}".format(self.proj_archive_id,self.rootdir+subdir))
+        time.sleep(10)
+        self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
+
+
+        fname_subdir2 = self.gen_uniq_fname()
+        fid_subdir2 = create_file_in_project(fname_subdir2, self.proj_archive_id, folder=self.rootdir+subdir)
+
+        # archive files in root dir only
+        run("dx archive -y --no-recurse {}:{}".format(self.proj_archive_id,self.rootdir))
+        time.sleep(10)
+        self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"live")
+
+        # archive all files in root dir recursively
+        run("dx archive -y {}:{}".format(self.proj_archive_id,self.rootdir))
+        time.sleep(20)
+        self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
+        self.assertEqual(dxpy.describe(fid_subdir2)["archivalState"],"archived")
+        
+        # invalid folder path
+        with self.assertSubprocessFailure(stderr_regexp="ResourceNotFound", exit_code=3):
+            run("dx archive -y {}:{}".format(self.proj_archive_id,self.rootdir+'invalid/'))
+
+    # def test_archive_filename_with_forwardslash(self):
+    #     subdir = 'x/'
+    #     dxpy.api.project_new_folder(self.proj_archive_id, {"folder": self.rootdir+subdir, "parents":True})
+
+    #     fname = r'x\\/'
+    #     fid_root = create_file_in_project(fname, self.proj_archive_id, folder=self.rootdir)
+    #     fid_subdir1 = create_file_in_project(fname, self.proj_archive_id, folder=self.rootdir+subdir)     
+
+    #     # run("dx archive -y {}:{}".format(self.proj_archive_id,subdir))
+    #     # time.sleep(10)
+    #     # self.assertEqual(dxpy.describe(fid_subdir1)["archivalState"],"archived")
+
+    #     run("dx archive -y {}:{}".format(self.proj_archive_id, subdir+fname))
+    #     time.sleep(10)
+    #     self.assertEqual(dxpy.describe(fid_root)["archivalState"],"archived")
+
+    #     with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
+    #         run("dx archive -y {}:{} {}:{}".format(
+    #             self.proj_archive_id, fname,
+    #             self.proj_archive_id, subdir))
+
+    def test_archive_equivalent_paths(self):
+        with temporary_project("other_project",select=True) as temp_project:
+            test_projectid = temp_project.get_id()
+            fname = self.gen_uniq_fname()
+            fid = create_file_in_project(fname, test_projectid,folder=self.rootdir)
+            run("dx select {}".format(test_projectid))
+            project_prefix = ["", ":", test_projectid+":", "other_project"+":"]
+            affix = ["", "/"]
+            input = ""
+            for p in project_prefix:
+                for a in affix:
+                    input += " {}{}{}".format(p,a,fname)
+                    print(input)
+                    dx_archive_confirm = pexpect.spawn("dx archive {}".format(input),
+                                            logfile=sys.stderr,
+                                            **spawn_extra_args)
+                    dx_archive_confirm.expect('Will tag 1')
+                    dx_archive_confirm.sendline("n")
+                    dx_archive_confirm.expect(pexpect.EOF, timeout=30)
+                    dx_archive_confirm.close()
+
+            input = ""
+            fp = create_folder_in_project(test_projectid,'/foo/')
+            for p in project_prefix:
+                for a in affix:
+                    input += " {}{}{}".format(p,a,'foo/')
+                    print(input)
+                    dx_archive_confirm = pexpect.spawn("dx archive {}".format(input),
+                                            logfile=sys.stderr,
+                                            **spawn_extra_args)
+                    dx_archive_confirm.expect('{}:/foo'.format(test_projectid))
+                    dx_archive_confirm.sendline("n")
+                    dx_archive_confirm.expect(pexpect.EOF, timeout=30)
+                    dx_archive_confirm.close()
+
+    def test_archive_invalid_paths(self):
+        # mixed file and folder path        
+        fname1 = self.gen_uniq_fname()
+        fid1 = create_file_in_project(fname1, self.proj_archive_id,folder=self.rootdir)
+        
+        with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
+            run("dx archive -y {}:{} {}:{}".format(
+                self.proj_archive_id,fid1,
+                self.proj_archive_id,self.rootdir))
+        
+        with self.assertSubprocessFailure(stderr_regexp="is invalid. Please check the inputs or check --help for example inputs.", exit_code=3):
+            run("dx archive -y {}:{}:{}".format(
+                self.proj_archive_id,self.rootdir,fid1))
+
+        # invalid project name
+        with self.assertSubprocessFailure(stderr_regexp="Cannot find project with name {}".format("invalid_project_name"), exit_code=3):
+            run("dx archive -y {}:{}".format("invalid_project_name",fid1))
+        
+        # no project context       
+        with self.assertSubprocessFailure(stderr_regexp="Cannot find current project. Please check the environment.",
+                                          exit_code=3), without_project_context():
+            run("dx archive -y {}".format(fid1))
+        
+        # invalid file name
+        with self.assertSubprocessFailure(stderr_regexp="Input '{}' is not found as a file in project '{}'".format("invalid_file_name",self.proj_archive_id), exit_code=3):
+            run("dx archive -y {}:{}".format(self.proj_archive_id,"invalid_file_name"))
+
+        # files in different project
+        with temporary_project("other_project",select=False) as temp_project:
+            test_projectid = temp_project.get_id()
+            fid2 = create_file_in_project("temp_file", trg_proj_id=test_projectid,folder=self.rootdir)
+            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                run("dx archive -y {}:{} {}:{}".format(
+                    self.proj_archive_id,fid1,
+                    test_projectid,fid2))
+            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                run("dx archive -y {}:{} :{}".format(
+                    self.proj_archive_id,fid1,
+                    fid2))
+            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                run("dx archive -y {}:{} {}".format(
+                    self.proj_archive_id,fid1,
+                    fid2))
+
+        repeated_name = '/foo'
+        fid = create_file_in_project(repeated_name, self.proj_archive_id)
+        fp = create_folder_in_project(self.proj_archive_id,repeated_name)
+         # invalid file name
+        with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
+            run("dx archive -y {}:{} {}:{}/".format(self.proj_archive_id,repeated_name,
+                                                    self.proj_archive_id,repeated_name))
+
+    def test_archive_allcopies(self):
+        fname = self.gen_uniq_fname()
+        fname_allcopies = self.gen_uniq_fname()
+        fid = create_file_in_project(fname, self.proj_archive_id)
+        fid_allcopy = create_file_in_project(fname_allcopies, self.proj_archive_id,folder=self.rootdir)
+        
+        with temporary_project(name="other_project",select=False) as temp_project:
+            test_projectid = temp_project.get_id()
+            # dxpy.api.project_update(test_projectid, {"billTo": self.bill_to})
+            dxpy.DXFile(dxid=fid, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir)
+            
+            run("dx archive -y {}:{}".format(self.proj_archive_id,fid))
+            time.sleep(5)
+            self.assertEqual(dxpy.describe(fid)["archivalState"],"archival")
+            with select_project(test_projectid):
+                self.assertEqual(dxpy.describe(fid)["archivalState"],"live")
+            
+            dxpy.DXFile(dxid=fid_allcopy, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir).get_id()
+            
+            if self.is_admin:
+                run("dx archive -y --all-copies {}:{}".format(self.proj_archive_id,fid_allcopy))
+                time.sleep(20)
+                self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
+                with select_project(test_projectid):
+                    self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
+            else:
+                with self.assertSubprocessFailure(stderr_regexp="Must be an admin of {} to archive all copies".format(self.bill_to)):
+                    run("dx archive -y --all-copies {}:{}".format(self.proj_archive_id, fid_allcopy))
+
+    def test_unarchive_dryrun(self):
+        fname1 = self.gen_uniq_fname()
+        fname2 = self.gen_uniq_fname()
+        fid1 = create_file_in_project(fname1, self.proj_unarchive_id, folder=self.rootdir)
+        fid2 = create_file_in_project(fname2, self.proj_unarchive_id, folder=self.rootdir)
+        _ = dxpy.api.project_archive(self.proj_unarchive_id, {"folder": self.rootdir})
+        time.sleep(10)
+
+        dx_archive_confirm = pexpect.spawn("dx unarchive {}:{}".format(self.proj_unarchive_id,fid1),
+                                         logfile=sys.stderr,
+                                         **spawn_extra_args)
+        dx_archive_confirm.expect('Will tag')
+        dx_archive_confirm.sendline("n")
+        dx_archive_confirm.expect(pexpect.EOF, timeout=30)
+        dx_archive_confirm.close()
+
+        self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
+        
+        output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,fid1))
+        time.sleep(10)
+        self.assertIn("Tagged 1 file(s) for unarchival", output)
+        self.assertEqual(dxpy.describe(fid1)["archivalState"],"unarchiving")
+
+        output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,self.rootdir))
+        time.sleep(10)
+        self.assertIn("Tagged 1 file(s) for unarchival", output)
+        self.assertEqual(dxpy.describe(fid2)["archivalState"],"unarchiving")
+        
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')

@@ -26,7 +26,7 @@ from collections import namedtuple
 import pipes
 
 import dxpy
-from ..compat import USING_PYTHON2, open
+from ..compat import USING_PYTHON2, open, Mapping
 from ..exceptions import AppInternalError
 
 ENTRY_POINT_TABLE = {}
@@ -191,7 +191,7 @@ def save_error(e, working_dir, error_type="AppInternalError"):
 def convert_handlers_to_dxlinks(x):
     if isinstance(x, dxpy.DXObject):
         x = dxpy.dxlink(x)
-    elif isinstance(x, collections.Mapping):
+    elif isinstance(x, Mapping):
         for key, value in x.items():
             x[key] = convert_handlers_to_dxlinks(value)
     elif isinstance(x, list):
@@ -433,7 +433,10 @@ class DXExecDependencyInstaller(object):
     def _install_dep_bundle(self, bundle):
         if bundle["id"].get("$dnanexus_link", "").startswith("file-"):
             self.log("Downloading bundled file {name}".format(**bundle))
-            dxpy.download_dxfile(bundle["id"], bundle["name"])
+            try:
+                dxpy.download_dxfile(bundle["id"], bundle["name"], project=dxpy.WORKSPACE_ID)
+            except dxpy.exceptions.ResourceNotFound:
+                dxpy.download_dxfile(bundle["id"], bundle["name"])
             self.run("dx-unpack {}".format(pipes.quote(bundle["name"])))
         else:
             self.log('Skipping bundled dependency "{name}" because it does not refer to a file'.format(**bundle))

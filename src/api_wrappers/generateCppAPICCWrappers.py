@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
 #
@@ -73,7 +73,7 @@ def make_input_params(accept_nonce):
     return ("input_params_cp" if accept_nonce else "input_params")
 
 
-print preamble
+print(preamble)
 
 for method in json.loads(sys.stdin.read()):
     route, signature, opts = method
@@ -82,19 +82,19 @@ for method in json.loads(sys.stdin.read()):
     if (opts['objectMethod']):
         root, oid_route, method_route = route.split("/")
         if oid_route == 'app-xxxx':
-            print app_object_method_template.format(method_name=method_name,
+            print(app_object_method_template.format(method_name=method_name,
                                                     method_route=method_route,
                                                     nonce_code=make_nonce_code(accept_nonce),
-                                                    input_params=make_input_params(accept_nonce))
+                                                    input_params=make_input_params(accept_nonce)))
         else:
-            print object_method_template.format(method_name=method_name,
+            print(object_method_template.format(method_name=method_name,
                                                 method_route=method_route,
                                                 nonce_code=make_nonce_code(accept_nonce),
-                                                input_params=make_input_params(accept_nonce))
+                                                input_params=make_input_params(accept_nonce)))
     else:
-        print class_method_template.format(method_name=method_name,
+        print(class_method_template.format(method_name=method_name,
                                            route=route,
                                            nonce_code=make_nonce_code(accept_nonce),
-                                           input_params=make_input_params(accept_nonce))
+                                           input_params=make_input_params(accept_nonce)))
 
-print postscript
+print(postscript)

@@ -1,6 +1,8 @@
 main() {
     # parallel download
     dx-download-all-inputs --parallel
+    # Install xattr
+    python3 -m pip install -U xattr
 
     # creating some output results
     echo "ABCD" > dummy_data.txt
@@ -14,6 +16,7 @@ main() {
         cp dummy_data.txt out/$d/$d
         attr -s "key0" -V "val0" out/$d/$d
         attr -s "key1" -V "val1" out/$d/$d
+        attr -s "runFolder" -V "runValue" out/$d/$d
     done
 
     # sequential upload with metadata as properties
@@ -37,6 +40,7 @@ function compare_xattr_to_properties()
         properties=$(dx describe --json $basename | jq -r .properties)
         [[ "val0" == $(echo $properties | jq -r .key0) ]]
         [[ "val1" == $(echo $properties | jq -r .key1) ]]
+        [[ "runValue" == $(echo $properties | jq -r .runFolder) ]]
     done
 }
 
