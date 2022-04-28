@@ -1,3 +1,13 @@
+dx-toolkit (0.324.0) trusty; urgency=medium
+
+  * Fixed: `dx build` comparison of workflow directory to workflow name
+  * Fixed: Set projejct argument for `dx run --detach` from inside a job
+  * Fixed: Reliability of symlink downloads with `aria2c`
+  * Changed: Removed `wget` as an option for downloading symlinked files
+  * Changed: Bump allowed requests dxpy dependency version to 2.27.1
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 28 Apr 2022 21:10:40 +0000
+
 dx-toolkit (0.323.0) trusty; urgency=medium
 
   * Changed: Do not list folder objects during `dx cd`
