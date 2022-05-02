@@ -15,6 +15,7 @@ from ..exceptions import DXError
 _logger = logging.getLogger(__name__)
 
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
+database_id_regex = re.compile('^database-\\w{24}$')
 
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
@@ -218,6 +219,9 @@ class DXDatasetDictionary():
             if field_value["database_unique_name"] and database_unique_name_regex.match(field_value["database_unique_name"]):  
                 unique_db_tb_col_path = "{}${}${}".format(field_value["database_unique_name"], field_value["table"], field_value["column"])
                 join_path_to_entity_field[unique_db_tb_col_path] = (entity["name"], field)
+            elif field_value["database_name"] and field_value["database_id"] and database_id_regex.match(field_value["database_name"]):
+                unique_db_name = "{}__{}".format(field_value["database_id"].replace("-", "_").lower(), field_value["database_name"])
+                join_path_to_entity_field[unique_db_name] = (entity["name"], field)
         return join_path_to_entity_field
 
     def create_edge(self, join_info_joins, join_path_to_entity_field):
