@@ -28,8 +28,8 @@ def extract_dataset(args):
             print_to_stdout = True
     if args.ddd:
         rec = DXDataset(entity_result['id'],project=project)
-        rec_json = rec.get_descriptor()
-        rec_dict = rec.get_dictionary().write(output_path=out_directory, print_to_stdout=print_to_stdout)
+        rec_dict = rec.get_dictionary()
+        write_ot = rec_dict.write(output_path=out_directory, file_name_prefix=rec.name, print_to_stdout=print_to_stdout)
     else:
         pass
     
@@ -317,7 +317,7 @@ class DXDatasetDictionary():
             }])
         return entity_dictionary
 
-    def write(self, output_path="", sep=",", print_to_stdout=False):
+    def write(self, output_path="", file_name_prefix="default_prefix", print_to_stdout=False, sep=","):
         """Create CSV files with the contents of the dictionaries.
         """
         csv_opts = dict(
@@ -346,9 +346,9 @@ class DXDatasetDictionary():
             output_file_coding = sys.stdout
             output_file_entity = sys.stdout
         else:
-            output_file_data = os.path.join(output_path,"data_dictionary.csv")
-            output_file_coding = os.path.join(output_path,"coding_dictionary.csv")
-            output_file_entity = os.path.join(output_path,"entity_dictionary.csv")
+            output_file_data = os.path.join(output_path, file_name_prefix + ".data_dictionary.csv")
+            output_file_coding = os.path.join(output_path, file_name_prefix + ".coding_dictionary.csv")
+            output_file_entity = os.path.join(output_path, file_name_prefix + ".entity_dictionary.csv")
         
         data_dframe.to_csv(output_file_data, **csv_opts)
         coding_dframe.to_csv(output_file_coding, **csv_opts)
