@@ -19,9 +19,19 @@ database_id_regex = re.compile('^database-\\w{24}$')
 
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
-    rec = DXDataset(entity_result['id'],project=project)
-    rec_json = rec.get_descriptor()
-    rec_dict = rec.get_dictionary().write(output_path="")
+    out_directory = ""
+    print_to_stdout = False
+    if args.output is not None:
+        if args.output:
+            out_directory = args.output
+        else:
+            print_to_stdout = True
+    if args.ddd:
+        rec = DXDataset(entity_result['id'],project=project)
+        rec_json = rec.get_descriptor()
+        rec_dict = rec.get_dictionary().write(output_path=out_directory, print_to_stdout=print_to_stdout)
+    else:
+        pass
     
 class DXDataset(DXRecord):
     """
@@ -307,7 +317,7 @@ class DXDatasetDictionary():
             }])
         return entity_dictionary
 
-    def write(self, output_path="", sep=","):
+    def write(self, output_path="", sep=",", print_to_stdout=False):
         """Create CSV files with the contents of the dictionaries.
         """
         csv_opts = dict(
@@ -327,14 +337,19 @@ class DXDatasetDictionary():
             df = pd.concat([b for b in ord_dict_of_df.values()], sort=False)
             return sort_dataframe_columns(df, required_columns)
 
-        coding_dframe = as_dataframe(self.data_dictionary, required_columns = ["entity", "name", "type", "primary_key_type"])
-        output_file = os.path.join(output_path,"data_dictionary.csv")
-        coding_dframe.to_csv(output_file, **csv_opts)
-
+        data_dframe = as_dataframe(self.data_dictionary, required_columns = ["entity", "name", "type", "primary_key_type"])
         coding_dframe = as_dataframe(self.coding_dictionary, required_columns=["coding_name", "code", "meaning"])
-        output_file = os.path.join(output_path,"coding_dictionary.csv")
-        coding_dframe.to_csv(output_file, **csv_opts)
-        
         entity_dframe = as_dataframe(self.entity_dictionary, required_columns=["entity", "entity_title"])
-        output_file = os.path.join(output_path,"entity_dictionary.csv")
-        entity_dframe.to_csv(output_file, **csv_opts)
+        
+        if print_to_stdout:
+            output_file_data = sys.stdout
+            output_file_coding = sys.stdout
+            output_file_entity = sys.stdout
+        else:
+            output_file_data = os.path.join(output_path,"data_dictionary.csv")
+            output_file_coding = os.path.join(output_path,"coding_dictionary.csv")
+            output_file_entity = os.path.join(output_path,"entity_dictionary.csv")
+        
+        data_dframe.to_csv(output_file_data, **csv_opts)
+        coding_dframe.to_csv(output_file_coding, **csv_opts)
+        entity_dframe.to_csv(output_file_entity, **csv_opts)
