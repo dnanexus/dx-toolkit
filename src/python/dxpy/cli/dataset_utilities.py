@@ -23,7 +23,10 @@ def extract_dataset(args):
     print_to_stdout = False
     if args.output is not None:
         if args.output:
-            out_directory = args.output
+            if os.path.exists(args.output):
+                out_directory = args.output
+            else:
+                raise FileNotFoundError("{0} folder does not exist!".format(args.output))
         else:
             print_to_stdout = True
     if args.ddd:
