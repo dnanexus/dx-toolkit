@@ -19,8 +19,13 @@ database_id_regex = re.compile('^database-\\w{24}$')
 
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
+    if entity_result['describe']['types'] == ['DatabaseQuery', 'CohortBrowser']:
+        dataset_id = DXRecord(DXRecord(entity_result['id'],project).get_details()['dataset']['$dnanexus_link']).get_id()
+    elif entity_result['describe']['types'] == ['Dataset']:
+        dataset_id = entity_result['id']
     out_directory = ""
     print_to_stdout = False
+
     if args.output is not None:
         if args.output:
             if os.path.exists(args.output):
@@ -29,8 +34,9 @@ def extract_dataset(args):
                 raise FileNotFoundError("{0} folder does not exist!".format(args.output))
         else:
             print_to_stdout = True
+
     if args.ddd:
-        rec = DXDataset(entity_result['id'],project=project)
+        rec = DXDataset(dataset_id,project=project)
         rec_dict = rec.get_dictionary()
         write_ot = rec_dict.write(output_path=out_directory, file_name_prefix=rec.name, print_to_stdout=print_to_stdout)
     else:
@@ -181,6 +187,12 @@ class DXDatasetDictionary():
             "title",
             "units"
         ]
+        dataset_type_to_dxdm_type = {"integer": "integer",
+                                     "double": "float",
+                                     "date": "date",
+                                     "datetime": "datetime",
+                                     "string": "string"
+        }
         dcols = {col: [] for col in required_columns + extra_cols}
         dcols["entity"] = [entity["name"]] * len(entity["fields"])
         dcols["referenced_entity_field"] = [""] * len(entity["fields"])
@@ -190,7 +202,7 @@ class DXDatasetDictionary():
             # Field-level parameters
             field_dict = entity["fields"][field]
             dcols["name"].append(field_dict["name"])
-            dcols["type"].append(field_dict["type"])
+            dcols["type"].append(dataset_type_to_dxdm_type[field_dict["type"]])
             dcols["primary_key_type"].append(
                 ("global" if is_primary_entity else "local")
                 if (global_primary_key["field"] and field_dict["name"] == global_primary_key["field"])
