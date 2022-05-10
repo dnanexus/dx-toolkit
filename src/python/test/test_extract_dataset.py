@@ -24,9 +24,11 @@ import shutil
 import os
 import subprocess
 import pandas as pd
+import dxpy
 from dxpy.cli.dataset_utilities import DXDataset
 from dxpy.utils.resolver import resolve_existing_path
 from dxpy.bindings import DXRecord
+from dxpy.exceptions import DXError
 
 class TestDXDataset(unittest.TestCase):
     def test_e2e_dataset(self):
@@ -40,10 +42,14 @@ class TestDXDataset(unittest.TestCase):
     def end_to_end(self, input_record):
         out_directory = tempfile.mkdtemp()
         project, path, entity_result = resolve_existing_path(input_record)
-        if entity_result['describe']['types'] == ['DatabaseQuery', 'CohortBrowser']:
-            dataset_id = DXRecord(DXRecord(entity_result['id'],project).get_details()['dataset']['$dnanexus_link']).get_id()
-        elif entity_result['describe']['types'] == ['Dataset']:
-            dataset_id = entity_result['id']
+        resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize', {"project": project})
+        if "Dataset" in resp['recordTypes']:
+            pass
+        elif "CohortBrowser" in resp['recordTypes']:
+            project = resp['datasetRecordProject']
+        else:
+            raise DXError('Invalid record type: %r' % resp['recordTypes'])
+        dataset_id = resp['dataset']
         rec = DXDataset(dataset_id,project=project)
         write_out = rec.get_dictionary().write(output_path=out_directory, file_name_prefix=rec.name)
         truth_files_directory = tempfile.mkdtemp()
@@ -58,7 +64,7 @@ class TestDXDataset(unittest.TestCase):
         for file in truth_file_list:
             dframe1 = pd.read_csv(os.path.join(truth_files_directory, file)).dropna(axis=1, how='all').sort_index(axis=1)
             dframe2 = pd.read_csv(os.path.join(out_directory, f"{rec.name}.{file}")).dropna(axis=1, how='all').sort_index(axis=1)
-            if file == 'coding_dictionary.csv':
+            if file == 'codings.csv':
                 dframe1 = dframe1.sort_values(by='code', axis=0, ignore_index=True)
                 dframe2 = dframe2.sort_values(by='code', axis=0, ignore_index=True)
             if file == 'entity_dictionary.csv':

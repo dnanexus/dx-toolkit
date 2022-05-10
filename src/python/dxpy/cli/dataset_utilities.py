@@ -4,38 +4,44 @@ import json
 import pandas as pd
 import os
 import re
-import logging
+import dxpy
+from dxpy.utils.printing import (fill)
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path
 from ..utils.file_handle import as_handle
 from ..exceptions import DXError
-
-_logger = logging.getLogger(__name__)
+from ..exceptions import err_exit
 
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
 
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
-    if entity_result['describe']['types'] == ['DatabaseQuery', 'CohortBrowser']:
-        dataset_id = DXRecord(DXRecord(entity_result['id'],project).get_details()['dataset']['$dnanexus_link']).get_id()
-    elif entity_result['describe']['types'] == ['Dataset']:
-        dataset_id = entity_result['id']
+    resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
+                                        {"project": project} )
+    if "Dataset" in resp['recordTypes']:
+        pass
+    elif "CohortBrowser" in resp['recordTypes']:
+        project = resp['datasetRecordProject']
+    else:
+        raise DXError('Invalid record type: %r' % resp['recordTypes'])
+
+    dataset_id = resp['dataset']
     out_directory = ""
     print_to_stdout = False
+    
+    if args.output is None:
+        out_directory = os.getcwd()
+    elif args.output == '-':
+        print_to_stdout = True 
+    elif os.path.isdir(args.output):
+        out_directory = args.output
+    else:
+        err_exit(fill("Error: {path} could not be found".format(path=args.output)))
 
-    if args.output is not None:
-        if args.output:
-            if os.path.exists(args.output):
-                out_directory = args.output
-            else:
-                raise FileNotFoundError("{0} folder does not exist!".format(args.output))
-        else:
-            print_to_stdout = True
-
-    if args.ddd:
+    if args.dump_dataset_dictionary:
         rec = DXDataset(dataset_id,project=project)
         rec_dict = rec.get_dictionary()
         write_ot = rec_dict.write(output_path=out_directory, file_name_prefix=rec.name, print_to_stdout=print_to_stdout)
@@ -133,12 +139,13 @@ class DXDatasetDictionary():
                     if table_name in _EXCLUDE_EDGES_FOR_TABLES:
                         continue
                     db_tb_name = "{}${}".format(db_name, table_name)
+                    # Print function, if and else statements below are for debug purpose. Will be removed before PR.
                     print("ji:", ji)
                     if db_tb_name not in join_path_to_entity_field:
-                        _logger.warning("Skipping edge for : " + db_tb_name)
+                        print("Skipping edge for : " + db_tb_name)
                         continue
                     else:
-                        logging.debug("{} present in join_path_to_entity_field. But skip adding corresponding {} \
+                        print("{} present in join_path_to_entity_field. But skip adding corresponding {} \
                                       to join_path_to_entity_field".format(db_tb_name, path))
                         continue
 
@@ -158,6 +165,7 @@ class DXDatasetDictionary():
                 rel[eb_row_idx] = edge["relationship"]
 
                 source_eblock = source_eblock.assign(relationship=rel, referenced_entity_field=ref)
+            # Else statement to be removed before raising PR. Printing for debug purpose
             else:
                 print("No entity for: ", edge["source_entity"], " for edge: ", edge)
         return eblocks
@@ -332,7 +340,7 @@ class DXDatasetDictionary():
             }])
         return entity_dictionary
 
-    def write(self, output_path="", file_name_prefix="default_prefix", print_to_stdout=False, sep=","):
+    def write(self, output_path="", file_name_prefix="", print_to_stdout=False, sep=","):
         """Create CSV files with the contents of the dictionaries.
         """
         csv_opts = dict(
@@ -362,7 +370,7 @@ class DXDatasetDictionary():
             output_file_entity = sys.stdout
         else:
             output_file_data = os.path.join(output_path, file_name_prefix + ".data_dictionary.csv")
-            output_file_coding = os.path.join(output_path, file_name_prefix + ".coding_dictionary.csv")
+            output_file_coding = os.path.join(output_path, file_name_prefix + ".codings.csv")
             output_file_entity = os.path.join(output_path, file_name_prefix + ".entity_dictionary.csv")
         
         data_dframe.to_csv(output_file_data, **csv_opts)

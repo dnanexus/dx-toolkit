@@ -6009,8 +6009,8 @@ parser_extract_dataset = subparsers.add_parser('extract_dataset', help='TODO:',
                                    prog='dx extract_dataset')
 # TODO: add all flags
 parser_extract_dataset.add_argument('path')
-parser_extract_dataset.add_argument('--ddd', action="store_true", default=False)
-parser_extract_dataset.add_argument('--output', action='store', type=str, const="", nargs='?')
+parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False)
+parser_extract_dataset.add_argument('--output')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
 
