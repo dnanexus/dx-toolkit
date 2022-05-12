@@ -5,14 +5,13 @@ import pandas as pd
 import os
 import re
 import dxpy
-from dxpy.utils.printing import (fill)
+from ..utils.printing import (fill)
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path
 from ..utils.file_handle import as_handle
-from ..exceptions import DXError
-from ..exceptions import err_exit
+from ..exceptions import DXError, err_exit
 
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
@@ -20,7 +19,7 @@ database_id_regex = re.compile('^database-\\w{24}$')
 def extract_dataset(args):
     project, path, entity_result = resolve_existing_path(args.path)
     resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
-                                        {"project": project} )
+                                        {"project": project, "cohortBrowser": False} )
     if "Dataset" in resp['recordTypes']:
         pass
     elif "CohortBrowser" in resp['recordTypes']:
@@ -44,7 +43,7 @@ def extract_dataset(args):
     if args.dump_dataset_dictionary:
         rec = DXDataset(dataset_id,project=project)
         rec_dict = rec.get_dictionary()
-        write_ot = rec_dict.write(output_path=out_directory, file_name_prefix=rec.name, print_to_stdout=print_to_stdout)
+        write_ot = rec_dict.write(output_path=out_directory, file_name_prefix=resp['recordName'], print_to_stdout=print_to_stdout)
     else:
         pass
     
