@@ -3683,6 +3683,10 @@ def ssh(args, ssh_config_verified=False):
     host, host_key, ssh_port = None, None, None
     for i in range(90):
         host = job_desc.get('host')
+        if job_desc.get('httpsApp', {}).get('dns', {}).get('url') is not None:
+            url = job_desc['httpsApp']['dns']['url']
+            if url.startswith('https://'):
+                host = url[8:]
         host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
         ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
