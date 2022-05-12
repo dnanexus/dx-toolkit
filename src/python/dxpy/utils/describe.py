@@ -318,20 +318,19 @@ def render_bundleddepends(thing):
     from ..exceptions import DXError
     bundles = []
     for item in thing:
-        bundle_asset_record = dxpy.DXFile(item["id"]["$dnanexus_link"]).get_properties().get("AssetBundle")
+        bundle_dxlink = item["id"]["$dnanexus_link"]
         asset = None
-
-        if bundle_asset_record:
-            asset = dxpy.DXRecord(bundle_asset_record)
-
-        if asset:
+        if bundle_dxlink.startswith("file-"):
             try:
-                bundles.append(asset.describe().get("name") + " (" + asset.get_id() + ")")
+                bundle_asset_record = dxpy.DXFile(bundle_dxlink).get_properties().get("AssetBundle")
+                if bundle_asset_record:
+                    asset = dxpy.DXRecord(bundle_asset_record)
+                    bundles.append(asset.describe().get("name") + " (" + asset.get_id() + ")")
             except DXError:
                 asset = None
 
         if not asset:
-            bundles.append(item["name"] + " (" + item["id"]["$dnanexus_link"] + ")")
+            bundles.append(item["name"] + " (" + bundle_dxlink + ")")
 
     return bundles
 
