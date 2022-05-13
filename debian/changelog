@@ -1,3 +1,9 @@
+dx-toolkit (0.324.1) trusty; urgency=medium
+
+  * Fixed: `dx get file-xxxx` with symlink changes in 0.324.0
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 13 May 2022 15:02:15 +0000
+
 dx-toolkit (0.324.0) trusty; urgency=medium
 
   * Fixed: `dx build` comparison of workflow directory to workflow name
