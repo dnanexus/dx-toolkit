@@ -104,6 +104,9 @@ class DXExecutable:
         if kwargs.get('cost_limit') is not None:
             run_input["costLimit"] = kwargs['cost_limit']
 
+        if kwargs.get('rank') is not None:
+            run_input["rank"] = kwargs['rank']
+
         return run_input
 
     @staticmethod
@@ -165,7 +168,7 @@ class DXExecutable:
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
-            ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, extra_args=None, **kwargs):
+            ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -201,6 +204,8 @@ class DXExecutable:
         :type detach: boolean
         :param cost_limit: Maximum cost of the job before termination.
         :type cost_limit: float
+        :param rank: Rank of execution 
+        :type rank: int
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
@@ -235,6 +240,7 @@ class DXExecutable:
                                         priority=priority,
                                         detach=detach,
                                         cost_limit=cost_limit,
+                                        rank=rank,
                                         extra_args=extra_args)
         return self._run_impl(run_input, **kwargs)
 
