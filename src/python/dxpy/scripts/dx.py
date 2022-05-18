@@ -6010,7 +6010,10 @@ parser_extract_dataset = subparsers.add_parser('extract_dataset', help='TODO:',
 # TODO: add all flags
 parser_extract_dataset.add_argument('path')
 parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False)
-parser_extract_dataset.add_argument('--output')
+parser_extract_dataset.add_argument('--fields', nargs='+')
+parser_extract_dataset.add_argument('--sql', action="store_true", default=False)
+parser_extract_dataset.add_argument('--delim', '--delimiter')
+parser_extract_dataset.add_argument('-o', '--output')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
 

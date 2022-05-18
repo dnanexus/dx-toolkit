@@ -4,6 +4,7 @@ import json
 import pandas as pd
 import os
 import re
+import csv
 import dxpy
 from ..utils.printing import (fill)
 from ..bindings import DXRecord
@@ -17,9 +18,20 @@ database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
 
 def extract_dataset(args):
+    if not args.dump_dataset_dictionary and args.fields is None:
+        raise DXError('Atleast one of the arguments `-ddd/--dump_dataset_dictionary` or `--fields` expected')
+    delimiter = ','
+    if args.delim is not None:
+        if len(args.delim) == 1:
+            delimiter = args.delim
+        else:
+            raise DXError('Invalid delimiter specified')
+
     project, path, entity_result = resolve_existing_path(args.path)
+
     resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
                                         {"project": project, "cohortBrowser": False} )
+    
     if "Dataset" in resp['recordTypes']:
         pass
     elif "CohortBrowser" in resp['recordTypes']:
@@ -40,12 +52,46 @@ def extract_dataset(args):
     else:
         err_exit(fill("Error: {path} could not be found".format(path=args.output)))
 
+    if args.fields is not None:
+        fields_list = ''.join(args.fields).split(',')
+        payload = {"project_context":project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
+        if "CohortBrowser" in resp['recordTypes']:
+            payload['base_sql'] = resp['sql']
+            payload['filters'] = resp['filters']
+        if args.sql:
+            resource_val = resp['url'] + '/data/' + resp['version'] + '/' + resp['dataset'] + '/raw-query'
+            print('args.sql passed. Yet to implement')
+        else:
+            resource_val = resp['url'] + '/data/' + resp['version'] + '/' + resp['dataset'] + '/raw'
+            resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
+            csv_from_json(file_name=resp['recordName'], print_to_stdout=False, sep=delimiter, raw_results=resp_raw['results'])
+
+    elif args.sql:
+        raise DXError('`--sql` passed without `--fields`')
+        
+    
     if args.dump_dataset_dictionary:
         rec = DXDataset(dataset_id,project=project)
         rec_dict = rec.get_dictionary()
         write_ot = rec_dict.write(output_path=out_directory, file_name_prefix=resp['recordName'], print_to_stdout=print_to_stdout)
     else:
         pass
+
+def csv_from_json(file_name="", print_to_stdout=False, sep=',', raw_results=[]):
+    out_file = file_name + '.txt'
+    fields_output = open(out_file, 'w')
+    csv_writer = csv.writer(fields_output, delimiter=sep, doublequote=True, escapechar = None, lineterminator = "\n", 
+                            quotechar = '"', quoting = csv.QUOTE_MINIMAL, skipinitialspace = False, strict = False)
+    count = 0
+    for entry in raw_results:
+        if count == 0:
+            header = entry.keys()
+            csv_writer.writerow(header)
+            count += 1
+
+        csv_writer.writerow(entry.values())
+ 
+    fields_output.close()
     
 class DXDataset(DXRecord):
     """
