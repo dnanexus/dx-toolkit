@@ -52,8 +52,22 @@ def extract_dataset(args):
     else:
         err_exit(fill("Error: {path} could not be found".format(path=args.output)))
 
+    rec_descriptor = DXDataset(dataset_id,project=project).get_descriptor()
+
     if args.fields is not None:
         fields_list = ''.join(args.fields).split(',')
+        error_list = []
+        for entry in fields_list:
+            if '.' not in entry:
+                error_list.append(entry)
+            elif entry.split('.')[0] not in rec_descriptor.__dict__["model"]["entities"].keys() or \
+               entry.split('.')[1] not in rec_descriptor.__dict__["model"]["entities"][entry.split('.')[0]]["fields"].keys():
+               error_list.append(entry)
+        
+        if error_list:
+            raise DXError('Invalid entity.field provided: %r' % error_list)
+
+
         payload = {"project_context":project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
         if "CohortBrowser" in resp['recordTypes']:
             payload['base_sql'] = resp['sql']
