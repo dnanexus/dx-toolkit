@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [324.0] - beta
+## [325.0] - beta
+
+## Fixed
+
+* `dx describe` of executable with bundledDepends that is not an asset
+
+## [324.1] - 2022.5.13 - stable
 
 ## Fixed
 
@@ -19,7 +25,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Removed `wget` option for downloading symlinked files
 * Bump allowed requests dxpy dependency version to 2.27.1
 
-## [323.0] - 2022.4.28 - stable
+## Added
+
+* New argument `symlink_max_tries` for `dxpy.download_dxfile()` with default value of 15
+
+## [323.0] - 2022.4.28
 
 ### Changed
 
