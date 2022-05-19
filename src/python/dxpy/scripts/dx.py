@@ -5182,7 +5182,7 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
 parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination. In case of workflows it is cost of the "
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
-parser_run.add_argument('-r', '--rank', type=int, metavar="[-1024-1023]", help='Set the rank of the root execution. Default is 0.', default=None)
+parser_run.add_argument('-r', '--rank', type=int, metavar="[-1024-1023]", help='Set the rank of the root execution. Requires executionRankEnabled license feature for the billTo. Default is 0.', default=None)
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None)
 register_parser(parser_run, categories='exec')
