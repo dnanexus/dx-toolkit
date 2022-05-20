@@ -41,18 +41,35 @@ def extract_dataset(args):
 
     dataset_id = resp['dataset']
     out_directory = ""
+    field_file_name = resp['recordName'] + '.txt'
     print_to_stdout = False
     
     if args.output is None:
         out_directory = os.getcwd()
     elif args.output == '-':
         print_to_stdout = True 
-    elif os.path.isdir(args.output):
-        out_directory = args.output
+    elif args.dump_dataset_dictionary:
+        if os.path.isdir(args.output):
+            out_directory = args.output
+        else:
+            err_exit(fill("Error: {path} is a file. Only directories can be provided with dump-dataset-dictionary".format(path=args.output)))
     else:
-        err_exit(fill("Error: {path} could not be found".format(path=args.output)))
+        if os.path.exists(args.output):
+            if os.path.isdir(args.output):
+                out_directory = args.output
+            else:
+                err_exit(fill("Error: {path} file already exists".format(path=args.output)))
+        elif os.path.exists(os.path.dirname(args.output)):
+            out_directory = os.path.dirname(args.output)
+            field_file_name = os.path.basename(args.output)
+        elif not os.path.dirname(args.output):
+            out_directory = os.getcwd()
+            field_file_name = os.path.basename(args.output)
+        else:
+            err_exit(fill("Error: {path} could not be found".format(path=os.path.dirname(args.output))))
 
     rec_descriptor = DXDataset(dataset_id,project=project).get_descriptor()
+    #print(rec_descriptor.__dict__["model"]["entities"]["N_encounters"]["fields"])
 
     if args.fields is not None:
         fields_list = ''.join(args.fields).split(',')
@@ -78,7 +95,7 @@ def extract_dataset(args):
         else:
             resource_val = resp['url'] + '/data/' + resp['version'] + '/' + resp['dataset'] + '/raw'
             resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
-            csv_from_json(file_name=resp['recordName'], print_to_stdout=False, sep=delimiter, raw_results=resp_raw['results'])
+            csv_from_json(file_directory=out_directory,file_name=field_file_name, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'])
 
     elif args.sql:
         raise DXError('`--sql` passed without `--fields`')
@@ -91,9 +108,12 @@ def extract_dataset(args):
     else:
         pass
 
-def csv_from_json(file_name="", print_to_stdout=False, sep=',', raw_results=[]):
-    out_file = file_name + '.txt'
-    fields_output = open(out_file, 'w')
+def csv_from_json(file_directory="", file_name="", print_to_stdout=False, sep=',', raw_results=[]):
+    if print_to_stdout:
+        fields_output = sys.stdout
+    else:
+        out_file = os.path.join(file_directory, file_name)
+        fields_output = open(out_file, 'w')
     csv_writer = csv.writer(fields_output, delimiter=sep, doublequote=True, escapechar = None, lineterminator = "\n", 
                             quotechar = '"', quoting = csv.QUOTE_MINIMAL, skipinitialspace = False, strict = False)
     count = 0
@@ -104,8 +124,8 @@ def csv_from_json(file_name="", print_to_stdout=False, sep=',', raw_results=[]):
             count += 1
 
         csv_writer.writerow(entry.values())
- 
-    fields_output.close()
+    if not print_to_stdout:
+        fields_output.close()
     
 class DXDataset(DXRecord):
     """
