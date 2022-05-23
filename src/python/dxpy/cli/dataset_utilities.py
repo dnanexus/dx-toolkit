@@ -42,6 +42,7 @@ def extract_dataset(args):
     dataset_id = resp['dataset']
     out_directory = ""
     field_file_name = resp['recordName'] + '.txt'
+    sql_file_name = resp['recordName'] + '.data.sql'
     print_to_stdout = False
     
     if args.output is None:
@@ -62,9 +63,11 @@ def extract_dataset(args):
         elif os.path.exists(os.path.dirname(args.output)):
             out_directory = os.path.dirname(args.output)
             field_file_name = os.path.basename(args.output)
+            sql_file_name = os.path.basename(args.output)
         elif not os.path.dirname(args.output):
             out_directory = os.getcwd()
             field_file_name = os.path.basename(args.output)
+            sql_file_name = os.path.basename(args.output)
         else:
             err_exit(fill("Error: {path} could not be found".format(path=os.path.dirname(args.output))))
 
@@ -90,8 +93,14 @@ def extract_dataset(args):
             payload['base_sql'] = resp['sql']
             payload['filters'] = resp['filters']
         if args.sql:
-            resource_val = resp['url'] + '/data/' + resp['version'] + '/' + resp['dataset'] + '/raw-query'
-            print('args.sql passed. Yet to implement')
+            resource_val = resp['url'] + '/viz-query/' + resp['version'] + '/' + resp['dataset'] + '/raw-query'
+            resp_raw_query = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
+            sql_results = resp_raw_query['sql'] + ';'
+            if print_to_stdout:
+                print(sql_results)
+            else:
+                with open(os.path.join(out_directory, sql_file_name), 'w') as f:
+                    print(sql_results, file=f)
         else:
             resource_val = resp['url'] + '/data/' + resp['version'] + '/' + resp['dataset'] + '/raw'
             resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
