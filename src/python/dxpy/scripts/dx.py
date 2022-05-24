@@ -3021,6 +3021,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "cluster_spec": srd_cluster_spec.as_dict(),
         "detach": args.detach,
         "cost_limit": args.cost_limit,
+        "rank": args.rank,
         "extra_args": args.extra_args
     }
 
@@ -5182,6 +5183,7 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
 parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination. In case of workflows it is cost of the "
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
+parser_run.add_argument('-r', '--rank', type=int, help='Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', default=None)
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None)
 register_parser(parser_run, categories='exec')
