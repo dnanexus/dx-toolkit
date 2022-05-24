@@ -10,7 +10,7 @@ from ..utils.printing import (fill)
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
-from ..utils.resolver import resolve_existing_path
+from ..utils.resolver import resolve_existing_path, ResolutionError
 from ..utils.file_handle import as_handle
 from ..exceptions import DXError, err_exit
 
@@ -19,7 +19,7 @@ database_id_regex = re.compile('^database-\\w{24}$')
 
 def extract_dataset(args):
     if not args.dump_dataset_dictionary and args.fields is None:
-        raise DXError('Atleast one of the arguments `-ddd/--dump_dataset_dictionary` or `--fields` expected')
+        raise DXError('Must provide at least one of the following options: --fields, -ddd')
     delimiter = ','
     if args.delim is not None:
         if len(args.delim) == 1:
@@ -29,16 +29,22 @@ def extract_dataset(args):
 
     project, path, entity_result = resolve_existing_path(args.path)
 
-    resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
+    try:
+        resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
                                         {"project": project, "cohortBrowser": False} )
+    except Exception as details:
+        raise ResolutionError(str(details))
     
     if "Dataset" in resp['recordTypes']:
         pass
     elif "CohortBrowser" in resp['recordTypes']:
         project = resp['datasetRecordProject']
     else:
-        raise DXError('Invalid record type: %r' % resp['recordTypes'])
+        raise DXError('Invalid record type: %r. The path must point to a record type of cohort or dataset' % resp['recordTypes'])
 
+    if resp['version'] != '3.0':
+        raise DXError('Invalid dataset version: %r. Version should be 3.0')
+        
     dataset_id = resp['dataset']
     out_directory = ""
     field_file_name = resp['recordName'] + '.txt'
@@ -85,7 +91,7 @@ def extract_dataset(args):
                error_list.append(entry)
         
         if error_list:
-            raise DXError('Invalid entity.field provided: %r' % error_list)
+            raise DXError('The following fields cannot be found: %r' % error_list)
 
 
         payload = {"project_context":project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
@@ -93,8 +99,11 @@ def extract_dataset(args):
             payload['base_sql'] = resp['sql']
             payload['filters'] = resp['filters']
         if args.sql:
-            resource_val = resp['url'] + '/viz-query/' + resp['version'] + '/' + resp['dataset'] + '/raw-query'
-            resp_raw_query = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
+            resource_val = resp['url'] + '/viz-query/3.0/' + resp['dataset'] + '/raw-query'
+            try:
+                resp_raw_query = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
+            except Exception as details:
+                raise ResolutionError(str(details))
             sql_results = resp_raw_query['sql'] + ';'
             if print_to_stdout:
                 print(sql_results)
@@ -102,8 +111,13 @@ def extract_dataset(args):
                 with open(os.path.join(out_directory, sql_file_name), 'w') as f:
                     print(sql_results, file=f)
         else:
-            resource_val = resp['url'] + '/data/' + resp['version'] + '/' + resp['dataset'] + '/raw'
-            resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
+            resource_val = resp['url'] + '/data/3.0/' + resp['dataset'] + '/raw'
+            try:
+                resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
+                if 'error' in resp_raw.keys():
+                    raise DXError(resp_raw)
+            except Exception as details:
+                raise ResolutionError(str(details))
             csv_from_json(file_directory=out_directory,file_name=field_file_name, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'])
 
     elif args.sql:
@@ -111,8 +125,7 @@ def extract_dataset(args):
         
     
     if args.dump_dataset_dictionary:
-        rec = DXDataset(dataset_id,project=project)
-        rec_dict = rec.get_dictionary()
+        rec_dict = rec_descriptor.get_dictionary()
         write_ot = rec_dict.write(output_path=out_directory, file_name_prefix=resp['recordName'], print_to_stdout=print_to_stdout)
     else:
         pass
