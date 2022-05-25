@@ -6006,16 +6006,15 @@ register_parser(parser_unarchive, categories='fs')
 #####################################
 # extract_dataset
 #####################################
-parser_extract_dataset = subparsers.add_parser('extract_dataset', help='TODO:',
-                                   description='TODO:',
+parser_extract_dataset = subparsers.add_parser('extract_dataset', help='dx command to retrieve Apollo-stored data, or the respective SQL to retrieve it, or to retrieve full or selected metadata',
+                                   description='dx command to retrieve Apollo-stored data, or the respective SQL to retrieve it, using a dataset or cohort, and for a set of entities and fields, or to retrieve full or selected metadata (i.e, content from the "descriptor" JSON) for a given dataset or cohort',
                                    prog='dx extract_dataset')
-# TODO: add all flags
-parser_extract_dataset.add_argument('path')
-parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False)
-parser_extract_dataset.add_argument('--fields', nargs='+')
-parser_extract_dataset.add_argument('--sql', action="store_true", default=False)
-parser_extract_dataset.add_argument('--delim', '--delimiter')
-parser_extract_dataset.add_argument('-o', '--output')
+parser_extract_dataset.add_argument('path', help='Dataset or Cohort object ID or name')
+parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the data dictionary, entity dictionary, and coding are generated in the output path')
+parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separated STRING  where each value is the entity name and field name separated by a dot')
+parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (STRING) will be returned instead of data')
+parser_extract_dataset.add_argument('--delim', '--delimiter', help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
+parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output)')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
 
