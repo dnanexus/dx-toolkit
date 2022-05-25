@@ -44,41 +44,70 @@ def extract_dataset(args):
 
     if resp['version'] != '3.0':
         raise DXError('Invalid dataset version: %r. Version should be 3.0')
-        
+
     dataset_id = resp['dataset']
     out_directory = ""
-    field_file_name = resp['recordName'] + '.txt'
-    sql_file_name = resp['recordName'] + '.data.sql'
+    out_file_field = ""
     print_to_stdout = False
-    
-    if args.output is None:
-        out_directory = os.getcwd()
-    elif args.output == '-':
-        print_to_stdout = True 
-    elif args.dump_dataset_dictionary:
-        if os.path.isdir(args.output):
-            out_directory = args.output
-        else:
-            err_exit(fill("Error: {path} is a file. Only directories can be provided with dump-dataset-dictionary".format(path=args.output)))
-    else:
-        if os.path.exists(args.output):
+    files_to_check = []
+    file_already_exist = []
+
+    if args.dump_dataset_dictionary:
+        if args.output is None:
+            out_directory = os.getcwd()
+            output_file_data = os.path.join(out_directory, resp['recordName'] + ".data_dictionary.csv")
+            output_file_coding = os.path.join(out_directory, resp['recordName'] + ".codings.csv")
+            output_file_entity = os.path.join(out_directory, resp['recordName'] + ".entity_dictionary.csv")
+            files_to_check = [output_file_data, output_file_coding, output_file_entity]
+        elif args.output == '-':
+            output_file_data = sys.stdout
+            output_file_coding = sys.stdout
+            output_file_entity = sys.stdout
+        elif os.path.exists(args.output):
             if os.path.isdir(args.output):
                 out_directory = args.output
+                output_file_data = os.path.join(out_directory, resp['recordName'] + ".data_dictionary.csv")
+                output_file_coding = os.path.join(out_directory, resp['recordName'] + ".codings.csv")
+                output_file_entity = os.path.join(out_directory, resp['recordName'] + ".entity_dictionary.csv")
+                files_to_check = [output_file_data, output_file_coding, output_file_entity]
             else:
-                err_exit(fill("Error: {path} file already exists".format(path=args.output)))
-        elif os.path.exists(os.path.dirname(args.output)):
-            out_directory = os.path.dirname(args.output)
-            field_file_name = os.path.basename(args.output)
-            sql_file_name = os.path.basename(args.output)
-        elif not os.path.dirname(args.output):
+                err_exit(fill("Error: {path} is a file. Only directories can be provided with dump-dataset-dictionary".format(path=args.output)))
+        else:
+            err_exit(fill("Error: directory {path} could not be found".format(path=args.output)))
+
+    if args.fields:
+        if args.sql:
+            file_name_suffix = '.data.sql'
+        else:
+            file_name_suffix = '.txt'
+        
+        if args.output is None:
             out_directory = os.getcwd()
-            field_file_name = os.path.basename(args.output)
-            sql_file_name = os.path.basename(args.output)
+            out_file_field = os.path.join(out_directory, resp['recordName'] + file_name_suffix)
+            files_to_check.append(out_file_field)
+        elif args.output == '-':
+            print_to_stdout = True
+        elif os.path.exists(args.output):
+            if os.path.isdir(args.output):
+                out_directory = args.output
+                out_file_field = os.path.join(out_directory, resp['recordName'] + file_name_suffix)
+                files_to_check.append(out_file_field)
+            else:
+                file_already_exist.append(args.output)
+        elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(args.output):
+            out_file_field = args.output
         else:
             err_exit(fill("Error: {path} could not be found".format(path=os.path.dirname(args.output))))
 
+    if files_to_check:
+        for file in files_to_check:
+            if os.path.exists(file):
+                file_already_exist.append(file)
+    
+    if file_already_exist:
+        err_exit(fill("Error: Following files already exist {path}".format(path=file_already_exist)))
+
     rec_descriptor = DXDataset(dataset_id,project=project).get_descriptor()
-    #print(rec_descriptor.__dict__["model"]["entities"]["N_encounters"]["fields"])
 
     if args.fields is not None:
         fields_list = ''.join(args.fields).split(',')
@@ -108,7 +137,7 @@ def extract_dataset(args):
             if print_to_stdout:
                 print(sql_results)
             else:
-                with open(os.path.join(out_directory, sql_file_name), 'w') as f:
+                with open(out_file_field, 'w') as f:
                     print(sql_results, file=f)
         else:
             resource_val = resp['url'] + '/data/3.0/' + resp['dataset'] + '/raw'
@@ -118,7 +147,7 @@ def extract_dataset(args):
                     raise DXError(resp_raw)
             except Exception as details:
                 raise ResolutionError(str(details))
-            csv_from_json(file_directory=out_directory,file_name=field_file_name, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'])
+            csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'])
 
     elif args.sql:
         raise DXError('`--sql` passed without `--fields`')
@@ -126,16 +155,16 @@ def extract_dataset(args):
     
     if args.dump_dataset_dictionary:
         rec_dict = rec_descriptor.get_dictionary()
-        write_ot = rec_dict.write(output_path=out_directory, file_name_prefix=resp['recordName'], print_to_stdout=print_to_stdout)
+        write_ot = rec_dict.write(output_file_data=output_file_data, output_file_entity=output_file_entity,
+                                  output_file_coding=output_file_coding, sep=delimiter)
     else:
         pass
 
-def csv_from_json(file_directory="", file_name="", print_to_stdout=False, sep=',', raw_results=[]):
+def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[]):
     if print_to_stdout:
         fields_output = sys.stdout
     else:
-        out_file = os.path.join(file_directory, file_name)
-        fields_output = open(out_file, 'w')
+        fields_output = open(out_file_name, 'w')
     csv_writer = csv.writer(fields_output, delimiter=sep, doublequote=True, escapechar = None, lineterminator = "\n", 
                             quotechar = '"', quoting = csv.QUOTE_MINIMAL, skipinitialspace = False, strict = False)
     count = 0
@@ -441,7 +470,7 @@ class DXDatasetDictionary():
             }])
         return entity_dictionary
 
-    def write(self, output_path="", file_name_prefix="", print_to_stdout=False, sep=","):
+    def write(self, output_file_data="", output_file_entity="", output_file_coding="", sep=","):
         """Create CSV files with the contents of the dictionaries.
         """
         csv_opts = dict(
@@ -464,15 +493,6 @@ class DXDatasetDictionary():
         data_dframe = as_dataframe(self.data_dictionary, required_columns = ["entity", "name", "type", "primary_key_type"])
         coding_dframe = as_dataframe(self.coding_dictionary, required_columns=["coding_name", "code", "meaning"])
         entity_dframe = as_dataframe(self.entity_dictionary, required_columns=["entity", "entity_title"])
-        
-        if print_to_stdout:
-            output_file_data = sys.stdout
-            output_file_coding = sys.stdout
-            output_file_entity = sys.stdout
-        else:
-            output_file_data = os.path.join(output_path, file_name_prefix + ".data_dictionary.csv")
-            output_file_coding = os.path.join(output_path, file_name_prefix + ".codings.csv")
-            output_file_entity = os.path.join(output_path, file_name_prefix + ".entity_dictionary.csv")
         
         data_dframe.to_csv(output_file_data, **csv_opts)
         coding_dframe.to_csv(output_file_coding, **csv_opts)
