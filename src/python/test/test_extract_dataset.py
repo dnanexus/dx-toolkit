@@ -24,34 +24,23 @@ import shutil
 import os
 import subprocess
 import pandas as pd
-import dxpy
-from dxpy.cli.dataset_utilities import DXDataset
-from dxpy.utils.resolver import resolve_existing_path
-from dxpy.bindings import DXRecord
-from dxpy.exceptions import DXError
 
-class TestDXDataset(unittest.TestCase):
-    def test_e2e_dataset(self):
+class TestDXExtractDataset(unittest.TestCase):
+    def test_e2e_dataset_ddd(self):
         dataset_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-G9k12VQ06G1P42KK7fFK3yKB"
-        self.end_to_end(dataset_record)
-
-    def test_e2e_cohortbrowser(self):
-        cohort_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-G9k3pGj0vGPvKg77BP1Yxq8q"
-        self.end_to_end(cohort_record)
-
-    def end_to_end(self, input_record):
         out_directory = tempfile.mkdtemp()
-        project, path, entity_result = resolve_existing_path(input_record)
-        resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize', {"project": project})
-        if "Dataset" in resp['recordTypes']:
-            pass
-        elif "CohortBrowser" in resp['recordTypes']:
-            project = resp['datasetRecordProject']
-        else:
-            raise DXError('Invalid record type: %r' % resp['recordTypes'])
-        dataset_id = resp['dataset']
-        rec = DXDataset(dataset_id,project=project)
-        write_out = rec.get_dictionary().write(output_path=out_directory, file_name_prefix=rec.name)
+        cmd = ["dx", "extract_dataset", dataset_record, "-ddd", "-o", out_directory]
+        subprocess.check_call(cmd)
+        self.end_to_end_ddd(out_directory=out_directory, rec_name = "test_dml_out01")
+
+    def test_e2e_cohortbrowser_ddd(self):
+        cohort_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-G9k3pGj0vGPvKg77BP1Yxq8q"
+        out_directory = tempfile.mkdtemp()
+        cmd = ["dx", "extract_dataset", cohort_record, "-ddd", "-o", out_directory]
+        subprocess.check_call(cmd)
+        self.end_to_end_ddd(out_directory=out_directory, rec_name = "test_cohort")
+
+    def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
         os.chdir(truth_files_directory)
         cmd = ["dx", "download", "project-G9j1pX00vGPzF2XQ7843k2Jq:file-G9k2Yv80vGPbgP551jJ8Xbpx", 
@@ -60,10 +49,11 @@ class TestDXDataset(unittest.TestCase):
         subprocess.check_call(cmd)
         os.chdir("..")
         truth_file_list = os.listdir(truth_files_directory)
+        print(os.listdir(out_directory))
 
         for file in truth_file_list:
             dframe1 = pd.read_csv(os.path.join(truth_files_directory, file)).dropna(axis=1, how='all').sort_index(axis=1)
-            dframe2 = pd.read_csv(os.path.join(out_directory, f"{rec.name}.{file}")).dropna(axis=1, how='all').sort_index(axis=1)
+            dframe2 = pd.read_csv(os.path.join(out_directory, f"{rec_name}.{file}")).dropna(axis=1, how='all').sort_index(axis=1)
             if file == 'codings.csv':
                 dframe1 = dframe1.sort_values(by='code', axis=0, ignore_index=True)
                 dframe2 = dframe2.sort_values(by='code', axis=0, ignore_index=True)
