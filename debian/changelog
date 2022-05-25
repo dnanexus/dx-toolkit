@@ -1,3 +1,9 @@
+dx-toolkit (0.325.1) trusty; urgency=medium
+
+  * Fixed: Building globalworkflow from existing workflow with `dx build --from` 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 25 May 2022 18:35:22 +0000
+
 dx-toolkit (0.325.0) trusty; urgency=medium
 
   * Fixed: `dx describe` of executable with bundledDepends that is not an asset
