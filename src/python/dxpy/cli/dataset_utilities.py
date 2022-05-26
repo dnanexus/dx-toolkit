@@ -40,9 +40,8 @@ def extract_dataset(args):
     else:
         raise DXError('Invalid record type: %r. The path must point to a record type of Dataset or DatabaseQuery' % resp['recordTypes'])
 
-    # TODO: Check dataset Version
-    # if resp['version'] != '3.0':
-    #     raise DXError('Invalid dataset version: %r. Version should be 3.0')
+    if resp['version'] != '3.0':
+        raise DXError('Invalid dataset version: %r. Version should be 3.0')
 
     dataset_id = resp['dataset']
     out_directory = ""
@@ -127,7 +126,7 @@ def extract_dataset(args):
             if resp.get('baseSql'):
                 payload['base_sql'] = resp.get('baseSql')
             payload['filters'] = resp['filters']
-            
+
         if args.sql:
             resource_val = resp['url'] + '/viz-query/3.0/' + resp['dataset'] + '/raw-query'
             try:
