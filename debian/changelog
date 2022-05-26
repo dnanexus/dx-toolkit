@@ -1,3 +1,9 @@
+dx-toolkit (0.326.0) trusty; urgency=medium
+
+  * Added: '--rank' arg for `dx run`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 25 May 2022 18:34:17 +0000
+
 dx-toolkit (0.325.0) trusty; urgency=medium
 
   * Fixed: `dx describe` of executable with bundledDepends that is not an asset
