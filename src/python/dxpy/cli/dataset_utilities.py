@@ -19,7 +19,7 @@ database_id_regex = re.compile('^database-\\w{24}$')
 
 def extract_dataset(args):
     if not args.dump_dataset_dictionary and args.fields is None:
-        raise DXError('Must provide at least one of the following options: --fields, -ddd')
+        raise DXError('Must provide at least one of the following options: --fields or --dump-dataset-dictionary')
     delimiter = ','
     if args.delim is not None:
         if len(args.delim) == 1:
@@ -35,15 +35,14 @@ def extract_dataset(args):
     except Exception as details:
         raise ResolutionError(str(details))
     
-    if "Dataset" in resp['recordTypes']:
-        pass
-    elif "CohortBrowser" in resp['recordTypes']:
-        project = resp['datasetRecordProject']
+    if ("Dataset" in resp['recordTypes']) or ("CohortBrowser" in resp['recordTypes']):
+        dataset_project = resp['datasetRecordProject']
     else:
-        raise DXError('Invalid record type: %r. The path must point to a record type of cohort or dataset' % resp['recordTypes'])
+        raise DXError('Invalid record type: %r. The path must point to a record type of Dataset or DatabaseQuery' % resp['recordTypes'])
 
-    if resp['version'] != '3.0':
-        raise DXError('Invalid dataset version: %r. Version should be 3.0')
+    # TODO: Check dataset Version
+    # if resp['version'] != '3.0':
+    #     raise DXError('Invalid dataset version: %r. Version should be 3.0')
 
     dataset_id = resp['dataset']
     out_directory = ""
@@ -107,26 +106,28 @@ def extract_dataset(args):
     if file_already_exist:
         err_exit(fill("Error: Following files already exist {path}".format(path=file_already_exist)))
 
-    rec_descriptor = DXDataset(dataset_id,project=project).get_descriptor()
-
+    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
     if args.fields is not None:
         fields_list = ''.join(args.fields).split(',')
         error_list = []
         for entry in fields_list:
-            if '.' not in entry:
+            entity_field = entry.split('.')
+            if len(entity_field) < 2 :
                 error_list.append(entry)
-            elif entry.split('.')[0] not in rec_descriptor.__dict__["model"]["entities"].keys() or \
-               entry.split('.')[1] not in rec_descriptor.__dict__["model"]["entities"][entry.split('.')[0]]["fields"].keys():
+            elif entity_field[0] not in rec_descriptor.model["entities"].keys() or \
+               entity_field[1] not in rec_descriptor.model["entities"][entity_field[0]]["fields"].keys():
                error_list.append(entry)
         
         if error_list:
             raise DXError('The following fields cannot be found: %r' % error_list)
 
-
+        print(resp)
         payload = {"project_context":project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
         if "CohortBrowser" in resp['recordTypes']:
-            payload['base_sql'] = resp['sql']
+            if resp.get('baseSql'):
+                payload['base_sql'] = resp.get('baseSql')
             payload['filters'] = resp['filters']
+            
         if args.sql:
             resource_val = resp['url'] + '/viz-query/3.0/' + resp['dataset'] + '/raw-query'
             try:
@@ -157,8 +158,6 @@ def extract_dataset(args):
         rec_dict = rec_descriptor.get_dictionary()
         write_ot = rec_dict.write(output_file_data=output_file_data, output_file_entity=output_file_entity,
                                   output_file_coding=output_file_coding, sep=delimiter)
-    else:
-        pass
 
 def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[]):
     if print_to_stdout:
