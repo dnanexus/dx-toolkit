@@ -6017,7 +6017,7 @@ parser_extract_dataset.add_argument('path', help='Dataset or Cohort object ID or
 parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the data dictionary, entity dictionary, and coding are generated in the output path')
 parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separated STRING  where each value is the entity name and field name separated by a dot')
 parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (STRING) will be returned instead of data')
-parser_extract_dataset.add_argument('--delim', '--delimiter', default=',', type=delim_len, help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
+parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const=',', default=',', type=delim_len, help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
 parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output)')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
