@@ -146,7 +146,7 @@ def extract_dataset(args):
                     raise DXError(resp_raw)
             except Exception as details:
                 raise ResolutionError(str(details))
-            csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'])
+            csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'], column_names=fields_list)
 
     elif args.sql:
         raise DXError('`--sql` passed without `--fields`')
@@ -157,21 +157,18 @@ def extract_dataset(args):
         write_ot = rec_dict.write(output_file_data=output_file_data, output_file_entity=output_file_entity,
                                   output_file_coding=output_file_coding, sep=delimiter)
 
-def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[]):
+def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[], column_names=[]):
     if print_to_stdout:
         fields_output = sys.stdout
     else:
         fields_output = open(out_file_name, 'w')
-    csv_writer = csv.writer(fields_output, delimiter=sep, doublequote=True, escapechar = None, lineterminator = "\n", 
-                            quotechar = '"', quoting = csv.QUOTE_MINIMAL, skipinitialspace = False, strict = False)
-    count = 0
-    for entry in raw_results:
-        if count == 0:
-            header = entry.keys()
-            csv_writer.writerow(header)
-            count += 1
 
-        csv_writer.writerow(entry.values())
+    csv_writer = csv.DictWriter(fields_output, delimiter=sep, doublequote=True, escapechar = None, lineterminator = "\n", quotechar = '"', 
+                                quoting = csv.QUOTE_MINIMAL, skipinitialspace = False, strict = False, fieldnames=column_names)
+    csv_writer.writeheader()
+    for entry in raw_results:
+        csv_writer.writerow(entry)
+        
     if not print_to_stdout:
         fields_output.close()
     
