@@ -33,14 +33,14 @@ def extract_dataset(args):
                                         {"project": project, "cohortBrowser": False} )
     except Exception as details:
         raise ResolutionError(str(details))
-    
+
+    if resp['datasetVersion'] != '3.0':
+        raise DXError('Invalid dataset version %r. Version should be 3.0' % resp['datasetVersion'])
+
     if ("Dataset" in resp['recordTypes']) or ("CohortBrowser" in resp['recordTypes']):
         dataset_project = resp['datasetRecordProject']
     else:
         raise DXError('Invalid record type: %r. The path must point to a record type of Dataset or DatabaseQuery' % resp['recordTypes'])
-
-    if resp['version'] != '3.0':
-        raise DXError('Invalid dataset version: %r. Version should be 3.0')
 
     dataset_id = resp['dataset']
     out_directory = ""
@@ -168,7 +168,7 @@ def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=
     csv_writer.writeheader()
     for entry in raw_results:
         csv_writer.writerow(entry)
-        
+
     if not print_to_stdout:
         fields_output.close()
     
