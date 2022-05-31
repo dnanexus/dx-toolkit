@@ -21,12 +21,6 @@ database_id_regex = re.compile('^database-\\w{24}$')
 def extract_dataset(args):
     if not args.dump_dataset_dictionary and args.fields is None:
         raise DXError('Must provide at least one of the following options: --fields or --dump-dataset-dictionary')
-    delimiter = ','
-    if args.delim is not None:
-        if len(args.delim) == 1:
-            delimiter = args.delim
-        else:
-            raise DXError('Invalid delimiter specified')
 
     project, path, entity_result = resolve_existing_path(args.path)
 
@@ -147,7 +141,7 @@ def extract_dataset(args):
                     raise DXError(resp_raw)
             except Exception as details:
                 raise ResolutionError(str(details))
-            csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'], column_names=fields_list)
+            csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=args.delim, raw_results=resp_raw['results'], column_names=fields_list)
 
     elif args.sql:
         raise DXError('`--sql` passed without `--fields`')
@@ -156,7 +150,7 @@ def extract_dataset(args):
     if args.dump_dataset_dictionary:
         rec_dict = rec_descriptor.get_dictionary()
         write_ot = rec_dict.write(output_file_data=output_file_data, output_file_entity=output_file_entity,
-                                  output_file_coding=output_file_coding, sep=delimiter)
+                                  output_file_coding=output_file_coding, sep=args.delim)
 
 def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[], column_names=[]):
     if print_to_stdout:
@@ -164,7 +158,7 @@ def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=
     else:
         fields_output = open(out_file_name, 'w')
 
-    csv_writer = csv.DictWriter(fields_output, delimiter=sep, doublequote=True, escapechar = None, lineterminator = "\n", quotechar = '"', 
+    csv_writer = csv.DictWriter(fields_output, delimiter=str(sep), doublequote=True, escapechar = None, lineterminator = "\n", quotechar = str('"'), 
                                 quoting = csv.QUOTE_MINIMAL, skipinitialspace = False, strict = False, fieldnames=column_names)
     csv_writer.writeheader()
     for entry in raw_results:
@@ -496,7 +490,7 @@ class DXDatasetDictionary():
             Create CSV files with the contents of the dictionaries.
         """
         csv_opts = dict(
-            sep=sep,
+            sep=str(sep),
             header=True,
             index=False,
             na_rep="",
