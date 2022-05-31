@@ -54,25 +54,25 @@ def extract_dataset(args):
     if args.dump_dataset_dictionary:
         if args.output is None:
             out_directory = os.getcwd()
-            output_file_data = os.path.join(out_directory, resp['recordName'] + ".data_dictionary.csv")
-            output_file_coding = os.path.join(out_directory, resp['recordName'] + ".codings.csv")
-            output_file_entity = os.path.join(out_directory, resp['recordName'] + ".entity_dictionary.csv")
-            files_to_check = [output_file_data, output_file_coding, output_file_entity]
         elif args.output == '-':
-            output_file_data = sys.stdout
-            output_file_coding = sys.stdout
-            output_file_entity = sys.stdout
+            print_to_stdout = True
         elif os.path.exists(args.output):
             if os.path.isdir(args.output):
                 out_directory = args.output
-                output_file_data = os.path.join(out_directory, resp['recordName'] + ".data_dictionary.csv")
-                output_file_coding = os.path.join(out_directory, resp['recordName'] + ".codings.csv")
-                output_file_entity = os.path.join(out_directory, resp['recordName'] + ".entity_dictionary.csv")
-                files_to_check = [output_file_data, output_file_coding, output_file_entity]
             else:
                 err_exit(fill("Error: {path} is a file. Only directories can be provided with dump-dataset-dictionary".format(path=args.output)))
         else:
             err_exit(fill("Error: directory {path} could not be found".format(path=args.output)))
+
+        if print_to_stdout:
+            output_file_data = sys.stdout
+            output_file_coding = sys.stdout
+            output_file_entity = sys.stdout
+        else:
+            output_file_data = os.path.join(out_directory, resp['recordName'] + ".data_dictionary.csv")
+            output_file_coding = os.path.join(out_directory, resp['recordName'] + ".codings.csv")
+            output_file_entity = os.path.join(out_directory, resp['recordName'] + ".entity_dictionary.csv")
+            files_to_check = [output_file_data, output_file_coding, output_file_entity]
 
     if args.fields:
         if args.sql:
