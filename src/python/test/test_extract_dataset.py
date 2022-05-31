@@ -17,6 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 from __future__ import print_function, unicode_literals, division, absolute_import
+from re import X
 
 import unittest
 import tempfile
@@ -41,9 +42,9 @@ class TestDXExtractDataset(unittest.TestCase):
         self.end_to_end_ddd(out_directory=out_directory, rec_name = "test_cohort")
 
     def test_e2e_dataset_sql(self):
-        cohort_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-G9k12VQ06G1P42KK7fFK3yKB"
+        dataset_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-G9k12VQ06G1P42KK7fFK3yKB"
         truth_output = "SELECT `patient_1`.`patient_id` AS `patient.patient_id`, `patient_1`.`name` AS `patient.name`, `patient_1`.`weight` AS `patient.weight`, `patient_1`.`height` AS `patient.height`, `patient_1`.`size` AS `patient.size` FROM `database_g9k1260089qpxpf468f9zybj__test_dml_out01`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN (SELECT DISTINCT `patient_1`.`patient_id` AS `patient_id` FROM `database_g9k1260089qpxpf468f9zybj__test_dml_out01`.`patient` AS `patient_1`);"
-        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
+        cmd = ["dx", "extract_dataset", dataset_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
             "patient.height", ",", "patient.size","--sql", "-o", "-"]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
         stdout = process.communicate()[0]
@@ -58,6 +59,24 @@ class TestDXExtractDataset(unittest.TestCase):
         stdout = process.communicate()[0]
         self.assertTrue(truth_output==stdout.strip())
 
+    def test_e2e_dataset_fields(self):
+        dataset_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-G9k12VQ06G1P42KK7fFK3yKB"
+        out_directory = tempfile.mkdtemp()
+        cmd = ["dx", "extract_dataset", dataset_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
+            "patient.height", ",", "patient.size", "-o", out_directory]
+        subprocess.check_call(cmd)
+        truth_file = "project-G9j1pX00vGPzF2XQ7843k2Jq:file-GBBpbq80vGPVB1Q1K9Vq7YQV"
+        self.end_to_end_fields(out_directory=out_directory, rec_name = "test_dml_out01.txt", truth_file=truth_file)
+
+    def test_e2e_cohortbrowser_fields(self):
+        cohort_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GB8ZQ9Q0vGPk8xzV4JZF288p"
+        out_directory = tempfile.mkdtemp()
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
+            "patient.height", ",", "patient.size", "-o", out_directory]
+        subprocess.check_call(cmd)
+        truth_file = "project-G9j1pX00vGPzF2XQ7843k2Jq:file-GBBpbq80vGPy35K9B1kyVQ6k"
+        self.end_to_end_fields(out_directory=out_directory, rec_name = "Combined_Cohort.txt", truth_file=truth_file)
+
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
         os.chdir(truth_files_directory)
@@ -67,7 +86,6 @@ class TestDXExtractDataset(unittest.TestCase):
         subprocess.check_call(cmd)
         os.chdir("..")
         truth_file_list = os.listdir(truth_files_directory)
-        print(os.listdir(out_directory))
 
         for file in truth_file_list:
             dframe1 = pd.read_csv(os.path.join(truth_files_directory, file)).dropna(axis=1, how='all').sort_index(axis=1)
@@ -82,6 +100,18 @@ class TestDXExtractDataset(unittest.TestCase):
         
         shutil.rmtree(out_directory)
         shutil.rmtree(truth_files_directory)
+
+    def end_to_end_fields(self, out_directory, rec_name, truth_file):
+        truth_files_directory = tempfile.mkdtemp()
+        os.chdir(truth_files_directory)
+        cmd = ["dx", "download", truth_file]
+        subprocess.check_call(cmd)
+        os.chdir("..")
+        dframe1 = pd.read_csv(os.path.join(truth_files_directory,os.listdir(truth_files_directory)[0]))
+        dframe1 = dframe1.sort_values(by=list(dframe1.columns), axis=0, ignore_index=True)
+        dframe2 = pd.read_csv(os.path.join(out_directory, rec_name))
+        dframe2 = dframe2.sort_values(by=list(dframe2.columns), axis=0, ignore_index=True)
+        self.assertTrue(dframe1.equals(dframe2))
 
 if __name__ == '__main__':
     unittest.main()
