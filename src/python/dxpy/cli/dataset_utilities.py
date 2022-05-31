@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals, division, absolute_import
+
 import sys
 import collections
 import json
@@ -119,7 +121,6 @@ def extract_dataset(args):
         if error_list:
             raise DXError('The following fields cannot be found: %r' % error_list)
 
-        print(resp)
         payload = {"project_context":project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
         if "CohortBrowser" in resp['recordTypes']:
             if resp.get('baseSql'):

@@ -40,6 +40,24 @@ class TestDXExtractDataset(unittest.TestCase):
         subprocess.check_call(cmd)
         self.end_to_end_ddd(out_directory=out_directory, rec_name = "test_cohort")
 
+    def test_e2e_dataset_sql(self):
+        cohort_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-G9k12VQ06G1P42KK7fFK3yKB"
+        truth_output = "SELECT `patient_1`.`patient_id` AS `patient.patient_id`, `patient_1`.`name` AS `patient.name`, `patient_1`.`weight` AS `patient.weight`, `patient_1`.`height` AS `patient.height`, `patient_1`.`size` AS `patient.size` FROM `database_g9k1260089qpxpf468f9zybj__test_dml_out01`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN (SELECT DISTINCT `patient_1`.`patient_id` AS `patient_id` FROM `database_g9k1260089qpxpf468f9zybj__test_dml_out01`.`patient` AS `patient_1`);"
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
+            "patient.height", ",", "patient.size","--sql", "-o", "-"]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+        stdout = process.communicate()[0]
+        self.assertTrue(truth_output==stdout.strip())
+
+    def test_e2e_cohortbrowser_sql(self):
+        cohort_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GB8ZQ9Q0vGPk8xzV4JZF288p"
+        truth_output = "SELECT `patient_1`.`patient_id` AS `patient.patient_id`, `patient_1`.`name` AS `patient.name`, `patient_1`.`weight` AS `patient.weight`, `patient_1`.`height` AS `patient.height`, `patient_1`.`size` AS `patient.size` FROM `database_g9k1260089qpxpf468f9zybj__test_dml_out01`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN (SELECT DISTINCT `patient_1`.`patient_id` AS `patient_id` FROM `database_g9k1260089qpxpf468f9zybj__test_dml_out01`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN (SELECT `patient_id` FROM (SELECT DISTINCT `patient_1`.`patient_id` AS `patient_id` FROM `database_g9k1260089qpxpf468f9zybj__test_dml_out01`.`patient` AS `patient_1` WHERE `patient_1`.`height` BETWEEN 68 AND 70 INTERSECT SELECT DISTINCT `patient_1`.`patient_id` AS `patient_id` FROM `database_g9k1260089qpxpf468f9zybj__test_dml_out01`.`patient` AS `patient_1` WHERE UNIX_TIMESTAMP(`patient_1`.`dob`) BETWEEN 925516800 AND 988675200)));"
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
+            "patient.height", ",", "patient.size","--sql", "-o", "-"]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+        stdout = process.communicate()[0]
+        self.assertTrue(truth_output==stdout.strip())
+
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
         os.chdir(truth_files_directory)
