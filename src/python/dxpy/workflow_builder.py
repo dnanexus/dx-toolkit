@@ -225,7 +225,7 @@ def validate_ignore_reuse(stages, ignore_reuse_stages):
          raise WorkflowBuilderException('"IgnoreReuse must be a list of strings - stage IDs or "*"')
 
     ignore_reuse_set = set(ignore_reuse_stages)
-    if '*' in ignore_reuse_set and ignore_reuse_set == 1:
+    if '*' in ignore_reuse_set and len(ignore_reuse_set) == 1:
         return
 
     stage_ids = set([stage.get('id') for stage in stages])
