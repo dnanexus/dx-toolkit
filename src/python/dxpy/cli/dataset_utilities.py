@@ -175,8 +175,20 @@ def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=
     
 class DXDataset(DXRecord):
     """
-    Generalized object model for DNAnexus datasets.
-    Attributes:
+        A class to handle record objects of type Dataset. 
+        Inherits from DXRecord, but automatically populates default fields, details and properties.
+        
+        Attributes:
+            All the same as DXRecord
+            name - from record details
+            description - from record details
+            schema - from record details
+            version - from record details
+            descriptor - DXDatasetDescriptor object
+        Functions
+            get_descriptor - calls DXDatasetDescriptor(descriptor_dxfile) if descriptor is None
+            get_dictionary - calls descriptor.get_dictionary
+
     """
 
     _record_type = "Dataset"
@@ -207,7 +219,16 @@ class DXDataset(DXRecord):
         return self.descriptor.get_dictionary()
 
 class DXDatasetDescriptor():
+    """
+        A class to represent a parsed descriptor of a  Dataset record object. 
+        Based on the Descriptor3 class from dxdata.
+        
+        Attributes
+            Representation of JSON object stored in descriptor file
+        Functions
+            get_dictionary - calls DXDatasetDictionary(descriptor)
 
+    """
     def __init__(self, dxfile, **kwargs):
         python3_5_x = sys.version_info.major == 3 and sys.version_info.minor == 5
 
@@ -232,7 +253,11 @@ class DXDatasetDictionary():
     """
         A class to represent data, coding and entity dictionaries based on the descriptor. 
         All 3 dictionaries will have the same internal representation as dictionaries of string to pandas dataframe.
-        Write function writes the 3 dataframes to output.
+
+        Attributes
+            data - dictionary of entity name to pandas dataframe representing entity with fields, relationships, etc.
+            entity - dictionary of entity name to pandas dataframe representing entity title, etc.
+            coding - dictionary of coding name to pandas dataframe representing codes, their hierarchy (if applicable) and their meanings
     """
     def __init__(self, descriptor):
         self.pd = __import__('pandas')
@@ -467,7 +492,8 @@ class DXDatasetDictionary():
         return entity_dictionary
 
     def write(self, output_file_data="", output_file_entity="", output_file_coding="", sep=","):
-        """Create CSV files with the contents of the dictionaries.
+        """
+            Create CSV files with the contents of the dictionaries.
         """
         csv_opts = dict(
             sep=sep,
