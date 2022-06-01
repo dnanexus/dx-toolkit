@@ -32,7 +32,7 @@ from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path, ResolutionError
 from ..utils.file_handle import as_handle
-from ..exceptions import DXError, err_exit
+from ..exceptions import err_exit
 
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
@@ -58,12 +58,12 @@ def extract_dataset(args):
         raise ResolutionError(str(details))
 
     if resp['datasetVersion'] != '3.0':
-        raise DXError('Invalid dataset version %r. Version should be 3.0' % resp['datasetVersion'])
+        raise err_exit(fill('Invalid dataset version %r. Version should be 3.0' % resp['datasetVersion']))
 
     if ("Dataset" in resp['recordTypes']) or ("CohortBrowser" in resp['recordTypes']):
         dataset_project = resp['datasetRecordProject']
     else:
-        raise DXError('Invalid record type: %r. The path must point to a record type of Dataset or DatabaseQuery' % resp['recordTypes'])
+        raise err_exit(fill('%r : Invalid path. The path must point to a record type of cohort or dataset' % resp['recordTypes']))
 
     dataset_id = resp['dataset']
     out_directory = ""
@@ -81,7 +81,7 @@ def extract_dataset(args):
             if os.path.isdir(args.output):
                 out_directory = args.output
             else:
-                err_exit(fill("Error: {path} is a file. Only directories can be provided with dump-dataset-dictionary".format(path=args.output)))
+                err_exit(fill("Error: When using -ddd, --output must be an existing directory"))
         else:
             err_exit(fill("Error: directory {path} could not be found".format(path=args.output)))
 
@@ -140,7 +140,7 @@ def extract_dataset(args):
                error_list.append(entry)
         
         if error_list:
-            raise DXError('The following fields cannot be found: %r' % error_list)
+            raise err_exit(fill('The following fields cannot be found: %r' % error_list))
 
         payload = {"project_context":project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
         if "CohortBrowser" in resp['recordTypes']:
@@ -165,13 +165,13 @@ def extract_dataset(args):
             try:
                 resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
                 if 'error' in resp_raw.keys():
-                    raise DXError(resp_raw)
+                    raise err_exit(fill(resp_raw))
             except Exception as details:
                 raise ResolutionError(str(details))
             csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'], column_names=fields_list)
 
     elif args.sql:
-        raise DXError('`--sql` passed without `--fields`')
+        raise err_exit(fill('`--sql` passed without `--fields`'))
         
     
     if args.dump_dataset_dictionary:
@@ -222,7 +222,7 @@ class DXDataset(DXRecord):
         if is_dxlink(self.details['descriptor']):
            self.descriptor_dxfile = DXFile(self.details['descriptor'], mode='rb')
         else:
-            raise DXError('Invalid link: %r' % self.details['descriptor'])
+            raise err_exit(fill('%r : Invalid cohort or dataset' % self.details['descriptor']))
         self.descriptor = None
         self.name = self.details.get('name')
         self.description = self.details.get('description')
