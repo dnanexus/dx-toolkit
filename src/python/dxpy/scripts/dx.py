@@ -6006,15 +6006,15 @@ register_parser(parser_unarchive, categories='fs')
 #####################################
 # extract_dataset
 #####################################
-parser_extract_dataset = subparsers.add_parser('extract_dataset', help='dx command to retrieve Apollo-stored data, or the respective SQL to retrieve it, or to retrieve full or selected metadata',
-                                   description='dx command to retrieve Apollo-stored data, or the respective SQL to retrieve it, using a dataset or cohort, and for a set of entities and fields, or to retrieve full or selected metadata (i.e, content from the "descriptor" JSON) for a given dataset or cohort',
+parser_extract_dataset = subparsers.add_parser('extract_dataset', help='(Preview feature) Retrieves the data, or generates SQL to retrieve the data, from a dataset or cohort for a set of entity.fields.',
+                                   description='(Preview feature) Retrieves the data, or generates SQL to retrieve the data, from a dataset or cohort for a set of entity.fields.',
                                    prog='dx extract_dataset')
-parser_extract_dataset.add_argument('path', help='Dataset or Cohort object ID or name')
-parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the data dictionary, entity dictionary, and coding are generated in the output path')
-parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separated STRING  where each value is the entity name and field name separated by a dot')
+parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the current selected project) or name')
+parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the three dictionary files: <record_name>.data_dictionary.csv, <record_name>.entity_dictionary.csv, <record_name>.codings.csv are generated using the -delimiter specified, if applicable, in the output directory, if not provided, in the current location')
+parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separated STRING  where each value is the phenotypic entity name and field name separated by a dot. If multiple entities are provided, they are inner-joined into one return. For example: <entity_name>.<field_name>,<entity_name>.<field_name>')
 parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (STRING) will be returned instead of data')
 parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const=',', default=',', help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
-parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output)')
+parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output). If not supplied, output will create a file with a default name in the current folder')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
 
