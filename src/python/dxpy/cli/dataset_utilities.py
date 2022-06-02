@@ -385,7 +385,7 @@ class DXDatasetDictionary():
             dcols["type"].append(dataset_type_to_dxdm_type[field_dict["type"]])
             dcols["primary_key_type"].append(
                 ("global" if is_primary_entity else "local")
-                if (global_primary_key["field"] and field_dict["name"] == global_primary_key["field"])
+                if (entity["primary_key"] and field_dict["name"] == entity["primary_key"])
                 else "")
             # Optional cols to be filled in with blanks regardless
             dcols["coding_name"].append(field_dict["coding_name"] if field_dict["coding_name"] else "")
@@ -481,11 +481,13 @@ class DXDatasetDictionary():
                 "code": all_codes,
                 "parent_code": parents,
                 "meaning": [model["codings"][code]["codes_to_meanings"][c] for c in all_codes],
+                "concept": [model["codings"][code]["codes_to_concepts"][c] for c in all_codes]
             })
         else:
             # No hierarchy; just unpack the codes dictionary
             codes, meanings = zip(*model["codings"][code]["codes_to_meanings"].items())
-            dcols.update({"code": codes, "meaning": meanings})
+            codes, concepts = zip(*model["codings"][code]["codes_to_concepts"].items())
+            dcols.update({"code": codes, "meaning": meanings, "concept": concepts})
 
         dcols["coding_name"] = [code] * len(dcols["code"])
         
