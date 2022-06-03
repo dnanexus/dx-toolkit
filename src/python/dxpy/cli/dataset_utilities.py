@@ -26,6 +26,7 @@ import os
 import re
 import csv
 import dxpy
+import pandas as pd
 from ..utils.printing import (fill)
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
@@ -284,7 +285,6 @@ class DXDatasetDictionary():
             coding - dictionary of coding name to pandas dataframe representing codes, their hierarchy (if applicable) and their meanings
     """
     def __init__(self, descriptor):
-        self.pd = __import__('pandas')
         self.data_dictionary =  self.load_data_dictionary(descriptor)
         self.coding_dictionary = self.load_coding_dictionary(descriptor)
         self.entity_dictionary = self.load_entity_dictionary(descriptor)
@@ -392,7 +392,7 @@ class DXDatasetDictionary():
             dcols["units"].append(field_dict["units"])
 
         try:
-            dframe = self.pd.DataFrame(dcols)
+            dframe = pd.DataFrame(dcols)
         except ValueError as exc:
             raise exc
 
@@ -485,7 +485,7 @@ class DXDatasetDictionary():
         dcols["coding_name"] = [coding_name_value] * len(dcols["code"])
         
         try:
-            dframe = self.pd.DataFrame(dcols)
+            dframe = pd.DataFrame(dcols)
         except ValueError as exc:
             raise exc
 
@@ -498,7 +498,7 @@ class DXDatasetDictionary():
         entity_dictionary = collections.OrderedDict()
         for entity_name in descriptor.model['entities']:
             entity = descriptor.model['entities'][entity_name]
-            entity_dictionary[entity_name] = self.pd.DataFrame.from_dict([{
+            entity_dictionary[entity_name] = pd.DataFrame.from_dict([{
                 "entity": entity_name,
                 "entity_title": entity.get('entity_title'),
                 "entity_label_singular": entity.get('entity_label_singular'),
@@ -525,7 +525,7 @@ class DXDatasetDictionary():
         
         def as_dataframe(ord_dict_of_df, required_columns):
             """Join all blocks into a pandas DataFrame."""
-            df = self.pd.concat([b for b in ord_dict_of_df.values()], sort=False)
+            df = pd.concat([b for b in ord_dict_of_df.values()], sort=False)
             return sort_dataframe_columns(df, required_columns)
 
         data_dframe = as_dataframe(self.data_dictionary, required_columns = ["entity", "name", "type", "primary_key_type"])
