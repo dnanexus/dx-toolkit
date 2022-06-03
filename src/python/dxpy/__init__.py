@@ -275,8 +275,9 @@ def _get_pool_manager(verify, cert_file, key_file, ssl_context=None):
         pool_args = dict(default_pool_args,
                          cert_file=cert_file,
                          key_file=key_file,
-                         ssl_context=ssl_context,
                          ca_certs=verify or os.environ.get('DX_CA_CERT') or requests.certs.where())
+        if ssl_context:
+            pool_args['ssl_context'] = ssl_context
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
             urllib3.disable_warnings()
