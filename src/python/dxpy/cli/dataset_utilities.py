@@ -57,6 +57,9 @@ def extract_dataset(args):
     except Exception as details:
         raise ResolutionError(str(details))
 
+    if resp["downloadRestricted"]:
+        raise err_exit(fill('Insufficient permissions due to the project policy'))
+
     if resp['datasetVersion'] != '3.0':
         raise err_exit(fill('Invalid dataset version %r. Version should be 3.0' % resp['datasetVersion']))
 
