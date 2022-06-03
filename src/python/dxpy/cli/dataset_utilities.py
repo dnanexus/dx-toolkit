@@ -299,7 +299,6 @@ class DXDatasetDictionary():
 
             join_path_to_entity_field.update(self.get_join_path_to_entity_field_map(descriptor.model['entities'][entity_name]))
 
-        _EXCLUDE_EDGES_FOR_TABLES = ("raw_file_metadata")
         edges = []
         for ji in descriptor.join_info:
             skip_edge = False
@@ -307,19 +306,7 @@ class DXDatasetDictionary():
             for path in [ji["joins"][0]["to"], ji["joins"][0]["from"]]:
                 if path not in join_path_to_entity_field:
                     skip_edge = True
-                    db_name,table_name,col_name = path.split("$")
-                    if table_name in _EXCLUDE_EDGES_FOR_TABLES:
-                        continue
-                    db_tb_name = "{}${}".format(db_name, table_name)
-                    # Print function, if and else statements below are for debug purpose. Will be removed before PR.
-                    print("ji:", ji)
-                    if db_tb_name not in join_path_to_entity_field:
-                        print("Skipping edge for : " + db_tb_name)
-                        continue
-                    else:
-                        print("{} present in join_path_to_entity_field. But skip adding corresponding {} \
-                                      to join_path_to_entity_field".format(db_tb_name, path))
-                        continue
+                    break
 
             if not skip_edge:
                 edges.append(self.create_edge(ji, join_path_to_entity_field))
@@ -337,9 +324,7 @@ class DXDatasetDictionary():
                 rel[eb_row_idx] = edge["relationship"]
 
                 source_eblock = source_eblock.assign(relationship=rel, referenced_entity_field=ref)
-            # Else statement to be removed before raising PR. Printing for debug purpose
-            else:
-                print("No entity for: ", edge["source_entity"], " for edge: ", edge)
+
         return eblocks
 
     def create_entity_dframe(self, entity, is_primary_entity, global_primary_key):
