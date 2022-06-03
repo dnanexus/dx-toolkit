@@ -453,13 +453,14 @@ class DXDatasetDictionary():
                     cblocks[coding_name_value] = self.create_coding_name_dframe(descriptor.model, entity, field, coding_name_value)
         return cblocks
 
-    def create_coding_name_dframe(self, model, entity, field, code):
+    def create_coding_name_dframe(self, model, entity, field, coding_name_value):
         """
             Returns CodingDictionary pandas DataFrame for an coding_name.
         """
         dcols = {}
         if model['entities'][entity]["fields"][field]["is_hierarchical"]:
-            def unpack_hierarchy(nodes, parent_code):
+            displ_ord = 0
+            def unpack_hierarchy(nodes, parent_code, displ_ord):
                 """Serialize the node hierarchy by depth-first traversal.
 
                 Yields: tuples of (code, parent_code)
@@ -468,28 +469,32 @@ class DXDatasetDictionary():
                     if isinstance(node, dict):
                         next_parent_code, child_nodes = next(iter(node.items()))
                         # internal: unpack recursively
-                        yield next_parent_code, parent_code
-                        for deep_node, deep_parent in unpack_hierarchy(child_nodes,
-                                next_parent_code):
-                            yield (deep_node, deep_parent)
+                        displ_ord += 1
+                        yield next_parent_code, parent_code, displ_ord
+                        for deep_node, deep_parent, displ_ord in unpack_hierarchy(child_nodes, next_parent_code, displ_ord):
+                            yield (deep_node, deep_parent, displ_ord)
                     else:
                         # terminal: serialize
-                        yield (node, parent_code)
+                        displ_ord += 1
+                        yield (node, parent_code, displ_ord)
 
-            all_codes, parents = zip(*unpack_hierarchy(model["codings"][code]["display"], ""))
+            all_codes, parents, displ_ord = zip(*unpack_hierarchy(model["codings"][coding_name_value]["display"], "", displ_ord))
             dcols.update({
                 "code": all_codes,
                 "parent_code": parents,
-                "meaning": [model["codings"][code]["codes_to_meanings"][c] for c in all_codes],
-                "concept": [model["codings"][code]["codes_to_concepts"][c] for c in all_codes]
+                "meaning": [model["codings"][coding_name_value]["codes_to_meanings"][c] for c in all_codes],
+                "concept": [model["codings"][coding_name_value]["codes_to_concepts"][c] for c in all_codes],
+                "display_order": displ_ord
             })
+            
         else:
             # No hierarchy; just unpack the codes dictionary
-            codes, meanings = zip(*model["codings"][code]["codes_to_meanings"].items())
-            codes, concepts = zip(*model["codings"][code]["codes_to_concepts"].items())
-            dcols.update({"code": codes, "meaning": meanings, "concept": concepts})
+            codes, meanings = zip(*model["codings"][coding_name_value]["codes_to_meanings"].items())
+            codes, concepts = zip(*model["codings"][coding_name_value]["codes_to_concepts"].items())
+            display_order = [int(model["codings"][coding_name_value]["display"].index(c) + 1) for c in codes]
+            dcols.update({"code": codes, "meaning": meanings, "concept": concepts, "display_order": display_order})
 
-        dcols["coding_name"] = [code] * len(dcols["code"])
+        dcols["coding_name"] = [coding_name_value] * len(dcols["code"])
         
         try:
             dframe = self.pd.DataFrame(dcols)
