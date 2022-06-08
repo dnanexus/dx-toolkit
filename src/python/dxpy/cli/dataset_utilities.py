@@ -100,7 +100,7 @@ def extract_dataset(args):
             else:
                 err_exit(fill("Error: When using -ddd, --output must be an existing directory"))
         else:
-            err_exit(fill("Error: directory {path} could not be found".format(path=args.output)))
+            err_exit(fill("Error: When using -ddd, --output must be an existing directory"))
 
         if print_to_stdout:
             output_file_data = sys.stdout
@@ -142,7 +142,7 @@ def extract_dataset(args):
                 file_already_exist.append(file)
     
     if file_already_exist:
-        err_exit(fill("Error: Following files already exist {path}".format(path=file_already_exist)))
+        err_exit(fill("Error: path already exists {path}".format(path=file_already_exist)))
 
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
     if args.fields is not None:
@@ -262,7 +262,7 @@ class DXDataset(DXRecord):
 
 class DXDatasetDescriptor():
     """
-        A class to represent a parsed descriptor of a  Dataset record object. 
+        A class to represent a parsed descriptor of a Dataset record object. 
         Based on the Descriptor3 class from dxdata.
         
         Attributes
@@ -462,7 +462,6 @@ class DXDatasetDictionary():
         """
             Returns CodingDictionary pandas DataFrame for a coding_name.
         """
-        print(model["codings"][coding_name_value])
         dcols = {}
         if model['entities'][entity]["fields"][field]["is_hierarchical"]:
             displ_ord = 0
@@ -489,14 +488,19 @@ class DXDatasetDictionary():
                 "code": all_codes,
                 "parent_code": parents,
                 "meaning": [model["codings"][coding_name_value]["codes_to_meanings"][c] for c in all_codes],
-                "concept": [model["codings"][coding_name_value]["codes_to_concepts"][c] for c in all_codes],
+                "concept": [model["codings"][coding_name_value]["codes_to_concepts"][c] if 
+                            (model["codings"][coding_name_value]["codes_to_concepts"] and 
+                            c in model["codings"][coding_name_value]["codes_to_concepts"].keys()) else None for c in all_codes],
                 "display_order": displ_ord
             })
             
         else:
             # No hierarchy; just unpack the codes dictionary
             codes, meanings = zip(*model["codings"][coding_name_value]["codes_to_meanings"].items())
-            codes, concepts = zip(*model["codings"][coding_name_value]["codes_to_concepts"].items())
+            if model["codings"][coding_name_value]["codes_to_concepts"]:
+                codes, concepts = zip(*model["codings"][coding_name_value]["codes_to_concepts"].items())
+            else:
+                concepts = [None] * len(codes)
             display_order = [int(model["codings"][coding_name_value]["display"].index(c) + 1) for c in codes]
             dcols.update({"code": codes, "meaning": meanings, "concept": concepts, "display_order": display_order})
 

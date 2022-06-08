@@ -48,9 +48,7 @@ class TestDXExtractDataset(unittest.TestCase):
                "patient.date_of_birth", ",", "patient.verified_dtm", ",", "test.test_id", ",", "trial_visit.visit_id", ",", "baseline.baseline_id", 
                ",", "hospital.hospital_id", ",", "doctor.doctor_id","--sql", "-o", "-"]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
-        print(truth_output)
         stdout = process.communicate()[0]
-        print(stdout.strip())
         self.assertTrue(truth_output==stdout.strip())
 
     def test_e2e_cohortbrowser_sql(self):
@@ -71,7 +69,7 @@ class TestDXExtractDataset(unittest.TestCase):
                ",", "hospital.hospital_id", ",", "doctor.doctor_id", "-o", out_directory]
         subprocess.check_call(cmd)
         truth_file = "project-G9j1pX00vGPzF2XQ7843k2Jq:file-GBGpx800vGPy4qf84JJQBX3x"
-        self.end_to_end_fields(out_directory=out_directory, rec_name = "extract_dataset_test.txt", truth_file=truth_file)
+        self.end_to_end_fields(out_directory=out_directory, rec_name = "extract_dataset_test.csv", truth_file=truth_file)
 
     def test_e2e_cohortbrowser_fields(self):
         cohort_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GBGq1pQ0vGPf0qYg30Jg7kkG"
@@ -81,7 +79,7 @@ class TestDXExtractDataset(unittest.TestCase):
                ",", "hospital.hospital_id", ",", "doctor.doctor_id", "-o", out_directory]
         subprocess.check_call(cmd)
         truth_file = "project-G9j1pX00vGPzF2XQ7843k2Jq:file-GBGq7FQ0vGPpK3GbF0Xbjz17"
-        self.end_to_end_fields(out_directory=out_directory, rec_name = "Combined_Cohort_Test.txt", truth_file=truth_file)
+        self.end_to_end_fields(out_directory=out_directory, rec_name = "Combined_Cohort_Test.csv", truth_file=truth_file)
 
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
