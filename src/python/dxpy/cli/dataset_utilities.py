@@ -47,22 +47,35 @@ def extract_dataset(args):
 
     if len(args.delim) == 1:
         delimiter = str(args.delim)
+        if delimiter == ",":
+            out_extension = ".csv"
+        elif delimiter == "\t":
+            out_extension = ".tsv"
+        else:
+            out_extension = ".txt"
     else:
         raise err_exit(fill('Invalid delimiter specified'))
-
+    
     project, path, entity_result = resolve_existing_path(args.path)
 
     try:
         resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
                                         {"project": project, "cohortBrowser": False} )
     except Exception as details:
-        raise ResolutionError(str(details))
+        if details.name == 'PermissionDenied':
+            print("Insufficient permissions")
+            sys.exit(1)
+        elif details.name in ["InvalidInput", "InvalidState"]:
+            print(f"{entity_result['id']} :Invalid cohort or dataset")
+            sys.exit(1)
+        else:
+            raise ResolutionError(str(details))
 
     if resp["downloadRestricted"]:
         raise err_exit(fill('Insufficient permissions due to the project policy'))
 
     if resp['datasetVersion'] != '3.0':
-        raise err_exit(fill('Invalid dataset version %r. Version should be 3.0' % resp['datasetVersion']))
+        raise err_exit(fill('%r : Invalid version of cohort or dataset. Version must be 3.0' % resp['datasetVersion']))
 
     if ("Dataset" in resp['recordTypes']) or ("CohortBrowser" in resp['recordTypes']):
         dataset_project = resp['datasetRecordProject']
@@ -94,16 +107,16 @@ def extract_dataset(args):
             output_file_coding = sys.stdout
             output_file_entity = sys.stdout
         else:
-            output_file_data = os.path.join(out_directory, resp['recordName'] + ".data_dictionary.csv")
-            output_file_coding = os.path.join(out_directory, resp['recordName'] + ".codings.csv")
-            output_file_entity = os.path.join(out_directory, resp['recordName'] + ".entity_dictionary.csv")
+            output_file_data = os.path.join(out_directory, resp['recordName'] + ".data_dictionary" + out_extension)
+            output_file_coding = os.path.join(out_directory, resp['recordName'] + ".codings" + out_extension)
+            output_file_entity = os.path.join(out_directory, resp['recordName'] + ".entity_dictionary" + out_extension)
             files_to_check = [output_file_data, output_file_coding, output_file_entity]
 
     if args.fields:
         if args.sql:
             file_name_suffix = '.data.sql'
         else:
-            file_name_suffix = '.txt'
+            file_name_suffix = out_extension
         
         if args.output is None:
             out_directory = os.getcwd()
@@ -169,7 +182,11 @@ def extract_dataset(args):
             try:
                 resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
                 if 'error' in resp_raw.keys():
-                    raise err_exit(fill(resp_raw))
+                    if resp_raw['error']['details'] and 'PermissionDenied: Access to the specified database is not allowed' in resp_raw['error']['details']:
+                        print("Insufficient permissions due to the project policy")
+                    else:
+                        print(resp_raw['error'])
+                    sys.exit(1)
             except Exception as details:
                 raise ResolutionError(str(details))
             csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'], column_names=fields_list)
@@ -443,8 +460,9 @@ class DXDatasetDictionary():
 
     def create_coding_name_dframe(self, model, entity, field, coding_name_value):
         """
-            Returns CodingDictionary pandas DataFrame for an coding_name.
+            Returns CodingDictionary pandas DataFrame for a coding_name.
         """
+        print(model["codings"][coding_name_value])
         dcols = {}
         if model['entities'][entity]["fields"][field]["is_hierarchical"]:
             displ_ord = 0
