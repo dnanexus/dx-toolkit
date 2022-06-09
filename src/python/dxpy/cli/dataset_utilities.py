@@ -66,7 +66,7 @@ def extract_dataset(args):
             print("Insufficient permissions")
             sys.exit(1)
         elif details.name in ["InvalidInput", "InvalidState"]:
-            print(f"{entity_result['id']} :Invalid cohort or dataset")
+            print('%r : Invalid cohort or dataset' % entity_result['id'])
             sys.exit(1)
         else:
             raise ResolutionError(str(details))
