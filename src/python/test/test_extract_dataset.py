@@ -79,6 +79,15 @@ class TestDXExtractDataset(unittest.TestCase):
         subprocess.check_call(cmd)
         truth_file = "project-G9j1pX00vGPzF2XQ7843k2Jq:file-GBGq7FQ0vGPpK3GbF0Xbjz17"
         self.end_to_end_fields(out_directory=out_directory, rec_name = "Combined_Cohort_Test.csv", truth_file=truth_file)
+    
+    def test_file_already_exists(self):
+        cohort_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GBGq1pQ0vGPf0qYg30Jg7kkG"
+        out_directory = tempfile.mkdtemp()
+        open(os.path.join(out_directory, "Combined_Cohort_Test.csv"), 'w').close()
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", "-o", out_directory]
+        output = subprocess.run(cmd, capture_output=True, text=True)
+        self.assertTrue("Error: path already exists" in output.stderr)
+        shutil.rmtree(out_directory)
 
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
