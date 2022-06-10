@@ -33,7 +33,7 @@ from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path, ResolutionError
 from ..utils.file_handle import as_handle
-from ..exceptions import err_exit
+from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState
 
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
@@ -61,15 +61,17 @@ def extract_dataset(args):
     try:
         resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
                                         {"project": project, "cohortBrowser": False} )
+    except PermissionDenied:
+        print("Insufficient permissions")
+        sys.exit(1)
+    except InvalidInput:
+        print('%r : Invalid cohort or dataset' % entity_result['id'])
+        sys.exit(1)
+    except InvalidState:
+        print('%r : Invalid cohort or dataset' % entity_result['id'])
+        sys.exit(1)
     except Exception as details:
-        if details.name == 'PermissionDenied':
-            print("Insufficient permissions")
-            sys.exit(1)
-        elif details.name in ["InvalidInput", "InvalidState"]:
-            print('%r : Invalid cohort or dataset' % entity_result['id'])
-            sys.exit(1)
-        else:
-            raise ResolutionError(str(details))
+        raise ResolutionError(str(details))
 
     if resp["downloadRestricted"]:
         raise err_exit(fill('Insufficient permissions due to the project policy'))
