@@ -31,7 +31,7 @@ from ..utils.printing import (fill)
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
-from ..utils.resolver import resolve_existing_path, ResolutionError
+from ..utils.resolver import resolve_existing_path
 from ..utils.file_handle import as_handle
 from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState
 
@@ -71,7 +71,7 @@ def extract_dataset(args):
         print('%r : Invalid cohort or dataset' % entity_result['id'])
         sys.exit(1)
     except Exception as details:
-        raise ResolutionError(str(details))
+        err_exit(fill(str(details)))
 
     if resp["downloadRestricted"]:
         raise err_exit(fill('Insufficient permissions due to the project policy'))
@@ -172,7 +172,7 @@ def extract_dataset(args):
             try:
                 resp_raw_query = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
             except Exception as details:
-                raise ResolutionError(str(details))
+                err_exit(fill((str(details))))
             sql_results = resp_raw_query['sql'] + ';'
             if print_to_stdout:
                 print(sql_results)
@@ -184,13 +184,14 @@ def extract_dataset(args):
             try:
                 resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
                 if 'error' in resp_raw.keys():
-                    if resp_raw['error']['details'] and 'PermissionDenied: Access to the specified database is not allowed' in resp_raw['error']['details']:
-                        print("Insufficient permissions due to the project policy")
+                    if resp_raw['error']['type'] == 'InvalidInput':
+                        print("Insufficient permissions due to the project policy.")
+                        print(resp_raw['error']['message'])
                     else:
                         print(resp_raw['error'])
                     sys.exit(1)
             except Exception as details:
-                raise ResolutionError(str(details))
+                err_exit(fill((str(details))))
             csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'], column_names=fields_list)
 
     elif args.sql:
@@ -552,10 +553,14 @@ class DXDatasetDictionary():
             df = pd.concat([b for b in ord_dict_of_df.values()], sort=False)
             return sort_dataframe_columns(df, required_columns)
 
-        data_dframe = as_dataframe(self.data_dictionary, required_columns = ["entity", "name", "type", "primary_key_type"])
-        coding_dframe = as_dataframe(self.coding_dictionary, required_columns=["coding_name", "code", "meaning"])
-        entity_dframe = as_dataframe(self.entity_dictionary, required_columns=["entity", "entity_title"])
+        if self.data_dictionary:
+            data_dframe = as_dataframe(self.data_dictionary, required_columns = ["entity", "name", "type", "primary_key_type"])
+            data_dframe.to_csv(output_file_data, **csv_opts)
+
+        if self.coding_dictionary:
+            coding_dframe = as_dataframe(self.coding_dictionary, required_columns=["coding_name", "code", "meaning"])
+            coding_dframe.to_csv(output_file_coding, **csv_opts)
         
-        data_dframe.to_csv(output_file_data, **csv_opts)
-        coding_dframe.to_csv(output_file_coding, **csv_opts)
-        entity_dframe.to_csv(output_file_entity, **csv_opts)
+        if self.entity_dictionary:
+            entity_dframe = as_dataframe(self.entity_dictionary, required_columns=["entity", "entity_title"])
+            entity_dframe.to_csv(output_file_entity, **csv_opts)
