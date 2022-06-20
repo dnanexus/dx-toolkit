@@ -2520,8 +2520,6 @@ def wait(args):
         err_exit('', 3)
 
 def build(args):
-    print(args.nextflow)
-    print("herecx")
     sys.argv = ['dx build'] + sys.argv[2:]
 
     def get_source_exec_desc(source_exec_path):
@@ -2654,6 +2652,12 @@ def build(args):
         if args.mode in ("globalworkflow", "applet", "app") and args.keep_open:
             build_parser.error("Global workflows, applets and apps cannot be kept open")
 
+        if args.nextflow and args.repository and not args.remote:
+            build_parser.error("Cannot build Nextflow pipeline from repository locally. Please use --remote.")
+
+        if args.nextflow and args.mode == "app":
+            build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
+
         # options not supported by workflow building
 
         if args.mode == "workflow":
@@ -2697,7 +2701,6 @@ def build(args):
             args.mode = get_mode(args)
 
         handle_arg_conflicts(args)
-
         if args.mode in ("app", "applet"):
             dx_build_app.build(args)
         elif args.mode in ("workflow", "globalworkflow"):
@@ -4648,7 +4651,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json or dxworkflow.json. (default: current directory)", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json or *.nf (for --nextflow option). (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4685,7 +4688,7 @@ app_and_globalworkflow_options.add_argument("--from", help="ID or path of the so
 # --[no-]remote
 build_parser.set_defaults(remote=False)
 build_parser.add_argument("--remote", help="Build the app remotely by uploading the source directory to the DNAnexus Platform and building it there. This option is useful if you would otherwise need to cross-compile the app(let) to target the Execution Environment.", action="store_true", dest="remote")
-build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder. (This option only applicable if --remote was specified).", action="store_false", dest="watch")
+build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder. (This option only applicable if --remote or --repository was specified).", action="store_false", dest="watch")
 build_parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 applet_and_workflow_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
@@ -4746,8 +4749,15 @@ build_parser.add_argument('--keep-open', help=fill("Do not close workflow after 
                                                    width_adjustment=-24), action='store_true')
 
 # nextflow
-build_parser.add_argument('nextflow', help=fill("Build Nextflow applet.",
+build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet. Can be used with --repository.",
                                                    width_adjustment=-24), action='store_true')
+
+# repository
+build_parser.add_argument('--repository', help=fill("Specifies GitHub repository of Nextflow workflow. Needs to be used with --nextflow and cannot be used with --remote.",
+                                                   width_adjustment=-24), dest="repository")
+# tag
+build_parser.add_argument('--tag', help=fill("Specifies tag for GitHub repository. Needs to be used with --repository.",
+                                                   width_adjustment=-24), dest="tag")
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')

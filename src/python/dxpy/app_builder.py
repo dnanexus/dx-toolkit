@@ -192,7 +192,7 @@ def _fix_perm_filter(tar_obj):
     return tar_obj
 
 
-def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False):
+def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False, resources_dir=None):
     """
     :param ensure_upload: If True, will bypass checksum of resources directory
                           and upload resources bundle unconditionally;
@@ -215,7 +215,13 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
     object, and returns a list describing a single bundled dependency in
     the form expected by the ``bundledDepends`` field of a run
     specification. Returns an empty list, if no archive was created.
+
+    :param resources_dir: Location of resources folder
+    :type resources_dir: str
     """
+    if not resources_dir:
+        resources_dir = os.path.join(src_dir, "resources")
+
     applet_spec = _get_applet_spec(src_dir)
 
     if project is None:
@@ -224,7 +230,6 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
         dest_project = project
         applet_spec['project'] = project
 
-    resources_dir = os.path.join(src_dir, "resources")
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
         target_folder = applet_spec['folder'] if 'folder' in applet_spec else folder
 
@@ -427,7 +432,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False,
                   project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable",
-                  dry_run=False, brief=False, **kwargs):
+                  dry_run=False, brief=False, types=[], **kwargs):
     """
     Creates a new applet object.
 
@@ -642,6 +647,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                     applet_spec["access"]["network"].append("*")
 
     merge(applet_spec, kwargs)
+    applet_spec["types"] = types
 
     # -----
     # Now actually create the applet
@@ -656,7 +662,7 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         if "tags" not in applet_spec:
             applet_spec["tags"] = []
         applet_spec["tags"] = list(set(applet_spec["tags"]) | set(applet_spec["categories"]))
-
+    print(applet_spec)
     applet_id = dxpy.api.applet_new(applet_spec)["id"]
 
     if archived_applet:
