@@ -2520,6 +2520,8 @@ def wait(args):
         err_exit('', 3)
 
 def build(args):
+    print(args.nextflow)
+    print("herecx")
     sys.argv = ['dx build'] + sys.argv[2:]
 
     def get_source_exec_desc(source_exec_path):
@@ -4741,6 +4743,10 @@ app_and_globalworkflow_options.add_argument("--region", action="append", help="E
 
 # --keep-open
 build_parser.add_argument('--keep-open', help=fill("Do not close workflow after building it. Cannot be used when building apps, applets or global workflows.",
+                                                   width_adjustment=-24), action='store_true')
+
+# nextflow
+build_parser.add_argument('nextflow', help=fill("Build Nextflow applet.",
                                                    width_adjustment=-24), action='store_true')
 
 build_parser.set_defaults(func=build)
