@@ -11,21 +11,7 @@
       "help": "Additional run arguments and pipeline parameters for Nextflow (i.e. -queue-size).",
       "class": "string",
       "optional": true
-    },
-    {
-      "name": "resume",
-      "label": "Resume",
-      "help": "Enables resume functionality in Nextflow workflows.",
-      "class": "boolean",
-      "default": false
-    },
-    {
-      "name": "resume_session",
-      "label": "Resume Session",
-      "help": "Session or job to be resumed.",
-      "class": "string",
-      "optional": true
-    },
+    }
     {
       "name": "nf_advanced_opts",
       "label": "Nextflow Advanced Options",
@@ -36,7 +22,7 @@
     {
       "name": "docker_creds",
       "label": "Docker Credentials",
-      "help": "Docker Credentials used to obtain private docker images.",
+      "help": "Docker credentials used to obtain private docker images.",
       "class": "file",
       "optional": true
     },
@@ -44,13 +30,6 @@
       "name": "debug",
       "label": "Debug Mode",
       "help": "Shows additional information in Nextflow logs.",
-      "class": "boolean",
-      "default": false
-    },
-    {
-      "name": "no_future_resume",
-      "label": "No Future Resume",
-      "help": "Allow saving workspace and cache files to the platform to be used later for resume functionality.",
       "class": "boolean",
       "default": false
     }

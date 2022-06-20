@@ -39,7 +39,6 @@ main() {
     
     if [ -n "$docker_creds" ]; then
         dx download "$docker_creds" -o /home/dnanexus/credentials
-        ls /home/dnanexus
         source /.dx.nextflow/resources/usr/local/bin/dx-registry-login
     fi
 
@@ -48,8 +47,7 @@ main() {
     DX_LOG=${log_file:-$DX_PROJECT_CONTEXT_ID:$LOG_NAME}
     export NXF_WORK=dx://$DX_WORK
     export NXF_HOME=/opt/nextflow
-    export NXF_UUID=${resume_session:-$(uuidgen)}
-    export NXF_IGNORE_RESUME_HISTORY=true
+    export NXF_UUID=$(uuidgen)
     export NXF_ANSI_LOG=false
     export NXF_EXECUTOR=dnanexus
     export NXF_PLUGINS_DEFAULT=nextaur@1.0.0
@@ -59,7 +57,6 @@ main() {
     trap on_exit EXIT
     echo "============================================================="
     echo "=== NF work-dir : ${DX_WORK}"
-    echo "=== NF Resume ID: ${NXF_UUID}"
     echo "=== NF log file : ${DX_LOG}"
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
@@ -67,7 +64,7 @@ main() {
     filtered_inputs=""
     
     @@RUN_INPUTS@@
-    nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run /home/dnanexus/nfp @@PROFILE_ARG@@ -name test-${NXF_UUID} $nf_run_args_and_pipeline_params ${filtered_inputs}
+    nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run /home/dnanexus/nfp @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params ${filtered_inputs}
 }
 
 

@@ -3456,7 +3456,7 @@ def run(args):
     if args.head_job_on_demand and (is_workflow or is_global_workflow):
         err_exit(exception=DXParserError("--head-job-on-demand cannot be used when running workflows"),
                  expected_exceptions=(DXParserError,))
-        
+
     # if the destination project has still not been set, use the
     # current project
     if dest_proj is None:

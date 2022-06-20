@@ -92,6 +92,7 @@ class DXExecutable:
 
         if kwargs.get('ignore_reuse') is not None:
             run_input["ignoreReuse"] = kwargs['ignore_reuse']
+        from ..utils.resolver import is_project_id
 
         if dxpy.JOB_ID is None or (kwargs.get('detach') is True and project is not None and is_project_id(project)):
             run_input["project"] = project

@@ -9,7 +9,7 @@ import os
 
 def get_nextflow_dxapp(custom_inputs=[]):
     """
-    :param custom_inputs: Custom inputs that will be used in created Nextflow pipeline.
+    :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
 
     Creates Nextflow dxapp.json from the Nextflow dxapp.json template
@@ -21,15 +21,19 @@ def get_nextflow_dxapp(custom_inputs=[]):
     return dxapp
 
 
-def get_nextflow_src(inputs=[], profile=None):
+def get_nextflow_src(inputs=None, profile=None):
     """
     :param inputs: Custom inputs that will be used in created Nextflow pipeline
     :type inputs: list
-    :param profile: Custom NF profile to be used when running Nextflow pipeline, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
+    :param profile: Custom Nextflow profile to be used when running a Nextflow pipeline, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
+    :returns: String containing the whole source file of an applet.
+    :rtype: string
 
     Creates Nextflow source file from the Nextflow source file template
     """
+    if inputs is None:
+        inputs = []
     with open(os.path.join(str(get_template_dir()), get_source_file_name()), 'r') as f:
         src = f.read()
 

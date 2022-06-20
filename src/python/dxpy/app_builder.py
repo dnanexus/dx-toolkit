@@ -220,9 +220,6 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
     object, and returns a list describing a single bundled dependency in
     the form expected by the ``bundledDepends`` field of a run
     specification. Returns an empty list, if no archive was created.
-
-    :param resources_dir: Location of resources folder
-    :type resources_dir: str
     """
     if not resources_dir:
         resources_dir = os.path.join(src_dir, "resources")
