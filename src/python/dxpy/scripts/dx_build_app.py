@@ -35,8 +35,11 @@ import dxpy
 import dxpy.app_builder
 import dxpy.workflow_builder
 import dxpy.executable_builder
+from dxpy.nextflow.nextflow_utils import get_resources_subpath
 from .. import logger
+from pathlib import Path
 
+from dxpy.nextflow.nextflow_builder import *
 from ..utils import json_load_raise_on_duplicates
 from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError, is_container_id
 from ..utils.completer import LocalCompleter
@@ -194,7 +197,7 @@ def _lint(dxapp_json_filename, mode):
     if 'name' in app_spec:
         if app_spec['name'] != app_spec['name'].lower():
             logger.warn('name "%s" should be all lowercase' % (app_spec['name'],))
-        if dirname != app_spec['name']:
+        if dirname != app_spec['name'] and not str(os.path.abspath(dxapp_json_filename)).startswith("/tmp") and not dirname.startswith("."):
             logger.warn('app name "%s" does not match containing directory "%s"' % (app_spec['name'], dirname))
     else:
         logger.warn('app is missing a name, please add one in the "name" field of dxapp.json')
@@ -745,7 +748,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
-                             region=None, brief=False, **kwargs):
+                             region=None, brief=False, resources_dir=None, worker_resources_subpath=".", types=[], **kwargs):
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
 
@@ -874,7 +877,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 folder=override_folder,
                 ensure_upload=ensure_upload,
                 force_symlinks=force_symlinks,
-                brief=brief) if not dry_run else []
+                brief=brief,
+                resources_dir=resources_dir,
+                worker_resources_subpath=worker_resources_subpath) if not dry_run else []
 
         # TODO: Clean up these applets if the app build fails.
         applet_ids_by_region = {}
@@ -891,6 +896,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     override_name=override_applet_name,
                     dry_run=dry_run,
                     brief=brief,
+                    types=types,
                     **kwargs)
                 if not dry_run:
                     logger.debug("Created applet " + applet_id + " successfully")
@@ -982,7 +988,15 @@ def _build_app(args, extra_args):
     TODO: remote app builds still return None, but we should fix this.
 
     """
-
+    resources_dir = None
+    types = []
+    source_dir = args.src_dir
+    worker_resources_subpath = "."  # no subpath, current directory.
+    if args.nextflow:
+        types = ["nextflow"]
+        resources_dir = args.src_dir
+        source_dir = prepare_nextflow(args.src_dir, args.profile)
+        worker_resources_subpath = get_resources_subpath()
     if args._from:
         # BUILD FROM EXISTING APPLET
         try:
@@ -1011,12 +1025,12 @@ def _build_app(args, extra_args):
 
         return output['id']
 
-    if not args.remote:
+    if not args.remote and not args.repository:  # building with NF repository is implicitly remote
         # LOCAL BUILD
 
         try:
             output = build_and_upload_locally(
-                args.src_dir,
+                source_dir,
                 args.mode,
                 overwrite=args.overwrite,
                 archive=args.archive,
@@ -1036,6 +1050,9 @@ def _build_app(args, extra_args):
                 return_object_dump=args.json,
                 region=args.region,
                 brief=args.brief,
+                resources_dir=resources_dir,
+                worker_resources_subpath=worker_resources_subpath,
+                types=types,
                 **extra_args
                 )
 
@@ -1057,33 +1074,22 @@ def _build_app(args, extra_args):
 
     else:
         # REMOTE BUILD
-
-        try:
-            app_json = _parse_app_spec(args.src_dir)
-            _check_suggestions(app_json, publish=args.publish)
-            _verify_app_source_dir(args.src_dir, args.mode)
-            if args.mode == "app" and not args.dry_run:
-                dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
-        except dxpy.app_builder.AppBuilderException as e:
-            print("Error: %s" % (e.args,), file=sys.stderr)
-            sys.exit(3)
-
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
         # options through to the interior call of dx_build_app(let).
         if args.dry_run:
-            parser.error('--remote cannot be combined with --dry-run')
+            parser.error('--remote and --repository cannot be combined with --dry-run')
         if args.overwrite:
-            parser.error('--remote cannot be combined with --overwrite/-f')
+            parser.error('--remote and --repository cannot be combined with --overwrite/-f')
         if args.archive:
-            parser.error('--remote cannot be combined with --archive/-a')
+            parser.error('--remote and --repository cannot be combined with --archive/-a')
 
         # The following flags are probably not useful in conjunction
         # with --remote.
         if args.json:
-            parser.error('--remote cannot be combined with --json')
+            parser.error('--remote and --repository cannot be combined with --json')
         if not args.use_temp_build_project:
-            parser.error('--remote cannot be combined with --no-temp-build-project')
+            parser.error('--remote and --repository cannot be combined with --no-temp-build-project')
 
         if isinstance(args.region, list) and len(args.region) > 1:
             parser.error('--region can only be specified once for remote builds')
@@ -1102,10 +1108,22 @@ def _build_app(args, extra_args):
             more_kwargs['do_parallel_build'] = False
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
+        if args.nextflow:
+            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials, args.brief)
+        else:
+            try:
+                app_json = _parse_app_spec(source_dir)
+                _check_suggestions(app_json, publish=args.publish)
+                _verify_app_source_dir(source_dir, args.mode)
+                if args.mode == "app" and not args.dry_run:
+                    dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
+            except dxpy.app_builder.AppBuilderException as e:
+                print("Error: %s" % (e.args,), file=sys.stderr)
+                sys.exit(3)
 
-        return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
-                                 publish=args.publish,
-                                 region=region, watch=args.watch, **more_kwargs)
+            return _build_app_remote(args.mode, source_dir, destination_override=args.destination,
+                                     publish=args.publish,
+                                     region=region, watch=args.watch, **more_kwargs)
 
 
 def build(args):
