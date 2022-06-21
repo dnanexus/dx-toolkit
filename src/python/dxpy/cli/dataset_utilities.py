@@ -64,17 +64,11 @@ def extract_dataset(args):
     except PermissionDenied:
         print("Insufficient permissions")
         sys.exit(1)
-    except InvalidInput:
-        print('%r : Invalid cohort or dataset' % entity_result['id'])
-        sys.exit(1)
-    except InvalidState:
+    except (InvalidInput, InvalidState):
         print('%r : Invalid cohort or dataset' % entity_result['id'])
         sys.exit(1)
     except Exception as details:
         err_exit(fill(str(details)))
-
-    if resp["downloadRestricted"]:
-        raise err_exit(fill('Insufficient permissions due to the project policy'))
 
     if resp['datasetVersion'] != '3.0':
         raise err_exit(fill('%r : Invalid version of cohort or dataset. Version must be 3.0' % resp['datasetVersion']))
@@ -117,6 +111,8 @@ def extract_dataset(args):
     if args.fields:
         if args.sql:
             file_name_suffix = '.data.sql'
+        elif resp["downloadRestricted"]:
+            raise err_exit(fill('Insufficient permissions due to the project policy'))
         else:
             file_name_suffix = out_extension
         
@@ -138,10 +134,10 @@ def extract_dataset(args):
         else:
             err_exit(fill("Error: {path} could not be found".format(path=os.path.dirname(args.output))))
 
-    if files_to_check:
-        for file in files_to_check:
-            if os.path.exists(file):
-                file_already_exist.append(file)
+    
+    for file in files_to_check:
+        if os.path.exists(file):
+            file_already_exist.append(file)
     
     if file_already_exist:
         err_exit(fill("Error: path already exists {path}".format(path=file_already_exist)))
@@ -255,7 +251,7 @@ class DXDataset(DXRecord):
     
     def get_descriptor(self):
         if self.descriptor is None:
-            self.descriptor = DXDatasetDescriptor(self.descriptor_dxfile,schema=self.schema)
+            self.descriptor = DXDatasetDescriptor(self.descriptor_dxfile, schema=self.schema)
         return self.descriptor
 
     def get_dictionary(self):
@@ -266,7 +262,6 @@ class DXDataset(DXRecord):
 class DXDatasetDescriptor():
     """
         A class to represent a parsed descriptor of a Dataset record object. 
-        Based on the Descriptor3 class from dxdata.
         
         Attributes
             Representation of JSON object stored in descriptor file
@@ -375,7 +370,7 @@ class DXDatasetDictionary():
             "title",
             "units"
         ]
-        dataset_type_to_dxdm_type = {"integer": "integer",
+        dataset_datatype_dict = {"integer": "integer",
                                      "double": "float",
                                      "date": "date",
                                      "datetime": "datetime",
@@ -390,7 +385,7 @@ class DXDatasetDictionary():
             # Field-level parameters
             field_dict = entity["fields"][field]
             dcols["name"].append(field_dict["name"])
-            dcols["type"].append(dataset_type_to_dxdm_type[field_dict["type"]])
+            dcols["type"].append(dataset_datatype_dict[field_dict["type"]])
             dcols["primary_key_type"].append(
                 ("global" if is_primary_entity else "local")
                 if (entity["primary_key"] and field_dict["name"] == entity["primary_key"])

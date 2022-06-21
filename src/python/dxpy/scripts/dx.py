@@ -6009,7 +6009,7 @@ register_parser(parser_unarchive, categories='fs')
 parser_extract_dataset = subparsers.add_parser('extract_dataset', help='(Preview feature) Retrieves the data, or generates SQL to retrieve the data, from a dataset or cohort for a set of entity.fields.',
                                    description='(Preview feature) Retrieves the data, or generates SQL to retrieve the data, from a dataset or cohort for a set of entity.fields.',
                                    prog='dx extract_dataset')
-parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the current selected project) or name')
+parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the record-id in current selected project) or name')
 parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the three dictionary files: <record_name>.data_dictionary.csv, <record_name>.entity_dictionary.csv, <record_name>.codings.csv are generated using the -delimiter specified, if applicable, in the output directory, if not provided, in the current location')
 parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separated STRING  where each value is the phenotypic entity name and field name separated by a dot. If multiple entities are provided, they are inner-joined into one return. For example: <entity_name>.<field_name>,<entity_name>.<field_name>')
 parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (STRING) will be returned instead of data')
