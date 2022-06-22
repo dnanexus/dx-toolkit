@@ -40,7 +40,7 @@ database_id_regex = re.compile('^database-\\w{24}$')
 
 def extract_dataset(args):
     """
-       (Preview feature) Retrieves the data, or generates SQL to retrieve the data, from a dataset or cohort for a set of entity.fields. 
+       (Preview feature) Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data. 
     """
     if not args.dump_dataset_dictionary and args.fields is None:
         raise err_exit(fill('Must provide at least one of the following options: --fields or --dump-dataset-dictionary'))
