@@ -3681,9 +3681,11 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.write("Resolving job hostname and SSH host key...")
     sys.stdout.flush()
     host, host_key, ssh_port = None, None, None
+    https_app_enabled_job = False
     for i in range(90):
         host = job_desc.get('host')
         if job_desc.get('httpsApp', {}).get('dns', {}).get('url') is not None:
+            https_app_enabled_job = True
             url = job_desc['httpsApp']['dns']['url']
             host = url[8:] if url.startswith('https://') else url
         host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
@@ -3702,8 +3704,11 @@ def ssh(args, ssh_config_verified=False):
         err_exit(msg.format(args.job_id))
 
     known_hosts_file = os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_known_hosts')
+    known_host = "{job_id}.dnanex.us".format(job_id=args.job_id)
+    if https_app_enabled_job:
+        known_host = host
     with open(known_hosts_file, 'a') as fh:
-        fh.write("{job_id}.dnanex.us {key}\n".format(job_id=args.job_id, key=host_key.rstrip()))
+        fh.write("{known_host} {key}\n".format(known_host=known_host, key=host_key.rstrip()))
 
     import socket
     connected = False
@@ -3749,7 +3754,7 @@ def ssh(args, ssh_config_verified=False):
 
     print("Connecting to {}:{}".format(host, ssh_port))
     ssh_args = ['ssh', '-i', os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_id'),
-                '-o', 'HostKeyAlias={}.dnanex.us'.format(args.job_id),
+                '-o', 'HostKeyAlias={}'.format(known_host),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
                 '-p', str(ssh_port), '-l', 'dnanexus', host]
     if args.ssh_proxy:
