@@ -6,13 +6,20 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [325.0] - beta
+## [326.0] - beta
+
+## Added
+
+* '--rank' argument for `dx run`
+
+## [325.1] - 2022.5.25 - stable
 
 ## Fixed
 
 * `dx describe` of executable with bundledDepends that is not an asset
+* Building globalworkflow from existing workflow with `dx build --from`
 
-## [324.1] - 2022.5.13 - stable
+## [324.1] - 2022.5.13
 
 ## Fixed
 
