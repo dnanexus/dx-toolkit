@@ -45,7 +45,7 @@ def extract_dataset(args):
     if not args.dump_dataset_dictionary and args.fields is None:
         raise err_exit(fill('Must provide at least one of the following options: --fields or --dump-dataset-dictionary'))
 
-    if len(args.delim) == 1:
+    if len(args.delim) == 1 and args.delim != '"':
         delimiter = str(args.delim)
         if delimiter == ",":
             out_extension = ".csv"
