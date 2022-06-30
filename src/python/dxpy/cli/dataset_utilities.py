@@ -31,7 +31,7 @@ from ..utils.printing import (fill)
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
-from ..utils.resolver import resolve_existing_path
+from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
 from ..utils.file_handle import as_handle
 from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState
 
@@ -43,9 +43,9 @@ def extract_dataset(args):
        (Preview feature) Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data. 
     """
     if not args.dump_dataset_dictionary and args.fields is None:
-        raise err_exit(fill('Must provide at least one of the following options: --fields or --dump-dataset-dictionary'))
+        raise err_exit('Must provide at least one of the following options: --fields or --dump-dataset-dictionary')
 
-    if len(args.delim) == 1 and args.delim != '"':
+    if len(args.delim) == 1:
         delimiter = str(args.delim)
         if delimiter == ",":
             out_extension = ".csv"
@@ -54,9 +54,17 @@ def extract_dataset(args):
         else:
             out_extension = ".txt"
     else:
-        raise err_exit(fill('Invalid delimiter specified'))
+        raise err_exit('Invalid delimiter specified')
     
     project, path, entity_result = resolve_existing_path(args.path)
+
+    if is_hashid(args.path) or args.path.startswith(":"):
+        if entity_result['describe']['project'] != dxpy.WORKSPACE_ID:
+            raise ResolutionError('Unable to resolve "' + args.path +
+                                  '" to a data object or folder name in \'' + dxpy.WORKSPACE_ID + "'")
+
+    if entity_result['describe']['class'] != 'record':
+        raise err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % entity_result['describe']['class'])
 
     try:
         resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
@@ -68,15 +76,15 @@ def extract_dataset(args):
         print('%r : Invalid cohort or dataset' % entity_result['id'])
         sys.exit(1)
     except Exception as details:
-        err_exit(fill(str(details)))
+        err_exit(str(details))
 
     if resp['datasetVersion'] != '3.0':
-        raise err_exit(fill('%r : Invalid version of cohort or dataset. Version must be 3.0' % resp['datasetVersion']))
+        raise err_exit('%r : Invalid version of cohort or dataset. Version must be 3.0' % resp['datasetVersion'])
 
     if ("Dataset" in resp['recordTypes']) or ("CohortBrowser" in resp['recordTypes']):
         dataset_project = resp['datasetRecordProject']
     else:
-        raise err_exit(fill('%r : Invalid path. The path must point to a record type of cohort or dataset' % resp['recordTypes']))
+        raise err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % resp['recordTypes'])
 
     dataset_id = resp['dataset']
     out_directory = ""
@@ -94,9 +102,9 @@ def extract_dataset(args):
             if os.path.isdir(args.output):
                 out_directory = args.output
             else:
-                err_exit(fill("Error: When using -ddd, --output must be an existing directory"))
+                err_exit("Error: When using -ddd, --output must be an existing directory")
         else:
-            err_exit(fill("Error: When using -ddd, --output must be an existing directory"))
+            err_exit("Error: When using -ddd, --output must be an existing directory")
 
         if print_to_stdout:
             output_file_data = sys.stdout
@@ -112,7 +120,7 @@ def extract_dataset(args):
         if args.sql:
             file_name_suffix = '.data.sql'
         elif resp["downloadRestricted"]:
-            raise err_exit(fill('Insufficient permissions due to the project policy'))
+            raise err_exit('Insufficient permissions due to the project policy')
         else:
             file_name_suffix = out_extension
         
@@ -132,7 +140,7 @@ def extract_dataset(args):
         elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(args.output):
             out_file_field = args.output
         else:
-            err_exit(fill("Error: {path} could not be found".format(path=os.path.dirname(args.output))))
+            err_exit("Error: {path} could not be found".format(path=os.path.dirname(args.output)))
 
     
     for file in files_to_check:
@@ -140,7 +148,7 @@ def extract_dataset(args):
             file_already_exist.append(file)
     
     if file_already_exist:
-        err_exit(fill("Error: path already exists {path}".format(path=file_already_exist)))
+        err_exit("Error: path already exists {path}".format(path=file_already_exist))
 
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
     if args.fields is not None:
@@ -155,7 +163,7 @@ def extract_dataset(args):
                error_list.append(entry)
         
         if error_list:
-            raise err_exit(fill('The following fields cannot be found: %r' % error_list))
+            raise err_exit('The following fields cannot be found: %r' % error_list)
 
         payload = {"project_context":project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
         if "CohortBrowser" in resp['recordTypes']:
@@ -168,7 +176,7 @@ def extract_dataset(args):
             try:
                 resp_raw_query = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
             except Exception as details:
-                err_exit(fill((str(details))))
+                err_exit((str(details)))
             sql_results = resp_raw_query['sql'] + ';'
             if print_to_stdout:
                 print(sql_results)
@@ -187,11 +195,11 @@ def extract_dataset(args):
                         print(resp_raw['error'])
                     sys.exit(1)
             except Exception as details:
-                err_exit(fill((str(details))))
+                err_exit((str(details)))
             csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'], column_names=fields_list)
 
     elif args.sql:
-        raise err_exit(fill('`--sql` passed without `--fields`'))
+        raise err_exit('`--sql` passed without `--fields`')
         
     
     if args.dump_dataset_dictionary:
@@ -242,7 +250,7 @@ class DXDataset(DXRecord):
         if is_dxlink(self.details['descriptor']):
            self.descriptor_dxfile = DXFile(self.details['descriptor'], mode='rb')
         else:
-            raise err_exit(fill('%r : Invalid cohort or dataset' % self.details['descriptor']))
+            raise err_exit('%r : Invalid cohort or dataset' % self.details['descriptor'])
         self.descriptor = None
         self.name = self.details.get('name')
         self.description = self.details.get('description')
