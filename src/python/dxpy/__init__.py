@@ -247,7 +247,7 @@ def _get_env_var_proxy(print_proxy=False):
           file=sys.stderr)
   return proxy
 
-def _get_pool_manager(verify, cert_file, key_file):
+def _get_pool_manager(verify, cert_file, key_file, ssl_context=None):
     global _pool_manager
     default_pool_args = dict(maxsize=32,
                              cert_reqs=ssl.CERT_REQUIRED,
@@ -275,6 +275,7 @@ def _get_pool_manager(verify, cert_file, key_file):
         pool_args = dict(default_pool_args,
                          cert_file=cert_file,
                          key_file=key_file,
+                         ssl_context=ssl_context,
                          ca_certs=verify or os.environ.get('DX_CA_CERT') or requests.certs.where())
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
@@ -555,7 +556,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     if auth:
         auth(_RequestForAuth(method, url, headers))
 
-    pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file")}
+    pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file", "ssl_context")}
     test_retry = kwargs.pop("_test_retry_http_request", False)
 
     # data is a sequence/buffer or a dict
