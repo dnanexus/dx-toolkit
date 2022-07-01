@@ -58,7 +58,11 @@ def extract_dataset(args):
     
     project, path, entity_result = resolve_existing_path(args.path)
 
-    if project != entity_result['describe']['project']:
+    print(project, entity_result['describe']['project'])
+    if project is None:
+        raise ResolutionError('Unable to resolve "' + args.path +
+                                  '" to a data object or folder name in a project')
+    elif project != entity_result['describe']['project']:
         raise ResolutionError('Unable to resolve "' + args.path +
                                   '" to a data object or folder name in \'' + project + "'")
 
