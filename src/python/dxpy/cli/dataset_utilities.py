@@ -45,7 +45,7 @@ def extract_dataset(args):
     if not args.dump_dataset_dictionary and args.fields is None:
         raise err_exit('Must provide at least one of the following options: --fields or --dump-dataset-dictionary')
 
-    if len(args.delim) == 1:
+    if len(args.delim) == 1 and args.delim != '"':
         delimiter = str(args.delim)
         if delimiter == ",":
             out_extension = ".csv"
@@ -58,10 +58,9 @@ def extract_dataset(args):
     
     project, path, entity_result = resolve_existing_path(args.path)
 
-    if is_hashid(args.path) or args.path.startswith(":"):
-        if entity_result['describe']['project'] != dxpy.WORKSPACE_ID:
-            raise ResolutionError('Unable to resolve "' + args.path +
-                                  '" to a data object or folder name in \'' + dxpy.WORKSPACE_ID + "'")
+    if project != entity_result['describe']['project']:
+        raise ResolutionError('Unable to resolve "' + args.path +
+                                  '" to a data object or folder name in \'' + project + "'")
 
     if entity_result['describe']['class'] != 'record':
         raise err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % entity_result['describe']['class'])
