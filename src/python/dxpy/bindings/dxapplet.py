@@ -29,6 +29,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import dxpy
 from . import DXDataObject, DXJob
 from ..utils import merge
+from ..utils.resolver import is_project_id
 from ..system_requirements import SystemRequirementsDict
 from ..exceptions import DXError
 from ..compat import basestring
@@ -92,7 +93,7 @@ class DXExecutable:
         if kwargs.get('ignore_reuse') is not None:
             run_input["ignoreReuse"] = kwargs['ignore_reuse']
 
-        if dxpy.JOB_ID is None or kwargs.get('detach') is True:
+        if dxpy.JOB_ID is None or (project is not None and kwargs.get('detach') is True and is_project_id(project)):
             run_input["project"] = project
 
         if kwargs.get('extra_args') is not None:
