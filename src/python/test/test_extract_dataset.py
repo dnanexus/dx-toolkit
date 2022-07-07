@@ -93,8 +93,9 @@ class TestDXExtractDataset(unittest.TestCase):
         out_directory = tempfile.mkdtemp()
         open(os.path.join(out_directory, "Combined_Cohort_Test.csv"), 'w').close()
         cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", "-o", out_directory]
-        output = subprocess.run(cmd, capture_output=True, text=True)
-        self.assertTrue("Error: path already exists" in output.stderr)
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        stdout = process.communicate()[0]
+        self.assertTrue("Error: path already exists" in stdout.strip())
         shutil.rmtree(out_directory)
 
     def end_to_end_ddd(self, out_directory, rec_name):
@@ -130,9 +131,9 @@ class TestDXExtractDataset(unittest.TestCase):
         subprocess.check_call(cmd)
         os.chdir("..")
         dframe1 = pd.read_csv(os.path.join(truth_files_directory,os.listdir(truth_files_directory)[0]))
-        dframe1 = dframe1.sort_values(by=list(dframe1.columns), axis=0, ignore_index=True)
+        dframe1 = dframe1.sort_values(by=list(dframe1.columns), axis=0).reset_index(drop=True)
         dframe2 = pd.read_csv(os.path.join(out_directory, rec_name))
-        dframe2 = dframe2.sort_values(by=list(dframe2.columns), axis=0, ignore_index=True)
+        dframe2 = dframe2.sort_values(by=list(dframe2.columns), axis=0).reset_index(drop=True)
         self.assertTrue(dframe1.equals(dframe2))
 
         shutil.rmtree(out_directory)
