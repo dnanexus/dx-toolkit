@@ -24,8 +24,16 @@ import shutil
 import os
 import subprocess
 import pandas as pd
+import dxpy
+from dxpy_testutil import cd
 
 class TestDXExtractDataset(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        proj_name = "dx-toolkit_test_data"
+        proj_id = list(dxpy.find_projects(describe=False, level='VIEW', name=proj_name))[0]['id']
+        cd(proj_id + ":/")
+
     def test_e2e_dataset_ddd(self):
         dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
         out_directory = tempfile.mkdtemp()
