@@ -6006,7 +6006,7 @@ register_parser(parser_unarchive, categories='fs')
 #####################################
 # extract_dataset
 #####################################
-parser_extract_dataset = subparsers.add_parser('extract_dataset', help="(Preview feature) Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.",
+parser_extract_dataset = subparsers.add_parser('extract_dataset', help="(Preview feature) Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.",
                                    description="(Preview feature) Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.",
                                    prog='dx extract_dataset')
 parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the record-id in current selected project) or name')
