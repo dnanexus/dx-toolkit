@@ -1,3 +1,24 @@
+dx-toolkit (0.327.0) trusty; urgency=medium
+
+  * Added: `dx extract_dataset` command
+  * Added: pandas requirement for dxpy
+  * Fixed: Parsing ignoreReuse in `dx build` of workflow
+  * Changed: DXHTTPRequest to pass ssl_context 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 08 Jul 2022 00:19:26 +0000
+
+dx-toolkit (0.326.0) trusty; urgency=medium
+
+  * Added: '--rank' arg for `dx run`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 25 May 2022 18:34:17 +0000
+
+dx-toolkit (0.325.0) trusty; urgency=medium
+
+  * Fixed: `dx describe` of executable with bundledDepends that is not an asset
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 13 May 2022 15:01:33 +0000
+
 dx-toolkit (0.324.0) trusty; urgency=medium
 
   * Fixed: `dx build` comparison of workflow directory to workflow name

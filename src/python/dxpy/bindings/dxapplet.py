@@ -29,6 +29,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import dxpy
 from . import DXDataObject, DXJob
 from ..utils import merge
+from ..utils.resolver import is_project_id
 from ..system_requirements import SystemRequirementsDict
 from ..exceptions import DXError
 from ..compat import basestring
@@ -92,7 +93,7 @@ class DXExecutable:
         if kwargs.get('ignore_reuse') is not None:
             run_input["ignoreReuse"] = kwargs['ignore_reuse']
 
-        if dxpy.JOB_ID is None or kwargs.get('detach') is True:
+        if dxpy.JOB_ID is None or (kwargs.get('detach') is True and project is not None and is_project_id(project)):
             run_input["project"] = project
 
         if kwargs.get('extra_args') is not None:
@@ -103,6 +104,9 @@ class DXExecutable:
 
         if kwargs.get('cost_limit') is not None:
             run_input["costLimit"] = kwargs['cost_limit']
+
+        if kwargs.get('rank') is not None:
+            run_input["rank"] = kwargs['rank']
 
         return run_input
 
@@ -165,7 +169,7 @@ class DXExecutable:
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
-            ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, extra_args=None, **kwargs):
+            ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -201,6 +205,8 @@ class DXExecutable:
         :type detach: boolean
         :param cost_limit: Maximum cost of the job before termination.
         :type cost_limit: float
+        :param rank: Rank of execution 
+        :type rank: int
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
@@ -235,6 +241,7 @@ class DXExecutable:
                                         priority=priority,
                                         detach=detach,
                                         cost_limit=cost_limit,
+                                        rank=rank,
                                         extra_args=extra_args)
         return self._run_impl(run_input, **kwargs)
 

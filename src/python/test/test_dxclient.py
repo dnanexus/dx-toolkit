@@ -2286,10 +2286,41 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         # make second app with no default tag
         app_new_output2 = dxpy.api.app_new({"name": "app_to_delete",
                                            "applet": applet_id,
-                                           "version": "1.0.1"})
+                                            "version": "1.0.1"})
         dxpy.api.app_delete(app_new_output2["id"])
 
         run("dx describe " + app_new_output2["id"])
+
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APPLET_DESCRIBE"])
+    def test_describe_applet_with_bundled_objects(self):
+        # create bundledDepends: applet, workflow, file as asset record
+        bundled_applet_id = self.test_applet_id
+        bundled_wf_id = self.create_workflow(self.project).get_id()
+        bundled_file_id = create_file_in_project("my_file", self.project)
+        bundled_record_details = {"archiveFileId": {"$dnanexus_link": bundled_file_id}}
+        bundled_record_id = dxpy.new_dxrecord(project=self.project, folder="/", types=["AssetBundle"],
+                                              details=bundled_record_details, name="my_record", close=True).get_id()
+        dxpy.DXFile(bundled_file_id).set_properties({"AssetBundle": bundled_record_id})
+
+        caller_applet_spec = self.create_applet_spec(self.project)
+        caller_applet_spec["name"] = "caller_applet"
+        caller_applet_spec["runSpec"]["bundledDepends"] = [{"name": "my_first_applet", "id": {"$dnanexus_link":  bundled_applet_id}},
+                                                           {"name": "my_workflow", "id": {"$dnanexus_link": bundled_wf_id}},
+                                                           {"name": "my_file", "id": {"$dnanexus_link": bundled_file_id}}]
+        caller_applet_id = dxpy.api.applet_new(caller_applet_spec)['id']
+
+        # "dx describe output" should have applet/workflow/record ids in bundledDepends
+        caller_applet_desc = run('dx describe {}'.format(caller_applet_id))
+        self.assertIn(bundled_applet_id, caller_applet_desc)
+        self.assertIn(bundled_wf_id, caller_applet_desc)
+        self.assertIn(bundled_record_id, caller_applet_desc)
+
+        # "dx describe --json" output should have applet/workflow/file ids in bundledDepends
+        caller_applet_desc_json = run('dx describe {} --json'.format(caller_applet_id))
+        self.assertIn(bundled_applet_id, caller_applet_desc_json)
+        self.assertIn(bundled_wf_id, caller_applet_desc_json)
+        self.assertIn(bundled_file_id, caller_applet_desc_json)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')

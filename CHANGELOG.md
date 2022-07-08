@@ -6,17 +6,43 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [326.0] - beta
+
+## Added
+
+* '--rank' argument for `dx run`
+
+## [325.1] - 2022.5.25 - stable
+
+## Fixed
+
+* `dx describe` of executable with bundledDepends that is not an asset
+* Building globalworkflow from existing workflow with `dx build --from`
+
+## [324.1] - 2022.5.13
+
 ## Fixed
 
 * Improvements to symlink downloading reliability by solely using `aria2c` and enhancing options around its use (removes `wget` option for downloading symlinked files, adds the ability to set max tries for aria2c, adds `-c` flag for continuing downloads, removes the `--check-certificate=false` option).
+* `dx build` comparison of workflow directory to workflow name
+* Set project argument for `dx run --detach` when executed from inside a job
 
-## [323.0] - beta
+## Changed
+
+* Removed `wget` option for downloading symlinked files
+* Bump allowed requests dxpy dependency version to 2.27.1
+
+## Added
+
+* New argument `symlink_max_tries` for `dxpy.download_dxfile()` with default value of 15
+
+## [323.0] - 2022.4.28
 
 ### Changed
 
 * Do not list folder contents to speed up `dx cd` 
 
-## [322.1] - 2022.4.5 - stable
+## [322.1] - 2022.4.5
 
 ### Added
 
