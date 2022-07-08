@@ -1,3 +1,12 @@
+dx-toolkit (0.327.0) trusty; urgency=medium
+
+  * Added: `dx extract_dataset` command
+  * Added: pandas requirement for dxpy
+  * Fixed: Parsing ignoreReuse in `dx build` of workflow
+  * Changed: DXHTTPRequest to pass ssl_context 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 08 Jul 2022 00:19:26 +0000
+
 dx-toolkit (0.326.0) trusty; urgency=medium
 
   * Added: '--rank' arg for `dx run`
