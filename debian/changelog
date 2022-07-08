@@ -1,3 +1,9 @@
+dx-toolkit (0.326.1) trusty; urgency=medium
+
+  * Fixed: Do not use job's workspace cotnainer ID in /applet-xxxx/run for detached jobs
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 08 Jul 2022 00:22:56 +0000
+
 dx-toolkit (0.326.0) trusty; urgency=medium
 
   * Added: '--rank' arg for `dx run`
