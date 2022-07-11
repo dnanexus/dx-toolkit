@@ -6,13 +6,32 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [326.0] - beta
+## [327.0] - beta
+
+## Added
+
+* `dx extract_dataset` command
+* New dxpy dependencies pandas, numpy
+
+## Fixed
+
+* Parsing ignoreReuse in `dx build` of workflow
+
+## Changed
+
+* DXHTTPRequest to pass ssl_context
+
+## [326.1] - 2022.7.7 - stable
 
 ## Added
 
 * '--rank' argument for `dx run`
 
-## [325.1] - 2022.5.25 - stable
+## Fixed
+
+* Do not use job's workspace container ID in /applet-xxxx/run for detached jobs
+
+## [325.1] - 2022.5.25
 
 ## Fixed
 
