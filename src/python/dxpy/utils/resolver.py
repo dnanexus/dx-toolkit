@@ -1176,7 +1176,10 @@ def get_global_exec_from_path(path):
         return get_app_from_path(path)
     elif path.startswith('globalworkflow-'):
         return get_global_workflow_from_path(path)
-
+    
+    # if it's an applet ID, don't try to resolve it here
+    if path.startswith('applet-'):
+        return None
     # If the path doesn't include a prefix, we must try describing
     # as an app and, if that fails, as a global workflow
     desc = get_app_from_path(path)
