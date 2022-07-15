@@ -10656,6 +10656,19 @@ class TestDXRun(DXTestCase):
                             "code": "dx-jobutil-add-output number 32"}
             })
             run("dx run myapplet -inumber=5 --project %s" % temp_project.name)
+    def test_applet_prefix_resolve_does_not_send_app_describe_request(self):
+        id = 'applet-xxxxasdfasdfasdfasdfas'
+        with self.assertSubprocessFailure(
+            output_regexp="^((?!app\-|globalworkflow\-).)*$", # there should be no app- or globalworkflow- in the output
+            exit_code=3):
+            run(f"_DX_DEBUG=2 dx run {id} 2>&1")
+        
+    def test_workflow_prefix_resolve_does_not_send_app_describe_request(self):
+        id = 'workflow-xxxxasdfasfasdf'
+        with self.assertSubprocessFailure( 
+            output_regexp="^((?!app\-|globalworkflow\-).)*$", # there should be no app- or globalworkflow- in the output
+            exit_code=3):
+            run(f"_DX_DEBUG=2 dx run {id} 2>&1")
 
 class TestDXUpdateApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
