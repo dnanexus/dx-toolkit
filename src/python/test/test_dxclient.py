@@ -10659,16 +10659,18 @@ class TestDXRun(DXTestCase):
     def test_applet_prefix_resolve_does_not_send_app_describe_request(self):
         id = 'applet-xxxxasdfasdfasdfasdfas'
         with self.assertSubprocessFailure(
-            output_regexp="^((?!app\-|globalworkflow\-).)*$", # there should be no app- or globalworkflow- in the output
+            # there should be no app- or globalworkflow- in the stderr
+            stderr_regexp="\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
             exit_code=3):
-            run(f"_DX_DEBUG=2 dx run {id} 2>&1")
+            run(f"_DX_DEBUG=2 dx run {id}")
         
     def test_workflow_prefix_resolve_does_not_send_app_describe_request(self):
         id = 'workflow-xxxxasdfasfasdf'
         with self.assertSubprocessFailure( 
-            output_regexp="^((?!app\-|globalworkflow\-).)*$", # there should be no app- or globalworkflow- in the output
+            # there should be no app- or globalworkflow- in the stderr
+            stderr_regexp="\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
             exit_code=3):
-            run(f"_DX_DEBUG=2 dx run {id} 2>&1")
+            run(f"_DX_DEBUG=2 dx run {id}")
 
 class TestDXUpdateApp(DXTestCaseBuildApps):
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
