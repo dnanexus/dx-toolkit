@@ -10656,6 +10656,7 @@ class TestDXRun(DXTestCase):
                             "code": "dx-jobutil-add-output number 32"}
             })
             run("dx run myapplet -inumber=5 --project %s" % temp_project.name)
+
     def test_applet_prefix_resolve_does_not_send_app_describe_request(self):
         id = 'applet-xxxxasdfasdfasdfasdfas'
         with self.assertSubprocessFailure(
