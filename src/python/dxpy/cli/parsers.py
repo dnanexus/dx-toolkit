@@ -144,7 +144,7 @@ def process_dataobject_args(args):
     process_properties_args(args)
 
     # Visibility
-    args.hidden = (args.hidden == 'hidden')
+    args.hidden = (args.hidden == 'hidden' or args.hidden is True)
 
     # Details
     if args.details is not None:
