@@ -1720,6 +1720,14 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertIn(os.path.basename(fd.name), listing)
                 listing = run("dx ls /destdir/a").split("\n")
                 self.assertIn(os.path.basename(fd2.name), listing)
+        
+    def test_dx_upload_mult_hidden(self):
+        with testutil.TemporaryFile() as fd:
+            with testutil.TemporaryFile() as fd2:
+                with temporary_project("test_dx_upload_mult_hidden", select=True) as p:
+                    stdout = run(f"dx upload {fd.name} {fd2.name} --visibility hidden")
+                    self.assertIn("hidden", stdout)
+                    self.assertNotIn("visible", stdout)
 
     def test_dx_upload_empty_file(self):
         with testutil.TemporaryFile() as fd:
