@@ -6,17 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [327.2]
-
-## Fixed
-
-* `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
-
 ## [327.1]
 
 ## Fixed
 
 * Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`
+* `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
 
 ## [327.0] - beta
 
