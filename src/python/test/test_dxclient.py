@@ -1725,7 +1725,7 @@ class TestDXClientUploadDownload(DXTestCase):
         with testutil.TemporaryFile() as fd:
             with testutil.TemporaryFile() as fd2:
                 with temporary_project("test_dx_upload_mult_hidden", select=True) as p:
-                    stdout = run(f"dx upload {fd.name} {fd2.name} --visibility hidden")
+                    stdout = run("dx upload {} {} --visibility hidden".format(fd.name, fd2.name))
                     self.assertIn("hidden", stdout)
                     self.assertNotIn("visible", stdout)
 
