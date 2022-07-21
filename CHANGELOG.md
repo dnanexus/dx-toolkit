@@ -5,11 +5,13 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
 ## Unreleased
+
 ## [327.1]
 
 ## Fixed
 
 * Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`
+* `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
 
 ## [327.0] - beta
 
