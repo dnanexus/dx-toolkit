@@ -662,7 +662,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         if "tags" not in applet_spec:
             applet_spec["tags"] = []
         applet_spec["tags"] = list(set(applet_spec["tags"]) | set(applet_spec["categories"]))
-    print(applet_spec)
     applet_id = dxpy.api.applet_new(applet_spec)["id"]
 
     if archived_applet:

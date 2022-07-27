@@ -61,10 +61,8 @@ def prepare_nextflow(resources_dir) -> str:
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
     DXAPP_CONTENT = get_nextflow_dxapp(inputs)
     EXEC_CONTENT = get_nextflow_src(inputs)
-    print(EXEC_CONTENT)
     write_dxapp(dxapp_dir, DXAPP_CONTENT)
     write_exec(dxapp_dir, EXEC_CONTENT)
-    print(inputs)
 
     return dxapp_dir
 
