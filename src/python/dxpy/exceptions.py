@@ -25,6 +25,8 @@ import requests
 from requests.exceptions import HTTPError
 
 import dxpy
+import urllib3
+import ssl
 
 EXPECTED_ERR_EXIT_STATUS = 3
 
@@ -225,6 +227,8 @@ network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
                       requests.packages.urllib3.exceptions.ConnectTimeoutError,
                       requests.packages.urllib3.exceptions.ReadTimeoutError,
                       requests.packages.urllib3.connectionpool.HTTPException,
+                      urllib3.exceptions.SSLError,
+                      ssl.SSLError,
                       HTTPError,
                       socket.error)
 
