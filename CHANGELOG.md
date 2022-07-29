@@ -8,6 +8,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [327.1]
 
+### Added
+
+* `--on-behalf-of <org>` argument for `dx new user`
+
 ## Fixed
 
 * Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`
