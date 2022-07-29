@@ -6273,18 +6273,23 @@ class TestDXClientNewUser(DXTestCase):
         username, email = generate_unique_username_email()
         first = "Asset"
         cmd = "dx new user"
-        baseargs = "--username {u} --email {e} --first {f} --set-bill-to".format(u=username, e=email, f=first)
+        baseargs = "--username {u} --email {e} --first {f}".format(u=username, e=email, f=first)
+    
+        # no org specified
+        with self.assertRaisesRegex(subprocess.CalledProcessError,
+                                    "error: argument --on-behalf-of: expected one argument"):   
+            run(" ".join([cmd, baseargs,"--on-behalf-of" ]))
         # creating user on behalf of org that does not exist 
         with self.assertRaisesRegex(subprocess.CalledProcessError,
                                         "ResourceNotFound"):
-            run(" ".join([cmd, baseargs,"--on-behalf-of does_not_exist"]))
+            run(" ".join([cmd, baseargs,"--on-behalf-of org-does_not_exist"]))
         # creating user for org in which the adder does not have ADMIN permissions
         with self.assertRaisesRegex(subprocess.CalledProcessError,
                                     "(PermissionDenied)|(ResourceNotFound)"):
             run(" ".join([cmd, baseargs,"--on-behalf-of org-dnanexus"]))
-        
+
         # creating user on behalf of org that does exist and has ADMIN permissions, this should not raise 
-        user_id = run(" ".join([cmd, baseargs,"--on-behalf-of {o}".format(o=self.org_id)])).strip()
+        user_id = run(" ".join([cmd, baseargs,"--on-behalf-of {o} --brief".format(o=self.org_id)])).strip()
         self._assert_user_desc(user_id, {"first": first})
 
 
