@@ -335,9 +335,11 @@ def _is_retryable_exception(e):
     if isinstance(e, urllib3.exceptions.NewConnectionError):
         return True
     if isinstance(e, requests.exceptions.SSLError):
-        errmsg = str(e)
-        if "EOF occurred in violation of protocol" in errmsg:
-            return True
+        return True
+    if isinstance(e, urllib3.exceptions.SSLError):
+        return True
+    if isinstance(e, ssl.SSLError): 
+        return True
     return False
 
 def _extract_msg_from_last_exception():

@@ -12,6 +12,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`
 * `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
+* retry uploading on all types of SSL errors 
 
 ## [327.0] - beta
 
