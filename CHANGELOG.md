@@ -6,11 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [327.1]
-
 ### Added
 
 * `--on-behalf-of <org>` argument for `dx new user`
+
+## [327.1]
 
 ## Fixed
 

@@ -6274,6 +6274,14 @@ class TestDXClientNewUser(DXTestCase):
         first = "Asset"
         cmd = "dx new user"
         baseargs = "--username {u} --email {e} --first {f}".format(u=username, e=email, f=first)
+        user_id = run(" ".join([cmd, baseargs,"--on-behalf-of {o} --brief".format(o=self.org_id)])).strip()
+        self._assert_user_desc(user_id, {"first": first})
+    
+    def test_create_user_on_behalf_of_negative(self):
+        username, email = generate_unique_username_email()
+        first = "Asset2"
+        cmd = "dx new user"
+        baseargs = "--username {u} --email {e} --first {f}".format(u=username, e=email, f=first)
     
         # no org specified
         with self.assertRaisesRegex(subprocess.CalledProcessError,
@@ -6287,10 +6295,6 @@ class TestDXClientNewUser(DXTestCase):
         with self.assertRaisesRegex(subprocess.CalledProcessError,
                                     "(PermissionDenied)|(ResourceNotFound)"):
             run(" ".join([cmd, baseargs,"--on-behalf-of org-dnanexus"]))
-
-        # creating user on behalf of org that does exist and has ADMIN permissions, this should not raise 
-        user_id = run(" ".join([cmd, baseargs,"--on-behalf-of {o} --brief".format(o=self.org_id)])).strip()
-        self._assert_user_desc(user_id, {"first": first})
 
 
     def test_self_signup_negative(self):
