@@ -282,7 +282,7 @@ class DXProject(DXContainer):
     _class = "project"
 
     def new(self, name, summary=None, description=None, protected=None,
-            restricted=None, download_restricted=None, contains_phi=None, 
+            restricted=None, download_restricted=None, contains_phi=None,
             tags=None, properties=None, bill_to=None, database_ui_view_only=None,
             **kwargs):
         """
@@ -296,7 +296,7 @@ class DXProject(DXContainer):
         :type protected: boolean
         :param restricted: If provided, whether the project should be restricted
         :type restricted: boolean
-        :param download_restricted: If provided, whether external downloads should be restricted
+        :param download_restricted: If provided, whether external downloads should be restricted. For database objects, whether the data in the project can be accessed by users from outside DNAnexus
         :type download_restricted: boolean
         :param contains_phi: If provided, whether the project should be marked as containing protected health information (PHI)
         :type contains_phi: boolean
@@ -344,8 +344,8 @@ class DXProject(DXContainer):
         return self._dxid
 
     def update(self, name=None, summary=None, description=None, protected=None,
-               restricted=None, download_restricted=None, version=None, 
-               allowed_executables=None, unset_allowed_executables=None, 
+               restricted=None, download_restricted=None, version=None,
+               allowed_executables=None, unset_allowed_executables=None,
                database_ui_view_only=None, **kwargs):
         """
         :param name: If provided, the new project name
