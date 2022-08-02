@@ -296,7 +296,7 @@ class DXProject(DXContainer):
         :type protected: boolean
         :param restricted: If provided, whether the project should be restricted
         :type restricted: boolean
-        :param download_restricted: If provided, whether external downloads should be restricted. For database objects, whether the data in the project can be accessed by users from outside DNAnexus
+        :param download_restricted: If provided, whether external file downloads and external access to database objects should be restricted
         :type download_restricted: boolean
         :param contains_phi: If provided, whether the project should be marked as containing protected health information (PHI)
         :type contains_phi: boolean
