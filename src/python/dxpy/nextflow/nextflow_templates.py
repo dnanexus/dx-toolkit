@@ -121,9 +121,17 @@ def get_nextflow_src(inputs):
     curl -s https://get.nextflow.io | bash
     mv nextflow /usr/bin
     filtered_inputs=""
+    
+    if "$debug" ; then
+        export NXF_DEBUG=2
+    fi
     {run_inputs}
     echo $filtered_inputs
-    nextflow run / $nf_run_args_and_pipeline_params ${{tmp}}
+    nextflow run / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
+    
+    if "$debug" ; then
+        cat /.nextflow.log
+    fi
     '''
 
 # iterate through inputs of dxapp.json and add them here?
