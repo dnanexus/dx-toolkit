@@ -1,3 +1,6 @@
+def get_docker_login():
+    return
+
 def get_default_inputs():
     return [
         {
@@ -64,8 +67,6 @@ def get_nextflow_dxapp(custom_inputs=[]):
         "title": "Nextflow Pipeline",
         "summary": "nextflow",
         "dxapi": "1.0.0",
-        "openSource": True,
-        "billTo": "org-dnanexus_apps",
         "version": "1.0.0",
         "inputSpec": inputs,
         "outputSpec": [
@@ -128,10 +129,6 @@ def get_nextflow_src(inputs):
     {run_inputs}
     echo $filtered_inputs
     nextflow run / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
-    
-    if "$debug" ; then
-        cat /.nextflow.log
-    fi
     '''
 
 # iterate through inputs of dxapp.json and add them here?

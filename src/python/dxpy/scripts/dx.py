@@ -4751,6 +4751,9 @@ build_parser.add_argument('--keep-open', help=fill("Do not close workflow after 
 # nextflow
 build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet. Can be used with --repository.",
                                                    width_adjustment=-24), action='store_true')
+# nextflow
+build_parser.add_argument('--profile', help=fill("Default profile for Nextflow pipeline. Can be used only with --nextflow.",
+                                                   width_adjustment=-24), action='store_true')
 
 # repository
 build_parser.add_argument('--repository', help=fill("Specifies GitHub repository of Nextflow workflow. Needs to be used with --nextflow and cannot be used with --remote.",

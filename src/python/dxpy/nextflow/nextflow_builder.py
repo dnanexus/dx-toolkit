@@ -25,7 +25,7 @@ Note that folder is created as a tempfile
 '''
 
 
-def build_pipeline_from_repository(args=None):
+def build_pipeline_from_repository(args):
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
         parser.error(
