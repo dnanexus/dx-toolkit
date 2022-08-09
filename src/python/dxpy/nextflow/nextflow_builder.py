@@ -1,5 +1,6 @@
 import os
-from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp get_nextflow_src
+from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
+from dxpy.nextflow.nextflow_templates import get_nextflow_src
 import tempfile
 import dxpy
 import json
