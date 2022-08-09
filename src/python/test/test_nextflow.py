@@ -19,8 +19,6 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 import os
-print("FFFS")
-print(os.getcwd())
 # from dxpy_testutil import (DXTestCase, run)
 from dxpy.compat import str
 from datetime import datetime
@@ -102,7 +100,7 @@ def build_nextflow_applet(app_dir, project_id):
 
 class TestNextflow(unittest.TestCase):
     def test_temp(self):
-        print("HGghffhghf")
+        print("test-message")
         assert False
 
 
