@@ -57,7 +57,7 @@ def build_pipeline_from_repository(args):
     return applet_id
 
 
-def prepare_nextflow(resources_dir, args) -> str:
+def prepare_nextflow(resources_dir, args):
     assert os.path.exists(resources_dir)
     inputs = []
     dxapp_dir = tempfile.mkdtemp(prefix="dx.nextflow.")
