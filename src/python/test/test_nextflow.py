@@ -18,7 +18,11 @@
 #   under the License.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
-import os
+
+from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
+                           select_project, cd, override_environment, generate_unique_username_email,
+                           without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
+
 # from dxpy_testutil import (DXTestCase, run)
 from dxpy.compat import str
 from datetime import datetime
@@ -29,67 +33,6 @@ import shutil
 import subprocess
 import locale
 
-class DXCalledProcessError(subprocess.CalledProcessError):
-    def __init__(self, returncode, cmd, output=None, stderr=None):
-        self.returncode = returncode
-        self.cmd = cmd
-        self.output = output
-        self.stderr = stderr
-    def __str__(self):
-        return "Command '%s' returned non-zero exit status %d, stderr:\n%s" % (self.cmd, self.returncode, self.stderr)
-
-
-def check_output(*popenargs, **kwargs):
-    """
-    Adapted version of the builtin subprocess.check_output which sets a
-    "stderr" field on the resulting exception (in addition to "output")
-    if the subprocess fails. (If the command succeeds, the contents of
-    stderr are discarded.)
-
-    :param also_return_stderr: if True, return stderr along with the output of the command as such (output, stderr)
-    :type also_return_stderr: bool
-
-    Unlike subprocess.check_output, unconditionally decodes the contents of the subprocess stdout and stderr using
-    sys.stdin.encoding.
-    """
-    if 'stdout' in kwargs:
-        raise ValueError('stdout argument not allowed, it will be overridden.')
-    if 'stderr' in kwargs:
-        raise ValueError('stderr argument not allowed, it will be overridden.')
-
-    return_stderr = False
-    if 'also_return_stderr' in kwargs:
-        if kwargs['also_return_stderr']:
-            return_stderr = True
-        del kwargs['also_return_stderr']
-
-    # Unplug stdin (if not already overridden) so that dx doesn't prompt
-    # user for input at the tty
-    process = subprocess.Popen(stdin=kwargs.get('stdin', subprocess.PIPE),
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
-    output, err = process.communicate()
-    retcode = process.poll()
-    output = output.decode(locale.getpreferredencoding())
-    err = err.decode(locale.getpreferredencoding())
-    if retcode:
-        print(err)
-        cmd = kwargs.get("args")
-        if cmd is None:
-            cmd = popenargs[0]
-        exc = DXCalledProcessError(retcode, cmd, output=output, stderr=err)
-        raise exc
-
-    if return_stderr:
-        return (output, err)
-    else:
-        return output
-
-def run(command, **kwargs):
-    print("$ %s" % (command,))
-    output = check_output(command, shell=True, **kwargs)
-    print(output)
-    return output
-
 def build_nextflow_applet(app_dir, project_id):
     updated_app_dir = app_dir + str(uuid.uuid1())
     # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
@@ -98,7 +41,7 @@ def build_nextflow_applet(app_dir, project_id):
     build_output = run(['dx', 'build', '--nextflow', './nextflow'])
     return json.loads(build_output)['id']
 
-class TestNextflow(unittest.TestCase):
+class TestNextflow(DXTestCase):
     def test_temp(self):
         print("test-message")
         assert False
