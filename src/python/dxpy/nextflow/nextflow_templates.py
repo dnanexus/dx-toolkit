@@ -106,7 +106,7 @@ def get_nextflow_dxapp(custom_inputs=[]):
     }
 
 
-def get_nextflow_src(inputs):
+def get_nextflow_src(inputs, args):
     run_inputs = ""
     for i in inputs:
         # we cannot override arguments that were not given at the runtime
@@ -116,6 +116,9 @@ def get_nextflow_src(inputs):
         fi
         '''
 
+    profile_arg = "-profile {}".format(args.profile) if args.profile else ""
+    print(profile_arg)
+    print("HERE!")
     return f'''
     #!/usr/bin/env bash
     
@@ -128,7 +131,7 @@ def get_nextflow_src(inputs):
     fi
     {run_inputs}
     echo $filtered_inputs
-    nextflow run / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
+    nextflow run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
     '''
 
 # iterate through inputs of dxapp.json and add them here?

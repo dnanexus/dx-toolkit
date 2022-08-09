@@ -31,22 +31,20 @@ def build_pipeline_from_repository(args):
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
-    print("input hash here")
     input_hash = {
-        "repository_url": args.repository
+        "repository_url": args.repository,
+        "repository_tag": args.tag,
+        "config_profile": args.profile
     }
-    print("api options hash here")
 
     api_options = {
         "name": "Nextflow build of %s" % (args.repository),
         "input": input_hash,
         "project": build_project_id,
     }
-    print("rhnning npi...")
 
     # TODO: this will have to be an app app_run!
     app_run_result = dxpy.api.applet_run('applet-GFb8kQj0469zQ5P5BQGYpKJz', input_params=api_options)
-    print("applet run finished...")
     job_id = app_run_result["id"]
     if not args.brief:
         print("Started builder job %s" % (job_id,))
@@ -59,14 +57,14 @@ def build_pipeline_from_repository(args):
     return applet_id
 
 
-def prepare_nextflow(resources_dir) -> str:
+def prepare_nextflow(resources_dir, args) -> str:
     assert os.path.exists(resources_dir)
     inputs = []
     dxapp_dir = tempfile.mkdtemp(prefix="dx.nextflow.")
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
     DXAPP_CONTENT = get_nextflow_dxapp(inputs)
-    EXEC_CONTENT = get_nextflow_src(inputs)
+    EXEC_CONTENT = get_nextflow_src(inputs, args)
     write_dxapp(dxapp_dir, DXAPP_CONTENT)
     write_exec(dxapp_dir, EXEC_CONTENT)
 

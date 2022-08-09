@@ -998,7 +998,7 @@ def _build_app(args, extra_args):
     if args.nextflow:
         types = ["nextflow"]
         resources_dir = args.src_dir
-        source_dir = prepare_nextflow(resources_dir)
+        source_dir = prepare_nextflow(resources_dir, args)
     if args._from:
         # BUILD FROM EXISTING APPLET
         try:
