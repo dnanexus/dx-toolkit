@@ -117,10 +117,3 @@ def prepare_inputs(schema_file):
                 dx_input["optional"] = True
             inputs.append(dx_input)
     return inputs
-        # Check that this definition is mentioned in allOf
-    # nexflow_schema.json in src_dir
-    # if not brief, print number of arguments (nf-core?)
-    # add arguments
-    # no type -> string?
-    # is output array of files?
-    ...
