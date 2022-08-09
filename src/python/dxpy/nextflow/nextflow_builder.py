@@ -45,7 +45,7 @@ def build_pipeline_from_repository(args):
     print("rhnning npi...")
 
     # TODO: this will have to be an app app_run!
-    app_run_result = dxpy.api.applet_run('nextflow_pipeline_importer', input_params=api_options)
+    app_run_result = dxpy.api.applet_run('applet-GFb8kQj0469zQ5P5BQGYpKJz', input_params=api_options)
     print("applet run finished...")
     job_id = app_run_result["id"]
     if not args.brief:
