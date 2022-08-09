@@ -31,17 +31,21 @@ def build_pipeline_from_repository(args):
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
+    print("input hash here")
     input_hash = {
         "repository_url": args.repository,
         "repository_tag": args.tag,
         "config_profile": args.profile
     }
+    print("api options hash here")
 
     api_options = {
         "name": "Nextflow build of %s" % (args.repository),
         "input": input_hash,
         "project": build_project_id,
     }
+    print("rhnning npi...")
+
     # TODO: this will have to be an app app_run!
     app_run_result = dxpy.api.applet_run('nextflow_pipeline_importer', input_params=api_options)
     job_id = app_run_result["id"]

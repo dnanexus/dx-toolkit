@@ -1081,18 +1081,18 @@ def _build_app(args, extra_args):
         # --remote. To enable these, we need to learn how to pass these
         # options through to the interior call of dx_build_app(let).
         if args.dry_run:
-            parser.error('--remote cannot be combined with --dry-run')
+            parser.error('--remote and --repository cannot be combined with --dry-run')
         if args.overwrite:
-            parser.error('--remote cannot be combined with --overwrite/-f')
+            parser.error('--remote and --repository cannot be combined with --overwrite/-f')
         if args.archive:
-            parser.error('--remote cannot be combined with --archive/-a')
+            parser.error('--remote and --repository cannot be combined with --archive/-a')
 
         # The following flags are probably not useful in conjunction
         # with --remote.
         if args.json:
-            parser.error('--remote cannot be combined with --json')
+            parser.error('--remote and --repository cannot be combined with --json')
         if not args.use_temp_build_project:
-            parser.error('--remote cannot be combined with --no-temp-build-project')
+            parser.error('--remote and --repository cannot be combined with --no-temp-build-project')
 
         if isinstance(args.region, list) and len(args.region) > 1:
             parser.error('--region can only be specified once for remote builds')
