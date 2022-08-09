@@ -93,7 +93,7 @@ def get_nextflow_dxapp(custom_inputs=[]):
             }
         },
         "details": {
-            "whatsNew": "1.0.0: initial version"
+            "whatsNew": "1.0.0: Initial version"
         },
         "categories": [],
         "access": {

@@ -2652,8 +2652,8 @@ def build(args):
         if args.mode in ("globalworkflow", "applet", "app") and args.keep_open:
             build_parser.error("Global workflows, applets and apps cannot be kept open")
 
-        if args.nextflow and args.repository and not args.remote:
-            build_parser.error("Cannot build Nextflow pipeline from repository locally. Please use --remote.")
+        if args.nextflow and args.repository and args.remote:
+            build_parser.error("Nextflow pipeline built from repository is always build using Nextflow Pipeline Importer. This is not compatible with --remote.")
 
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
@@ -4748,17 +4748,17 @@ app_and_globalworkflow_options.add_argument("--region", action="append", help="E
 build_parser.add_argument('--keep-open', help=fill("Do not close workflow after building it. Cannot be used when building apps, applets or global workflows.",
                                                    width_adjustment=-24), action='store_true')
 
-# nextflow
+# --nextflow
 build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet. Can be used with --repository.",
                                                    width_adjustment=-24), action='store_true')
-# nextflow
+# --profile
 build_parser.add_argument('--profile', help=fill("Default profile for Nextflow pipeline. Can be used only with --nextflow.",
-                                                   width_adjustment=-24), action='store_true')
+                                                   width_adjustment=-24), dest="profile")
 
-# repository
+# --repository
 build_parser.add_argument('--repository', help=fill("Specifies GitHub repository of Nextflow workflow. Needs to be used with --nextflow and cannot be used with --remote.",
                                                    width_adjustment=-24), dest="repository")
-# tag
+# --tag
 build_parser.add_argument('--tag', help=fill("Specifies tag for GitHub repository. Needs to be used with --repository.",
                                                    width_adjustment=-24), dest="tag")
 

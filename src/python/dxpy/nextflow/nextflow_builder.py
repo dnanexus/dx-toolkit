@@ -1,5 +1,5 @@
 import os
-from dxpy.nextflow.nextflow_templates import *
+from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp get_nextflow_src
 import tempfile
 import dxpy
 import json
@@ -32,6 +32,8 @@ def build_pipeline_from_repository(args):
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
     input_hash = {
         "repository_url": args.repository,
+        "repository_tag": args.tag,
+        "config_profile": args.profile
     }
 
     api_options = {
