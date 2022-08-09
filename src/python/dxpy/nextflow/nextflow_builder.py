@@ -33,9 +33,7 @@ def build_pipeline_from_repository(args):
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
     print("input hash here")
     input_hash = {
-        "repository_url": args.repository,
-        "repository_tag": args.tag,
-        "config_profile": args.profile
+        "repository_url": args.repository
     }
     print("api options hash here")
 
@@ -48,6 +46,7 @@ def build_pipeline_from_repository(args):
 
     # TODO: this will have to be an app app_run!
     app_run_result = dxpy.api.applet_run('nextflow_pipeline_importer', input_params=api_options)
+    print("applet run finished...")
     job_id = app_run_result["id"]
     if not args.brief:
         print("Started builder job %s" % (job_id,))
