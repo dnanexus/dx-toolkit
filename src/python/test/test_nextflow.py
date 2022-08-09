@@ -22,14 +22,14 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
                            select_project, cd, override_environment, generate_unique_username_email,
                            without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
+import dxpy_testutil as testutil
 
-# from dxpy_testutil import (DXTestCase, run)
 from dxpy.compat import str
 from datetime import datetime
 import uuid
 import unittest
 import json
-import shutil
+import pytest
 import subprocess
 import locale
 
@@ -46,7 +46,8 @@ class TestNextflow(DXTestCase):
         print("test-message")
         assert False
 
-
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_API_PROJ_VIEW_FOLDERS","DNA_API_PROJ_REMOVE_FOLDER"])
     def test_basic_hello(self):
         applet = build_nextflow_applet("./nextflow/", "project-GFYvg4Q0469VKVVVP359Yfpp")
         print(applet)
