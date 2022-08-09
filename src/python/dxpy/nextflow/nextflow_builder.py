@@ -6,7 +6,6 @@ import dxpy
 import json
 
 
-
 def write_exec(folder, content):
     exec_file = f"{folder}/nextflow.sh"
     os.makedirs(os.path.dirname(os.path.abspath(exec_file)), exist_ok=True)
@@ -70,7 +69,7 @@ def prepare_nextflow(resources_dir, args):
 
     return dxapp_dir
 
-
+# TODO: Add docstrings for all the methods.
 def prepare_inputs(schema_file):
     def get_default_input_value(key):
         types = {
@@ -88,8 +87,8 @@ def prepare_inputs(schema_file):
             "integer": "int",
             "number": "float",
             "boolean": "boolean",
-            "object":"hash"  # TODO: check default values
-        # TODO: add directory + file + path
+            "object": "hash"  # TODO: check default values
+            # TODO: add directory + file + path
         }
         if nf_type in types:
             return types[nf_type]
@@ -103,7 +102,7 @@ def prepare_inputs(schema_file):
     except Exception as json_e:
         raise AssertionError(json_e)
     for d_key, d_schema in schema.get("definitions", {}).items():
-        required_inputs = d_schema.get("required",[])
+        required_inputs = d_schema.get("required", [])
         for property_key, property in d_schema.get("properties", {}).items():
             dx_input = {}
             dx_input["name"] = f"{property_key}"

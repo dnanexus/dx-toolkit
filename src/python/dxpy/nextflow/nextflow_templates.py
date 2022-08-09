@@ -106,7 +106,7 @@ def get_nextflow_dxapp(custom_inputs=[]):
         }
     }
 
-
+# TODO: change args to individual arguments.
 def get_nextflow_src(inputs, args):
     run_inputs = ""
     for i in inputs:
