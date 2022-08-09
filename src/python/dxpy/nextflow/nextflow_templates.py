@@ -1,4 +1,5 @@
 def get_docker_login():
+
     return
 
 def get_default_inputs():
@@ -117,8 +118,6 @@ def get_nextflow_src(inputs, args):
         '''
 
     profile_arg = "-profile {}".format(args.profile) if args.profile else ""
-    print(profile_arg)
-    print("HERE!")
     return f'''
     #!/usr/bin/env bash
     

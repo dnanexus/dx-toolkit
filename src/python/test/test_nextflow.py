@@ -18,85 +18,95 @@
 #   under the License.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
+import os
+print("FFFS")
+print(os.getcwd())
+# from dxpy_testutil import (DXTestCase, run)
+from dxpy.compat import str
+from datetime import datetime
+import uuid
+import unittest
+import json
+import shutil
+import subprocess
+import locale
 
-import os, sys, unittest, json, tempfile, subprocess, shutil, re, base64, random, time
-import filecmp
-import pipes
-import stat
-import hashlib
-import collections
-import string
-from contextlib import contextmanager
-import pexpect
-import requests
-import textwrap
-import pytest
-import gzip
-import tarfile
-from mock import patch
-
-import dxpy
-import dxpy.executable_builder
-import dxpy.workflow_builder
-from dxpy.scripts import dx_build_app
-from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
-                           select_project, cd, override_environment, generate_unique_username_email,
-                           without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
-import dxpy_testutil as testutil
-from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
-from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
-from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
+class DXCalledProcessError(subprocess.CalledProcessError):
+    def __init__(self, returncode, cmd, output=None, stderr=None):
+        self.returncode = returncode
+        self.cmd = cmd
+        self.output = output
+        self.stderr = stderr
+    def __str__(self):
+        return "Command '%s' returned non-zero exit status %d, stderr:\n%s" % (self.cmd, self.returncode, self.stderr)
 
 
-def test_basic_hello(self):
-    applet_id = dxpy.api.applet_new({"name": "my_first_applet",
-                                     "project": self.project,
-                                     "dxapi": "1.0.0",
-                                     "inputSpec": [{"name": "number", "class": "int"}],
-                                     "outputSpec": [{"name": "number", "class": "int"}],
-                                     "runSpec": {"interpreter": "bash",
-                                                 "distribution": "Ubuntu",
-                                                 "release": "14.04",
-                                                 "code": "exit 0"}
-                                     })['id']
+def check_output(*popenargs, **kwargs):
+    """
+    Adapted version of the builtin subprocess.check_output which sets a
+    "stderr" field on the resulting exception (in addition to "output")
+    if the subprocess fails. (If the command succeeds, the contents of
+    stderr are discarded.)
+
+    :param also_return_stderr: if True, return stderr along with the output of the command as such (output, stderr)
+    :type also_return_stderr: bool
+
+    Unlike subprocess.check_output, unconditionally decodes the contents of the subprocess stdout and stderr using
+    sys.stdin.encoding.
+    """
+    if 'stdout' in kwargs:
+        raise ValueError('stdout argument not allowed, it will be overridden.')
+    if 'stderr' in kwargs:
+        raise ValueError('stderr argument not allowed, it will be overridden.')
+
+    return_stderr = False
+    if 'also_return_stderr' in kwargs:
+        if kwargs['also_return_stderr']:
+            return_stderr = True
+        del kwargs['also_return_stderr']
+
+    # Unplug stdin (if not already overridden) so that dx doesn't prompt
+    # user for input at the tty
+    process = subprocess.Popen(stdin=kwargs.get('stdin', subprocess.PIPE),
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, *popenargs, **kwargs)
+    output, err = process.communicate()
+    retcode = process.poll()
+    output = output.decode(locale.getpreferredencoding())
+    err = err.decode(locale.getpreferredencoding())
+    if retcode:
+        print(err)
+        cmd = kwargs.get("args")
+        if cmd is None:
+            cmd = popenargs[0]
+        exc = DXCalledProcessError(retcode, cmd, output=output, stderr=err)
+        raise exc
+
+    if return_stderr:
+        return (output, err)
+    else:
+        return output
+
+def run(command, **kwargs):
+    print("$ %s" % (command,))
+    output = check_output(command, shell=True, **kwargs)
+    print(output)
+    return output
+
+def build_nextflow_applet(app_dir, project_id):
+    updated_app_dir = app_dir + str(uuid.uuid1())
+    # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
+    shutil.copytree(app_dir, updated_app_dir)
+
+    build_output = run(['dx', 'build', '--nextflow', './nextflow'])
+    return json.loads(build_output)['id']
+
+class TestNextflow(unittest.TestCase):
+    def test_temp(self):
+        print("HGghffhghf")
+        assert False
 
 
-    wf_input = [{"name": "foo", "class": "int"}]
-    wf_output = [{"name": "bar", "class": "int", "outputSource":
-        {"$dnanexus_link": {"stage": "stage_0", "outputField": "number"}}}]
-
-    workflow_spec = {"name": "my_workflow",
-                     "outputFolder": "/",
-                     "stages": [stage0, stage1],
-                     "inputs": wf_input,
-                     "outputs": wf_output
-                     }
-
-    workflow_dir = self.write_workflow_directory("dxbuilt_workflow",
-                                                 json.dumps(workflow_spec),
-                                                 readme_content="Workflow Readme")
-
-    new_workflow = json.loads(run("dx build --json " + workflow_dir))
-    wf_describe = dxpy.get_handler(new_workflow["id"]).describe()
-    self.assertEqual(wf_describe["class"], "workflow")
-    self.assertEqual(wf_describe["id"], new_workflow["id"])
-    self.assertEqual(wf_describe["editVersion"], 0)
-    self.assertEqual(wf_describe["name"], "my_workflow")
-    self.assertEqual(wf_describe["state"], "closed")
-    self.assertEqual(wf_describe["outputFolder"], "/")
-    self.assertEqual(wf_describe["project"], self.project)
-    self.assertEqual(wf_describe["description"], "Workflow Readme")
-    self.assertEqual(len(wf_describe["stages"]), 2)
-    self.assertEqual(wf_describe["stages"][0]["id"], "stage_0")
-    self.assertEqual(wf_describe["stages"][0]["name"], "stage_0_name")
-    self.assertEqual(wf_describe["stages"][0]["executable"], applet_id)
-    self.assertEqual(wf_describe["stages"][0]["executionPolicy"]["restartOn"], {})
-    self.assertEqual(wf_describe["stages"][0]["executionPolicy"]["onNonRestartableFailure"],
-                     "failStage")
-    self.assertEqual(wf_describe["stages"][0]["systemRequirements"]["main"]["instanceType"],
-                     self.default_inst_type)
-    self.assertEqual(wf_describe["stages"][1]["id"], "stage_1")
-    self.assertIsNone(wf_describe["stages"][1]["name"])
-    self.assertEqual(wf_describe["stages"][1]["executable"], applet_id)
-    self.assertEqual(wf_describe["inputs"], wf_input)
-    self.assertEqual(wf_describe["outputs"], wf_output)
+    def test_basic_hello(self):
+        applet = build_nextflow_applet("./nextflow/", "project-GFYvg4Q0469VKVVVP359Yfpp")
+        print(applet)
+        self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
