@@ -1027,7 +1027,7 @@ def _build_app(args, extra_args):
 
         return output['id']
 
-    if not args.remote:
+    if not args.remote or args.repository:  # building with NF repository is implicitly remote
         # LOCAL BUILD
         # change nextflow HERE TODO:
         try:
