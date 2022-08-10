@@ -6,9 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## Added
+### Added
 
-* Optional parameter `--head-job-on-demand` for `dx run app(let)-xxxx` 
+* `--head-job-on-demand` argument for `dx run app(let)-xxxx` 
+* `--on-behalf-of <org>` argument for `dx new user`
 
 ## [327.1]
 
@@ -16,6 +17,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`
 * `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
+* retry uploading on all types of SSL errors 
 
 ## [327.0] - beta
 

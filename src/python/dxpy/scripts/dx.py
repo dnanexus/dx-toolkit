@@ -1355,6 +1355,8 @@ def _get_user_new_args(args):
         user_new_args["occupation"] = args.occupation
     if args.set_bill_to is True:
         user_new_args["billTo"] = args.org
+    if args.on_behalf_of is not None:
+        user_new_args["provisioningOrg"] = args.on_behalf_of
     return user_new_args
 
 
@@ -5314,6 +5316,7 @@ parser_new_user_user_opts.add_argument("--middle", help="Middle name")
 parser_new_user_user_opts.add_argument("--last", help="Last name")
 parser_new_user_user_opts.add_argument("--token-duration", help='Time duration for which the newly generated auth token for the new user will be valid (default 30 days; max 30 days). An integer will be interpreted as seconds; you can append a suffix (s, m, h, d) to indicate different units (e.g. "--token-duration 10m" to indicate 10 minutes).')
 parser_new_user_user_opts.add_argument("--occupation", help="Occupation")
+parser_new_user_user_opts.add_argument("--on-behalf-of", help="On behalf of which org is the account provisioned")
 parser_new_user_org_opts = parser_new_user.add_argument_group("Org options", "Optionally invite the new user to an org with the specified parameters")
 parser_new_user_org_opts.add_argument("--org", help="ID of the org")
 parser_new_user_org_opts.add_argument("--level", choices=["ADMIN", "MEMBER"], default="MEMBER", action=DXNewUserOrgArgsAction, help="Org membership level that will be granted to the new user; default MEMBER")
