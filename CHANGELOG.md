@@ -12,9 +12,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `--head-job-on-demand` argument for `dx-jobutil-new-job`
 * `--on-behalf-of <org>` argument for `dx new user`
 
-## [327.1]
-
-## Fixed
+### Fixed
 
 * Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`
 * `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
@@ -22,50 +20,50 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [327.0] - beta
 
-## Added
+### Added
 
 * `dx extract_dataset` command
 * New dxpy dependencies pandas, numpy
 
-## Fixed
+### Fixed
 
 * Parsing ignoreReuse in `dx build` of workflow
 
-## Changed
+### Changed
 
 * DXHTTPRequest to pass ssl_context
 
 ## [326.1] - 2022.7.7 - stable
 
-## Added
+### Added
 
 * '--rank' argument for `dx run`
 
-## Fixed
+### Fixed
 
 * Do not use job's workspace container ID in /applet-xxxx/run for detached jobs
 
 ## [325.1] - 2022.5.25
 
-## Fixed
+### Fixed
 
 * `dx describe` of executable with bundledDepends that is not an asset
 * Building globalworkflow from existing workflow with `dx build --from`
 
 ## [324.1] - 2022.5.13
 
-## Fixed
+### Fixed
 
 * Improvements to symlink downloading reliability by solely using `aria2c` and enhancing options around its use (removes `wget` option for downloading symlinked files, adds the ability to set max tries for aria2c, adds `-c` flag for continuing downloads, removes the `--check-certificate=false` option).
 * `dx build` comparison of workflow directory to workflow name
 * Set project argument for `dx run --detach` when executed from inside a job
 
-## Changed
+### Changed
 
 * Removed `wget` option for downloading symlinked files
 * Bump allowed requests dxpy dependency version to 2.27.1
 
-## Added
+### Added
 
 * New argument `symlink_max_tries` for `dxpy.download_dxfile()` with default value of 15
 
