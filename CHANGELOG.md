@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * `--head-job-on-demand` argument for `dx run app(let)-xxxx` 
+* `--head-job-on-demand` argument for `dx-jobutil-new-job`
 * `--on-behalf-of <org>` argument for `dx new user`
 
 ## [327.1]
