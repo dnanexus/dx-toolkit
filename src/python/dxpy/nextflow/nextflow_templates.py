@@ -107,7 +107,7 @@ def get_nextflow_dxapp(custom_inputs=[]):
     }
 
 # TODO: change args to individual arguments.
-def get_nextflow_src(inputs, args):
+def get_nextflow_src(inputs, profile):
     run_inputs = ""
     for i in inputs:
         # we cannot override arguments that were not given at the runtime
@@ -117,7 +117,7 @@ def get_nextflow_src(inputs, args):
         fi
         '''
 
-    profile_arg = "-profile {}".format(args.profile) if args.profile else ""
+    profile_arg = "-profile {}".format(profile) if profile else ""
     return f'''
     #!/usr/bin/env bash
     

@@ -19,25 +19,31 @@ def write_dxapp(folder, content):
         json.dump(content, dxapp)
 
 
-'''
-Creates files needed for nextflow applet build and returns folder with these files.
-Note that folder is created as a tempfile
-'''
+def build_pipeline_from_repository(repository, tag, profile, brief):
+    """
+    :param repository: URL to git repository
+    :type repository: string
+    :param tag: tag of given git repository. if not given, default branch is used.
+    :type tag: string
+    :param profile: Custom NF profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
+    :type profile: string
+    :param brief: Level of verbosity
+    :type brief: boolean
 
-
-def build_pipeline_from_repository(args):
+    Runs the Nextflow Pipeline Importer app, which creates NF applet from given repository.
+    """
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
     input_hash = {
-        "repository_url": args.repository,
-        "repository_tag": args.tag,
-        "config_profile": args.profile
+        "repository_url": repository,
+        "repository_tag": tag,
+        "config_profile": profile
     }
 
     api_options = {
-        "name": "Nextflow build of %s" % (args.repository),
+        "name": "Nextflow build of %s" % (repository),
         "input": input_hash,
         "project": build_project_id,
     }
@@ -45,25 +51,32 @@ def build_pipeline_from_repository(args):
     # TODO: this will have to be an app app_run!
     app_run_result = dxpy.api.applet_run('applet-GFb8kQj0469zQ5P5BQGYpKJz', input_params=api_options)
     job_id = app_run_result["id"]
-    if not args.brief:
+    if not brief:
         print("Started builder job %s" % (job_id,))
     dxpy.DXJob(job_id).wait_on_done(interval=1)
     applet_id, _ = dxpy.get_dxlink_ids(dxpy.api.job_describe(job_id)['output']['output_applet'])
-    if not args.brief:
+    if not brief:
         print("Created Nextflow pipeline %s" % (applet_id))
     else:
         print(applet_id)
     return applet_id
 
+def prepare_nextflow(resources_dir, profile):
+    """
+    :param resources_dir: Directory with all resources needed for Nextflow Pipeline. Usually directory with user's NF files.
+    :type resources_dir: str or Path
+    :param profile: Custom NF profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
+    :type profile: string
 
-def prepare_nextflow(resources_dir, args):
+    Creates files for creating applet, such as dxapp.json and source file. These files are created in temp directory.
+    """
     assert os.path.exists(resources_dir)
     inputs = []
     dxapp_dir = tempfile.mkdtemp(prefix="dx.nextflow.")
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
     DXAPP_CONTENT = get_nextflow_dxapp(inputs)
-    EXEC_CONTENT = get_nextflow_src(inputs, args)
+    EXEC_CONTENT = get_nextflow_src(inputs, profile)
     write_dxapp(dxapp_dir, DXAPP_CONTENT)
     write_exec(dxapp_dir, EXEC_CONTENT)
 

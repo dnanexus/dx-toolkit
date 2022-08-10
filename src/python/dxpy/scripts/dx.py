@@ -2653,7 +2653,7 @@ def build(args):
             build_parser.error("Global workflows, applets and apps cannot be kept open")
 
         if args.nextflow and args.repository and args.remote:
-            build_parser.error("Nextflow pipeline built from repository is always build using Nextflow Pipeline Importer. This is not compatible with --remote.")
+            build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
 
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
@@ -4756,7 +4756,7 @@ build_parser.add_argument('--profile', help=fill("Default profile for Nextflow p
                                                    width_adjustment=-24), dest="profile")
 
 # --repository
-build_parser.add_argument('--repository', help=fill("Specifies GitHub repository of Nextflow workflow. Needs to be used with --nextflow and cannot be used with --remote.",
+build_parser.add_argument('--repository', help=fill("Specifies a git repository of Nextflow workflow. Needs to be used with --nextflow and cannot be used with --remote.",
                                                    width_adjustment=-24), dest="repository")
 # --tag
 build_parser.add_argument('--tag', help=fill("Specifies tag for GitHub repository. Needs to be used with --repository.",
