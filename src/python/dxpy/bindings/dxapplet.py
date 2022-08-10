@@ -121,8 +121,12 @@ class DXExecutable:
         for unsupported_arg in ['stage_instance_types', 'stage_folders', 'rerun_stages', 'ignore_reuse_stages']:
             if kwargs.get(unsupported_arg):
                 raise DXError(unsupported_arg + ' is not supported for applets (only workflows)')
+        
+        run_input = DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
 
-        return DXExecutable._get_run_input_common_fields(executable_input, **kwargs)
+        if kwargs.get('head_job_on_demand') is not None:
+            run_input["headJobOnDemand"] = kwargs['head_job_on_demand']
+        return run_input
 
     def _run_impl(self, run_input, **kwargs):
         """
@@ -168,7 +172,7 @@ class DXExecutable:
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
-            depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None,
+            depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None, 
             ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
@@ -197,6 +201,8 @@ class DXExecutable:
         :type delay_workspace_destruction: boolean
         :param priority: Priority level to request for all jobs created in the execution tree, "low", "normal", or "high"
         :type priority: string
+        :param head_job_on_demand: If true, the job will be run on a demand instance.
+        :type head_job_on_demand: bool
         :param ignore_reuse: Disable job reuse for this execution
         :type ignore_reuse: boolean
         :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
@@ -239,6 +245,7 @@ class DXExecutable:
                                         debug=debug,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
+                                        head_job_on_demand = head_job_on_demand,
                                         detach=detach,
                                         cost_limit=cost_limit,
                                         rank=rank,

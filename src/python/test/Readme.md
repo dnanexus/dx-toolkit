@@ -22,3 +22,5 @@ $ ./test_dxclient.py TestDXClient.test_dx_project_tagging
 Note however that in this case, the test runs your currently-installed
 version of `dx`, so if you have made local changes, you should rebuild
 it before running the test.
+
+Using print() for debugging inside dx-toolkit can break tests (causing premature tearDown).
