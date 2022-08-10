@@ -3025,6 +3025,9 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "extra_args": args.extra_args
     }
 
+    if isinstance(executable, dxpy.DXApplet) or isinstance(executable, dxpy.DXApp):
+        run_kwargs["head_job_on_demand"] = args.head_job_on_demand
+
     if any([args.watch or args.ssh or args.allow_ssh]):
         if run_kwargs["priority"] in ["low", "normal"]:
             if not args.brief:
@@ -3440,10 +3443,12 @@ def run(args):
     is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
 
     if args.depends_on and (is_workflow or is_global_workflow):
-
         err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
                  expected_exceptions=(DXParserError,))
-
+    if args.head_job_on_demand and (is_workflow or is_global_workflow):
+        err_exit(exception=DXParserError("--head-job-on-demand cannot be used when running workflows"),
+                 expected_exceptions=(DXParserError,))
+        
     # if the destination project has still not been set, use the
     # current project
     if dest_proj is None:
@@ -5124,6 +5129,10 @@ parser_run.add_argument('--priority',
                         help=fill('Request a scheduling priority for all resulting jobs. ' +
                                   'Defaults to high when --watch, --ssh, or --allow-ssh flags are used.', 
                                   width_adjustment=-24))
+parser_run.add_argument('--head-job-on-demand', action='store_true',
+                        help=fill('Requests that the head job of an app or applet be run in an on-demand instance. ' +
+                                  'Note that --head-job-on-demand option will override the --priority setting for the head job',
+                                  width_adjustment=-24))
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
 parser_run.add_argument('--watch', help="Watch the job after launching it. Defaults --priority to high.", action='store_true')
@@ -5185,7 +5194,7 @@ parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job befor
                                               width_adjustment=-24), metavar='cost_limit', type=float)
 parser_run.add_argument('-r', '--rank', type=int, help='Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', default=None)
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
-                        stage_instance_types=None, stage_folders=None)
+                        stage_instance_types=None, stage_folders=None, head_job_on_demand=None)
 register_parser(parser_run, categories='exec')
 
 #####################################

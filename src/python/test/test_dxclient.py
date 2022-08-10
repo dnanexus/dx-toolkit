@@ -3144,7 +3144,7 @@ dx-jobutil-add-output record_array $second_record --array
                          'skipping tests that would run jobs')
     def test_dx_run_head_job_on_demand(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
-                                         "name": "myapplet2",
+                                         "name": "myapplet4",
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
@@ -3154,34 +3154,26 @@ dx-jobutil-add-output record_array $second_record --array
                                          "access": {"project": "VIEW",
                                                     "allProjects": "VIEW",
                                                     "network": []}})["id"]
-           
+        special_field_query_json = json.loads('{"fields":{"headJobOnDemand":true}}')
+        normal_job_id = run("dx run myapplet4 --brief -y").strip()
+        normal_job_desc = dxpy.api.job_describe(normal_job_id, special_field_query_json)
+        self.assertEqual(normal_job_desc["headJobOnDemand"], None)
 
-        specialFieldQueryJson = json.loads('{"fields":{"headJobOnDemand":true}}')
-        normal_job_id = run("dx run myapplet2 --brief -y").strip()
-        normal_job_desc = dxpy.api.describe(normal_job_id, specialFieldQueryJson)
-        self.assertEqual(normal_job_desc["headJobOnDemand"], "false")
-
-        head_on_demand_job_id = run("dx run myapplet2 --head-job-on-demand --brief -y").strip()
-        head_on_demand_job_desc = dxpy.describe(head_on_demand_job_id, specialFieldQueryJson)
-        self.assertEqual(head_on_demand_job_desc["headJobOnDemand"], "true")
-
+        head_on_demand_job_id = run("dx run myapplet4 --head-job-on-demand --brief -y").strip()
+        head_on_demand_job_desc = dxpy.api.job_describe(head_on_demand_job_id, special_field_query_json)
+        self.assertEqual(head_on_demand_job_desc["headJobOnDemand"], True)
         # don't actually need these to run
         run("dx terminate " + normal_job_id)
         run("dx terminate " + head_on_demand_job_id)
-
 
         # shown in help
         dx_help_output = run("dx help run")
         self.assertIn("--head-job-on-demand", dx_help_output)
 
-
-        # workflow tests
-        # error code 3 when run on a workflow 
-        workflow_id = run("dx new workflow myworkflow2 --brief").strip()
-        run("dx add stage {workflow} {applet}".format(workflow=workflow_id,
-                                                      applet=applet_id))
+        # error code 3 when run on a workflow and a correct error message
+        workflow_id = run("dx new workflow --brief").strip()
         with self.assertSubprocessFailure(exit_code=3, stderr_text="--head-job-on-demand cannot be used when running workflows"):
-            run("dx run myworkflow2 --head-job-on-demand -y") 
+            run("dx run {workflow_id} --head-job-on-demand -y".format(workflow_id=workflow_id)) 
 
     def test_dx_run_tags_and_properties(self):
         # success

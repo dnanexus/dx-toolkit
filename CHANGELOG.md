@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## Added
+
+* Optional parameter `--head-job-on-demand` for `dx run app(let)-xxxx` 
+
 ## [327.1]
 
 ## Fixed
