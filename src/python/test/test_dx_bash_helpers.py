@@ -662,6 +662,8 @@ class TestDXJobutilNewJob(DXTestCase):
             ("--name JobName", {"name": "JobName"}),
             # depends-on - array of strings
             ("--depends-on foo bar baz", {"dependsOn": ["foo", "bar", "baz"]}),
+            # headJobOnDemand - boolean
+            ("--head-job-on-demand", {"headJobOnDemand": True}),
             # instance type: single instance - string
             ("--instance-type foo_bar_baz",
              {"systemRequirements": {"entrypointname": { "instanceType": "foo_bar_baz" }}}),
