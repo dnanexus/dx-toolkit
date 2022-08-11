@@ -123,7 +123,7 @@ def get_nextflow_src(inputs, profile):
     #!/usr/bin/env bash
     ls -a /.dx.nextflow/
     echo "bef. f"
-    source /.dx.nextflow/usr/local/bin/dx-registry-login
+    source /.dx.nextflow/resources/usr/local/bin/dx-registry-login
     curl -s https://get.nextflow.io | bash
     mv nextflow /usr/bin
     filtered_inputs=""
