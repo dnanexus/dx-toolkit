@@ -84,7 +84,9 @@ def prepare_nextflow(resources_dir, profile):
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, DXAPP_CONTENT)
     write_exec(dxapp_dir, EXEC_CONTENT)
-    print(os.listdir(dxapp_dir))
+    import glob
+    for filename in glob.iglob(root_dir + '**/**', recursive=True):
+        print(filename)
 
     return dxapp_dir
 
