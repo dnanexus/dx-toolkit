@@ -747,7 +747,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
-                             region=None, brief=False, types=[], **kwargs):
+                             region=None, brief=False, resources_dir=None, types=[], **kwargs):
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
 
@@ -880,7 +880,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 folder=override_folder,
                 ensure_upload=ensure_upload,
                 force_symlinks=force_symlinks,
-                brief=brief) if not dry_run else []
+                brief=brief,
+                resources_dir=resources_dir) if not dry_run else []
 
         # TODO: Clean up these applets if the app build fails.
         applet_ids_by_region = {}
@@ -991,10 +992,12 @@ def _build_app(args, extra_args):
 
     """
     # TODO: nextflow changes
+    resources_dir = None
     types = []
     source_dir = args.src_dir
     if args.nextflow:
         types = ["nextflow"]
+        resources_dir = args.src_dir
         source_dir = prepare_nextflow(args.src_dir, args.profile)
     if args._from:
         # BUILD FROM EXISTING APPLET
@@ -1050,6 +1053,7 @@ def _build_app(args, extra_args):
                 return_object_dump=args.json,
                 region=args.region,
                 brief=args.brief,
+                resources_dir=resources_dir,
                 types=types,
                 **extra_args
                 )

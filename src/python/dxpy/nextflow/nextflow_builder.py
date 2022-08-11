@@ -76,7 +76,9 @@ def prepare_nextflow(resources_dir, profile):
     """
     assert os.path.exists(resources_dir)
     inputs = []
-    dxapp_dir = tempfile.mkdtemp(prefix="dx.nextflow.")
+    # dxapp_dir = tempfile.mkdtemp(prefix="dx.nextflow.")
+    os.makedirs(".dx.nextflow", exist_ok=True)
+    dxapp_dir = os.path.join(resources_dir, '.dx.nextflow')
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
     DXAPP_CONTENT = get_nextflow_dxapp(inputs)
@@ -84,7 +86,6 @@ def prepare_nextflow(resources_dir, profile):
     copy_tree(get_template_dir(), dxapp_dir)
     print(resources_dir)
     print(os.path.join(dxapp_dir, 'resources', 'home', 'dnanexus', 'NF'))
-    os.symlink(resources_dir, os.path.join(dxapp_dir, 'resources', 'home', 'dnanexus', 'NF'))
     write_dxapp(dxapp_dir, DXAPP_CONTENT)
     write_exec(dxapp_dir, EXEC_CONTENT)
     import glob
