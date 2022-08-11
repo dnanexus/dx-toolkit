@@ -1,3 +1,4 @@
+
 def get_docker_login():
 
     return
@@ -121,6 +122,7 @@ def get_nextflow_src(inputs, profile):
     return f'''
     #!/usr/bin/env bash
     
+    source /usr/local/bin/dx-registry-login
     curl -s https://get.nextflow.io | bash
     mv nextflow /usr/bin
     filtered_inputs=""

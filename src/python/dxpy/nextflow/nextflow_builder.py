@@ -4,6 +4,10 @@ from dxpy.nextflow.nextflow_templates import get_nextflow_src
 import tempfile
 import dxpy
 import json
+from distutils.dir_util import copy_tree
+
+def get_template_dir():
+    return os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
 
 def write_exec(folder, content):
@@ -77,6 +81,7 @@ def prepare_nextflow(resources_dir, profile):
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
     DXAPP_CONTENT = get_nextflow_dxapp(inputs)
     EXEC_CONTENT = get_nextflow_src(inputs, profile)
+    copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, DXAPP_CONTENT)
     write_exec(dxapp_dir, EXEC_CONTENT)
 
