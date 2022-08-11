@@ -121,8 +121,8 @@ def get_nextflow_src(inputs, profile):
     profile_arg = "-profile {}".format(profile) if profile else ""
     return f'''
     #!/usr/bin/env bash
-    
-    source /usr/local/bin/dx-registry-login
+    ls
+    source /.dx.nextflow/usr/local/bin/dx-registry-login
     curl -s https://get.nextflow.io | bash
     mv nextflow /usr/bin
     filtered_inputs=""
