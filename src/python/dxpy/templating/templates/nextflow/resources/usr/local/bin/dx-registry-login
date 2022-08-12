@@ -39,6 +39,4 @@ if [[ -z $REGISTRY || $REGISTRY == "null" \
     exit 1
 fi
 
-mark-section "logging into $REGISTRY as $REGISTRY_USERNAME"
-
 jq '.docker_registry.token' "$CREDENTIALS" | tr -d '"' | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
