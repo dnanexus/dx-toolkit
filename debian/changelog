@@ -1,3 +1,16 @@
+dx-toolkit (0.328.0) trusty; urgency=medium
+
+  * Added: --head-job-on-demand argument for dx run app(let)-xxxx
+  * Added: --head-job-on-demand argument for dx-jobutil-new-job
+  * Added: --on-behalf-of <org> argument for dx new user
+  * Changed: dx-toolkit never included in execDepends when building app(lets) with dx build
+  * Fixed: Reduce the number of API calls for dx run applet-xxxx and dx run workflow-xxxx
+  * Fixed: dx upload f1 f2 --visibility hidden now correctly marks both files as hidden
+  * Fixed: `dx upload` retry on all types of SSL errors
+  * Deprecated: --no-dx-toolkit-autodep option for dx build
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 12 Aug 2022 15:07:33 +0000
+
 dx-toolkit (0.327.0) trusty; urgency=medium
 
   * Added: `dx extract_dataset` command
