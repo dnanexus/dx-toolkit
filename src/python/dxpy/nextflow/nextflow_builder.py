@@ -84,8 +84,6 @@ def prepare_nextflow(resources_dir, profile):
     DXAPP_CONTENT = get_nextflow_dxapp(inputs)
     EXEC_CONTENT = get_nextflow_src(inputs, profile)
     copy_tree(get_template_dir(), dxapp_dir)
-    print(resources_dir)
-    print(os.path.join(dxapp_dir, 'resources', 'home', 'dnanexus', 'NF'))
     write_dxapp(dxapp_dir, DXAPP_CONTENT)
     write_exec(dxapp_dir, EXEC_CONTENT)
     import glob
