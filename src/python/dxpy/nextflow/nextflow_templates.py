@@ -121,9 +121,10 @@ def get_nextflow_src(inputs, profile):
     profile_arg = "-profile {}".format(profile) if profile else ""
     return f'''
     #!/usr/bin/env bash
-    ls -a /.dx.nextflow/
+
     if [ -n "$docker_creds" ]; then
-        dx download "$docker_creds" -o credentials
+        dx download "$docker_creds" -o /home/dnanexus/credentials
+        ls /home/dnanexus
         source /.dx.nextflow/resources/usr/local/bin/dx-registry-login
     fi
     curl -s https://get.nextflow.io | bash
