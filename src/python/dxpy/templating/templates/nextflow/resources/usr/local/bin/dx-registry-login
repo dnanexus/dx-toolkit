@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
+CREDENTIALS=credentials
+if [[ ! -f "$CREDENTIALS" ]]; then
+    exit 0 # No credentials - we carry on without them.
+fi
+
 set -e
+
 
 if [[ $1 == "--help" || $1 == "-h" ]]; then
     echo -e "Usage: $0"
@@ -9,14 +15,6 @@ if [[ $1 == "--help" || $1 == "-h" ]]; then
 fi
 
 command -v docker >/dev/null 2>&1 || (echo "ERROR: docker is required when running with the Docker credentials."; exit 1)
-
-echo "parsing credentials to the Docker container registry"
-
-CREDENTIALS=/home/dnanexus/credentials
-if [[ ! -f "$CREDENTIALS" ]]; then
-    echo "ERROR: Credentials file not provided. Cannot log into a Docker registry."
-    exit 1
-fi
 
 export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
 export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
@@ -39,4 +37,4 @@ if [[ -z $REGISTRY || $REGISTRY == "null" \
     exit 1
 fi
 
-jq '.docker_registry.token' "$CREDENTIALS" | tr -d '"' | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
+jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
