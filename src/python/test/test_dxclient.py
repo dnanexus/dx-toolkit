@@ -903,7 +903,6 @@ class TestDXClient(DXTestCase):
                                                         runSpec={"code": "sleep 1200",
                                                                  "interpreter": "bash",
                                                                  "distribution": "Ubuntu", "release": "20.04", "version":"0",
-                                                                 "execDepends": [{"name": "dx-toolkit"}],
                                                                  "systemRequirements": {"*": {"instanceType": instance_type}}},
                                                         inputSpec=[], outputSpec=[],
                                                         dxapi="1.0.0", version="1.0.0",
@@ -1123,7 +1122,6 @@ class TestDXClient(DXTestCase):
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
                                                              "distribution": "Ubuntu", "release": "20.04", "version": "0",
-                                                             "execDepends": [{"name": "dx-toolkit"}],
                                                              "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}}},
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
@@ -1153,8 +1151,8 @@ class TestDXClient(DXTestCase):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
                                                     runSpec={"code": "exit 5", "interpreter": "bash",
-                                                         "distribution": "Ubuntu", "release": "20.04", "version":"0",
-                                                         "execDepends": [{"name": "dx-toolkit"}]},
+                                                         "distribution": "Ubuntu", "release": "20.04", "version":"0"
+                                                         },
                                                     inputSpec=[], outputSpec=[],
                                                     dxapi="1.0.0", version="1.0.0",
                                                     project=self.project))["id"]

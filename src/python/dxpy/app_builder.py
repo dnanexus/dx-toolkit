@@ -426,7 +426,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
 
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False,
-                  project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable",
+                  project=None, override_folder=None, override_name=None, 
                   dry_run=False, brief=False, **kwargs):
     """
     Creates a new applet object.
@@ -437,11 +437,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     :type override_folder: str
     :param override_name: name for the resulting applet which, if specified, overrides that given in dxapp.json
     :type override_name: str
-    :param dx_toolkit_autodep: What type of dx-toolkit dependency to
-        inject if none is present. "stable" for the APT package; "git"
-        for HEAD of dx-toolkit master branch; or False for no
-        dependency.
-    :type dx_toolkit_autodep: boolean or string
 
     """
     applet_spec = _get_applet_spec(src_dir)
@@ -612,34 +607,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         else:
             raise AppBuilderException("No asset bundle was found that matched the specification %s"
                                       % (json.dumps(asset)))
-
-    # Include the DNAnexus client libraries as an execution dependency, if they are not already
-    # there
-    if dx_toolkit_autodep == "git":
-        dx_toolkit_dep = {"name": "dx-toolkit",
-                          "package_manager": "git",
-                          "url": "git://github.com/dnanexus/dx-toolkit.git",
-                          "tag": "master",
-                          "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
-    elif dx_toolkit_autodep == "stable":
-        dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
-    elif dx_toolkit_autodep:
-        raise AppBuilderException("dx_toolkit_autodep must be one of 'stable', 'git', or False; got %r instead" % (dx_toolkit_autodep,))
-
-    if dx_toolkit_autodep:
-        applet_spec["runSpec"].setdefault("execDepends", [])
-        exec_depends = applet_spec["runSpec"]["execDepends"]
-        if type(exec_depends) is not list or any(type(dep) is not dict for dep in exec_depends):
-            raise AppBuilderException("Expected runSpec.execDepends to be an array of objects")
-        dx_toolkit_dep_found = any(dep.get('name') in DX_TOOLKIT_PKGS or dep.get('url') in DX_TOOLKIT_GIT_URLS for dep in exec_depends)
-        if not dx_toolkit_dep_found:
-            exec_depends.append(dx_toolkit_dep)
-            if dx_toolkit_autodep == "git":
-                applet_spec.setdefault("access", {})
-                applet_spec["access"].setdefault("network", [])
-                # Note: this can be set to "github.com" instead of "*" if the build doesn't download any deps
-                if "*" not in applet_spec["access"]["network"]:
-                    applet_spec["access"]["network"].append("*")
 
     merge(applet_spec, kwargs)
 

@@ -12,6 +12,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `--head-job-on-demand` argument for `dx-jobutil-new-job`
 * `--on-behalf-of <org>` argument for `dx new user`
 
+### Changed 
+
+* dx-toolkit never included in execDepends when building app(lets) with `dx build`
+
+### Deprecated
+
+* `--no-dx-toolkit-autodep` option for dx build
+
 ### Fixed
 
 * Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`

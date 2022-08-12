@@ -2630,9 +2630,6 @@ def build(args):
         if args._from is not None and args.remote:
             build_parser.error("Options --from and --remote cannot be specified together")
 
-        if args._from is not None and not args.dx_toolkit_autodep:
-            build_parser.error("Options --from and --no-dx-toolkit-autodep cannot be specified together")
-
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
 
@@ -2671,7 +2668,6 @@ def build(args):
                 # True by default and will be currently silently ignored
                 #'--[no-]watch': args.watch,
                 #'--parallel-build': args.parallel_build,
-                #'--dx-toolkit[-stable][-legacy-git]-autodep': args.dx_toolkit_autodep,
                 #'--[no]version-autonumbering': args.version_autonumbering,
                 #'--[no]update': args.update,
                 '--region': args.region,
@@ -4716,11 +4712,10 @@ app_and_globalworkflow_options.set_defaults(update=True)
 app_and_globalworkflow_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
 app_and_globalworkflow_options.add_argument("--no-update", help="Never update an existing unpublished app/globalworkflow in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
-build_parser.set_defaults(dx_toolkit_autodep="stable")
 build_parser.add_argument("--dx-toolkit-legacy-git-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="git")
 build_parser.add_argument("--dx-toolkit-stable-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
 build_parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
-build_parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency (default is to add it if it would otherwise be absent from the runSpec)", action="store_false", dest="dx_toolkit_autodep")
+build_parser.add_argument("--no-dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_false", dest="dx_toolkit_autodep")
 
 # --[no-]parallel-build
 build_parser.set_defaults(parallel_build=True)

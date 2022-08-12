@@ -487,7 +487,7 @@ def _parse_app_spec(src_dir):
             raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + str(e.args))
 
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
-                      version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",
+                      version_override=None, bill_to_override=None,
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
                       do_check_syntax=True, region=None, watch=True):
     if mode == 'app':
@@ -508,7 +508,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
     temp_dir = tempfile.mkdtemp()
 
-    build_options = {'dx_toolkit_autodep': dx_toolkit_autodep}
+    build_options = {}
 
     if version_override:
         build_options['version_override'] = version_override
@@ -743,7 +743,7 @@ def build_app_from(applet_desc, version, publish=False, do_try_update=True, bill
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
-                             dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
+                             do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
                              region=None, brief=False, **kwargs):
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
@@ -850,10 +850,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     msg += " -f/--overwrite nor -a/--archive were given."
                     raise dxpy.app_builder.AppBuilderException(msg)
 
-        if "buildOptions" in app_json:
-            if app_json["buildOptions"].get("dx_toolkit_autodep") is False:
-                dx_toolkit_autodep = False
-
         if dry_run:
             # Set a dummy "projects_by_region" so that we can exercise the dry
             # run flows for uploading resources bundles and applets below.
@@ -893,7 +889,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     project=project,
                     override_folder=override_folder,
                     override_name=override_applet_name,
-                    dx_toolkit_autodep=dx_toolkit_autodep,
                     dry_run=dry_run,
                     brief=brief,
                     **kwargs)
@@ -1033,7 +1028,6 @@ def _build_app(args, extra_args):
                 do_parallel_build=args.parallel_build,
                 do_version_autonumbering=args.version_autonumbering,
                 do_try_update=args.update,
-                dx_toolkit_autodep=args.dx_toolkit_autodep,
                 do_check_syntax=args.check_syntax,
                 ensure_upload=args.ensure_upload,
                 force_symlinks=args.force_symlinks,
@@ -1110,7 +1104,7 @@ def _build_app(args, extra_args):
             more_kwargs['do_check_syntax'] = False
 
         return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
-                                 publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
+                                 publish=args.publish,
                                  region=region, watch=args.watch, **more_kwargs)
 
 
