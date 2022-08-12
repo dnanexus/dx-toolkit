@@ -122,8 +122,10 @@ def get_nextflow_src(inputs, profile):
     return f'''
     #!/usr/bin/env bash
     ls -a /.dx.nextflow/
-    echo "bef. f"
-    source /.dx.nextflow/resources/usr/local/bin/dx-registry-login
+    if [ -n "$docker_creds" ]; then
+        dx download "$docker_creds" -o credentials
+        source /.dx.nextflow/resources/usr/local/bin/dx-registry-login
+    fi
     curl -s https://get.nextflow.io | bash
     mv nextflow /usr/bin
     filtered_inputs=""
@@ -132,7 +134,6 @@ def get_nextflow_src(inputs, profile):
         export NXF_DEBUG=2
     fi
     {run_inputs}
-    echo $filtered_inputs
     nextflow run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
     '''
 
