@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [328.0] - beta
+
 ### Added
 
 * `--head-job-on-demand` argument for `dx run app(let)-xxxx` 
@@ -26,12 +28,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
 * retry uploading on all types of SSL errors 
 
-## [327.0] - beta
-
-### Added
-
-* `dx extract_dataset` command
-* New dxpy dependencies pandas, numpy
+## [327.1] - 2022.8.12 - stable
 
 ### Fixed
 
@@ -41,7 +38,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * DXHTTPRequest to pass ssl_context
 
-## [326.1] - 2022.7.7 - stable
+## [326.1] - 2022.7.7 
 
 ### Added
 
