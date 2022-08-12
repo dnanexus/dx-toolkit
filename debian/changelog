@@ -1,3 +1,9 @@
+dx-toolkit (0.327.1) trusty; urgency=medium
+
+  * Changed: Revert `dx extract_dataset`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 12 Aug 2022 15:10:04 +0000
+
 dx-toolkit (0.327.0) trusty; urgency=medium
 
   * Added: `dx extract_dataset` command
