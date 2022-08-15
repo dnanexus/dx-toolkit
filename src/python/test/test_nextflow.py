@@ -52,7 +52,7 @@ else:
     spawn_extra_args = {"encoding" : "utf-8" }
 
 
-def build_nextflow_applet(app_dir, project_id):
+def build_nextflow_applet(app_dir):
     updated_app_dir = app_dir + str(uuid.uuid1())
     # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
     # shutil.copytree(app_dir, updated_app_dir)
@@ -64,10 +64,10 @@ def build_nextflow_applet(app_dir, project_id):
 class TestNextflow(DXTestCase):
     def test_temp(self):
         print("test-message")
-        assert False
+        # assert False
 
     def test_basic_hello(self):
-        applet = build_nextflow_applet("./nextflow/", "project-GFYvg4Q0469VKVVVP359Yfpp")
+        applet = build_nextflow_applet("./nextflow/")
         print(applet)
         self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
 
