@@ -53,7 +53,7 @@ else:
 
 
 def build_nextflow_applet(app_dir):
-    with temporary_project('test proj with UPLOAD perms', reclaim_permissions=True) as temp_project:
+    with temporary_project('test proj with UPLOAD perms', reclaim_permissions=True, cleanup=False) as temp_project:
 
         updated_app_dir = app_dir + str(uuid.uuid1())
         # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
