@@ -53,14 +53,16 @@ else:
 
 
 def build_nextflow_applet(app_dir):
-    updated_app_dir = app_dir + str(uuid.uuid1())
-    # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
-    # shutil.copytree(app_dir, updated_app_dir)
-    print(run(['pwd']))
-    print(run(['ls']))
-    build_output = run(['dx', 'build', '--nextflow', './nextflow'])
-    print(build_output, file=sys.stderr)
-    return json.loads(build_output)['id']
+    with temporary_project('test proj with UPLOAD perms', reclaim_permissions=True) as temp_project:
+
+        updated_app_dir = app_dir + str(uuid.uuid1())
+        # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
+        # shutil.copytree(app_dir, updated_app_dir)
+        print(run(['pwd']))
+        print(run(['ls']))
+        build_output = run(['dx', 'build', '--nextflow', './nextflow', '-f', f'project={temp_project.get_id()}'])
+        print(build_output, file=sys.stderr)
+        return json.loads(build_output)['id']
 
 
 class TestNextflow(DXTestCase):
