@@ -1,8 +1,3 @@
-
-def get_docker_login():
-
-    return
-
 def get_default_inputs():
     return [
         {
@@ -46,13 +41,6 @@ def get_default_inputs():
             "help": "Shows additional information in Nextflow logs.",
             "class": "boolean",
             "default": False
-        },
-        {
-            "name": "secret_directive_file",
-            "label": "Secret Directive File",
-            "help": "Adds the built-in Nextflow support for pipeline secrets to allow users to handle and manage sensitive information for pipeline execution in a safe manner.",
-            "class": "file",
-            "optional": True
         },
         {
             "name": "no_future_resume",
