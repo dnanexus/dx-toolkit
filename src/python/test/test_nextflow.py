@@ -76,17 +76,13 @@ class TestNextflowTemplates(DXTestCase):
         found=[False] * len(inputs)
         input_names = [i["name"] for i in inputs]
         input_pairs = dict(zip(input_names, found))
-
-        print(found)
-        print(input_names)
-        print(input_pairs)
         for i in inputSpec:
             if i.get("name") in input_names:
                 if input_pairs.get(i.get("name")):
                     print("here")
                     raise Exception("Input was found twice!")
                 input_pairs[i.get("name")] = True
-        print(input_pairs)
+        print(input_pairs.values())
         return all(value == True for value in input_pairs.values())
 
     def test_inputs(self):
