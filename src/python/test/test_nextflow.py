@@ -82,7 +82,6 @@ class TestNextflowTemplates(DXTestCase):
                     print("here")
                     raise Exception("Input was found twice!")
                 input_pairs[i.get("name")] = True
-        print(input_pairs.values())
         return all(value == True for value in input_pairs.values())
 
     def test_inputs(self):
@@ -100,9 +99,8 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_dxapp_multiple_custom_inputs(self):
         dxapp = get_nextflow_dxapp(custom_inputs=[self.input1, self.input2])
-        self.assertEqual(len(dxapp.get("inputSpec")), self.default_input_len + 2)
         self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), [self.input1, self.input2]))
-        self.assertEqual(len(dxapp.get("inpucSpec")), self.default_input_len + 2)
+        self.assertEqual(len(dxapp.get("inputSpec")), self.default_input_len + 2)
 
 
 
