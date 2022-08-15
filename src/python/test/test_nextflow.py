@@ -18,26 +18,12 @@
 #   under the License.
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, unittest, json, tempfile, subprocess, shutil, re, base64, random, time
-import filecmp
-import pipes
-import stat
-import hashlib
-import collections
-import string
-from contextlib import contextmanager
-import pexpect
-import requests
-import textwrap
-import pytest
-import gzip
-import tarfile
-from mock import patch
+import os, sys, unittest, json
+from dxpy.nextflow.nextflow_templates import get_nextflow_src
+from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
+from dxpy.nextflow.nextflow_templates import get_default_inputs
+
 import uuid
-import dxpy
-import dxpy.executable_builder
-import dxpy.workflow_builder
-from dxpy.scripts import dx_build_app
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
                            select_project, cd, override_environment, generate_unique_username_email,
                            without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
@@ -73,6 +59,11 @@ class TestNextflow(DXTestCase):
     def test_basic_hello(self):
         applet = build_nextflow_applet("./nextflow/")
         print(applet)
+
+class TestNextflowTemplates(DXTestCase):
+    def test_inputs(self):
+        inputs = get_default_inputs()
+        assert len(inputs) == 7
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
