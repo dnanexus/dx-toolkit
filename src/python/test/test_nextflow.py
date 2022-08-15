@@ -56,7 +56,8 @@ def build_nextflow_applet(app_dir):
     updated_app_dir = app_dir + str(uuid.uuid1())
     # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
     # shutil.copytree(app_dir, updated_app_dir)
-    print("here!")
+    print(run(['pwd']))
+    print(run(['ls']))
     build_output = run(['dx', 'build', '--nextflow', './nextflow'])
     print(build_output, file=sys.stderr)
     return json.loads(build_output)['id']
