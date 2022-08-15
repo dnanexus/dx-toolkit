@@ -102,7 +102,14 @@ class TestNextflowTemplates(DXTestCase):
         self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), [self.input1, self.input2]))
         self.assertEqual(len(dxapp.get("inputSpec")), self.default_input_len + 2)
 
+    def test_src(self):
+        src = get_nextflow_src()
+        self.assertTrue("#!/usr/bin/env bash" in src)
+        self.assertTrue("nextflow run" in src)
 
+    def test_src_profile(self):
+        src = get_nextflow_src(profile="test_profile")
+        self.assertTrue("-profile test_profile" in src)
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
