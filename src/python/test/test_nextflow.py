@@ -63,7 +63,7 @@ class TestNextflow(DXTestCase):
 class TestNextflowTemplates(DXTestCase):
     def test_inputs(self):
         inputs = get_default_inputs()
-        print(len(inputs)
+        print(len(inputs))
         self.assertEqual(len(inputs)), 7)
 
 if __name__ == '__main__':
