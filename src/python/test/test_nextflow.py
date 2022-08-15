@@ -61,10 +61,52 @@ class TestNextflow(DXTestCase):
         print(applet)
 
 class TestNextflowTemplates(DXTestCase):
+
+    default_input_len = 7
+    input1 = {
+        "class": "file",
+        "name": "first_input",
+        "optional": True,
+        "help": "(Optional) First input",
+        "label": "Test"
+    }
+    input2 = {
+        "class": "string",
+        "name": "second_input",
+        "help": "second input",
+        "label": "Test2"
+    }
+
     def test_inputs(self):
         inputs = get_default_inputs()
         print(len(inputs))
-        self.assertEqual(len(inputs), 7)
+        self.assertEqual(len(inputs), self.default_input_len)
+
+    def test_dxapp(self):
+        dxapp = get_nextflow_dxapp()
+        self.assertEqual(dxapp.get("name"), "nextflow pipeline")
+
+    def test_dxapp_single_custom_input(self):
+        dxapp = get_nextflow_dxapp(custom_inputs=[self.input1])
+        self.assertEqual(len(dxapp.get("inputSpec")), self.default_input_len + 1)
+
+    def test_dxapp_multiple_custom_inputs(self):
+        found1 = False
+        found2 = False
+        dxapp = get_nextflow_dxapp(custom_inputs=[self.input1, self.input2])
+        self.assertEqual(len(dxapp.get("inputSpec")), self.default_input_len + 2)
+        for i in dxapp.get("inputSpec"):
+            if i.get("name") == self.input1["name"]
+                found1=True
+                print("1")
+            if i.get("name") == self.input2["name"]
+                print("2")
+                found2=True
+        self.assertTrue(found1)
+        self.assertTrue(found2)
+        self.assertEqual(len(dxapp.get("inpucSpec")), self.default_input_len + 2)
+
+
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
