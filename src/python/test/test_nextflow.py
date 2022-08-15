@@ -64,7 +64,7 @@ class TestNextflowTemplates(DXTestCase):
     def test_inputs(self):
         inputs = get_default_inputs()
         print(len(inputs)
-        assert len(inputs) == 7
+        self.assertEqual(len(inputs)), 7)
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
