@@ -81,6 +81,7 @@ class TestNextflowTemplates(DXTestCase):
                 if input_pairs.get(i.get("name")) == True:
                     raise Exception("Input was found twice!")
                 input_pairs[i.get("name")] = True
+        print(input_pairs)
         return all(value == True for value in input_pairs.values())
 
     def test_inputs(self):
