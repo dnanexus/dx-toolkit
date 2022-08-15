@@ -41,20 +41,15 @@ else:
 def build_nextflow_applet(app_dir):
     with temporary_project('test proj', reclaim_permissions=True, cleanup=False) as temp_project:
 
-        updated_app_dir = app_dir + str(uuid.uuid1())
+        # updated_app_dir = app_dir + str(uuid.uuid1())
         # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
         # shutil.copytree(app_dir, updated_app_dir)
-        print(run(['pwd']))
-        print(run(['ls']))
         build_output = run(['dx', 'build', '--nextflow', './nextflow', '-f', '--project', temp_project.get_id()])
         print(build_output, file=sys.stderr)
         return json.loads(build_output)['id']
 
 
 class TestNextflow(DXTestCase):
-    # def test_temp(self):
-    #     print("test-message")
-    #     # assert False
 
     def test_basic_hello(self):
         applet = build_nextflow_applet("./nextflow/")
@@ -82,15 +77,14 @@ class TestNextflowTemplates(DXTestCase):
         input_names = [i["name"] for i in inputs]
         input_pairs = dict(zip(input_names, found))
         for i in inputSpec:
-            if i.get("name") in input_pairs:
-                if input_pairs.get("name") == True:
+            if i.get("name") in input_names:
+                if input_pairs.get(i.get("name")) == True:
                     raise Exception("Input was found twice!")
-                input_pairs["name"] = True
+                input_pairs[i.get("name")] = True
         return all(value == True for value in input_pairs.values())
 
     def test_inputs(self):
         inputs = get_default_inputs()
-        print(len(inputs))
         self.assertEqual(len(inputs), self.default_input_len)
 
     def test_dxapp(self):
