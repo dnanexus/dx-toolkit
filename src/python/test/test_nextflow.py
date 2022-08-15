@@ -62,14 +62,13 @@ def build_nextflow_applet(app_dir):
 
 
 class TestNextflow(DXTestCase):
-    def test_temp(self):
-        print("test-message")
-        # assert False
+    # def test_temp(self):
+    #     print("test-message")
+    #     # assert False
 
     def test_basic_hello(self):
         applet = build_nextflow_applet("./nextflow/")
         print(applet)
-        self.assertFalse(True, "Expected command to fail with CalledProcessError but it succeeded")
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
