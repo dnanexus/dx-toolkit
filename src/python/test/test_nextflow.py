@@ -93,9 +93,9 @@ class TestNextflowTemplates(DXTestCase):
         self.assertEqual(dxapp.get("name"), "nextflow pipeline")
 
     @parameterized.expand([
-        ([input1]),
-        ([input2]),
-        ([input1, input2])
+        [input1],
+        [input2],
+        [input1, input2]
     ])
     def test_dxapp_single_custom_input(self, inputs):
         print(inputs)
