@@ -120,12 +120,15 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_prepare_inputs(self):
         inputs = prepare_inputs("./nextflow/schema2.json")
-        print("_____")
+        names = [i["name"] for i in inputs]
+        self.assertTrue("input" in names and "outdir" in names and "save_merged_fastq" in names)
+        self.assertEqual(len(names), 3)
+
+    def test_prepare_inputs(self):
+        inputs = prepare_inputs("./nextflow/schema1.json")
         print(inputs)
-        print(len(inputs))
-        for i in inputs:
-            print(i["name"])
-        print("_____")
+        self.assertEqual(len(inputs), 72)
+
 
 
 if __name__ == '__main__':
