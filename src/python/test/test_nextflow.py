@@ -128,7 +128,11 @@ class TestNextflowTemplates(DXTestCase):
         inputs = prepare_inputs("./nextflow/schema3.json")
         self.assertEqual(len(inputs), 1)
         i = inputs[0]
-        print(i)
+        self.assertEqual(i["name"], "outdir")
+        self.assertEqual(i["title"], "outdir")
+        self.assertEqual(i["help"], "out_directory help text")
+        self.assertEqual(i["hidden"], False)
+        self.assertEqual(i["class"], "string")
 
     def test_prepare_inputs_large_file(self):
         inputs = prepare_inputs("./nextflow/schema1.json")
