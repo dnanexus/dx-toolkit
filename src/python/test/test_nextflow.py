@@ -39,6 +39,21 @@ else:
     spawn_extra_args = {"encoding" : "utf-8" }
 
 
+default_input_len = 7
+input1 = {
+    "class": "file",
+    "name": "first_input",
+    "optional": True,
+    "help": "(Optional) First input",
+    "label": "Test"
+}
+input2 = {
+    "class": "string",
+    "name": "second_input",
+    "help": "second input",
+    "label": "Test2"
+}
+
 def build_nextflow_applet(app_dir):
     with temporary_project('test proj', reclaim_permissions=True, cleanup=False) as temp_project:
 
@@ -50,28 +65,13 @@ def build_nextflow_applet(app_dir):
         return json.loads(build_output)['id']
 
 
-class TestNextflow(DXTestCase):
-
-    def test_basic_hello(self):
-        applet = build_nextflow_applet("./nextflow/")
-        print(applet)
+# class TestNextflow(DXTestCase):
+#
+#     def test_basic_hello(self):
+#         applet = build_nextflow_applet("./nextflow/")
+#         print(applet)
 
 class TestNextflowTemplates(DXTestCase):
-
-    default_input_len = 7
-    input1 = {
-        "class": "file",
-        "name": "first_input",
-        "optional": True,
-        "help": "(Optional) First input",
-        "label": "Test"
-    }
-    input2 = {
-        "class": "string",
-        "name": "second_input",
-        "help": "second input",
-        "label": "Test2"
-    }
 
     def are_inputs_in_spec(self, inputSpec, inputs):
         found=[False] * len(inputs)
@@ -80,28 +80,31 @@ class TestNextflowTemplates(DXTestCase):
         for i in inputSpec:
             if i.get("name") in input_names:
                 if input_pairs.get(i.get("name")):
-                    print("here")
                     raise Exception("Input was found twice!")
                 input_pairs[i.get("name")] = True
-        return all(value == True for value in input_pairs.values())
+        return all(value is True for value in input_pairs.values())
 
     def test_inputs(self):
         inputs = get_default_inputs()
-        self.assertEqual(len(inputs), self.default_input_len)
+        self.assertEqual(len(inputs), default_input_len)
 
     def test_dxapp(self):
         dxapp = get_nextflow_dxapp()
         self.assertEqual(dxapp.get("name"), "nextflow pipeline")
 
+    @parameterized.expand([
+        [[input1]],
+        [[input1, input2]],
+    ])
     def test_dxapp_single_custom_input(self):
-        dxapp = get_nextflow_dxapp(custom_inputs=[self.input1])
-        self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), [self.input1]))
-        self.assertEqual(len(dxapp.get("inputSpec")), self.default_input_len + 1)
+        dxapp = get_nextflow_dxapp(custom_inputs=[input1])
+        self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), [input1]))
+        self.assertEqual(len(dxapp.get("inputSpec")), default_input_len + 1)
 
     def test_dxapp_multiple_custom_inputs(self):
-        dxapp = get_nextflow_dxapp(custom_inputs=[self.input1, self.input2])
-        self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), [self.input1, self.input2]))
-        self.assertEqual(len(dxapp.get("inputSpec")), self.default_input_len + 2)
+        dxapp = get_nextflow_dxapp(custom_inputs=[input1, input2])
+        self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), [input1, input2]))
+        self.assertEqual(len(dxapp.get("inputSpec")), default_input_len + 2)
 
     def test_src_basic(self):
         src = get_nextflow_src()
@@ -113,9 +116,9 @@ class TestNextflowTemplates(DXTestCase):
         self.assertTrue("-profile test_profile" in src)
 
     def test_src_inputs(self):
-        src = get_nextflow_src(inputs=[self.input1, self.input2])
-        self.assertTrue("--{}=${}".format(self.input1.get("name"), self.input1.get("name")) in src)
-        self.assertTrue("--{}=${}".format(self.input2.get("name"), self.input2.get("name")) in src)
+        src = get_nextflow_src(inputs=[input1, input2])
+        self.assertTrue("--{}=${}".format(input1.get("name"), input1.get("name")) in src)
+        self.assertTrue("--{}=${}".format(input2.get("name"), input2.get("name")) in src)
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
