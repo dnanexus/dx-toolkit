@@ -98,7 +98,7 @@ class TestNextflowTemplates(DXTestCase):
         [input1, input2]
     ])
     def test_dxapp_single_custom_input(self, *inputs):
-        print(inputs)
+        inputs = list(inputs)
         dxapp = get_nextflow_dxapp(custom_inputs=inputs)
         self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), inputs))
         self.assertEqual(len(dxapp.get("inputSpec")), default_input_len + len(inputs))
