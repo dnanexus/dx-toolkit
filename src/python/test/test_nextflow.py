@@ -119,7 +119,7 @@ class TestNextflowTemplates(DXTestCase):
         self.assertTrue("--{}=${}".format(input2.get("name"), input2.get("name")) in src)
 
     def test_prepare_inputs(self):
-        inputs = prepare_inputs("./nextflow/schema1.json")
+        inputs = prepare_inputs("./nextflow/schema2.json")
         print("_____")
         print(inputs)
         print("_____")
