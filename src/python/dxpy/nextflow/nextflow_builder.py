@@ -82,7 +82,7 @@ def prepare_nextflow(resources_dir, profile):
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
     DXAPP_CONTENT = get_nextflow_dxapp(inputs)
-    EXEC_CONTENT = get_nextflow_src(inputs, profile)
+    EXEC_CONTENT = get_nextflow_src(inputs=inputs, profile=profile)
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, DXAPP_CONTENT)
     write_exec(dxapp_dir, EXEC_CONTENT)

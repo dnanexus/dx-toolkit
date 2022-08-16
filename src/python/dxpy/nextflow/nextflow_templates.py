@@ -96,7 +96,7 @@ def get_nextflow_dxapp(custom_inputs=[]):
     }
 
 # TODO: change args to individual arguments.
-def get_nextflow_src(inputs, profile):
+def get_nextflow_src(inputs=[], profile=None):
     run_inputs = ""
     for i in inputs:
         # we cannot override arguments that were not given at the runtime

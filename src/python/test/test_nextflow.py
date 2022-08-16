@@ -17,6 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 from __future__ import print_function, unicode_literals, division, absolute_import
+from parameterized import parameterized
 
 import os, sys, unittest, json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src
@@ -102,7 +103,7 @@ class TestNextflowTemplates(DXTestCase):
         self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), [self.input1, self.input2]))
         self.assertEqual(len(dxapp.get("inputSpec")), self.default_input_len + 2)
 
-    def test_src(self):
+    def test_src_basic(self):
         src = get_nextflow_src()
         self.assertTrue("#!/usr/bin/env bash" in src)
         self.assertTrue("nextflow run" in src)
@@ -110,6 +111,11 @@ class TestNextflowTemplates(DXTestCase):
     def test_src_profile(self):
         src = get_nextflow_src(profile="test_profile")
         self.assertTrue("-profile test_profile" in src)
+
+    def test_src_inputs(self):
+        src = get_nextflow_src(inputs=[self.input1, self.input2])
+        self.assertTrue("--{}=${}".format(self.input1.get("name"), self.input1.get("name")) in src)
+        self.assertTrue("--{}=${}".format(self.input2.get("name"), self.input2.get("name")) in src)
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
