@@ -126,7 +126,7 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_prepare_inputs(self):
         inputs = prepare_inputs("./nextflow/schema1.json")
-        print(inputs)
+        print(len(inputs))
         self.assertEqual(len(inputs), 72)
 
 
