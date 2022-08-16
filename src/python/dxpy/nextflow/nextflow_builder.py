@@ -126,8 +126,6 @@ def prepare_inputs(schema_file):
             dx_input = {}
             dx_input["name"] = property_key
             dx_input["title"] = dx_input['name']
-            print(property_key)
-            print(property)
             dx_input["help"] = property.get('help_text', get_default_input_value('help'))
             if "default" in property:
                 dx_input["default"] = property.get("default")
