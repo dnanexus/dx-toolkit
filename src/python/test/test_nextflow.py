@@ -126,9 +126,11 @@ class TestNextflowTemplates(DXTestCase):
         i_input = inputs["name"]
         i_outdir = inputs["outdir"]
         i_save_merged_fastq = inputs["save_merged_fastq"]
+
+        self.assertTrue
         self.assertEqual(len(names), 3)
 
-    def test_prepare_inputs(self):
+    def test_prepare_inputs_large_file(self):
         inputs = prepare_inputs("./nextflow/schema1.json")
         self.assertEqual(len(inputs), 93)
 
