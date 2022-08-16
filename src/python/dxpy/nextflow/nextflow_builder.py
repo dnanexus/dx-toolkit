@@ -92,7 +92,7 @@ def prepare_nextflow(resources_dir, profile):
 def prepare_inputs(schema_file):
     def get_default_input_value(key):
         types = {
-            "hidden": "false",
+            "hidden": False,
             "help": "Default help message"
             # TODO: add directory + file + path
         }
