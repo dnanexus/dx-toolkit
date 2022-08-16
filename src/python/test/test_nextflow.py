@@ -97,17 +97,11 @@ class TestNextflowTemplates(DXTestCase):
         [input2],
         [input1, input2]
     ])
-    def test_dxapp_single_custom_input(self, *inputs):
+    def test_dxapp_custom_input(self, *inputs):
         inputs = list(inputs)
-        print(inputs)
         dxapp = get_nextflow_dxapp(custom_inputs=inputs)
         self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), inputs))
         self.assertEqual(len(dxapp.get("inputSpec")), default_input_len + len(inputs))
-
-    def test_dxapp_multiple_custom_inputs(self):
-        dxapp = get_nextflow_dxapp(custom_inputs=[input1, input2])
-        self.assertTrue(self.are_inputs_in_spec(dxapp.get("inputSpec"), [input1, input2]))
-        self.assertEqual(len(dxapp.get("inputSpec")), default_input_len + 2)
 
     def test_src_basic(self):
         src = get_nextflow_src()
