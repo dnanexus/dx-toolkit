@@ -122,6 +122,9 @@ class TestNextflowTemplates(DXTestCase):
         inputs = prepare_inputs("./nextflow/schema2.json")
         print("_____")
         print(inputs)
+        print(len(inputs))
+        for i in inputs:
+            print(i["name"])
         print("_____")
 
 
