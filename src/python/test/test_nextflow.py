@@ -23,6 +23,7 @@ import os, sys, unittest, json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src
 from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
 from dxpy.nextflow.nextflow_templates import get_default_inputs
+from dxpy.nextflow.nextflow_builder import prepare_inputs
 
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
@@ -116,6 +117,11 @@ class TestNextflowTemplates(DXTestCase):
         src = get_nextflow_src(inputs=[input1, input2])
         self.assertTrue("--{}=${}".format(input1.get("name"), input1.get("name")) in src)
         self.assertTrue("--{}=${}".format(input2.get("name"), input2.get("name")) in src)
+
+    def test_prepare_inputs(self):
+        inputs = prepare_inputs("./nextflow/schema1.json")
+        print(inputs)
+
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
