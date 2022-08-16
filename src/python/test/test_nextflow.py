@@ -120,7 +120,9 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_prepare_inputs(self):
         inputs = prepare_inputs("./nextflow/schema1.json")
+        print("_____")
         print(inputs)
+        print("_____")
 
 
 if __name__ == '__main__':
