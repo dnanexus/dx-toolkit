@@ -124,15 +124,15 @@ def prepare_inputs(schema_file):
         required_inputs = d_schema.get("required", [])
         for property_key, property in d_schema.get("properties", {}).items():
             dx_input = {}
-            dx_input["name"] = f"{property_key}"
-            dx_input["title"] = f"{property.get(property_key, dx_input['name'])}"
+            dx_input["name"] = property_key
+            dx_input["title"] = dx_input['name']
             print(property_key)
             print(property)
-            dx_input["help"] = f"{property.get(property_key, get_default_input_value('help'))}"
-            if property_key in property:
-                dx_input["default"] = f"{property.get(property_key)}"
-            dx_input["hidden"] = f"{property.get(property_key, get_default_input_value('hidden'))}"
-            dx_input["class"] = f"{get_dx_type(property_key)}"
+            dx_input["help"] = property.get('help_text', get_default_input_value('help'))
+            if "default" in property:
+                dx_input["default"] = property.get("default")
+            dx_input["hidden"] = property.get('hidden', get_default_input_value('hidden'))
+            dx_input["class"] = get_dx_type(property_key)
             if property_key not in required_inputs:
                 dx_input["optional"] = True
             inputs.append(dx_input)
