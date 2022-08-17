@@ -140,7 +140,12 @@ def get_nextflow_src(inputs=[], profile=None):
           ;;
       esac
     }}
-
+    
+main() {{
+    [[ $debug ]] && set -x && env | sort
+    [[ $debug ]] && export NXF_DEBUG=2
+    
+    
     if [ -n "$docker_creds" ]; then
         dx download "$docker_creds" -o /home/dnanexus/credentials
         ls /home/dnanexus
@@ -148,13 +153,60 @@ def get_nextflow_src(inputs=[], profile=None):
     fi
     curl -s https://get.nextflow.io | bash
     mv nextflow /usr/bin
+
+    # nextaur
+
+    LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
+    DX_WORK=${{work_dir:-$DX_WORKSPACE_ID:/scratch/}}
+    DX_LOG=${{log_file:-$DX_PROJECT_CONTEXT_ID:$LOG_NAME}}
+
+    export NXF_WORK=dx://$DX_WORK
+    export NXF_HOME=/opt/nextflow
+    export NXF_UUID=${{resume_session:-$(uuidgen)}}
+    export NXF_IGNORE_RESUME_HISTORY=true
+    export NXF_ANSI_LOG=false
+    export NXF_EXECUTOR=dnanexus
+    export NXF_PLUGINS_DEFAULT=nextaur@1.0.0
+    export NXF_DOCKER_LEGACY=true
+    #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
+    #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
+    trap on_exit EXIT
+
+    echo "============================================================="
+    echo "=== NF work-dir : ${{DX_WORK}}"
+    echo "=== NF Resume ID: ${{NXF_UUID}}"
+    echo "=== NF log file : ${{DX_LOG}}"
+    echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
+    echo "============================================================="
+
+    # restore cache
+    local ret
+    mkdir -p .nextflow/cache/$NXF_UUID
+    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID/*" -o ".nextflow/cache/$NXF_UUID" --no-progress -r -f 2>&1) || {{
+      if [[ $ret == *"The specified folder could not be found"* ]]; then
+        echo "No previous execution cache was found"
+      else
+        echo $ret >&2
+        exit 1
+      fi
+    }}
+
+    # prevent glob expansion
+    set -f
+    # launch nextflow
+    # nextflow -trace nextflow.plugin \
+    #       $opts \
+    #       -log $LOG_NAME \
+    #       run $pipeline_url \
+    #       -resume $NXF_UUID \
+    #       $args
+    # restore glob expansion
     filtered_inputs=""
     
-    if "$debug" ; then
-        export NXF_DEBUG=2
-    fi
     {run_inputs}
-    nextflow run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
+    nextflow -trace nextflow.plugin $nf_advanced_opts run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
+    set +f
+}}
     '''
 
 # iterate through inputs of dxapp.json and add them here?
