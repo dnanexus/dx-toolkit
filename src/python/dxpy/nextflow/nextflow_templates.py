@@ -142,6 +142,8 @@ def get_nextflow_src(inputs=[], profile=None):
     }}
     
 main() {{
+    set -f
+
     [[ $debug ]] && set -x && env | sort
     [[ $debug ]] && export NXF_DEBUG=2
     
@@ -181,34 +183,13 @@ main() {{
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
 
-    # restore cache
-    local ret
-    mkdir -p .nextflow/cache/$NXF_UUID
-    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID/*" -o ".nextflow/cache/$NXF_UUID" --no-progress -r -f 2>&1) || {{
-      if [[ $ret == *"The specified folder could not be found"* ]]; then
-        echo "No previous execution cache was found"
-      else
-        echo $ret >&2
-        exit 1
-      fi
-    }}
 
-    # prevent glob expansion
-    set -f
-    # launch nextflow
-    # nextflow -trace nextflow.plugin \
-    #       $opts \
-    #       -log $LOG_NAME \
-    #       run $pipeline_url \
-    #       -resume $NXF_UUID \
-    #       $args
-    # restore glob expansion
     cd /
     filtered_inputs=""
     
     {run_inputs}
-    nextflow -trace nextflow.plugin $nf_advanced_opts -log $LOG_NAME run . {profile_arg} $nf_run_args_and_pipeline_params ${{filtered_inputs}}
-    
+    #nextflow -trace nextflow.plugin $nf_advanced_opts -log $LOG_NAME run . {profile_arg} $nf_run_args_and_pipeline_params ${{filtered_inputs}}
+    nextflow run https://github.com/nextflow-io/hello
     set +f
 }}
 
