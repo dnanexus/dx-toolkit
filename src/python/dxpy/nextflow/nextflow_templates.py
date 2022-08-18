@@ -145,6 +145,8 @@ main() {{
     [[ $debug ]] && set -x && env | sort
     [[ $debug ]] && export NXF_DEBUG=2
     
+    dx cat file-GFz1yK00469v4kv49xvvFb3k | tar -zxv -C /
+    
     
     if [ -n "$docker_creds" ]; then
         dx download "$docker_creds" -o /home/dnanexus/credentials
@@ -204,7 +206,7 @@ main() {{
     filtered_inputs=""
     
     {run_inputs}
-    nextflow $nf_advanced_opts run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
+    nextflow -trace nextflow.plugin $nf_advanced_opts run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
     set +f
 }}
     '''
