@@ -142,6 +142,7 @@ def get_nextflow_src(inputs=[], profile=None):
     }}
     
 main() {{
+    sleep 3600 
     [[ $debug ]] && set -x && env | sort
     [[ $debug ]] && export NXF_DEBUG=2
     
