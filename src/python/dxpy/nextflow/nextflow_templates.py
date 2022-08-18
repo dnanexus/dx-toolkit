@@ -207,7 +207,7 @@ main() {{
     filtered_inputs=""
     
     {run_inputs}
-    nextflow -trace nextflow.plugin $nf_advanced_opts -log $LOG_NAME run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}} || true
+    nextflow -trace nextflow.plugin $nf_advanced_opts -log $LOG_NAME run . {profile_arg} $nf_run_args_and_pipeline_params ${{filtered_inputs}}
     
     set +f
 }}
