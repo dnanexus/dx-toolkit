@@ -142,7 +142,6 @@ def get_nextflow_src(inputs=[], profile=None):
     }}
     
 main() {{
-    sleep 3600 
     [[ $debug ]] && set -x && env | sort
     [[ $debug ]] && export NXF_DEBUG=2
     
@@ -207,9 +206,33 @@ main() {{
     filtered_inputs=""
     
     {run_inputs}
-    nextflow $nf_advanced_opts run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
+    nextflow -trace nextflow.plugin $nf_advanced_opts run {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}}
     set +f
 }}
+
+
+nf_task_exit() {{
+  ret=$?
+  if [ -f .command.log ]; then
+    dx upload .command.log --path "${{cmd_log_file}}" --brief --wait --no-progress || true
+  else
+    >&2 echo "Missing Nextflow .command.log file"
+  fi
+  # mark the job as successful in any case, real task
+  # error code is managed by nextflow via .exitcode file
+  dx-jobutil-add-output exit_code "0" --class=int
+}}
+
+nf_task_entry() {{
+  # enable debugging mode
+  [[ $NXF_DEBUG ]] && set -x
+  # capture the exit code
+  trap nf_task_exit EXIT
+  # run the task
+  dx cat "${{cmd_launcher_file}}" > .command.run
+  bash .command.run > >(tee .command.log) 2>&1 || true
+}}
+
     '''
 
 # iterate through inputs of dxapp.json and add them here?
