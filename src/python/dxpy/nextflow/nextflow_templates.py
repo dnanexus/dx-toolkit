@@ -208,6 +208,8 @@ main() {{
     
     {run_inputs}
     nextflow -trace nextflow.plugin $nf_advanced_opts run -log $LOG_NAME {profile_arg} / $nf_run_args_and_pipeline_params ${{filtered_inputs}} || true
+    
+    sleep 2600
     set +f
 }}
 
