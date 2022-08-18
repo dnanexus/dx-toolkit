@@ -156,8 +156,10 @@ main() {{
         source /.dx.nextflow/resources/usr/local/bin/dx-registry-login
     fi
     curl -s https://get.nextflow.io | bash
+    
     mv nextflow /usr/bin
-
+    nextflow -version
+    exit 1
     # nextaur
 
     LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
