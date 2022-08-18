@@ -203,6 +203,7 @@ main() {{
     #       -resume $NXF_UUID \
     #       $args
     # restore glob expansion
+    cd /
     filtered_inputs=""
     
     {run_inputs}
