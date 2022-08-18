@@ -189,7 +189,7 @@ main() {{
     
     {run_inputs}
     #nextflow -trace nextflow.plugin $nf_advanced_opts -log $LOG_NAME run . {profile_arg} $nf_run_args_and_pipeline_params ${{filtered_inputs}}
-    nextflow run https://github.com/nextflow-io/hello
+    nextflow -log $LOG_NAME run https://github.com/nextflow-io/hello
     set +f
 }}
 
