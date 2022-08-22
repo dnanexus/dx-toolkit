@@ -9748,12 +9748,10 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
 
-        output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}
-        output_app_spec["headJobOnDemand"] = False
-        
+        output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}        
 
         app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -9914,10 +9912,9 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # dxapp.json so as not to pollute it.
         app_spec = dict(self.base_applet_spec, name="get_applet_field_cleanup")
         output_app_spec = app_spec.copy()
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
         output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
-        output_app_spec["headJobOnDemand"] = False
 
         app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -9940,10 +9937,9 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # making sure the resource directory is downloaded.
         app_spec = dict(self.base_applet_spec, name="get_applet_windows")
         output_app_spec = app_spec.copy()
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
         output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
-        output_app_spec["headJobOnDemand"] = False
 
         app_dir = self.write_app_directory("get_åpplet_windows", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
