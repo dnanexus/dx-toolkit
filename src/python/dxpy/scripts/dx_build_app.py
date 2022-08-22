@@ -35,6 +35,7 @@ import dxpy
 import dxpy.app_builder
 import dxpy.workflow_builder
 import dxpy.executable_builder
+from dxpy.nextflow.nextflow_utils import get_resources_subpath
 from .. import logger
 from pathlib import Path
 
@@ -747,7 +748,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
-                             region=None, brief=False, resources_dir=None, types=[], **kwargs):
+                             region=None, brief=False, resources_dir=None, worker_resources_subpath=".", types=[], **kwargs):
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
 
@@ -881,7 +882,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 ensure_upload=ensure_upload,
                 force_symlinks=force_symlinks,
                 brief=brief,
-                resources_dir=resources_dir) if not dry_run else []
+                resources_dir=resources_dir,
+                worker_resources_subpath=worker_resources_subpath) if not dry_run else []
 
         # TODO: Clean up these applets if the app build fails.
         applet_ids_by_region = {}
@@ -995,10 +997,12 @@ def _build_app(args, extra_args):
     resources_dir = None
     types = []
     source_dir = args.src_dir
+    worker_resources_subpath = None
     if args.nextflow:
         types = ["nextflow"]
         resources_dir = args.src_dir
         source_dir = prepare_nextflow(args.src_dir, args.profile)
+        worker_resources_subpath = get_resources_subpath()
     if args._from:
         # BUILD FROM EXISTING APPLET
         try:
@@ -1029,7 +1033,6 @@ def _build_app(args, extra_args):
 
     if not args.remote and not args.repository:  # building with NF repository is implicitly remote
         # LOCAL BUILD
-        # change nextflow HERE TODO:
         try:
             output = build_and_upload_locally(
                 source_dir,
@@ -1054,6 +1057,7 @@ def _build_app(args, extra_args):
                 region=args.region,
                 brief=args.brief,
                 resources_dir=resources_dir,
+                worker_resources_subpath=worker_resources_subpath,
                 types=types,
                 **extra_args
                 )

@@ -5,6 +5,9 @@ import json
 def get_source_file_name():
     return "nextflow.sh"
 
+def get_resources_subpath():
+    return "/home/dnanexus/nfp"
+
 def get_template_dir():
     return os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
