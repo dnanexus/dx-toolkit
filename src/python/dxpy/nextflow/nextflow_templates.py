@@ -54,9 +54,12 @@ def get_default_inputs():
             "default": False
         }
     ]
+
+
 def get_nextflow_dxapp(custom_inputs=[]):
     inputs = custom_inputs + get_default_inputs()
-    dxapp = json.load(os.path.join(str(get_template_dir()), 'dxapp.json'))
+    with open(os.path.join(str(get_template_dir()), 'dxapp.json'), 'r') as f:
+        dxapp = json.load(f)
     dxapp["inputSpec"] = inputs
     return dxapp
 
