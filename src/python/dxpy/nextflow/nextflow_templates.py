@@ -103,7 +103,7 @@ def get_nextflow_dxapp(custom_inputs=[]):
 def get_nextflow_src(inputs=[], profile=None):
     run_inputs = ""
     for i in inputs:
-        # wverride arguments that were not given at the runtime
+        # override arguments that were not given at the runtime
         run_inputs = run_inputs + f'''
         if [ -n "${i['name']}" ]; then
             filtered_inputs="${{filtered_inputs}} --{i['name']}=${i['name']}"
