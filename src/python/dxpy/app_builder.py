@@ -280,11 +280,11 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
                 # add an entry in the tar file for the current directory, but
                 # do not recurse!
-                print("TAR_FH dirname")
-                print(dirname)
-                print("TAR_FH relative_dirname")
-                print(relative_dirname)
-                tar_fh.add(dirname, arcname='.' + relative_dirname, recursive=False, filter=_fix_perm_filter)
+                # print("TAR_FH dirname")
+                # print(dirname)
+                # print("TAR_FH relative_dirname")
+                # print(relative_dirname)
+                tar_fh.add(dirname, arcname='nextflow/pipeline' + relative_dirname, recursive=False, filter=_fix_perm_filter)
 
                 # Canonicalize the order of subdirectories; this is the order in
                 # which they will be visited by os.walk
@@ -348,12 +348,12 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                     # If we are to dereference, use the target fn
                     if deref_link:
                         true_filename = os.path.realpath(true_filename)
-                    print("TAR_FH true_filename")
-                    print(true_filename)
-                    print("TAR_FH relative_filename")
-                    print(relative_filename)
+                    # print("TAR_FH true_filename")
+                    # print(true_filename)
+                    # print("TAR_FH relative_filename")
+                    # print(relative_filename)
 
-                    tar_fh.add(true_filename, arcname='.' + relative_filename, filter=_fix_perm_filter)
+                    tar_fh.add(true_filename, arcname='nextflow/pipeline' + relative_filename, filter=_fix_perm_filter)
 
                 # end for filename in sorted(files)
 
