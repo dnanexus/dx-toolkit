@@ -1,5 +1,6 @@
 import os
 import dxpy
+import json
 
 def get_source_file_name():
     return "nextflow.sh"
