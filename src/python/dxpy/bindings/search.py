@@ -686,7 +686,7 @@ def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
-        If not boolean, :class:`~dxpy.exceptions.DXSearchError` is raised
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -707,6 +707,7 @@ def find_one_project(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -727,6 +728,7 @@ def find_one_app(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
