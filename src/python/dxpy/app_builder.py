@@ -257,13 +257,15 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
         # the mtime and mode used are that of the target (using os.stat())
         # If the link is to be kept as a link, the mtime and mode are those
         # of the link itself (using os.lstat())
-
+        # TODO: HERE update
         with tempfile.NamedTemporaryFile(suffix=".tar") as tar_tmp_fh:
 
             output_sha1 = hashlib.sha1()
             tar_fh = tarfile.open(fileobj=tar_tmp_fh, mode='w')
 
             for dirname, subdirs, files in os.walk(resources_dir):
+                print("DIRNAME, subdirs, files HERE")
+                print(f"{dirname}, {subdirs}, {files}")
                 if not dirname.startswith(resources_dir):
                     raise AssertionError('Expected %r to start with root directory %r' % (dirname, resources_dir))
 
@@ -278,6 +280,10 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
                 # add an entry in the tar file for the current directory, but
                 # do not recurse!
+                print("TAR_FH dirname")
+                print(dirname)
+                print("TAR_FH relative_dirname")
+                print(relative_dirname)
                 tar_fh.add(dirname, arcname='.' + relative_dirname, recursive=False, filter=_fix_perm_filter)
 
                 # Canonicalize the order of subdirectories; this is the order in
@@ -342,6 +348,10 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                     # If we are to dereference, use the target fn
                     if deref_link:
                         true_filename = os.path.realpath(true_filename)
+                    print("TAR_FH true_filename")
+                    print(true_filename)
+                    print("TAR_FH relative_filename")
+                    print(relative_filename)
 
                     tar_fh.add(true_filename, arcname='.' + relative_filename, filter=_fix_perm_filter)
 
