@@ -8,11 +8,11 @@ on_exit() {
   echo "=== Execution complete — uploading Nextflow cache metadata files"
   dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID/*" 2>&1 >/dev/null || true
   echo "LS"
-  ls
+  ls /
   echo "LS .nextflow"
-  ls .nextflow
+  ls /.nextflow
   echo "LS .nextflow/cache"
-  ls .nextflow/cache
+  ls /.nextflow/cache
   dx upload ".nextflow/cache/$NXF_UUID" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID" --no-progress --brief --wait -p -r || true
   # done
   exit $ret
