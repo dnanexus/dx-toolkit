@@ -151,7 +151,7 @@ main() {{
     [[ $debug ]] && set -x && env | sort
     [[ $debug ]] && export NXF_DEBUG=2
     
-    dx cat file-GFz1yK00469v4kv49xvvFb3k | tar -zxv -C /
+    # dx cat file-GFz1yK00469v4kv49xvvFb3k | tar -zxv -C /
     
     
     if [ -n "$docker_creds" ]; then
@@ -159,11 +159,7 @@ main() {{
         ls /home/dnanexus
         source /.dx.nextflow/resources/usr/local/bin/dx-registry-login
     fi
-    curl -s https://get.nextflow.io | bash
     
-    mv nextflow /usr/bin
-    nextflow -version
-    exit 1
     # nextaur
 
     LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
