@@ -2,24 +2,11 @@ import os
 from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
 from dxpy.nextflow.nextflow_templates import get_nextflow_src
 from dxpy.nextflow.nextflow_utils import get_template_dir
-import tempfile
+from dxpy.nextflow.nextflow_utils import write_exec
+from dxpy.nextflow.nextflow_utils import write_dxapp
 import dxpy
 import json
 from distutils.dir_util import copy_tree
-
-
-
-def write_exec(folder, content):
-    exec_file = f"{folder}/nextflow.sh"
-    os.makedirs(os.path.dirname(os.path.abspath(exec_file)), exist_ok=True)
-    with open(exec_file, "w") as exec:
-        exec.write(content)
-
-
-def write_dxapp(folder, content):
-    dxapp_file = f"{folder}/dxapp.json"
-    with open(dxapp_file, "w") as dxapp:
-        json.dump(content, dxapp)
 
 
 def build_pipeline_from_repository(repository, tag, profile, brief):
