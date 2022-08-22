@@ -42,16 +42,33 @@ main() {
         ls /home/dnanexus
         source /.dx.nextflow/resources/usr/local/bin/dx-registry-login
     fi
-    curl -s https://get.nextflow.io | bash
-    
-    mv nextflow /usr/bin
+
+    LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
+    DX_WORK=${work_dir:-$DX_WORKSPACE_ID:/scratch/}
+    DX_LOG=${log_file:-$DX_PROJECT_CONTEXT_ID:$LOG_NAME}
+    export NXF_WORK=dx://$DX_WORK
+    export NXF_HOME=/opt/nextflow
+    export NXF_UUID=${resume_session:-$(uuidgen)}
+    export NXF_IGNORE_RESUME_HISTORY=true
+    export NXF_ANSI_LOG=false
+    export NXF_EXECUTOR=dnanexus
+    export NXF_PLUGINS_DEFAULT=nextaur@1.0.0
+    export NXF_DOCKER_LEGACY=true
+    #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
+    #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
+    trap on_exit EXIT
+    echo "============================================================="
+    echo "=== NF work-dir : ${DX_WORK}"
+    echo "=== NF Resume ID: ${NXF_UUID}"
+    echo "=== NF log file : ${DX_LOG}"
+    echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
+    echo "============================================================="
 
 
-    cd /
     filtered_inputs=""
     
     @@RUN_INPUTS@@
-    nextflow run @@PROFILE_ARG@@ / $nf_run_args_and_pipeline_params ${filtered_inputs}
+    nextflow -trace nextflow.plugin @@PROFILE_ARG@@ $nf_run_args_and_pipeline_params -log ${LOG_NAME} run . -name ${NXF_UUID} $nf_run_args_and_pipeline_params ${filtered_inputs}
 }
 
 
