@@ -269,8 +269,6 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
             tar_fh = tarfile.open(fileobj=tar_tmp_fh, mode='w')
 
             for dirname, subdirs, files in os.walk(resources_dir):
-                print("DIRNAME, subdirs, files HERE")
-                print(f"{dirname}, {subdirs}, {files}")
                 if not dirname.startswith(resources_dir):
                     raise AssertionError('Expected %r to start with root directory %r' % (dirname, resources_dir))
 
