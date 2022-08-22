@@ -9751,7 +9751,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
 
-        output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}        
+        output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}
 
         app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
