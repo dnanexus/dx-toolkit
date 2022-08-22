@@ -1,13 +1,12 @@
 import os
 from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
 from dxpy.nextflow.nextflow_templates import get_nextflow_src
+from dxpy.nextflow.nextflow_utils import get_template_dir
 import tempfile
 import dxpy
 import json
 from distutils.dir_util import copy_tree
 
-def get_template_dir():
-    return os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
 
 def write_exec(folder, content):
