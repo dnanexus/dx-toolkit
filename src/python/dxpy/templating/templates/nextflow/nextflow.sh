@@ -64,7 +64,7 @@ main() {
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
 
-
+    cd /
     filtered_inputs=""
     
     @@RUN_INPUTS@@
