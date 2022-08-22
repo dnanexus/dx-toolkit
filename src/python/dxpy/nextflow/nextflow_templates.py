@@ -26,8 +26,8 @@ def get_nextflow_src(inputs=[], profile=None):
         fi
         '''
     profile_arg = "-profile {}".format(profile) if profile else ""
-    src.replace("@@RUN_INPUTS@@", run_inputs)
-    src.replace("@@PROFILE_ARG@@", profile_arg)
+    src = src.replace("@@RUN_INPUTS@@", run_inputs)
+    src = src.replace("@@PROFILE_ARG@@", profile_arg)
     return src
 
 # iterate through inputs of dxapp.json and add them here?
