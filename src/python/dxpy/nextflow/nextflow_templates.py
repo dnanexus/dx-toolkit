@@ -1,5 +1,7 @@
 from dxpy.nextflow.nextflow_utils import get_template_dir
 import json
+import os
+
 def get_default_inputs():
     return [
         {
