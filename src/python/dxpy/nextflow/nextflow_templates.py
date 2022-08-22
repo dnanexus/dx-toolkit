@@ -2,65 +2,12 @@ from dxpy.nextflow.nextflow_utils import get_template_dir
 import json
 import os
 
-def get_default_inputs():
-    return [
-        {
-            "name": "nf_run_args_and_pipeline_params",
-            "label": "Nextflow Run Arguments and Pipeline Parameters",
-            "help": "Additional run arguments and pipeline parameters for Nextflow (i.e. -queue-size).",
-            "class": "string",
-            "optional": True
-        },
-        {
-            "name": "resume",
-            "label": "Resume",
-            "help": "Enables resume functionality in Nextflow workflows.",
-            "class": "boolean",
-            "default": False
-        },
-        {
-            "name": "resume_session",
-            "label": "Resume Session",
-            "help": "Session or job to be resumed.",
-            "class": "string",
-            "optional": True
-        },
-        {
-            "name": "nf_advanced_opts",
-            "label": "Nextflow Advanced Options",
-            "help": "Advanced options for Nextflow (i.e. -quiet).",
-            "class": "string",
-            "optional": True
-        },
-        {
-            "name": "docker_creds",
-            "label": "Docker Credentials",
-            "help": "Docker Credentials used to obtain private docker images.",
-            "class": "file",
-            "optional": True
-        },
-        {
-            "name": "debug",
-            "label": "Debug Mode",
-            "help": "Shows additional information in Nextflow logs.",
-            "class": "boolean",
-            "default": False
-        },
-        {
-            "name": "no_future_resume",
-            "label": "No Future Resume",
-            "help": "Allow saving workspace and cache files to the platform to be used later for resume functionality.",
-            "class": "boolean",
-            "default": False
-        }
-    ]
 
 
 def get_nextflow_dxapp(custom_inputs=[]):
-    inputs = custom_inputs + get_default_inputs()
     with open(os.path.join(str(get_template_dir()), 'dxapp.json'), 'r') as f:
         dxapp = json.load(f)
-    dxapp["inputSpec"] = inputs
+    dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
     return dxapp
 
 
