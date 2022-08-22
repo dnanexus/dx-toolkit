@@ -79,7 +79,11 @@ def get_nextflow_dxapp(custom_inputs=[]):
                     "*": {
                         "instanceType": "mem1_ssd1_v2_x8"
                     }
-                }
+                },
+                "assetDepends": [
+                    {"id": "record-GG0q3X00fVVZQP9G4kFF16zp"},
+                    {"id": "record-GG1P0xQ0F9gggxxjKzqV40vg"}
+                ]
             }
         },
         "details": {
