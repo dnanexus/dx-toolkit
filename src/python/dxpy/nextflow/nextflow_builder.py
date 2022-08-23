@@ -39,7 +39,8 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
                 object_id = object_id["id"]
             return dxpy.dxlink(object_id=object_id, project_id=object_project)
         except dxpy.utils.resolver.ResolutionError:
-            print("GitHub credentials ({}) file could not be found!".format(dx_object), file=sys.stderr)
+            print("GitHub credentials ('{}') file could not be found!".format(dx_object), file=sys.stderr)
+            exit(2)
 
 
     build_project_id = dxpy.WORKSPACE_ID
@@ -63,7 +64,7 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
     try:
         app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
     except dxpy.exceptions.ResourceNotFound:
-        print("GitHub credentials file ({}) could not be found!".format(github_creds), file=sys.stderr)
+        print("GitHub credentials file ('{}') could not be found!".format(github_creds), file=sys.stderr)
         raise
     job_id = app_run_result["id"]
     if not brief:
