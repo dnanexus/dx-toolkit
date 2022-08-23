@@ -22,7 +22,6 @@ from parameterized import parameterized
 import os, sys, unittest, json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src
 from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
-from dxpy.nextflow.nextflow_templates import get_default_inputs
 from dxpy.nextflow.nextflow_builder import prepare_inputs
 
 import uuid
@@ -67,10 +66,6 @@ class TestNextflowTemplates(DXTestCase):
                     raise Exception("Input was found twice!")
                 input_pairs[i.get("name")] = True
         return all(value is True for value in input_pairs.values())
-
-    def test_inputs(self):
-        inputs = get_default_inputs()
-        self.assertEqual(len(inputs), default_input_len)
 
     def test_dxapp(self):
         dxapp = get_nextflow_dxapp()
