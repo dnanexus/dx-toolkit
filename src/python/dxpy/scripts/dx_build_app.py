@@ -999,6 +999,8 @@ def _build_app(args, extra_args):
     source_dir = args.src_dir
     worker_resources_subpath = None
     if args.nextflow:
+        print("HERE")
+        print(args.github_credentials)
         types = ["nextflow"]
         resources_dir = args.src_dir
         source_dir = prepare_nextflow(args.src_dir, args.profile)

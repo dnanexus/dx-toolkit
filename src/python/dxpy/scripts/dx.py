@@ -2652,8 +2652,14 @@ def build(args):
         if args.mode in ("globalworkflow", "applet", "app") and args.keep_open:
             build_parser.error("Global workflows, applets and apps cannot be kept open")
 
-        if args.nextflow and args.repository and args.remote:
+        if args.repository and not args.nextflow:
+            build_parser.error("Repository argument is available only when building nextflow. Did you mean `dx build --nextflow`?")
+
+        if args.repository and args.remote:
             build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
+
+        if args.github_credentials and not args.repository:
+            build_parser.error("GitHub credentials can be supplied only when building Nextflow pipeline from repository.")
 
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
@@ -4751,6 +4757,7 @@ build_parser.add_argument('--keep-open', help=fill("Do not close workflow after 
 # --nextflow
 build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet. Can be used with --repository.",
                                                    width_adjustment=-24), action='store_true')
+
 # --profile
 build_parser.add_argument('--profile', help=fill("Default profile for Nextflow pipeline. Can be used only with --nextflow.",
                                                    width_adjustment=-24), dest="profile")
@@ -4761,6 +4768,14 @@ build_parser.add_argument('--repository', help=fill("Specifies a git repository 
 # --tag
 build_parser.add_argument('--tag', help=fill("Specifies tag for GitHub repository. Needs to be used with --repository.",
                                                    width_adjustment=-24), dest="tag")
+
+# --github-credentials
+build_parser.add_argument('--github-credentials', help=fill("File with credentials for GitHub repositories. Needs to be used with --repository.",
+                                                   width_adjustment=-24), dest="github_credentials").completer = DXPathCompleter(classes=['file'])
+
+app_and_globalworkflow_options.add_argument("--from", help="ID or path of the source applet/workflow to create an app/globalworkflow from. Source directory src_dir cannot be given when using this option",
+                          dest="_from").completer = DXPathCompleter(classes=['applet','workflow'])
+
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
