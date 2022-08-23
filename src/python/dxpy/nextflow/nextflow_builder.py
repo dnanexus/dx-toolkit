@@ -22,15 +22,26 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
 
     Runs the Nextflow Pipeline Importer app, which creates NF applet from given repository.
     """
+    # FIXME: is this already present somewhere?
+    def create_dxlink(object_id):
+        if dxpy.is_dxlink(object_id):
+            return object_id
+        if dxpy.utils.resolver.is_project_explicit(object_id):
+            return dxpy.dxlink(object_id)
+        else:
+            split_object_id = object_id.split(":", 1)
+            return dxpy.dxlink(object_id=split_object_id[1], project_id=split_object_id[0])
+
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
+
     input_hash = {
         "repository_url": repository,
         "repository_tag": tag,
         "config_profile": profile,
-        "github_credentials": dxpy.dxlink(github_creds)
+        "github_credentials": create_dxlink(github_creds)
     }
 
     api_options = {
