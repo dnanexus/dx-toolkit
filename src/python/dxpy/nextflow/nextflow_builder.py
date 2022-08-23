@@ -38,8 +38,6 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
         return dxpy.dxlink(object_id=object_id, project_id=object_project)
 
 
-    resolve_existing_path
-
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
         parser.error(
