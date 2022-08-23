@@ -85,7 +85,7 @@ class TestNextflowTemplates(DXTestCase):
     def test_src_basic(self):
         src = get_nextflow_src()
         self.assertTrue("#!/usr/bin/env bash" in src)
-        self.assertTrue("nextflow run" in src)
+        self.assertTrue("nextflow" in src)
 
     def test_src_profile(self):
         src = get_nextflow_src(profile="test_profile")
