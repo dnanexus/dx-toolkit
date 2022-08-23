@@ -67,7 +67,7 @@ main() {
     filtered_inputs=""
     
     @@RUN_INPUTS@@
-    nextflow -trace nextflow.plugin @@PROFILE_ARG@@ $nf_run_args_and_pipeline_params -log ${LOG_NAME} run /home/dnanexus/nfp -name ${NXF_UUID} $nf_run_args_and_pipeline_params ${filtered_inputs}
+    nextflow -trace nextflow.plugin $nf_run_args_and_pipeline_params -log ${LOG_NAME} run /home/dnanexus/nfp @@PROFILE_ARG@@ -name ${NXF_UUID} $nf_run_args_and_pipeline_params ${filtered_inputs}
 }
 
 
