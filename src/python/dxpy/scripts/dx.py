@@ -4766,7 +4766,7 @@ build_parser.add_argument('--profile', help=fill("Default profile for Nextflow p
 build_parser.add_argument('--repository', help=fill("Specifies a git repository of Nextflow workflow. Needs to be used with --nextflow and cannot be used with --remote.",
                                                    width_adjustment=-24), dest="repository")
 # --tag
-build_parser.add_argument('--tag', help=fill("Specifies tag for GitHub repository. Needs to be used with --repository.",
+build_parser.add_argument('--repository-tag', help=fill("Specifies tag for GitHub repository. Needs to be used with --repository.",
                                                    width_adjustment=-24), dest="tag")
 
 # --github-credentials

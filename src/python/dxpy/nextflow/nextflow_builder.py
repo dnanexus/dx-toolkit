@@ -60,7 +60,7 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
         "input": input_hash,
         "project": build_project_id,
     }
-    print(input_hash["github_credentials"])
+
     try:
         app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
     except dxpy.exceptions.ResourceNotFound:
@@ -88,7 +88,6 @@ def prepare_nextflow(resources_dir, profile):
     """
     assert os.path.exists(resources_dir)
     inputs = []
-    # dxapp_dir = tempfile.mkdtemp(prefix="dx.nextflow.")
     os.makedirs(".dx.nextflow", exist_ok=True)
     dxapp_dir = os.path.join(resources_dir, '.dx.nextflow')
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
@@ -100,8 +99,14 @@ def prepare_nextflow(resources_dir, profile):
     write_exec(dxapp_dir, EXEC_CONTENT)
     return dxapp_dir
 
-# TODO: Add docstrings for all the methods.
+
 def prepare_inputs(schema_file):
+    """
+    :param schema_file: path to nextflow_schema.json file
+    :type schema_file: str or Path
+
+    Creates DNAnexus inputs from Nextflow inputs.
+    """
     def get_default_input_value(key):
         types = {
             "hidden": False,
@@ -118,11 +123,12 @@ def prepare_inputs(schema_file):
             "integer": "int",
             "number": "float",
             "boolean": "boolean",
-            "object": "hash"  # TODO: check default values
+            "object": "hash"
             # TODO: add directory + file + path
         }
         if nf_type in types:
             return types[nf_type]
+        # TODO: raise Exception after file+directory is implemented
         return "string"
         # raise Exception(f"type {nf_type} is not supported by DNAnexus")
 

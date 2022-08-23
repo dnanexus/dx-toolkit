@@ -55,23 +55,6 @@ input2 = {
     "label": "Test2"
 }
 
-def build_nextflow_applet(app_dir):
-    with temporary_project('test proj', reclaim_permissions=True, cleanup=False) as temp_project:
-
-        # updated_app_dir = app_dir + str(uuid.uuid1())
-        # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
-        # shutil.copytree(app_dir, updated_app_dir)
-        build_output = run(['dx', 'build', '--nextflow', './nextflow', '-f', '--project', temp_project.get_id()])
-        print(build_output, file=sys.stderr)
-        return json.loads(build_output)['id']
-
-
-# class TestNextflow(DXTestCase):
-#
-#     def test_basic_hello(self):
-#         applet = build_nextflow_applet("./nextflow/")
-#         print(applet)
-
 class TestNextflowTemplates(DXTestCase):
 
     def are_inputs_in_spec(self, inputSpec, inputs):

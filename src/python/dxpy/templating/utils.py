@@ -247,11 +247,6 @@ def create_files_from_templates(template_dir, app_json, language,
                                 pattern, pattern_suffix='',
                                 parallelized_input='', parallelized_output='', description='',
                                 entry_points=()):
-    print("here!")
-    print(required_file_input_names)
-    print(optional_file_input_names)
-    print(optional_file_array_input_names)
-    print(required_file_array_input_names)
     manifest = []
     name = app_json['name']
     title = app_json.get('title', name)
@@ -296,9 +291,7 @@ def create_files_from_templates(template_dir, app_json, language,
             if any(template_filename.endswith(ext) for ext in ('~', '.pyc', '.pyo', '__pycache__')):
                 continue
             use_template_file(os.path.join('test', template_filename))
-    print(template_dir)
     for template_filename in os.listdir(os.path.join(template_dir, 'src')):
-        print(template_filename)
         if template_filename.endswith('~'):
             continue
         elif template_filename.startswith('code'):

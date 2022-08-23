@@ -103,7 +103,6 @@ def check_output(*popenargs, **kwargs):
     err = err.decode(locale.getpreferredencoding())
     if retcode:
         print(err)
-        print(output)
         cmd = kwargs.get("args")
         if cmd is None:
             cmd = popenargs[0]

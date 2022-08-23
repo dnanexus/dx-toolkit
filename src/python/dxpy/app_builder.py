@@ -262,7 +262,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
         # the mtime and mode used are that of the target (using os.stat())
         # If the link is to be kept as a link, the mtime and mode are those
         # of the link itself (using os.lstat())
-        # TODO: HERE update
+
         with tempfile.NamedTemporaryFile(suffix=".tar") as tar_tmp_fh:
 
             output_sha1 = hashlib.sha1()

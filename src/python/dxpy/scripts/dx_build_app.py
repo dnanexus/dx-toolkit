@@ -993,7 +993,6 @@ def _build_app(args, extra_args):
     TODO: remote app builds still return None, but we should fix this.
 
     """
-    # TODO: nextflow changes
     resources_dir = None
     types = []
     source_dir = args.src_dir
@@ -1079,7 +1078,6 @@ def _build_app(args, extra_args):
         return output['id']
 
     else:
-        # TODO: use this for nextflow and separate this so nextflow is not necesarily in remote branch
         # REMOTE BUILD
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
@@ -1115,7 +1113,6 @@ def _build_app(args, extra_args):
             more_kwargs['do_parallel_build'] = False
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
-        # TODO: remote nextflow repository
         if args.nextflow:
             return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials, args.brief)
         else:
