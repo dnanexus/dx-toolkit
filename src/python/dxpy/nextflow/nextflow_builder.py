@@ -52,7 +52,7 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
         "input": input_hash,
         "project": build_project_id,
     }
-
+    print(input_hash["github_credentials"])
     try:
         app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
     except dxpy.exceptions.ResourceNotFound:
