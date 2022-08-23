@@ -47,7 +47,7 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
         "repository_url": repository,
         "repository_tag": tag,
         "config_profile": profile,
-        "github_credentials": github_creds
+        "github_credentials": create_dxlink(github_creds)
     }
 
     api_options = {
