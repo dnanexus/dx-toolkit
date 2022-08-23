@@ -26,7 +26,7 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
     def create_dxlink(object_id):
         if dxpy.is_dxlink(object_id):
             return object_id
-        if dxpy.utils.resolver.is_project_explicit(object_id):
+        if ":" in object_id:
             split_object_id = object_id.split(":", 1)
             return dxpy.dxlink(object_id=split_object_id[1], project_id=split_object_id[0])
         else:
