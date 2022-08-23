@@ -197,7 +197,7 @@ def _lint(dxapp_json_filename, mode):
     if 'name' in app_spec:
         if app_spec['name'] != app_spec['name'].lower():
             logger.warn('name "%s" should be all lowercase' % (app_spec['name'],))
-        if dirname != app_spec['name'] and not str(os.path.abspath(dxapp_json_filename)).startswith("/tmp"):
+        if dirname != app_spec['name'] and not str(os.path.abspath(dxapp_json_filename)).startswith("/tmp") and not dirname.startswith("."):
             logger.warn('app name "%s" does not match containing directory "%s"' % (app_spec['name'], dirname))
     else:
         logger.warn('app is missing a name, please add one in the "name" field of dxapp.json')
