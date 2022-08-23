@@ -27,10 +27,11 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
         if dxpy.is_dxlink(object_id):
             return object_id
         if dxpy.utils.resolver.is_project_explicit(object_id):
-            return dxpy.dxlink(object_id)
-        else:
             split_object_id = object_id.split(":", 1)
             return dxpy.dxlink(object_id=split_object_id[1], project_id=split_object_id[0])
+        else:
+            return dxpy.dxlink(object_id)
+
 
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
