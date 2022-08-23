@@ -4773,8 +4773,6 @@ build_parser.add_argument('--tag', help=fill("Specifies tag for GitHub repositor
 build_parser.add_argument('--github-credentials', help=fill("File with credentials for GitHub repositories. Needs to be used with --repository.",
                                                    width_adjustment=-24), dest="github_credentials").completer = DXPathCompleter(classes=['file'])
 
-app_and_globalworkflow_options.add_argument("--from", help="ID or path of the source applet/workflow to create an app/globalworkflow from. Source directory src_dir cannot be given when using this option",
-                          dest="_from").completer = DXPathCompleter(classes=['applet','workflow'])
 
 
 build_parser.set_defaults(func=build)
