@@ -25,18 +25,21 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
     Runs the Nextflow Pipeline Importer app, which creates NF applet from given repository.
     """
     # FIXME: is this already present somewhere?
-    def create_dxlink(object):
-        if dxpy.is_dxlink(object):
-            return object
-        if ":" in object:
-            object_project, object_id = object.split(":", 1)
-        else:
-            object_id = object
-            object_project = None
-        if not dxpy.utils.resolver.is_hashid(object_id):
-            object_project, _, object_id = dxpy.utils.resolver.resolve_existing_path(object_id, expected="entity", expected_classes=["file"], describe=False)
-            object_id = object_id["id"]
-        return dxpy.dxlink(object_id=object_id, project_id=object_project)
+    def create_dxlink(dx_object):
+        try:
+            if dxpy.is_dxlink(dx_object):
+                return dx_object
+            if ":" in dx_object:
+                object_project, object_id = dx_object.split(":", 1)
+            else:
+                object_id = dx_object
+                object_project = None
+            if not dxpy.utils.resolver.is_hashid(object_id):
+                object_project, _, object_id = dxpy.utils.resolver.resolve_existing_path(object_id, expected="entity", expected_classes=["file"], describe=False)
+                object_id = object_id["id"]
+            return dxpy.dxlink(object_id=object_id, project_id=object_project)
+        except dxpy.utils.resolver.ResolutionError:
+            print("GitHub credentials ({}) file could not be found!".format(dx_object), file=sys.stderr)
 
 
     build_project_id = dxpy.WORKSPACE_ID
@@ -60,7 +63,7 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
     try:
         app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
     except dxpy.exceptions.ResourceNotFound:
-        print("GitHub credentials file could not be found!", file=sys.stderr)
+        print("GitHub credentials file ({}) could not be found!".format(github_creds), file=sys.stderr)
         raise
     job_id = app_run_result["id"]
     if not brief:
