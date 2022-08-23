@@ -22,7 +22,6 @@ from parameterized import parameterized
 import os, sys, unittest, json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src
 from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
-from dxpy.nextflow.nextflow_templates import get_default_inputs
 from dxpy.nextflow.nextflow_builder import prepare_inputs
 
 import uuid
@@ -55,23 +54,6 @@ input2 = {
     "label": "Test2"
 }
 
-def build_nextflow_applet(app_dir):
-    with temporary_project('test proj', reclaim_permissions=True, cleanup=False) as temp_project:
-
-        # updated_app_dir = app_dir + str(uuid.uuid1())
-        # updated_app_dir = os.path.abspath(os.path.join(tempdir, os.path.basename(app_dir)))
-        # shutil.copytree(app_dir, updated_app_dir)
-        build_output = run(['dx', 'build', '--nextflow', './nextflow', '-f', '--project', temp_project.get_id()])
-        print(build_output, file=sys.stderr)
-        return json.loads(build_output)['id']
-
-
-# class TestNextflow(DXTestCase):
-#
-#     def test_basic_hello(self):
-#         applet = build_nextflow_applet("./nextflow/")
-#         print(applet)
-
 class TestNextflowTemplates(DXTestCase):
 
     def are_inputs_in_spec(self, inputSpec, inputs):
@@ -84,10 +66,6 @@ class TestNextflowTemplates(DXTestCase):
                     raise Exception("Input was found twice!")
                 input_pairs[i.get("name")] = True
         return all(value is True for value in input_pairs.values())
-
-    def test_inputs(self):
-        inputs = get_default_inputs()
-        self.assertEqual(len(inputs), default_input_len)
 
     def test_dxapp(self):
         dxapp = get_nextflow_dxapp()
@@ -107,7 +85,7 @@ class TestNextflowTemplates(DXTestCase):
     def test_src_basic(self):
         src = get_nextflow_src()
         self.assertTrue("#!/usr/bin/env bash" in src)
-        self.assertTrue("nextflow run" in src)
+        self.assertTrue("nextflow" in src)
 
     def test_src_profile(self):
         src = get_nextflow_src(profile="test_profile")

@@ -192,7 +192,7 @@ def _fix_perm_filter(tar_obj):
     return tar_obj
 
 
-def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False, resources_dir=None):
+def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False, resources_dir=None, worker_resources_subpath="."):
     """
     :param ensure_upload: If True, will bypass checksum of resources directory
                           and upload resources bundle unconditionally;
@@ -207,11 +207,16 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                            result in a broken link within the resource directory
                            unless you really know what you're doing.
     :type force_symlinks: boolean
+    :param resources_dir: Directory with resources to be archived and uploaded. If not given, uses `resources/`.
+    :type resources_dir: str
+    :param worker_resources_subpath: Directory where files will be extracted on worker.
+                                     If not given, `/` folder is used.
+    :type worker_resources_subpath: str
     :returns: A list (possibly empty) of references to the generated archive(s)
     :rtype: list
 
-    If it exists, archives and uploads the contents of the
-    ``resources/`` subdirectory of *src_dir* to a new remote file
+    If resources_dir exists, archives and uploads the contents of the resources_dir
+    (usually ``resources/``) subdirectory of *src_dir* to a new remote file
     object, and returns a list describing a single bundled dependency in
     the form expected by the ``bundledDepends`` field of a run
     specification. Returns an empty list, if no archive was created.
@@ -278,7 +283,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
                 # add an entry in the tar file for the current directory, but
                 # do not recurse!
-                tar_fh.add(dirname, arcname='.' + relative_dirname, recursive=False, filter=_fix_perm_filter)
+                tar_fh.add(dirname, arcname=worker_resources_subpath + relative_dirname, recursive=False, filter=_fix_perm_filter)
 
                 # Canonicalize the order of subdirectories; this is the order in
                 # which they will be visited by os.walk
@@ -343,7 +348,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                     if deref_link:
                         true_filename = os.path.realpath(true_filename)
 
-                    tar_fh.add(true_filename, arcname='.' + relative_filename, filter=_fix_perm_filter)
+                    tar_fh.add(true_filename, arcname=worker_resources_subpath + relative_filename, filter=_fix_perm_filter)
 
                 # end for filename in sorted(files)
 

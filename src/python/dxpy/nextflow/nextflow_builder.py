@@ -1,29 +1,17 @@
 import os
+import sys
+
 from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
 from dxpy.nextflow.nextflow_templates import get_nextflow_src
-import tempfile
+from dxpy.nextflow.nextflow_utils import get_template_dir
+from dxpy.nextflow.nextflow_utils import write_exec
+from dxpy.nextflow.nextflow_utils import write_dxapp
 import dxpy
 import json
 from distutils.dir_util import copy_tree
 
-def get_template_dir():
-    return os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
-
-def write_exec(folder, content):
-    exec_file = f"{folder}/nextflow.sh"
-    os.makedirs(os.path.dirname(os.path.abspath(exec_file)), exist_ok=True)
-    with open(exec_file, "w") as exec:
-        exec.write(content)
-
-
-def write_dxapp(folder, content):
-    dxapp_file = f"{folder}/dxapp.json"
-    with open(dxapp_file, "w") as dxapp:
-        json.dump(content, dxapp)
-
-
-def build_pipeline_from_repository(repository, tag, profile, brief):
+def build_pipeline_from_repository(repository, tag, profile, github_creds, brief=False):
     """
     :param repository: URL to git repository
     :type repository: string
@@ -36,14 +24,35 @@ def build_pipeline_from_repository(repository, tag, profile, brief):
 
     Runs the Nextflow Pipeline Importer app, which creates NF applet from given repository.
     """
+    # FIXME: is this already present somewhere?
+    def create_dxlink(dx_object):
+        try:
+            if dxpy.is_dxlink(dx_object):
+                return dx_object
+            if ":" in dx_object:
+                object_project, object_id = dx_object.split(":", 1)
+            else:
+                object_id = dx_object
+                object_project = None
+            if not dxpy.utils.resolver.is_hashid(object_id):
+                object_project, _, object_id = dxpy.utils.resolver.resolve_existing_path(object_id, expected="entity", expected_classes=["file"], describe=False)
+                object_id = object_id["id"]
+            return dxpy.dxlink(object_id=object_id, project_id=object_project)
+        except dxpy.utils.resolver.ResolutionError:
+            print("GitHub credentials ('{}') file could not be found!".format(dx_object), file=sys.stderr)
+            exit(2)
+
+
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
+
     input_hash = {
         "repository_url": repository,
         "repository_tag": tag,
-        "config_profile": profile
+        "config_profile": profile,
+        "github_credentials": create_dxlink(github_creds)
     }
 
     api_options = {
@@ -52,8 +61,11 @@ def build_pipeline_from_repository(repository, tag, profile, brief):
         "project": build_project_id,
     }
 
-    # TODO: this will have to be an app app_run!
-    app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
+    try:
+        app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
+    except dxpy.exceptions.ResourceNotFound:
+        print("GitHub credentials file ('{}') could not be found!".format(github_creds), file=sys.stderr)
+        raise
     job_id = app_run_result["id"]
     if not brief:
         print("Started builder job %s" % (job_id,))
@@ -76,7 +88,6 @@ def prepare_nextflow(resources_dir, profile):
     """
     assert os.path.exists(resources_dir)
     inputs = []
-    # dxapp_dir = tempfile.mkdtemp(prefix="dx.nextflow.")
     os.makedirs(".dx.nextflow", exist_ok=True)
     dxapp_dir = os.path.join(resources_dir, '.dx.nextflow')
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
@@ -88,8 +99,14 @@ def prepare_nextflow(resources_dir, profile):
     write_exec(dxapp_dir, EXEC_CONTENT)
     return dxapp_dir
 
-# TODO: Add docstrings for all the methods.
+
 def prepare_inputs(schema_file):
+    """
+    :param schema_file: path to nextflow_schema.json file
+    :type schema_file: str or Path
+
+    Creates DNAnexus inputs from Nextflow inputs.
+    """
     def get_default_input_value(key):
         types = {
             "hidden": False,
@@ -106,11 +123,12 @@ def prepare_inputs(schema_file):
             "integer": "int",
             "number": "float",
             "boolean": "boolean",
-            "object": "hash"  # TODO: check default values
+            "object": "hash"
             # TODO: add directory + file + path
         }
         if nf_type in types:
             return types[nf_type]
+        # TODO: raise Exception after file+directory is implemented
         return "string"
         # raise Exception(f"type {nf_type} is not supported by DNAnexus")
 
