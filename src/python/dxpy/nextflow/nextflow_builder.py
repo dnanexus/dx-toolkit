@@ -35,6 +35,7 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
             object_project = None
         if not dxpy.utils.resolver.is_hashid(object_id):
             object_project, _, object_id = dxpy.utils.resolver.resolve_existing_path(object_id, expected="entity", expected_classes=["file"], describe=False)
+            object_id = object_id["id"]
         return dxpy.dxlink(object_id=object_id, project_id=object_project)
 
 
