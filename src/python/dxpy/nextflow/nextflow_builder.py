@@ -50,10 +50,12 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
 
     input_hash = {
         "repository_url": repository,
-        "repository_tag": tag,
-        "config_profile": profile,
-        "github_credentials": create_dxlink(github_creds)
+        "repository_tag": tag
     }
+    if profile:
+        input_hash["config_profile"] = profile
+    if github_creds:
+        input_hash["github_credentials"] = create_dxlink(github_creds)
 
     api_options = {
         "name": "Nextflow build of %s" % (repository),
