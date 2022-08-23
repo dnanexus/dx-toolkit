@@ -25,15 +25,20 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
     Runs the Nextflow Pipeline Importer app, which creates NF applet from given repository.
     """
     # FIXME: is this already present somewhere?
-    def create_dxlink(object_id):
-        if dxpy.is_dxlink(object_id):
-            return object_id
-        if ":" in object_id:
-            split_object_id = object_id.split(":", 1)
-            return dxpy.dxlink(object_id=split_object_id[1], project_id=split_object_id[0])
+    def create_dxlink(object):
+        if dxpy.is_dxlink(object):
+            return object
+        if ":" in object:
+            object_project, object_id = object.split(":", 1)
         else:
-            return dxpy.dxlink(object_id)
+            object_id = object
+            object_project = None
+        if not dxpy.utils.resolver.is_hashid(object_id):
+            object_id, _, object_id = dxpy.resolve_existing_path(object_id, expected="entity", expected_classes=["file"])
+        return dxpy.dxlink(object_id=object_id, project_id=object_project)
 
+
+    resolve_existing_path
 
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
