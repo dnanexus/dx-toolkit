@@ -9,7 +9,7 @@ import json
 from distutils.dir_util import copy_tree
 
 
-def build_pipeline_from_repository(repository, tag, profile, brief):
+def build_pipeline_from_repository(repository, tag, profile, github_creds, brief=False):
     """
     :param repository: URL to git repository
     :type repository: string
@@ -29,7 +29,8 @@ def build_pipeline_from_repository(repository, tag, profile, brief):
     input_hash = {
         "repository_url": repository,
         "repository_tag": tag,
-        "config_profile": profile
+        "config_profile": profile,
+        "github_credentials": github_creds
     }
 
     api_options = {

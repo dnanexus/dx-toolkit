@@ -1119,7 +1119,7 @@ def _build_app(args, extra_args):
             more_kwargs['do_check_syntax'] = False
         # TODO: remote nextflow repository
         if args.nextflow:
-            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.brief)
+            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials args.brief)
         else:
             try:
                 app_json = _parse_app_spec(source_dir)
