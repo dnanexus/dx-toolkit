@@ -1,4 +1,6 @@
 import os
+import sys
+
 from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
 from dxpy.nextflow.nextflow_templates import get_nextflow_src
 from dxpy.nextflow.nextflow_utils import get_template_dir
@@ -51,8 +53,11 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
         "project": build_project_id,
     }
 
-    # TODO: this will have to be an app app_run!
-    app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
+    try:
+        app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
+    except dxpy.exceptions.ResourceNotFound:
+        print("GitHub credentials file could not be found!", file=sys.stderr)
+        raise
     job_id = app_run_result["id"]
     if not brief:
         print("Started builder job %s" % (job_id,))
