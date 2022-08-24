@@ -662,6 +662,9 @@ def find_global_workflows(name=None, name_mode='exact', category=None,
                                   first_page_size=first_page_size, **kwargs)
 
 def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
+    # users often incorrectly pass strings to zero_ok, fail fast in that case
+    if not isinstance(zero_ok, bool):
+        raise DXError('_find_one: Unexpected value found for argument zero_ok, it should be a bool')
     kwargs["limit"] = 1 if more_ok else 2
     response = method(**kwargs)
     result = next(response, None)
@@ -683,6 +686,7 @@ def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -703,6 +707,7 @@ def find_one_project(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -723,6 +728,7 @@ def find_one_app(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if

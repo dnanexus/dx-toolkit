@@ -2441,6 +2441,15 @@ class TestDXSearch(testutil.DXTestCaseCompat):
             for method in methods:
                 with self.assertRaises(DXError):
                     method(**query)
+    
+    def test_find_one_fails_if_zero_ok_not_bool(self):
+        with self.assertRaises(DXError):
+            dxpy.find_one_project(1)
+        with self.assertRaises(DXError):
+            dxpy.find_one_data_object("foo")
+        with self.assertRaises(DXError):
+            dxpy.find_one_app([])
+
 
 class TestPrettyPrint(unittest.TestCase):
     def test_string_escaping(self):
