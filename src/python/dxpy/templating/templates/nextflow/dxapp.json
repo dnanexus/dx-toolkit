@@ -59,14 +59,9 @@
   ],
   "runSpec": {
     "interpreter": "bash",
-    "execDepends": [
-      {
-        "name": "default-jre"
-      }
-    ],
+    "execDepends": [],
     "distribution": "Ubuntu",
     "release": "20.04",
-    "file": "nextflow.sh",
     "version": "0"
   },
   "regionalOptions": {

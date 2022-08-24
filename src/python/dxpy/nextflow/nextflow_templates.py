@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from dxpy.nextflow.nextflow_utils import get_template_dir
 from dxpy.nextflow.nextflow_utils import get_source_file_name
 import json
@@ -15,6 +17,7 @@ def get_nextflow_dxapp(custom_inputs=[]):
     with open(os.path.join(str(get_template_dir()), 'dxapp.json'), 'r') as f:
         dxapp = json.load(f)
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
+    dxapp["runSpec"]["file"] = get_source_file_name()
     return dxapp
 
 
@@ -32,9 +35,10 @@ def get_nextflow_src(inputs=[], profile=None):
 
     run_inputs = ""
     for i in inputs:
+        #FIXME: not pushed, test
         run_inputs = run_inputs + f'''
         if [ -n "${i['name']}" ]; then
-            filtered_inputs="${{filtered_inputs}} --{i['name']}=${i['name']}"
+            filtered_inputs="${{filtered_inputs}} --{i['name']}=\"${i['name']}\""
         fi
         '''
     profile_arg = "-profile {}".format(profile) if profile else ""
