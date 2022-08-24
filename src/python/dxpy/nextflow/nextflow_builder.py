@@ -11,7 +11,7 @@ import json
 from distutils.dir_util import copy_tree
 
 
-def build_pipeline_from_repository(repository, tag, profile, github_creds, brief=False):
+def build_pipeline_from_repository(repository, tag, profile="", github_creds=, brief=False):
     """
     :param repository: URL to git repository
     :type repository: string
@@ -19,6 +19,8 @@ def build_pipeline_from_repository(repository, tag, profile, github_creds, brief
     :type tag: string
     :param profile: Custom NF profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
+    :param github_creds: file containing github credentials for download private repositories
+    :type github_creds: file
     :param brief: Level of verbosity
     :type brief: boolean
 
