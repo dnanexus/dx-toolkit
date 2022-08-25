@@ -7,7 +7,7 @@ import os
 
 
 
-def get_nextflow_dxapp(custom_inputs=[]):
+def get_nextflow_dxapp(custom_inputs=[], resources_directory="Nextflow pipeline"):
     """
     :param custom_inputs: Custom inputs that will be used in created Nextflow pipeline.
     :type custom_inputs: list
@@ -18,6 +18,8 @@ def get_nextflow_dxapp(custom_inputs=[]):
         dxapp = json.load(f)
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
     dxapp["runSpec"]["file"] = get_source_file_name()
+    dxapp["runSpec"]["name"] = resources_directory
+
     return dxapp
 
 
