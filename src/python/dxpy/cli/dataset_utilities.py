@@ -26,7 +26,6 @@ import os
 import re
 import csv
 import dxpy
-import pandas as pd
 from ..utils.printing import (fill)
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
@@ -93,7 +92,54 @@ def extract_dataset(args):
     files_to_check = []
     file_already_exist = []
 
+    def _check_system_python_version():
+        python_version_major = sys.version_info.major
+        python_version_minor = sys.version_info.minor
+        python_version_micro = sys.version_info.micro
+        if python_version_major == 3 and python_version_minor >= 7:
+            python_range = '0'
+        elif python_version_major == 3 and ((python_version_minor > 6) or (python_version_minor == 5 and python_version_micro >= 3)):
+            python_range = '1'
+        else:
+            python_range = '2'
+        return python_range
+
+    def _check_pandas_version(python_range, pandas_version):
+        pd_0, pd_1, pd_2 = map(int,pandas_version.split("."))
+        if pd_0 == 0 and ((pd_1 == 23 and pd_2 >= 3) or (pd_1 == 24) or (pd_1 == 25 and pd_2 < 3) or (pd_1 == 25 and pd_2 == 3 and python_range==1)):
+            pass
+        else:
+            print(_generate_pandas_version_message('Warning', pandas_version_dictionary[python_range], pandas_version))
+
+    def _generate_pandas_version_message(type = None, pandas_version_dictionary = None, pandas_version = None):
+        message_text_1 = "Warning: For '-ddd' usage, the recommended pandas version is "
+        message_text_2 = ". The installed version of pandas is "
+        message_text_3 = ". It is recommended to update pandas. "
+        message_text_4 = "For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is "
+        message_text_5 = "'-ddd' requires the use of pandas, which is not currently installed. Please install pandas to a version "
+        if type == 'Error':
+            message = message_text_5 + pandas_version_dictionary + ". " + message_text_4 + pandas_version_dictionary
+        elif type == 'Warning':
+            message = message_text_1 + pandas_version_dictionary + message_text_2 + pandas_version + message_text_3 + message_text_4 + pandas_version_dictionary
+        return message
+
     if args.dump_dataset_dictionary:
+        global pd
+        pandas_version_dictionary = {"0": "'1.3.5'",
+                                     "1": "greater than or equal to '0.23.3' and less than or equal to '0.25.3'",
+                                     "2": "greater than or equal to '0.23.3' and less than '0.25.3'"}
+        python_range = _check_system_python_version()
+        try:
+            import pandas as pd
+            pandas_version = pd.__version__
+            if python_range == '0':
+                if pandas_version != '1.3.5':
+                    print(_generate_pandas_version_message('Warning', pandas_version_dictionary['0'], pandas_version))
+            else:
+                _check_pandas_version(python_range, pandas_version)
+        except ImportError as e:
+            err_exit(_generate_pandas_version_message('Error', pandas_version_dictionary[python_range], None))
+        
         if args.output is None:
             out_directory = os.getcwd()
         elif args.output == '-':
