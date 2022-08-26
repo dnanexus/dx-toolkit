@@ -96,6 +96,11 @@ def extract_dataset(args):
         python_version_major = sys.version_info.major
         python_version_minor = sys.version_info.minor
         python_version_micro = sys.version_info.micro
+
+        # Set python version range
+        # python_range = 0 for python_version>="3.7"
+        # python_range = 1 for python_version>="3.5.3" and python_version<"3.7"
+        # python_range = 2 for python_version<"3.5.3"
         if python_version_major == 3 and python_version_minor >= 7:
             python_range = '0'
         elif python_version_major == 3 and ((python_version_minor > 6) or (python_version_minor == 5 and python_version_micro >= 3)):
@@ -104,41 +109,29 @@ def extract_dataset(args):
             python_range = '2'
         return python_range
 
-    def _check_pandas_version(python_range, pandas_version):
-        pd_0, pd_1, pd_2 = map(int,pandas_version.split("."))
-        if pd_0 == 0 and ((pd_1 == 23 and pd_2 >= 3) or (pd_1 == 24) or (pd_1 == 25 and pd_2 < 3) or (pd_1 == 25 and pd_2 == 3 and python_range==1)):
+    def _check_pandas_version(python_range, current_pandas_version, pandas_version_range):
+        # Valid pandas versions based on python versions
+        # python_range = 0; pandas==1.3.5
+        # python_range = 1; pandas>=0.23.3,<=0.25.3
+        # python_range = 2; pandas>=0.23.3,< 0.25.0
+        pd_0, pd_1, pd_2 = map(int,current_pandas_version.split("."))
+        if (python_range == '0' and current_pandas_version == '1.3.5') or (pd_0 == 0 and ((pd_1 == 23 and pd_2 >= 3) or (pd_1 == 24) or (pd_1 == 25 and pd_2 < 3) or (pd_1 == 25 and pd_2 == 3 and python_range==1))):
             pass
         else:
-            print(_generate_pandas_version_message('Warning', pandas_version_dictionary[python_range], pandas_version))
-
-    def _generate_pandas_version_message(type = None, pandas_version_dictionary = None, pandas_version = None):
-        message_text_1 = "Warning: For '-ddd' usage, the recommended pandas version is "
-        message_text_2 = ". The installed version of pandas is "
-        message_text_3 = ". It is recommended to update pandas. "
-        message_text_4 = "For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is "
-        message_text_5 = "'-ddd' requires the use of pandas, which is not currently installed. Please install pandas to a version "
-        if type == 'Error':
-            message = message_text_5 + pandas_version_dictionary + ". " + message_text_4 + pandas_version_dictionary
-        elif type == 'Warning':
-            message = message_text_1 + pandas_version_dictionary + message_text_2 + pandas_version + message_text_3 + message_text_4 + pandas_version_dictionary
-        return message
+            print("Warning: For '-ddd' usage, the recommended pandas version is {}. The installed version of pandas is {}. It is recommended to update pandas. For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is {}.".format(pandas_version_range, current_pandas_version, pandas_version_range))
 
     if args.dump_dataset_dictionary:
         global pd
         pandas_version_dictionary = {"0": "'1.3.5'",
-                                     "1": "greater than or equal to '0.23.3' and less than or equal to '0.25.3'",
-                                     "2": "greater than or equal to '0.23.3' and less than '0.25.3'"}
+                                     "1": ">= '0.23.3' and <= '0.25.3'",
+                                     "2": ">= '0.23.3' and < '0.25.3'"}
         python_range = _check_system_python_version()
         try:
             import pandas as pd
-            pandas_version = pd.__version__
-            if python_range == '0':
-                if pandas_version != '1.3.5':
-                    print(_generate_pandas_version_message('Warning', pandas_version_dictionary['0'], pandas_version))
-            else:
-                _check_pandas_version(python_range, pandas_version)
+            current_pandas_version = pd.__version__
+            _check_pandas_version(python_range, current_pandas_version, pandas_version_dictionary[python_range])
         except ImportError as e:
-            err_exit(_generate_pandas_version_message('Error', pandas_version_dictionary[python_range], None))
+            err_exit("'-ddd' requires the use of pandas, which is not currently installed. Please install pandas to a version {}. For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is {}.".format(pandas_version_dictionary[python_range], pandas_version_dictionary[python_range]))
         
         if args.output is None:
             out_directory = os.getcwd()
