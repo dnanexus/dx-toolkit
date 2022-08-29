@@ -7,13 +7,15 @@ import os
 
 
 
-def get_nextflow_dxapp(custom_inputs=[]):
+def get_nextflow_dxapp(custom_inputs=None):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
 
     Creates Nextflow dxapp.json from the Nextflow dxapp.json template
     """
+    if custom_inputs is None:
+        custom_inputs = []
     with open(os.path.join(str(get_template_dir()), 'dxapp.json'), 'r') as f:
         dxapp = json.load(f)
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]

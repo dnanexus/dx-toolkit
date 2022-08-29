@@ -11,7 +11,7 @@
       "help": "Additional run arguments and pipeline parameters for Nextflow (i.e. -queue-size).",
       "class": "string",
       "optional": true
-    }
+    },
     {
       "name": "nf_advanced_opts",
       "label": "Nextflow Advanced Options",
