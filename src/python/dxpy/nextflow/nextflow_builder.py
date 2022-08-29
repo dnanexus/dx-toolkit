@@ -87,8 +87,8 @@ def prepare_nextflow(resources_dir, profile):
     """
     assert os.path.exists(resources_dir)
     inputs = []
-    os.makedirs(".dx.nextflow", exist_ok=True)
     dxapp_dir = os.path.join(resources_dir, '.dx.nextflow')
+    os.makedirs(dxapp_dir, exist_ok=True)
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
     dxapp_content = get_nextflow_dxapp(inputs, resources_dir)
