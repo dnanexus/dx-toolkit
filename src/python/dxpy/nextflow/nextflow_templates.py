@@ -7,7 +7,7 @@ import os
 
 
 
-def get_nextflow_dxapp(custom_inputs=[], name="Nextflow pipeline"):
+def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
