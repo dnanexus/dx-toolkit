@@ -20,7 +20,7 @@ def get_nextflow_dxapp(custom_inputs=[], name="Nextflow pipeline"):
         dxapp = json.load(f)
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
     dxapp["runSpec"]["file"] = get_source_file_name()
-    dxapp["runSpec"]["name"] = name
+    dxapp["name"] = name
     import sys
     print(dxapp, file=sys.stderr)
     return dxapp
