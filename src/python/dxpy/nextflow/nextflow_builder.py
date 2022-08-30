@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 
 import os
-import sys
 
-from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
-from dxpy.nextflow.nextflow_templates import get_nextflow_src
-from dxpy.nextflow.nextflow_utils import get_template_dir
-from dxpy.nextflow.nextflow_utils import write_exec
-from dxpy.nextflow.nextflow_utils import write_dxapp
-from dxpy.exceptions import err_exit
+from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp)
+from dxpy.utils.resolver import parse_obj
 import dxpy
 import json
 import argparse
@@ -30,23 +26,6 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
 
     Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
     """
-    # FIXME: is this already present somewhere?
-    def create_dxlink(dx_object):
-        try:
-            if dxpy.is_dxlink(dx_object):
-                return dx_object
-            if ":" in dx_object:
-                object_project, object_id = dx_object.split(":", 1)
-            else:
-                object_id = dx_object
-                object_project = None
-            if not dxpy.utils.resolver.is_hashid(object_id):
-                object_project, _, object_id = dxpy.utils.resolver.resolve_existing_path(object_id, expected="entity", expected_classes=["file"], describe=False)
-                object_id = object_id["id"]
-            return dxpy.dxlink(object_id=object_id, project_id=object_project)
-        except dxpy.utils.resolver.ResolutionError:
-            err_exit("GitHub credentials ('{}') file could not be found!".format(dx_object))
-
 
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
@@ -61,14 +40,14 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
     if profile:
         input_hash["config_profile"] = profile
     if github_creds:
-        input_hash["github_credentials"] = create_dxlink(github_creds)
+        input_hash["github_credentials"] = parse_obj(github_creds, "file")
 
     nf_builder_job = dxpy.DXApp(name='nextflow_pipeline_importer').run(app_input=input_hash, project=build_project_id, name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
         print("Started builder job %s" % (nf_builder_job.get_id(),))
     nf_builder_job.wait_on_done(interval=1)
-    applet_id, _ = dxpy.get_dxlink_ids(nf_builder_job.describe()['output']['output_applet'])
+    applet_id, _ = dxpy.get_dxlink_ids(nf_builder_job.describe(fields={"output": True})['output']['output_applet'])
     if not brief:
         print("Created Nextflow pipeline %s" % (applet_id))
     else:
@@ -79,7 +58,7 @@ def prepare_nextflow(resources_dir, profile):
     """
     :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
     :type resources_dir: str or Path
-    :param profile: Custom NF profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
+    :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
     :type profile: string
 
     Creates files necessary for creating an applet on the Platform, such as dxapp.json and a source file. These files are created in '.dx.nextflow' directory.
@@ -106,13 +85,6 @@ def prepare_inputs(schema_file):
     :rtype: string
     Creates DNAnexus inputs (inputSpec) from Nextflow inputs.
     """
-    def get_default_input_value(key):
-        input_items = {
-            "hidden": False,
-        }
-        if key in input_items:
-            return input_items[key]
-        raise Exception("Default value for key {} is not given.".format(key))
 
     def get_dx_type(nf_type):
         types = {
@@ -142,10 +114,11 @@ def prepare_inputs(schema_file):
                 dx_input["help"] = property.get('help_text')
             if "default" in property:
                 dx_input["default"] = property.get("default")
-            dx_input["hidden"] = property.get('hidden', get_default_input_value('hidden'))
+            dx_input["hidden"] = property.get('hidden', False)
             dx_input["class"] = get_dx_type(property_key)
             if property_key not in required_inputs:
                 dx_input["optional"] = True
-                dx_input["help"] = "(Optional) {}".format(dx_input["help"])
+                if dx_input.get("help") is None:
+                    dx_input["help"] = "(Optional) {}".format(dx_input["help"])
             inputs.append(dx_input)
     return inputs

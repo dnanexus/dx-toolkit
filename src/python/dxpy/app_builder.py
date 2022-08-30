@@ -192,7 +192,7 @@ def _fix_perm_filter(tar_obj):
     return tar_obj
 
 
-def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False, resources_dir=None, worker_resources_subpath="."):
+def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False, resources_dir=None, worker_resources_subpath=""):
     """
     :param ensure_upload: If True, will bypass checksum of resources directory
                           and upload resources bundle unconditionally;
@@ -209,8 +209,9 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
     :type force_symlinks: boolean
     :param resources_dir: Directory with resources to be archived and uploaded. If not given, uses `resources/`.
     :type resources_dir: str
-    :param worker_resources_subpath: Directory where files will be extracted on worker.
-                                     If not given, `/` folder is used.
+    :param worker_resources_subpath: Path that will be prepended to the default directory where files are extracted on the worker.
+                                     Default is empty string, therefore files would be extracted directly to the root folder.
+                                     Example: If "home/dnanexus" is given, files will be extracted into /home/dnanexus.
     :type worker_resources_subpath: str
     :returns: A list (possibly empty) of references to the generated archive(s)
     :rtype: list
@@ -343,7 +344,6 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                     # If we are to dereference, use the target fn
                     if deref_link:
                         true_filename = os.path.realpath(true_filename)
-
                     tar_fh.add(true_filename, arcname=worker_resources_subpath + relative_filename, filter=_fix_perm_filter)
                 # end for filename in sorted(files)
 
@@ -432,7 +432,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False,
                   project=None, override_folder=None, override_name=None,
-                  dry_run=False, brief=False, types=[], **kwargs):
+                  dry_run=False, brief=False, types=None, **kwargs):
     """
     Creates a new applet object.
 
@@ -442,10 +442,14 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     :type override_folder: str
     :param override_name: name for the resulting applet which, if specified, overrides that given in dxapp.json
     :type override_name: str
+    :param types: marks the created applet with the specified types
+    :type types: List[str]
 
     """
     applet_spec = _get_applet_spec(src_dir)
 
+    if types is None:
+        types = []
     if project is None:
         dest_project = applet_spec['project']
     else:
