@@ -68,8 +68,8 @@ main() {
     # parse dnanexus-job.json to get job output destination
     # and use that dxpath as the nextflow params.outdir
     # TODO: override publishDir in user's main.nf to `publishDir=params.outdir`
-    OUT_PROJECT=$(cat /home/dnanexus/dnanexus-job.json | jq -r .project)"
-    OUT_FOLDER=$(cat /home/dnanexus/dnanexus-job.json | jq -r .folder)"
+    OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)"
+    OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)"
     OUTDIR="dx://$OUT_PROJECT:$OUT_FOLDER"
     
     nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run /home/dnanexus/nfp @@PROFILE_ARG@@ -name test-${NXF_UUID} --outdir $OUTDIR $nf_run_args_and_pipeline_params ${filtered_inputs}
