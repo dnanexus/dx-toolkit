@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import sys
 
@@ -6,23 +8,27 @@ from dxpy.nextflow.nextflow_templates import get_nextflow_src
 from dxpy.nextflow.nextflow_utils import get_template_dir
 from dxpy.nextflow.nextflow_utils import write_exec
 from dxpy.nextflow.nextflow_utils import write_dxapp
+from dxpy.exceptions import err_exit
 import dxpy
 import json
+import argparse
 from distutils.dir_util import copy_tree
+parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 
 def build_pipeline_from_repository(repository, tag, profile="", github_creds=None, brief=False):
     """
-    :param repository: URL to git repository
+    :param repository: URL to a Git repository
     :type repository: string
-    :param tag: tag of given git repository. if not given, default branch is used.
+    :param tag: tag of a given Git repository. If it is not provided, the default branch is used.
     :type tag: string
-    :param profile: Custom NF profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
+    :param profile: Custom Nextflow profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
     :param brief: Level of verbosity
     :type brief: boolean
+    :returns: ID of the created applet
 
-    Runs the Nextflow Pipeline Importer app, which creates NF applet from given repository.
+    Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
     """
     # FIXME: is this already present somewhere?
     def create_dxlink(dx_object):
@@ -39,8 +45,7 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
                 object_id = object_id["id"]
             return dxpy.dxlink(object_id=object_id, project_id=object_project)
         except dxpy.utils.resolver.ResolutionError:
-            print("GitHub credentials ('{}') file could not be found!".format(dx_object), file=sys.stderr)
-            exit(2)
+            err_exit("GitHub credentials ('{}') file could not be found!".format(dx_object))
 
 
     build_project_id = dxpy.WORKSPACE_ID
@@ -58,21 +63,12 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
     if github_creds:
         input_hash["github_credentials"] = create_dxlink(github_creds)
 
-    api_options = {
-        "name": "Nextflow build of %s" % (repository),
-        "input": input_hash,
-        "project": build_project_id,
-    }
-    try:
-        app_run_result = dxpy.api.app_run('app-nextflow_pipeline_importer', input_params=api_options)
-    except dxpy.exceptions.ResourceNotFound:
-        print("GitHub credentials file ('{}') could not be found!".format(github_creds), file=sys.stderr)
-        raise
-    job_id = app_run_result["id"]
+    nf_builder_job = dxpy.DXApp(name='nextflow_pipeline_importer').run(app_input=input_hash, project=build_project_id, name="Nextflow build of %s" % (repository), detach=True)
+
     if not brief:
-        print("Started builder job %s" % (job_id,))
-    dxpy.DXJob(job_id).wait_on_done(interval=1)
-    applet_id, _ = dxpy.get_dxlink_ids(dxpy.api.job_describe(job_id)['output']['output_applet'])
+        print("Started builder job %s" % (nf_builder_job.get_id(),))
+    nf_builder_job.wait_on_done(interval=1)
+    applet_id, _ = dxpy.get_dxlink_ids(nf_builder_job.describe()['output']['output_applet'])
     if not brief:
         print("Created Nextflow pipeline %s" % (applet_id))
     else:
@@ -81,12 +77,12 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
 
 def prepare_nextflow(resources_dir, profile):
     """
-    :param resources_dir: Directory with all resources needed for Nextflow Pipeline. Usually directory with user's NF files.
+    :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
     :type resources_dir: str or Path
     :param profile: Custom NF profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
 
-    Creates files for creating applet, such as dxapp.json and source file. These files are created in temp directory.
+    Creates files necessary for creating an applet on the Platform, such as dxapp.json and a source file. These files are created in '.dx.nextflow' directory.
     """
     assert os.path.exists(resources_dir)
     inputs = []
@@ -94,11 +90,11 @@ def prepare_nextflow(resources_dir, profile):
     dxapp_dir = os.path.join(resources_dir, '.dx.nextflow')
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
-    DXAPP_CONTENT = get_nextflow_dxapp(inputs)
-    EXEC_CONTENT = get_nextflow_src(inputs=inputs, profile=profile)
+    dxapp_content = get_nextflow_dxapp(inputs)
+    exec_content = get_nextflow_src(inputs=inputs, profile=profile)
     copy_tree(get_template_dir(), dxapp_dir)
-    write_dxapp(dxapp_dir, DXAPP_CONTENT)
-    write_exec(dxapp_dir, EXEC_CONTENT)
+    write_dxapp(dxapp_dir, dxapp_content)
+    write_exec(dxapp_dir, exec_content)
     return dxapp_dir
 
 
@@ -106,18 +102,17 @@ def prepare_inputs(schema_file):
     """
     :param schema_file: path to nextflow_schema.json file
     :type schema_file: str or Path
-
-    Creates DNAnexus inputs from Nextflow inputs.
+    :returns: DNAnexus datatype used in dxapp.json inputSpec field
+    :rtype: string
+    Creates DNAnexus inputs (inputSpec) from Nextflow inputs.
     """
     def get_default_input_value(key):
-        types = {
+        input_items = {
             "hidden": False,
-            "help": "Default help message"
-            # TODO: add directory + file + path
         }
-        if key in types:
-            return types[key]
-        return "NOT_IMPLEMENTED"
+        if key in input_items:
+            return input_items[key]
+        raise Exception("Default value for key {} is not given.".format(key))
 
     def get_dx_type(nf_type):
         types = {
@@ -135,18 +130,16 @@ def prepare_inputs(schema_file):
         # raise Exception(f"type {nf_type} is not supported by DNAnexus")
 
     inputs = []
-    try:
-        with open(schema_file, "r") as fh:
-            schema = json.load(fh)
-    except Exception as json_e:
-        raise AssertionError(json_e)
+    with open(schema_file, "r") as fh:
+        schema = json.load(fh)
     for d_key, d_schema in schema.get("definitions", {}).items():
         required_inputs = d_schema.get("required", [])
         for property_key, property in d_schema.get("properties", {}).items():
             dx_input = {}
             dx_input["name"] = property_key
             dx_input["title"] = dx_input['name']
-            dx_input["help"] = property.get('help_text', get_default_input_value('help'))
+            if "help_text" in property:
+                dx_input["help"] = property.get('help_text')
             if "default" in property:
                 dx_input["default"] = property.get("default")
             dx_input["hidden"] = property.get('hidden', get_default_input_value('hidden'))

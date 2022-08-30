@@ -39,7 +39,8 @@ from dxpy.nextflow.nextflow_utils import get_resources_subpath
 from .. import logger
 from pathlib import Path
 
-from dxpy.nextflow.nextflow_builder import *
+from dxpy.nextflow.nextflow_builder import build_pipeline_from_repository
+from dxpy.nextflow.nextflow_builder import prepare_nextflow
 from ..utils import json_load_raise_on_duplicates
 from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError, is_container_id
 from ..utils.completer import LocalCompleter
@@ -1027,7 +1028,6 @@ def _build_app(args, extra_args):
 
     if not args.remote and not args.repository:  # building with NF repository is implicitly remote
         # LOCAL BUILD
-
         try:
             output = build_and_upload_locally(
                 source_dir,
@@ -1110,20 +1110,19 @@ def _build_app(args, extra_args):
             more_kwargs['do_check_syntax'] = False
         if args.nextflow:
             return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials, args.brief)
-        else:
-            try:
-                app_json = _parse_app_spec(source_dir)
-                _check_suggestions(app_json, publish=args.publish)
-                _verify_app_source_dir(source_dir, args.mode)
-                if args.mode == "app" and not args.dry_run:
-                    dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
-            except dxpy.app_builder.AppBuilderException as e:
-                print("Error: %s" % (e.args,), file=sys.stderr)
-                sys.exit(3)
+        try:
+            app_json = _parse_app_spec(source_dir)
+            _check_suggestions(app_json, publish=args.publish)
+            _verify_app_source_dir(source_dir, args.mode)
+            if args.mode == "app" and not args.dry_run:
+                dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
+        except dxpy.app_builder.AppBuilderException as e:
+            print("Error: %s" % (e.args,), file=sys.stderr)
+            sys.exit(3)
 
-            return _build_app_remote(args.mode, source_dir, destination_override=args.destination,
-                                     publish=args.publish,
-                                     region=region, watch=args.watch, **more_kwargs)
+        return _build_app_remote(args.mode, source_dir, destination_override=args.destination,
+                                 publish=args.publish,
+                                 region=region, watch=args.watch, **more_kwargs)
 
 
 def build(args):

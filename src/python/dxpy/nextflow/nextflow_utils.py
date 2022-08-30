@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+
 import os
 import dxpy
 import json
 
 def get_source_file_name():
-    return "nextflow.sh"
+    return "src/nextflow.sh"
 
 def get_resources_subpath():
     return "/home/dnanexus/nfp"
