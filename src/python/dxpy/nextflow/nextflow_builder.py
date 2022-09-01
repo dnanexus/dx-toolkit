@@ -118,7 +118,7 @@ def prepare_inputs(schema_file):
             dx_input["class"] = get_dx_type(property_key)
             if property_key not in required_inputs:
                 dx_input["optional"] = True
-                if dx_input.get("help") is None:
+                if dx_input.get("help") is not None:
                     dx_input["help"] = "(Optional) {}".format(dx_input["help"])
             inputs.append(dx_input)
     return inputs
