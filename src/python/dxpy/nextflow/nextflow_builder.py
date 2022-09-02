@@ -86,20 +86,24 @@ def prepare_inputs(schema_file):
     Creates DNAnexus inputs (inputSpec) from Nextflow inputs.
     """
 
-    def get_dx_type(nf_type):
+    def get_dx_type(nf_type, nf_format=None):
         types = {
             "string": "string",
             "integer": "int",
             "number": "float",
             "boolean": "boolean",
             "object": "hash"
-            # TODO: add directory + file + path
         }
-        if nf_type in types:
+        str_types = {
+            "file-path": "file",
+            "directory-path": "string",  # So far we will stick with strings dx://...
+            "path": "string"
+        }
+        if nf_type == "string" and nf_format in str_types:
+            return str_types[nf_format]
+        elif nf_type in types:
             return types[nf_type]
-        # TODO: raise Exception after file+directory is implemented
-        return "string"
-        # raise Exception(f"type {nf_type} is not supported by DNAnexus")
+        raise Exception("type {} is not supported by DNAnexus".format(nf_type))
 
     inputs = []
     with open(schema_file, "r") as fh:
@@ -115,7 +119,7 @@ def prepare_inputs(schema_file):
             if "default" in property:
                 dx_input["default"] = property.get("default")
             dx_input["hidden"] = property.get('hidden', False)
-            dx_input["class"] = get_dx_type(property.get("type"))
+            dx_input["class"] = get_dx_type(property.get("type"), property.get("format"))
             if property_key not in required_inputs:
                 dx_input["optional"] = True
                 if dx_input.get("help") is not None:
