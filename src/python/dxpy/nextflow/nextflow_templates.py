@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-from dxpy.nextflow.nextflow_utils import get_template_dir
-from dxpy.nextflow.nextflow_utils import get_source_file_name
+from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath)
 import json
 import os
 
@@ -41,13 +40,13 @@ def get_nextflow_src(inputs=None, profile=None):
 
     run_inputs = ""
     for i in inputs:
-        #FIXME: not pushed, test
-        run_inputs = run_inputs + f'''
-        if [ -n "${i['name']}" ]; then
-            filtered_inputs="${{filtered_inputs}} --{i['name']}=\"${i['name']}\""
+        run_inputs = run_inputs + '''
+        if [ -n "$%s" ]; then
+            filtered_inputs+=(--%s="${%s}")
         fi
-        '''
+        ''' % (i['name'], i['name'], i['name'])
     profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@RUN_INPUTS@@", run_inputs)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
+    src = src.replace("@@RESOURCES_SUBPATH@@", get_resources_subpath())
     return src

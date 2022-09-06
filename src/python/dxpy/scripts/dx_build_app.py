@@ -749,7 +749,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
-                             region=None, brief=False, resources_dir=None, worker_resources_subpath=".", types=[], **kwargs):
+                             region=None, brief=False, resources_dir=None, worker_resources_subpath="", types=[], **kwargs):
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
 
@@ -992,7 +992,7 @@ def _build_app(args, extra_args):
     resources_dir = None
     types = []
     source_dir = args.src_dir
-    worker_resources_subpath = "."  # no subpath, current directory.
+    worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
     if args.nextflow:
         types = ["nextflow"]
         resources_dir = args.src_dir
@@ -1108,7 +1108,7 @@ def _build_app(args, extra_args):
             more_kwargs['do_parallel_build'] = False
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
-        if args.nextflow:
+        if args.nextflow and args.repository is not None:
             return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials, args.brief)
         try:
             app_json = _parse_app_spec(source_dir)

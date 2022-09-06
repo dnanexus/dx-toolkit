@@ -80,13 +80,13 @@ main() {
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
 
-    filtered_inputs=""
+    filtered_inputs=()
 
     @@RUN_INPUTS@@
     
     [[ $debug ]] && TRACE_CMD="-trace nextflow.plugin"
 
-    nextflow $TRACE_CMD $nf_advanced_opts -log ${LOG_NAME} run /home/dnanexus/nfp @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params ${filtered_inputs} & NXF_EXEC_PID=$!
+    nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
     set +x
     if [[ $debug ]] ; then
       touch $LOG_NAME
