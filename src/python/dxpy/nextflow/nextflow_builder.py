@@ -88,7 +88,7 @@ def prepare_inputs(schema_file):
 
     def get_dx_type(nf_type):
         types = {
-            "string": "str",
+            "string": "string",
             "integer": "int",
             "number": "float",
             "boolean": "boolean",
@@ -115,7 +115,7 @@ def prepare_inputs(schema_file):
             if "default" in property:
                 dx_input["default"] = property.get("default")
             dx_input["hidden"] = property.get('hidden', False)
-            dx_input["class"] = get_dx_type(property_key)
+            dx_input["class"] = get_dx_type(property.get("type"))
             if property_key not in required_inputs:
                 dx_input["optional"] = True
                 if dx_input.get("help") is not None:
