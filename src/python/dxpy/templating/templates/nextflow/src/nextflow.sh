@@ -5,22 +5,22 @@ on_exit() {
   # upload log file
   dx upload $LOG_NAME --path $DX_LOG --wait --brief --no-progress --parents || true
   
+  set +x
   if [[ $debug ]]; then
-    kill $LOG_MONITOR0_PID 2>/dev/null || true
-    
     # DEVEX-1943 Wait up to 30 seconds for log forwarders to terminate
+    set +e
     i=0
     while [[ $i -lt 30 ]];
     do
-        if kill -0 "$LOG_MONITOR1_PID" 2>/dev/null; then
+        if kill -0 "$LOG_MONITOR_PID" 2>/dev/null; then
             sleep 1
         else
             break
         fi
         ((i++))
     done
-
-    kill $LOG_MONITOR1_PID 2>/dev/null || true 
+    kill $LOG_MONITOR_PID 2>/dev/null || true
+    set -xe
   fi
 
   # backup cache
@@ -82,19 +82,22 @@ main() {
 
     filtered_inputs=""
 
-    # initiate log file and start forwarding it to the job monitor 
-    touch $LOG_NAME
-    if [[ $debug ]]; then
-      (while true; do truncate --size="<5G" $LOG_NAME; sleep 10; done) &
-      LOG_MONITOR0_PID=$!
-      disown $LOG_MONITOR0_PID
-      
-      tail --pid=$LOG_MONITOR0_PID --follow -n 0 $LOG_NAME >&2 & LOG_MONITOR1_PID=$!
-      disown $LOG_MONITOR1_PID
+    @@RUN_INPUTS@@
+    
+    [[ $debug ]] && TRACE_CMD="-trace nextflow.plugin"
+
+    nextflow $TRACE_CMD $nf_advanced_opts -log ${LOG_NAME} run /home/dnanexus/nfp @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params ${filtered_inputs} & NXF_EXEC_PID=$!
+    set +x
+    if [[ $debug ]] ; then
+      touch $LOG_NAME
+      tail --follow --pid=$NXF_EXEC_PID -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
+      disown $LOG_MONITOR_PID
+      set -x
     fi
     
-    @@RUN_INPUTS@@
-    nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run /home/dnanexus/nfp @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params ${filtered_inputs}
+    wait $NXF_EXEC_PID
+    ret=$?
+    exit $ret
 }
 
 
