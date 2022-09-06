@@ -53,8 +53,9 @@ dx_path() {
 main() {
     set -f
 
-    [[ $debug ]] && set -x && env | sort
     [[ $debug ]] && export NXF_DEBUG=2
+    [[ $debug ]] && TRACE_CMD="-trace nextflow.plugin"
+    [[ $debug ]] && set -x && env | sort
     
     if [ -n "$docker_creds" ]; then
         dx download "$docker_creds" -o /home/dnanexus/credentials
@@ -83,9 +84,6 @@ main() {
     filtered_inputs=()
 
     @@RUN_INPUTS@@
-    
-    [[ $debug ]] && TRACE_CMD="-trace nextflow.plugin"
-
     nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
     set +x
     if [[ $debug ]] ; then
