@@ -31,7 +31,8 @@ from ..exceptions import DXCLIError, DXError
 from ..utils.printing import (RED, GREEN, WHITE, BOLD, ENDC, UNDERLINE, fill)
 from ..utils.describe import (get_find_executions_string, get_ls_l_desc, get_ls_l_desc_fields, parse_typespec)
 from ..utils.resolver import (parse_input_keyval, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
-                              resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
+                              resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id,
+                              parse_obj)
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex, basestring, USING_PYTHON2
 try:
@@ -49,20 +50,6 @@ def parse_bool(string):
         elif 'false'.startswith(string.lower()) or string == '0':
             return False
     raise DXCLIError('Could not resolve \"' + string +  '\" to a boolean')
-
-def parse_obj(string, klass):
-    if string == '':
-        raise DXCLIError('Error: Nonempty string cannot be resolved')
-    project, path, entity_result = resolve_existing_path(string)
-    if entity_result is None:
-        raise DXCLIError('Could not resolve \"' + string + '\" to a name or ID')
-    if not entity_result['describe']['class'] == klass:
-        raise DXCLIError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
-    if is_hashid(string):
-        return {'$dnanexus_link': entity_result['id']}
-    else:
-        return {'$dnanexus_link': {"project": entity_result['describe']['project'],
-                                   "id": entity_result['id']}}
 
 dx_data_classes = ['record', 'file', 'applet', 'workflow']
 

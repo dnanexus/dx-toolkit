@@ -61,8 +61,8 @@ main() {
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
 
-    filtered_inputs=""
-    
+    filtered_inputs=()
+
     @@RUN_INPUTS@@
 
     # parse dnanexus-job.json to get job output destination
@@ -72,7 +72,7 @@ main() {
     OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
     OUTDIR="dx://$OUT_PROJECT:$OUT_FOLDER"
     
-    nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run /home/dnanexus/nfp @@PROFILE_ARG@@ -name test-${NXF_UUID} --outdir $OUTDIR $nf_run_args_and_pipeline_params ${filtered_inputs}
+    nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}"
 }
 
 
