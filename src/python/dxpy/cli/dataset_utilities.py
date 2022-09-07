@@ -93,17 +93,14 @@ def extract_dataset(args):
     file_already_exist = []
 
     def _check_system_python_version():
-        python_version_major = sys.version_info.major
-        python_version_minor = sys.version_info.minor
-        python_version_micro = sys.version_info.micro
-
+        python_version = sys.version_info[:3]
         # Set python version range
         # python_range = 0 for python_version>="3.7"
         # python_range = 1 for python_version>="3.5.3" and python_version<"3.7"
         # python_range = 2 for python_version<"3.5.3"
-        if python_version_major == 3 and python_version_minor >= 7:
+        if python_version >= (3, 7):
             python_range = '0'
-        elif python_version_major == 3 and ((python_version_minor > 6) or (python_version_minor == 5 and python_version_micro >= 3)):
+        elif python_version >= (3, 5, 3) :
             python_range = '1'
         else:
             python_range = '2'
@@ -111,11 +108,11 @@ def extract_dataset(args):
 
     def _check_pandas_version(python_range, current_pandas_version, pandas_version_range):
         # Valid pandas versions based on python versions
-        # python_range = 0; pandas==1.3.5
-        # python_range = 1; pandas>=0.23.3,<=0.25.3
-        # python_range = 2; pandas>=0.23.3,< 0.25.0
-        pd_0, pd_1, pd_2 = map(int,current_pandas_version.split("."))
-        if (python_range == '0' and current_pandas_version == '1.3.5') or (pd_0 == 0 and ((pd_1 == 23 and pd_2 >= 3) or (pd_1 == 24) or (pd_1 == 25 and pd_2 < 3) or (pd_1 == 25 and pd_2 == 3 and python_range==1))):
+        # python_range = 0; python_version>="3.7"; Valid pandas version: pandas==1.3.5
+        # python_range = 1; python_version>="3.5.3" and python_version<"3.7"; Valid pandas version: pandas>=0.23.3,<=0.25.3
+        # python_range = 2; python_version<"3.5.3"; Valid pandas version: pandas>=0.23.3,< 0.25.0
+        system_pandas_version = tuple(map(int,current_pandas_version.split(".")))
+        if (python_range == '0' and system_pandas_version == (1, 3, 5)) or (python_range == '1' and ((0, 25, 3) >= system_pandas_version >= (0, 23, 3))) or (python_range == '2' and ((0, 25, 0) > system_pandas_version >= (0, 23, 3))):
             pass
         else:
             print("Warning: For '-ddd' usage, the recommended pandas version is {}. The installed version of pandas is {}. It is recommended to update pandas. For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is {}.".format(pandas_version_range, current_pandas_version, pandas_version_range))
@@ -124,7 +121,7 @@ def extract_dataset(args):
         global pd
         pandas_version_dictionary = {"0": "'1.3.5'",
                                      "1": ">= '0.23.3' and <= '0.25.3'",
-                                     "2": ">= '0.23.3' and < '0.25.3'"}
+                                     "2": ">= '0.23.3' and < '0.25.0'"}
         python_range = _check_system_python_version()
         try:
             import pandas as pd
