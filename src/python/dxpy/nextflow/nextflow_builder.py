@@ -65,7 +65,7 @@ def prepare_nextflow(resources_dir, profile):
     Creates files necessary for creating an applet on the Platform, such as dxapp.json and a source file. These files are created in '.dx.nextflow' directory.
     """
     assert os.path.exists(resources_dir)
-    if not glob.glob('*.nf'):
+    if not glob(os.path.join(resources_dir, "*.nf")):
         raise dxpy.app_builder.AppBuilderException("Directory %s does not contain Nextflow file (*.nf): not a valid Nextflow directory" % resources_dir)
     inputs = []
     os.makedirs(".dx.nextflow", exist_ok=True)
