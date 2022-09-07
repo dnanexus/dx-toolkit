@@ -2,9 +2,11 @@
 
 on_exit() {
   ret=$?
-  # upload log file
-  dx upload $LOG_NAME --path $DX_LOG --wait --brief --no-progress --parents || true
-  
+  # upload log file only when it has content
+  if [[ -s $LOG_NAME ]]; then
+    dx upload $LOG_NAME --path $DX_LOG --wait --brief --no-progress --parents || true
+  fi
+
   set +x
   if [[ $debug == true ]]; then
     # DEVEX-1943 Wait up to 30 seconds for log forwarders to terminate
