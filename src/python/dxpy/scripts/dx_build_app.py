@@ -1015,15 +1015,6 @@ def _build_app(args, extra_args):
             if output is not None and args.run is None:
                 print(json.dumps(output))
 
-        except dxpy.app_builder.AppBuilderException as e:
-            # AppBuilderException represents errors during app building
-            # that could reasonably have been anticipated by the user.
-            print("Error: %s" % (e.args,), file=sys.stderr)
-            sys.exit(3)
-        except dxpy.exceptions.DXAPIError as e:
-            print("Error: %s" % (e,), file=sys.stderr)
-            sys.exit(3)
-
         return output['id']
 
     if not args.remote and not args.repository:  # building with NF repository is implicitly remote
@@ -1058,14 +1049,6 @@ def _build_app(args, extra_args):
 
             if output is not None and args.run is None:
                 print(json.dumps(output))
-        except dxpy.app_builder.AppBuilderException as e:
-            # AppBuilderException represents errors during app or applet building
-            # that could reasonably have been anticipated by the user.
-            print("Error: %s" % (e.args,), file=sys.stderr)
-            sys.exit(3)
-        except dxpy.exceptions.DXAPIError as e:
-            print("Error: %s" % (e,), file=sys.stderr)
-            sys.exit(3)
 
         if args.dry_run:
             return None
@@ -1116,9 +1099,6 @@ def _build_app(args, extra_args):
             _verify_app_source_dir(source_dir, args.mode)
             if args.mode == "app" and not args.dry_run:
                 dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
-        except dxpy.app_builder.AppBuilderException as e:
-            print("Error: %s" % (e.args,), file=sys.stderr)
-            sys.exit(3)
 
         return _build_app_remote(args.mode, source_dir, destination_override=args.destination,
                                  publish=args.publish,
@@ -1126,8 +1106,16 @@ def _build_app(args, extra_args):
 
 
 def build(args):
-    executable_id = _build_app(args,
-                               json.loads(args.extra_args) if args.extra_args else {})
+    try:
+        executable_id = _build_app(args, json.loads(args.extra_args) if args.extra_args else {})
+    except dxpy.app_builder.AppBuilderException as e:
+        # AppBuilderException represents errors during app building
+        # that could reasonably have been anticipated by the user.
+        print("Error: %s" % (e.args,), file=sys.stderr)
+        sys.exit(3)
+    except dxpy.exceptions.DXAPIError as e:
+        print("Error: %s" % (e,), file=sys.stderr)
+        sys.exit(3)
     if args.run is not None:
         if executable_id is None:
             raise AssertionError('Expected executable_id to be set here')
