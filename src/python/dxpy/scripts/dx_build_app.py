@@ -1000,55 +1000,53 @@ def _build_app(args, extra_args):
         worker_resources_subpath = get_resources_subpath()
     if args._from:
         # BUILD FROM EXISTING APPLET
-        try:
-            output = build_app_from(
-                args._from,
-                [args.version_override],
-                publish=args.publish,
-                do_try_update=args.update,
-                bill_to_override=args.bill_to,
-                confirm=args.confirm,
-                return_object_dump=args.json,
-                brief=args.brief,
-                **extra_args
-            )
-            if output is not None and args.run is None:
-                print(json.dumps(output))
+        output = build_app_from(
+            args._from,
+            [args.version_override],
+            publish=args.publish,
+            do_try_update=args.update,
+            bill_to_override=args.bill_to,
+            confirm=args.confirm,
+            return_object_dump=args.json,
+            brief=args.brief,
+            **extra_args
+        )
+        if output is not None and args.run is None:
+            print(json.dumps(output))
 
         return output['id']
 
     if not args.remote and not args.repository:  # building with NF repository is implicitly remote
         # LOCAL BUILD
-        try:
-            output = build_and_upload_locally(
-                source_dir,
-                args.mode,
-                overwrite=args.overwrite,
-                archive=args.archive,
-                publish=args.publish,
-                destination_override=args.destination,
-                version_override=args.version_override,
-                bill_to_override=args.bill_to,
-                use_temp_build_project=args.use_temp_build_project,
-                do_parallel_build=args.parallel_build,
-                do_version_autonumbering=args.version_autonumbering,
-                do_try_update=args.update,
-                do_check_syntax=args.check_syntax,
-                ensure_upload=args.ensure_upload,
-                force_symlinks=args.force_symlinks,
-                dry_run=args.dry_run,
-                confirm=args.confirm,
-                return_object_dump=args.json,
-                region=args.region,
-                brief=args.brief,
-                resources_dir=resources_dir,
-                worker_resources_subpath=worker_resources_subpath,
-                types=types,
-                **extra_args
-                )
+        output = build_and_upload_locally(
+            source_dir,
+            args.mode,
+            overwrite=args.overwrite,
+            archive=args.archive,
+            publish=args.publish,
+            destination_override=args.destination,
+            version_override=args.version_override,
+            bill_to_override=args.bill_to,
+            use_temp_build_project=args.use_temp_build_project,
+            do_parallel_build=args.parallel_build,
+            do_version_autonumbering=args.version_autonumbering,
+            do_try_update=args.update,
+            do_check_syntax=args.check_syntax,
+            ensure_upload=args.ensure_upload,
+            force_symlinks=args.force_symlinks,
+            dry_run=args.dry_run,
+            confirm=args.confirm,
+            return_object_dump=args.json,
+            region=args.region,
+            brief=args.brief,
+            resources_dir=resources_dir,
+            worker_resources_subpath=worker_resources_subpath,
+            types=types,
+            **extra_args
+            )
 
-            if output is not None and args.run is None:
-                print(json.dumps(output))
+        if output is not None and args.run is None:
+            print(json.dumps(output))
 
         if args.dry_run:
             return None
@@ -1093,12 +1091,12 @@ def _build_app(args, extra_args):
             more_kwargs['do_check_syntax'] = False
         if args.nextflow and args.repository is not None:
             return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials, args.brief)
-        try:
-            app_json = _parse_app_spec(source_dir)
-            _check_suggestions(app_json, publish=args.publish)
-            _verify_app_source_dir(source_dir, args.mode)
-            if args.mode == "app" and not args.dry_run:
-                dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
+
+        app_json = _parse_app_spec(source_dir)
+        _check_suggestions(app_json, publish=args.publish)
+        _verify_app_source_dir(source_dir, args.mode)
+        if args.mode == "app" and not args.dry_run:
+            dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
 
         return _build_app_remote(args.mode, source_dir, destination_override=args.destination,
                                  publish=args.publish,
