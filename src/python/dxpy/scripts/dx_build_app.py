@@ -993,10 +993,10 @@ def _build_app(args, extra_args):
     types = []
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
-    if args.nextflow:
+    if args.nextflow and args.repository:
+        source_dir = prepare_nextflow(args.src_dir, args.profile)
         types = ["nextflow"]
         resources_dir = args.src_dir
-        source_dir = prepare_nextflow(args.src_dir, args.profile)
         worker_resources_subpath = get_resources_subpath()
     if args._from:
         # BUILD FROM EXISTING APPLET

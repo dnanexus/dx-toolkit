@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import os
+import dxpy
+import json
+import argparse
+from glob import glob
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp)
 from dxpy.utils.resolver import parse_obj
-import dxpy
-import json
-import argparse
 from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
@@ -64,6 +65,8 @@ def prepare_nextflow(resources_dir, profile):
     Creates files necessary for creating an applet on the Platform, such as dxapp.json and a source file. These files are created in '.dx.nextflow' directory.
     """
     assert os.path.exists(resources_dir)
+    if not glob.glob('*.nf'):
+        raise dxpy.app_builder.AppBuilderException("Directory %s does not contain Nextflow file (*.nf): not a valid Nextflow directory" % resources_dir)
     inputs = []
     os.makedirs(".dx.nextflow", exist_ok=True)
     dxapp_dir = os.path.join(resources_dir, '.dx.nextflow')
