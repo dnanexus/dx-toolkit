@@ -993,7 +993,7 @@ def _build_app(args, extra_args):
     types = []
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
-    if args.nextflow and args.repository:
+    if args.nextflow and not args.repository:
         source_dir = prepare_nextflow(args.src_dir, args.profile)
         types = ["nextflow"]
         resources_dir = args.src_dir
