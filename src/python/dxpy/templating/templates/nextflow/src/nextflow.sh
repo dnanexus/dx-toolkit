@@ -6,7 +6,7 @@ on_exit() {
   dx upload $LOG_NAME --path $DX_LOG --wait --brief --no-progress --parents || true
   
   set +x
-  if [[ $debug ]]; then
+  if [[ $debug == true ]]; then
     # DEVEX-1943 Wait up to 30 seconds for log forwarders to terminate
     set +e
     i=0
@@ -53,9 +53,11 @@ dx_path() {
 main() {
     set -f
 
-    [[ $debug ]] && export NXF_DEBUG=2
-    [[ $debug ]] && TRACE_CMD="-trace nextflow.plugin"
-    [[ $debug ]] && set -x && env | sort
+    if [[ $debug == true ]]; then
+      export NXF_DEBUG=2
+      TRACE_CMD="-trace nextflow.plugin"
+      set -x && env | sort
+    fi
     
     if [ -n "$docker_creds" ]; then
         dx download "$docker_creds" -o /home/dnanexus/credentials
@@ -85,10 +87,12 @@ main() {
 
     @@RUN_INPUTS@@
     nextflow ${TRACE_CMD} $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
+    
+    # forwarding nextflow log file to job monitor
     set +x
-    if [[ $debug ]] ; then
+    if [[ $debug == true ]] ; then
       touch $LOG_NAME
-      tail --follow --pid=$NXF_EXEC_PID -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
+      tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
       disown $LOG_MONITOR_PID
       set -x
     fi
