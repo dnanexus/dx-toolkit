@@ -61,6 +61,8 @@ def prepare_nextflow(resources_dir, profile):
     :type resources_dir: str or Path
     :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
     :type profile: string
+    :returns: Path to the created dxapp_dir
+    :rtype: Path
 
     Creates files necessary for creating an applet on the Platform, such as dxapp.json and a source file. These files are created in '.dx.nextflow' directory.
     """
