@@ -6,6 +6,7 @@ on_exit() {
   echo "=== Execution complete — uploading Nextflow cache metadata files"
   dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID/*" 2>&1 >/dev/null || true
   dx upload ".nextflow/cache/$NXF_UUID" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID" --no-progress --brief --wait -p -r || true
+  
   # parse dnanexus-job.json to get job output destination
   OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
   OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
@@ -13,10 +14,17 @@ on_exit() {
   
   # publish output files
   rm .nextflow -rf
-  for name in $(find . -type f| sed 's/.\///');do
-    echo "$name"
-    dx upload "$name" --path "$OUTDIR/$name" --no-progress --brief --wait -p -r | xargs -I {} dx-jobutil-add-output output_files {} --class=array:file
-  done
+  if [[ -s $LOG_NAME ]]; then
+    mkdir ../nextflow_log
+    mv $LOG_NAME ../nextflow_log/$LOG_NAME || true
+  else
+    echo "No nextflow log file available."
+  fi
+  
+  if [[ -n "$(ls -A ..)" ]]; then
+    dx-upload-all-outputs --parallel || true
+  else
+    echo "No log file or output files has been generated."
   # done
   exit $ret
 }
@@ -74,8 +82,8 @@ main() {
 
     @@RUN_INPUTS@@
 
-    mkdir -p /home/dnanexus/nxf_playground
-    cd /home/dnanexus/nxf_playground
+    mkdir -p /home/dnanexus/out/output_files
+    cd /home/dnanexus/out/output_files
     nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}"
 }
 
