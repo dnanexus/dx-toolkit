@@ -6,10 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [329.0] - beta
+
+### Added
+
+* `dx extract_dataset` command
+* Optional pandas dependency for dxpy
+
 ### Changed
 - `dxpy.find_one_project`, `dxpy.find_one_data_object`, `dxpy.find_one_app` raise `DXError` if `zero_ok` argument is not a `bool`
 
-## [328.0] - beta
+## [328.0] - 2022.9.8 - stable
 
 ### Added
 
@@ -29,9 +36,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`
 * `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
-* retry uploading on all types of SSL errors 
+* `dx upload` retry on all types of SSL errors 
 
-## [327.1] - 2022.8.12 - stable
+## [327.1] - 2022.8.12
 
 ### Fixed
 
