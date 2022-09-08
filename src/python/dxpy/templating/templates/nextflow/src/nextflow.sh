@@ -25,6 +25,7 @@ on_exit() {
     dx-upload-all-outputs --parallel || true
   else
     echo "No log file or output files has been generated."
+  fi
   # done
   exit $ret
 }
