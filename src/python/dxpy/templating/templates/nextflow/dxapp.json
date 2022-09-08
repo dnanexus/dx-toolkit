@@ -35,6 +35,11 @@
     }
   ],
   "outputSpec": [
+    {
+      "name": "output_files",
+      "label": "Output files of Nextflow pipeline",
+      "class": "array:file"
+    }
   ],
   "runSpec": {
     "interpreter": "bash",

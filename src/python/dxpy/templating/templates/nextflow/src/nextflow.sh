@@ -2,12 +2,21 @@
 
 on_exit() {
   ret=$?
-  # upload log file
-  dx upload $LOG_NAME --path $DX_LOG --wait --brief --no-progress --parents || true
   # backup cache
   echo "=== Execution complete — uploading Nextflow cache metadata files"
   dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID/*" 2>&1 >/dev/null || true
   dx upload ".nextflow/cache/$NXF_UUID" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID" --no-progress --brief --wait -p -r || true
+  # parse dnanexus-job.json to get job output destination
+  OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
+  OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
+  OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
+  
+  # publish output files
+  rm .nextflow -rf
+  for name in $(find . -type f| sed 's/.\///');do
+    echo "$name"
+    dx upload "$name" --path "$OUTDIR/$name" --no-progress --brief --wait -p -r | xargs -I {} dx-jobutil-add-output output_files {} --class=array:file
+  done
   # done
   exit $ret
 }
