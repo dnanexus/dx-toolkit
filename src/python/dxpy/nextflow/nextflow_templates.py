@@ -6,7 +6,7 @@ import os
 
 
 
-def get_nextflow_dxapp(custom_inputs=None):
+def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
@@ -19,6 +19,7 @@ def get_nextflow_dxapp(custom_inputs=None):
         dxapp = json.load(f)
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
     dxapp["runSpec"]["file"] = get_source_file_name()
+    dxapp["name"] = name
     return dxapp
 
 
@@ -40,11 +41,14 @@ def get_nextflow_src(inputs=None, profile=None):
 
     run_inputs = ""
     for i in inputs:
+        value = "${%s}" % (i['name'])
+        if i.get("class") == "file":
+            value = "dx://$(jq .[$dnanexus_link] -r <<< ${%s})" % i['name']
         run_inputs = run_inputs + '''
         if [ -n "$%s" ]; then
-            filtered_inputs+=(--%s="${%s}")
+            filtered_inputs+=(--%s="%s")
         fi
-        ''' % (i['name'], i['name'], i['name'])
+        ''' % (i['name'], i['name'], value)
     profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@RUN_INPUTS@@", run_inputs)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -f
+
 on_exit() {
   ret=$?
   # upload log file only when it has content
@@ -53,8 +55,6 @@ dx_path() {
 }
     
 main() {
-    set -f
-
     if [[ $debug == true ]]; then
       export NXF_DEBUG=2
       TRACE_CMD="-trace nextflow.plugin"

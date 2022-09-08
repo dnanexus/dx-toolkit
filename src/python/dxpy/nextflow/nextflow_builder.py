@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 
 import os
+import dxpy
+import json
+import argparse
+from glob import glob
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp)
 from dxpy.utils.resolver import parse_obj
-import dxpy
-import json
-import argparse
 from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
@@ -60,16 +61,20 @@ def prepare_nextflow(resources_dir, profile):
     :type resources_dir: str or Path
     :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
     :type profile: string
+    :returns: Path to the created dxapp_dir
+    :rtype: Path
 
     Creates files necessary for creating an applet on the Platform, such as dxapp.json and a source file. These files are created in '.dx.nextflow' directory.
     """
     assert os.path.exists(resources_dir)
+    if not glob(os.path.join(resources_dir, "*.nf")):
+        raise dxpy.app_builder.AppBuilderException("Directory %s does not contain Nextflow file (*.nf): not a valid Nextflow directory" % resources_dir)
     inputs = []
-    os.makedirs(".dx.nextflow", exist_ok=True)
     dxapp_dir = os.path.join(resources_dir, '.dx.nextflow')
+    os.makedirs(dxapp_dir, exist_ok=True)
     if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
         inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
-    dxapp_content = get_nextflow_dxapp(inputs)
+    dxapp_content = get_nextflow_dxapp(inputs, os.path.basename(resources_dir))
     exec_content = get_nextflow_src(inputs=inputs, profile=profile)
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, dxapp_content)
@@ -86,20 +91,24 @@ def prepare_inputs(schema_file):
     Creates DNAnexus inputs (inputSpec) from Nextflow inputs.
     """
 
-    def get_dx_type(nf_type):
+    def get_dx_type(nf_type, nf_format=None):
         types = {
             "string": "string",
             "integer": "int",
             "number": "float",
             "boolean": "boolean",
             "object": "hash"
-            # TODO: add directory + file + path
         }
-        if nf_type in types:
+        str_types = {
+            "file-path": "file",
+            "directory-path": "string",  # So far we will stick with strings dx://...
+            "path": "string"
+        }
+        if nf_type == "string" and nf_format in str_types:
+            return str_types[nf_format]
+        elif nf_type in types:
             return types[nf_type]
-        # TODO: raise Exception after file+directory is implemented
-        return "string"
-        # raise Exception(f"type {nf_type} is not supported by DNAnexus")
+        raise Exception("type {} is not supported by DNAnexus".format(nf_type))
 
     inputs = []
     with open(schema_file, "r") as fh:
@@ -115,7 +124,7 @@ def prepare_inputs(schema_file):
             if "default" in property:
                 dx_input["default"] = property.get("default")
             dx_input["hidden"] = property.get('hidden', False)
-            dx_input["class"] = get_dx_type(property.get("type"))
+            dx_input["class"] = get_dx_type(property.get("type"), property.get("format"))
             if property_key not in required_inputs:
                 dx_input["optional"] = True
                 if dx_input.get("help") is not None:
