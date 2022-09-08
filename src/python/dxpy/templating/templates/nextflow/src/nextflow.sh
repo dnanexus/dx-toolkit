@@ -21,7 +21,8 @@ on_exit() {
     echo "No nextflow log file available."
   fi
   
-  if [[ -n "$(ls -A ..)" ]]; then
+  cd ..
+  if [[ -n "$(ls -A ./nextflow_log)" || -n "$(ls -A ./output_files)" ]]; then
     dx-upload-all-outputs --parallel || true
   else
     echo "No log file or output files has been generated."
