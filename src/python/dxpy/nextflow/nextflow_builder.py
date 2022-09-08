@@ -8,7 +8,7 @@ from glob import glob
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp)
-from dxpy.utils.resolver import parse_obj
+from dxpy.cli.exec_io import parse_obj
 from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
