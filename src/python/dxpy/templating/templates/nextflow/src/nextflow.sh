@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -f
+
 on_exit() {
   ret=$?
   # backup cache
@@ -51,10 +53,10 @@ on_exit() {
 }
     
 main() {
-    set -f
-
-    [[ $debug ]] && set -x && env | sort
-    [[ $debug ]] && export NXF_DEBUG=2
+    if $debug ; then
+      set -x && env | sort
+      export NXF_DEBUG=2
+    fi
     
     if [ -n "$docker_creds" ]; then
         dx download "$docker_creds" -o /home/dnanexus/credentials

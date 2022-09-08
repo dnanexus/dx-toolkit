@@ -1,5 +1,4 @@
 {
-  "name": "nextflow pipeline",
   "title": "Nextflow Pipeline",
   "summary": "nextflow",
   "dxapi": "1.0.0",
@@ -49,6 +48,7 @@
     }
   ],
   "runSpec": {
+    "headJobOnDemand": true,
     "interpreter": "bash",
     "execDepends": [],
     "distribution": "Ubuntu",
@@ -59,7 +59,7 @@
     "aws:us-east-1": {
       "systemRequirements": {
         "*": {
-          "instanceType": "mem1_ssd1_v2_x8"
+          "instanceType": "mem1_ssd1_v2_x2"
         }
       },
       "assetDepends": [
