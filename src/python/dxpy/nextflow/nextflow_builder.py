@@ -5,9 +5,10 @@ import dxpy
 import json
 import argparse
 from glob import glob
+import tempfile
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
-from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp)
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name)
 from dxpy.cli.exec_io import parse_obj
 from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
@@ -43,7 +44,7 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
     if github_creds:
         input_hash["github_credentials"] = parse_obj(github_creds, "file")
 
-    nf_builder_job = dxpy.DXApp(name='nextflow_pipeline_importer').run(app_input=input_hash, project=build_project_id, name="Nextflow build of %s" % (repository), detach=True)
+    nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id, name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
         print("Started builder job %s" % (nf_builder_job.get_id(),))
@@ -70,10 +71,9 @@ def prepare_nextflow(resources_dir, profile):
     if not glob(os.path.join(resources_dir, "*.nf")):
         raise dxpy.app_builder.AppBuilderException("Directory %s does not contain Nextflow file (*.nf): not a valid Nextflow directory" % resources_dir)
     inputs = []
-    dxapp_dir = os.path.join(resources_dir, '.dx.nextflow')
-    os.makedirs(dxapp_dir, exist_ok=True)
-    if os.path.exists(f"{resources_dir}/nextflow_schema.json"):
-        inputs = prepare_inputs(f"{resources_dir}/nextflow_schema.json")
+    dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
+    if os.path.exists("{}/nextflow_schema.json".format(resources_dir)):
+        inputs = prepare_inputs("{}/nextflow_schema.json".format(resources_dir))
     dxapp_content = get_nextflow_dxapp(inputs, os.path.basename(resources_dir))
     exec_content = get_nextflow_src(inputs=inputs, profile=profile)
     copy_tree(get_template_dir(), dxapp_dir)
