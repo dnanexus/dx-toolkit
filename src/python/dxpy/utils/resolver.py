@@ -1367,17 +1367,3 @@ def parse_input_keyval(keyeqval):
         return (name, value)
     except:
         raise DXCLIError('An input was found that did not conform to the syntax: -i<input name>=<input value>')
-
-def parse_obj(string, klass):
-    if string == '':
-        raise DXCLIError('Error: Nonempty string cannot be resolved')
-    project, path, entity_result = resolve_existing_path(string)
-    if entity_result is None:
-        raise DXCLIError('Could not resolve \"' + string + '\" to a name or ID')
-    if not entity_result['describe']['class'] == klass:
-        raise DXCLIError('Error: The given object is of class ' + entity_result['describe']['class'] + ' but an object of class ' + klass + ' was expected.')
-    if is_hashid(string):
-        return {'$dnanexus_link': entity_result['id']}
-    else:
-        return {'$dnanexus_link': {"project": entity_result['describe']['project'],
-                                   "id": entity_result['id']}}

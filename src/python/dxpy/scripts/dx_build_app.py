@@ -749,7 +749,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
                              do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
-                             region=None, brief=False, resources_dir=None, worker_resources_subpath="", types=[], **kwargs):
+                             region=None, brief=False, resources_dir=None, worker_resources_subpath="", **kwargs):
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
 
@@ -897,7 +897,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     override_name=override_applet_name,
                     dry_run=dry_run,
                     brief=brief,
-                    types=types,
                     **kwargs)
                 if not dry_run:
                     logger.debug("Created applet " + applet_id + " successfully")
@@ -990,12 +989,10 @@ def _build_app(args, extra_args):
 
     """
     resources_dir = None
-    types = []
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
     if args.nextflow and not args.repository:
         source_dir = prepare_nextflow(args.src_dir, args.profile)
-        types = ["nextflow"]
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath()
     if args._from:
@@ -1041,7 +1038,6 @@ def _build_app(args, extra_args):
             brief=args.brief,
             resources_dir=resources_dir,
             worker_resources_subpath=worker_resources_subpath,
-            types=types,
             **extra_args
             )
 

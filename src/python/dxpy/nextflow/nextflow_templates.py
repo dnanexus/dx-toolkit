@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath)
+from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath, get_importer_name)
 import json
 import os
 
@@ -13,6 +13,14 @@ def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
 
     Creates Nextflow dxapp.json from the Nextflow dxapp.json template
     """
+    def is_importer_job():
+        try:
+            with open("/home/dnanexus/dnanexus-job.json", "r") as f:
+                job_info=json.load(f)
+                return job_info.get("executableName") == get_importer_name()
+        except Exception:
+            return False
+
     if custom_inputs is None:
         custom_inputs = []
     with open(os.path.join(str(get_template_dir()), 'dxapp.json'), 'r') as f:
@@ -20,6 +28,8 @@ def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
     dxapp["runSpec"]["file"] = get_source_file_name()
     dxapp["name"] = name
+    if os.environ.get("DX_JOB_ID") is None or not is_importer_job():
+        dxapp["details"] = {"repository": "local"}
     return dxapp
 
 

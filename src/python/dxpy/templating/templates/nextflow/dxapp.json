@@ -3,6 +3,7 @@
   "summary": "nextflow",
   "dxapi": "1.0.0",
   "version": "1.0.0",
+  "types": ["nextflow"],
   "inputSpec": [
     {
       "name": "nf_run_args_and_pipeline_params",

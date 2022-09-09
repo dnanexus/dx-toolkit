@@ -39,7 +39,7 @@ else:
     spawn_extra_args = {"encoding" : "utf-8" }
 
 
-default_input_len = 7
+default_input_len = 4
 input1 = {
     "class": "file",
     "name": "first_input",
@@ -69,7 +69,8 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_dxapp(self):
         dxapp = get_nextflow_dxapp()
-        self.assertEqual(dxapp.get("name"), "nextflow pipeline")
+        self.assertEqual(dxapp.get("name"), "Nextflow pipeline")
+        self.assertEqual(dxapp.get("details", {}).get("repository"), "local")
 
     @parameterized.expand([
         [input1],
@@ -93,8 +94,8 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_src_inputs(self):
         src = get_nextflow_src(inputs=[input1, input2])
-        self.assertTrue("--{}=${}".format(input1.get("name"), input1.get("name")) in src)
-        self.assertTrue("--{}=${}".format(input2.get("name"), input2.get("name")) in src)
+        self.assertTrue("--{}=\"${{{}}}\"".format(input2.get("name"), input2.get("name")) in src)
+        self.assertTrue("--{}=\"dx://$".format(input1.get("name"), input1.get("name")) in src)
 
     def test_prepare_inputs(self):
         inputs = prepare_inputs("./nextflow/schema2.json")

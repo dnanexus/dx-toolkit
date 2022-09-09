@@ -432,7 +432,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False,
                   project=None, override_folder=None, override_name=None,
-                  dry_run=False, brief=False, types=None, **kwargs):
+                  dry_run=False, brief=False, **kwargs):
     """
     Creates a new applet object.
 
@@ -442,14 +442,10 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     :type override_folder: str
     :param override_name: name for the resulting applet which, if specified, overrides that given in dxapp.json
     :type override_name: str
-    :param types: marks the created applet with the specified types
-    :type types: List[str]
 
     """
     applet_spec = _get_applet_spec(src_dir)
 
-    if types is None:
-        types = []
     if project is None:
         dest_project = applet_spec['project']
     else:
@@ -618,7 +614,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
                                       % (json.dumps(asset)))
 
     merge(applet_spec, kwargs)
-    applet_spec["types"] = types
 
     # -----
     # Now actually create the applet
