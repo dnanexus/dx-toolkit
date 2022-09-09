@@ -2931,6 +2931,7 @@ dx-jobutil-add-output record_array $second_record --array
                                                      "distribution": "Ubuntu",
                                                      "release": "20.04",
                                                      "version": "0",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""},
                                          "access": {"project": "VIEW",
                                                     "allProjects": "VIEW",
