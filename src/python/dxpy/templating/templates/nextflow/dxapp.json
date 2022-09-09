@@ -28,7 +28,7 @@
     {
       "name": "debug",
       "label": "Debug Mode",
-      "help": "Shows additional information in Nextflow logs.",
+      "help": "Shows additional information in the job logs. If true, the execution log messages from Nextflow will also be included.",
       "class": "boolean",
       "default": false
     }
