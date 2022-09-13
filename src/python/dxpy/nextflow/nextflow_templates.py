@@ -28,6 +28,8 @@ def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
     dxapp["runSpec"]["file"] = get_source_file_name()
     dxapp["name"] = name
+    dxapp["title"] = name
+    dxapp["summary"] = name
     if os.environ.get("DX_JOB_ID") is None or not is_importer_job():
         dxapp["details"] = {"repository": "local"}
     return dxapp
