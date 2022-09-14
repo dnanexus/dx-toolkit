@@ -25,13 +25,12 @@ from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
 from dxpy.nextflow.nextflow_builder import prepare_inputs
 
 import uuid
-from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
-                           select_project, cd, override_environment, generate_unique_username_email,
-                           without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
+from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run)
 import dxpy_testutil as testutil
-from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
+import dxpy
+
 if USING_PYTHON2:
     spawn_extra_args = {}
 else:
@@ -117,7 +116,58 @@ class TestNextflowTemplates(DXTestCase):
         inputs = prepare_inputs("./nextflow/schema1.json")
         self.assertEqual(len(inputs), 93)
 
+class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
+    def test_dx_build_nextflow_set_default_metadata(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path="nextflow/main.nf")
+        applet_id = json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
+        app = dxpy.describe(applet_id)
+        self.assertEqual(app['name'], pipeline_name)
+        self.assertEqual(app['title'], pipeline_name)
+        self.assertEqual(app['summary'], pipeline_name)
+        # self.assertIsNotNone(app['details'])
+        # self.assertEqual(app['details']["repository"], "local")
+
+    def test_dx_build_nextflow_with_abs_path(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path="nextflow/main.nf")
+        applet_id = json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
+        app = dxpy.describe(applet_id)
+        self.assertEqual(app['name'], pipeline_name)
+
+    def test_dx_build_nextflow_with_relative_path(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path="nextflow/main.nf")
+        applet_id = json.loads(run("cd {} && dx build --nextflow . --json".format(applet_dir)))["id"]
+        app = dxpy.describe(applet_id)
+        self.assertEqual(app['name'], pipeline_name)
+
+    def test_dx_build_nextflow_with_space_in_name(self):
+        pipeline_name = "hello pipeline"
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path="nextflow/main.nf")
+        applet_id = json.loads(run("dx build --nextflow '{}' --json".format(applet_dir)))["id"]
+        app = dxpy.describe(applet_id)
+        self.assertEqual(app['name'], pipeline_name)
+
+    def test_dx_build_nextflow_with_extra_args(self):
+        pipeline_name = "hello"
+        extra_args = '{"name": "testing_name_hello"}'
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path="nextflow/main.nf")
+        applet_id = json.loads(run("dx build --nextflow '{}' --json --extra-args '{}'".format(applet_dir, extra_args)))["id"]
+        app = dxpy.describe(applet_id)
+        self.assertEqual(app["name"], json.loads(extra_args)["name"])
+        self.assertEqual(app["title"], pipeline_name)
+        self.assertEqual(app["summary"], pipeline_name)
+
+        extra_args = '{"name": "new_name", "title": "new title"}'
+        applet_id = json.loads(run("dx build --nextflow '{}' --json --extra-args '{}'".format(applet_dir, extra_args)))["id"]
+        app = dxpy.describe(applet_id)
+        self.assertEqual(app["name"], json.loads(extra_args)["name"])
+        self.assertEqual(app["title"], json.loads(extra_args)["title"])
+        self.assertEqual(app["summary"], pipeline_name)
+
+    # @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
