@@ -27,6 +27,8 @@ def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
         dxapp = json.load(f)
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
     dxapp["runSpec"]["file"] = get_source_file_name()
+
+    # By default title and summary will be set to the pipeline name
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name

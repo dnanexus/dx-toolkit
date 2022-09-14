@@ -657,7 +657,6 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     """
 
     base_nextflow_nf = "nextflow/main.nf"
-    base_nextflow_config = "nextflow/nextflow.config"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()
@@ -670,7 +669,8 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     def write_nextflow_applet_directory(self, applet_name, existing_nf_file_path=None, nf_file_name="main.nf", nf_file_content=None):
         # Note: if called twice with the same app_name, will overwrite
         # the dxapp.json and the nf file (if specified) but will not
-        # remove any other files that happened to be present
+        # remove any other files that happened to be present;
+        # applet_name will be the name of the folder storing the pipeline
         p = os.path.join(self.temp_file_path, applet_name)
         pb = p.encode("utf-8")
         try:
