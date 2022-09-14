@@ -6,7 +6,7 @@ import os
 
 
 
-def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
+def get_nextflow_dxapp(custom_inputs=None, name=""):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
@@ -29,6 +29,8 @@ def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
     dxapp["runSpec"]["file"] = get_source_file_name()
 
     # By default title and summary will be set to the pipeline name
+    if name is None or name == '':
+        name = "Nextflow pipeline"
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name

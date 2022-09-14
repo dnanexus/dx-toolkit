@@ -134,6 +134,12 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         app = dxpy.describe(applet_id)
         self.assertEqual(app['name'], pipeline_name)
 
+        pipeline_name = "hello_abs_with_trailing_slash"
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(run("dx build --nextflow --json " + applet_dir + "/"))["id"]
+        app = dxpy.describe(applet_id)
+        self.assertEqual(app['name'], pipeline_name)
+
         pipeline_name = "hello_rel"
         applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
         applet_id = json.loads(run("cd {} && dx build --nextflow . --json".format(applet_dir)))["id"]
