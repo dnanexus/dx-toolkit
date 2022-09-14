@@ -29,7 +29,7 @@ def get_nextflow_dxapp(custom_inputs=None, name=""):
     dxapp["runSpec"]["file"] = get_source_file_name()
 
     # By default title and summary will be set to the pipeline name
-    if name is None or name == '':
+    if name is None or name == "":
         name = "Nextflow pipeline"
     dxapp["name"] = name
     dxapp["title"] = name
