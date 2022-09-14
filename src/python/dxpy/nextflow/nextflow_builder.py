@@ -56,6 +56,15 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
         print(applet_id)
     return applet_id
 
+def get_resources_dir_name(resources_dir):
+    """
+    :param resources_dir: Directory with all source files needed to build an applet. Can be an absolute or a relative path.
+    :type resources_dir: str or Path
+    :returns: The name of the folder
+    :rtype: str
+    """
+    return os.path.basename(os.path.abspath(resources_dir))
+
 def prepare_nextflow(resources_dir, profile):
     """
     :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
@@ -74,7 +83,8 @@ def prepare_nextflow(resources_dir, profile):
     dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
     if os.path.exists("{}/nextflow_schema.json".format(resources_dir)):
         inputs = prepare_inputs("{}/nextflow_schema.json".format(resources_dir))
-    dxapp_content = get_nextflow_dxapp(inputs, os.path.basename(resources_dir))
+
+    dxapp_content = get_nextflow_dxapp(inputs, name=get_resources_dir_name(resources_dir))
     exec_content = get_nextflow_src(inputs=inputs, profile=profile)
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, dxapp_content)
