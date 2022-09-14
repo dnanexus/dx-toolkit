@@ -164,6 +164,31 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(app["title"], json.loads(extra_args)["title"])
         self.assertEqual(app["summary"], pipeline_name)
 
+
+class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
+   
+    def test_dx_run_nextflow_with_additional_parameters(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+
+        # nextflow_top_level_opts
+        job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} --brief".format(
+            applet_id=applet_id, record_id=record.get_id())).strip()
+        job_desc = dxpy.describe(job_id)
+        self.assertEqual(job_desc["input"], exp)
+
+        # nextflow_run_opts
+
+        # nextflow_pipeline_params
+
+        # used all at once ()
+        
+
+
+
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')
