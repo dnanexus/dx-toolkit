@@ -57,6 +57,12 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
     return applet_id
 
 def get_resources_dir_name(resources_dir):
+    """
+    :param resources_dir: Directory with all source files needed to build an applet. Can be an absolute or a relative path.
+    :type resources_dir: str or Path
+    :returns: The name of the folder
+    :rtype: str
+    """
     return os.path.basename(os.path.abspath(resources_dir))
 
 def prepare_nextflow(resources_dir, profile):
