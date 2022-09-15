@@ -45,6 +45,8 @@ def get_nextflow_src(inputs=None, profile=None, resources_dir=None):
     :type inputs: list
     :param profile: Custom Nextflow profile to be used when running a Nextflow pipeline, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
+    :param resources_dir: Directory with all source files needed to build an applet. Can be an absolute or a relative path.
+    :type resources_dir: str or Path
     :returns: String containing the whole source file of an applet.
     :rtype: string
 
