@@ -20,8 +20,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 from parameterized import parameterized
 
 import os, sys, unittest, json
-from dxpy.nextflow.nextflow_templates import get_nextflow_src
-from dxpy.nextflow.nextflow_templates import get_nextflow_dxapp
+from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
 from dxpy.nextflow.nextflow_builder import prepare_inputs
 
 import uuid

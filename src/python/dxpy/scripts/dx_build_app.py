@@ -35,12 +35,12 @@ import dxpy
 import dxpy.app_builder
 import dxpy.workflow_builder
 import dxpy.executable_builder
-from dxpy.nextflow.nextflow_utils import get_resources_subpath
 from .. import logger
 from pathlib import Path
 
-from dxpy.nextflow.nextflow_builder import build_pipeline_from_repository
-from dxpy.nextflow.nextflow_builder import prepare_nextflow
+from dxpy.nextflow.nextflow_builder import build_pipeline_from_repository, prepare_nextflow
+from dxpy.nextflow.nextflow_utils import get_resources_subpath
+
 from ..utils import json_load_raise_on_duplicates
 from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError, is_container_id
 from ..utils.completer import LocalCompleter
@@ -994,7 +994,7 @@ def _build_app(args, extra_args):
     if args.nextflow and not args.repository:
         source_dir = prepare_nextflow(args.src_dir, args.profile)
         resources_dir = args.src_dir
-        worker_resources_subpath = get_resources_subpath()
+        worker_resources_subpath = get_resources_subpath(resources_dir)
     if args._from:
         # BUILD FROM EXISTING APPLET
         output = build_app_from(
