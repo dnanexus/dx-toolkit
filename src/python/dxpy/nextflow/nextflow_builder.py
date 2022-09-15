@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from contextlib import redirect_stderr
 import os
 import dxpy
 import json
