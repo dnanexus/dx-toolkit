@@ -34,6 +34,29 @@ jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --usernam
 
 on_exit() {
   ret=$?
+  # upload log file only when it has content
+  if [[ -s $LOG_NAME ]]; then
+    dx upload $LOG_NAME --path $DX_LOG --wait --brief --no-progress --parents || true
+  fi
+
+  set +x
+  if [[ $debug == true ]]; then
+    # DEVEX-1943 Wait up to 30 seconds for log forwarders to terminate
+    set +e
+    i=0
+    while [[ $i -lt 30 ]];
+    do
+        if kill -0 "$LOG_MONITOR_PID" 2>/dev/null; then
+            sleep 1
+        else
+            break
+        fi
+        ((i++))
+    done
+    kill $LOG_MONITOR_PID 2>/dev/null || true
+    set -xe
+  fi
+
   # backup cache
   echo "=== Execution complete — uploading Nextflow cache metadata files"
   dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID/*" 2>&1 >/dev/null || true
@@ -68,7 +91,7 @@ on_exit() {
   exit $ret
 }
 
-  dx_path() {
+dx_path() {
   local str=${1#"dx://"}
   local tmp=$(mktemp -t nf-XXXXXXXXXX)
   case $str in
@@ -88,9 +111,10 @@ on_exit() {
 }
     
 main() {
-    if $debug ; then
-      set -x && env | sort
+    if [[ $debug == true ]]; then
       export NXF_DEBUG=2
+      TRACE_CMD="-trace nextflow.plugin"
+      set -x && env | sort
     fi
     
     if [ -n "$docker_creds" ]; then
@@ -122,7 +146,20 @@ main() {
 
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
-    nextflow -trace nextflow.plugin $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}"
+    nextflow ${TRACE_CMD} $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
+    
+    # forwarding nextflow log file to job monitor
+    set +x
+    if [[ $debug == true ]] ; then
+      touch $LOG_NAME
+      tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
+      disown $LOG_MONITOR_PID
+      set -x
+    fi
+    
+    wait $NXF_EXEC_PID
+    ret=$?
+    exit $ret
 }
 
 
