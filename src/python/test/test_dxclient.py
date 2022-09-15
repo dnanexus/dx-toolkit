@@ -5396,6 +5396,57 @@ class TestDXClientFind(DXTestCase):
         self.assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
         self.assert_cmd_gives_ids("dx find analyses "+options3, [])
 
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                                'skipping test that requires special org')
+    def test_dx_find_internet_usage_IPs(self):
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.0.0",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                                ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": "def main(): pass",
+                              "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04",
+                              "execDepends": [{"name": "python-numpy"}]})
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.close()
+        prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
+                      "rowFetchChunk": 100}
+        dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
+        stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
+        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200},
+                                    tags=["foo"],
+                                    properties={"foo": "bar"})
+        dxapplet.run(applet_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input,
+                             tags=["foo", "bar"],
+                             properties={"foo": "baz"})
+
+        cd("{project_id}:/".format(project_id=dxapplet.get_proj_id()))
+
+        # Wait for job to be created
+        executions = [stage['execution']['id'] for stage in dxanalysis.describe()['stages']]
+        t = 0
+        while len(executions) > 0:
+            try:
+                dxpy.api.job_describe(executions[len(executions) - 1], {})
+                executions.pop()
+            except DXAPIError:
+                t += 1
+                if t > 20:
+                    raise Exception("Timeout while waiting for job to be created for an analysis stage")
+                time.sleep(1)
+        output1 = run("dx find executions --user=self --verbose --json") 
+        output2 = run("dx find jobs --user=self --verbose --json") 
+        output3 = run("dx describe {} --verbose".format(dxjob.get_id()))
+
+        self.assertIn("internetUsageIPs", output1)
+        self.assertIn("internetUsageIPs", output2)
+        self.assertIn("Internet Usage IPs", output3)
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
     def test_find_analyses_run_by_jobs(self):

@@ -778,7 +778,7 @@ def print_execution_desc(desc):
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
-                         'priority', 'sshHostKey']
+                         'priority', 'sshHostKey', 'internetUsageIPs']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -918,6 +918,9 @@ def print_execution_desc(desc):
         print_json_field("Invoice Metadata", desc['invoiceMetadata'])
     if desc.get('sshHostKey'):
         print_nofill_field("SSH Host Key", printable_ssh_host_key(desc['sshHostKey']))
+    if desc.get('internetUsageIPs'):
+        print_list_field("Internet Usage IPs", desc['internetUsageIPs'])
+
 
     for field in desc:
         if field not in recognized_fields:
