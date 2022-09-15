@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from contextlib import redirect_stderr
 import os
 import dxpy
 import json
@@ -79,28 +80,28 @@ def prepare_nextflow(resources_dir, profile):
     assert os.path.exists(resources_dir)
     if not glob(os.path.join(resources_dir, "*.nf")):
         raise dxpy.app_builder.AppBuilderException("Directory %s does not contain Nextflow file (*.nf): not a valid Nextflow directory" % resources_dir)
-    inputs = []
     dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
-    if os.path.exists("{}/nextflow_schema.json".format(resources_dir)):
-        inputs = prepare_inputs("{}/nextflow_schema.json".format(resources_dir))
 
-    dxapp_content = get_nextflow_dxapp(inputs, name=get_resources_dir_name(resources_dir))
-    exec_content = get_nextflow_src(inputs=inputs, profile=profile)
+    custom_inputs = prepare_custom_inputs(schema_file=os.path.join(resources_dir, "nextflow_schema.json"))
+    dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, name=get_resources_dir_name(resources_dir))
+    exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile)
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, dxapp_content)
     write_exec(dxapp_dir, exec_content)
     return dxapp_dir
 
 
-def prepare_inputs(schema_file):
+def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
     """
     :param schema_file: path to nextflow_schema.json file
     :type schema_file: str or Path
-    :returns: DNAnexus datatype used in dxapp.json inputSpec field
-    :rtype: string
-    Creates DNAnexus inputs (inputSpec) from Nextflow inputs.
+    :returns: list of custom inputs defined with DNAnexus datatype 
+    :rtype: list
+    Creates custome input list from nextflow_schema.json that
+    will be added in dxapp.json inputSpec field
     """
-
+    
+    
     def get_dx_type(nf_type, nf_format=None):
         types = {
             "string": "string",
@@ -121,6 +122,9 @@ def prepare_inputs(schema_file):
         raise Exception("type {} is not supported by DNAnexus".format(nf_type))
 
     inputs = []
+    if not os.path.exists(schema_file):
+        return inputs
+
     with open(schema_file, "r") as fh:
         schema = json.load(fh)
     for d_key, d_schema in schema.get("definitions", {}).items():

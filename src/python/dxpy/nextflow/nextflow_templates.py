@@ -39,10 +39,10 @@ def get_nextflow_dxapp(custom_inputs=None, name=""):
     return dxapp
 
 
-def get_nextflow_src(inputs=None, profile=None):
+def get_nextflow_src(custom_inputs=[], profile=None):
     """
-    :param inputs: Custom inputs that will be used in created Nextflow pipeline
-    :type inputs: list
+    :param custom_inputs: Custom inputs that will be used in created Nextflow params-file
+    :type custom_inputs: list
     :param profile: Custom Nextflow profile to be used when running a Nextflow pipeline, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
     :returns: String containing the whole source file of an applet.
@@ -50,13 +50,11 @@ def get_nextflow_src(inputs=None, profile=None):
 
     Creates Nextflow source file from the Nextflow source file template
     """
-    if inputs is None:
-        inputs = []
     with open(os.path.join(str(get_template_dir()), get_source_file_name()), 'r') as f:
         src = f.read()
 
     run_inputs = ""
-    for i in inputs:
+    for i in custom_inputs:
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
             value = "dx://$(jq .[$dnanexus_link] -r <<< ${%s})" % i['name']
