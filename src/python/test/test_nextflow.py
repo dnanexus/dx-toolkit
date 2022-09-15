@@ -121,10 +121,14 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         pipeline_name = "hello"
         applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
         applet_id = json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
-        app = dxpy.describe(applet_id)
-        self.assertEqual(app["name"], pipeline_name)
-        self.assertEqual(app["title"], pipeline_name)
-        self.assertEqual(app["summary"], pipeline_name)
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+        self.assertEqual(desc["name"], pipeline_name)
+        self.assertEqual(desc["title"], pipeline_name)
+        self.assertEqual(desc["summary"], pipeline_name)
+
+        details = applet.get_details()
+        self.assertEqual(details["repository"], "local")
 
     def test_dx_build_nextflow_with_abs_and_relative_path(self):
         pipeline_name = "hello_abs"
@@ -175,10 +179,14 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         pipeline_name = "hello"
         hello_repo_url = "https://github.com/nextflow-io/hello"
         applet_id = run("dx build --nextflow --repository '{}' --brief".format(hello_repo_url)).strip()
-        applet = dxpy.DXApplet(applet_id).describe()
-        self.assertEqual(applet["name"], pipeline_name)
-        self.assertEqual(applet["title"], pipeline_name)
-        self.assertEqual(applet["summary"], pipeline_name)
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+        self.assertEqual(desc["name"], pipeline_name)
+        self.assertEqual(desc["title"], pipeline_name)
+        self.assertEqual(desc["summary"], pipeline_name)
+
+        details = applet.get_details()
+        self.assertEqual(details["repository"], hello_repo_url)
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
