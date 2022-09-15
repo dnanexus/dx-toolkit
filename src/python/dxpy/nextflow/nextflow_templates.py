@@ -39,7 +39,7 @@ def get_nextflow_dxapp(custom_inputs=None, name=""):
     return dxapp
 
 
-def get_nextflow_src(inputs=None, profile=None):
+def get_nextflow_src(inputs=None, profile=None, resources_dir=None):
     """
     :param inputs: Custom inputs that will be used in created Nextflow pipeline
     :type inputs: list
@@ -68,5 +68,5 @@ def get_nextflow_src(inputs=None, profile=None):
     profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@RUN_INPUTS@@", run_inputs)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
-    src = src.replace("@@RESOURCES_SUBPATH@@", get_resources_subpath())
+    src = src.replace("@@RESOURCES_SUBPATH@@", get_resources_subpath(resources_dir))
     return src

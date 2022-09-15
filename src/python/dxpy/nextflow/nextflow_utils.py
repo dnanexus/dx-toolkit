@@ -14,6 +14,8 @@ def get_resources_dir_name(resources_dir):
     :returns: The name of the folder
     :rtype: str
     """
+    if resources_dir == None:
+        return ''
     return os.path.basename(os.path.abspath(resources_dir))
 
 def get_resources_subpath(resources_dir):
