@@ -173,27 +173,6 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(app["title"], json.loads(extra_args)["title"])
         self.assertEqual(app["summary"], pipeline_name)
 
-class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
-
-    def test_dx_run_nextflow_with_additional_parameters(self):
-        pipeline_name = "hello"
-        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
-        applet_id = json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
-        applet = dxpy.DXApplet(applet_id)
-
-        # nextflow_top_level_opts
-        job_id = run("dx run {applet_id} -iint0=16 -istring0=input_string -irecord0={record_id} --brief".format(
-            applet_id=applet_id, record_id=record.get_id())).strip()
-        job_desc = dxpy.describe(job_id)
-        self.assertEqual(job_desc["input"], exp)
-
-        # nextflow_run_opts
-
-        # nextflow_pipeline_params
-
-        # used all at once ()
-
-
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_build_nextflow_from_repository_default_metadata(self):
@@ -208,6 +187,39 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
         details = applet.get_details()
         self.assertEqual(details["repository"], hello_repo_url)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_build_nextflow_from_repository_with_extra_args(self):
+        pipeline_name = "hello"
+        hello_repo_url = "https://github.com/nextflow-io/hello"
+        extra_args = '{"name": "new_name", "title": "new title"}'
+        applet_id = run("dx build --nextflow --repository '{}' --extra-args '{}' --brief".format(hello_repo_url, extra_args)).strip()
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+        self.assertEqual(desc["name"], "new name")
+        self.assertEqual(desc["title"], "new title")
+        self.assertEqual(desc["summary"], pipeline_name)
+
+class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
+
+    def test_dx_run_nextflow_with_additional_parameters(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+
+        job = applet.run({
+                         "nextflow_pipeline_params": "--input 'Printed_test_message'",
+                         "nextflow_top_level_opts": "-quiet"
+        })
+
+        watched_run_output = run("dx watch {}".format(job.get_id()))
+        self.assertIn("Printed_test_message", watched_run_output)
+        # Running with the -quiet option reduces the amount of log and the lines such as:
+        # STDOUT Launching `/home/dnanexus/hello/main.nf` [run-c8804f26-2eac-48d2-9a1a-a707ad1189eb] DSL2 - revision: 72a5d52d07
+        # are not printed
+        self.assertNotIn("Launching", watched_run_output)
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
