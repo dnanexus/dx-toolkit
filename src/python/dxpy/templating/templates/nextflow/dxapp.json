@@ -14,19 +14,19 @@
       "optional": true
     },
     {
-      "name": "nextflow_pipeline_params",
-      "label": "Nextflow Pipeline Parameters",
-      "help": "Additional pipeline parameters for Nextflow. Must be preceded with double dash characters, e.g. --foo, which can be accessed in the pipeline script using the params.foo identifier.",
-      "class": "string",
-      "group": "Additional pipeline parameters",
-      "optional": true
-    },
-    {
       "name": "nextflow_top_level_opts",
       "label": "Nextflow Top-level Options",
       "help": "Additional top-level options for Nextflow (e.g. -quiet).",
       "class": "string",
       "group": "Nextflow options",
+      "optional": true
+    },
+    {
+      "name": "nextflow_pipeline_params",
+      "label": "Nextflow Pipeline Parameters",
+      "help": "Additional pipeline parameters for Nextflow. Must be preceded with double dash characters (e.g. --foo, which can be accessed in the pipeline script using the params.foo identifier).",
+      "class": "string",
+      "group": "Additional pipeline parameters",
       "optional": true
     },
     {
