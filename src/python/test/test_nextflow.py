@@ -203,6 +203,8 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
     def test_dx_run_nextflow_with_additional_parameters(self):
         pipeline_name = "hello"
         applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
