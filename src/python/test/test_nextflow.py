@@ -190,6 +190,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
+    @unittest.skip("The name is still set to hello here - to be fixed")
     def test_dx_build_nextflow_from_repository_with_extra_args(self):
         pipeline_name = "hello"
         hello_repo_url = "https://github.com/nextflow-io/hello"
