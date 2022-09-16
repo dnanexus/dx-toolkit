@@ -37,12 +37,14 @@ def get_nextflow_dxapp(custom_inputs=None, name="Nextflow pipeline"):
     return dxapp
 
 
-def get_nextflow_src(inputs=None, profile=None):
+def get_nextflow_src(inputs=None, profile=None, resources_dir=None):
     """
     :param inputs: Custom inputs that will be used in created Nextflow pipeline
     :type inputs: list
     :param profile: Custom Nextflow profile to be used when running a Nextflow pipeline, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
+    :param resources_dir: Directory with all source files needed to build an applet. Can be an absolute or a relative path.
+    :type resources_dir: str or Path
     :returns: String containing the whole source file of an applet.
     :rtype: string
 
@@ -66,5 +68,5 @@ def get_nextflow_src(inputs=None, profile=None):
     profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@RUN_INPUTS@@", run_inputs)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
-    src = src.replace("@@RESOURCES_SUBPATH@@", get_resources_subpath())
+    src = src.replace("@@RESOURCES_SUBPATH@@", get_resources_subpath(resources_dir))
     return src
