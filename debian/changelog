@@ -1,3 +1,11 @@
+dx-toolkit (0.329.0) trusty; urgency=medium
+
+  * Added: `dx extract_dataset` command
+  * Added: Optional pandas dependency for dxpy 
+  * Changed: dxpy.find_one_project, dxpy.find_one_data_object, dxpy.find_one_app raise DXError if zero_ok argument is not a bool
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 08 Sep 2022 19:39:40 +0000
+
 dx-toolkit (0.328.0) trusty; urgency=medium
 
   * Added: --head-job-on-demand argument for dx run app(let)-xxxx

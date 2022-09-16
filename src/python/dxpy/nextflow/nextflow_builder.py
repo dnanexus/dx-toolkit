@@ -8,7 +8,7 @@ from glob import glob
 import tempfile
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
-from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name)
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, get_resources_dir_name)
 from dxpy.cli.exec_io import parse_obj
 from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
@@ -56,15 +56,6 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
         print(applet_id)
     return applet_id
 
-def get_resources_dir_name(resources_dir):
-    """
-    :param resources_dir: Directory with all source files needed to build an applet. Can be an absolute or a relative path.
-    :type resources_dir: str or Path
-    :returns: The name of the folder
-    :rtype: str
-    """
-    return os.path.basename(os.path.abspath(resources_dir))
-
 def prepare_nextflow(resources_dir, profile):
     """
     :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
@@ -83,7 +74,7 @@ def prepare_nextflow(resources_dir, profile):
 
     custom_inputs = prepare_custom_inputs(schema_file=os.path.join(resources_dir, "nextflow_schema.json"))
     dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, name=get_resources_dir_name(resources_dir))
-    exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile)
+    exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, dxapp_content)
     write_exec(dxapp_dir, exec_content)

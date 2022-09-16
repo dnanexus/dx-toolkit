@@ -664,7 +664,7 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
 
     def tearDown(self):
         shutil.rmtree(self.temp_file_path)
-        super(DXTestCaseBuildNextflowApps, self).tearDown() 
+        super(DXTestCaseBuildNextflowApps, self).tearDown()
 
     def write_nextflow_applet_directory(self, applet_name, existing_nf_file_path=None, nf_file_name="main.nf", nf_file_content="\n"):
         # Note: if called twice with the same app_name, will overwrite
