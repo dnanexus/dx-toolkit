@@ -57,15 +57,6 @@ on_exit() {
     set -xe
   fi
 
-  # # TODO: backup cache
-  # echo "=== Execution complete — uploading Nextflow cache metadata files"
-  # dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID/*" 2>&1 >/dev/null || true
-
-  # if [[ -d .nextflow/cache/$NXF_UUID ]]; then
-  #   dx upload ".nextflow/cache/$NXF_UUID" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID" --no-progress --brief --wait -p -r || true
-  # else
-  #   echo "No nextflow cache has been generated."
-  # fi
 
   # parse dnanexus-job.json to get job output destination
   OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
@@ -73,7 +64,6 @@ on_exit() {
   OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
 
   # remove .nextflow from the current folder /home/dnanexus/output_files
-  # the cache folder inside should already be uploaded 
   rm -rf .nextflow
 
   # try uploading the log file if it exists
@@ -150,7 +140,7 @@ main() {
 
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
-    nextflow ${TRACE_CMD} $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
+    nextflow ${TRACE_CMD} "$nextflow_top_level_opts" -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} "$nextflow_run_opts" "$nextflow_pipeline_params" "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
     set +x
