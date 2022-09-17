@@ -226,7 +226,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(desc["title"], "new title")
         self.assertEqual(desc["summary"], pipeline_name)
 
-   @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_build_nextflow_with_publishDir(self):
         pipeline_name = "cat_ls"
@@ -247,7 +247,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
             outdir, inFile_path, inFolder_path)
 
         job_id = run(
-            "dx run {applet_id} -idebug=true -inf_run_args_and_pipeline_params={pipeline_args} --folder :/test-cat-ls/ -y --brief".format(
+            "dx run {applet_id} -idebug=true -inextflow_pipeline_params={pipeline_args} --folder :/test-cat-ls/ -y --brief".format(
                 applet_id=applet_id, pipeline_args=pipeline_args)
         ).strip()
         job_handler = dxpy.DXJob(job_id)
