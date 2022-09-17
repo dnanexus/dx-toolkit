@@ -117,7 +117,7 @@ main() {
     filtered_inputs=()
 
     @@RUN_INPUTS@@
-    nextflow ${TRACE_CMD} $nf_advanced_opts -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nf_run_args_and_pipeline_params "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
+    nextflow ${TRACE_CMD} "$nextflow_top_level_opts" -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} "$nextflow_run_opts" "$nextflow_pipeline_params" "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
     set +x

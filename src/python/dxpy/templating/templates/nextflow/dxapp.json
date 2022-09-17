@@ -6,17 +6,27 @@
   "types": ["nextflow"],
   "inputSpec": [
     {
-      "name": "nf_run_args_and_pipeline_params",
-      "label": "Nextflow Run Arguments and Pipeline Parameters",
-      "help": "Additional run arguments and pipeline parameters for Nextflow (i.e. -queue-size).",
+      "name": "nextflow_run_opts",
+      "label": "Nextflow Run Options",
+      "help": "Additional run arguments for Nextflow (e.g. -profile).",
       "class": "string",
+      "group": "Nextflow options",
       "optional": true
     },
     {
-      "name": "nf_advanced_opts",
-      "label": "Nextflow Advanced Options",
-      "help": "Advanced options for Nextflow (i.e. -quiet).",
+      "name": "nextflow_top_level_opts",
+      "label": "Nextflow Top-level Options",
+      "help": "Additional top-level options for Nextflow (e.g. -quiet).",
       "class": "string",
+      "group": "Nextflow options",
+      "optional": true
+    },
+    {
+      "name": "nextflow_pipeline_params",
+      "label": "Nextflow Pipeline Parameters",
+      "help": "Additional pipeline parameters for Nextflow. Must be preceded with double dash characters (e.g. --foo, which can be accessed in the pipeline script using the params.foo identifier).",
+      "class": "string",
+      "group": "Additional pipeline parameters",
       "optional": true
     },
     {
