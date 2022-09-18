@@ -230,11 +230,11 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
                          'skipping tests that would run jobs')
     def test_dx_build_nextflow_with_publishDir(self):
         pipeline_name = "cat_ls"
-        extra_args = '{"name": "testing_cat_ls"}'
+        # extra_args = '{"name": "testing_cat_ls"}'
         applet_dir = self.write_nextflow_applet_directory(
-            pipeline_name, existing_nf_file_path="nextflow/publishDir/cat_ls.nf")
+            pipeline_name, nf_file_name="main.nf", existing_nf_file_path="nextflow/publishDir/main.nf")
         applet_id = json.loads(run(
-            "dx build --nextflow '{}' --json --extra-args '{}'".format(applet_dir, extra_args)))["id"]
+            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
         desc = dxpy.describe(applet_id)
 
         # Run with "dx run".
