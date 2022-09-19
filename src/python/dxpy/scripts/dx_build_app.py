@@ -284,13 +284,23 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
                     'Skipping bash syntax check due to unavailability of bash on Windows.')
         else:
             subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
-
-    if override_lang == 'python2.7':
+    python_unsure = False
+    if override_lang == 'python2.7' and USING_PYTHON2:
+        checker_fn = check_python
+    elif override_lang == 'python3' and not USING_PYTHON2:
         checker_fn = check_python
     elif override_lang == 'bash':
         checker_fn = check_bash
     elif filename.endswith('.py'):
         checker_fn = check_python
+        # don't enforce and ignore if the shebang is ambiguous and we're not sure
+        # that the file version is the same as the one we're running
+        with open(filename, 'r') as f:
+            first_line = f.readline()
+            if not (('python3' in first_line and not USING_PYTHON2) or
+                    ('python2' in first_line and USING_PYTHON2)):
+                enforce = False
+                python_unsure = True
     elif filename.endswith('.sh'):
         checker_fn = check_bash
     else:
@@ -314,6 +324,8 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         if enforce:
             raise DXSyntaxError(filename + " has a syntax error")
     except py_compile.PyCompileError as e:
+        if python_unsure:
+            print("Unsure if " + filename + " is using Python 2 or Python 3, the following error might not be relevant", file=sys.stderr)
         print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
         if USING_PYTHON2:
             errmsg = e.msg
@@ -344,7 +356,7 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
             warn_message += 'for distribution is \"Ubuntu\" and release - \"14.04\".'
             logger.warn(warn_message)
 
-        if manifest['runSpec']['interpreter'] in ["python2.7", "bash"]:
+        if manifest['runSpec']['interpreter'] in ["python2.7", "bash", "python3"]:
             if "file" in manifest['runSpec']:
                 entry_point_file = os.path.abspath(os.path.join(src_dir, manifest['runSpec']['file']))
                 try:
