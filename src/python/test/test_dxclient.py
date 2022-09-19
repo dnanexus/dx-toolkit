@@ -5397,8 +5397,8 @@ class TestDXClientFind(DXTestCase):
         self.assert_cmd_gives_ids("dx find analyses "+options3, [])
 
 
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                                'skipping test that requires special org')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                                'skipping test that would run jobs')
     def test_dx_find_internet_usage_IPs(self):
         dxapplet = dxpy.DXApplet()
         dxapplet.new(name="test_applet",
