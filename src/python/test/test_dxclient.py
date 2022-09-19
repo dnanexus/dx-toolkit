@@ -5439,13 +5439,11 @@ class TestDXClientFind(DXTestCase):
                 if t > 20:
                     raise Exception("Timeout while waiting for job to be created for an analysis stage")
                 time.sleep(1)
-        output1 = run("dx find executions --user=self --verbose --json") 
-        output2 = run("dx find jobs --user=self --verbose --json") 
-        output3 = run("dx describe {} --verbose".format(dxjob.get_id()))
+        output1 = run("dx find jobs --user=self --verbose --json") 
+        output2 = run("dx describe {} --verbose".format(dxjob.get_id()))
 
         self.assertIn("internetUsageIPs", output1)
-        self.assertIn("internetUsageIPs", output2)
-        self.assertIn("Internet Usage IPs", output3)
+        self.assertIn("Internet Usage IPs", output2)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')

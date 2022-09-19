@@ -2100,7 +2100,8 @@ def find_executions(args):
     more_results = False
     include_io = (args.verbose and args.json) or args.show_outputs
     include_internetUsageIPs = args.verbose and args.json
-    job_describe_args = {
+    if args.classname == 'job':
+        describe_args = {
         "defaultFields": True, 
         "fields": {
             "runInput": include_io,
@@ -2110,6 +2111,8 @@ def find_executions(args):
             "internetUsageIPs":include_internetUsageIPs
         }
     }
+    else:
+        describe_args = {"io": include_io}
     id_desc = None
 
     # Now start parsing flags
@@ -2140,7 +2143,7 @@ def find_executions(args):
              'state': args.state,
              'origin_job': origin,
              'parent_job': "none" if args.origin_jobs else args.parent,
-             'describe': job_describe_args,
+             'describe': describe_args,
              'created_after': args.created_after,
              'created_before': args.created_before,
              'name': args.name,
@@ -2222,7 +2225,7 @@ def find_executions(args):
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
             parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
             query = {'classname': args.classname,
-                     'describe': job_describe_args,
+                     'describe': describe_args,
                      'include_subjobs': False if args.no_subjobs else True,
                      root_field: list(roots.keys())}
             if not args.all_projects:

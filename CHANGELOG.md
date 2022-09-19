@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-`dx find jobs`, `dx find executions` and `dx describe job-xxxx` with `--verbose` argument return new field: *internetUsageIPs* if the caller is in an organization that has enabled *jobInternetUsageMonitoring* license feature
+`dx find jobs`, and `dx describe job-xxxx` with `--verbose` argument return new field: *internetUsageIPs* if the caller is in an organization that has enabled *jobInternetUsageMonitoring* license feature
 
 ## [329.0] - beta
 
