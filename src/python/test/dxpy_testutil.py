@@ -656,7 +656,7 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     app destruction, and extraction of app data as local files.
     """
 
-    base_nextflow_nf = "nextflow/main.nf"
+    base_nextflow_nf = "nextflow/hello/main.nf"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()
