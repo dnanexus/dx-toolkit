@@ -45,6 +45,18 @@
     }
   ],
   "outputSpec": [
+    {
+      "name": "output_files",
+      "label": "Output files of Nextflow pipeline",
+      "class": "array:file",
+      "optional": true
+    },
+    {
+      "name": "nextflow_log",
+      "label": "Log file of Nextflow pipeline",
+      "class": "file",
+      "optional": true
+    }
   ],
   "runSpec": {
     "headJobOnDemand": true,

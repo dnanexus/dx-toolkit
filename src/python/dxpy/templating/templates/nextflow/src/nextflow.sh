@@ -57,10 +57,30 @@ on_exit() {
     set -xe
   fi
 
-  # backup cache
-  echo "=== Execution complete — uploading Nextflow cache metadata files"
-  dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID/*" 2>&1 >/dev/null || true
-  dx upload ".nextflow/cache/$NXF_UUID" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID" --no-progress --brief --wait -p -r || true
+
+  # parse dnanexus-job.json to get job output destination
+  OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
+  OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
+  OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
+
+  # remove .nextflow from the current folder /home/dnanexus/output_files
+  rm -rf .nextflow
+
+  # try uploading the log file if it exists
+  if [[ -s $LOG_NAME ]]; then
+    mkdir ../nextflow_log
+    mv $LOG_NAME ../nextflow_log/$LOG_NAME || true
+  else
+    echo "No nextflow log file available."
+  fi
+  
+  # upload the published files if any
+  cd ..
+  if [[ -d ./nextflow_log || -n "$(ls -A ./output_files)" ]]; then
+    dx-upload-all-outputs --parallel || true
+  else
+    echo "No log file or output files has been generated."
+  fi
   # done
   exit $ret
 }
@@ -117,6 +137,9 @@ main() {
     filtered_inputs=()
 
     @@RUN_INPUTS@@
+
+    mkdir -p /home/dnanexus/out/output_files
+    cd /home/dnanexus/out/output_files
     nextflow ${TRACE_CMD} "$nextflow_top_level_opts" -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} "$nextflow_run_opts" "$nextflow_pipeline_params" "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
