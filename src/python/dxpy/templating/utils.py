@@ -23,6 +23,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, shutil, subprocess, re, json
 import stat
 
+from ..utils import import_readline
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
 from ..cli import prompt_for_yn
 from ..compat import input, open
@@ -40,10 +41,7 @@ completer_state = {
 }
 
 try:
-    try:
-        import gnureadline as readline
-    except ImportError:
-        import readline
+    import_readline()
     import rlcompleter
     readline.parse_and_bind("tab: complete")
     readline.set_completer_delims("")
