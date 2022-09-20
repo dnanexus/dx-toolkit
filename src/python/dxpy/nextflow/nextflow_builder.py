@@ -29,7 +29,18 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
     Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
     """
     def parse_extra_args(extra_args):
-        print(extra_args)
+        dx_input = {}
+        if extra_args.get("name") is not None:
+            dx_input["name"] = extra_args.get("name")
+        if extra_args.get("title") is not None:
+            dx_input["title"] = extra_args.get("title")
+        if extra_args.get("summary") is not None:
+            dx_input["summary"] = extra_args.get("summary")
+        if extra_args.get("runSpec", {}).get("timeoutPolicy") is not None:
+            dx_input["timeout_policy"] = extra_args.get("timeoutPolicy")
+        if extra_args.get("details", {}).get("whatsNew") is not None:
+            dx_input["whats_new"] = extra_args.get("whatsNew")
+        return dx_input
 
 
     build_project_id = dxpy.WORKSPACE_ID
@@ -46,7 +57,8 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
         input_hash["config_profile"] = profile
     if github_creds:
         input_hash["github_credentials"] = parse_obj(github_creds, "file")
-    parse_extra_args(extra_args)
+    input_hash.update(parse_extra_args(extra_args))
+    #timeout_policy, summary, title, name, whats_new,
     nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id, name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
