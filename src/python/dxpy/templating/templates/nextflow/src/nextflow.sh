@@ -50,10 +50,6 @@ generate_runtime_config() {
 
 on_exit() {
   ret=$?
-  # upload log file only when it has content
-  if [[ -s $LOG_NAME ]]; then
-    dx upload $LOG_NAME --path $DX_LOG --wait --brief --no-progress --parents || true
-  fi
 
   set +x
   if [[ $debug == true ]]; then
@@ -74,15 +70,10 @@ on_exit() {
   fi
 
 
-  # parse dnanexus-job.json to get job output destination
-  OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
-  OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
-  OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
-
   # remove .nextflow from the current folder /home/dnanexus/output_files
   rm -rf .nextflow
 
-  # try uploading the log file if it exists
+  # try uploading the log file if it is not empty
   if [[ -s $LOG_NAME ]]; then
     mkdir ../nextflow_log
     mv $LOG_NAME ../nextflow_log/$LOG_NAME || true
@@ -90,7 +81,7 @@ on_exit() {
     echo "No nextflow log file available."
   fi
   
-  # upload the published files if any
+  # upload the log file and published files if any
   cd ..
   if [[ -d ./nextflow_log || -n "$(ls -A ./output_files)" ]]; then
     dx-upload-all-outputs --parallel || true
@@ -131,9 +122,15 @@ main() {
         dx-registry-login
     fi
 
-    LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
     DX_WORK=${work_dir:-$DX_WORKSPACE_ID:/scratch/}
-    DX_LOG=${log_file:-$DX_PROJECT_CONTEXT_ID:$LOG_NAME}
+
+    LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
+    # parse dnanexus-job.json to get job output destination
+    OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
+    OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
+    OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
+    DX_LOG=${log_file:-"$OUTDIR/$LOG_NAME"}
+
     export NXF_WORK=dx://$DX_WORK
     export NXF_HOME=/opt/nextflow
     export NXF_UUID=$(uuidgen)
