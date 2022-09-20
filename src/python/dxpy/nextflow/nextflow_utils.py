@@ -37,3 +37,7 @@ def write_dxapp(folder, content):
     dxapp_file = "{}/dxapp.json".format(folder)
     with open(dxapp_file, "w") as dxapp:
         json.dump(content, dxapp)
+
+def get_regional_options():
+    region=dxpy.DXProject().describe(fields={})
+    ...

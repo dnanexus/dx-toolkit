@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath, get_importer_name)
+from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
+                                          get_importer_name, get_regional_options)
 import json
 import os
 
@@ -34,6 +35,7 @@ def get_nextflow_dxapp(custom_inputs=None, name=""):
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
+    dxapp["regionalOptions"] =
     if os.environ.get("DX_JOB_ID") is None or not is_importer_job():
         dxapp["details"] = {"repository": "local"}
     return dxapp
