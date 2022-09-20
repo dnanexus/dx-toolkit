@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed 
 * Don't check python3 syntax with python2 and vice versa in `dx build`
-* Fixed bug where default applet name was checked during `dx build` for name match in current folder instead of the name from given extra-args
+* `dx build` now properly verifies the applet's name given in the `extra-args` parameter
 
 ## [329.0] - beta
 
