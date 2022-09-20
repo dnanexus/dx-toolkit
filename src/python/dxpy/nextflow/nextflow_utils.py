@@ -39,7 +39,8 @@ def write_dxapp(folder, content):
         json.dump(content, dxapp)
 
 def get_regional_options():
-    nextaur_asset, nextflow_asset = get_nextflow_assets()
+    region = dxpy.DXProject().describe()["region"]
+    nextaur_asset, nextflow_asset = get_nextflow_assets(region)
     regional_options = {
         region: {
             "systemRequirements": {
@@ -55,7 +56,7 @@ def get_regional_options():
     }
     return regional_options
 
-def get_nextflow_assets():
+def get_nextflow_assets(region):
     prod_assets = {
         "aws:ap-southeast-2": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
         "aws:eu-central-1": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
@@ -74,7 +75,6 @@ def get_nextflow_assets():
         "azure:westus": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
         "aws:eu-west-2-g": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy")
     }
-    region = dxpy.DXProject().describe()["region"]
     try:
         dxpy.describe(prod_assets[region][0], fields={})
         return prod_assets[region]
