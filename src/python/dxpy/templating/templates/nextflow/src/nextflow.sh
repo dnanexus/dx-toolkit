@@ -145,11 +145,10 @@ main() {
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
 
-    generate_runtime_config
-
-
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
+    
+    generate_runtime_config
     nextflow ${TRACE_CMD} $nextflow_top_level_opts $RUNTIME_CONFIG -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nextflow_run_opts $nextflow_pipeline_params @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
