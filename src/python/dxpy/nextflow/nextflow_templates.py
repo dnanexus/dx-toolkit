@@ -38,7 +38,7 @@ def get_nextflow_dxapp(custom_inputs=None, name=""):
     return dxapp
 
 
-def get_nextflow_src(custom_inputs=[], profile=None, resources_dir=None):
+def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     """
     :param custom_inputs: Custom inputs (as configured in nextflow_schema.json) that will be used in created runtime configuration and runtime params argument
     :type custom_inputs: list
