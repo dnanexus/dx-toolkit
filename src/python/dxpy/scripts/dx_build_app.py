@@ -785,9 +785,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     projects_by_region = None
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
-        if not override_applet_name and kwargs.get("name"):
-            override_applet_name = kwargs.get("name")
-            print("Here")
         region = dxpy.api.project_describe(working_project,
                                            input_params={"fields": {"region": True}})["region"]
         projects_by_region = {region: working_project}
@@ -855,6 +852,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 # applet in the destination exists with the same name as this
                 # one, then we should err out *before* uploading resources.
                 try:
+                    if not override_applet_name and kwargs.get("name"):
+                        override_applet_name = kwargs.get("name")
+                        print("Here")
                     dest_name = override_applet_name or app_json.get('name') or os.path.basename(os.path.abspath(src_dir))
                 except:
                     raise dxpy.app_builder.AppBuilderException("Could not determine applet name from specification + "
