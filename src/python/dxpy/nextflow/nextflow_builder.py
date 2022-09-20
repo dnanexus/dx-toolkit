@@ -37,9 +37,9 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
         if extra_args.get("summary") is not None:
             dx_input["summary"] = extra_args.get("summary")
         if extra_args.get("runSpec", {}).get("timeoutPolicy") is not None:
-            dx_input["timeout_policy"] = extra_args.get("timeoutPolicy")
+            dx_input["timeout_policy"] = extra_args.get("runSpec", {}).get("timeoutPolicy")
         if extra_args.get("details", {}).get("whatsNew") is not None:
-            dx_input["whats_new"] = extra_args.get("whatsNew")
+            dx_input["whats_new"] = extra_args.get("details", {}).get("whatsNew")
         return dx_input
 
 
