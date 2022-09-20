@@ -6,9 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+
 ### Added
 
-`dx find jobs`, and `dx describe job-xxxx` with `--verbose` argument return new field: *internetUsageIPs* if the caller is in an organization that has enabled *jobInternetUsageMonitoring* license feature
+* `dx find jobs --json`, and `dx describe job-xxxx` with `--verbose` argument return new field: *internetUsageIPs* if the caller is in an organization that has enabled *jobInternetUsageMonitoring* license feature
+
+### Fixed 
+* don't check python3 syntax with python2 and vice versa in `dx build`
+
 
 ## [329.0] - beta
 
