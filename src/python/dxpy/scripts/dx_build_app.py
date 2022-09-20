@@ -36,7 +36,6 @@ import dxpy.app_builder
 import dxpy.workflow_builder
 import dxpy.executable_builder
 from .. import logger
-from pathlib import Path
 
 from dxpy.nextflow.nextflow_builder import build_pipeline_from_repository, prepare_nextflow
 from dxpy.nextflow.nextflow_utils import get_resources_subpath
