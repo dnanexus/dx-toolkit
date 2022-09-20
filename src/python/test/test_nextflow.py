@@ -287,7 +287,9 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         hello_repo_url = "https://github.com/nextflow-io/hello"
         applet_id = run("dx build --nextflow --repository '{}' --profile \"czech\" --brief".format(hello_repo_url)).strip()
         applet = dxpy.DXApplet(applet_id)
-        desc = applet.describe()
+
+        job = applet.run()
+        #TODO: add assertions to check if the profile param is passed correctly to dx run
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
