@@ -6,6 +6,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed 
+* don't check python3 syntax with python2 and vice versa in `dx build`
+
 ## [329.0] - beta
 
 ### Added
