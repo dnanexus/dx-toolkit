@@ -76,8 +76,7 @@ def get_nextflow_assets():
     }
     region = dxpy.DXProject().describe()["region"]
     try:
-        print(prod_assets[region])
-        dxpy.describe(prod_assets[region], fields={})
+        dxpy.describe(prod_assets[region][0], fields={})
         return prod_assets[region]
     except ResourceNotFound:
         return stg_assets[region]
