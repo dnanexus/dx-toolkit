@@ -34,11 +34,16 @@ jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --usernam
 
 generate_runtime_config() {
   touch nxf_runtime.config
+  # make a runtime config file to override optional inputs
+  # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
   @@GENERATE_RUNTIME_CONFIG@@
 
   RUNTIME_CONFIG=''
   if [[ -s nxf_runtime.config ]]; then
-    cat nxf_runtime.config
+    if [[ $debug == true ]]; then
+      cat nxf_runtime.config
+    fi
+
     RUNTIME_CONFIG='-c nxf_runtime.config'
   fi
 }
@@ -149,7 +154,17 @@ main() {
     cd /home/dnanexus/out/output_files
     
     generate_runtime_config
-    nextflow ${TRACE_CMD} $nextflow_top_level_opts $RUNTIME_CONFIG -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nextflow_run_opts $nextflow_pipeline_params @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
+    nextflow \
+      ${TRACE_CMD} \
+      $nextflow_top_level_opts \
+      ${RUNTIME_CONFIG} \
+      -log ${LOG_NAME} \
+      run @@RESOURCES_SUBPATH@@ \
+      @@PROFILE_ARG@@ \
+      -name run-${NXF_UUID} \
+      $nextflow_run_opts \
+      $nextflow_pipeline_params \
+      @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
     set +x
