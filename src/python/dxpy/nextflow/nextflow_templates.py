@@ -40,7 +40,7 @@ def get_nextflow_dxapp(custom_inputs=[], name=""):
 
 def get_nextflow_src(custom_inputs=[], profile=None, resources_dir=None):
     """
-    :param custom_inputs: Custom inputs that will be used in created Nextflow params-file
+    :param custom_inputs: Custom inputs (as configured in nextflow_schema.json) that will be used in created runtime configuration and runtime params argument
     :type custom_inputs: list
     :param profile: Custom Nextflow profile to be used when running a Nextflow pipeline, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
@@ -55,28 +55,25 @@ def get_nextflow_src(custom_inputs=[], profile=None, resources_dir=None):
         src = f.read()
 
     required_runtime_params = ""
-    override_config_params=""
-    generate_runtime_config=""
+    generate_runtime_config= ""
     for i in custom_inputs:
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
             value = "dx://$(jq .[$dnanexus_link] -r <<< ${%s})" % i['name']
-        elif i.get("class") == "string":
-            value = '\\"' + value + '\\"'
-# \\'"%s"\\'
+
+        # optional inputs will be added to custom runtime config file
         if i.get("optional", False):
+            if i.get("class") == "string":
+                value = '\\"' + value + '\\"'
             generate_runtime_config = generate_runtime_config + '''
             if [ -n "$%s" ]; then
                 echo params.%s=%s >> nxf_runtime.config
             fi    
             '''% (i['name'], i['name'], value)
-        #     override_config_params = override_config_params + '''
-        #     if [ -n "$%s" ]; then
-        #         sed -E -i 's|(\s+'"${%s}"'\s+=\s).*(\s*$)|\1%s\2|' nextflow.config
-        #     fi
-        #     ''' % (i['name'], i['name'], value)
+        # required inputs need to be added as runtime pipeline params
         else:
             required_runtime_params += " --{} {}".format(i["name"], value)
+
     profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
