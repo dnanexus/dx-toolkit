@@ -36,7 +36,6 @@ import dxpy.app_builder
 import dxpy.workflow_builder
 import dxpy.executable_builder
 from .. import logger
-from pathlib import Path
 
 from dxpy.nextflow.nextflow_builder import build_pipeline_from_repository, prepare_nextflow
 from dxpy.nextflow.nextflow_utils import get_resources_subpath
@@ -852,6 +851,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 # applet in the destination exists with the same name as this
                 # one, then we should err out *before* uploading resources.
                 try:
+                    if not override_applet_name and kwargs.get("name"):
+                        override_applet_name = kwargs.get("name")
                     dest_name = override_applet_name or app_json.get('name') or os.path.basename(os.path.abspath(src_dir))
                 except:
                     raise dxpy.app_builder.AppBuilderException("Could not determine applet name from specification + "
@@ -1098,7 +1099,7 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
         if args.nextflow and args.repository is not None:
-            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials, args.brief)
+            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials, args.brief, extra_args)
 
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)

@@ -119,7 +119,7 @@ main() {
     if [[ $debug == true ]]; then
       export NXF_DEBUG=2
       TRACE_CMD="-trace nextflow.plugin"
-      set -x && env | sort
+      set -x && env | grep -v DX_SECURITY_CONTEXT | sort
     fi
     
     if [ -n "$docker_creds" ]; then
