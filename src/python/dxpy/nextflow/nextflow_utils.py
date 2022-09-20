@@ -49,8 +49,8 @@ def get_regional_options():
                 }
             },
             "assetDepends": [
-                {"id": nextflow_asset},
-                {"id": nextaur_asset}
+                {"id": nextaur_asset},
+                {"id": nextflow_asset}
             ]
         }
     }
@@ -75,6 +75,7 @@ def get_nextflow_assets(region):
         "azure:westus": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
         "aws:eu-west-2-g": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy")
     }
+
     try:
         dxpy.describe(prod_assets[region][0], fields={})
         return prod_assets[region]
