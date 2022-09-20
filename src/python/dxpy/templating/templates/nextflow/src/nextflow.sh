@@ -32,6 +32,17 @@ fi
 jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
 }
 
+generate_runtime_config() {
+  touch nxf_runtime.config
+  @@GENERATE_RUNTIME_CONFIG@@
+
+  RUNTIME_CONFIG=''
+  if [[ -s nxf_runtime.config ]]; then
+    cat nxf_runtime.config
+    RUNTIME_CONFIG='-c nxf_runtime.config'
+  fi
+}
+
 on_exit() {
   ret=$?
   # upload log file only when it has content
@@ -114,10 +125,9 @@ main() {
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
 
-    filtered_inputs=()
+    generate_runtime_config
 
-    @@RUN_INPUTS@@
-    nextflow ${TRACE_CMD} "$nextflow_top_level_opts" -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} "$nextflow_run_opts" "$nextflow_pipeline_params" "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
+    nextflow ${TRACE_CMD} $nextflow_top_level_opts $RUNTIME_CONFIG -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} $nextflow_run_opts $nextflow_pipeline_params @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
     set +x

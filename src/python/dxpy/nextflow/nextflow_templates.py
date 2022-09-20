@@ -5,8 +5,7 @@ import json
 import os
 
 
-
-def get_nextflow_dxapp(custom_inputs=None, name=""):
+def get_nextflow_dxapp(custom_inputs=[], name=""):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
@@ -16,7 +15,7 @@ def get_nextflow_dxapp(custom_inputs=None, name=""):
     def is_importer_job():
         try:
             with open("/home/dnanexus/dnanexus-job.json", "r") as f:
-                job_info=json.load(f)
+                job_info = json.load(f)
                 return job_info.get("executableName") == get_importer_name()
         except Exception:
             return False
@@ -55,18 +54,33 @@ def get_nextflow_src(custom_inputs=[], profile=None, resources_dir=None):
     with open(os.path.join(str(get_template_dir()), get_source_file_name()), 'r') as f:
         src = f.read()
 
-    run_inputs = ""
+    required_runtime_params = ""
+    override_config_params=""
+    generate_runtime_config=""
     for i in custom_inputs:
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
             value = "dx://$(jq .[$dnanexus_link] -r <<< ${%s})" % i['name']
-        run_inputs = run_inputs + '''
-        if [ -n "$%s" ]; then
-            filtered_inputs+=(--%s="%s")
-        fi
-        ''' % (i['name'], i['name'], value)
+        elif i.get("class") == "string":
+            value = '\\"' + value + '\\"'
+# \\'"%s"\\'
+        if i.get("optional", False):
+            generate_runtime_config = generate_runtime_config + '''
+            if [ -n "$%s" ]; then
+                echo params.%s=%s >> nxf_runtime.config
+            fi    
+            '''% (i['name'], i['name'], value)
+        #     override_config_params = override_config_params + '''
+        #     if [ -n "$%s" ]; then
+        #         sed -E -i 's|(\s+'"${%s}"'\s+=\s).*(\s*$)|\1%s\2|' nextflow.config
+        #     fi
+        #     ''' % (i['name'], i['name'], value)
+        else:
+            required_runtime_params += " --{} {}".format(i["name"], value)
     profile_arg = "-profile {}".format(profile) if profile else ""
-    src = src.replace("@@RUN_INPUTS@@", run_inputs)
+    src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
+    src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
-    src = src.replace("@@RESOURCES_SUBPATH@@", get_resources_subpath(resources_dir))
+    src = src.replace("@@RESOURCES_SUBPATH@@",
+                      get_resources_subpath(resources_dir))
     return src
