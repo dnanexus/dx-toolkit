@@ -919,7 +919,7 @@ def print_execution_desc(desc):
     if desc.get('sshHostKey'):
         print_nofill_field("SSH Host Key", printable_ssh_host_key(desc['sshHostKey']))
     if desc.get('internetUsageIPs'):
-        print_list_field("Internet Usage IPs", desc['internetUsageIPs'])
+        print_json_field("Internet Usage IPs", desc['internetUsageIPs'])
 
 
     for field in desc:

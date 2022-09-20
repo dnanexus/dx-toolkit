@@ -5415,11 +5415,6 @@ class TestDXClientFind(DXTestCase):
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
                       "rowFetchChunk": 100}
-        dxworkflow = dxpy.new_dxworkflow(name='find_executions test workflow')
-        stage = dxworkflow.add_stage(dxapplet, stage_input=prog_input)
-        dxanalysis = dxworkflow.run({stage+".rowFetchChunk": 200},
-                                    tags=["foo"],
-                                    properties={"foo": "bar"})
         dxapplet.run(applet_input=prog_input)
         dxjob = dxapplet.run(applet_input=prog_input,
                              tags=["foo", "bar"],
@@ -5427,23 +5422,13 @@ class TestDXClientFind(DXTestCase):
 
         cd("{project_id}:/".format(project_id=dxapplet.get_proj_id()))
 
-        # Wait for job to be created
-        executions = [stage['execution']['id'] for stage in dxanalysis.describe()['stages']]
-        t = 0
-        while len(executions) > 0:
-            try:
-                dxpy.api.job_describe(executions[len(executions) - 1], {})
-                executions.pop()
-            except DXAPIError:
-                t += 1
-                if t > 20:
-                    raise Exception("Timeout while waiting for job to be created for an analysis stage")
-                time.sleep(1)
         output1 = run("dx find jobs --user=self --verbose --json") 
-        output2 = run("dx describe {} --verbose".format(dxjob.get_id()))
+        output2 = run("dx describe {} --verbose --json".format(dxjob.get_id()))
+        output3 = run("dx describe {} --verbose".format(dxjob.get_id()))
 
         self.assertIn("internetUsageIPs", output1)
-        self.assertIn("Internet Usage IPs", output2)
+        self.assertIn("internetUsageIPs", output2)
+        self.assertIn("Internet Usage IPs", output3)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
