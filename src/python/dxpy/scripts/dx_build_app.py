@@ -848,6 +848,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 # applet in the destination exists with the same name as this
                 # one, then we should err out *before* uploading resources.
                 try:
+                    if not override_applet_name and kwargs.get("name"):
+                        override_applet_name = kwargs.get("name")
                     dest_name = override_applet_name or app_json.get('name') or os.path.basename(os.path.abspath(src_dir))
                 except:
                     raise dxpy.app_builder.AppBuilderException("Could not determine applet name from specification + "
