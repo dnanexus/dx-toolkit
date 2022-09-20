@@ -281,6 +281,14 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         # are not printed
         self.assertNotIn("Launching", watched_run_output)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_build_nextflow_from_repository_profile(self):
+        hello_repo_url = "https://github.com/nextflow-io/hello"
+        applet_id = run("dx build --nextflow --repository '{}' --profile \"czech\" --brief".format(hello_repo_url)).strip()
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write(
