@@ -99,7 +99,7 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
     :type schema_file: str or Path
     :returns: list of custom inputs defined with DNAnexus datatype 
     :rtype: list
-    Creates custome input list from nextflow_schema.json that
+    Creates custom input list from nextflow_schema.json that
     will be added in dxapp.json inputSpec field
     """
     
