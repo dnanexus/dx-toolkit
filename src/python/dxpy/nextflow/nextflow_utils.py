@@ -55,7 +55,7 @@ def get_regional_options():
     }
     return regional_options
 
-def get_nextflow_assets(region):
+def get_nextflow_assets():
     prod_assets = {
         "aws:ap-southeast-2": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
         "aws:eu-central-1": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
