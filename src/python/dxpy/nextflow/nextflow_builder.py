@@ -14,7 +14,7 @@ from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 
-def build_pipeline_from_repository(repository, tag, profile="", github_creds=None, brief=False):
+def build_pipeline_from_repository(repository, tag, profile="", github_creds=None, brief=False, extra_args={}):
     """
     :param repository: URL to a Git repository
     :type repository: string
@@ -28,6 +28,9 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
 
     Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
     """
+    def parse_extra_args(extra_args):
+        print(extra_args)
+
 
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
@@ -43,7 +46,7 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
         input_hash["config_profile"] = profile
     if github_creds:
         input_hash["github_credentials"] = parse_obj(github_creds, "file")
-
+    parse_extra_args(extra_args)
     nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id, name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
