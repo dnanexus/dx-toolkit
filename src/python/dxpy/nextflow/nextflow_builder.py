@@ -14,7 +14,7 @@ from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 
-def build_pipeline_from_repository(repository, tag, profile="", github_creds=None, brief=False):
+def build_pipeline_from_repository(repository, tag, profile="", github_creds=None, brief=False, extra_args={}):
     """
     :param repository: URL to a Git repository
     :type repository: string
@@ -28,15 +28,27 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
 
     Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
     """
+    def parse_extra_args(extra_args):
+        dx_input = {}
+        if extra_args.get("name") is not None:
+            dx_input["name"] = extra_args.get("name")
+        if extra_args.get("title") is not None:
+            dx_input["title"] = extra_args.get("title")
+        if extra_args.get("summary") is not None:
+            dx_input["summary"] = extra_args.get("summary")
+        if extra_args.get("runSpec", {}).get("timeoutPolicy") is not None:
+            dx_input["timeout_policy"] = extra_args.get("runSpec", {}).get("timeoutPolicy")
+        if extra_args.get("details", {}).get("whatsNew") is not None:
+            dx_input["whats_new"] = extra_args.get("details", {}).get("whatsNew")
+        return dx_input
+
 
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
-
-    input_hash = {
-        "repository_url": repository,
-    }
+    input_hash = parse_extra_args(extra_args)
+    input_hash["repository_url"] = repository
     if tag:
         input_hash["repository_tag"] = tag
     if profile:
