@@ -35,7 +35,7 @@ def get_nextflow_dxapp(custom_inputs=None, name=""):
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
-    dxapp["regionalOptions"] =
+    dxapp["regionalOptions"] = get_regional_options()
     if os.environ.get("DX_JOB_ID") is None or not is_importer_job():
         dxapp["details"] = {"repository": "local"}
     return dxapp
