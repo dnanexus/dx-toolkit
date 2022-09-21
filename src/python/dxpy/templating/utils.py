@@ -296,7 +296,6 @@ def create_files_from_templates(template_dir, app_json, language,
             if any(template_filename.endswith(ext) for ext in ('~', '.pyc', '.pyo', '__pycache__')):
                 continue
             use_template_file(os.path.join('test', template_filename))
-
     for template_filename in os.listdir(os.path.join(template_dir, 'src')):
         if template_filename.endswith('~'):
             continue

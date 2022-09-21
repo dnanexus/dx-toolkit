@@ -6,7 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Initial support for Nextflow
+
 ### Fixed 
+
 * Don't check python3 syntax with python2 and vice versa in `dx build`
 * `dx build` now properly verifies the applet's name given in the `extra-args` parameter
 
