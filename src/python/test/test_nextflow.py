@@ -29,7 +29,7 @@ import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run)
 import dxpy_testutil as testutil
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
-from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
+from dxpy.utils.resolver import ResolutionError
 import dxpy
 from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
 

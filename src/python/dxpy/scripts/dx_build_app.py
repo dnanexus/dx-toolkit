@@ -1005,7 +1005,12 @@ def _build_app(args, extra_args):
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
     if args.nextflow and not args.repository:
-        source_dir = prepare_nextflow(args.src_dir, args.profile, args.destination)
+        if args.destination:
+            dest_project_id, _, _ = parse_destination(args.destination)
+        else:
+            dest_project_id = dxpy.WORKSPACE_ID
+        destination_region = dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
+        source_dir = prepare_nextflow(args.src_dir, args.profile, destination_region)
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
     if args._from:
