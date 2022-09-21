@@ -24,7 +24,7 @@ import sys
 import unittest
 import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
-from dxpy.nextflow.nextflow_builder import prepare_inputs
+from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
 
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run)
@@ -104,14 +104,14 @@ class TestNextflowTemplates(DXTestCase):
             "--{}=\"dx://$".format(input1.get("name"), input1.get("name")) in src)
 
     def test_prepare_inputs(self):
-        inputs = prepare_inputs("./nextflow/schema2.json")
+        inputs = prepare_custom_inputs("./nextflow/schema2.json")
         names = [i["name"] for i in inputs]
         self.assertTrue(
             "input" in names and "outdir" in names and "save_merged_fastq" in names)
         self.assertEqual(len(names), 3)
 
     def test_prepare_inputs_single(self):
-        inputs = prepare_inputs("./nextflow/schema3.json")
+        inputs = prepare_custom_inputs("./nextflow/schema3.json")
         self.assertEqual(len(inputs), 1)
         i = inputs[0]
         self.assertEqual(i["name"], "outdir")
@@ -121,7 +121,7 @@ class TestNextflowTemplates(DXTestCase):
         self.assertEqual(i["class"], "string")
 
     def test_prepare_inputs_large_file(self):
-        inputs = prepare_inputs("./nextflow/schema1.json")
+        inputs = prepare_custom_inputs("./nextflow/schema1.json")
         self.assertEqual(len(inputs), 93)
 
 
