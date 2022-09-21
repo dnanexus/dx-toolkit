@@ -27,12 +27,12 @@ def get_importer_name():
 def get_template_dir():
     return os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
-def makedirs(folder, content):
+def write_exec(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())
     try:
         os.makedirs(os.path.dirname(os.path.abspath(exec_file)))
-    except OSError as exc:
-        if exc.errno != errno.EEXIST:
+    except OSError as e:
+        if e.errno != errno.EEXIST:
             raise
         pass
     with open(exec_file, "w") as fh:
