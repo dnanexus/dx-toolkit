@@ -3155,8 +3155,10 @@ dx-jobutil-add-output record_array $second_record --array
                                                     "network": []}})["id"]
         special_field_query_json = json.loads('{"fields":{"headJobOnDemand":true}}')
         normal_job_id = run("dx run myapplet4 --brief -y").strip()
+        normal_job_desc = dxpy.api.job_describe(normal_job_id)
+        self.assertEqual(normal_job_desc.get("headJobOnDemand"), None)
         normal_job_desc = dxpy.api.job_describe(normal_job_id, special_field_query_json)
-        self.assertEqual(normal_job_desc["headJobOnDemand"], None)
+        self.assertEqual(normal_job_desc["headJobOnDemand"], False)
 
         head_on_demand_job_id = run("dx run myapplet4 --head-job-on-demand --brief -y").strip()
         head_on_demand_job_desc = dxpy.api.job_describe(head_on_demand_job_id, special_field_query_json)
