@@ -70,7 +70,7 @@ def get_nextflow_assets(region):
         "aws:ap-southeast-2": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
         "aws:eu-central-1": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
         "aws:eu-west-2": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
-        "aws:us-east-1": ("record-GG0q3X00fVVZQP9G4kFF16zp", "record-GG1P0xQ0F9gggxxjKzqV40vg"),
+        "aws:us-east-1": ("record-GG23y1j00vk1BJ5zKzykGXvY", "record-GG1P0xQ0F9gggxxjKzqV40vg"),
         "azure:westeurope": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
         "azure:westus": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy"),
         "aws:eu-west-2-g": ("record-xxxxxxxxxxxxxxxxxxxxxxxx", "record-yyyyyyyyyyyyyyyyyyyyyyyy")
