@@ -66,23 +66,6 @@
     "release": "20.04",
     "version": "0"
   },
-  "regionalOptions": {
-    "aws:us-east-1": {
-      "systemRequirements": {
-        "*": {
-          "instanceType": "mem1_ssd1_v2_x2"
-        }
-      },
-      "assetDepends": [
-        {
-          "id": "record-GG0q3X00fVVZQP9G4kFF16zp"
-        },
-        {
-          "id": "record-GGZK1Jj0J0ZbGxJV0b20Fp0p"
-        }
-      ]
-    }
-  },
   "details": {
     "whatsNew": "1.0.0: Initial version"
   },
