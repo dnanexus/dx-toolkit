@@ -20,7 +20,7 @@ Utilities shared by dxpy modules.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, json, collections, concurrent.futures, traceback, sys, time, gc
+import os, json, collections, concurrent.futures, traceback, sys, time, gc, platform
 from multiprocessing import cpu_count
 import dateutil.parser
 from .. import logger
@@ -280,6 +280,17 @@ def json_loads_raise_on_duplicates(*args, **kwargs):
     """
     kwargs['object_pairs_hook'] = _dict_raise_on_duplicates
     return json.loads(*args, **kwargs)
+
+def import_readline():
+    # Import pyreadline3 on Windows with Python >= 3.5
+    if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
+        import pyreadline3 as readline
+    else:
+        try:
+            # Import gnureadline if installed for macOS
+            import gnureadline as readline
+        except ImportError:
+            import readline
 
 def warn(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
