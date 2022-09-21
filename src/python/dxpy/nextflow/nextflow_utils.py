@@ -4,7 +4,6 @@ import os
 import dxpy
 import json
 from dxpy.exceptions import ResourceNotFound
-from dxpy.scripts.dx_build_app import parse_destination
 
 def get_source_file_name():
     return "src/nextflow.sh"
@@ -28,19 +27,6 @@ def get_importer_name():
 
 def get_template_dir():
     return os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
-
-def get_destination_region(destination):
-    """
-    :param destination: The destination path for building the applet, as given by the --destination option to "dx build". Will be in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]].
-    :type destination: str
-    :returns: The name of the region in which the applet will be built, e.g. 'aws:us-east-1'
-    :rtype: str
-    """
-    if destination:
-        dest_project_id, _, _ = parse_destination(destination)
-    else:
-        dest_project_id = dxpy.WORKSPACE_ID
-    return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
 
 def write_exec(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())

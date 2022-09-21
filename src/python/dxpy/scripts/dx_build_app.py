@@ -993,6 +993,20 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         if using_temp_project:
             dxpy.executable_builder.delete_temporary_projects(list(projects_by_region.values()))
 
+def get_destination_region(destination):
+    """
+    :param destination: The destination path for building the applet, as given by the --destination option to "dx build". Will be in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]].
+    :type destination: str
+
+    :returns: The name of the region in which the applet will be built, e.g. 'aws:us-east-1'. It doesn't take into account the destination project specified in dxapp.json.
+    :rtype: str
+    """
+    if destination:
+        dest_project_id, _, _ = parse_destination(destination)
+    else:
+        dest_project_id = dxpy.WORKSPACE_ID
+    return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
+
 
 def _build_app(args, extra_args):
     """Builds an app or applet and returns the resulting executable ID
@@ -1005,12 +1019,7 @@ def _build_app(args, extra_args):
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
     if args.nextflow and not args.repository:
-        if args.destination:
-            dest_project_id, _, _ = parse_destination(args.destination)
-        else:
-            dest_project_id = dxpy.WORKSPACE_ID
-        destination_region = dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
-        source_dir = prepare_nextflow(args.src_dir, args.profile, destination_region)
+        source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
     if args._from:
