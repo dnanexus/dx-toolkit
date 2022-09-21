@@ -255,9 +255,21 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
         print(job_desc["output"])
         self.assertEqual(len(job_desc["output"]["nextflow_log"]), 1)
-        self.assertEqual(len(job_desc["output"]["output_files"]), 2)
 
+        # the output files will be: nxf_runtime.config, ls_folder.txt, cat_file.txt
+        self.assertEqual(len(job_desc["output"]["output_files"]), 3)
 
+    def test_dx_build_nextflow_with_destination(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(
+            run("dx build --nextflow --json --destination MyApplet " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+        self.assertEqual(desc["name"], "MyApplet")
+        self.assertEqual(desc["title"], pipeline_name)
+        self.assertEqual(desc["summary"], pipeline_name)
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
