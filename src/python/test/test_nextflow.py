@@ -97,7 +97,7 @@ class TestNextflowTemplates(DXTestCase):
         self.assertTrue("-profile test_profile" in src)
 
     def test_src_inputs(self):
-        src = get_nextflow_src(inputs=[input1, input2])
+        src = get_nextflow_src(custom_inputs=[input1, input2])
         self.assertTrue(
             "--{}=\"${{{}}}\"".format(input2.get("name"), input2.get("name")) in src)
         self.assertTrue(
