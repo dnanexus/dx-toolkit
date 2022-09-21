@@ -136,7 +136,7 @@ main() {
     export NXF_UUID=$(uuidgen)
     export NXF_ANSI_LOG=false
     export NXF_EXECUTOR=dnanexus
-    export NXF_PLUGINS_DEFAULT=nextaur@1.0.0
+    export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
     export NXF_DOCKER_LEGACY=true
     #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
     #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
