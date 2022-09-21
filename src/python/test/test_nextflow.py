@@ -24,7 +24,6 @@ import sys
 import unittest
 import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
-from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
 
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run)
@@ -32,6 +31,7 @@ import dxpy_testutil as testutil
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 import dxpy
+from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
 
 if USING_PYTHON2:
     spawn_extra_args = {}
@@ -40,7 +40,7 @@ else:
     spawn_extra_args = {"encoding": "utf-8"}
 
 
-default_input_len = 4
+default_input_len = 5
 input1 = {
     "class": "file",
     "name": "first_input",
@@ -104,14 +104,14 @@ class TestNextflowTemplates(DXTestCase):
             "--{}=\"dx://$".format(input1.get("name"), input1.get("name")) in src)
 
     def test_prepare_inputs(self):
-        inputs = prepare_custom_inputs("./nextflow/schema2.json")
+        inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
         names = [i["name"] for i in inputs]
         self.assertTrue(
             "input" in names and "outdir" in names and "save_merged_fastq" in names)
         self.assertEqual(len(names), 3)
 
     def test_prepare_inputs_single(self):
-        inputs = prepare_custom_inputs("./nextflow/schema3.json")
+        inputs = prepare_custom_inputs(schema_file="./nextflow/schema3.json")
         self.assertEqual(len(inputs), 1)
         i = inputs[0]
         self.assertEqual(i["name"], "outdir")
@@ -121,7 +121,7 @@ class TestNextflowTemplates(DXTestCase):
         self.assertEqual(i["class"], "string")
 
     def test_prepare_inputs_large_file(self):
-        inputs = prepare_custom_inputs("./nextflow/schema1.json")
+        inputs = prepare_custom_inputs(schema_file="./nextflow/schema1.json")
         self.assertEqual(len(inputs), 93)
 
 
@@ -227,7 +227,6 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
-    @unittest.skip("The test environment causes this to fail - to be fixed")
     def test_dx_build_nextflow_with_publishDir(self):
         pipeline_name = "cat_ls"
         # extra_args = '{"name": "testing_cat_ls"}'

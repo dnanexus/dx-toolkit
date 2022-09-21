@@ -1005,7 +1005,7 @@ def _build_app(args, extra_args):
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
     if args.nextflow and not args.repository:
-        source_dir = prepare_nextflow(args.src_dir, args.profile)
+        source_dir = prepare_nextflow(args.src_dir, args.profile, args.destination)
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
     if args._from:

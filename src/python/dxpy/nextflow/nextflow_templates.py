@@ -1,16 +1,19 @@
 #!/usr/bin/env python
 
 from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
-                                          get_importer_name, get_regional_options)
+                                          get_importer_name, get_regional_options, get_destination_region)
 import json
 import os
 
 
-def get_nextflow_dxapp(custom_inputs=None, name=""):
+def get_nextflow_dxapp(custom_inputs=None, name="", destination=None):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
-
+    :param name: Name of the applet.
+    :type name: str
+    :param destination: The
+    :type destination: str
     Creates Nextflow dxapp.json from the Nextflow dxapp.json template
     """
     def is_importer_job():
@@ -34,7 +37,8 @@ def get_nextflow_dxapp(custom_inputs=None, name=""):
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
-    dxapp["regionalOptions"] = get_regional_options()
+    destination_region = get_destination_region(destination)
+    dxapp["regionalOptions"] = get_regional_options(destination_region)
     if os.environ.get("DX_JOB_ID") is None or not is_importer_job():
         dxapp["details"] = {"repository": "local"}
     return dxapp
