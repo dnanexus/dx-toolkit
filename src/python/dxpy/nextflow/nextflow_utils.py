@@ -30,8 +30,8 @@ def get_template_dir():
 def write_exec(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())
     os.makedirs(os.path.dirname(os.path.abspath(exec_file)), exist_ok=True)
-    with open(exec_file, "w") as exec:
-        exec.write(content)
+    with open(exec_file, "w") as fh:
+        fh.write(content)
 
 def write_dxapp(folder, content):
     dxapp_file = "{}/dxapp.json".format(folder)
