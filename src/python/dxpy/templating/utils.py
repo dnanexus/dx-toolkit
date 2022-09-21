@@ -20,13 +20,21 @@ Miscellaneous utility classes and functions for the dx-app-wizard command-line t
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, shutil, subprocess, re, json
+import os, sys, shutil, subprocess, re, json, platform
 import stat
 
-from ..utils import import_readline
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
 from ..cli import prompt_for_yn
 from ..compat import input, open
+# Import pyreadline3 on Windows with Python >= 3.5
+if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
+    import pyreadline3 as readline
+else:
+    try:
+        # Import gnureadline if installed for macOS
+        import gnureadline as readline
+    except ImportError as e:
+        import readline
 
 from . import python
 from . import bash
@@ -41,7 +49,6 @@ completer_state = {
 }
 
 try:
-    import_readline()
     import rlcompleter
     readline.parse_and_bind("tab: complete")
     readline.set_completer_delims("")

@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools, platform
 import shlex # respects quoted substrings when splitting
 
 import requests
@@ -55,7 +55,7 @@ from ..cli.org import (get_org_invite_args, add_membership, remove_membership, u
                        find_orgs, org_find_members, org_find_projects, org_find_apps)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
-from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input, import_readline
+from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
 from ..utils.batch_utils import (batch_run, batch_launch_args)
 
 from ..app_categories import APP_CATEGORIES
@@ -93,7 +93,15 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        import_readline()
+        # Import pyreadline3 on Windows with Python >= 3.5
+        if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
+            import pyreadline3 as readline
+        else:
+            try:
+                # Import gnureadline if installed for macOS
+                import gnureadline as readline
+            except ImportError as e:
+                import readline
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
