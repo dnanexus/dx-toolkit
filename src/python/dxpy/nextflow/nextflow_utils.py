@@ -53,7 +53,7 @@ def write_dxapp(folder, content):
     with open(dxapp_file, "w") as dxapp:
         json.dump(content, dxapp)
 
-def F(region):
+def get_regional_options(region):
     nextflow_asset, nextaur_asset = get_nextflow_assets(region)
     regional_options = {
         region: {
