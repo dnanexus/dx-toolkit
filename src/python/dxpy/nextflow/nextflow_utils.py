@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os
+import os, errno
 import dxpy
 import json
 from dxpy.exceptions import ResourceNotFound
@@ -27,9 +27,14 @@ def get_importer_name():
 def get_template_dir():
     return os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
-def write_exec(folder, content):
+def makedirs(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())
-    os.makedirs(os.path.dirname(os.path.abspath(exec_file)), exist_ok=True)
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(exec_file)))
+    except OSError as exc:
+        if exc.errno != errno.EEXIST:
+            raise
+        pass
     with open(exec_file, "w") as fh:
         fh.write(content)
 
