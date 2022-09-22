@@ -40,7 +40,7 @@ else:
     spawn_extra_args = {"encoding": "utf-8"}
 
 
-default_input_len = 4
+default_input_len = 5
 input1 = {
     "class": "file",
     "name": "first_input",
