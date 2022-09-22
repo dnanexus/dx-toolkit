@@ -10790,8 +10790,7 @@ class TestDXArchive(DXTestCase):
         cls.proj_unarchive_name = "dx_test_unarchive"
         cls.usr = dxpy.whoami()
         cls.bill_to = dxpy.api.user_describe(cls.usr)['billTo']
-        cls.is_admin = True if dxpy.api.org_describe(cls.bill_to)['level'] == 'ADMIN' else False
-
+        cls.is_admin = True if dxpy.api.org_describe(cls.bill_to).get('level') == 'ADMIN' or cls.bill_to == cls.user else False
         cls.rootdir = '/'
         cls.proj_archive_id = dxpy.api.project_new({'name': cls.proj_archive_name, 'billTo': cls.bill_to})['id']
         cls.proj_unarchive_id = dxpy.api.project_new({'name': cls.proj_unarchive_name, 'billTo': cls.bill_to})['id']
