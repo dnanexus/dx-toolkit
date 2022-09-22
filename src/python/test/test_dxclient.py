@@ -3155,8 +3155,10 @@ dx-jobutil-add-output record_array $second_record --array
                                                     "network": []}})["id"]
         special_field_query_json = json.loads('{"fields":{"headJobOnDemand":true}}')
         normal_job_id = run("dx run myapplet4 --brief -y").strip()
+        normal_job_desc = dxpy.api.job_describe(normal_job_id)
+        self.assertEqual(normal_job_desc.get("headJobOnDemand"), None)
         normal_job_desc = dxpy.api.job_describe(normal_job_id, special_field_query_json)
-        self.assertEqual(normal_job_desc["headJobOnDemand"], None)
+        self.assertEqual(normal_job_desc["headJobOnDemand"], False)
 
         head_on_demand_job_id = run("dx run myapplet4 --head-job-on-demand --brief -y").strip()
         head_on_demand_job_desc = dxpy.api.job_describe(head_on_demand_job_id, special_field_query_json)
@@ -10788,8 +10790,7 @@ class TestDXArchive(DXTestCase):
         cls.proj_unarchive_name = "dx_test_unarchive"
         cls.usr = dxpy.whoami()
         cls.bill_to = dxpy.api.user_describe(cls.usr)['billTo']
-        cls.is_admin = True if dxpy.api.org_describe(cls.bill_to)['level'] == 'ADMIN' else False
-
+        cls.is_admin = True if dxpy.api.org_describe(cls.bill_to).get('level') == 'ADMIN' or cls.bill_to == cls.usr else False
         cls.rootdir = '/'
         cls.proj_archive_id = dxpy.api.project_new({'name': cls.proj_archive_name, 'billTo': cls.bill_to})['id']
         cls.proj_unarchive_id = dxpy.api.project_new({'name': cls.proj_unarchive_name, 'billTo': cls.bill_to})['id']

@@ -87,3 +87,4 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     src = src.replace("@@RESOURCES_SUBPATH@@",
                       get_resources_subpath(resources_dir))
     return src
+

@@ -150,3 +150,4 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
                     dx_input["help"] = "(Optional) {}".format(dx_input["help"])
             inputs.append(dx_input)
     return inputs
+

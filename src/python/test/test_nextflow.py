@@ -297,3 +297,4 @@ if __name__ == '__main__':
         sys.stderr.write(
             'WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')
     unittest.main()
+

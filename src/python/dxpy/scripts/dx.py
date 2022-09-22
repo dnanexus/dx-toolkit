@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools, platform
 import shlex # respects quoted substrings when splitting
 
 import requests
@@ -93,11 +93,15 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        # gnureadline required on macos
-        try:
-            import gnureadline as readline
-        except ImportError:
-            import readline
+        # Import pyreadline3 on Windows with Python >= 3.5
+        if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
+            import pyreadline3 as readline
+        else:
+            try:
+                # Import gnureadline if installed for macOS
+                import gnureadline as readline
+            except ImportError as e:
+                import readline
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
