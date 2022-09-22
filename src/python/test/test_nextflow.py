@@ -142,6 +142,8 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         details = applet.get_details()
         self.assertEqual(details["repository"], "local")
 
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping tests that would run jobs')
     def test_dx_build_nextflow_with_abs_and_relative_path(self):
         pipeline_name = "hello_abs"
         applet_dir = self.write_nextflow_applet_directory(
