@@ -1,4 +1,4 @@
-argcomplete==1.9.4
+argcomplete<2.0.0
 websocket-client==0.54.0
 python-dateutil>=2.5
 psutil>=3.3.0
