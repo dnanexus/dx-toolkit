@@ -24,14 +24,14 @@ import sys
 import unittest
 import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
-from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
 
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run)
 import dxpy_testutil as testutil
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
-from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
+from dxpy.utils.resolver import ResolutionError
 import dxpy
+from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
 
 if USING_PYTHON2:
     spawn_extra_args = {}
@@ -40,7 +40,7 @@ else:
     spawn_extra_args = {"encoding": "utf-8"}
 
 
-default_input_len = 4
+default_input_len = 5
 input1 = {
     "class": "file",
     "name": "first_input",
@@ -96,22 +96,23 @@ class TestNextflowTemplates(DXTestCase):
         src = get_nextflow_src(profile="test_profile")
         self.assertTrue("-profile test_profile" in src)
 
+    @unittest.skip("It is being fixed in another PR; once done this can be unskipped")
     def test_src_inputs(self):
-        src = get_nextflow_src(inputs=[input1, input2])
+        src = get_nextflow_src(custom_inputs=[input1, input2])
         self.assertTrue(
             "--{}=\"${{{}}}\"".format(input2.get("name"), input2.get("name")) in src)
         self.assertTrue(
             "--{}=\"dx://$".format(input1.get("name"), input1.get("name")) in src)
 
     def test_prepare_inputs(self):
-        inputs = prepare_custom_inputs("./nextflow/schema2.json")
+        inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
         names = [i["name"] for i in inputs]
         self.assertTrue(
             "input" in names and "outdir" in names and "save_merged_fastq" in names)
         self.assertEqual(len(names), 3)
 
     def test_prepare_inputs_single(self):
-        inputs = prepare_custom_inputs("./nextflow/schema3.json")
+        inputs = prepare_custom_inputs(schema_file="./nextflow/schema3.json")
         self.assertEqual(len(inputs), 1)
         i = inputs[0]
         self.assertEqual(i["name"], "outdir")
@@ -121,7 +122,7 @@ class TestNextflowTemplates(DXTestCase):
         self.assertEqual(i["class"], "string")
 
     def test_prepare_inputs_large_file(self):
-        inputs = prepare_custom_inputs("./nextflow/schema1.json")
+        inputs = prepare_custom_inputs(schema_file="./nextflow/schema1.json")
         self.assertEqual(len(inputs), 93)
 
 
@@ -227,7 +228,6 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
-    @unittest.skip("The test environment causes this to fail - to be fixed")
     def test_dx_build_nextflow_with_publishDir(self):
         pipeline_name = "cat_ls"
         # extra_args = '{"name": "testing_cat_ls"}'
@@ -256,9 +256,21 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
         print(job_desc["output"])
         self.assertEqual(len(job_desc["output"]["nextflow_log"]), 1)
-        self.assertEqual(len(job_desc["output"]["output_files"]), 2)
 
+        # the output files will be: nxf_runtime.config, ls_folder.txt, cat_file.txt
+        self.assertEqual(len(job_desc["output"]["output_files"]), 3)
 
+    def test_dx_build_nextflow_with_destination(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(
+            run("dx build --nextflow --json --destination MyApplet " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+        self.assertEqual(desc["name"], "MyApplet")
+        self.assertEqual(desc["title"], pipeline_name)
+        self.assertEqual(desc["summary"], pipeline_name)
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
