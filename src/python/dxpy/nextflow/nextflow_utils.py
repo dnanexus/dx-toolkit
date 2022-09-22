@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os
+import os, errno
 import dxpy
 import json
 from dxpy.exceptions import ResourceNotFound
@@ -29,7 +29,12 @@ def get_template_dir():
 
 def write_exec(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())
-    os.makedirs(os.path.dirname(os.path.abspath(exec_file)), exist_ok=True)
+    try:
+        os.makedirs(os.path.dirname(os.path.abspath(exec_file)))
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+        pass
     with open(exec_file, "w") as fh:
         fh.write(content)
 
