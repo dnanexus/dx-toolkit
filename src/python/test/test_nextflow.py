@@ -96,7 +96,6 @@ class TestNextflowTemplates(DXTestCase):
         src = get_nextflow_src(profile="test_profile")
         self.assertTrue("-profile test_profile" in src)
 
-    @unittest.skip("It is being fixed in another PR; once done this can be unskipped")
     def test_src_inputs(self):
         src = get_nextflow_src(custom_inputs=[input1, input2])
         self.assertTrue(
