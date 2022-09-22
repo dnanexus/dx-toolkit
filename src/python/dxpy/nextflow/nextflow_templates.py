@@ -67,7 +67,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
 
         # optional inputs will be added to custom runtime config file
         if i.get("optional", False):
-            if i.get("class") == "string":
+            if i.get("class") not in ("int","float","boolean"):
                 value = '\\"' + value + '\\"'
             generate_runtime_config = generate_runtime_config + '''
             if [ -n "$%s" ]; then
