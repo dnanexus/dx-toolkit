@@ -4,6 +4,7 @@ import os
 import dxpy
 import json
 from dxpy.exceptions import ResourceNotFound
+
 def get_source_file_name():
     return "src/nextflow.sh"
 
@@ -38,8 +39,7 @@ def write_dxapp(folder, content):
     with open(dxapp_file, "w") as dxapp:
         json.dump(content, dxapp)
 
-def get_regional_options():
-    region = dxpy.DXProject().describe()["region"]
+def get_regional_options(region):
     nextflow_asset, nextaur_asset = get_nextflow_assets(region)
     regional_options = {
         region: {
