@@ -11,6 +11,7 @@ from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_s
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, get_resources_dir_name)
 from dxpy.cli.exec_io import parse_obj
 from distutils.dir_util import copy_tree
+
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 
@@ -68,12 +69,14 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
         print(applet_id)
     return applet_id
 
-def prepare_nextflow(resources_dir, profile):
+def prepare_nextflow(resources_dir, profile, region):
     """
     :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
     :type resources_dir: str or Path
     :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
-    :type profile: string
+    :type profile: str
+    :param region: The region in which the applet will be built.
+    :type region: str
     :returns: Path to the created dxapp_dir
     :rtype: Path
 
@@ -82,28 +85,28 @@ def prepare_nextflow(resources_dir, profile):
     assert os.path.exists(resources_dir)
     if not glob(os.path.join(resources_dir, "*.nf")):
         raise dxpy.app_builder.AppBuilderException("Directory %s does not contain Nextflow file (*.nf): not a valid Nextflow directory" % resources_dir)
-    inputs = []
     dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
-    if os.path.exists("{}/nextflow_schema.json".format(resources_dir)):
-        inputs = prepare_inputs("{}/nextflow_schema.json".format(resources_dir))
 
-    dxapp_content = get_nextflow_dxapp(inputs, name=get_resources_dir_name(resources_dir))
-    exec_content = get_nextflow_src(inputs=inputs, profile=profile, resources_dir=resources_dir)
+    custom_inputs = prepare_custom_inputs(schema_file=os.path.join(resources_dir, "nextflow_schema.json"))
+    dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, name=get_resources_dir_name(resources_dir), region=region)
+    exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, dxapp_content)
     write_exec(dxapp_dir, exec_content)
     return dxapp_dir
 
 
-def prepare_inputs(schema_file):
+def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
     """
     :param schema_file: path to nextflow_schema.json file
     :type schema_file: str or Path
-    :returns: DNAnexus datatype used in dxapp.json inputSpec field
-    :rtype: string
-    Creates DNAnexus inputs (inputSpec) from Nextflow inputs.
+    :returns: list of custom inputs defined with DNAnexus datatype 
+    :rtype: list
+    Creates custom input list from nextflow_schema.json that
+    will be added in dxapp.json inputSpec field
     """
-
+    
+    
     def get_dx_type(nf_type, nf_format=None):
         types = {
             "string": "string",
@@ -124,6 +127,9 @@ def prepare_inputs(schema_file):
         raise Exception("type {} is not supported by DNAnexus".format(nf_type))
 
     inputs = []
+    if not os.path.exists(schema_file):
+        return inputs
+
     with open(schema_file, "r") as fh:
         schema = json.load(fh)
     for d_key, d_schema in schema.get("definitions", {}).items():
@@ -144,3 +150,4 @@ def prepare_inputs(schema_file):
                     dx_input["help"] = "(Optional) {}".format(dx_input["help"])
             inputs.append(dx_input)
     return inputs
+

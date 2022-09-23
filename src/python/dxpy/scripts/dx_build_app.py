@@ -197,7 +197,7 @@ def _lint(dxapp_json_filename, mode):
     if 'name' in app_spec:
         if app_spec['name'] != app_spec['name'].lower():
             logger.warn('name "%s" should be all lowercase' % (app_spec['name'],))
-        if dirname != app_spec['name'] and not str(os.path.abspath(dxapp_json_filename)).startswith("/tmp") and not dirname.startswith("."):
+        if dirname != app_spec['name'] and not os.path.abspath(dxapp_json_filename).startswith("/tmp") and not dirname.startswith("."):
             logger.warn('app name "%s" does not match containing directory "%s"' % (app_spec['name'], dirname))
     else:
         logger.warn('app is missing a name, please add one in the "name" field of dxapp.json')
@@ -993,6 +993,20 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         if using_temp_project:
             dxpy.executable_builder.delete_temporary_projects(list(projects_by_region.values()))
 
+def get_destination_region(destination):
+    """
+    :param destination: The destination path for building the applet, as given by the --destination option to "dx build". Will be in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]].
+    :type destination: str
+
+    :returns: The name of the region in which the applet will be built, e.g. 'aws:us-east-1'. It doesn't take into account the destination project specified in dxapp.json.
+    :rtype: str
+    """
+    if destination:
+        dest_project_id, _, _ = parse_destination(destination)
+    else:
+        dest_project_id = dxpy.WORKSPACE_ID
+    return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
+
 
 def _build_app(args, extra_args):
     """Builds an app or applet and returns the resulting executable ID
@@ -1005,7 +1019,7 @@ def _build_app(args, extra_args):
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
     if args.nextflow and not args.repository:
-        source_dir = prepare_nextflow(args.src_dir, args.profile)
+        source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
     if args._from:

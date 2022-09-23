@@ -32,12 +32,24 @@ fi
 jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
 }
 
+generate_runtime_config() {
+  touch nxf_runtime.config
+  # make a runtime config file to override optional inputs
+  # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
+  @@GENERATE_RUNTIME_CONFIG@@
+
+  RUNTIME_CONFIG=''
+  if [[ -s nxf_runtime.config ]]; then
+    if [[ $debug == true ]]; then
+      cat nxf_runtime.config
+    fi
+
+    RUNTIME_CONFIG='-c nxf_runtime.config'
+  fi
+}
+
 on_exit() {
   ret=$?
-  # upload log file only when it has content
-  if [[ -s $LOG_NAME ]]; then
-    dx upload $LOG_NAME --path $DX_LOG --wait --brief --no-progress --parents || true
-  fi
 
   set +x
   if [[ $debug == true ]]; then
@@ -58,15 +70,10 @@ on_exit() {
   fi
 
 
-  # parse dnanexus-job.json to get job output destination
-  OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
-  OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
-  OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
-
   # remove .nextflow from the current folder /home/dnanexus/output_files
   rm -rf .nextflow
 
-  # try uploading the log file if it exists
+  # try uploading the log file if it is not empty
   if [[ -s $LOG_NAME ]]; then
     mkdir ../nextflow_log
     mv $LOG_NAME ../nextflow_log/$LOG_NAME || true
@@ -74,7 +81,7 @@ on_exit() {
     echo "No nextflow log file available."
   fi
   
-  # upload the published files if any
+  # upload the log file and published files if any
   cd ..
   if [[ -d ./nextflow_log || -n "$(ls -A ./output_files)" ]]; then
     dx-upload-all-outputs --parallel || true
@@ -115,15 +122,21 @@ main() {
         dx-registry-login
     fi
 
-    LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
     DX_WORK=${work_dir:-$DX_WORKSPACE_ID:/scratch/}
-    DX_LOG=${log_file:-$DX_PROJECT_CONTEXT_ID:$LOG_NAME}
+
+    LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
+    # parse dnanexus-job.json to get job output destination
+    OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
+    OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
+    OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
+    DX_LOG=${log_file:-"$OUTDIR/$LOG_NAME"}
+
     export NXF_WORK=dx://$DX_WORK
     export NXF_HOME=/opt/nextflow
     export NXF_UUID=$(uuidgen)
     export NXF_ANSI_LOG=false
     export NXF_EXECUTOR=dnanexus
-    export NXF_PLUGINS_DEFAULT=nextaur@1.0.0
+    export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
     export NXF_DOCKER_LEGACY=true
     #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
     #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
@@ -134,13 +147,21 @@ main() {
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
 
-    filtered_inputs=()
-
-    @@RUN_INPUTS@@
-
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
-    nextflow ${TRACE_CMD} "$nextflow_top_level_opts" -log ${LOG_NAME} run @@RESOURCES_SUBPATH@@ @@PROFILE_ARG@@ -name run-${NXF_UUID} "$nextflow_run_opts" "$nextflow_pipeline_params" "${filtered_inputs[@]}" & NXF_EXEC_PID=$!
+    
+    generate_runtime_config
+    nextflow \
+      ${TRACE_CMD} \
+      $nextflow_top_level_opts \
+      ${RUNTIME_CONFIG} \
+      -log ${LOG_NAME} \
+      run @@RESOURCES_SUBPATH@@ \
+      @@PROFILE_ARG@@ \
+      -name run-${NXF_UUID} \
+      $nextflow_run_opts \
+      $nextflow_pipeline_params \
+      @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
     set +x
