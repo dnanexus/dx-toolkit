@@ -8676,6 +8676,12 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     def test_syntax_checks(self):
         app_spec = dict(self.base_app_spec, name="syntax_checks")
+        if USING_PYTHON2:
+            app_spec['runSpec']['interpreter'] = 'python2.7'
+        else:
+            app_spec['runSpec']['interpreter'] = 'python3'
+            app_spec['runSpec']['release'] = '20.04'
+
         app_dir = self.write_app_directory("syntax_checks",
                                            json.dumps(app_spec),
                                            code_filename="code.py",
