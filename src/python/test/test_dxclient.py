@@ -9941,6 +9941,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.md")))
             self.assertFalse(os.path.exists(os.path.join("get_applet", "Readme.developer.md")))
 
+    @unittest.skipUnless(sys.platform.startswith("win"), "Windows only test")
     def test_get_applet_on_windows(self):
         # This test is to verify that "dx get applet" works correctly on windows,
         # making sure the resource directory is downloaded.

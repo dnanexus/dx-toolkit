@@ -26,7 +26,7 @@ import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
 
 import uuid
-from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run)
+from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
 import dxpy_testutil as testutil
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError
@@ -162,8 +162,9 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         pipeline_name = "hello_rel"
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
-        applet_id = json.loads(
-            run("cd {} && dx build --nextflow . --json".format(applet_dir)))["id"]
+        with chdir(applet_dir):
+            applet_id = json.loads(
+            run("dx build --nextflow . --json".format(applet_dir)))["id"]
         app = dxpy.describe(applet_id)
         self.assertEqual(app["name"], pipeline_name)
 
