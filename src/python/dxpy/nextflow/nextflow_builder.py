@@ -127,11 +127,15 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
         raise Exception("type {} is not supported by DNAnexus".format(nf_type))
 
     inputs = []
+    print(schema_file)
+    print(os.path.exists(schema_file))
     if not os.path.exists(schema_file):
         return inputs
 
     with open(schema_file, "r") as fh:
         schema = json.load(fh)
+    print("____________")
+    print(schema)
     for d_key, d_schema in schema.get("definitions", {}).items():
         required_inputs = d_schema.get("required", [])
         for property_key, property in d_schema.get("properties", {}).items():
