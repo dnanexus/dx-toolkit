@@ -298,7 +298,10 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         checker_fn = check_python
         # don't enforce and ignore if the shebang is ambiguous and we're not sure
         # that the file version is the same as the one we're running
-        with open(filename, 'rb') as f:
+        read_mode = "r"
+        if USING_PYTHON2:
+            read_mode = "rb"
+        with open(filename, read_mode) as f:
             first_line = f.readline()
             if not (('python3' in first_line and not USING_PYTHON2) or
                     ('python2' in first_line and USING_PYTHON2)):
