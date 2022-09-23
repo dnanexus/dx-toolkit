@@ -26,7 +26,7 @@ import re
 import subprocess
 import pandas as pd
 import dxpy
-from dxpy_testutil import cd
+from dxpy_testutil import cd, chdir
 
 class TestDXExtractDataset(unittest.TestCase):
     @classmethod
@@ -101,44 +101,44 @@ class TestDXExtractDataset(unittest.TestCase):
 
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
-        os.chdir(truth_files_directory)
-        cmd = ["dx", "download", "dx-toolkit_test_data:Extract_Dataset/data_dictionary.csv", 
-                                 "dx-toolkit_test_data:Extract_Dataset/codings.csv",
-                                 "dx-toolkit_test_data:Extract_Dataset/entity_dictionary.csv"]
-        subprocess.check_call(cmd)
-        os.chdir("..")
-        truth_file_list = os.listdir(truth_files_directory)
+        with chdir(truth_files_directory):
+            cmd = ["dx", "download", "dx-toolkit_test_data:Extract_Dataset/data_dictionary.csv", 
+                                    "dx-toolkit_test_data:Extract_Dataset/codings.csv",
+                                    "dx-toolkit_test_data:Extract_Dataset/entity_dictionary.csv"]
+            subprocess.check_call(cmd)
+            os.chdir("..")
+            truth_file_list = os.listdir(truth_files_directory)
 
-        for file in truth_file_list:
-            dframe1 = pd.read_csv(os.path.join(truth_files_directory, file)).dropna(axis=1, how='all').sort_index(axis=1)
-            fil_nam = rec_name + "." + file
-            dframe2 = pd.read_csv(os.path.join(out_directory, fil_nam)).dropna(axis=1, how='all').sort_index(axis=1)
-            if file == 'codings.csv':
-                #continue
-                dframe1 = dframe1.sort_values(by=['code','coding_name'], axis=0).reset_index(drop=True)
-                dframe2 = dframe2.sort_values(by=['code','coding_name'], axis=0).reset_index(drop=True)
-            elif file in ['entity_dictionary.csv', 'data_dictionary.csv']:
-                dframe1 = dframe1.sort_values(by='entity', axis=0).reset_index(drop=True)
-                dframe2 = dframe2.sort_values(by='entity', axis=0).reset_index(drop=True)
-            self.assertTrue(dframe1.equals(dframe2))
-        
-        shutil.rmtree(out_directory)
-        shutil.rmtree(truth_files_directory)
+            for file in truth_file_list:
+                dframe1 = pd.read_csv(os.path.join(truth_files_directory, file)).dropna(axis=1, how='all').sort_index(axis=1)
+                fil_nam = rec_name + "." + file
+                dframe2 = pd.read_csv(os.path.join(out_directory, fil_nam)).dropna(axis=1, how='all').sort_index(axis=1)
+                if file == 'codings.csv':
+                    #continue
+                    dframe1 = dframe1.sort_values(by=['code','coding_name'], axis=0).reset_index(drop=True)
+                    dframe2 = dframe2.sort_values(by=['code','coding_name'], axis=0).reset_index(drop=True)
+                elif file in ['entity_dictionary.csv', 'data_dictionary.csv']:
+                    dframe1 = dframe1.sort_values(by='entity', axis=0).reset_index(drop=True)
+                    dframe2 = dframe2.sort_values(by='entity', axis=0).reset_index(drop=True)
+                self.assertTrue(dframe1.equals(dframe2))
+            
+            shutil.rmtree(out_directory)
+            shutil.rmtree(truth_files_directory)
 
     def end_to_end_fields(self, out_directory, rec_name, truth_file):
         truth_files_directory = tempfile.mkdtemp()
-        os.chdir(truth_files_directory)
-        cmd = ["dx", "download", truth_file]
-        subprocess.check_call(cmd)
-        os.chdir("..")
-        dframe1 = pd.read_csv(os.path.join(truth_files_directory,os.listdir(truth_files_directory)[0]))
-        dframe1 = dframe1.sort_values(by=list(dframe1.columns), axis=0).reset_index(drop=True)
-        dframe2 = pd.read_csv(os.path.join(out_directory, rec_name))
-        dframe2 = dframe2.sort_values(by=list(dframe2.columns), axis=0).reset_index(drop=True)
-        self.assertTrue(dframe1.equals(dframe2))
+        with chdir(truth_files_directory):
+            cmd = ["dx", "download", truth_file]
+            subprocess.check_call(cmd)
+            os.chdir("..")
+            dframe1 = pd.read_csv(os.path.join(truth_files_directory,os.listdir(truth_files_directory)[0]))
+            dframe1 = dframe1.sort_values(by=list(dframe1.columns), axis=0).reset_index(drop=True)
+            dframe2 = pd.read_csv(os.path.join(out_directory, rec_name))
+            dframe2 = dframe2.sort_values(by=list(dframe2.columns), axis=0).reset_index(drop=True)
+            self.assertTrue(dframe1.equals(dframe2))
 
-        shutil.rmtree(out_directory)
-        shutil.rmtree(truth_files_directory)
+            shutil.rmtree(out_directory)
+            shutil.rmtree(truth_files_directory)
 
 if __name__ == '__main__':
     unittest.main()
