@@ -192,7 +192,7 @@ def _fix_perm_filter(tar_obj):
     return tar_obj
 
 
-def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False, resources_dir=None, worker_resources_subpath=""):
+def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False, resources_dir=None, worker_resources_subpath="."):
     """
     :param ensure_upload: If True, will bypass checksum of resources directory
                           and upload resources bundle unconditionally;
