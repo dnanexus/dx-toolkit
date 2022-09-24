@@ -1,3 +1,11 @@
+dx-toolkit (0.330.0) trusty; urgency=medium
+
+  * Added: Initial nextflow support
+  * Fixed: Do not check python3 syntax with python2 and vice versa in dx `build`
+  * Fixed: `dx build` properly verifies the applet's name given in the extra-args parameter
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 24 Sep 2022 01:28:01 +0000
+
 dx-toolkit (0.329.0) trusty; urgency=medium
 
   * Added: `dx extract_dataset` command
