@@ -6,16 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [333.0] - beta
+
 ### Added
 
 * Initial support for Nextflow
 
 ### Fixed 
 
-* Don't check python3 syntax with python2 and vice versa in `dx build`
-* `dx build` now properly verifies the applet's name given in the `extra-args` parameter
+* Do not check python3 syntax with python2 and vice versa in `dx build`
+* `dx build` properly verifies the applet's name given in the `extra-args` parameter
 
-## [329.0] - beta
+## [329.0] - 2022.9.23 - stable
 
 ### Added
 
@@ -25,7 +27,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 - `dxpy.find_one_project`, `dxpy.find_one_data_object`, `dxpy.find_one_app` raise `DXError` if `zero_ok` argument is not a `bool`
 
-## [328.0] - 2022.9.8 - stable
+## [328.0] - 2022.9.8
 
 ### Added
 
