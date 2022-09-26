@@ -7,7 +7,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ## Unreleased
 
 ### Fixed
-* `dx describe user-xxxx` don't try to print empty name when calling with *platformadminsupport* role
+* `dx describe user-xxxx` don't try to print the name if it is not present in the API response (e.g. caller has the *platformadminsupport* role)
  
 ## [333.0] - beta
 
