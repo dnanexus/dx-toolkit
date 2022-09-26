@@ -5398,6 +5398,40 @@ class TestDXClientFind(DXTestCase):
         self.assert_cmd_gives_ids("dx find jobs "+options3, [job_id])
         self.assert_cmd_gives_ids("dx find analyses "+options3, [])
 
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                                'skipping test that would run jobs')
+    def test_dx_find_internet_usage_IPs(self):
+        dxapplet = dxpy.DXApplet()
+        dxapplet.new(name="test_applet",
+                     dxapi="1.0.0",
+                     inputSpec=[{"name": "chromosomes", "class": "record"},
+                                {"name": "rowFetchChunk", "class": "int"}
+                                ],
+                     outputSpec=[{"name": "mappings", "class": "record"}],
+                     runSpec={"code": "def main(): pass",
+                              "interpreter": "python2.7",
+                              "distribution": "Ubuntu", "release": "14.04",
+                              "execDepends": [{"name": "python-numpy"}]})
+        dxrecord = dxpy.new_dxrecord()
+        dxrecord.close()
+        prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
+                      "rowFetchChunk": 100}
+        dxapplet.run(applet_input=prog_input)
+        dxjob = dxapplet.run(applet_input=prog_input,
+                             tags=["foo", "bar"],
+                             properties={"foo": "baz"})
+
+        cd("{project_id}:/".format(project_id=dxapplet.get_proj_id()))
+
+        output1 = run("dx find jobs --user=self --verbose --json") 
+        output2 = run("dx describe {} --verbose --json".format(dxjob.get_id()))
+        output3 = run("dx describe {} --verbose".format(dxjob.get_id()))
+
+        self.assertIn("internetUsageIPs", output1)
+        self.assertIn("internetUsageIPs", output2)
+        self.assertIn("Internet Usage IPs", output3)
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run a job')
     def test_find_analyses_run_by_jobs(self):
