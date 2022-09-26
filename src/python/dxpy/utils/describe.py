@@ -983,7 +983,7 @@ def format_currency(value, meta, currency_locale=None):
 
 def print_user_desc(desc):
     print_field("ID", desc["id"])
-    if "first" in desc and "last" in desc: 
+    if "first" in desc and "middle" in desc and "last" in desc: 
         print_field("Name", desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"])
     if "email" in desc:
         print_field("Email", desc["email"])
