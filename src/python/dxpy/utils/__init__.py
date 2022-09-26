@@ -20,7 +20,7 @@ Utilities shared by dxpy modules.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, json, collections, concurrent.futures, traceback, sys, time, gc
+import os, json, collections, concurrent.futures, traceback, sys, time, gc, platform
 from multiprocessing import cpu_count
 import dateutil.parser
 from .. import logger

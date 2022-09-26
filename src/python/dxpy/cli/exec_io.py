@@ -22,7 +22,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 # TODO: refactor all dx run helper functions here
 
-import os, sys, json, collections, pipes
+import os, sys, json, collections, pipes, platform
 from ..bindings.dxworkflow import DXWorkflow
 
 import dxpy
@@ -34,10 +34,15 @@ from ..utils.resolver import (parse_input_keyval, is_hashid, is_job_id, is_local
                               resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex, basestring, USING_PYTHON2
-try:
-    import gnureadline as readline
-except ImportError:
-    import readline
+# Import pyreadline3 on Windows with Python >= 3.5
+if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
+    import pyreadline3 as readline
+else:
+    try:
+        # Import gnureadline if installed for macOS
+        import gnureadline as readline
+    except ImportError as e:
+        import readline
 ####################
 # -i Input Parsing #
 ####################

@@ -6,15 +6,22 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-
 ### Added
 
 * `dx find jobs --json`, and `dx describe job-xxxx` with `--verbose` argument return new field: *internetUsageIPs* if the caller is in an organization that has enabled *jobInternetUsageMonitoring* license feature
 
-### Fixed 
-* don't check python3 syntax with python2 and vice versa in `dx build`
+## [333.0] - beta
 
-## [329.0] - beta
+### Added
+
+* Initial support for Nextflow
+
+### Fixed 
+
+* Do not check python3 syntax with python2 and vice versa in `dx build`
+* `dx build` properly verifies the applet's name given in the `extra-args` parameter
+
+## [329.0] - 2022.9.23 - stable
 
 ### Added
 
@@ -24,7 +31,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 - `dxpy.find_one_project`, `dxpy.find_one_data_object`, `dxpy.find_one_app` raise `DXError` if `zero_ok` argument is not a `bool`
 
-## [328.0] - 2022.9.8 - stable
+## [328.0] - 2022.9.8
 
 ### Added
 
