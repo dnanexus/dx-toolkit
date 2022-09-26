@@ -6,6 +6,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+* `dx describe user-xxxx` don't try to print empty name when calling with *platformadminsupport* role
+ 
 ## [333.0] - beta
 
 ### Added
