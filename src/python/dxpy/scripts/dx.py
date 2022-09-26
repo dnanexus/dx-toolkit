@@ -4773,8 +4773,7 @@ build_parser.add_argument('--profile', help=fill("Default profile for the Nextfl
 build_parser.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Can be used only with --nextflow. Incompatible with --remote.",
                                                    width_adjustment=-24), dest="repository")
 # --tag
-build_parser.add_argument('--repository-tag', help=fill("Specifies tag for GitHub repository. Can be used only with --repository.",
-                                                   width_adjustment=-24), dest="tag")
+build_parser.add_argument('--repository-tag', help=argparse.SUPPRESS, dest="tag")
 
 # --github-credentials
 build_parser.add_argument('--github-credentials', help=fill("GitHub credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository."
