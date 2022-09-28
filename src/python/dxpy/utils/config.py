@@ -201,6 +201,8 @@ class DXConfig(MutableMapping):
                         rmtree(os.path.join(sessions_dir, session_dir), ignore_errors=True)
 
             parent_process = Process(os.getpid()).parent()
+            if parent_process is None:
+                parent_process = Process(os.getpid())
             default_session_dir = os.path.join(sessions_dir, str(parent_process.pid))
             while parent_process is not None and parent_process.pid != 0:
                 session_dir = os.path.join(sessions_dir, str(parent_process.pid))
