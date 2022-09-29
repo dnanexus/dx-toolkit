@@ -4666,11 +4666,6 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
                                      prog='dx build',
                                      parents=[env_args, stdout_args])
 
-nextflow_parser = subparsers.add_parser('nextflow', help='nextflooow',
-                                     description='nextflowless.',
-                                     prog='dx build nextflow',
-                                     parents=[env_args, stdout_args])
-
 app_and_globalworkflow_options = build_parser.add_argument_group('Options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
 applet_and_workflow_options = build_parser.add_argument_group('Options for creating applets or workflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is NOT specified)')
 nextflow_options = build_parser.add_argument_group('Options for creating Nextflow applets', '(Only valid when --nextflow is specified)')
@@ -4806,11 +4801,22 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
                                                             "More information about the file syntax can be found at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
+# build_parser = subparsers.add_parser('build', help='Create a new applet/app, or a workflow',
+#                                      description='Build an applet, app, or workflow object from a local source directory or an app from an existing applet in the platform. You can use ' + BOLD("dx-app-wizard") + ' to generate a skeleton directory of an app/applet with the necessary files.',
+#                                      prog='dx build',
+#                                      parents=[env_args, stdout_args])
 
-
+nextflow_parser = subparsers.add_parser('nextflow', help='nextflooow',
+                                     description='nextflowless.',
+                                     prog='dx build nextflow',
+                                     parents=[env_args, stdout_args])
+parser_add_developers.add_argument('developers', metavar='developer', help='One or more users or orgs to add',
+build_subparsers = parser_add.add_subparsers(parser_class=DXArgumentParser)
+build_subparsers.metavar = 'list_type'
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
-register_parser(nextflow_parser, categories='exec')
+register_parser(nextflow_parser, subparsers_action=build_subparsers, categories='exec')
+
 
 #####################################
 # build_asset
