@@ -2681,8 +2681,8 @@ def build(args):
         if args.repository and args.remote:
             build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
 
-        if args.github_credentials and not args.repository:
-            build_parser.error("GitHub credentials can be supplied only when building Nextflow pipeline from a Git repository.")
+        if args.git_credentials and not args.repository:
+            build_parser.error("Git credentials can be supplied only when building Nextflow pipeline from a Git repository.")
 
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
@@ -4668,6 +4668,7 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
 
 app_and_globalworkflow_options = build_parser.add_argument_group('options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
 applet_and_workflow_options = build_parser.add_argument_group('options for creating applets or workflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is NOT specified)')
+nextflow_options = build_parser.add_argument_group('options for creating Nextflow applets', '(Only valid when --nextflow is specified)')
 
 # COMMON OPTIONS
 build_parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
@@ -4785,20 +4786,20 @@ build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet. Can be
                                                    width_adjustment=-24), action='store_true')
 
 # --profile
-build_parser.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline. Can be used only with --nextflow.",
+nextflow_options.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline. Can be used only with --nextflow.",
                                                    width_adjustment=-24), dest="profile")
 
 # --repository
-build_parser.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Can be used only with --nextflow. Incompatible with --remote.",
+nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Can be used only with --nextflow. Incompatible with --remote.",
                                                    width_adjustment=-24), dest="repository")
 # --tag
-build_parser.add_argument('--repository-tag', help=fill("Specifies tag for GitHub repository. Can be used only with --repository.",
+nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for GitHub repository. Can be used only with --repository.",
                                                    width_adjustment=-24), dest="tag")
 
-# --github-credentials
-build_parser.add_argument('--github-credentials', help=fill("GitHub credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository."
+# --git-credentials
+nextflow_options.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository."
                                                             "More information about the file syntax can be found at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
-                                                   width_adjustment=-24), dest="github_credentials").completer = DXPathCompleter(classes=['file'])
+                                                   width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
 
 
