@@ -140,14 +140,13 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
             dx_input["title"] = dx_input['name']
             if "help_text" in property:
                 dx_input["help"] = property.get('help_text')
-            if "default" in property:
-                dx_input["default"] = property.get("default")
             dx_input["hidden"] = property.get('hidden', False)
             dx_input["class"] = get_dx_type(property.get("type"), property.get("format"))
+            dx_input["optional"] = True
             if property_key not in required_inputs:
-                dx_input["optional"] = True
-                if dx_input.get("help") is not None:
-                    dx_input["help"] = "(Optional) {}".format(dx_input["help"])
+                dx_input["help"] = "(Optional) {}".format(dx_input.get("help", ""))
+            else:
+                dx_input["help"] = "(Required) {}".format(dx_input.get("help", ""))
             inputs.append(dx_input)
     return inputs
 
