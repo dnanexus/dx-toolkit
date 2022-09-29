@@ -4797,7 +4797,7 @@ nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for G
                                                    width_adjustment=-24), dest="tag")
 
 # --git-credentials
-nextflow_options.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository."
+nextflow_options.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository. "
                                                             "More information about the file syntax can be found at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
