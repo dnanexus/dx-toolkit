@@ -4781,23 +4781,30 @@ app_and_globalworkflow_options.add_argument("--region", action="append", help="E
 build_parser.add_argument('--keep-open', help=fill("Do not close workflow after building it. Cannot be used when building apps, applets or global workflows.",
                                                    width_adjustment=-24), action='store_true')
 
+build_subparsers = build_parser.add_subparsers(parser_class=DXArgumentParser)
+build_subparsers.metavar = 'list_type'
+nextflow_parser = build_subparsers.add_parser('nextflow', help='nextflooow',
+                                     description='nextflowless.',
+                                     prog='dx build nextflow',
+                                     parents=[env_args, stdout_args])
+
 # --nextflow
 build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet.",
                                                    width_adjustment=-24), action='store_true')
 
 # --profile
-nextflow_options.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline.",
+nextflow_parser.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline.",
                                                    width_adjustment=-24), dest="profile")
 
 # --repository
-nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Incompatible with --remote.",
+nextflow_parser.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Incompatible with --remote.",
                                                    width_adjustment=-24), dest="repository")
 # --tag
-nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for GitHub repository. Can be used only with --repository.",
+nextflow_parser.add_argument('--repository-tag', help=fill("Specifies tag for GitHub repository. Can be used only with --repository.",
                                                    width_adjustment=-24), dest="tag")
 
 # --git-credentials
-nextflow_options.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository."
+nextflow_parser.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository."
                                                             "More information about the file syntax can be found at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
@@ -4807,12 +4814,7 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
 #                                      parents=[env_args, stdout_args])
 
 # parser_add_developers.add_argument('developers', metavar='developer', help='One or more users or orgs to add',
-build_subparsers = build_parser.add_subparsers(parser_class=DXArgumentParser)
-build_subparsers.metavar = 'list_type'
-nextflow_parser = build_subparsers.add_parser('nextflow', help='nextflooow',
-                                     description='nextflowless.',
-                                     prog='dx build nextflow',
-                                     parents=[env_args, stdout_args])
+
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
 register_parser(nextflow_parser, subparsers_action=build_subparsers, categories='exec')
