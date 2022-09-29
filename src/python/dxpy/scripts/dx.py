@@ -4810,7 +4810,7 @@ nextflow_parser = subparsers.add_parser('nextflow', help='nextflooow',
                                      description='nextflowless.',
                                      prog='dx build nextflow',
                                      parents=[env_args, stdout_args])
-parser_add_developers.add_argument('developers', metavar='developer', help='One or more users or orgs to add',
+# parser_add_developers.add_argument('developers', metavar='developer', help='One or more users or orgs to add',
 build_subparsers = parser_add.add_subparsers(parser_class=DXArgumentParser)
 build_subparsers.metavar = 'list_type'
 build_parser.set_defaults(func=build)
