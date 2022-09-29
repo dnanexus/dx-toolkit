@@ -4665,9 +4665,10 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
                                      description='Build an applet, app, or workflow object from a local source directory or an app from an existing applet in the platform. You can use ' + BOLD("dx-app-wizard") + ' to generate a skeleton directory of an app/applet with the necessary files.',
                                      prog='dx build',
                                      parents=[env_args, stdout_args])
+
 nextflow_parser = subparsers.add_parser('nextflow', help='nextflooow',
                                      description='nextflowless.',
-                                     prog='dx build --nextflow',
+                                     prog='dx build nextflow',
                                      parents=[env_args, stdout_args])
 
 app_and_globalworkflow_options = build_parser.add_argument_group('Options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
