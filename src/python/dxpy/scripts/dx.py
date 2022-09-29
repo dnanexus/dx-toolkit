@@ -4783,10 +4783,10 @@ build_parser.add_argument('--keep-open', help=fill("Do not close workflow after 
 
 build_subparsers = build_parser.add_subparsers(parser_class=DXArgumentParser)
 build_subparsers.metavar = 'list_type'
-nextflow_parser = build_subparsers.add_parser('nextflow', help='nextflooow',
+nextflow_parser = build_subparsers.add_parser('--nextflow', help='Creates nextflow applet',
                                      description='nextflowless.',
                                      prog='dx build nextflow',
-                                     parents=[env_args, stdout_args])
+                                     parents=[stdout_args])
 
 # --nextflow
 build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet.",
