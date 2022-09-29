@@ -4806,13 +4806,13 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
 #                                      prog='dx build',
 #                                      parents=[env_args, stdout_args])
 
-nextflow_parser = subparsers.add_parser('nextflow', help='nextflooow',
+# parser_add_developers.add_argument('developers', metavar='developer', help='One or more users or orgs to add',
+build_subparsers = build_parser.add_subparsers(parser_class=DXArgumentParser)
+build_subparsers.metavar = 'list_type'
+nextflow_parser = build_subparsers.add_parser('nextflow', help='nextflooow',
                                      description='nextflowless.',
                                      prog='dx build nextflow',
                                      parents=[env_args, stdout_args])
-# parser_add_developers.add_argument('developers', metavar='developer', help='One or more users or orgs to add',
-build_subparsers = parser_add.add_subparsers(parser_class=DXArgumentParser)
-build_subparsers.metavar = 'list_type'
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
 register_parser(nextflow_parser, subparsers_action=build_subparsers, categories='exec')
