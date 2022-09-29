@@ -4782,15 +4782,15 @@ build_parser.add_argument('--keep-open', help=fill("Do not close workflow after 
                                                    width_adjustment=-24), action='store_true')
 
 # --nextflow
-build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet. Can be used with --repository.",
+build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet.",
                                                    width_adjustment=-24), action='store_true')
 
 # --profile
-nextflow_options.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline. Can be used only with --nextflow.",
+nextflow_options.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline.",
                                                    width_adjustment=-24), dest="profile")
 
 # --repository
-nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Can be used only with --nextflow. Incompatible with --remote.",
+nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Incompatible with --remote.",
                                                    width_adjustment=-24), dest="repository")
 # --tag
 nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for GitHub repository. Can be used only with --repository.",
