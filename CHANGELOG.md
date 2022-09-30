@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * `dx find jobs --json`, and `dx describe job-xxxx` with `--verbose` argument return new field: *internetUsageIPs* if the caller is in an organization that has enabled *jobInternetUsageMonitoring* license feature
+* Nextflow applets no longer have default arguments and required inputs
 
 ## [333.0] - beta
 
