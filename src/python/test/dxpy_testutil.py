@@ -686,7 +686,7 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
         else:
             with open(os.path.join(pb, nf_file_name.encode("utf-8")), 'w') as nf_file:
                 nf_file.write(nf_file_content)
-        if nf_config is not None:
+        if nf_config_path is not None:
             shutil.copyfile(nf_config, p + "/nextflow.config")
         return p
 
