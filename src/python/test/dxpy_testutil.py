@@ -657,6 +657,8 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     """
 
     base_nextflow_nf = "nextflow/hello/main.nf"
+    profile_nextflow_nf = "nextflow/hello/main.nf"
+    profile_nextflow_config = "nextflow/hello/main.nf"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()
