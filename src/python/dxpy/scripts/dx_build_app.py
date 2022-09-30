@@ -1116,7 +1116,7 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
         if args.nextflow and args.repository is not None:
-            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.github_credentials, args.brief, extra_args)
+            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.git_credentials, args.brief, extra_args)
 
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)
