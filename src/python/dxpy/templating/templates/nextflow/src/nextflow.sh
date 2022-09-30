@@ -154,7 +154,7 @@ main() {
     profile_arg=@@PROFILE_ARG@@
     if [ -n "$profile_arg" ]; then
       if [[ "$nextflow_run_opts" == *"-profile "* ]]; then
-        echo "Profile was given in run options... overriding the default one ($profile_arg)"
+        echo "Profile was given in run options... overriding the default profile ($profile_arg)"
         profile_arg=""
       else
         profile_arg="-profile $profile_arg"
