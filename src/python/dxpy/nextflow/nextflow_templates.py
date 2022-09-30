@@ -43,7 +43,7 @@ def get_nextflow_dxapp(custom_inputs=None, name="", region="aws:us-east-1"):
     return dxapp
 
 
-def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
+def get_nextflow_src(custom_inputs=None, profile="", resources_dir=None):
     """
     :param custom_inputs: Custom inputs (as configured in nextflow_schema.json) that will be used in created runtime configuration and runtime params argument
     :type custom_inputs: list
@@ -80,10 +80,9 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
         else:
             required_runtime_params += " --{}={}".format(i["name"], value)
 
-    profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
-    src = src.replace("@@PROFILE_ARG@@", profile_arg)
+    src = src.replace("@@PROFILE_ARG@@", profile)
     src = src.replace("@@RESOURCES_SUBPATH@@",
                       get_resources_subpath(resources_dir))
     return src
