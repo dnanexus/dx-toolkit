@@ -293,6 +293,26 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         # are not printed
         self.assertNotIn("Launching", watched_run_output)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_run_nextflow_override_profile(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+
+        job = applet.run({
+                         "nextflow_pipeline_params": "--input 'Printed_test_message'",
+                         "nextflow_top_level_opts": "-quiet"
+        })
+
+        watched_run_output = run("dx watch {}".format(job.get_id()))
+        self.assertIn("Printed_test_message", watched_run_output)
+        # Running with the -quiet option reduces the amount of log and the lines such as:
+        # STDOUT Launching `/home/dnanexus/hello/main.nf` [run-c8804f26-2eac-48d2-9a1a-a707ad1189eb] DSL2 - revision: 72a5d52d07
+        # are not printed
+        self.assertNotIn("Launching", watched_run_output)
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write(
