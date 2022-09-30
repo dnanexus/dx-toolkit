@@ -68,7 +68,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
         if i.get("class") == "file":
             value = "dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)" % i['name']
         # optional inputs will be added to custom runtime config file
-        if i.get("optional", False):
+        if "Nextflow pipeline optional" in i.get("help", ""):
             if i.get("class") not in ("int","float","boolean"):
                 value = '\\"' + value + '\\"'
             generate_runtime_config = generate_runtime_config + '''
