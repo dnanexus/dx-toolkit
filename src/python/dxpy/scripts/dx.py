@@ -4793,7 +4793,7 @@ nextflow_options.add_argument('--profile', help=fill("Default profile for the Ne
 nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Incompatible with --remote.",
                                                    width_adjustment=-24), dest="repository")
 # --tag
-nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for GitHub repository. Can be used only with --repository.",
+nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for Git repository. Can be used only with --repository.",
                                                    width_adjustment=-24), dest="tag")
 
 # --git-credentials

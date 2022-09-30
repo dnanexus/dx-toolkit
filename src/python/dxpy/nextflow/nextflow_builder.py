@@ -15,7 +15,7 @@ from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 
-def build_pipeline_from_repository(repository, tag, profile="", github_creds=None, brief=False, extra_args={}):
+def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, brief=False, extra_args={}):
     """
     :param repository: URL to a Git repository
     :type repository: string
@@ -54,8 +54,8 @@ def build_pipeline_from_repository(repository, tag, profile="", github_creds=Non
         input_hash["repository_tag"] = tag
     if profile:
         input_hash["config_profile"] = profile
-    if github_creds:
-        input_hash["github_credentials"] = parse_obj(github_creds, "file")
+    if git_creds:
+        input_hash["github_credentials"] = parse_obj(git_creds, "file")
 
     nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id, name="Nextflow build of %s" % (repository), detach=True)
 
