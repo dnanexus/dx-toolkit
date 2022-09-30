@@ -167,7 +167,7 @@ main() {
       ${RUNTIME_CONFIG} \
       -log ${LOG_NAME} \
       run @@RESOURCES_SUBPATH@@ \
-      "$profile_arg" \
+      $profile_arg \
       -name run-${NXF_UUID} \
       $nextflow_run_opts \
       $nextflow_pipeline_params \
