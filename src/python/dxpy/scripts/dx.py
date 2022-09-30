@@ -4801,6 +4801,7 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
                                                             "More information about the file syntax can be found at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
+build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
 
 #####################################
