@@ -151,11 +151,9 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
             dx_input["optional"] = True
             if property_key not in required_inputs:
                 dx_input["help"] = "(Nextflow pipeline optional) {}".format(dx_input.get("help", ""))
-                dx_input["group"] = "Optional Nextflow inputs"
                 inputs.append(dx_input)
             else:
                 dx_input["help"] = "(Nextflow pipeline required) {}".format(dx_input.get("help", ""))
-                dx_input["group"] = "Required Nextflow inputs"
                 inputs.insert(0, dx_input)
 
     return inputs
