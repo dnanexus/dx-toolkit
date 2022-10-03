@@ -151,13 +151,23 @@ main() {
     cd /home/dnanexus/out/output_files
     
     generate_runtime_config
+    profile_arg=@@PROFILE_ARG@@
+    if [ -n "$profile_arg" ]; then
+      if [[ "$nextflow_run_opts" == *"-profile "* ]]; then
+        echo "Profile was given in run options... overriding the default profile ($profile_arg)"
+        profile_arg=""
+      else
+        profile_arg="-profile $profile_arg"
+      fi
+    fi
+
     nextflow \
       ${TRACE_CMD} \
       $nextflow_top_level_opts \
       ${RUNTIME_CONFIG} \
       -log ${LOG_NAME} \
       run @@RESOURCES_SUBPATH@@ \
-      @@PROFILE_ARG@@ \
+      $profile_arg \
       -name run-${NXF_UUID} \
       $nextflow_run_opts \
       $nextflow_pipeline_params \

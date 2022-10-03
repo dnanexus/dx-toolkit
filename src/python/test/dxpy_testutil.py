@@ -657,6 +657,8 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     """
 
     base_nextflow_nf = "nextflow/hello/main.nf"
+    profile_nextflow_nf = "nextflow/hello/main.nf"
+    profile_nextflow_config = "nextflow/hello/main.nf"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()
@@ -666,7 +668,7 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
         shutil.rmtree(self.temp_file_path)
         super(DXTestCaseBuildNextflowApps, self).tearDown()
 
-    def write_nextflow_applet_directory(self, applet_name, existing_nf_file_path=None, nf_file_name="main.nf", nf_file_content="\n"):
+    def write_nextflow_applet_directory(self, applet_name, existing_nf_file_path=None, nf_file_name="main.nf", nf_file_content="\n", nf_config_path=None):
         # Note: if called twice with the same app_name, will overwrite
         # the dxapp.json and the nf file (if specified) but will not
         # remove any other files that happened to be present;
@@ -684,6 +686,8 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
         else:
             with open(os.path.join(pb, nf_file_name.encode("utf-8")), 'w') as nf_file:
                 nf_file.write(nf_file_content)
+        if nf_config_path is not None:
+            shutil.copyfile(nf_config_path, p + "/nextflow.config")
         return p
 
 class TemporaryFile:
