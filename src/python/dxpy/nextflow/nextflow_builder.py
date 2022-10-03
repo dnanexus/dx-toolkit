@@ -8,7 +8,8 @@ from glob import glob
 import tempfile
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
-from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, get_resources_dir_name)
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
+                                          get_resources_dir_name)
 from dxpy.cli.exec_io import parse_obj
 from distutils.dir_util import copy_tree
 
@@ -29,6 +30,7 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
 
     Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
     """
+
     def parse_extra_args(extra_args):
         dx_input = {}
         if extra_args.get("name") is not None:
@@ -43,7 +45,6 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
             dx_input["whats_new"] = extra_args.get("details", {}).get("whatsNew")
         return dx_input
 
-
     build_project_id = dxpy.WORKSPACE_ID
     if build_project_id is None:
         parser.error(
@@ -57,7 +58,8 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
     if git_creds:
         input_hash["github_credentials"] = parse_obj(git_creds, "file")
 
-    nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id, name="Nextflow build of %s" % (repository), detach=True)
+    nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id,
+                                                              name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
         print("Started builder job %s" % (nf_builder_job.get_id(),))
@@ -68,6 +70,7 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
     else:
         print(applet_id)
     return applet_id
+
 
 def prepare_nextflow(resources_dir, profile, region):
     """
@@ -84,11 +87,13 @@ def prepare_nextflow(resources_dir, profile, region):
     """
     assert os.path.exists(resources_dir)
     if not glob(os.path.join(resources_dir, "*.nf")):
-        raise dxpy.app_builder.AppBuilderException("Directory %s does not contain Nextflow file (*.nf): not a valid Nextflow directory" % resources_dir)
+        raise dxpy.app_builder.AppBuilderException(
+            "Directory %s does not contain Nextflow file (*.nf): not a valid Nextflow directory" % resources_dir)
     dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
 
     custom_inputs = prepare_custom_inputs(schema_file=os.path.join(resources_dir, "nextflow_schema.json"))
-    dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, name=get_resources_dir_name(resources_dir), region=region)
+    dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, name=get_resources_dir_name(resources_dir),
+                                       region=region)
     exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, dxapp_content)
@@ -105,8 +110,7 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
     Creates custom input list from nextflow_schema.json that
     will be added in dxapp.json inputSpec field
     """
-    
-    
+
     def get_dx_type(nf_type, nf_format=None):
         types = {
             "string": "string",
@@ -138,16 +142,18 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
             dx_input = {}
             dx_input["name"] = property_key
             dx_input["title"] = dx_input['name']
-            if "help_text" in property:
-                dx_input["help"] = property.get('help_text')
             if "default" in property:
-                dx_input["default"] = property.get("default")
+                dx_input["help"] = "Default value:{}\n".format(property.get("default", ""))
+            if "help_text" in property:
+                dx_input["help"] = dx_input.get("help", "") + property.get('help_text', "")
             dx_input["hidden"] = property.get('hidden', False)
             dx_input["class"] = get_dx_type(property.get("type"), property.get("format"))
+            dx_input["optional"] = True
             if property_key not in required_inputs:
-                dx_input["optional"] = True
-                if dx_input.get("help") is not None:
-                    dx_input["help"] = "(Optional) {}".format(dx_input["help"])
-            inputs.append(dx_input)
-    return inputs
+                dx_input["help"] = "(Nextflow pipeline optional) {}".format(dx_input.get("help", ""))
+                inputs.append(dx_input)
+            else:
+                dx_input["help"] = "(Nextflow pipeline required) {}".format(dx_input.get("help", ""))
+                inputs.insert(0, dx_input)
 
+    return inputs
