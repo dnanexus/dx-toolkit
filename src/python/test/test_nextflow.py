@@ -116,7 +116,7 @@ class TestNextflowTemplates(DXTestCase):
         i = inputs[0]
         self.assertEqual(i["name"], "outdir")
         self.assertEqual(i["title"], "outdir")
-        self.assertEqual(i["help"], "out_directory help text")
+        self.assertEqual(i["help"], "(Nextflow pipeline required) out_directory help text")
         self.assertEqual(i["hidden"], False)
         self.assertEqual(i["class"], "string")
 
