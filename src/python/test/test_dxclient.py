@@ -9953,6 +9953,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # When retrieving the applet, we'll get back an empty list for
         # types, tags, etc. Those should not be written back to the
         # dxapp.json so as not to pollute it.
+        self.maxDiff = None
         app_spec = dict(self.base_applet_spec, name="get_applet_field_cleanup")
         output_app_spec = app_spec.copy()
         output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
