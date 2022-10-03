@@ -14,8 +14,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * `dx describe user-xxxx` don't try to print the name if it is not present in the API response (e.g. caller has the *platformadminsupport* role)
-* Nextflow profile that was provided as a default at build time can be overridden at runtime
-
+ 
 ## [333.0] - beta
 
 ### Added

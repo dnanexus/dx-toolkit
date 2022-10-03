@@ -293,29 +293,6 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         # are not printed
         self.assertNotIn("Launching", watched_run_output)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping tests that would run jobs')
-    def test_dx_run_nextflow_override_profile(self):
-        pipeline_name = "hello"
-        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.profile_nextflow_nf, nf_config_path=self.profile_nextflow_config)
-        applet_id = json.loads(run("dx build --nextflow --profile first --json " + applet_dir))["id"]
-        applet = dxpy.DXApplet(applet_id)
-
-        job = applet.run({
-                         "nextflow_top_level_opts": "-quiet"
-        })
-
-        watched_run_output = run("dx watch {}".format(job.get_id()))
-        self.assertIn("first_profile", watched_run_output)
-
-        job = applet.run({
-                         "nextflow_run_opts": "-profile second",
-                         "nextflow_top_level_opts": "-quiet"
-        })
-
-        watched_run_output = run("dx watch {}".format(job.get_id()))
-        self.assertIn("second_profile", watched_run_output)
-
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write(

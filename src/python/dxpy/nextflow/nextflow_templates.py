@@ -58,8 +58,6 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     """
     if custom_inputs is None:
         custom_inputs = []
-    if profile is None:
-        profile = ""
     with open(os.path.join(str(get_template_dir()), get_source_file_name()), 'r') as f:
         src = f.read()
 
@@ -82,9 +80,11 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
         else:
             required_runtime_params += " --{}={}".format(i["name"], value)
 
+    profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
-    src = src.replace("@@PROFILE_ARG@@", profile)
-    src = src.replace("@@RESOURCES_SUBPATH@@", get_resources_subpath(resources_dir))
+    src = src.replace("@@PROFILE_ARG@@", profile_arg)
+    src = src.replace("@@RESOURCES_SUBPATH@@",
+                      get_resources_subpath(resources_dir))
     return src
 
