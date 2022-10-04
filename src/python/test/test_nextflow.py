@@ -295,7 +295,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
-    def test_dx_run_nextflow_override_profile(self):
+    def test_dx_build_nextflow_from_repository_profile(self):
         hello_repo_url = "https://github.com/nextflow-io/hello"
         applet_id = run("dx build --nextflow --repository '{}' --profile \"czech\" --brief".format(hello_repo_url)).strip()
         applet = dxpy.DXApplet(applet_id)
@@ -308,15 +308,15 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping tests that would run jobs')
-def test_dx_build_nextflow_from_repository_profile(self):
-    hello_repo_url = "https://github.com/nextflow-io/hello"
-    applet_id = run("dx build --nextflow --repository '{}' --profile \"czech\" --brief".format(hello_repo_url)).strip()
-    applet = dxpy.DXApplet(applet_id)
+    def test_dx_build_nextflow_from_repository_profile_override(self):
+        hello_repo_url = "https://github.com/nextflow-io/hello"
+        applet_id = run("dx build --nextflow --repository '{}' --profile \"czech\" --brief".format(hello_repo_url)).strip()
+        applet = dxpy.DXApplet(applet_id)
 
-    job = applet.run(applet_input={"nextflow_run_opts": "-profile slovak"})
+        job = applet.run(applet_input={"nextflow_run_opts": "-profile slovak"})
 
-    watched_run_output = run("dx watch {}".format(job.get_id()))
-    self.assertTrue("Unknown configuration profile: 'slovak'" in watched_run_output)
+        watched_run_output = run("dx watch {}".format(job.get_id()))
+        self.assertTrue("Unknown configuration profile: 'slovak'" in watched_run_output)
 
 
 
