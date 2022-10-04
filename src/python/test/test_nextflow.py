@@ -296,25 +296,29 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_run_nextflow_override_profile(self):
-        pipeline_name = "hello"
-        applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.profile_nextflow_nf, nf_config_path=self.profile_nextflow_config)
-        applet_id = json.loads(run("dx build --nextflow --profile first --json " + applet_dir))["id"]
+        hello_repo_url = "https://github.com/nextflow-io/hello"
+        applet_id = run("dx build --nextflow --repository '{}' --profile \"czech\" --brief".format(hello_repo_url)).strip()
         applet = dxpy.DXApplet(applet_id)
 
-        job = applet.run({
-                         "nextflow_top_level_opts": "-quiet"
-        })
+        job = applet.run({})
 
         watched_run_output = run("dx watch {}".format(job.get_id()))
-        self.assertIn("first_profile", watched_run_output)
+        self.assertTrue("Unknown configuration profile: 'czech'" in watched_run_output)
 
-        job = applet.run({
-                         "nextflow_run_opts": "-profile second",
-                         "nextflow_top_level_opts": "-quiet"
-        })
 
-        watched_run_output = run("dx watch {}".format(job.get_id()))
-        self.assertIn("second_profile", watched_run_output)
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                     'skipping tests that would run jobs')
+def test_dx_build_nextflow_from_repository_profile(self):
+    hello_repo_url = "https://github.com/nextflow-io/hello"
+    applet_id = run("dx build --nextflow --repository '{}' --profile \"czech\" --brief".format(hello_repo_url)).strip()
+    applet = dxpy.DXApplet(applet_id)
+
+    job = applet.run(applet_input={"nextflow_run_opts": "-profile slovak"})
+
+    watched_run_output = run("dx watch {}".format(job.get_id()))
+    self.assertTrue("Unknown configuration profile: 'slovak'" in watched_run_output)
+
+
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
