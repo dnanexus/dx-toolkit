@@ -1,3 +1,11 @@
+dx-toolkit (0.331.0) trusty; urgency=medium
+
+  * Added: `dx find jobs --json` and `dx describe --verbose job-xxxx` with --verbose argument return field internetUsageIPs if the caller an org admin and has enabled jobInternetUsageMonitoring license feature
+  * Added: Nextflow applets no longer have default arguments and required inputs
+  * Fixed: dx `describe user-xxxx` will not try to print the name if it is not present in the API response 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 04 Oct 2022 12:41:05 +0000
+
 dx-toolkit (0.330.0) trusty; urgency=medium
 
   * Added: Initial nextflow support
