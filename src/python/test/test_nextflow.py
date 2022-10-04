@@ -300,6 +300,8 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         applet = dxpy.DXApplet(applet_id)
 
         job = applet.run()
+        print(job.describe())
+
         #TODO: add assertions to check if the profile param is passed correctly to dx run
 
 if __name__ == '__main__':
