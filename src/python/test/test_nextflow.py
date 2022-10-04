@@ -300,9 +300,22 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         applet = dxpy.DXApplet(applet_id)
 
         job = applet.run(applet_input={})
-        print(job.describe())
 
-        #TODO: add assertions to check if the profile param is passed correctly to dx run
+        watched_run_output = run("dx watch {}".format(job.get_id()))
+        self.assertTrue("Unknown configuration profile: 'czech'" in watched_run_output)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_build_nextflow_from_repository_profile(self):
+        hello_repo_url = "https://github.com/nextflow-io/hello"
+        applet_id = run("dx build --nextflow --repository '{}' --profile \"czech\" --brief".format(hello_repo_url)).strip()
+        applet = dxpy.DXApplet(applet_id)
+
+        job = applet.run(applet_input={"profile":"slovak"})
+
+        watched_run_output = run("dx watch {}".format(job.get_id()))
+        self.assertTrue("Unknown configuration profile: 'slovak'" in watched_run_output)
+
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
