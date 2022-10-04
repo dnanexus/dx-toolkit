@@ -66,7 +66,7 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
     if not brief:
         print("Created Nextflow pipeline %s" % (applet_id))
     else:
-        print(dict(id=applet_id))
+        print(json.dumps(dict(id=applet_id)))
     return applet_id
 
 def prepare_nextflow(resources_dir, profile, region):
