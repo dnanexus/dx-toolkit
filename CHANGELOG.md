@@ -6,27 +6,30 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+# [331.0] - beta
+
 ### Added
 
-* `dx find jobs --json`, and `dx describe job-xxxx` with `--verbose` argument return new field: *internetUsageIPs* if the caller is in an organization that has enabled *jobInternetUsageMonitoring* license feature
+* Added: `dx find jobs --json` and `dx describe --verbose job-xxxx` with --verbose argument return field internetUsageIPs if the caller is an org admin and the org has jobInternetUsageMonitoring enabled
 * Nextflow applets no longer have default arguments and required inputs
 
 ### Fixed
 
-* `dx describe user-xxxx` don't try to print the name if it is not present in the API response (e.g. caller has the *platformadminsupport* role)
+* `dx describe user-xxxx` will not try to print the name if it is not present in the API response
  
-## [333.0] - beta
+## [333.0] - 2022.10.4 - stable
 
 ### Added
 
 * Initial support for Nextflow
+* pyreadline3 dependency for Windows with Python >= 3.5
 
 ### Fixed 
 
 * Do not check python3 syntax with python2 and vice versa in `dx build`
 * `dx build` properly verifies the applet's name given in the `extra-args` parameter
 
-## [329.0] - 2022.9.23 - stable
+## [329.0] - 2022.9.23
 
 ### Added
 
