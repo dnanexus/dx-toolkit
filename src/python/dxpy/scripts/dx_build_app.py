@@ -726,7 +726,7 @@ def build_app_from(applet_desc, version, publish=False, do_try_update=True, bill
         "details", "access", "ignoreReuse"
     )
     inherited_metadata = {}
-    for field in fields_to_inherit: 
+    for field in fields_to_inherit:
         if field in applet_desc:
             inherited_metadata[field] = applet_desc[field]
 
@@ -734,7 +734,7 @@ def build_app_from(applet_desc, version, publish=False, do_try_update=True, bill
     for field in required_non_empty:
         if field not in inherited_metadata or not inherited_metadata[field]:
             inherited_metadata[field] = applet_desc["name"]
-    
+
     app_id = dxpy.app_builder.create_app_multi_region(regional_options,
                                                       app_name,
                                                       None,
@@ -787,8 +787,12 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     projects_by_region = None
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
-        if override_applet_name and kwargs.get("name"):
-            logger.warning("Name of the applet was set in both destination and extra args!")
+        if kwargs.get("name"):
+            if override_applet_name:
+                logger.warning("Name of the applet is set in both destination and extra args! "
+                               "\"{}\" will be used!".format(kwargs.get("name")))
+            override_applet_name = kwargs.get("name")
+
         region = dxpy.api.project_describe(working_project,
                                            input_params={"fields": {"region": True}})["region"]
         projects_by_region = {region: working_project}
@@ -856,8 +860,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 # applet in the destination exists with the same name as this
                 # one, then we should err out *before* uploading resources.
                 try:
-                    if not override_applet_name and kwargs.get("name"):
-                        override_applet_name = kwargs.get("name")
                     dest_name = override_applet_name or app_json.get('name') or os.path.basename(os.path.abspath(src_dir))
                 except:
                     raise dxpy.app_builder.AppBuilderException("Could not determine applet name from specification + "
