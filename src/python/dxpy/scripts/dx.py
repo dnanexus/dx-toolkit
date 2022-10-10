@@ -4668,7 +4668,6 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
 
 app_and_globalworkflow_options = build_parser.add_argument_group('Options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
 applet_and_workflow_options = build_parser.add_argument_group('Options for creating applets or workflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is NOT specified)')
-nextflow_options = build_parser.add_argument_group('Options for creating Nextflow applets', '(Only valid when --nextflow is specified)')
 
 # COMMON OPTIONS
 build_parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
@@ -4685,7 +4684,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json or *.nf (for --nextflow option). (default: current directory)", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json. (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4782,24 +4781,19 @@ build_parser.add_argument('--keep-open', help=fill("Do not close workflow after 
                                                    width_adjustment=-24), action='store_true')
 
 # --nextflow
-build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet.",
-                                                   width_adjustment=-24), action='store_true')
+build_parser.add_argument('--nextflow', help=argparse.SUPPRESS, action='store_true')
 
 # --profile
-nextflow_options.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline.",
-                                                   width_adjustment=-24), dest="profile")
+build_parser.add_argument('--profile', help=argparse.SUPPRESS, dest="profile")
 
 # --repository
-nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Incompatible with --remote.",
-                                                   width_adjustment=-24), dest="repository")
+build_parser.add_argument('--repository', help=argparse.SUPPRESS, dest="repository")
 # --tag
-nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for Git repository. Can be used only with --repository.",
-                                                   width_adjustment=-24), dest="tag")
+build_parser.add_argument('--repository-tag', help=argparse.SUPPRESS, dest="tag")
 
 # --git-credentials
-nextflow_options.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository. "
-                                                            "More information about the file syntax can be found at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
-                                                   width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
+build_parser.add_argument('--git-credentials', help=argparse.SUPPRESS,
+                              dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
