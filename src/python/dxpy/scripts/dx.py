@@ -4684,7 +4684,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json. (default: current directory)", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json (default: current directory).", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4721,7 +4721,7 @@ app_and_globalworkflow_options.add_argument("--from", help="ID or path of the so
 # --[no-]remote
 build_parser.set_defaults(remote=False)
 build_parser.add_argument("--remote", help="Build the app remotely by uploading the source directory to the DNAnexus Platform and building it there. This option is useful if you would otherwise need to cross-compile the app(let) to target the Execution Environment.", action="store_true", dest="remote")
-build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder. (This option only applicable if --remote or --repository was specified).", action="store_false", dest="watch")
+build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder (this option only applicable if --remote or --repository was specified).", action="store_false", dest="watch")
 build_parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 applet_and_workflow_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
@@ -4736,7 +4736,7 @@ app_and_globalworkflow_options.add_argument("-b", "--bill-to", help="Entity (of 
 # --[no-]check-syntax
 build_parser.set_defaults(check_syntax=True)
 build_parser.add_argument("--check-syntax", help=argparse.SUPPRESS, action="store_true", dest="check_syntax")
-build_parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors)", action="store_false", dest="check_syntax")
+build_parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors).", action="store_false", dest="check_syntax")
 
 # --[no-]version-autonumbering
 app_and_globalworkflow_options.set_defaults(version_autonumbering=True)
@@ -4771,7 +4771,7 @@ build_parser.set_defaults(json=False)
 build_parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
 build_parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
 build_parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
-build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
+build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default).", nargs=argparse.REMAINDER)
 
 # --region
 app_and_globalworkflow_options.add_argument("--region", action="append", help="Enable the app/globalworkflow in this region. This flag can be specified multiple times to enable the app/globalworkflow in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
