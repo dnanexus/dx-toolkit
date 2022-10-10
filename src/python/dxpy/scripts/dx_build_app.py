@@ -787,6 +787,8 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     projects_by_region = None
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
+        if override_applet_name and kwargs.get("name"):
+            logger.warning("Name of the applet was set in both destination and extra args!")
         region = dxpy.api.project_describe(working_project,
                                            input_params={"fields": {"region": True}})["region"]
         projects_by_region = {region: working_project}
@@ -850,7 +852,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             projects_by_region = {region: dest_project}
 
             if not overwrite and not archive:
-                # If we cannot overwite or archive an existing applet and an
+                # If we cannot overwrite or archive an existing applet and an
                 # applet in the destination exists with the same name as this
                 # one, then we should err out *before* uploading resources.
                 try:
