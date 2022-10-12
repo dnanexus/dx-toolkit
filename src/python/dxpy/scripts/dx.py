@@ -4721,7 +4721,7 @@ app_and_globalworkflow_options.add_argument("--from", help="ID or path of the so
 # --[no-]remote
 build_parser.set_defaults(remote=False)
 build_parser.add_argument("--remote", help="Build the app remotely by uploading the source directory to the DNAnexus Platform and building it there. This option is useful if you would otherwise need to cross-compile the app(let) to target the Execution Environment.", action="store_true", dest="remote")
-build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder (this option only applicable if --remote or --repository was specified).", action="store_false", dest="watch")
+build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder (this option is only applicable if --remote or --repository is specified).", action="store_false", dest="watch")
 build_parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 applet_and_workflow_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
