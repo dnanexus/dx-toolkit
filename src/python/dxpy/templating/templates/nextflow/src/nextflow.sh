@@ -192,6 +192,7 @@ nf_task_exit() {
 
 nf_task_entry() {
   # enable debugging mode
+  echo "TASK ENTRY!"
   [[ $NXF_DEBUG ]] && set -x
   if [ -n "$docker_creds" ]; then
     dx-registry-login
