@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Warning for `dx build` when name is set both in extra-args and destination
+
+### Fixed
+
+* Error when setting name for `dx build` in both extra-args and destination prints correct destination if it already exists
+
 # [331.0] - beta
 
 ### Added
