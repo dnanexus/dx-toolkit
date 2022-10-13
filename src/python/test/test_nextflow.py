@@ -202,8 +202,10 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
     def test_dx_build_nextflow_from_repository_default_metadata(self):
         pipeline_name = "hello"
         hello_repo_url = "https://github.com/nextflow-io/hello"
-        applet_id = run(
+        applet_json = run(
             "dx build --nextflow --repository '{}' --brief".format(hello_repo_url)).strip()
+        applet_id = json.loads(applet_json).get("id")
+
         applet = dxpy.DXApplet(applet_id)
         desc = applet.describe()
         self.assertEqual(desc["name"], pipeline_name)
@@ -219,7 +221,8 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         pipeline_name = "hello"
         hello_repo_url = "https://github.com/nextflow-io/hello"
         extra_args = '{"name": "new name", "title": "new title"}'
-        applet_id = run("dx build --nextflow --repository '{}' --extra-args '{}' --brief".format(hello_repo_url, extra_args)).strip()
+        applet_json = run("dx build --nextflow --repository '{}' --extra-args '{}' --brief".format(hello_repo_url, extra_args)).strip()
+        applet_id = json.loads(applet_json).get("id")
         applet = dxpy.DXApplet(applet_id)
         desc = applet.describe()
         self.assertEqual(desc["name"], "new name")
