@@ -4668,7 +4668,6 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
 
 app_and_globalworkflow_options = build_parser.add_argument_group('Options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
 applet_and_workflow_options = build_parser.add_argument_group('Options for creating applets or workflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is NOT specified)')
-nextflow_options = build_parser.add_argument_group('Options for creating Nextflow applets', '(Only valid when --nextflow is specified)')
 
 # COMMON OPTIONS
 build_parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
@@ -4685,7 +4684,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json or *.nf (for --nextflow option). (default: current directory)", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json (default: current directory).", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4722,7 +4721,7 @@ app_and_globalworkflow_options.add_argument("--from", help="ID or path of the so
 # --[no-]remote
 build_parser.set_defaults(remote=False)
 build_parser.add_argument("--remote", help="Build the app remotely by uploading the source directory to the DNAnexus Platform and building it there. This option is useful if you would otherwise need to cross-compile the app(let) to target the Execution Environment.", action="store_true", dest="remote")
-build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder. (This option only applicable if --remote or --repository was specified).", action="store_false", dest="watch")
+build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder (this option is only applicable if --remote or --repository is specified).", action="store_false", dest="watch")
 build_parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 applet_and_workflow_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
@@ -4737,7 +4736,7 @@ app_and_globalworkflow_options.add_argument("-b", "--bill-to", help="Entity (of 
 # --[no-]check-syntax
 build_parser.set_defaults(check_syntax=True)
 build_parser.add_argument("--check-syntax", help=argparse.SUPPRESS, action="store_true", dest="check_syntax")
-build_parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors)", action="store_false", dest="check_syntax")
+build_parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors).", action="store_false", dest="check_syntax")
 
 # --[no-]version-autonumbering
 app_and_globalworkflow_options.set_defaults(version_autonumbering=True)
@@ -4772,7 +4771,7 @@ build_parser.set_defaults(json=False)
 build_parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
 build_parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
 build_parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
-build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
+build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default).", nargs=argparse.REMAINDER)
 
 # --region
 app_and_globalworkflow_options.add_argument("--region", action="append", help="Enable the app/globalworkflow in this region. This flag can be specified multiple times to enable the app/globalworkflow in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
@@ -4782,24 +4781,19 @@ build_parser.add_argument('--keep-open', help=fill("Do not close workflow after 
                                                    width_adjustment=-24), action='store_true')
 
 # --nextflow
-build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet.",
-                                                   width_adjustment=-24), action='store_true')
+build_parser.add_argument('--nextflow', help=argparse.SUPPRESS, action='store_true')
 
 # --profile
-nextflow_options.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline.",
-                                                   width_adjustment=-24), dest="profile")
+build_parser.add_argument('--profile', help=argparse.SUPPRESS, dest="profile")
 
 # --repository
-nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Incompatible with --remote.",
-                                                   width_adjustment=-24), dest="repository")
+build_parser.add_argument('--repository', help=argparse.SUPPRESS, dest="repository")
 # --tag
-nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for Git repository. Can be used only with --repository.",
-                                                   width_adjustment=-24), dest="tag")
+build_parser.add_argument('--repository-tag', help=argparse.SUPPRESS, dest="tag")
 
 # --git-credentials
-nextflow_options.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. Can be used only with --repository. "
-                                                            "More information about the file syntax can be found at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
-                                                   width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
+build_parser.add_argument('--git-credentials', help=argparse.SUPPRESS,
+                              dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
