@@ -92,6 +92,21 @@ on_exit() {
   exit $ret
 }
 
+resume_session() {
+    local ret
+    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/$resume_session/" --no-progress -r -f 2>&1) || 
+    {
+      if [[ $ret == *"The specified folder could not be found"* ]]; then
+        echo "No previous execution cache was found"
+        exit
+      else
+        echo $ret >&2
+        exit 1
+      fi
+    }
+  # TODO: untar all files
+}
+
 dx_path() {
   local str=${1#"dx://"}
   local tmp=$(mktemp -t nf-XXXXXXXXXX)
@@ -133,7 +148,7 @@ main() {
 
     export NXF_WORK=dx://$DX_WORK
     export NXF_HOME=/opt/nextflow
-    export NXF_UUID=$(uuidgen)
+    export NXF_UUID=${resume_session:-$(uuidgen)}
     export NXF_ANSI_LOG=false
     export NXF_EXECUTOR=dnanexus
     export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
@@ -146,6 +161,11 @@ main() {
     echo "=== NF log file : ${DX_LOG}"
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
+
+    # restore cache
+    if [[ $resume == true && -n $resume_session]]; then
+      resume_session
+    fi
 
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
