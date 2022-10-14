@@ -72,7 +72,8 @@ on_exit() {
   # backup cache
   if [[ $no_future_cache == false ]]; then
     echo "=== Execution complete — uploading Nextflow cache and working files"
-    dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/*" 2>&1 >/dev/null || true
+    # TBD: overwritten previous cache?
+    # dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/*" 2>&1 >/dev/null || true
     # TODO: tar cache and history files
     # dx upload ".nextflow/cache/$NXF_UUID" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID" --no-progress --brief --wait -p -r || true
   fi
