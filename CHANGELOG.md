@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+# [332.0] - beta
+
 ### Added
 
 * A warning for `dx build` when app(let)'s name is set both in `--extra-args` and `--destination`
@@ -19,7 +21,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 *  Help for building Nextflow pipelines is suppressed
 
-# [331.0] - beta
+# [331.0] - 2022.10.44 - stable
 
 ### Added
 
@@ -30,7 +32,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx describe user-xxxx` will not try to print the name if it is not present in the API response
  
-## [333.0] - 2022.10.4 - stable
+## [330.0] - 2022.10.4
 
 ### Added
 
