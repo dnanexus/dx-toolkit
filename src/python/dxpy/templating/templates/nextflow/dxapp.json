@@ -42,6 +42,27 @@
       "help": "Shows additional information in the job logs. If true, the execution log messages from Nextflow will also be included.",
       "class": "boolean",
       "default": false
+    },
+    {
+      "name": "resume",
+      "label": "Resume",
+      "help": "Enables resume functionality in Nextflow workflows.",
+      "class": "boolean",
+      "default": "false"
+    },
+    {
+      "name": "resume_session",
+      "label": "Resume Session",
+      "help": "Session to be resumed",
+      "class": "string",
+      "optional": "true"
+    },
+    {
+      "name": "no_future_resume",
+      "label": "No Future Resume",
+      "help": "Allow saving workspace and cache files to the platform to be used later for resume functionality",
+      "class": "boolean",
+      "default": "false"
     }
   ],
   "outputSpec": [
