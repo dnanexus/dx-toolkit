@@ -8,11 +8,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Warning for `dx build` when name is set both in extra-args and destination
+* A warning for `dx build` when app(let)'s name is set both in `--extra-args` and `--destination`
 
 ### Fixed
 
-* Error when setting name for `dx build` in both extra-args and destination prints correct destination if it already exists
+* An error when setting app(let)s name in `dx build` in both `--extra-args` and `--destination`
 
 # [331.0] - beta
 
