@@ -6,7 +6,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-# [332.0] - beta
+## [332.0] - beta
 
 ### Added
 
@@ -21,7 +21,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 *  Help for building Nextflow pipelines is suppressed
 
-# [331.0] - 2022.10.44 - stable
+## [331.0] - 2022.10.44 - stable
 
 ### Added
 
