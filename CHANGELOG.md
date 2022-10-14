@@ -13,6 +13,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * An error when setting app(let)s name in `dx build` (now the name set via `--extra-args` properly overrides the one set via `--destination`)
+*  `dx build --nextflow --repository` returns json instead of a simple string
+
+### Changed
+
+*  Help for building Nextflow pipelines is suppressed
 
 # [331.0] - beta
 
