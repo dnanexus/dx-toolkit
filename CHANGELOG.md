@@ -12,7 +12,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* An error when setting app(let)s name in `dx build` in both `--extra-args` and `--destination`
+* An error when setting app(let)s name in `dx build` (now the name set via `--extra-args` properly overrides the one set via `--destination`)
 
 # [331.0] - beta
 
