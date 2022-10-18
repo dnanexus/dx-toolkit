@@ -71,10 +71,13 @@ on_exit() {
 
   # backup cache
   if [[ $no_future_cache == false ]]; then
-    echo "=== Execution complete — uploading Nextflow cache and working files"
+    echo "=== Execution complete — uploading Nextflow cache and history file"
     # TBD: overwritten previous cache?
     # dx rm -r "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/*" 2>&1 >/dev/null || true
-    # TODO: tar cache and history files
+    # files in workdir: $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/scratch/
+    # should be uploaded to $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/ by the plugin after each subjob
+    # so we shall only upload cache and history file
+
     # dx upload ".nextflow/cache/$NXF_UUID" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID" --no-progress --brief --wait -p -r || true
   fi
 
