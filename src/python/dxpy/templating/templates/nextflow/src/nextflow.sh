@@ -167,6 +167,7 @@ main() {
       restore_cache
     fi
     export NXF_UUID=${resume_session:-$(uuidgen)}
+    dx set_properties $DX_JOB_ID session_id=$NXF_UUID
 
     DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/scratch/"
     export NXF_WORK=dx://$DX_WORK
