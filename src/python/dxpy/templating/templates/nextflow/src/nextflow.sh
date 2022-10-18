@@ -103,7 +103,7 @@ on_exit() {
   exit $ret
 }
 
-resume_session() {
+restore_cache() {
     local ret
     ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/$resume_session/" --no-progress -r -f 2>&1) || 
     {
@@ -116,6 +116,7 @@ resume_session() {
       fi
     }
   # TODO: untar all files
+  # $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/ --> $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/
 }
 
 dx_path() {
@@ -148,7 +149,6 @@ main() {
         dx-registry-login
     fi
 
-    DX_WORK=${work_dir:-$DX_WORKSPACE_ID:/scratch/}
 
     LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
     # parse dnanexus-job.json to get job output destination
@@ -157,12 +157,20 @@ main() {
     OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
     DX_LOG=${log_file:-"$OUTDIR/$LOG_NAME"}
 
-    export NXF_WORK=dx://$DX_WORK
     export NXF_HOME=/opt/nextflow
-    export NXF_UUID=${resume_session:-$(uuidgen)}
     export NXF_ANSI_LOG=false
     export NXF_EXECUTOR=dnanexus
     export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
+    
+    # restore cache
+    if [[ $resume == true && -n $resume_session]]; then
+      restore_cache
+    fi
+    export NXF_UUID=${resume_session:-$(uuidgen)}
+
+    DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/scratch/"
+    export NXF_WORK=dx://$DX_WORK
+  
     export NXF_DOCKER_LEGACY=true
     #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
     #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
@@ -173,10 +181,6 @@ main() {
     echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
     echo "============================================================="
 
-    # restore cache
-    if [[ $resume == true && -n $resume_session]]; then
-      resume_session
-    fi
 
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
