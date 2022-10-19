@@ -166,6 +166,15 @@ main() {
   mkdir -p /home/dnanexus/out/output_files
   cd /home/dnanexus/out/output_files
 
+  # download history file stored in current project
+  HISTORY_FILE=".nextflow/history"
+  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/history" --no-progress -f -o $HISTORY_FILE 2>&1) ||
+    {
+      if [[ $ret != *"ResolutionError"* ]]; then
+        dx-jobutil-report-error "$ret"
+      fi
+    }
+
 
   # set workdir
   DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/"
