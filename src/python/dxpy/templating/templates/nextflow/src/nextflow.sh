@@ -104,8 +104,8 @@ on_exit() {
 }
 
 restore_cache() {
-    local ret
-    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/$resume_session/" --no-progress -r -f 2>&1) || 
+  local ret
+  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar" --no-progress -f -o .nextflow/cache.tar 2>&1) ||
     {
       if [[ $ret == *"ResolutionError"* ]]; then
         dx-jobutil-report-error "No previous execution cache of session $NXF_UUID was found."
@@ -113,8 +113,12 @@ restore_cache() {
         dx-jobutil-report-error "$ret"
       fi
     }
-  # TODO: untar all files
-  # $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/ --> $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/
+
+  # untar cache files
+  tar -xvf .nextflow/cache.tar
+  if [[ -z "$(ls -A .nextflow/cache/$NXF_UUID)" ]]; then
+    dx-jobutil-report-error "Previous execution cache of session $NXF_UUID is empty."
+  fi
 }
 
 dx_path() {
@@ -175,6 +179,21 @@ main() {
       fi
     }
 
+  # restore cache and set/create current session id
+  if [[ $resume == true ]]; then
+    if [[ -n "$resume_session" ]]; then
+      NXF_UUID=$resume_session
+    elif [[ -s $HISTORY_FILE ]]; then
+      # read history
+      NXF_UUID=$(cat $HISTORY_FILE | sort -k1 | tail -1 | awk '{print $7}')
+    else
+      dx-jobutil-report-error "Cannot find a session to resume. Please provide a valid session ID"
+    fi
+    restore_cache
+  else
+    NXF_UUID=$(uuidgen)
+  fi
+  dx set_properties "$DX_JOB_ID" session_id=$NXF_UUID
 
   # set workdir
   DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/"
