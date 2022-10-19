@@ -107,12 +107,10 @@ restore_cache() {
     local ret
     ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/$resume_session/" --no-progress -r -f 2>&1) || 
     {
-      if [[ $ret == *"The specified folder could not be found"* ]]; then
-        echo "No previous execution cache was found"
-        exit
+      if [[ $ret == *"ResolutionError"* ]]; then
+        dx-jobutil-report-error "No previous execution cache of session $NXF_UUID was found."
       else
-        echo $ret >&2
-        exit 1
+        dx-jobutil-report-error "$ret"
       fi
     }
   # TODO: untar all files
