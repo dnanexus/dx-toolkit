@@ -147,70 +147,69 @@ main() {
         dx-registry-login
     fi
 
+  # parse dnanexus-job.json to get job output destination
+  OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
+  OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
+  OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
 
-    LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
-    # parse dnanexus-job.json to get job output destination
-    OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
-    OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
-    OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
-    DX_LOG=${log_file:-"$OUTDIR/$LOG_NAME"}
+  # initiate log file
+  LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
+  DX_LOG=${log_file:-"$OUTDIR/$LOG_NAME"}
 
-    export NXF_HOME=/opt/nextflow
-    export NXF_ANSI_LOG=false
-    export NXF_EXECUTOR=dnanexus
-    export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
-    
-    # restore cache
-    if [[ $resume == true && -n $resume_session]]; then
-      restore_cache
-    fi
-    export NXF_UUID=${resume_session:-$(uuidgen)}
-    dx set_properties $DX_JOB_ID session_id=$NXF_UUID
+  # set NXF env constants
+  export NXF_HOME=/opt/nextflow
+  export NXF_ANSI_LOG=false
+  export NXF_EXECUTOR=dnanexus
+  export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
 
-    DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/scratch/"
-    export NXF_WORK=dx://$DX_WORK
-  
-    export NXF_DOCKER_LEGACY=true
-    #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
-    #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
-    trap on_exit EXIT
-    echo "============================================================="
-    echo "=== NF work-dir : ${DX_WORK}"
-    echo "=== NF log file : ${DX_LOG}"
-    echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
-    echo "============================================================="
+  # use /home/dnanexus/out/output_files as the temporary nextflow execution folder
+  mkdir -p /home/dnanexus/out/output_files
+  cd /home/dnanexus/out/output_files
 
 
-    mkdir -p /home/dnanexus/out/output_files
-    cd /home/dnanexus/out/output_files
-    
-    generate_runtime_config
-    nextflow \
-      ${TRACE_CMD} \
-      $nextflow_top_level_opts \
-      ${RUNTIME_CONFIG} \
-      -log ${LOG_NAME} \
-      run @@RESOURCES_SUBPATH@@ \
-      @@PROFILE_ARG@@ \
-      -name run-${NXF_UUID} \
-      $nextflow_run_opts \
-      $nextflow_pipeline_params \
-      @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
-    
-    # forwarding nextflow log file to job monitor
-    set +x
-    if [[ $debug == true ]] ; then
-      touch $LOG_NAME
-      tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
-      disown $LOG_MONITOR_PID
-      set -x
-    fi
-    
-    wait $NXF_EXEC_PID
-    ret=$?
-    exit $ret
+  # set workdir
+  DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/"
+  export NXF_WORK=dx://$DX_WORK
+
+  export NXF_DOCKER_LEGACY=true
+  #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
+  #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
+
+  trap on_exit EXIT
+  echo "============================================================="
+  echo "=== NF work-dir : ${DX_WORK}"
+  echo "=== NF log file : ${DX_LOG}"
+  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
+  echo "============================================================="
+
+  generate_runtime_config
+  nextflow \
+    ${TRACE_CMD} \
+    $nextflow_top_level_opts \
+    ${RUNTIME_CONFIG} \
+    -log ${LOG_NAME} \
+    run @@RESOURCES_SUBPATH@@ \
+    @@PROFILE_ARG@@ \
+    -name run-${NXF_UUID} \
+    $nextflow_run_opts \
+    $nextflow_pipeline_params \
+    @@REQUIRED_RUNTIME_PARAMS@@ &
+  NXF_EXEC_PID=$!
+
+  # forwarding nextflow log file to job monitor
+  set +x
+  if [[ $debug == true ]]; then
+    touch $LOG_NAME
+    tail --follow -n 0 $LOG_NAME -s 60 >&2 &
+    LOG_MONITOR_PID=$!
+    disown $LOG_MONITOR_PID
+    set -x
+  fi
+
+  wait $NXF_EXEC_PID
+  ret=$?
+  exit $ret
 }
-
 
 nf_task_exit() {
   ret=$?
