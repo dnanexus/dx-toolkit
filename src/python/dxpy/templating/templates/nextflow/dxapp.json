@@ -48,21 +48,21 @@
       "label": "Resume",
       "help": "Enables resume functionality in Nextflow workflows. If true, will resume the previous session using the ID declared as resume_session.",
       "class": "boolean",
-      "default": "false"
+      "default": false
     },
     {
       "name": "resume_session",
       "label": "Resume Session",
       "help": "Session UUDI to be resumed",
       "class": "string",
-      "optional": "true"
+      "optional": true
     },
     {
       "name": "no_future_resume",
       "label": "No Future Resume",
-      "help": "Disable cache pipeline results. If true, workspace and cache files will not be uploaded to the platform, and the current session could not be resumed in the future",
+      "help": "Disable caching pipeline results. If true, workspace and cache files will not be uploaded to the platform, and the current session could not be resumed in the future",
       "class": "boolean",
-      "default": "false"
+      "default": false
     }
   ],
   "outputSpec": [
