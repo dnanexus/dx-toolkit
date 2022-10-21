@@ -72,29 +72,22 @@ on_exit() {
   # backup cache
   if [[ $no_future_resume == false ]]; then
     echo "=== Execution complete — uploading Nextflow cache and history file"
-    # TODO: files in workdir: $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/scratch/
-    # should be uploaded to $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/ by the plugin after each subjob
-    
+    # only upload cache.tar(cache and history)
+    # files in workdir $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/ are uploaded by the plugin after each subjob
+
     # update project nextflow history
-    download_prev_history
-    if [[ -s ".nextflow/prev_history" ]]; then
-      # merge the nonempty project nextflow history with the current history
-      sort -mu ".nextflow/prev_history" ".nextflow/history" -o ".nextflow/cache/latest_history"
-      # remove previous project history
-      dx rm "$DX_PROJECT_CONTEXT_ID:/.nextflow/history" 2>&1 >/dev/null || true
-    else
-      # there is no project nextflow history
-      mv ".nextflow/history" ".nextflow/cache/latest_history"
-    fi
-    # upload the new project history
-    dx upload ".nextflow/cache/latest_history" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/history" --no-progress --brief --wait -p -r || echo "Failed to update nextflow history in $DX_PROJECT_CONTEXT_ID"
-    
-    # wrap cache folder and lastest history and upload cache.tar
-    if [[ -n "$(ls -A .nextflow/cache)" ]]; then
-      tar -cvf .nextflow/cache.tar .nextflow/cache
+    update_project_history
+
+    # wrap cache folder and history and upload cache.tar
+    if [[ -n "$(ls -A .nextflow)" ]]; then
+      tar -cf cache.tar .nextflow
       # remove any existing cache.tar with the same session id
-      dx rm "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar" 2>&1 >/dev/null || true
-      dx upload ".nextflow/cache.tar" --path "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r || echo "Failed to upload cache of current session"
+      dx rm "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" 2>&1 >/dev/null || true
+      
+      CACHE_ID=$(dx upload "cache.tar" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) && \
+      echo "Upload cache of current session as file: $CACHE_ID" && \
+      rm -f cache.tar || \
+      echo "Failed to upload cache of current session $NXF_UUID"
     else
       echo "No cache is generated from this execution. Skip uploading cache."
     fi
@@ -103,7 +96,7 @@ on_exit() {
   # clean up files of this session
   else
     echo "=== Execution complete — removing working files in ${DX_WORK}"
-    dx rm -r -f "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID" 2>&1 >/dev/null || true
+    dx rm -r -f "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID" 2>&1 >/dev/null || true
   fi
 
   # remove .nextflow from the current folder /home/dnanexus/output_files
@@ -147,13 +140,9 @@ restore_cache_and_history() {
     fi
   fi
 
-  if [[ $debug == true ]]; then
-    echo "Will resume from previous session: $NXF_UUID"
-  fi
-
-  # download $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar --> .nextflow/cache.tar
+  # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar --> .nextflow/cache.tar
   local ret
-  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar" --no-progress -f -o .nextflow/cache.tar 2>&1) ||
+  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" --no-progress -f -o cache.tar 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* ]]; then
         dx-jobutil-report-error "No previous execution cache of session $NXF_UUID was found."
@@ -162,31 +151,39 @@ restore_cache_and_history() {
       fi
     }
 
-  # untar cache.tar, which contains
+  # untar cache.tar, which need to contain
   # 1. cache folder .nextflow/cache/$NXF_UUID
-  # 2. history of previous session .nextflow/cache/latest_history
-  tar -xvf .nextflow/cache.tar
-  if [[ -z "$(ls -A .nextflow/cache/$NXF_UUID)" ]]; then
-    dx-jobutil-report-error "Previous execution cache of session $NXF_UUID is empty."
-  fi
-
-  if [[ -s ".nextflow/cache/latest_history" ]]; then
-    mv ".nextflow/cache/latest_history" ".nextflow/history"
-  else
-    dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
-  fi
+  # 2. history of previous session .nextflow/history
+  tar -xf cache.tar
+  [[ -n "$(ls -A .nextflow/cache/$NXF_UUID)" ]] || dx-jobutil-report-error "Previous execution cache of session $NXF_UUID is empty."
+  [[ -s ".nextflow/history" ]] || dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
+  rm cache.tar
 }
 
-download_prev_history() {
+update_project_history() {
   local ret
-  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/history" --no-progress -f -o .nextflow/prev_history 2>&1) ||
+  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress -f -o .nextflow/prev_history 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        echo "No history file found as $DX_PROJECT_CONTEXT_ID:/.nextflow/history"
+        echo "No history file found as $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history"
       else
         dx-jobutil-report-error "$ret"
       fi
     }
+    
+    if [[ -s ".nextflow/prev_history" ]]; then
+      # merge the nonempty project nextflow history with the current history
+      sort -mu ".nextflow/prev_history" ".nextflow/history" -o ".nextflow/latest_history"
+      # remove previous project history
+      dx rm "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" 2>&1 >/dev/null || true
+      rm .nextflow/prev_history
+    else
+      # there is no project nextflow history
+      cp ".nextflow/history" ".nextflow/latest_history"
+    fi
+    # upload the new project history
+    dx upload ".nextflow/latest_history" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress --brief --wait -p -r || echo "Failed to update nextflow history in $DX_PROJECT_CONTEXT_ID"
+    rm .nextflow/latest_history
 }
 
 dx_path() {
@@ -207,12 +204,13 @@ dx_path() {
       ;;
   esac
 }
-    
+
 main() {
   if [[ $debug == true ]]; then
     export NXF_DEBUG=2
     TRACE_CMD="-trace nextflow.plugin"
-    set -x && env | grep -v DX_SECURITY_CONTEXT | sort
+    env | grep -v DX_SECURITY_CONTEXT | sort
+    set -x
   fi
 
   if [ -n "$docker_creds" ]; then
@@ -238,7 +236,7 @@ main() {
   export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
 
   # use /home/dnanexus/out/output_files as the temporary nextflow execution folder
-  mkdir -p /home/dnanexus/out/output_files 
+  mkdir -p /home/dnanexus/out/output_files
   cd /home/dnanexus/out/output_files
   mkdir -p .nextflow/cache
 
@@ -246,6 +244,7 @@ main() {
   RESUME_CMD=""
   if [[ $resume == true ]]; then
     restore_cache_and_history
+    echo "Will resume from previous session: $NXF_UUID"
     RESUME_CMD="-resume $NXF_UUID"
   elif [[ -n "$resume_session" ]]; then
     dx-jobutil-report-error "Session was provided, but resume functionality was not allowed. Please set input 'resume' as true and try again."
@@ -256,9 +255,11 @@ main() {
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
   # set workdir
-  DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/"
+  DX_WORK="$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/"
   export NXF_WORK=dx://$DX_WORK
 
+  # for optional inputs, pass to the run command by using a runtime config
+  # TODO: better handling inputs defined in nextflow_schema.json
   generate_runtime_config
 
   # execution starts
@@ -266,7 +267,7 @@ main() {
   echo "============================================================="
   echo "=== NF work-dir : ${DX_WORK}"
   echo "=== NF log file : ${DX_LOG}"
-  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar"
+  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar"
   echo "============================================================="
 
   set -x
@@ -304,7 +305,7 @@ nf_task_exit() {
   if [ -f .command.log ]; then
     dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
   else
-    >&2 echo "Missing Nextflow .command.log file"
+    echo >&2 "Missing Nextflow .command.log file"
   fi
   # mark the job as successful in any case, real task
   # error code is managed by nextflow via .exitcode file
@@ -320,6 +321,6 @@ nf_task_entry() {
   # capture the exit code
   trap nf_task_exit EXIT
   # run the task
-  dx cat "${cmd_launcher_file}" > .command.run
+  dx cat "${cmd_launcher_file}" >.command.run
   bash .command.run > >(tee .command.log) 2>&1 || true
 }
