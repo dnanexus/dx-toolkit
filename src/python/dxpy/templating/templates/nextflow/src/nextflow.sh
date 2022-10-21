@@ -69,14 +69,14 @@ on_exit() {
     set -xe
   fi
 
+  # update project nextflow history
+    update_project_history
+
   # backup cache
   if [[ $no_future_resume == false ]]; then
     echo "=== Execution complete — uploading Nextflow cache and history file"
     # only upload cache.tar(cache and history)
     # files in workdir $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/ are uploaded by the plugin after each subjob
-
-    # update project nextflow history
-    update_project_history
 
     # wrap cache folder and history and upload cache.tar
     if [[ -n "$(ls -A .nextflow)" ]]; then
