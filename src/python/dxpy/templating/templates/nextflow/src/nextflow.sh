@@ -96,6 +96,7 @@ on_exit() {
   # clean up files of this session
   else
     echo "=== Execution complete — removing working files in ${DX_WORK}"
+    dx tag "$DX_JOB_ID" "no_future_resume"
     dx rm -r -f "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID" 2>&1 >/dev/null || true
   fi
 
@@ -246,6 +247,7 @@ main() {
     restore_cache_and_history
     echo "Will resume from previous session: $NXF_UUID"
     RESUME_CMD="-resume $NXF_UUID"
+    dx tag "$DX_JOB_ID" "resumed"
   elif [[ -n "$resume_session" ]]; then
     dx-jobutil-report-error "Session was provided, but resume functionality was not allowed. Please set input 'resume' as true and try again."
   else
