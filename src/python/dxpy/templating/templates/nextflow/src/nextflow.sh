@@ -113,24 +113,30 @@ on_exit() {
   exit $ret
 }
 
-restore_cache() {
+restore_cache_and_history() {
+  # get session id if specified
   if [[ -n "$resume_session" ]]; then
     NXF_UUID=$resume_session
   else
+    # find the latest job of this applet
     EXECUTABLE_ID=$(jq -r .executable /home/dnanexus/dnanexus-job.json)
-    PREV_JOB_ID=$(dx find executions --executable "$EXECUTABLE_ID" --origin-jobs --brief --project $DX_PROJECT_CONTEXT_ID| sed -n 1p)
+    PREV_JOB_ID=$(dx find executions --executable "$EXECUTABLE_ID" --origin-jobs --brief --project $DX_PROJECT_CONTEXT_ID | sed -n 2p)
     if [[ -z $PREV_JOB_ID ]]; then
       dx-jobutil-report-error "Cannot find a previous session ran by $EXECUTABLE_ID."
     fi
-    
+    # get session id of this latest job
     NXF_UUID=$(dx describe "$PREV_JOB_ID" --json | jq .properties.session_id)
     if [[ -z $NXF_UUID ]]; then
       dx-jobutil-report-error "Cannot retrieve the session ID of previous job $PREV_JOB_ID."
     fi
   fi
 
+  if [[ $debug == true ]]; then
+    echo "Will resume from previous session: $NXF_UUID"
+  fi
+
+  # download $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar --> .nextflow/cache.tar
   local ret
-  mkdir .nextflow
   ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar" --no-progress -f -o .nextflow/cache.tar 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* ]]; then
@@ -140,10 +146,18 @@ restore_cache() {
       fi
     }
 
-  # untar cache files
+  # untar cache.tar, which contains
+  # 1. cache folder .nextflow/cache/$NXF_UUID
+  # 2. history of previous session .nextflow/cache/latest_history
   tar -xvf .nextflow/cache.tar
   if [[ -z "$(ls -A .nextflow/cache/$NXF_UUID)" ]]; then
     dx-jobutil-report-error "Previous execution cache of session $NXF_UUID is empty."
+  fi
+
+  if [[ -s ".nextflow/cache/latest_history" ]]; then
+    mv ".nextflow/cache/latest_history" ".nextflow/history"
+  else
+    dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
   fi
 }
 
@@ -208,18 +222,22 @@ main() {
   export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
 
   # use /home/dnanexus/out/output_files as the temporary nextflow execution folder
-  mkdir -p /home/dnanexus/out/output_files
+  mkdir -p /home/dnanexus/out/output_files 
   cd /home/dnanexus/out/output_files
+  mkdir -p .nextflow/cache
 
-  HISTORY_FILE=".nextflow/history"
   # restore cache and set/create current session id
+  RESUME_CMD=""
   if [[ $resume == true ]]; then
-    restore_cache
+    restore_cache_and_history
+    RESUME_CMD="-resume $NXF_UUID"
+  elif [[ -n "$resume_session" ]]; then
+    dx-jobutil-report-error "Session was provided, but resume functionality was not allowed. Please set input 'resume' as true and try again."
   else
     NXF_UUID=$(uuidgen)
   fi
   export NXF_UUID
-  dx set_properties "$DX_JOB_ID" session_id=$NXF_UUID
+  dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
   # set workdir
   DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/"
@@ -231,7 +249,7 @@ main() {
   echo "============================================================="
   echo "=== NF work-dir : ${DX_WORK}"
   echo "=== NF log file : ${DX_LOG}"
-  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
+  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache.tar"
   echo "============================================================="
 
   set -x
