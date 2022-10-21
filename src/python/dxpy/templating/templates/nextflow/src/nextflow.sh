@@ -179,15 +179,18 @@ dx_path() {
 }
     
 main() {
-    if [[ $debug == true ]]; then
-      export NXF_DEBUG=2
-      TRACE_CMD="-trace nextflow.plugin"
-      set -x && env | grep -v DX_SECURITY_CONTEXT | sort
-    fi
-    
-    if [ -n "$docker_creds" ]; then
-        dx-registry-login
-    fi
+  if [[ $debug == true ]]; then
+    export NXF_DEBUG=2
+    TRACE_CMD="-trace nextflow.plugin"
+    set -x && env | grep -v DX_SECURITY_CONTEXT | sort
+  fi
+
+  if [ -n "$docker_creds" ]; then
+    dx-registry-login
+  fi
+  export NXF_DOCKER_LEGACY=true
+  #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
+  #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
 
   # parse dnanexus-job.json to get job output destination
   OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
@@ -222,9 +225,7 @@ main() {
   DX_WORK="$DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/work/"
   export NXF_WORK=dx://$DX_WORK
 
-  export NXF_DOCKER_LEGACY=true
-  #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
-  #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
+  generate_runtime_config
 
   trap on_exit EXIT
   echo "============================================================="
@@ -233,7 +234,7 @@ main() {
   echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
   echo "============================================================="
 
-  generate_runtime_config
+  set -x
   nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
@@ -247,9 +248,9 @@ main() {
     $nextflow_pipeline_params \
     @@REQUIRED_RUNTIME_PARAMS@@ &
   NXF_EXEC_PID=$!
+  set +x
 
   # forwarding nextflow log file to job monitor
-  set +x
   if [[ $debug == true ]]; then
     touch $LOG_NAME
     tail --follow -n 0 $LOG_NAME -s 60 >&2 &
