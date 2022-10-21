@@ -277,7 +277,7 @@ main() {
     run @@RESOURCES_SUBPATH@@ \
     @@PROFILE_ARG@@ \
     -name $DX_JOB_ID \
-    # TODO: resume command
+    $RESUME_CMD \
     $nextflow_run_opts \
     $nextflow_pipeline_params \
     @@REQUIRED_RUNTIME_PARAMS@@ &
