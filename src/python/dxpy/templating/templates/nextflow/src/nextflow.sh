@@ -38,13 +38,13 @@ generate_runtime_config() {
   # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
   @@GENERATE_RUNTIME_CONFIG@@
 
-  RUNTIME_CONFIG=''
+  RUNTIME_CONFIG_CMD=''
   if [[ -s nxf_runtime.config ]]; then
     if [[ $debug == true ]]; then
       cat nxf_runtime.config
     fi
 
-    RUNTIME_CONFIG='-c nxf_runtime.config'
+    RUNTIME_CONFIG_CMD='-c nxf_runtime.config'
   fi
 }
 
@@ -237,7 +237,7 @@ main() {
   nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
-    ${RUNTIME_CONFIG} \
+    ${RUNTIME_CONFIG_CMD} \
     -log ${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
     @@PROFILE_ARG@@ \
