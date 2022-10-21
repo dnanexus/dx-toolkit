@@ -141,7 +141,7 @@ restore_cache_and_history() {
       dx-jobutil-report-error "Cannot find a previous session ran by $EXECUTABLE_ID."
     fi
     # get session id of this latest job
-    NXF_UUID=$(dx describe "$PREV_JOB_ID" --json | jq .properties.session_id)
+    NXF_UUID=$(dx describe "$PREV_JOB_ID" --json | jq -r .properties.session_id)
     if [[ -z $NXF_UUID ]]; then
       dx-jobutil-report-error "Cannot retrieve the session ID of previous job $PREV_JOB_ID."
     fi
