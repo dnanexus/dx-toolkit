@@ -231,7 +231,7 @@ main() {
   LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
   DX_LOG=${log_file:-"$OUTDIR/$LOG_NAME"}
 
-  # set NXF env constants
+  # set default NXF env constants
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
   export NXF_EXECUTOR=dnanexus
@@ -261,6 +261,7 @@ main() {
 
   generate_runtime_config
 
+  # execution starts
   trap on_exit EXIT
   echo "============================================================="
   echo "=== NF work-dir : ${DX_WORK}"
