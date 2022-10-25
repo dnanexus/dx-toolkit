@@ -129,8 +129,8 @@ restore_cache_and_history() {
     NXF_UUID=$resume_session
   else
     # find the latest job of this applet
-    EXECUTABLE_ID=$(jq -r .executable /home/dnanexus/dnanexus-job.json)
-    PREV_JOB_ID=$(dx find executions --executable "$EXECUTABLE_ID" --origin-jobs --brief --project $DX_PROJECT_CONTEXT_ID | sed -n 2p)
+    EXECUTABLE_NAME=$(jq -r .name /home/dnanexus/dnanexus-job.json)
+    PREV_JOB_ID=$(dx api system findExecutions '{"state":["done","failed"],"project":"'$DX_PROJECT_CONTEXT_ID'", "limit":1, "includeSubjobs":false, "name":{"glob":"'${EXECUTABLE_NAME}'*"}}' | jq -r '.results[].id')
     if [[ -z $PREV_JOB_ID ]]; then
       dx-jobutil-report-error "Cannot find a previous session ran by $EXECUTABLE_ID."
     fi
