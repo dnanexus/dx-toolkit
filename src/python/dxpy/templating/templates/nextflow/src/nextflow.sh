@@ -129,7 +129,7 @@ restore_cache_and_history() {
     NXF_UUID=$resume_session
   else
     # find the latest job of this applet
-    EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
+    EXECUTABLE_NAME=$(jq -r .name /home/dnanexus/dnanexus-job.json)
     
     NXF_UUID=$(dx api system findExecutions \
     '{"state":["done","failed"],
