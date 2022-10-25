@@ -70,7 +70,7 @@ on_exit() {
   fi
 
   # update project nextflow history
-    update_project_history
+  update_project_history
 
   # backup cache
   if [[ $no_future_resume == false ]]; then
@@ -83,11 +83,11 @@ on_exit() {
       tar -cf cache.tar .nextflow
       # remove any existing cache.tar with the same session id
       dx rm "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" 2>&1 >/dev/null || true
-      
-      CACHE_ID=$(dx upload "cache.tar" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) && \
-      echo "Upload cache of current session as file: $CACHE_ID" && \
-      rm -f cache.tar || \
-      echo "Failed to upload cache of current session $NXF_UUID"
+
+      CACHE_ID=$(dx upload "cache.tar" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
+        echo "Upload cache of current session as file: $CACHE_ID" &&
+        rm -f cache.tar ||
+        echo "Failed to upload cache of current session $NXF_UUID"
     else
       echo "No cache is generated from this execution. Skip uploading cache."
     fi
@@ -171,21 +171,21 @@ update_project_history() {
         dx-jobutil-report-error "$ret"
       fi
     }
-    
-    if [[ -s ".nextflow/prev_history" ]]; then
-      # merge the nonempty project nextflow history with the current history
-      sort -mu ".nextflow/prev_history" ".nextflow/history" -o ".nextflow/latest_history"
-      # remove previous project history
-      dx rm "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" 2>&1 >/dev/null || true
-      rm .nextflow/prev_history
-    else
-      # there is no project nextflow history
-      cp ".nextflow/history" ".nextflow/latest_history"
-    fi
-    # upload the new project history
-    dx upload ".nextflow/latest_history" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress --brief --wait -p -r || \
+
+  if [[ -s ".nextflow/prev_history" ]]; then
+    # merge the nonempty project nextflow history with the current history
+    sort -mu ".nextflow/prev_history" ".nextflow/history" -o ".nextflow/latest_history"
+    # remove previous project history
+    dx rm "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" 2>&1 >/dev/null || true
+    rm .nextflow/prev_history
+  else
+    # there is no project nextflow history
+    cp ".nextflow/history" ".nextflow/latest_history"
+  fi
+  # upload the new project history
+  dx upload ".nextflow/latest_history" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress --brief --wait -p -r ||
     echo "Failed to update nextflow history in $DX_PROJECT_CONTEXT_ID"
-    rm .nextflow/latest_history
+  rm .nextflow/latest_history
 }
 
 dx_path() {
@@ -267,28 +267,28 @@ main() {
   generate_runtime_config
 
   # execution starts
+  NEXTFLOW_CMD="nextflow \
+      ${TRACE_CMD} \
+      $nextflow_top_level_opts \
+      ${RUNTIME_CONFIG} \
+      -log ${LOG_NAME} \
+      run @@RESOURCES_SUBPATH@@ \
+      @@PROFILE_ARG@@ \
+      -name run-${NXF_UUID} \
+      $nextflow_run_opts \
+      $nextflow_pipeline_params \
+      @@REQUIRED_RUNTIME_PARAMS@@
+      "
+
   trap on_exit EXIT
   echo "============================================================="
   echo "=== NF work-dir : ${DX_WORK}"
   echo "=== NF log file : ${DX_LOG}"
-  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar"
+  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
+  echo "=== NF command  :" $NEXTFLOW_CMD
   echo "============================================================="
 
-  set -x
-  nextflow \
-    ${TRACE_CMD} \
-    $nextflow_top_level_opts \
-    ${RUNTIME_CONFIG_CMD} \
-    -log ${LOG_NAME} \
-    run @@RESOURCES_SUBPATH@@ \
-    @@PROFILE_ARG@@ \
-    -name $DX_JOB_ID \
-    $RESUME_CMD \
-    $nextflow_run_opts \
-    $nextflow_pipeline_params \
-    @@REQUIRED_RUNTIME_PARAMS@@ &
-  NXF_EXEC_PID=$!
-  set +x
+  $NEXTFLOW_CMD & NXF_EXEC_PID=$!
 
   # forwarding nextflow log file to job monitor
   if [[ $debug == true ]]; then
