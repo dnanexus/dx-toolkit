@@ -140,18 +140,13 @@ main() {
     export NXF_DOCKER_LEGACY=true
     #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
     #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
-    trap on_exit EXIT
-    echo "============================================================="
-    echo "=== NF work-dir : ${DX_WORK}"
-    echo "=== NF log file : ${DX_LOG}"
-    echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
-    echo "============================================================="
 
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
     
     generate_runtime_config
-    nextflow \
+    
+    NEXTFLOW_CMD="nextflow \
       ${TRACE_CMD} \
       $nextflow_top_level_opts \
       ${RUNTIME_CONFIG} \
@@ -161,7 +156,18 @@ main() {
       -name run-${NXF_UUID} \
       $nextflow_run_opts \
       $nextflow_pipeline_params \
-      @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
+      @@REQUIRED_RUNTIME_PARAMS@@
+      "
+
+    trap on_exit EXIT
+    echo "============================================================="
+    echo "=== NF work-dir : ${DX_WORK}"
+    echo "=== NF log file : ${DX_LOG}"
+    echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
+    echo "=== NF command  :" $NEXTFLOW_CMD
+    echo "============================================================="
+
+    $NEXTFLOW_CMD & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
     set +x
