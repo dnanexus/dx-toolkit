@@ -76,6 +76,7 @@
     ],
     "project": "CONTRIBUTE",
     "allProjects": "VIEW"
-  }
+  },
+  "ignoreReuse": true
 }
 
