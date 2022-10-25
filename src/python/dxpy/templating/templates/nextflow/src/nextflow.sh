@@ -255,6 +255,7 @@ main() {
     NXF_UUID=$(uuidgen)
   fi
   export NXF_UUID
+  export NXF_CACHE_MODE=LENIENT
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
   # set workdir
