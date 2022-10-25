@@ -183,7 +183,8 @@ update_project_history() {
       cp ".nextflow/history" ".nextflow/latest_history"
     fi
     # upload the new project history
-    dx upload ".nextflow/latest_history" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress --brief --wait -p -r || echo "Failed to update nextflow history in $DX_PROJECT_CONTEXT_ID"
+    dx upload ".nextflow/latest_history" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress --brief --wait -p -r || \
+    echo "Failed to update nextflow history in $DX_PROJECT_CONTEXT_ID"
     rm .nextflow/latest_history
 }
 
