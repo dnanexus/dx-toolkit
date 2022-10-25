@@ -145,7 +145,7 @@ restore_cache_and_history() {
   local ret
   ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" --no-progress -f -o cache.tar 2>&1) ||
     {
-      if [[ $ret == *"FileNotFoundError"* ]]; then
+      if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
         dx-jobutil-report-error "No previous execution cache of session $NXF_UUID was found."
       else
         dx-jobutil-report-error "$ret"
