@@ -163,7 +163,7 @@ restore_cache_and_history() {
 
 update_project_history() {
   local ret
-  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress -f -o .nextflow/prev_history 2>&1) ||
+  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress -f -o .nextflow/prev_history 2>&1 >/dev/null) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
         echo "No history file found as $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history"
