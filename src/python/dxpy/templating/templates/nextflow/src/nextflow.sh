@@ -273,16 +273,17 @@ main() {
 
   # execution starts
   NEXTFLOW_CMD="nextflow \
-      ${TRACE_CMD} \
-      $nextflow_top_level_opts \
-      ${RUNTIME_CONFIG} \
-      -log ${LOG_NAME} \
-      run @@RESOURCES_SUBPATH@@ \
-      @@PROFILE_ARG@@ \
-      -name run-${NXF_UUID} \
-      $nextflow_run_opts \
-      $nextflow_pipeline_params \
-      @@REQUIRED_RUNTIME_PARAMS@@
+    ${TRACE_CMD} \
+    $nextflow_top_level_opts \
+    ${RUNTIME_CONFIG_CMD} \
+    -log ${LOG_NAME} \
+    run @@RESOURCES_SUBPATH@@ \
+    @@PROFILE_ARG@@ \
+    -name $DX_JOB_ID \
+    $RESUME_CMD \
+    $nextflow_run_opts \
+    $nextflow_pipeline_params \
+    @@REQUIRED_RUNTIME_PARAMS@@
       "
 
   trap on_exit EXIT
