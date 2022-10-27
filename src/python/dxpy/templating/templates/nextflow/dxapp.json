@@ -46,7 +46,7 @@
     {
       "name": "resume",
       "label": "Resume",
-      "help": "Enables resume functionality in Nextflow workflows. If true, will resume the previous session using the ID declared as resume_session.",
+      "help": "Enables resume functionality in Nextflow pipelines. If true, will resume the previous session using the ID declared as resume_session.",
       "class": "boolean",
       "default": false
     },
