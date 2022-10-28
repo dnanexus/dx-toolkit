@@ -125,11 +125,12 @@ on_exit() {
 
 restore_cache_and_history() {
   # get session id if specified
+  valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   if [[ -n "$resume_session" ]]; then
     NXF_UUID=$resume_session
   else
-    # find the latest job of this applet
-
+    # find the latest job run by applet with the same name
+    echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
     NXF_UUID=$(dx api system findExecutions \
     '{"state":["done","failed"],
     "project":"'$DX_PROJECT_CONTEXT_ID'",
@@ -141,8 +142,12 @@ restore_cache_and_history() {
     jq -r '.results[].describe.properties.session_id')
 
     if [[ -z $NXF_UUID ]]; then
-      dx-jobutil-report-error "Cannot find a previous session ran by $EXECUTABLE_NAME."
+      dx-jobutil-report-error "Cannot find a previous session run by $EXECUTABLE_NAME."
     fi
+  fi
+  
+  if [[ ! "$NXF_UUID" =~ $valid_id_pattern ]]; then
+      dx-jobutil-report-error "The session ID $NXF_UUID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
   fi
 
   # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar --> .nextflow/cache.tar
