@@ -73,6 +73,7 @@ on_exit() {
   update_project_history
 
   # backup cache
+  dx set_properties "$DX_JOB_ID" "no_future_resume=$no_future_resume"
   if [[ $no_future_resume == false ]]; then
     echo "=== Execution complete — uploading Nextflow cache and history file"
     # only upload cache.tar(cache and history)
@@ -138,6 +139,7 @@ restore_cache_and_history() {
     "includeSubjobs":false,
     "describe":{"fields":{"properties":true}},
     "properties":{"session_id":true,
+    "no_future_resume":false,
     "nextflow_executable":"'$EXECUTABLE_NAME'"}}' |
     jq -r '.results[].describe.properties.session_id')
 
