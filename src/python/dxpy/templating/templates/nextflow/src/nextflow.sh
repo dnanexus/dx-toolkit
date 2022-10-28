@@ -95,9 +95,9 @@ on_exit() {
   # no_future_resume is true
   # clean up files of this session
   else
-    echo "=== Execution complete — removing working files in ${DX_WORK}"
+    echo "=== Execution complete — removing working files from workdir"
     dx tag "$DX_JOB_ID" "no_future_resume"
-    dx rm -r -f "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID" 2>&1 >/dev/null || true
+    nextflow clean -f $NXF_UUID || true
   fi
 
   # remove .nextflow from the current folder /home/dnanexus/output_files
@@ -263,7 +263,7 @@ main() {
   export NXF_CACHE_MODE=LENIENT
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
-  # set workdir
+  # set default workdir
   DX_WORK="$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/"
   export NXF_WORK=dx://$DX_WORK
 
@@ -288,10 +288,10 @@ main() {
 
   trap on_exit EXIT
   echo "============================================================="
-  echo "=== NF work-dir : ${DX_WORK}"
-  echo "=== NF log file : ${DX_LOG}"
-  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/cache/$NXF_UUID"
-  echo "=== NF command  :" $NEXTFLOW_CMD
+  echo "=== NF default workdir  : ${DX_WORK}"
+  echo "=== NF log file         : ${DX_LOG}"
+  echo "=== NF cache            : $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache/"
+  echo "=== NF command          :" $NEXTFLOW_CMD
   echo "============================================================="
 
   $NEXTFLOW_CMD & NXF_EXEC_PID=$!
