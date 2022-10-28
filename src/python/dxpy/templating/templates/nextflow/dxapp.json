@@ -53,7 +53,7 @@
     {
       "name": "resume_session",
       "label": "Resume Session",
-      "help": "Session UUDI to be resumed",
+      "help": "Unique ID of the previous session to be resumed. If not provided, will try resume from the last job ran by an applet with the same name in current project.",
       "class": "string",
       "optional": true
     },
