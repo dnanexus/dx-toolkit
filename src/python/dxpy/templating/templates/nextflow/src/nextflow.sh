@@ -129,16 +129,15 @@ restore_cache_and_history() {
     NXF_UUID=$resume_session
   else
     # find the latest job of this applet
-    EXECUTABLE_NAME=$(jq -r .name /home/dnanexus/dnanexus-job.json)
-    
+
     NXF_UUID=$(dx api system findExecutions \
     '{"state":["done","failed"],
     "project":"'$DX_PROJECT_CONTEXT_ID'",
     "limit":1,
     "includeSubjobs":false,
-    "name":{"glob":"'${EXECUTABLE_NAME}'*"},
     "describe":{"fields":{"properties":true}},
-    "properties":{"session_id":true}}' | 
+    "properties":{"session_id":true,
+    "nextflow_executable":"'$EXECUTABLE_NAME'"}}' |
     jq -r '.results[].describe.properties.session_id')
 
     if [[ -z $NXF_UUID ]]; then
@@ -248,6 +247,7 @@ main() {
   mkdir -p .nextflow/cache
 
   # restore cache and set/create current session id
+  EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
   RESUME_CMD=""
   if [[ $resume == true ]]; then
     restore_cache_and_history
@@ -262,6 +262,7 @@ main() {
   export NXF_UUID
   export NXF_CACHE_MODE=LENIENT
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
+  dx set_properties "$DX_JOB_ID" "nextflow_executable=$EXECUTABLE_NAME"
 
   # set default workdir
   DX_WORK="$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/"
