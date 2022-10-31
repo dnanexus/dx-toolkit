@@ -139,7 +139,7 @@ restore_cache_and_history() {
     "includeSubjobs":false,
     "describe":{"fields":{"properties":true}},
     "properties":{"session_id":true,
-    "no_future_resume":false,
+    "no_future_resume":"false",
     "nextflow_executable":"'$EXECUTABLE_NAME'"}}' |
     jq -r '.results[].describe.properties.session_id')
 
