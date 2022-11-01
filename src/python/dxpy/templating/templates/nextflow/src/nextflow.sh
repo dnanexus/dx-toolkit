@@ -149,9 +149,7 @@ main() {
 
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
-    required_inputs=""
-    @@REQUIRED_RUNTIME_PARAMS@@
-
+    
     generate_runtime_config
     nextflow \
       ${TRACE_CMD} \
@@ -163,7 +161,7 @@ main() {
       -name run-${NXF_UUID} \
       $nextflow_run_opts \
       $nextflow_pipeline_params \
-      $required_inputs & NXF_EXEC_PID=$!
+      @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
     
     # forwarding nextflow log file to job monitor
     set +x
