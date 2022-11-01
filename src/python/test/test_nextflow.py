@@ -98,10 +98,10 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_src_inputs(self):
         src = get_nextflow_src(custom_inputs=[input1, input2])
-        self.assertTrue(
-            "--{}=${{{}}}".format(input2.get("name"), input2.get("name")) in src)
-        self.assertTrue(
-            "dx://${{DX_WORKSPACE_ID}}:/$(echo ${{{}}} | jq .[$dnanexus_link] -r | xargs -I {{}} dx describe {{}} --json | jq -r .name)".format(input1.get("name")) in src)
+        self.assertTrue("if [ -n \"${}\" ];".format(input2.get("name")) in src)
+        self.assertTrue("--{}=${}".format(input2.get("name"), input2.get("name")))
+        self.assertTrue("if [ -n \"${}\" ];".format(input1.get("name")) in src)
+        self.assertTrue("--{}=${}".format(input1.get("name"), input1.get("name")))
 
     def test_prepare_inputs(self):
         inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
