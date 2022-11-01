@@ -139,6 +139,15 @@ restore_cache_and_history() {
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   if [[ -n "$resume_session" ]]; then
     PREV_JOB_SESSION_ID=$resume_session
+    PREV_JOB_DESC=$(dx api system findExecutions \
+    '{"state":["done","failed"],
+    "project":"'$DX_PROJECT_CONTEXT_ID'",
+    "limit":1,
+    "includeSubjobs":false,
+    "describe":{"fields":{"properties":true}},
+    "properties":{"session_id":"'$PREV_JOB_SESSION_ID'",
+    "no_future_resume":"false",
+    "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
   else
     # find the latest job run by applet with the same name
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
@@ -152,9 +161,6 @@ restore_cache_and_history() {
     "no_future_resume":"false",
     "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
 
-    if [[ -z $PREV_JOB_DESC ]]; then
-      dx-jobutil-report-error "Cannot find a resumable session run by $EXECUTABLE_NAME."
-    fi
     PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
   fi
 
@@ -162,12 +168,16 @@ restore_cache_and_history() {
       dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
   fi
 
+  if [[ -z $PREV_JOB_DESC ]]; then
+    dx-jobutil-report-error "Cannot find a resumable session run by $EXECUTABLE_NAME."
+  fi
+
   # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar --> .nextflow/cache.tar
   local ret
   ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar" --no-progress -f -o cache.tar 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "No previous execution cache of session $PREV_JOB_SESSION_ID was found."
+        dx-jobutil-report-error "No previous execution cache of session $PREV_JOB_SESSION_ID was found as $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar."
       else
         dx-jobutil-report-error "$ret"
       fi
@@ -187,7 +197,7 @@ restore_cache_and_history() {
     ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work/" --no-progress -rf 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found."
+        dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found at $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work/."
       else
         dx-jobutil-report-error "$ret"
       fi
