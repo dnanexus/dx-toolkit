@@ -6,6 +6,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `nextflow run` command in the log for easier debugging
+
+### Fixed
+
+* Overriding config arguments with an empty string for Nextflow pipelines
+
+### Changed
+
+* `psutil` version to 5.9.3 which includes wheelfiles for macOS arm64
+* Set ignore reuse in the nextflow applet template
+
 ## [332.0] - beta
 
 ### Added
