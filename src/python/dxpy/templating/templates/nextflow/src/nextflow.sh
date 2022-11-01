@@ -79,8 +79,8 @@ on_exit() {
 
     # upload local workdir (when executor is overriden to 'local')
     # otherwise files in workdir $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/ are uploaded by the plugin after each subjob
-    if [[ $NXF_WORK != dx* && -d $NXF_WORK ]]; then
-      WORKDIR_ID=$(dx upload $NXF_WORK --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work" --no-progress --brief --wait -p -r) &&
+    if [[ $NXF_WORK != dx* && -d $NXF_WORK && -n "$(ls -A $NXF_WORK)" ]]; then
+      WORKDIR_ID=$(dx upload $NXF_WORK/* --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/" --no-progress --brief --wait -p -r) &&
         echo "Upload local work directory of current session as file: $WORKDIR_ID" &&
         rm -f NXF_WORK ||
         echo "Failed to upload local work directory of current session $NXF_UUID"
