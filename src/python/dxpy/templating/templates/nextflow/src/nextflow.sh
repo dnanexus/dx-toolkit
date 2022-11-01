@@ -314,6 +314,8 @@ main() {
 
   # set workdir from user specified nextflow_run_opts or use default
   set_workdir
+  export NXF_WORK
+  dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
 
   # for optional inputs, pass to the run command by using a runtime config
   # TODO: better handling inputs defined in nextflow_schema.json
