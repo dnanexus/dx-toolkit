@@ -137,7 +137,7 @@ restore_cache_and_history() {
   # get session id if specified
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   if [[ -n "$resume_session" ]]; then
-    NXF_UUID=$resume_session
+    PREV_JOB_SESSION_ID=$resume_session
   else
     # find the latest job run by applet with the same name
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
@@ -152,13 +152,13 @@ restore_cache_and_history() {
     "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
 
     if [[ -z $PREV_JOB_DESC ]]; then
-      dx-jobutil-report-error "Cannot find a previous session run by $EXECUTABLE_NAME."
+      dx-jobutil-report-error "Cannot find a resumable session run by $EXECUTABLE_NAME."
     fi
+    PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
   fi
 
-  PREV_JOB_SESSION_ID=$(jq -r '.results[].describe.properties.session_id' "$PREV_JOB_DESC")
   if [[ ! "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]]; then
-    dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
+      dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
   fi
 
   # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar --> .nextflow/cache.tar
@@ -180,13 +180,23 @@ restore_cache_and_history() {
   [[ -s ".nextflow/history" ]] || dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
   rm cache.tar
 
-  PREV_JOB_WORKDIR=$(jq -r '.results[].describe.properties.session_id' "$PREV_JOB_DESC")
-  if [[ $PREV_JOB_WORKDIR != dx* && -n "$(ls -A .nextflow/cache/work)" ]]; then
-    mkdir -p "$PREV_JOB_WORKDIR" & mv .nextflow/cache/work "$PREV_JOB_WORKDIR" || \
-    dx-jobutil-report-error "Cannot restore local work directory of previous session $PREV_JOB_SESSION_ID."
+  PREV_JOB_WORKDIR=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.workdir' )
+  if [[ $PREV_JOB_WORKDIR != dx* ]]; then
+    # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work --> ./work
+    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work/" --no-progress -rf 2>&1) ||
+    {
+      if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
+        dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found."
+      else
+        dx-jobutil-report-error "$ret"
+      fi
+    }
+    mkdir -p "$PREV_JOB_WORKDIR" & mv ./work "$PREV_JOB_WORKDIR"
   fi
+
   echo "Will resume from previous session: $PREV_JOB_SESSION_ID"
-  RESUME_CMD="-resume $PREV_JOB_SESSION_ID"
+  NXF_UUID=$PREV_JOB_SESSION_ID
+  RESUME_CMD="-resume $NXF_UUID"
   dx tag "$DX_JOB_ID" "resumed"
 }
 
@@ -309,6 +319,7 @@ main() {
   else
     NXF_UUID=$(uuidgen)
   fi
+  export NXF_UUID
   export NXF_CACHE_MODE=LENIENT
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
