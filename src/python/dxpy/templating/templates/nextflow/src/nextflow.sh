@@ -190,6 +190,31 @@ restore_cache_and_history() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
+ set_workdir() {
+  arr=($(echo "$nextflow_run_opts" | tr '\s' '\n'))
+  for i in "${!arr[@]}"; do
+    case ${arr[i]} in
+      -w=*|-work-dir=*)
+        USER_WORKDIR="${i#*=}"
+        break
+        ;;
+      -w|-work-dir)
+        USER_WORKDIR=${arr[i+1]}
+        break
+        ;;
+      *)
+        ;;
+    esac
+  done
+
+  if [[ -n $USER_WORKDIR ]]; then
+    NXF_WORK=$USER_WORKDIR
+  else
+    DX_WORK="$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/"
+    NXF_WORK=dx://$DX_WORK
+  fi
+}
+
 update_project_history() {
   local ret
   ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress -f -o .nextflow/prev_history 2>&1 >/dev/null) ||
