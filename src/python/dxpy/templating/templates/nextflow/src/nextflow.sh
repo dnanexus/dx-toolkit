@@ -51,6 +51,8 @@ generate_runtime_config() {
 on_exit() {
   ret=$?
 
+  echo "$ret was the exit code of the main job"
+
   set +x
   if [[ $debug == true ]]; then
     # DEVEX-1943 Wait up to 30 seconds for log forwarders to terminate
@@ -163,7 +165,6 @@ main() {
       $nextflow_run_opts \
       $nextflow_pipeline_params \
       @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
-    echo "$? was the exit code of the main job"
     set -e
     # forwarding nextflow log file to job monitor
     set +x
