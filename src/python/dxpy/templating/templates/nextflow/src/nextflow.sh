@@ -38,12 +38,10 @@ generate_runtime_config() {
   # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
   @@GENERATE_RUNTIME_CONFIG@@
 
-  RUNTIME_CONFIG_CMD=''
   if [[ -s nxf_runtime.config ]]; then
     if [[ $debug == true ]]; then
       cat nxf_runtime.config
     fi
-
     RUNTIME_CONFIG_CMD='-c nxf_runtime.config'
   fi
 }
@@ -135,9 +133,9 @@ on_exit() {
 }
 
 restore_cache_and_history() {
-  # get session id if specified
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   if [[ -n "$resume_session" ]]; then
+    # get session id if specified
     PREV_JOB_SESSION_ID=$resume_session
     PREV_JOB_DESC=$(dx api system findExecutions \
     '{"state":["done","failed"],
@@ -167,7 +165,6 @@ restore_cache_and_history() {
   if [[ ! "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]]; then
       dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
   fi
-
   if [[ -z $PREV_JOB_DESC ]]; then
     dx-jobutil-report-error "Cannot find a resumable session run by $EXECUTABLE_NAME."
   fi
@@ -212,7 +209,7 @@ restore_cache_and_history() {
 }
 
  set_workdir() {
-  arr=($(echo "$nextflow_run_opts" | tr '\s' '\n'))
+  arr=($(echo "$nextflow_run_opts" | tr -s ' ' '\n'))
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
       -w=*|-work-dir=*)
@@ -297,7 +294,6 @@ main() {
   #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
   #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
 
-
   # set default NXF env constants
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
@@ -341,6 +337,7 @@ main() {
 
   # for optional inputs, pass to the run command by using a runtime config
   # TODO: better handling inputs defined in nextflow_schema.json
+  RUNTIME_CONFIG_CMD=""
   generate_runtime_config
 
   # execution starts
