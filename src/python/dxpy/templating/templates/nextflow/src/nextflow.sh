@@ -143,9 +143,7 @@ main() {
 
     mkdir -p /home/dnanexus/out/output_files
     cd /home/dnanexus/out/output_files
-    required_inputs=""
-    @@REQUIRED_RUNTIME_PARAMS@@
-
+    
     generate_runtime_config
     
     NEXTFLOW_CMD="nextflow \
@@ -158,7 +156,7 @@ main() {
       -name run-${NXF_UUID} \
       $nextflow_run_opts \
       $nextflow_pipeline_params \
-      $required_inputs & NXF_EXEC_PID=$!
+      @@REQUIRED_RUNTIME_PARAMS@@
       "
 
     trap on_exit EXIT
