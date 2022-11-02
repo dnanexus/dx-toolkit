@@ -192,6 +192,7 @@ nf_task_exit() {
 
 nf_task_entry() {
   # enable debugging mode
+  echo "in the entry task..."
   [[ $NXF_DEBUG ]] && set -x
   if [ -n "$docker_creds" ]; then
     dx-registry-login
@@ -200,5 +201,9 @@ nf_task_entry() {
   trap nf_task_exit EXIT
   # run the task
   dx cat "${cmd_launcher_file}" > .command.run
-  bash .command.run > >(tee .command.log) 2>&1 || true
+  set +e
+  bash .command.run > >(tee .command.log) 2>&1
+  echo "$? was the result of the bash command."
+  set -e
+
 }
