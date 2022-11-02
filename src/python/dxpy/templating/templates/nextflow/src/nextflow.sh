@@ -151,6 +151,7 @@ main() {
     cd /home/dnanexus/out/output_files
     
     generate_runtime_config
+    set +e
     nextflow \
       ${TRACE_CMD} \
       $nextflow_top_level_opts \
@@ -163,7 +164,7 @@ main() {
       $nextflow_pipeline_params \
       @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
     echo "$? was the exit code of the main job"
-    
+    set -e
     # forwarding nextflow log file to job monitor
     set +x
     if [[ $debug == true ]] ; then
