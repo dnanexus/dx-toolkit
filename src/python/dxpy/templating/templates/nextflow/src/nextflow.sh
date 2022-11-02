@@ -162,6 +162,7 @@ main() {
       $nextflow_run_opts \
       $nextflow_pipeline_params \
       @@REQUIRED_RUNTIME_PARAMS@@ & NXF_EXEC_PID=$!
+    echo "$? was the exit code of the main job"
     
     # forwarding nextflow log file to job monitor
     set +x
