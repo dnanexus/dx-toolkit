@@ -74,15 +74,25 @@ on_exit() {
   dx set_properties "$DX_JOB_ID" "no_future_resume=$no_future_resume"
   if [[ $no_future_resume == false ]]; then
     echo "=== Execution complete — uploading Nextflow cache and history file"
-
-    # upload local workdir (when executor is overriden to 'local')
-    # otherwise files in workdir $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/ are uploaded by the plugin after each subjob
+    # upload local workdir (only when executor is overriden to 'local')
+    # otherwise files in workdir are uploaded by the plugin after each subjob
     if [[ $NXF_WORK != dx* && -d $NXF_WORK && -n "$(ls -A $NXF_WORK)" ]]; then
-      ln -s $NXF_WORK ./work
-      WORKDIR_ID=$(dx upload ./work --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/" --no-progress --brief --wait -p -r) &&
-        echo "Upload local work directory of current session to folder: $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work" &&
+      if [[ $HAS_LOCAL_WORKDIR == true ]]; then
+        ln -rs ${PREV_JOB_WORKDIR%/}/* -t $NXF_WORK
+      fi
+      dx upload $NXF_WORK --path "$DX_PROJECT_CONTEXT_ID:/${NXF_WORK#*/}" --no-progress --brief --wait -p -r &&
+        echo "Upload local work directory of current session to folder: $DX_PROJECT_CONTEXT_ID:$NXF_WORK" &&
         rm -f NXF_WORK ||
         echo "Failed to upload local work directory of current session $NXF_UUID"
+    else
+      DX_WORK=${NXF_WORK#'dx://'}
+      if [[ $HAS_LOCAL_WORKDIR == true ]]; then
+        for name in $(eval "ls -1d $PREV_JOB_WORKDIR");do
+          dx rm -r -f "$DX_WORK/$name" 2>&1 >/dev/null || true
+          dx upload "$name" --path "$DX_WORK/$name" --no-progress --brief --wait -p -r  
+        done
+        echo "Upload resumed local work directory of resumed session to folder: $NXF_WORK"
+      fi
     fi
 
     # only upload cache.tar(cache and history)
@@ -188,18 +198,22 @@ restore_cache_and_history() {
   [[ -s ".nextflow/history" ]] || dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
   rm cache.tar
 
+  # if previous job is run by local executor, resume the previous workdir
   PREV_JOB_WORKDIR=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.workdir' )
   if [[ $PREV_JOB_WORKDIR != dx* ]]; then
-    # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work --> ./work
-    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work/" --no-progress -rf 2>&1) ||
+    # download $DX_PROJECT_CONTEXT_ID:/${PREV_JOB_WORKDIR#*/} --> ${PREV_JOB_WORKDIR}
+    # https://jira.internal.dnanexus.com/browse/APPS-1403
+    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/${PREV_JOB_WORKDIR#*/}" --no-progress -rf 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found at $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work/."
+        dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found at $DX_PROJECT_CONTEXT_ID:/${PREV_JOB_WORKDIR#*/}"
       else
         dx-jobutil-report-error "$ret"
       fi
     }
-    ln -s ./work "$PREV_JOB_WORKDIR"
+    # restore previous workdir
+    ln -rs "${PREV_JOB_WORKDIR#*/}" "${PREV_JOB_WORKDIR%/}"
+    HAS_LOCAL_WORKDIR=true
   fi
 
   echo "Will resume from previous session: $PREV_JOB_SESSION_ID"
