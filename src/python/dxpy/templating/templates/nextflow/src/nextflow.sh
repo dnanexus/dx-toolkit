@@ -138,6 +138,7 @@ restore_cache_and_history() {
     PREV_JOB_SESSION_ID=$resume_session
     PREV_JOB_DESC=$(dx api system findExecutions \
     '{"state":["done","failed"],
+    "created": {"after": 1.5552e10}, # 6M in milliseconds: 6 * 1000*60*60*24*30
     "project":"'$DX_PROJECT_CONTEXT_ID'",
     "limit":1,
     "includeSubjobs":false,
@@ -150,6 +151,7 @@ restore_cache_and_history() {
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
     PREV_JOB_DESC=$(dx api system findExecutions \
     '{"state":["done","failed"],
+    "created": {"after": 1.5552e10}, # 6M in milliseconds: 6 * 1000*60*60*24*30
     "project":"'$DX_PROJECT_CONTEXT_ID'",
     "limit":1,
     "includeSubjobs":false,
@@ -165,7 +167,7 @@ restore_cache_and_history() {
       dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
   fi
   if [[ -z $PREV_JOB_DESC ]]; then
-    dx-jobutil-report-error "Cannot find a resumable session run by $EXECUTABLE_NAME."
+    dx-jobutil-report-error "Cannot find any matching session ID run by $EXECUTABLE_NAME in $DX_PROJECT_CONTEXT_ID in the past 6 months. Please provides exact resume_session for resume."
   fi
 
   # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar --> .nextflow/cache.tar
