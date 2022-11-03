@@ -67,8 +67,8 @@
   ],
   "outputSpec": [
     {
-      "name": "output_files",
-      "label": "Output files of Nextflow pipeline",
+      "name": "published_files",
+      "label": "Published files of Nextflow pipeline",
       "class": "array:file",
       "optional": true
     },
