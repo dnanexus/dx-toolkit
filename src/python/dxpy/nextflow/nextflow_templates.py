@@ -78,7 +78,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
             '''% (i['name'], i['name'], value)
         # required inputs need to be added as runtime pipeline params
         else:
-            # required_inputs variable is initialized nextflow.sh script
+            # required_inputs variable is initialized in the nextflow.sh script template
             required_runtime_params = required_runtime_params + '''
             if [ -n "${}" ]; then
                 required_inputs="${{required_inputs}} --{}=${}" 
