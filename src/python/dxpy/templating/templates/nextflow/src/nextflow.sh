@@ -201,13 +201,14 @@ restore_cache_and_history() {
     ln -s ./work "$PREV_JOB_WORKDIR"
   fi
 
+  # resume succeeded, set session id and add it to job properties
   echo "Will resume from previous session: $PREV_JOB_SESSION_ID"
   NXF_UUID=$PREV_JOB_SESSION_ID
   RESUME_CMD="-resume $NXF_UUID"
   dx tag "$DX_JOB_ID" "resumed"
 }
 
- set_workdir() {
+ get_runtime_workdir() {
   arr=($(echo "$nextflow_run_opts" | tr -s ' ' '\n'))
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
@@ -330,7 +331,7 @@ main() {
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
   # set workdir from user specified nextflow_run_opts or use default
-  set_workdir
+  get_runtime_workdir
   export NXF_WORK
   dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
 
