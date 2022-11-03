@@ -108,25 +108,25 @@ on_exit() {
     # dx rm -r -f "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID" 2>&1 >/dev/null || true
   fi
 
-  # remove .nextflow from the current folder /home/dnanexus/published_files
+  # remove .nextflow from the current folder /home/dnanexus/nextflow_playground
   rm -rf .nextflow
   rm nxf_runtime.config
 
   # try uploading the log file if it is not empty
+  mkdir -p /home/dnanexus/out/nextflow_log
   if [[ -s $LOG_NAME ]]; then
-    mkdir ../nextflow_log
-    mv "$LOG_NAME" "../nextflow_log/$LOG_NAME" || true
+    mv "$LOG_NAME" "/home/dnanexus/out/nextflow_log/$LOG_NAME" || true
   else
     echo "No nextflow log file available."
   fi
 
   # upload the log file and published files if any
   cd ..
-  if [[ -d ./nextflow_log || -n "$(ls -A ./published_files)" ]]; then
-    dx-upload-all-outputs --parallel || true
-  else
-    echo "No log file or published files has been generated."
+  if [[ -n "$(ls -A nextflow_playground)" ]]; then
+    mv nextflow_playground /home/dnanexus/out/published_files
   fi
+
+  dx-upload-all-outputs --parallel || echo "No log file or published files has been generated."
   # done
   exit $ret
 }
@@ -299,9 +299,9 @@ main() {
   export NXF_EXECUTOR=dnanexus
   export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
 
-  # use /home/dnanexus/out/published_files as the temporary nextflow execution folder
-  mkdir -p /home/dnanexus/out/published_files
-  cd /home/dnanexus/out/published_files
+  # use /home/dnanexus/nextflow_playground as the temporary nextflow execution folder
+  mkdir -p /home/dnanexus/nextflow_playground
+  cd /home/dnanexus/nextflow_playground
   mkdir -p .nextflow/cache
 
   # parse dnanexus-job.json to get job output destination
