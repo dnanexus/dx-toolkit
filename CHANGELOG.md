@@ -18,6 +18,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `psutil` version to 5.9.3 which includes wheelfiles for macOS arm64
 * Set ignore reuse in the nextflow applet template
+* Set `restartableEntryPoints` to "all" in the nextflow pipeline applet's `runsSpec`
+
 
 ## [332.0] - beta
 
