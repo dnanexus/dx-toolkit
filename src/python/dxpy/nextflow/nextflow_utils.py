@@ -81,6 +81,8 @@ def get_nextflow_assets(region):
         "aws:eu-west-2-g": ("record-GGbJyxpKkJJFB2PF8XjBpV00", "record-GGbVBv2KqxX767f98FXG6p0Q")
     }
 
+
+
     try:
         dxpy.describe(prod_assets[region][0], fields={})
         return prod_assets[region]
