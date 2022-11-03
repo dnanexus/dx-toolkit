@@ -60,6 +60,7 @@
   ],
   "runSpec": {
     "headJobOnDemand": true,
+    "restartableEntryPoints": "all",
     "interpreter": "bash",
     "execDepends": [],
     "distribution": "Ubuntu",
