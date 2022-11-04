@@ -1,3 +1,13 @@
+dx-toolkit (0.333.0) trusty; urgency=medium
+
+  * Added: `nextflow run` command in the log for debugging
+  * Fixed: Overriding config arguments with an empty string for nextflow pipelines
+  * Changed: dxpy psutil requirement to >= 5.9.3 for macOS arm
+  * Changed: Set `ignoreReuse` in the nextflow applet template
+  * Set `restartableEntryPoints` to 'all' in the nextflow pipele applet's runSpec 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 04 Nov 2022 14:58:04 +0000
+
 dx-toolkit (0.332.0) trusty; urgency=medium
 
   * Added: A warning for `dx build` when app(let)'s name is set both in --extra-args and --destination
