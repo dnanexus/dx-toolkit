@@ -78,9 +78,9 @@ on_exit() {
     # otherwise files in workdir are uploaded by the plugin after each subjob
     if [[ $NXF_WORK != dx* && -d $NXF_WORK && -n "$(ls -A $NXF_WORK)" ]]; then
       REAL_LOCAL_WORKDIR=$(realpath --relative-to=/ $NXF_WORK)
-      dx rm -r "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" 2>&1 >/dev/null || true
-      dx upload $NXF_WORK --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" --no-progress --brief --wait -p -r &&
-        echo "Upload local work directory of current session to folder: $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" ||
+      dx rm -r "$DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" 2>&1 >/dev/null || true
+      dx upload $NXF_WORK --path "$DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" --no-progress --brief --wait -p -r &&
+        echo "Upload local work directory of current session to folder: $DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" ||
         echo "Failed to upload local work directory of current session $NXF_UUID"
     fi
     rm -rf $NXF_WORK || true
@@ -91,9 +91,9 @@ on_exit() {
     if [[ -n "$(ls -A .nextflow)" ]]; then
       tar -cf cache.tar .nextflow
       # remove any existing cache.tar with the same session id
-      dx rm "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" 2>&1 >/dev/null || true
+      dx rm "$DX_CACHEDIR/$NXF_UUID/cache.tar" 2>&1 >/dev/null || true
 
-      CACHE_ID=$(dx upload "cache.tar" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
+      CACHE_ID=$(dx upload "cache.tar" --path "$DX_CACHEDIR/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
         echo "Upload cache of current session as file: $CACHE_ID" &&
         rm -f cache.tar ||
         echo "Failed to upload cache of current session $NXF_UUID"
@@ -171,12 +171,12 @@ restore_cache_and_history() {
   [[ -n $PREV_JOB_DESC ]] ||
     dx-jobutil-report-error "Cannot find any matching session ID run by $EXECUTABLE_NAME in $DX_PROJECT_CONTEXT_ID in the past 6 months. Please provides exact resume_session for resume."
 
-  # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar --> .nextflow/cache.tar
+  # download $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar --> .nextflow/cache.tar
   local ret
-  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar" --no-progress -f -o cache.tar 2>&1) ||
+  ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar" --no-progress -f -o cache.tar 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "No previous execution cache of session $PREV_JOB_SESSION_ID was found as $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar."
+        dx-jobutil-report-error "No previous execution cache of session $PREV_JOB_SESSION_ID was found as $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar."
       else
         dx-jobutil-report-error "$ret"
       fi
@@ -195,9 +195,9 @@ restore_cache_and_history() {
   # if previous job is run by local executor, resume the previous workdir
   PREV_JOB_WORKDIR=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.workdir')
   if [[ $PREV_JOB_WORKDIR != dx* ]]; then
-    # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/local_workdir and restore ${PREV_JOB_WORKDIR}
+    # download $DX_CACHEDIR/$PREV_JOB_SESSION_ID/local_workdir and restore ${PREV_JOB_WORKDIR}
     # https://jira.internal.dnanexus.com/browse/APPS-1403
-    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/local_workdir/" --no-progress -rf 2>&1) ||
+    ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/local_workdir/" --no-progress -rf 2>&1) ||
       {
         if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
           dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found at $DX_PROJECT_CONTEXT_ID:/${PREV_JOB_WORKDIR#*/}"
@@ -233,15 +233,14 @@ get_runtime_workdir() {
     *) ;;
     esac
   done
-
 }
 
 update_project_history() {
   local ret
-  ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress -f -o .nextflow/prev_history 2>&1 >/dev/null) ||
+  ret=$(dx download "$DX_CACHEDIR/history" --no-progress -f -o .nextflow/prev_history 2>&1 >/dev/null) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        echo "No history file found as $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history"
+        echo "No history file found as $DX_CACHEDIR/history"
       else
         dx-jobutil-report-error "$ret"
       fi
@@ -251,14 +250,14 @@ update_project_history() {
     # merge the nonempty project nextflow history with the current history
     sort -mu ".nextflow/prev_history" ".nextflow/history" -o ".nextflow/latest_history"
     # remove previous project history
-    dx rm "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" 2>&1 >/dev/null || true
+    dx rm "$DX_CACHEDIR/history" 2>&1 >/dev/null || true
     rm .nextflow/prev_history
   else
     # there is no project nextflow history
     cp ".nextflow/history" ".nextflow/latest_history"
   fi
   # upload the new project history
-  dx upload ".nextflow/latest_history" --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/history" --no-progress --brief --wait -p -r ||
+  dx upload ".nextflow/latest_history" --path "$DX_CACHEDIR/history" --no-progress --brief --wait -p -r ||
     echo "Failed to update nextflow history in $DX_PROJECT_CONTEXT_ID"
   rm .nextflow/latest_history
 }
@@ -318,6 +317,7 @@ main() {
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
   dx set_properties "$DX_JOB_ID" "nextflow_executable=$EXECUTABLE_NAME"
 
+  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db
   # restore cache and set/create current session id
   RESUME_CMD=""
   if [[ $resume == true ]]; then
