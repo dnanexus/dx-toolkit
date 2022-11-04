@@ -80,10 +80,10 @@ on_exit() {
       REAL_LOCAL_WORKDIR=$(realpath --relative-to=/ $NXF_WORK)
       dx rm -r "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" 2>&1 >/dev/null || true
       dx upload $NXF_WORK --path "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" --no-progress --brief --wait -p -r &&
-        echo "Upload local work directory of current session to folder: $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" &&
-        rm -rf $NXF_WORK ||
+        echo "Upload local work directory of current session to folder: $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" ||
         echo "Failed to upload local work directory of current session $NXF_UUID"
     fi
+    rm -rf $NXF_WORK || true
     rm -rf $PREV_JOB_WORKDIR || true
 
     # only upload cache.tar(cache and history)
