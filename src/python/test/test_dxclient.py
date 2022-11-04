@@ -9946,6 +9946,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
                     break
             self.assertTrue(seenResources)
 
+    @unittest.skip("skipping per DEVEX-2161")
     def test_get_applet_field_cleanup(self):
         # TODO: not sure why self.assertEqual doesn't consider
         # assertEqual to pass unless the strings here are unicode strings

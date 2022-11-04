@@ -2539,6 +2539,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
         res = dxpy.DXHTTPRequest("/system/whoami", {}, want_full_response=True)
         self.assertTrue("CONTENT-type" in res.headers)
 
+    @unittest.skip("skipping per DEVEX-2161")
     def test_ssl_options(self):
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=False)
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where())
