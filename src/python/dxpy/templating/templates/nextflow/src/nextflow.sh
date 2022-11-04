@@ -185,8 +185,10 @@ restore_cache_and_history() {
   # 1. cache folder .nextflow/cache/$PREV_JOB_SESSION_ID
   # 2. history of previous session .nextflow/history
   tar -xf cache.tar
-  [[ -n "$(ls -A .nextflow/cache/$PREV_JOB_SESSION_ID)" ]] || dx-jobutil-report-error "Previous execution cache of session $NXF_UUID is empty."
-  [[ -s ".nextflow/history" ]] || dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
+  [[ -n "$(ls -A .nextflow/cache/$PREV_JOB_SESSION_ID)" ]] ||
+    dx-jobutil-report-error "Previous execution cache of session $NXF_UUID is empty."
+  [[ -s ".nextflow/history" ]] ||
+    dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
   rm cache.tar
 
   # if previous job is run by local executor, resume the previous workdir
