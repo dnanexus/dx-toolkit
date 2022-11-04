@@ -300,7 +300,6 @@ main() {
   # set default NXF env constants
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
-  export NXF_EXECUTOR=dnanexus
   export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
 
   # use /home/dnanexus/nextflow_playground as the temporary nextflow execution folder
@@ -332,16 +331,30 @@ main() {
   export NXF_CACHE_MODE=LENIENT
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
+  # set default executor
+  if [[ -n $PREV_JOB_WORKDIR && $PREV_JOB_WORKDIR != dx* ]]; then
+    NXF_EXECUTOR=local
+  else
+    NXF_EXECUTOR=dnanexus
+  fi
   # get workdir from user specified nextflow_run_opts if any
   [[ -n $nextflow_run_opts ]] && get_runtime_workdir
   # no user specified workdir, set default
-  [[ -z $NXF_WORK ]] && [[ $no_future_resume == false ]] && NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/" ||
-    NXF_WORK="dx://$DX_WORKSPACE_ID:/scratch/"
+  if [[ -z $NXF_WORK ]]; then
+    if [[ $NXF_EXECUTOR == 'local' ]]; then
+      NXF_WORK='local_workdir'
+    elif [[ $no_future_resume == false ]]; then
+      NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
+    else
+      NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
+    fi
+  else
   # validate workdir and previous workdir are in the same filesystem
-  [[ -z $PREV_JOB_WORKDIR ]] ||
-    [[ $PREV_JOB_WORKDIR == dx* && $NXF_WORK == dx* ]] ||
-    [[ $PREV_JOB_WORKDIR != dx* && $NXF_WORK != dx* ]] ||
-    dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
+    [[ $NXF_EXECUTOR == 'local' && $NXF_WORK != dx* ]] ||
+    [[ $NXF_EXECUTOR == 'dnanexus' && $NXF_WORK == dx* ]] ||
+    dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same $NXF_EXECUTOR file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
+  fi
+  export NXF_EXECUTOR
   export NXF_WORK
   dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
 
