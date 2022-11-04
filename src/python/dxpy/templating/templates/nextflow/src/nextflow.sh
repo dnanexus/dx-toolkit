@@ -312,12 +312,9 @@ main() {
   mkdir -p .nextflow/cache
 
   # parse dnanexus-job.json to get job output destination
-  OUT_PROJECT=$(jq -r .project /home/dnanexus/dnanexus-job.json)
-  OUT_FOLDER=$(jq -r .folder /home/dnanexus/dnanexus-job.json)
-  OUTDIR="$OUT_PROJECT:${OUT_FOLDER#/}"
+  DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
   # initiate log file
-  LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
-  DX_LOG=${log_file:-"$OUTDIR/$LOG_NAME"}
+  LOG_NAME="nextflow-$DX_JOB_ID.log"
 
   # add current executable name to job properties:
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
@@ -375,10 +372,14 @@ main() {
 
   trap on_exit EXIT
   echo "============================================================="
-  echo "=== NF workdir  : ${NXF_WORK}"
-  echo "=== NF log file : ${DX_LOG}"
-  echo "=== NF cache    : $DX_PROJECT_CONTEXT_ID:/.nextflow/$NXF_UUID/cache/"
-  echo "=== NF command  :" $NEXTFLOW_CMD
+  echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
+  echo "=== NF session ID   : ${NXF_UUID}"
+  echo "=== NF log file     : ${DX_JOB_OUTDIR}/${LOG_NAME}"
+  if [[ $no_future_resume == false ]]; then
+  echo "=== NF workDir      : ${NXF_WORK}"
+  echo "=== NF cache folder : ${DX_CACHEDIR}/${NXF_UUID}/"
+  fi
+  echo "=== NF command      :" $NEXTFLOW_CMD
   echo "============================================================="
 
   $NEXTFLOW_CMD &
