@@ -334,6 +334,13 @@ main() {
 
   # set workdir from user specified nextflow_run_opts or use default
   [[ -n $nextflow_run_opts ]] && get_runtime_workdir
+
+  # validate workdir
+  [[ -z $PREV_JOB_WORKDIR ]] ||
+    [[ $PREV_JOB_WORKDIR == dx* && $NXF_WORK == dx* ]] ||
+    [[ $PREV_JOB_WORKDIR != dx* && $NXF_WORK != dx* ]] ||
+    dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
+
   export NXF_WORK
   dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
 
