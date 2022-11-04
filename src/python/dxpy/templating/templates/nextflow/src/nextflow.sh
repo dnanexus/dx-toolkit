@@ -124,8 +124,9 @@ on_exit() {
 
   # upload the log file and published files if any
   cd ..
-  if [[ -n "$(ls -A nextflow_playground)" ]]; then
-    mv nextflow_playground /home/dnanexus/out/published_files
+  if [[ -n "$(ls -A $TMP_WORKDIR)" ]]; then
+    mv $TMP_WORKDIR /home/dnanexus/out/published_files
+    ls /home/dnanexus/out/published_files -AlR
   fi
 
   dx-upload-all-outputs --parallel || echo "No log file or published files has been generated."
@@ -312,6 +313,8 @@ main() {
   # use /home/dnanexus/nextflow_playground as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_playground
   cd /home/dnanexus/nextflow_playground
+  TMP_WORKDIR=$(sudo mktemp -d --tmpdir=. -t nf-XXXXXXXX)
+  cd $TMP_WORKDIR
   mkdir -p .nextflow/cache
 
   # parse dnanexus-job.json to get job output destination
