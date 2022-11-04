@@ -333,20 +333,16 @@ main() {
   export NXF_CACHE_MODE=LENIENT
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
-  # set workdir from user specified nextflow_run_opts or use default
+  # get workdir from user specified nextflow_run_opts if any
   [[ -n $nextflow_run_opts ]] && get_runtime_workdir
-
-  # validate workdir
-    DX_WORK="$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/"
-  if [[ -z $PREV_JOB_WORKDIR ]]; then
-    NXF_WORK=${NXF_WORK:-"dx://$DX_WORK"}
-  elif [[ -n $NXF_WORK ]]; then
+  # no user specified workdir, set default
+  [[ -z $NXF_WORK ]] && [[ $no_future_resume == false ]] && NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/" ||
+    NXF_WORK="dx://$DX_WORKSPACE_ID:/scratch/"
+  # validate workdir and previous workdir are in the same filesystem
+  [[ -z $PREV_JOB_WORKDIR ]] ||
     [[ $PREV_JOB_WORKDIR == dx* && $NXF_WORK == dx* ]] ||
     [[ $PREV_JOB_WORKDIR != dx* && $NXF_WORK != dx* ]] ||
     dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
-  else
-    [[ $PREV_JOB_WORKDIR == dx* ]] && NXF_WORK=dx://$DX_WORK || NXF_WORK="work"
-  fi
   export NXF_WORK
   dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
 
