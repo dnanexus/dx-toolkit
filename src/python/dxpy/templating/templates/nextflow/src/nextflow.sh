@@ -231,7 +231,6 @@ get_runtime_workdir() {
       break
       ;;
     *) ;;
-
     esac
   done
 
@@ -307,7 +306,7 @@ main() {
   # use /home/dnanexus/nextflow_playground as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_playground
   cd /home/dnanexus/nextflow_playground
-  TMP_WORKDIR=$(sudo mktemp -d --tmpdir=. -t nf-XXXXXXXX)
+  TMP_WORKDIR=$(mktemp -d --tmpdir=. -t nf-XXXXXXXX)
   cd $TMP_WORKDIR
   mkdir -p .nextflow/cache
 
@@ -372,8 +371,8 @@ main() {
   echo "=== NF session ID   : ${NXF_UUID}"
   echo "=== NF log file     : ${DX_JOB_OUTDIR}/${LOG_NAME}"
   if [[ $no_future_resume == false ]]; then
-  echo "=== NF workDir      : ${NXF_WORK}"
-  echo "=== NF cache folder : ${DX_CACHEDIR}/${NXF_UUID}/"
+    echo "=== NF workDir      : ${NXF_WORK}"
+    echo "=== NF cache folder : ${DX_CACHEDIR}/${NXF_UUID}/"
   fi
   echo "=== NF command      :" $NEXTFLOW_CMD
   echo "============================================================="
