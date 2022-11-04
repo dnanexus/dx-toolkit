@@ -84,6 +84,7 @@ on_exit() {
         rm -rf $NXF_WORK ||
         echo "Failed to upload local work directory of current session $NXF_UUID"
     fi
+    rm -rf $PREV_JOB_WORKDIR || true
 
     # only upload cache.tar(cache and history)
     # wrap cache folder and history and upload cache.tar
