@@ -223,11 +223,11 @@ get_runtime_workdir() {
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
     -w=* | -work-dir=*)
-      USER_WORKDIR="${i#*=}"
+      NXF_WORK="${i#*=}"
       break
       ;;
     -w | -work-dir)
-      USER_WORKDIR=${arr[i + 1]}
+      NXF_WORK=${arr[i + 1]}
       break
       ;;
     *) ;;
@@ -235,12 +235,6 @@ get_runtime_workdir() {
     esac
   done
 
-  if [[ -n $USER_WORKDIR ]]; then
-    NXF_WORK=$USER_WORKDIR
-  else
-    DX_WORK="$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/"
-    NXF_WORK=dx://$DX_WORK
-  fi
 }
 
 update_project_history() {
@@ -346,11 +340,16 @@ main() {
   [[ -n $nextflow_run_opts ]] && get_runtime_workdir
 
   # validate workdir
-  [[ -z $PREV_JOB_WORKDIR ]] ||
+    DX_WORK="$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID/work/"
+  if [[ -z $PREV_JOB_WORKDIR ]]; then
+    NXF_WORK=${NXF_WORK:-"dx://$DX_WORK"}
+  elif [[ -n $NXF_WORK ]]; then
     [[ $PREV_JOB_WORKDIR == dx* && $NXF_WORK == dx* ]] ||
     [[ $PREV_JOB_WORKDIR != dx* && $NXF_WORK != dx* ]] ||
     dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
-
+  else
+    [[ $PREV_JOB_WORKDIR == dx* ]] && NXF_WORK=dx://$DX_WORK || NXF_WORK="work"
+  fi
   export NXF_WORK
   dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
 
