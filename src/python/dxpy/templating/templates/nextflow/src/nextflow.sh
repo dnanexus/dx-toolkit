@@ -137,8 +137,8 @@ restore_cache_and_history() {
     # get session id if specified
     PREV_JOB_SESSION_ID=$resume_session
     PREV_JOB_DESC=$(dx api system findExecutions \
-    '{"state":["done","failed"],
-    "created": {"after": 1.5552e10}, # 6M in milliseconds: 6 * 1000*60*60*24*30
+      '{"state":["done","failed"],
+    "created": {"after": 1.5552e10},
     "project":"'$DX_PROJECT_CONTEXT_ID'",
     "limit":1,
     "includeSubjobs":false,
@@ -150,8 +150,8 @@ restore_cache_and_history() {
     # find the latest job run by applet with the same name
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
     PREV_JOB_DESC=$(dx api system findExecutions \
-    '{"state":["done","failed"],
-    "created": {"after": 1.5552e10}, # 6M in milliseconds: 6 * 1000*60*60*24*30
+      '{"state":["done","failed"],
+    "created": {"after": 1.5552e10},
     "project":"'$DX_PROJECT_CONTEXT_ID'",
     "limit":1,
     "includeSubjobs":false,
@@ -210,20 +210,20 @@ restore_cache_and_history() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
- get_runtime_workdir() {
+get_runtime_workdir() {
   arr=($(echo "$nextflow_run_opts" | tr -s ' ' '\n'))
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
-      -w=*|-work-dir=*)
-        USER_WORKDIR="${i#*=}"
-        break
-        ;;
-      -w|-work-dir)
-        USER_WORKDIR=${arr[i+1]}
-        break
-        ;;
-      *)
-        ;;
+    -w=* | -work-dir=*)
+      USER_WORKDIR="${i#*=}"
+      break
+      ;;
+    -w | -work-dir)
+      USER_WORKDIR=${arr[i + 1]}
+      break
+      ;;
+    *) ;;
+
     esac
   done
 
@@ -315,7 +315,7 @@ main() {
   LOG_NAME="nextflow-$(date +"%y%m%d-%H%M%S").log"
   DX_LOG=${log_file:-"$OUTDIR/$LOG_NAME"}
 
-  # add current executable name to job properties: 
+  # add current executable name to job properties:
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
   dx set_properties "$DX_JOB_ID" "nextflow_executable=$EXECUTABLE_NAME"
 
@@ -333,7 +333,7 @@ main() {
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
   # set workdir from user specified nextflow_run_opts or use default
-  get_runtime_workdir
+  [[ -n $nextflow_run_opts ]] && get_runtime_workdir
   export NXF_WORK
   dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
 
