@@ -30,6 +30,7 @@ import dxpy
 from dxpy.exceptions import err_exit
 from dxpy.utils import describe
 from dxpy_testutil import (chdir, run, TEST_ISOLATED_ENV)
+from dxpy.compat import USING_PYTHON2
 
 def setUpTempProject(thing):
     thing.old_workspace_id = dxpy.WORKSPACE_ID
@@ -75,7 +76,7 @@ def md5_checksum(filename):
     result = result.decode("ascii")
     return result
 
-
+@unittest.skipIf(USING_PYTHON2, 'Python 2 image does not contain aria2c')
 class TestSymlink(unittest.TestCase):
     def setUp(self):
         self.wd = tempfile.mkdtemp()
