@@ -163,12 +163,10 @@ restore_cache_and_history() {
     PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
   fi
 
-  if [[ ! "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]]; then
-      dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
-  fi
-  if [[ -z $PREV_JOB_DESC ]]; then
+  [[ "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]] ||
+    dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
+  [[ -n $PREV_JOB_DESC ]] ||
     dx-jobutil-report-error "Cannot find any matching session ID run by $EXECUTABLE_NAME in $DX_PROJECT_CONTEXT_ID in the past 6 months. Please provides exact resume_session for resume."
-  fi
 
   # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/cache.tar --> .nextflow/cache.tar
   local ret
