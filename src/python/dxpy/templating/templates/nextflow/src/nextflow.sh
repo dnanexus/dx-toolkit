@@ -189,18 +189,23 @@ restore_cache_and_history() {
   [[ -s ".nextflow/history" ]] || dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
   rm cache.tar
 
-  PREV_JOB_WORKDIR=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.workdir' )
+  # if previous job is run by local executor, resume the previous workdir
+  PREV_JOB_WORKDIR=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.workdir')
   if [[ $PREV_JOB_WORKDIR != dx* ]]; then
-    # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work --> ./work
-    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work/" --no-progress -rf 2>&1) ||
-    {
-      if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found at $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/work/."
-      else
-        dx-jobutil-report-error "$ret"
-      fi
-    }
-    ln -s ./work "$PREV_JOB_WORKDIR"
+    # download $DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/local_workdir and restore ${PREV_JOB_WORKDIR}
+    # https://jira.internal.dnanexus.com/browse/APPS-1403
+    ret=$(dx download "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$PREV_JOB_SESSION_ID/local_workdir/" --no-progress -rf 2>&1) ||
+      {
+        if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
+          dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found at $DX_PROJECT_CONTEXT_ID:/${PREV_JOB_WORKDIR#*/}"
+        else
+          dx-jobutil-report-error "$ret"
+        fi
+      }
+    # restore previous workdir
+    set +f
+    cp -r local_workdir/* / && rm -r local_workdir
+    set -f
   fi
 
   # resume succeeded, set session id and add it to job properties
