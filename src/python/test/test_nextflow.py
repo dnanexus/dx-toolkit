@@ -220,7 +220,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
     def test_dx_build_nextflow_from_repository_destination(self):
         hello_repo_url = "https://github.com/nextflow-io/hello"
         folder = "/test_dx_build_nextflow_from_repository_destination/{}".format(str(uuid.uuid4().hex))
-        run("dx mkdir {}".format(folder))
+        run("dx mkdir -p {}".format(folder))
         applet_json = run(
             "dx build --nextflow --repository '{}' --brief --destination {}".format(hello_repo_url, folder)).strip()
         applet_id = json.loads(applet_json).get("id")
