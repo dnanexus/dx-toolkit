@@ -19,7 +19,7 @@ from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 
-def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, brief=False, extra_args={}):
+def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, brief=False, destination=None, extra_args={}):
     """
     :param repository: URL to a Git repository
     :type repository: string
@@ -58,10 +58,9 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
         input_hash["config_profile"] = profile
     if git_creds:
         input_hash["github_credentials"] = parse_obj(git_creds, "file")
-    if extra_args.get("destination"):
-        build_project_id, build_folder, _ = try_call(resolve_existing_path,
-                                                     args.folder,
-                                                     expected='folder')
+    if destination:
+        build_project_id, build_folder, _ = try_call(resolve_existing_path, destination, expected='folder')
+
     print(build_project_id)
     print(build_folder)
     print(extra_args)
