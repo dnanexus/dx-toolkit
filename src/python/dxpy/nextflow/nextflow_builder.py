@@ -11,6 +11,9 @@ from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_s
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
                                           get_resources_dir_name)
 from dxpy.cli.exec_io import parse_obj
+from dxpy.cli import try_call
+from dxpy.utils.resolver import resolve_existing_path
+
 from distutils.dir_util import copy_tree
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
@@ -46,9 +49,7 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
         return dx_input
 
     build_project_id = dxpy.WORKSPACE_ID
-    if build_project_id is None:
-        parser.error(
-            "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
+    build_folder = None
     input_hash = parse_extra_args(extra_args)
     input_hash["repository_url"] = repository
     if tag:
@@ -57,9 +58,16 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
         input_hash["config_profile"] = profile
     if git_creds:
         input_hash["github_credentials"] = parse_obj(git_creds, "file")
+    if extra_args.get("destination"):
+        build_project_id, build_folder, _ = try_call(resolve_existing_path,
+                                                     args.folder,
+                                                     expected='folder')
+    if build_project_id is None:
+        parser.error(
+            "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
     nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id,
-                                                              destination=extra_args.get("destination", None),
+                                                              folder=build_folder,
                                                               name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
