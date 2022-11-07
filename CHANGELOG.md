@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * `nextflow run` command in the log for easier debugging
+* support for `--destination` in `nextflow build --repository`
 
 ### Fixed
 
