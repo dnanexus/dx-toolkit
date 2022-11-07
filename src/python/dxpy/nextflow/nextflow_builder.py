@@ -59,6 +59,7 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
         input_hash["github_credentials"] = parse_obj(git_creds, "file")
 
     nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id,
+                                                              destination=extra_args.get("destination", None),
                                                               name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
