@@ -62,6 +62,9 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
         build_project_id, build_folder, _ = try_call(resolve_existing_path,
                                                      args.folder,
                                                      expected='folder')
+    print(build_project_id)
+    print(build_folder)
+    print(extra_args)
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
