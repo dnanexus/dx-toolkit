@@ -8,8 +8,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* `nextflow run` command in the log for easier debugging
 * support for `--destination` in `nextflow build --repository`
+
+## [333.0] - 2022.11.04 - beta
+
+### Added
+
+* `nextflow run` command in the log for easier debugging
 
 ### Fixed
 
@@ -22,7 +27,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Set `restartableEntryPoints` to "all" in the nextflow pipeline applet's `runsSpec`
 
 
-## [332.0] - beta
+## [332.0] - 2022.11.04 - stable
 
 ### Added
 
@@ -37,7 +42,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 *  Help for building Nextflow pipelines is suppressed
 
-## [331.0] - 2022.10.44 - stable
+## [331.0] - 2022.10.14
 
 ### Added
 
