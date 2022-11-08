@@ -129,7 +129,7 @@ on_exit() {
     ls /home/dnanexus/out/published_files -AlR
   fi
 
-  dx-upload-all-outputs --parallel || echo "No log file or published files has been generated."
+  dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
   # done
   exit $ret
 }
