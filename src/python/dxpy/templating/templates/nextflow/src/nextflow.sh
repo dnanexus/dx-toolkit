@@ -76,10 +76,10 @@ on_exit() {
     echo "=== Execution complete — uploading Nextflow cache and history file"
     # upload local workdir (only when executor is overriden to 'local')
     # otherwise files in workdir are uploaded by the plugin after each subjob
-    if [[ $NXF_WORK != dx* && -d $NXF_WORK && -n "$(ls -A $NXF_WORK)" ]]; then
+    if [[ $NXF_EXECUTOR == 'local' && -d $NXF_WORK && -n "$(ls -A $NXF_WORK)" ]]; then
       REAL_LOCAL_WORKDIR=$(realpath --relative-to=/ $NXF_WORK)
       dx rm -r "$DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" 2>&1 >/dev/null || true
-      dx upload $NXF_WORK --path "$DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" --no-progress --brief --wait -p -r &&
+      dx upload $NXF_WORK --path "$DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" --no-progress --brief --wait -p -r 2>&1 >/dev/null &&
         echo "Upload local work directory of current session to folder: $DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" ||
         echo "Failed to upload local work directory of current session $NXF_UUID"
     fi
@@ -233,6 +233,26 @@ get_runtime_workdir() {
     *) ;;
     esac
   done
+
+  # no user specified workdir, set default
+  if [[ -z $NXF_WORK ]]; then
+    if [[ -n $PREV_JOB_WORKDIR && $PREV_JOB_WORKDIR != dx* ]]; then
+      NXF_WORK='/local_workdir'
+    else
+      if [[ $no_future_resume == false ]]; then
+        NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
+      else
+        NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
+      fi
+    fi
+  else
+    # validate workdir and previous workdir are in the same filesystem
+    [[ -z $PREV_JOB_WORKDIR ]] ||
+      [[ $PREV_JOB_WORKDIR != dx* && $NXF_WORK != dx* ]] ||
+      [[ $PREV_JOB_WORKDIR == dx* && $NXF_WORK == dx* ]] ||
+      dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same $NXF_EXECUTOR file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
+  fi
+  [[ $NXF_WORK != dx* ]] && NXF_EXECUTOR='local' || NXF_EXECUTOR='dnanexus'
 }
 
 update_project_history() {
@@ -321,9 +341,11 @@ main() {
   # restore cache and set/create current session id
   RESUME_CMD=""
   if [[ $resume == true ]]; then
-    restore_cache_and_history
-  elif [[ -n "$resume_session" ]]; then
-    dx-jobutil-report-error "Session was provided, but resume functionality was not allowed. Please set input 'resume' as true and try again."
+    if [[ -n "$resume_session" ]]; then
+      restore_cache_and_history
+    else
+      dx-jobutil-report-error "Session was provided, but resume functionality was not allowed. Please set input 'resume' as true and try again."
+    fi
   else
     NXF_UUID=$(uuidgen)
   fi
@@ -331,29 +353,7 @@ main() {
   export NXF_CACHE_MODE=LENIENT
   dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
-  # set default executor
-  if [[ -n $PREV_JOB_WORKDIR && $PREV_JOB_WORKDIR != dx* ]]; then
-    NXF_EXECUTOR=local
-  else
-    NXF_EXECUTOR=dnanexus
-  fi
-  # get workdir from user specified nextflow_run_opts if any
-  [[ -n $nextflow_run_opts ]] && get_runtime_workdir
-  # no user specified workdir, set default
-  if [[ -z $NXF_WORK ]]; then
-    if [[ $NXF_EXECUTOR == 'local' ]]; then
-      NXF_WORK='local_workdir'
-    elif [[ $no_future_resume == false ]]; then
-      NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
-    else
-      NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
-    fi
-  else
-  # validate workdir and previous workdir are in the same filesystem
-    [[ $NXF_EXECUTOR == 'local' && $NXF_WORK != dx* ]] ||
-    [[ $NXF_EXECUTOR == 'dnanexus' && $NXF_WORK == dx* ]] ||
-    dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same $NXF_EXECUTOR file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
-  fi
+  get_runtime_workdir
   export NXF_EXECUTOR
   export NXF_WORK
   dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
