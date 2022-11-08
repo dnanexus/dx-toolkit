@@ -382,10 +382,10 @@ main() {
   echo "============================================================="
   echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
   echo "=== NF session ID   : ${NXF_UUID}"
-  echo "=== NF log file     : ${DX_JOB_OUTDIR}/${LOG_NAME}"
+  echo "=== NF log file     : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
   if [[ $no_future_resume == false ]]; then
     echo "=== NF workDir      : ${NXF_WORK}"
-    echo "=== NF cache folder : ${DX_CACHEDIR}/${NXF_UUID}/"
+    echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
   echo "=== NF command      :" $NEXTFLOW_CMD
   echo "============================================================="
