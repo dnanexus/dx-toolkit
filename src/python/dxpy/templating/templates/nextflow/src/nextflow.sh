@@ -211,6 +211,7 @@ nf_task_entry() {
   dx cat "${cmd_launcher_file}" > .command.run
   set +e
   bash .command.run > >(tee .command.log) 2>&1
-  export exit_code=$1
+  export exit_code=$?
+  echo $exit_code
   set -e
 }
