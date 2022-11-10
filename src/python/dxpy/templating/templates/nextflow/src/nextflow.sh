@@ -195,7 +195,7 @@ nf_task_exit() {
   fi
   # mark the job as successful in any case, real task
   # error code is managed by nextflow via .exitcode file
-  if [ -z ${exit_code} ]; then export exit_code=0;
+  if [ -z ${exit_code} ]; then export exit_code=0; fi
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
