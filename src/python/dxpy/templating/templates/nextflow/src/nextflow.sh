@@ -104,10 +104,8 @@ on_exit() {
   # no_future_resume is true
   # clean up files of this session
   else
-    echo "=== Execution complete — removing working files from workdir"
-    dx tag "$DX_JOB_ID" "no_future_resume"
+    echo "=== Execution complete — cache and working files will not be resumable"
     nextflow clean -f $NXF_UUID || true
-    # dx rm -r -f "$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db/$NXF_UUID" 2>&1 >/dev/null || true
   fi
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_playground
