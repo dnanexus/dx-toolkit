@@ -115,8 +115,8 @@ on_exit() {
   rm nxf_runtime.config
 
   # try uploading the log file if it is not empty
-  mkdir -p /home/dnanexus/out/nextflow_log
   if [[ -s $LOG_NAME ]]; then
+    mkdir -p /home/dnanexus/out/nextflow_log
     mv "$LOG_NAME" "/home/dnanexus/out/nextflow_log/$LOG_NAME" || true
   else
     echo "No nextflow log file available."
