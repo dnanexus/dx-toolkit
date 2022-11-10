@@ -46,13 +46,6 @@
     {
       "name": "resume",
       "label": "Resume",
-      "help": "Enables resume functionality in Nextflow pipelines. If true, will resume the previous session using the ID declared as resume_session.",
-      "class": "boolean",
-      "default": false
-    },
-    {
-      "name": "resume_session",
-      "label": "Resume Session",
       "help": "Unique ID of the previous session to be resumed. If not provided, will resume the last session run by an applet with the same name in the current project that runs during the last 6 months",
       "class": "string",
       "optional": true
