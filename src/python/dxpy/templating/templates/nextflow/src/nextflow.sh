@@ -71,7 +71,6 @@ on_exit() {
   update_project_history
 
   # backup cache
-  dx set_properties "$DX_JOB_ID" "preserve_cache=$preserve_cache"
   if [[ $preserve_cache == true ]]; then
     echo "=== Execution complete — caching current session to $DX_CACHEDIR/$NXF_UUID"
     # upload local workdir (only when executor is overriden to 'local')
@@ -332,7 +331,6 @@ main() {
 
   # add current executable name to job properties:
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
-  dx set_properties "$DX_JOB_ID" "nextflow_executable=$EXECUTABLE_NAME"
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db
   # restore cache and set/create current session id
@@ -344,12 +342,10 @@ main() {
   fi
   export NXF_UUID
   export NXF_CACHE_MODE=LENIENT
-  dx set_properties "$DX_JOB_ID" "session_id=$NXF_UUID"
 
   get_runtime_workdir
   export NXF_EXECUTOR
   export NXF_WORK
-  dx set_properties "$DX_JOB_ID" "workdir=$NXF_WORK"
 
   # for optional inputs, pass to the run command by using a runtime config
   # TODO: better handling inputs defined in nextflow_schema.json
@@ -358,6 +354,12 @@ main() {
 
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
+
+  if [[ $preserve_cache == true ]]; then
+    dx set_properties "$DX_JOB_ID" "nextflow_executable=$EXECUTABLE_NAME session_id=$NXF_UUID workdir=$NXF_WORK"
+  else
+    dx set_properties "$DX_JOB_ID" "preserve_cache=$preserve_cache"
+  fi
 
   # execution starts
   NEXTFLOW_CMD="nextflow \
