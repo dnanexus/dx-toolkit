@@ -133,40 +133,46 @@ on_exit() {
 
 restore_cache_and_history() {
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
-  if [[ -n "$resume_session" ]]; then
-    # get session id if specified
-    PREV_JOB_SESSION_ID=$resume_session
-    PREV_JOB_DESC=$(dx api system findExecutions \
-      '{"state":["done","failed"],
-    "created": {"after": 1.5552e10},
-    "project":"'$DX_PROJECT_CONTEXT_ID'",
-    "limit":1,
-    "includeSubjobs":false,
-    "describe":{"fields":{"properties":true}},
-    "properties":{"session_id":"'$PREV_JOB_SESSION_ID'",
-    "no_future_resume":"false",
-    "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
-  else
-    # find the latest job run by applet with the same name
-    echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
-    PREV_JOB_DESC=$(dx api system findExecutions \
-      '{"state":["done","failed"],
-    "created": {"after": 1.5552e10},
-    "project":"'$DX_PROJECT_CONTEXT_ID'",
-    "limit":1,
-    "includeSubjobs":false,
-    "describe":{"fields":{"properties":true}},
-    "properties":{"session_id":true,
-    "no_future_resume":"false",
-    "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
+  # if [[ -n "$resume_session" ]]; then
+  #   # get session id if specified
+  #   PREV_JOB_SESSION_ID=$resume_session
+  #   PREV_JOB_DESC=$(dx api system findExecutions \
+  #     '{"state":["done","failed"],
+  #   "created": {"after": 1.5552e10},
+  #   "project":"'$DX_PROJECT_CONTEXT_ID'",
+  #   "limit":1,
+  #   "includeSubjobs":false,
+  #   "describe":{"fields":{"properties":true}},
+  #   "properties":{"session_id":"'$PREV_JOB_SESSION_ID'",
+  #   "no_future_resume":"false",
+  #   "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
+  # else
+  #   # find the latest job run by applet with the same name
+  #   echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
+  #   PREV_JOB_DESC=$(dx api system findExecutions \
+  #     '{"state":["done","failed"],
+  #   "created": {"after": 1.5552e10},
+  #   "project":"'$DX_PROJECT_CONTEXT_ID'",
+  #   "limit":1,
+  #   "includeSubjobs":false,
+  #   "describe":{"fields":{"properties":true}},
+  #   "properties":{"session_id":true,
+  #   "no_future_resume":"false",
+  #   "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
 
-    PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
+  #   PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
+  # fi
+
+  if [[ $resume_session == job-* ]]; then
+    PREV_JOB_SESSION_ID=$(dx describe "$resume_session" --json | jq -r '.results[].describe.properties.session_id')
+  else
+    PREV_JOB_SESSION_ID=$resume_session
   fi
 
   [[ "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]] ||
     dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume_session' with a valid session ID and try again."
-  [[ -n $PREV_JOB_DESC ]] ||
-    dx-jobutil-report-error "Cannot find any matching session ID run by $EXECUTABLE_NAME in $DX_PROJECT_CONTEXT_ID in the past 6 months. Please provides exact resume_session for resume."
+  # [[ -n $PREV_JOB_DESC ]] ||
+  #   dx-jobutil-report-error "Cannot find any matching session ID run by $EXECUTABLE_NAME in $DX_PROJECT_CONTEXT_ID in the past 6 months. Please provides exact resume_session for resume."
 
   # download $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar --> .nextflow/cache.tar
   local ret
