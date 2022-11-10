@@ -216,7 +216,7 @@ restore_cache_and_history() {
 }
 
 get_runtime_workdir() {
-  arr=($(echo "$nextflow_run_opts" | tr -s ' ' '\n'))
+  IFS=" " read -r -a arr <<<"$nextflow_run_opts"
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
     -w=* | -work-dir=*)
