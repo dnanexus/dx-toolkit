@@ -252,8 +252,8 @@ get_runtime_workdir() {
 
   # no user specified workdir, set default
   if [[ -z $NXF_WORK ]]; then
-    if [[ -n $PREV_JOB_WORKDIR && $PREV_JOB_WORKDIR != dx* ]]; then
-      NXF_WORK='/local_workdir'
+    if [[ $NXF_EXECUTOR == 'local' ]]; then
+      NXF_WORK='/work'
     else
       if [[ $no_future_resume == false ]]; then
         NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
@@ -261,14 +261,14 @@ get_runtime_workdir() {
         NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
       fi
     fi
-  else
+  elif [[ -n $NXF_EXECUTOR ]]; then
     # validate workdir and previous workdir are in the same filesystem
-    [[ -z $PREV_JOB_WORKDIR ]] ||
-      [[ $PREV_JOB_WORKDIR != dx* && $NXF_WORK != dx* ]] ||
-      [[ $PREV_JOB_WORKDIR == dx* && $NXF_WORK == dx* ]] ||
+    [[ $NXF_EXECUTOR == 'local' && $NXF_WORK != dx* ]] ||
+      [[ $NXF_EXECUTOR == 'dnanexus' && $NXF_WORK == dx* ]] ||
       dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same $NXF_EXECUTOR file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
+  else
+    [[ $NXF_WORK != dx* ]] && NXF_EXECUTOR='local' || NXF_EXECUTOR='dnanexus'
   fi
-  [[ $NXF_WORK != dx* ]] && NXF_EXECUTOR='local' || NXF_EXECUTOR='dnanexus'
 }
 
 update_project_history() {
