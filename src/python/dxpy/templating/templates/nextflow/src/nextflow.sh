@@ -123,11 +123,8 @@ on_exit() {
   fi
 
   # upload the log file and published files if any
-  cd ..
-  if [[ -n "$(ls -A $TMP_WORKDIR)" ]]; then
-    mv $TMP_WORKDIR /home/dnanexus/out/published_files
-    ls /home/dnanexus/out/published_files -AlR
-  fi
+  mkdir -p /home/dnanexus/out/published_files
+  find . -type f -newermt "$BEGIN_TIME" -exec mv {} /home/dnanexus/out/published_files/ \;
 
   dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
   # done
@@ -362,6 +359,9 @@ main() {
   # TODO: better handling inputs defined in nextflow_schema.json
   RUNTIME_CONFIG_CMD=""
   generate_runtime_config
+
+  # set beginning timestamp
+  BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
   # execution starts
   NEXTFLOW_CMD="nextflow \
