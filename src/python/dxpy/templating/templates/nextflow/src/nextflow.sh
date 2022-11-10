@@ -176,13 +176,13 @@ restore_cache_and_history() {
   # [[ -n $PREV_JOB_DESC ]] ||
   #   dx-jobutil-report-error "Cannot find any matching session ID run by $EXECUTABLE_NAME in $DX_PROJECT_CONTEXT_ID in the past 6 months. Please provides exact resume_session for resume."
 
-  # download $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar --> .nextflow/cache.tar
+  # download $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
   set +f
   local ret
   ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/*" --no-progress -f 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "No previous execution cache of session $PREV_JOB_SESSION_ID was found as $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar."
+        dx-jobutil-report-error "No previous execution cache of session $PREV_JOB_SESSION_ID was found as $DX_CACHEDIR/$PREV_JOB_SESSION_ID/."
       else
         dx-jobutil-report-error "$ret"
       fi
@@ -193,9 +193,9 @@ restore_cache_and_history() {
   # 2. history of previous session .nextflow/history
   tar -xf cache.tar
   [[ -n "$(ls -A .nextflow/cache/$PREV_JOB_SESSION_ID)" ]] ||
-    dx-jobutil-report-error "Previous execution cache of session $NXF_UUID is empty."
+    dx-jobutil-report-error "Previous execution cache of session $PREV_JOB_SESSION_ID is empty."
   [[ -s ".nextflow/history" ]] ||
-    dx-jobutil-report-error "Missing history file in restored cache of previous session $NXF_UUID."
+    dx-jobutil-report-error "Missing history file in restored cache of previous session $PREV_JOB_SESSION_ID."
   rm cache.tar
 
   # if previous job is run by local executor, resume the previous workdir
