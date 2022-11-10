@@ -147,8 +147,8 @@ restore_cache_and_history() {
     "limit":1,
     "includeSubjobs":false,
     "describe":{"fields":{"properties":true}},
-    "properties":{"session_id":true,
-    "preserve_cache":"true",
+    "properties":{"nextflow_session_id":true,
+    "nextflow_preserve_cache":"true",
     "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
 
     [[ -n $PREV_JOB_DESC ]] ||
@@ -356,9 +356,9 @@ main() {
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
   if [[ $preserve_cache == true ]]; then
-    dx set_properties "$DX_JOB_ID" "nextflow_executable=$EXECUTABLE_NAME session_id=$NXF_UUID workdir=$NXF_WORK"
+    dx set_properties "$DX_JOB_ID" "nextflow_executable=$EXECUTABLE_NAME nextflow_session_id=$NXF_UUID nextflow_workdir=$NXF_WORK"
   else
-    dx set_properties "$DX_JOB_ID" "preserve_cache=$preserve_cache"
+    dx set_properties "$DX_JOB_ID" "nextflow_preserve_cache=$preserve_cache"
   fi
 
   # execution starts
