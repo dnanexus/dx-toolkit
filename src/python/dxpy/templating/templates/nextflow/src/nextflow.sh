@@ -71,8 +71,8 @@ on_exit() {
   update_project_history
 
   # backup cache
-  dx set_properties "$DX_JOB_ID" "no_future_resume=$no_future_resume"
-  if [[ $no_future_resume == false ]]; then
+  dx set_properties "$DX_JOB_ID" "preserve_cache=$preserve_cache"
+  if [[ $preserve_cache == true ]]; then
     echo "=== Execution complete — uploading Nextflow cache and history file"
     # upload local workdir (only when executor is overriden to 'local')
     # otherwise files in workdir are uploaded by the plugin after each subjob
@@ -109,7 +109,7 @@ on_exit() {
       echo "No cache is generated from this execution. Skip uploading cache."
     fi
 
-  # no_future_resume is true
+  # preserve_cache is false
   # clean up files of this session
   else
     echo "=== Execution complete — cache and working files will not be resumable"
@@ -150,7 +150,7 @@ restore_cache_and_history() {
   #   "includeSubjobs":false,
   #   "describe":{"fields":{"properties":true}},
   #   "properties":{"session_id":"'$PREV_JOB_SESSION_ID'",
-  #   "no_future_resume":"false",
+  #   "preserve_cache":"true",
   #   "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
   # else
   #   # find the latest job run by applet with the same name
@@ -163,7 +163,7 @@ restore_cache_and_history() {
   #   "includeSubjobs":false,
   #   "describe":{"fields":{"properties":true}},
   #   "properties":{"session_id":true,
-  #   "no_future_resume":"false",
+  #   "preserve_cache":"true",
   #   "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
 
   #   PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
@@ -255,7 +255,7 @@ get_runtime_workdir() {
     if [[ $NXF_EXECUTOR == 'local' ]]; then
       NXF_WORK='/work'
     else
-      if [[ $no_future_resume == false ]]; then
+      if [[ $preserve_cache == true ]]; then
         NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
       else
         NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
@@ -400,7 +400,7 @@ main() {
   echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
   echo "=== NF session ID   : ${NXF_UUID}"
   echo "=== NF log file     : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
-  if [[ $no_future_resume == false ]]; then
+  if [[ $preserve_cache == true ]]; then
     echo "=== NF workDir      : ${NXF_WORK}"
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi

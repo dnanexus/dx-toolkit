@@ -58,9 +58,9 @@
       "optional": true
     },
     {
-      "name": "no_future_resume",
-      "label": "No Future Resume",
-      "help": "Disable caching pipeline results. If true, workspace and cache files will not be uploaded to the platform, and the current session could not be resumed in the future",
+      "name": "preserve_cache",
+      "label": "Preserve Cache",
+      "help": "Enable storing pipeline cache and local working files to the current project. If true, local working files and cache files will be uploaded to the platform, so the current session could be resumed in the future",
       "class": "boolean",
       "default": false
     }
