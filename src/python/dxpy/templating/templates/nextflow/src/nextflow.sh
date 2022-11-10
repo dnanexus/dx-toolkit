@@ -135,42 +135,13 @@ on_exit() {
 
 restore_cache_and_history() {
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
-  # if [[ -n "$resume_session" ]]; then
-  #   # get session id if specified
-  #   PREV_JOB_SESSION_ID=$resume_session
-  #   PREV_JOB_DESC=$(dx api system findExecutions \
-  #     '{"state":["done","failed"],
-  #   "created": {"after": 1.5552e10},
-  #   "project":"'$DX_PROJECT_CONTEXT_ID'",
-  #   "limit":1,
-  #   "includeSubjobs":false,
-  #   "describe":{"fields":{"properties":true}},
-  #   "properties":{"session_id":"'$PREV_JOB_SESSION_ID'",
-  #   "preserve_cache":"true",
-  #   "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
-  # else
-  #   # find the latest job run by applet with the same name
-  #   echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
-  #   PREV_JOB_DESC=$(dx api system findExecutions \
-  #     '{"state":["done","failed"],
-  #   "created": {"after": 1.5552e10},
-  #   "project":"'$DX_PROJECT_CONTEXT_ID'",
-  #   "limit":1,
-  #   "includeSubjobs":false,
-  #   "describe":{"fields":{"properties":true}},
-  #   "properties":{"session_id":true,
-  #   "preserve_cache":"true",
-  #   "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
-
-  #   PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
-  # fi
 
   if [[ $resume == job-* ]]; then
     PREV_JOB_SESSION_ID=$(dx describe "$resume" --json | jq -r '.results[].describe.properties.session_id')
   elif [[ $resume == 'true' || $resume == 'last' ]]; then
     # find the latest job run by applet with the same name
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
-    PREV_JOB_SESSION_ID=$(dx api system findExecutions \
+    PREV_JOB_DESC=$(dx api system findExecutions \
       '{"state":["done","failed"],
     "created": {"after": 1.5552e10},
     "project":"'$DX_PROJECT_CONTEXT_ID'",
@@ -179,15 +150,17 @@ restore_cache_and_history() {
     "describe":{"fields":{"properties":true}},
     "properties":{"session_id":true,
     "preserve_cache":"true",
-    "nextflow_executable":"'$EXECUTABLE_NAME'"}}' | jq -r '.results[].describe.properties.session_id')
+    "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
+
+    [[ -n $PREV_JOB_DESC ]] ||
+      dx-jobutil-report-error "Cannot find any jobs within the last 6 months to resume from. Please provide the exact sessionID for \”resume\” value or run without resume."
+    PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
   else
     PREV_JOB_SESSION_ID=$resume
   fi
 
   [[ "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]] ||
-    dx-jobutil-report-error "The session ID $PREV_JOB_SESSION_ID is not a valid UUID. Please set input 'resume' with a valid session ID and try again."
-  # [[ -n $PREV_JOB_DESC ]] ||
-  #   dx-jobutil-report-error "Cannot find any matching session ID run by $EXECUTABLE_NAME in $DX_PROJECT_CONTEXT_ID in the past 6 months. Please provides exact resume_session for resume."
+    dx-jobutil-report-error "Invalid resume value. Please provide either \”true\”, \”last\”, or \”sessionID\”. If provided a sessionID, Nextflow cached content cannot be found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/. Please provide the exact sessionID for \”resume\” value or run without resume."
 
   # download cached files from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
   set +f
@@ -195,7 +168,7 @@ restore_cache_and_history() {
   ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/*" --no-progress -f 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "No previous execution cache of session $PREV_JOB_SESSION_ID was found as $DX_CACHEDIR/$PREV_JOB_SESSION_ID/."
+        dx-jobutil-report-error "Nextflow cached content cannot be found as $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide the exact sessionID for \”resume\” value or run without resume."
       else
         dx-jobutil-report-error "$ret"
       fi
