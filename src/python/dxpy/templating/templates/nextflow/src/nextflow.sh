@@ -321,8 +321,6 @@ main() {
   # use /home/dnanexus/nextflow_playground as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_playground
   cd /home/dnanexus/nextflow_playground
-  TMP_WORKDIR=$(mktemp -d --tmpdir=. -t nf-XXXXXXXX)
-  cd $TMP_WORKDIR
   mkdir -p .nextflow/cache
 
   # parse dnanexus-job.json to get job output destination
