@@ -339,7 +339,7 @@ main() {
     if [[ -n "$resume_session" ]]; then
       restore_cache_and_history
     else
-      dx-jobutil-report-error "Session was provided, but resume functionality was not allowed. Please set input 'resume' as true and try again."
+      dx-jobutil-report-error "Session ID needs to be specified when using resume functionality. Please provide a valid session ID and try again."
     fi
   else
     NXF_UUID=$(uuidgen)
