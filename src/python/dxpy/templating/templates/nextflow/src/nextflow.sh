@@ -76,15 +76,23 @@ on_exit() {
     echo "=== Execution complete — uploading Nextflow cache and history file"
     # upload local workdir (only when executor is overriden to 'local')
     # otherwise files in workdir are uploaded by the plugin after each subjob
-    if [[ $NXF_EXECUTOR == 'local' && -d $NXF_WORK && -n "$(ls -A $NXF_WORK)" ]]; then
-      REAL_LOCAL_WORKDIR=$(realpath --relative-to=/ $NXF_WORK)
-      dx rm -r "$DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" 2>&1 >/dev/null || true
-      dx upload $NXF_WORK --path "$DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" --no-progress --brief --wait -p -r 2>&1 >/dev/null &&
-        echo "Upload local work directory of current session to folder: $DX_CACHEDIR/$NXF_UUID/local_workdir/$REAL_LOCAL_WORKDIR" ||
+    if [[ $NXF_EXECUTOR == 'local' ]]; then
+
+      if [[ -d $NXF_WORK && -n "$(ls -A $NXF_WORK)" ]]; then
+        ABSOLUTE_LOCAL_WORKDIR=$(realpath $NXF_WORK)
+        echo $ABSOLUTE_LOCAL_WORKDIR >> local_working_files.txt
+      fi
+      tar -cf local_working_env.tar -T local_working_files.txt || true
+
+      dx rm "$DX_CACHEDIR/$NXF_UUID/local_working_env.tar" 2>&1 >/dev/null || true
+      LOCAL_WORK_ENV_ID=$(dx upload local_working_env.tar --path "$DX_CACHEDIR/$NXF_UUID/local_working_env.tar" --no-progress --brief --wait -p -r) &&
+        echo "Upload local work directory of current session as $LOCAL_WORK_ENV_ID: $DX_CACHEDIR/$NXF_UUID/local_working_env.tar" &&
+        rm -f local_working_env.tar ||
         echo "Failed to upload local work directory of current session $NXF_UUID"
     fi
     rm -rf $NXF_WORK || true
-    rm -rf $PREV_JOB_WORKDIR || true
+    rm local_working_files.txt
+    # rm -rf $PREV_JOB_WORKDIR || true
 
     # only upload cache.tar(cache and history)
     # wrap cache folder and history and upload cache.tar
