@@ -73,28 +73,24 @@ on_exit() {
   # backup cache
   dx set_properties "$DX_JOB_ID" "preserve_cache=$preserve_cache"
   if [[ $preserve_cache == true ]]; then
-    echo "=== Execution complete — uploading Nextflow cache and history file"
+    echo "=== Execution complete — caching current session to $DX_CACHEDIR/$NXF_UUID"
     # upload local workdir (only when executor is overriden to 'local')
     # otherwise files in workdir are uploaded by the plugin after each subjob
     if [[ $NXF_EXECUTOR == 'local' ]]; then
-
       if [[ -d $NXF_WORK && -n "$(ls -A $NXF_WORK)" ]]; then
         ABSOLUTE_LOCAL_WORKDIR=$(realpath $NXF_WORK)
-        echo $ABSOLUTE_LOCAL_WORKDIR >> local_working_files.txt
+        echo $ABSOLUTE_LOCAL_WORKDIR >>local_working_files.txt
       fi
-      tar -cf local_working_env.tar -T local_working_files.txt || true
-
-      dx rm "$DX_CACHEDIR/$NXF_UUID/local_working_env.tar" 2>&1 >/dev/null || true
-      LOCAL_WORK_ENV_ID=$(dx upload local_working_env.tar --path "$DX_CACHEDIR/$NXF_UUID/local_working_env.tar" --no-progress --brief --wait -p -r) &&
-        echo "Upload local work directory of current session as $LOCAL_WORK_ENV_ID: $DX_CACHEDIR/$NXF_UUID/local_working_env.tar" &&
-        rm -f local_working_env.tar ||
-        echo "Failed to upload local work directory of current session $NXF_UUID"
+      if [[ -e local_working_files.txt ]]; then
+        tar -cf local_working_env.tar -T local_working_files.txt || true
+        dx rm "$DX_CACHEDIR/$NXF_UUID/local_working_env.tar" 2>&1 >/dev/null || true
+        LOCAL_WORK_ENV_ID=$(dx upload local_working_env.tar --path "$DX_CACHEDIR/$NXF_UUID/local_working_env.tar" --no-progress --brief --wait -p -r) &&
+          echo "Upload local work directory of current session as $LOCAL_WORK_ENV_ID" ||
+          echo "Failed to upload local work directory of current session $NXF_UUID"
+      fi
+      rm -rf local_working_env.tar local_working_files.txt $NXF_WORK || true
     fi
-    rm -rf $NXF_WORK || true
-    rm local_working_files.txt
-    # rm -rf $PREV_JOB_WORKDIR || true
 
-    # only upload cache.tar(cache and history)
     # wrap cache folder and history and upload cache.tar
     if [[ -n "$(ls -A .nextflow)" ]]; then
       tar -cf cache.tar .nextflow
