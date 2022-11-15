@@ -183,32 +183,6 @@ restore_cache_and_history() {
     dx-jobutil-report-error "Missing history file in restored cache of previous session $PREV_JOB_SESSION_ID."
   rm cache.tar
 
-  # PREV_JOB_WORKDIR=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.workdir')
-  # if [[ $PREV_JOB_WORKDIR != dx* ]]; then
-  #   # download $DX_CACHEDIR/$PREV_JOB_SESSION_ID/local_working_env and restore ${PREV_JOB_WORKDIR}
-  #   # https://jira.internal.dnanexus.com/browse/APPS-1403
-  #   ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/local_working_env/" --no-progress -rf 2>&1) ||
-  #     {
-  #       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-  #         dx-jobutil-report-error "No previous local work directory of session $PREV_JOB_SESSION_ID was found at $DX_PROJECT_CONTEXT_ID:/${PREV_JOB_WORKDIR#*/}"
-  #       else
-  #         dx-jobutil-report-error "$ret"
-  #       fi
-  #     }
-  # # restore previous workdir
-  # set +f
-  # cp -r local_workdir/* / && rm -r local_workdir
-  # set -f
-  # fi
-
-  # if previous job is run by local executor, resume the previous workdir
-  # [[ -e local_working_env.tar ]] &&
-  #   tar -tf local_working_env.tar | xargs -I {} echo /{} >local_working_files.txt &&
-  #   cat local_working_files.txt &&
-  #   tar -xf local_working_env.tar -C / &&
-  #   rm local_working_env.tar &&
-  #   NXF_EXECUTOR='local' ||
-  #   NXF_EXECUTOR='dnanexus'
   # resume succeeded, set session id and add it to job properties
   echo "Will resume from previous session: $PREV_JOB_SESSION_ID"
   NXF_UUID=$PREV_JOB_SESSION_ID
