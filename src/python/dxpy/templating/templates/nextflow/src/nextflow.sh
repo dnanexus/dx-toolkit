@@ -202,13 +202,13 @@ restore_cache_and_history() {
   # fi
 
   # if previous job is run by local executor, resume the previous workdir
-  [[ -e local_working_env.tar ]] &&
-    tar -tf local_working_env.tar | xargs -I {} echo /{} >local_working_files.txt &&
-    cat local_working_files.txt &&
-    tar -xf local_working_env.tar -C / &&
-    rm local_working_env.tar &&
-    NXF_EXECUTOR='local' ||
-    NXF_EXECUTOR='dnanexus'
+  # [[ -e local_working_env.tar ]] &&
+  #   tar -tf local_working_env.tar | xargs -I {} echo /{} >local_working_files.txt &&
+  #   cat local_working_files.txt &&
+  #   tar -xf local_working_env.tar -C / &&
+  #   rm local_working_env.tar &&
+  #   NXF_EXECUTOR='local' ||
+  #   NXF_EXECUTOR='dnanexus'
   # resume succeeded, set session id and add it to job properties
   echo "Will resume from previous session: $PREV_JOB_SESSION_ID"
   NXF_UUID=$PREV_JOB_SESSION_ID
