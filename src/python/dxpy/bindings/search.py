@@ -434,7 +434,7 @@ def find_analyses(*args, **kwargs):
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=False, explicit_perms=None, region=None,
                   public=None, created_after=None, created_before=None, billed_to=None,
-                  limit=None, return_handler=False, first_page_size=100, containsPHI=None, **kwargs):
+                  limit=None, return_handler=False, first_page_size=100, containsPHI=None, externalUploadRestricted=None, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -476,6 +476,9 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :param containsPHI: If set to true, only returns projects that contain PHI.
         If set to false, only returns projects that do not contain PHI.
     :type containsPHI: boolean
+    :param externalUploadRestricted: If set to true, only returns projects with externalUploadRestricted enabled. 
+        If set to false, only returns projects that do not have externalUploadRestricted enabled. 
+    :type externalUploadRestricted: boolean
     :rtype: generator
 
     Returns a generator that yields all projects that match the query.
@@ -523,6 +526,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
         query["limit"] = limit
     if containsPHI is not None:
         query["containsPHI"] = containsPHI
+    if externalUploadRestricted is not None:
+        query["externalUploadRestricted"] = externalUploadRestricted
 
     return _find(dxpy.api.system_find_projects, query, limit, return_handler, first_page_size, **kwargs)
 
