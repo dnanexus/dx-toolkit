@@ -275,12 +275,11 @@ main() {
   # set default NXF env constants
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
-  export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
+  export NXF_EXECUTOR='dnanexus'
 
   # use /home/dnanexus/nextflow_playground as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_playground
   cd /home/dnanexus/nextflow_playground
-  mkdir -p .nextflow/cache
 
   # parse dnanexus-job.json to get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
@@ -302,7 +301,6 @@ main() {
   export NXF_CACHE_MODE=LENIENT
 
   get_runtime_workdir
-  export NXF_EXECUTOR
   export NXF_WORK
 
   # for optional inputs, pass to the run command by using a runtime config
