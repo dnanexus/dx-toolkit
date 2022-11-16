@@ -49,7 +49,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
                            instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
-                           property_args, tag_args, contains_phi, process_phi_param)
+                           property_args, tag_args, contains_phi, process_phi_param, process_external_upload_restricted_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
                        find_orgs, org_find_members, org_find_projects, org_find_apps)
@@ -2353,6 +2353,8 @@ def find_data(args):
 def find_projects(args):
     try_call(process_find_by_property_args, args)
     try_call(process_phi_param, args)
+    try_call(process_external_upload_restricted_param, args)
+
     try:
         results = dxpy.find_projects(name=args.name, name_mode='glob',
                                      properties=args.properties, tags=args.tag,
@@ -2363,7 +2365,8 @@ def find_projects(args):
                                      created_after=args.created_after,
                                      created_before=args.created_before,
                                      region=args.region,
-                                     containsPHI=args.containsPHI)
+                                     containsPHI=args.containsPHI,
+                                     externalUploadRestricted=args.external_upload_restricted)
     except:
         err_exit()
     format_find_results(args, results)
@@ -5084,6 +5087,8 @@ parser_update_project.add_argument('--download-restricted', choices=["true", "fa
                                    help="Whether the project should be DOWNLOAD RESTRICTED")
 parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
+parser_update_project.add_argument('--external-upload-restricted', choices=["true", "false"],
+                                   help="Whether uploads of file and table data to the project should be restricted")
 parser_update_project.add_argument('--database-ui-view-only', choices=["true", "false"],
                                    help="Whether the viewers on the project can access the database data directly")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
@@ -5753,6 +5758,8 @@ parser_find_projects.add_argument('--created-after',
 parser_find_projects.add_argument('--created-before',
                                   help='''Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the project was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for projects created earlier than 2 days ago)''')
 parser_find_projects.add_argument('--region', help='Restrict the search to the provided region')
+parser_find_projects.add_argument('--external-upload-restricted', choices=["true", "false"],
+                                   help="Whether uploads of file and table data to the project should be restricted")
 parser_find_projects.set_defaults(func=find_projects)
 register_parser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 
