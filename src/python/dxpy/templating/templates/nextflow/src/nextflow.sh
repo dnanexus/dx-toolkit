@@ -192,22 +192,18 @@ get_runtime_workdir() {
 
   # no user specified workdir, set default
   if [[ -z $NXF_WORK ]]; then
-    if [[ $NXF_EXECUTOR == 'local' ]]; then
-      NXF_WORK='/work'
+    if [[ $preserve_cache == true ]]; then
+      NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
     else
-      if [[ $preserve_cache == true ]]; then
-        NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
-      else
-        NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
-      fi
+      NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
     fi
-  elif [[ -n $NXF_EXECUTOR ]]; then
-    # validate workdir and previous workdir are in the same filesystem
-    [[ $NXF_EXECUTOR == 'local' && $NXF_WORK != dx* ]] ||
-      [[ $NXF_EXECUTOR == 'dnanexus' && $NXF_WORK == dx* ]] ||
-      dx-jobutil-report-error "Resuming from a previous session requires the both resumed and current workdir to be in the same $NXF_EXECUTOR file system. Please provide a compatible workdir with '-w' in nextflow_run_opts."
   else
-    [[ $NXF_WORK != dx* ]] && NXF_EXECUTOR='local' || NXF_EXECUTOR='dnanexus'
+    if [[ $preserve_cache != true ]]; then
+      dx-jobutil-report-error "When preserve_cache=false, user-specified workdir will not be accepted. To save intermediate result files to your working directory, please set 'preserve_cache' to true and try again."
+    else
+      [[ $NXF_WORK == dx* ]] ||
+        dx-jobutil-report-error "To preserve cache using 'dnanexus' executor, a DNAnexus storage path should be provided as pipeline work directory. Please provide a compatible workdir starting with 'dx://' with '-w' in nextflow_run_opts."
+    fi
   fi
 }
 
