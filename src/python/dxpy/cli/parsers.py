@@ -364,7 +364,4 @@ def process_phi_param(args):
 
 def process_external_upload_restricted_param(args):
     if args.external_upload_restricted is not None:
-        if args.external_upload_restricted == "true":
-            args.external_upload_restricted = True
-        elif args.external_upload_restricted == "false":
-            args.external_upload_restricted = False
+        args.external_upload_restricted = (args.external_upload_restricted == "true")
