@@ -120,7 +120,7 @@ restore_cache_and_history() {
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
 
   if [[ $resume == job-* ]]; then
-    PREV_JOB_SESSION_ID=$(dx describe "$resume" --json | jq -r '.results[].describe.properties.session_id')
+    PREV_JOB_SESSION_ID=$(dx describe "$resume" --json | jq -r '.results[].describe.properties.nextfow_session_id')
   elif [[ $resume == 'true' || $resume == 'last' ]]; then
     # find the latest job run by applet with the same name
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
@@ -137,7 +137,7 @@ restore_cache_and_history() {
 
     [[ -n $PREV_JOB_DESC ]] ||
       dx-jobutil-report-error "Cannot find any jobs within the last 6 months to resume from. Please provide the exact sessionID for \”resume\” value or run without resume."
-    PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.session_id')
+    PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.nextflow_session_id')
   else
     PREV_JOB_SESSION_ID=$resume
   fi
