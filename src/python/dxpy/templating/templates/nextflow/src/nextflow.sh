@@ -146,9 +146,8 @@ restore_cache_and_history() {
     dx-jobutil-report-error "Invalid resume value. Please provide either \”true\”, \”last\”, or \”sessionID\”. If provided a sessionID, Nextflow cached content cannot be found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/. Please provide the exact sessionID for \”resume\” value or run without resume."
 
   # download cached files from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
-  set +f
   local ret
-  ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/*" --no-progress -f 2>&1) ||
+  ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar" --no-progress -f -o cache.tar 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
         dx-jobutil-report-error "Nextflow cached content cannot be found as $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide the exact sessionID for \”resume\” value or run without resume."
