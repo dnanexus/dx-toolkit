@@ -314,9 +314,9 @@ main() {
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
   if [[ $preserve_cache == true ]]; then
-    dx set_properties "$DX_JOB_ID" nextflow_executable=$EXECUTABLE_NAME nextflow_session_id=$NXF_UUID nextflow_workdir=$NXF_WORK
+    dx set_properties "$DX_JOB_ID" nextflow_executable="$EXECUTABLE_NAME" nextflow_session_id="$NXF_UUID" nextflow_workdir="$NXF_WORK" nextflow_preserve_cache="$preserve_cache"
   else
-    dx set_properties "$DX_JOB_ID" "nextflow_preserve_cache=$preserve_cache"
+    dx set_properties "$DX_JOB_ID" nextflow_preserve_cache="$preserve_cache"
   fi
 
   # execution starts
