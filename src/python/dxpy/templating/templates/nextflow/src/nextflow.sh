@@ -328,7 +328,6 @@ main() {
   echo "=== NF session ID   : ${NXF_UUID}"
   echo "=== NF log file     : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
   if [[ $preserve_cache == true ]]; then
-    echo "=== NF workDir      : ${NXF_WORK}"
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
   echo "=== NF command      :" $NEXTFLOW_CMD
