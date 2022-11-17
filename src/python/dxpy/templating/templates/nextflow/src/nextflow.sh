@@ -92,7 +92,6 @@ on_exit() {
   # clean up files of this session
   else
     echo "=== Execution complete — cache and working files will not be resumable"
-    nextflow clean -f $NXF_UUID || true
   fi
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_playground
