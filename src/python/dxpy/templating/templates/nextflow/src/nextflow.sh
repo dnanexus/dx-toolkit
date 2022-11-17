@@ -281,7 +281,7 @@ main() {
   # add current executable name to job properties:
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
 
-  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/nextflow_cache_db
+  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   # restore cache and set/create current session id
   RESUME_CMD=""
   if [[ -n $resume ]]; then
