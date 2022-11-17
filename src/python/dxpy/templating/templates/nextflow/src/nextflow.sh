@@ -213,6 +213,5 @@ nf_task_entry() {
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
   dx set_properties ${DX_JOB_ID} exit_code=$exit_code
-  echo $exit_code
   set -e
 }
