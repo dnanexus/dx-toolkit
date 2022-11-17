@@ -117,10 +117,7 @@ on_exit() {
 
 restore_cache_and_history() {
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
-
-  if [[ $resume == job-* ]]; then
-    PREV_JOB_SESSION_ID=$(dx describe "$resume" --json | jq -r '.results[].describe.properties.nextfow_session_id')
-  elif [[ $resume == 'true' || $resume == 'last' ]]; then
+  if [[ $resume == 'true' || $resume == 'last' ]]; then
     # find the latest job run by applet with the same name
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
     PREV_JOB_DESC=$(dx api system findExecutions \
