@@ -33,6 +33,7 @@ jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --usernam
 }
 
 generate_runtime_config() {
+  set +x
   touch nxf_runtime.config
   # make a runtime config file to override optional inputs
   # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
@@ -41,6 +42,7 @@ generate_runtime_config() {
   if [[ -s nxf_runtime.config ]]; then
     if [[ $debug == true ]]; then
       cat nxf_runtime.config
+      set -x
     fi
     RUNTIME_CONFIG_CMD='-c nxf_runtime.config'
   fi
