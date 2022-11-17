@@ -266,6 +266,7 @@ main() {
   # set default NXF env constants
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
+  export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
   export NXF_EXECUTOR='dnanexus'
 
   # use /home/dnanexus/nextflow_playground as the temporary nextflow execution folder
