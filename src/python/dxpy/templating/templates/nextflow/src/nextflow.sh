@@ -172,6 +172,13 @@ restore_cache() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
+check_cache_db_storage() {
+  MAX_CACHE_STORAGE=20
+  existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
+  [[ $existing_cache -le MAX_CACHE_STORAGE ]] ||
+    dx-jobutil-report-error "The number of preserved sessions is already at the limit (N=20) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true. "
+}
+
 validate_run_opts() {
   IFS=" " read -r -a arr <<<"$nextflow_run_opts"
   # TODO: in future impl: error out when unsupported opts are given
@@ -251,6 +258,11 @@ main() {
   fi
 
   validate_run_opts
+
+  if [[ $preserve_cache == true ]]; then
+    check_cache_db_storage
+  fi
+
   if [ -n "$docker_creds" ]; then
     dx-registry-login
   fi
