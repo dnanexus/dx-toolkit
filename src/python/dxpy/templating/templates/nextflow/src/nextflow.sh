@@ -201,6 +201,13 @@ validate_run_opts() {
     dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/$NXF_UUID/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
   fi
 }
+prepare_cache_folders() {
+  if [[ $preserve_cache == true ]]; then
+    [[ -n $resume ]] || dx mkdir -p $DX_CACHEDIR/$NXF_UUID/work/
+    NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
+  else
+    NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
+  fi
 }
 
 update_project_history() {
@@ -302,6 +309,8 @@ main() {
   if [[ -n $resume ]]; then
     restore_cache
   fi
+
+  prepare_cache_folders
   export NXF_WORK
 
   # for optional inputs, pass to the run command by using a runtime config
