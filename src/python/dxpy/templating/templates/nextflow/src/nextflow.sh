@@ -169,8 +169,9 @@ restore_cache_and_history() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
-get_runtime_workdir() {
+validate_run_opts() {
   IFS=" " read -r -a arr <<<"$nextflow_run_opts"
+  # TODO: in future impl: error out when unsupported opts are given
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
     -w=* | -work-dir=*)
@@ -246,6 +247,7 @@ main() {
     set -x
   fi
 
+  validate_run_opts
   if [ -n "$docker_creds" ]; then
     dx-registry-login
   fi
