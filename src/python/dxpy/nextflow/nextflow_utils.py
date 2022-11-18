@@ -66,7 +66,7 @@ def get_nextflow_assets(region):
         "aws:ap-southeast-2": ("record-GGbPk785py8Kz5bj4xJqBQ1x", "record-GGbPv285K56b6YXp4x0yx4Xg"),
         "aws:eu-central-1": ("record-GGbPk5j49jj85Jbg4vQVXy38", "record-GGbPpyj48GgbqqGk4x4FzYgP"),
         "aws:eu-west-2": ("record-GGbPkGjJ0pX15P8f4vgX0G0q", "record-GGbPqp0JkzF2XyxP50xKyGbp"),
-        "aws:us-east-1": ("record-GJq6K0004KGX87VQBV0BP09x", "record-GG23y1j00vk1BJ5zKzykGXvY"),
+        "aws:us-east-1": ("record-GJqgqgj0YFfX53jFGQ1Kf4V8", "record-GG23y1j00vk1BJ5zKzykGXvY"),
 
         "azure:westeurope": ("record-GGbPpQQBZGZP29Yg4xZpgxZP", "record-GGbPq00BXKVBBgk14x8pQj3K"),
         "azure:westus": ("record-GGbPpQj9vGQzFq8y4xG102Zz", "record-GGbPq089xQvJBjkG4vbPg0Kg"),
@@ -76,7 +76,7 @@ def get_nextflow_assets(region):
         "aws:ap-southeast-2": ("record-GGbJz3j52fYPG2fp8Y1Q3vvG", "record-GGbVF5857Zj7PbQQ8FP1KKxX"),
         "aws:eu-central-1": ("record-GGbJz204G2gQ2bpj8BzyYQzj", "record-GGbVBb84ZBgV92b98Yz263QK"),
         "aws:eu-west-2": ("record-GGbJz10JpGq192b98Yz21pJQ", "record-GGbVBp8JXvXj0ZZJ8Y2KYjj7"),
-        "aws:us-east-1": ("record-GJq6K0004KGX87VQBV0BP09x", "record-GG23y1j00vk1BJ5zKzykGXvY"),
+        "aws:us-east-1": ("record-GJqgqgj0YFfX53jFGQ1Kf4V8", "record-GG23y1j00vk1BJ5zKzykGXvY"),
 
         "azure:westeurope": ("record-GGbJyZ8BP1f3X0xP8GkgJP41", "record-GGbVFZjBQZzGv2p88F39ZJY3"),
         "azure:westus": ("record-GGbJy489qFGpB0468YFXxyX5", "record-GGbVG009zzFX6fg18YKxKXy7"),
