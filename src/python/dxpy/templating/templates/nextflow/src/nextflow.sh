@@ -251,11 +251,11 @@ main() {
   if [ -n "$docker_creds" ]; then
     dx-registry-login
   fi
+
+  # set default NXF env constants
   export NXF_DOCKER_LEGACY=true
   #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
   #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
-
-  # set default NXF env constants
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
   export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
@@ -265,17 +265,16 @@ main() {
   mkdir -p /home/dnanexus/nextflow_playground
   cd /home/dnanexus/nextflow_playground
 
-  # parse dnanexus-job.json to get job output destination
+  # get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
   # initiate log file
   LOG_NAME="nextflow-$DX_JOB_ID.log"
 
-  # add current executable name to job properties:
+  # get current executable name
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  # restore cache and set/create current session id
-  RESUME_CMD=""
+  # set/create current session id
   if [[ -n $resume ]]; then
     restore_cache_and_history
   else
