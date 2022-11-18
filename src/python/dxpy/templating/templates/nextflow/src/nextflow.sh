@@ -201,6 +201,22 @@ validate_run_opts() {
     dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/$NXF_UUID/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
   fi
 }
+
+check_running_jobs() {
+  FIRST_RUNNING_JOB=$(dx api system findExecutions \
+    '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
+    "project":"'$DX_PROJECT_CONTEXT_ID'",
+    "includeSubjobs":false,
+    "properties":{"nextflow_session_id":"'$NXF_UUID'",
+    "nextflow_preserve_cache":"true",
+    "nextflow_executable":"'$EXECUTABLE_NAME'"}}' | jq '.results[-1].id')
+
+  [[ $FIRST_RUNNING_JOB == $DX_JOB_ID ]] ||
+    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
+    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
+    or run without preserve_cache set to true."
+}
+
 setup_workdir() {
   if [[ $preserve_cache == true ]]; then
     [[ -n $resume ]] || dx mkdir -p $DX_CACHEDIR/$NXF_UUID/work/
@@ -304,6 +320,10 @@ main() {
   fi
   export NXF_UUID
   export NXF_CACHE_MODE=LENIENT
+
+  if [[ $preserve_cache == true && -n $resume ]]; then
+    check_running_jobs
+  fi
 
   RESUME_CMD=""
   if [[ -n $resume ]]; then
