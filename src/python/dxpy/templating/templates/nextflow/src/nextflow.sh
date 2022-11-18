@@ -117,8 +117,7 @@ on_exit() {
   exit $ret
 }
 
-restore_cache_and_history() {
-  valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
+get_resume_session_id() {
   if [[ $resume == 'true' || $resume == 'last' ]]; then
     # find the latest job run by applet with the same name
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
@@ -140,9 +139,14 @@ restore_cache_and_history() {
     PREV_JOB_SESSION_ID=$resume
   fi
 
+  valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   [[ "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]] ||
     dx-jobutil-report-error "Invalid resume value. Please provide either \”true\”, \”last\”, or \”sessionID\”. If provided a sessionID, Nextflow cached content cannot be found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/. Please provide the exact sessionID for \”resume\” value or run without resume."
 
+  NXF_UUID=$PREV_JOB_SESSION_ID
+}
+
+restore_cache() {
   # download cached files from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
   local ret
   ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar" --no-progress -f -o cache.tar 2>&1) ||
@@ -164,7 +168,6 @@ restore_cache_and_history() {
 
   # resume succeeded, set session id and add it to job properties
   echo "Will resume from previous session: $PREV_JOB_SESSION_ID"
-  NXF_UUID=$PREV_JOB_SESSION_ID
   RESUME_CMD="-resume $NXF_UUID"
   dx tag "$DX_JOB_ID" "resumed"
 }
@@ -276,14 +279,17 @@ main() {
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   # set/create current session id
   if [[ -n $resume ]]; then
-    restore_cache_and_history
+    get_resume_session_id
   else
     NXF_UUID=$(uuidgen)
   fi
   export NXF_UUID
   export NXF_CACHE_MODE=LENIENT
 
-  get_runtime_workdir
+  RESUME_CMD=""
+  if [[ -n $resume ]]; then
+    restore_cache
+  fi
   export NXF_WORK
 
   # for optional inputs, pass to the run command by using a runtime config
