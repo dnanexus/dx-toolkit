@@ -160,8 +160,6 @@ restore_cache_and_history() {
   tar -xf cache.tar
   [[ -n "$(ls -A .nextflow/cache/$PREV_JOB_SESSION_ID)" ]] ||
     dx-jobutil-report-error "Previous execution cache of session $PREV_JOB_SESSION_ID is empty."
-  [[ -s ".nextflow/history" ]] ||
-    dx-jobutil-report-error "Missing history file in restored cache of previous session $PREV_JOB_SESSION_ID."
   rm cache.tar
 
   # resume succeeded, set session id and add it to job properties
