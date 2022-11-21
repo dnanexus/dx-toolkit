@@ -209,7 +209,7 @@ check_running_jobs() {
     FIRST_RESUMED_JOB=$(echo $FIRST_RESUMED_JOB_DESC | jq -r '.results[-1].id // empty')
   fi
 
-  [[ -z $FIRST_RESUMED_JOB ]] ||
+  [[ $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
     dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
     Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
     or run without preserve_cache set to true."
