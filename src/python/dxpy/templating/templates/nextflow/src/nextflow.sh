@@ -199,7 +199,7 @@ validate_run_opts() {
 }
 
 check_running_jobs() {
-  FIRST_RUNNING_JOB=$(dx api system findExecutions \
+  FIRST_RESUMED_JOB=$(dx api system findExecutions \
     '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
     "project":"'$DX_PROJECT_CONTEXT_ID'",
     "includeSubjobs":false,
@@ -207,7 +207,7 @@ check_running_jobs() {
     "nextflow_preserve_cache":"true",
     "nextflow_executable":"'$EXECUTABLE_NAME'"}}' | jq '.results[-1].id')
 
-  [[ $FIRST_RUNNING_JOB == $DX_JOB_ID ]] ||
+  [[ -n $FIRST_RESUMED_JOB ]] ||
     dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
     Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
     or run without preserve_cache set to true."
