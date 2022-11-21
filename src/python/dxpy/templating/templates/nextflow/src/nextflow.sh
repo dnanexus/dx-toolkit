@@ -123,9 +123,10 @@ get_resume_session_id() {
     "limit":1,
     "includeSubjobs":false,
     "describe":{"fields":{"properties":true}},
-    "properties":{"nextflow_session_id":true,
-    "nextflow_preserve_cache":"true",
-    "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
+    "properties":{
+      "nextflow_session_id":true,
+      "nextflow_preserve_cache":"true",
+      "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
 
     [[ -n $PREV_JOB_DESC ]] ||
       dx-jobutil-report-error "Cannot find any jobs within the last 6 months to resume from. Please provide the exact sessionID for \”resume\” value or run without resume."
@@ -202,9 +203,10 @@ check_running_jobs() {
     '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
     "project":"'$DX_PROJECT_CONTEXT_ID'",
     "includeSubjobs":false,
-    "properties":{"nextflow_session_id":"'$NXF_UUID'",
-    "nextflow_preserve_cache":"true",
-    "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
+    "properties":{
+      "nextflow_session_id":"'$NXF_UUID'",
+      "nextflow_preserve_cache":"true",
+      "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
   if [[ -n $FIRST_RESUMED_JOB_DESC ]]; then
     FIRST_RESUMED_JOB=$(echo $FIRST_RESUMED_JOB_DESC | jq -r '.results[-1].id // empty')
   fi
@@ -295,7 +297,10 @@ main() {
   export NXF_CACHE_MODE=LENIENT
 
   if [[ $preserve_cache == true ]]; then
-    dx set_properties "$DX_JOB_ID" nextflow_executable="$EXECUTABLE_NAME" nextflow_session_id="$NXF_UUID" nextflow_preserve_cache="$preserve_cache"
+    dx set_properties "$DX_JOB_ID" \
+      nextflow_executable="$EXECUTABLE_NAME" \
+      nextflow_session_id="$NXF_UUID" \
+      nextflow_preserve_cache="$preserve_cache"
   fi
 
   if [[ $preserve_cache == true && -n $resume ]]; then
