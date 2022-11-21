@@ -53,7 +53,7 @@ on_exit() {
 
   properties=$(dx describe ${DX_JOB_ID} --json 2>/dev/null | jq -r ".properties")
   if [[ $properties != "null" ]]; then
-    if [[ $(jq .nextflow_errorStrategy $properties) == "ignore" ]]; then
+    if [[ $(jq .nextflow_errorStrategy <<<${properties} -r) == "ignore" ]]; then
       echo "ignore had happened"
     fi
   fi
