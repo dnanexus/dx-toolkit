@@ -281,7 +281,7 @@ class DXProject(DXContainer):
 
     _class = "project"
 
-    def new(self, name, summary=None, description=None, protected=None,
+    def new(self, name, summary=None, description=None, region=None, protected=None,
             restricted=None, download_restricted=None, contains_phi=None,
             tags=None, properties=None, bill_to=None, database_ui_view_only=None,
             **kwargs):
@@ -291,6 +291,8 @@ class DXProject(DXContainer):
         :param summary: If provided, a short summary of what the project contains
         :type summary: string
         :param description: If provided, the new project description
+        :type name: string
+        :param region: If provided, the region that this project will be created in. The region must be among the permitted regions of the project's billTo
         :type name: string
         :param protected: If provided, whether the project should be protected
         :type protected: boolean
@@ -322,6 +324,8 @@ class DXProject(DXContainer):
             input_hash["summary"] = summary
         if description is not None:
             input_hash["description"] = description
+        if region is not None:
+            input_hash["region"] = region
         if protected is not None:
             input_hash["protected"] = protected
         if restricted is not None:

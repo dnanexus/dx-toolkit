@@ -8,6 +8,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* support for `--destination` in `nextflow build --repository`
+
+## [333.0] - 2022.11.04 - beta
+
+### Added
+
+* `nextflow run` command in the log for easier debugging
+
+### Fixed
+
+* Overriding config arguments with an empty string for Nextflow pipelines
+
+### Changed
+
+* `psutil` version to 5.9.3 which includes wheelfiles for macOS arm64
+* Set ignore reuse in the nextflow applet template
+* Set `restartableEntryPoints` to "all" in the nextflow pipeline applet's `runsSpec`
+
+
+## [332.0] - 2022.11.04 - stable
+
+### Added
+
 * A warning for `dx build` when app(let)'s name is set both in `--extra-args` and `--destination`
 
 ### Fixed
@@ -19,7 +42,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 *  Help for building Nextflow pipelines is suppressed
 
-# [331.0] - beta
+## [331.0] - 2022.10.14
 
 ### Added
 
@@ -30,7 +53,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx describe user-xxxx` will not try to print the name if it is not present in the API response
  
-## [333.0] - 2022.10.4 - stable
+## [330.0] - 2022.10.4
 
 ### Added
 

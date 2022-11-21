@@ -338,7 +338,7 @@ def _is_retryable_exception(e):
         return True
     if isinstance(e, urllib3.exceptions.SSLError):
         return True
-    if isinstance(e, ssl.SSLError): 
+    if isinstance(e, ssl.SSLError):
         return True
     return False
 
@@ -1036,7 +1036,7 @@ def append_underlying_workflow_describe(globalworkflow_desc):
 
     for region, config in globalworkflow_desc['regionalOptions'].items():
         workflow_id = config['workflow']
-        workflow_desc = dxpy.api.workflow_describe(workflow_id)
+        workflow_desc = dxpy.api.workflow_describe(workflow_id, input_params={"project": config["resources"]})
         globalworkflow_desc['regionalOptions'][region]['workflowDescribe'] = workflow_desc
     return globalworkflow_desc
 

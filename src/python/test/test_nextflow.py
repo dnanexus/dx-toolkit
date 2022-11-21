@@ -98,10 +98,10 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_src_inputs(self):
         src = get_nextflow_src(custom_inputs=[input1, input2])
-        self.assertTrue(
-            "--{}=${{{}}}".format(input2.get("name"), input2.get("name")) in src)
-        self.assertTrue(
-            "dx://${{DX_WORKSPACE_ID}}:/$(echo ${{{}}} | jq .[$dnanexus_link] -r | xargs -I {{}} dx describe {{}} --json | jq -r .name)".format(input1.get("name")) in src)
+        self.assertTrue("if [ -n \"${}\" ];".format(input2.get("name")) in src)
+        self.assertTrue("--{}=${}".format(input2.get("name"), input2.get("name")))
+        self.assertTrue("if [ -n \"${}\" ];".format(input1.get("name")) in src)
+        self.assertTrue("--{}=${}".format(input1.get("name"), input1.get("name")))
 
     def test_prepare_inputs(self):
         inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
@@ -214,6 +214,20 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
         details = applet.get_details()
         self.assertEqual(details["repository"], hello_repo_url)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_build_nextflow_from_repository_destination(self):
+        hello_repo_url = "https://github.com/nextflow-io/hello"
+        folder = "/test_dx_build_nextflow_from_repository_destination/{}".format(str(uuid.uuid4().hex))
+        run("dx mkdir -p {}".format(folder))
+        applet_json = run(
+            "dx build --nextflow --repository '{}' --brief --destination {}".format(hello_repo_url, folder)).strip()
+        applet_id = json.loads(applet_json).get("id")
+
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+        self.assertEqual(desc["folder"], folder)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')

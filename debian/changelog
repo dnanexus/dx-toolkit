@@ -1,3 +1,22 @@
+dx-toolkit (0.333.0) trusty; urgency=medium
+
+  * Added: `nextflow run` command in the log for debugging
+  * Fixed: Overriding config arguments with an empty string for nextflow pipelines
+  * Changed: dxpy psutil requirement to >= 5.9.3 for macOS arm
+  * Changed: Set `ignoreReuse` in the nextflow applet template
+  * Set `restartableEntryPoints` to 'all' in the nextflow pipele applet's runSpec 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 04 Nov 2022 14:58:04 +0000
+
+dx-toolkit (0.332.0) trusty; urgency=medium
+
+  * Added: A warning for `dx build` when app(let)'s name is set both in --extra-args and --destination
+  * Fixed: An error when setting app(let)s name in `dx build` (now the name set via --extra-args properly overrides the one set via --destination)
+  * Fixed: `dx build --nextflow --repository` returns json instead of a simple string
+  * Changed: Help for building Nextflow pipelines is suppressed
+ 
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 14 Oct 2022 22:21:11 +0000
+
 dx-toolkit (0.331.0) trusty; urgency=medium
 
   * Added: `dx find jobs --json` and `dx describe --verbose job-xxxx` with --verbose argument return field internetUsageIPs if the caller an org admin and has enabled jobInternetUsageMonitoring license feature
