@@ -200,19 +200,19 @@ validate_run_opts() {
 }
 
 check_running_jobs() {
-  FIRST_RESUMED_JOB_DESC=$(dx api system findExecutions \
-    '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
-    "project":"'$DX_PROJECT_CONTEXT_ID'",
-    "includeSubjobs":false,
-    "properties":{
-      "nextflow_session_id":"'$NXF_UUID'",
-      "nextflow_preserve_cache":"true",
-      "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
-  if [[ -n $FIRST_RESUMED_JOB_DESC ]]; then
-    FIRST_RESUMED_JOB=$(echo $FIRST_RESUMED_JOB_DESC | jq -r '.results[-1].id // empty')
-  fi
+  FIRST_RESUMED_JOB=$(
+    dx api system findExecutions \
+      '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
+        "project":"'$DX_PROJECT_CONTEXT_ID'",
+        "includeSubjobs":false,
+        "properties":{
+          "nextflow_session_id":"'$NXF_UUID'",
+          "nextflow_preserve_cache":"true",
+          "nextflow_executable":"'$EXECUTABLE_NAME'"}}' 2>/dev/null |
+      jq -r '.results[-1].id // empty'
+  )
 
-  [[ $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
+  [[ -n $FIRST_RESUMED_JOB && $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
     dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
     Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
     or run without preserve_cache set to true."
