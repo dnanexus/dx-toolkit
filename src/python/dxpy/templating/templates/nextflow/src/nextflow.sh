@@ -290,6 +290,8 @@ main() {
     NXF_UUID=$(uuidgen)
   fi
   export NXF_UUID
+
+  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
   export NXF_CACHE_MODE=LENIENT
 
   if [[ $preserve_cache == true ]]; then
