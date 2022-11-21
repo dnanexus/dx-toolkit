@@ -177,7 +177,6 @@ check_cache_db_storage() {
 
 validate_run_opts() {
   IFS=" " read -r -a arr <<<"$nextflow_run_opts"
-  # TODO: in future impl: error out when unsupported opts are given
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
     -w=* | -work-dir=*)
@@ -316,7 +315,6 @@ main() {
   export NXF_WORK
 
   # for optional inputs, pass to the run command by using a runtime config
-  # TODO: better handling inputs defined in nextflow_schema.json
   RUNTIME_CONFIG_CMD=""
   generate_runtime_config
 
