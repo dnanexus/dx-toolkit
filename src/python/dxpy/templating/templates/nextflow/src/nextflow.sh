@@ -91,7 +91,7 @@ on_exit() {
     echo "=== Execution complete — cache and working files will not be resumable"
   fi
 
-  # remove .nextflow from the current folder /home/dnanexus/nextflow_playground
+  # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
   rm nxf_runtime.config
 
@@ -271,9 +271,9 @@ main() {
   export NXF_PLUGINS_DEFAULT=nextaur@1.1.0
   export NXF_EXECUTOR='dnanexus'
 
-  # use /home/dnanexus/nextflow_playground as the temporary nextflow execution folder
-  mkdir -p /home/dnanexus/nextflow_playground
-  cd /home/dnanexus/nextflow_playground
+  # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
+  mkdir -p /home/dnanexus/nextflow_execution
+  cd /home/dnanexus/nextflow_execution
 
   # get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
