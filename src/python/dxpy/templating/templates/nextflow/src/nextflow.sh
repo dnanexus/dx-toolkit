@@ -171,8 +171,8 @@ main() {
 
     $NEXTFLOW_CMD & NXF_EXEC_PID=$!
     properties=$(dx describe ${DX_JOB_ID} --json 2>/dev/null | jq -r ".properties")
-    if [[ $properties != "null" ]]
-      if [[ $(jq .nextflow_errorStrategy $properties) == "ignore" ]]
+    if [[ $properties != "null" ]]; then
+      if [[ $(jq .nextflow_errorStrategy $properties) == "ignore" ]]; then
         echo "ignore had happened"
       fi
     fi
