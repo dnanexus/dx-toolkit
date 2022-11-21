@@ -76,8 +76,6 @@ on_exit() {
     # wrap cache folder and upload cache.tar
     if [[ -n "$(ls -A .nextflow)" ]]; then
       tar -cf cache.tar .nextflow
-      # remove any existing cache.tar with the same session id
-      dx rm "$DX_CACHEDIR/$NXF_UUID/cache.tar" 2>&1 >/dev/null || true
 
       CACHE_ID=$(dx upload "cache.tar" --path "$DX_CACHEDIR/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
         echo "Upload cache of current session as file: $CACHE_ID" &&
@@ -144,9 +142,10 @@ get_resume_session_id() {
 }
 
 restore_cache() {
-  # download cached files from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
+  # download latest cache.tar from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
+  PREV_JOB_CACHE_FILE=$(dx ls $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar -l | sort -r | head -1 | grep 'file-[a-zA-Z0-9]*' -o)
   local ret
-  ret=$(dx download "$DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar" --no-progress -f -o cache.tar 2>&1) ||
+  ret=$(dx download $PREV_JOB_CACHE_FILE --no-progress -f -o cache.tar 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
         dx-jobutil-report-error "Nextflow cached content cannot be found as $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide the exact sessionID for \”resume\” value or run without resume."
@@ -199,15 +198,18 @@ validate_run_opts() {
 }
 
 check_running_jobs() {
-  FIRST_RESUMED_JOB=$(dx api system findExecutions \
+  FIRST_RESUMED_JOB_DESC=$(dx api system findExecutions \
     '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
     "project":"'$DX_PROJECT_CONTEXT_ID'",
     "includeSubjobs":false,
     "properties":{"nextflow_session_id":"'$NXF_UUID'",
     "nextflow_preserve_cache":"true",
-    "nextflow_executable":"'$EXECUTABLE_NAME'"}}' | jq '.results[-1].id')
+    "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
+  if [[ -n $FIRST_RESUMED_JOB_DESC ]]; then
+    FIRST_RESUMED_JOB=$(echo $FIRST_RESUMED_JOB_DESC | jq -r '.results[-1].id // empty')
+  fi
 
-  [[ -n $FIRST_RESUMED_JOB ]] ||
+  [[ -z $FIRST_RESUMED_JOB ]] ||
     dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
     Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
     or run without preserve_cache set to true."
@@ -221,7 +223,6 @@ setup_workdir() {
     NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
   fi
 }
-
 
 dx_path() {
   local str=${1#"dx://"}
