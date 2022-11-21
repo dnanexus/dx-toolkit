@@ -116,21 +116,23 @@ get_resume_session_id() {
   if [[ $resume == 'true' || $resume == 'last' ]]; then
     # find the latest job run by applet with the same name
     echo "Will try to find the session ID of the latest session run by $EXECUTABLE_NAME."
-    PREV_JOB_DESC=$(dx api system findExecutions \
-      '{"state":["done","failed"],
-    "created": {"after": 1.5552e10},
-    "project":"'$DX_PROJECT_CONTEXT_ID'",
-    "limit":1,
-    "includeSubjobs":false,
-    "describe":{"fields":{"properties":true}},
-    "properties":{
-      "nextflow_session_id":true,
-      "nextflow_preserve_cache":"true",
-      "nextflow_executable":"'$EXECUTABLE_NAME'"}}')
+    PREV_JOB_SESSION_ID=$(
+      dx api system findExecutions \
+        '{"state":["done","failed"],
+          "created": {"after":'$((($(date +%s) - 6 * 60 * 60 * 24 * 30) * 1000))'},
+          "project":"'$DX_PROJECT_CONTEXT_ID'",
+          "limit":1,
+          "includeSubjobs":false,
+          "describe":{"fields":{"properties":true}},
+          "properties":{
+            "nextflow_session_id":true,
+            "nextflow_preserve_cache":"true",
+            "nextflow_executable":"'$EXECUTABLE_NAME'"}}' 2>/dev/null |
+        jq -r '.results[].describe.properties.nextflow_session_id'
+    )
 
-    [[ -n $PREV_JOB_DESC ]] ||
+    [[ -n $PREV_JOB_SESSION_ID ]] ||
       dx-jobutil-report-error "Cannot find any jobs within the last 6 months to resume from. Please provide the exact sessionID for \”resume\” value or run without resume."
-    PREV_JOB_SESSION_ID=$(echo "$PREV_JOB_DESC" | jq -r '.results[].describe.properties.nextflow_session_id')
   else
     PREV_JOB_SESSION_ID=$resume
   fi
