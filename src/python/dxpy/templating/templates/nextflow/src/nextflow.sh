@@ -292,6 +292,10 @@ main() {
   export NXF_UUID
   export NXF_CACHE_MODE=LENIENT
 
+  if [[ $preserve_cache == true ]]; then
+    dx set_properties "$DX_JOB_ID" nextflow_executable="$EXECUTABLE_NAME" nextflow_session_id="$NXF_UUID" nextflow_preserve_cache="$preserve_cache"
+  fi
+
   if [[ $preserve_cache == true && -n $resume ]]; then
     check_running_jobs
   fi
@@ -311,10 +315,6 @@ main() {
 
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
-
-  if [[ $preserve_cache == true ]]; then
-    dx set_properties "$DX_JOB_ID" nextflow_executable="$EXECUTABLE_NAME" nextflow_session_id="$NXF_UUID" nextflow_preserve_cache="$preserve_cache"
-  fi
 
   # execution starts
   NEXTFLOW_CMD="nextflow \
