@@ -46,7 +46,7 @@
     {
       "name": "resume",
       "label": "Resume",
-      "help": "Unique ID of the previous session to be resumed. If not provided, will resume the last session run by an applet with the same name in the current project that runs during the last 6 months",
+      "help": "Unique ID of the previous session to be resumed. If 'true' or 'last' is provided instead of the sessionID, will resume the latest resumable session run by an applet with the same name in the current project in the last 6 months.",
       "class": "string",
       "optional": true
     },
