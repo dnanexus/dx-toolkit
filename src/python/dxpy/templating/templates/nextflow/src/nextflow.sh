@@ -69,14 +69,11 @@ on_exit() {
     set -xe
   fi
 
-  # update project nextflow history
-  update_project_history
-
   # backup cache
   if [[ $preserve_cache == true ]]; then
     echo "=== Execution complete — caching current session to $DX_CACHEDIR/$NXF_UUID"
 
-    # wrap cache folder and history and upload cache.tar
+    # wrap cache folder and upload cache.tar
     if [[ -n "$(ls -A .nextflow)" ]]; then
       tar -cf cache.tar .nextflow
       # remove any existing cache.tar with the same session id
@@ -160,7 +157,6 @@ restore_cache() {
 
   # untar cache.tar, which needs to contain
   # 1. cache folder .nextflow/cache/$PREV_JOB_SESSION_ID
-  # 2. history of previous session .nextflow/history
   tar -xf cache.tar
   [[ -n "$(ls -A .nextflow/cache/$PREV_JOB_SESSION_ID)" ]] ||
     dx-jobutil-report-error "Previous execution cache of session $PREV_JOB_SESSION_ID is empty."
@@ -226,32 +222,6 @@ setup_workdir() {
   fi
 }
 
-update_project_history() {
-  local ret
-  ret=$(dx download "$DX_CACHEDIR/history" --no-progress -f -o .nextflow/prev_history 2>&1 >/dev/null) ||
-    {
-      if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        echo "No history file found as $DX_CACHEDIR/history"
-      else
-        dx-jobutil-report-error "$ret"
-      fi
-    }
-
-  if [[ -s ".nextflow/prev_history" ]]; then
-    # merge the nonempty project nextflow history with the current history
-    sort -mu ".nextflow/prev_history" ".nextflow/history" -o ".nextflow/latest_history"
-    # remove previous project history
-    dx rm "$DX_CACHEDIR/history" 2>&1 >/dev/null || true
-    rm .nextflow/prev_history
-  else
-    # there is no project nextflow history
-    cp ".nextflow/history" ".nextflow/latest_history"
-  fi
-  # upload the new project history
-  dx upload ".nextflow/latest_history" --path "$DX_CACHEDIR/history" --no-progress --brief --wait -p -r 2>&1 >/dev/null ||
-    echo "Failed to update nextflow history in $DX_PROJECT_CONTEXT_ID"
-  rm .nextflow/latest_history
-}
 
 dx_path() {
   local str=${1#"dx://"}
