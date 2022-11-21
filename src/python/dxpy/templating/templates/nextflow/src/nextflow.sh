@@ -194,7 +194,7 @@ validate_run_opts() {
 
   # if there is a user specified workdir, error out as currently user workdir is not supported
   if [[ -n $NXF_WORK ]]; then
-    dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/$NXF_UUID/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
+    dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
   fi
 }
 
@@ -250,6 +250,7 @@ main() {
     set -x
   fi
 
+  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   validate_run_opts
 
   if [[ $preserve_cache == true ]]; then
@@ -281,7 +282,6 @@ main() {
   # get current executable name
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
 
-  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   # set/create current session id
   if [[ -n $resume ]]; then
     get_resume_session_id
