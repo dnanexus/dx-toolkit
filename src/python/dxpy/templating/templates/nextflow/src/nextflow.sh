@@ -51,6 +51,12 @@ generate_runtime_config() {
 on_exit() {
   ret=$?
 
+  properties=$(dx describe ${DX_JOB_ID} --json 2>/dev/null | jq -r ".properties")
+  if [[ $properties != "null" ]]; then
+    if [[ $(jq .nextflow_errorStrategy $properties) == "ignore" ]]; then
+      echo "ignore had happened"
+    fi
+  fi
   set +x
   if [[ $debug == true ]]; then
     # DEVEX-1943 Wait up to 30 seconds for log forwarders to terminate
@@ -170,12 +176,6 @@ main() {
     echo "============================================================="
 
     $NEXTFLOW_CMD & NXF_EXEC_PID=$!
-    properties=$(dx describe ${DX_JOB_ID} --json 2>/dev/null | jq -r ".properties")
-    if [[ $properties != "null" ]]; then
-      if [[ $(jq .nextflow_errorStrategy $properties) == "ignore" ]]; then
-        echo "ignore had happened"
-      fi
-    fi
     # forwarding nextflow log file to job monitor
     set +x
     if [[ $debug == true ]] ; then
