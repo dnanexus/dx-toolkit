@@ -51,6 +51,12 @@ generate_runtime_config() {
 on_exit() {
   ret=$?
 
+  properties=$(dx describe ${DX_JOB_ID} --json 2>/dev/null | jq -r ".properties")
+  if [[ $properties != "null" ]]; then
+    if [[ $(jq .nextflow_errorStrategy <<<${properties} -r) == "ignore" ]]; then
+      echo "ignore had happened"
+    fi
+  fi
   set +x
   if [[ $debug == true ]]; then
     # DEVEX-1943 Wait up to 30 seconds for log forwarders to terminate
@@ -361,21 +367,19 @@ main() {
   echo "=== NF command      :" $NEXTFLOW_CMD
   echo "============================================================="
 
-  $NEXTFLOW_CMD &
-  NXF_EXEC_PID=$!
-
-  # forwarding nextflow log file to job monitor
-  if [[ $debug == true ]]; then
-    touch $LOG_NAME
-    tail --follow -n 0 $LOG_NAME -s 60 >&2 &
-    LOG_MONITOR_PID=$!
-    disown $LOG_MONITOR_PID
-    set -x
-  fi
-
-  wait $NXF_EXEC_PID
-  ret=$?
-  exit $ret
+    $NEXTFLOW_CMD & NXF_EXEC_PID=$!
+    # forwarding nextflow log file to job monitor
+    set +x
+    if [[ $debug == true ]] ; then
+      touch $LOG_NAME
+      tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
+      disown $LOG_MONITOR_PID
+      set -x
+    fi
+    
+    wait $NXF_EXEC_PID
+    ret=$?
+    exit $ret
 }
 
 nf_task_exit() {
@@ -387,7 +391,8 @@ nf_task_exit() {
   fi
   # mark the job as successful in any case, real task
   # error code is managed by nextflow via .exitcode file
-  dx-jobutil-add-output exit_code "0" --class=int
+  if [ -z ${exit_code} ]; then export exit_code=0; fi
+  dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
 nf_task_entry() {
@@ -399,6 +404,10 @@ nf_task_entry() {
   # capture the exit code
   trap nf_task_exit EXIT
   # run the task
-  dx cat "${cmd_launcher_file}" >.command.run
-  bash .command.run > >(tee .command.log) 2>&1 || true
+  dx cat "${cmd_launcher_file}" > .command.run
+  set +e
+  bash .command.run > >(tee .command.log) 2>&1
+  export exit_code=$?
+  dx set_properties ${DX_JOB_ID} exit_code=$exit_code
+  set -e
 }
