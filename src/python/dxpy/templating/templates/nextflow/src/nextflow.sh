@@ -163,7 +163,7 @@ restore_cache() {
           "folder": "/.nextflow_cache_db/'$NXF_UUID'", 
           "recurse": false}, 
         "describe": true}' 2>/dev/null |
-      jq -r '.results | sort_by(.describe.modified)[-1] | .id // empty'
+      jq -r '.results | sort_by(.describe.created)[-1] | .id // empty'
   )
 
   [[ -n $PREV_JOB_CACHE_FILE ]] ||
