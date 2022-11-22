@@ -155,7 +155,7 @@ get_resume_session_id() {
 restore_cache() {
   # download latest cache.tar from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
   PREV_JOB_CACHE_FILE=$(dx ls $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar -l 2>/dev/null | sort -r | head -1 | grep 'file-[a-zA-Z0-9]*' -o) ||
-    dx-jobutil-report-error "Cannot find any $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide a valide sessionID."
+    dx-jobutil-report-error "Cannot find any $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide a valid sessionID."
 
   local ret
   ret=$(dx download $PREV_JOB_CACHE_FILE --no-progress -f -o cache.tar 2>&1) ||
