@@ -387,7 +387,7 @@ nf_task_exit() {
   if [ -f .command.log ]; then
     dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
   else
-    echo >&2 "Missing Nextflow .command.log file"
+    >&2 echo "Missing Nextflow .command.log file"	
   fi
   # mark the job as successful in any case, real task
   # error code is managed by nextflow via .exitcode file
