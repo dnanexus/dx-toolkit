@@ -62,6 +62,7 @@
     {
       "name": "published_files",
       "label": "Published files of Nextflow pipeline",
+      "help": "Output files published by current Nextflow pipeline and uploaded to the job output destination.",
       "class": "array:file",
       "optional": true
     },
