@@ -138,16 +138,16 @@ get_resume_session_id() {
     )
 
     [[ -n $PREV_JOB_SESSION_ID ]] ||
-      dx-jobutil-report-error "Cannot find any jobs within the last 6 months to resume from. Please provide the exact sessionID for \”resume\” value or run without resume."
+      dx-jobutil-report-error "Cannot find any jobs within the last 6 months to resume from. Please provide the exact sessionID for \"resume\" value or run without resume."
   else
     PREV_JOB_SESSION_ID=$resume
   fi
 
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   [[ "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]] ||
-    dx-jobutil-report-error "Invalid resume value. Please provide either \”true\”, \”last\”, or \”sessionID\”. 
+    dx-jobutil-report-error "Invalid resume value. Please provide either \"true\", \"last\", or \"sessionID\". 
     If a sessionID was provided, Nextflow cached content could not found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/. 
-    Please provide the exact sessionID for \”resume\” value or run without resume."
+    Please provide the exact sessionID for \"resume\" value or run without resume."
 
   NXF_UUID=$PREV_JOB_SESSION_ID
 }
@@ -161,7 +161,7 @@ restore_cache() {
   ret=$(dx download $PREV_JOB_CACHE_FILE --no-progress -f -o cache.tar 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "Nextflow cached content cannot be downloaded from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide the exact sessionID for \”resume\” value or run without resume."
+        dx-jobutil-report-error "Nextflow cached content cannot be downloaded from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide the exact sessionID for \"resume\" value or run without resume."
       else
         dx-jobutil-report-error "$ret"
       fi
