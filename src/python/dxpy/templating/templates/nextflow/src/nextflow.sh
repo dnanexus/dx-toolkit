@@ -260,8 +260,11 @@ main() {
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   NXF_PLUGINS_VERSION=1.1.0
+
+  # check if all run opts provided by user are supported
   validate_run_opts
 
+  # check if the number of preserved cache in current project does not exceed the limit (20)
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage
   fi
@@ -309,15 +312,19 @@ main() {
       nextflow_preserve_cache="$preserve_cache"
   fi
 
+  # check if there are any ongoing jobs resuming
+  # and generating new cache for the session to resume
   if [[ $preserve_cache == true && -n $resume ]]; then
     check_running_jobs
   fi
 
+  # restore previous cache and create resume argument to nextflow run
   RESUME_CMD=""
   if [[ -n $resume ]]; then
     restore_cache
   fi
 
+  # set workdir based on preserve_cache option
   setup_workdir
   export NXF_WORK
 
