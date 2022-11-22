@@ -40,7 +40,7 @@ else:
     spawn_extra_args = {"encoding": "utf-8"}
 
 
-default_input_len = 5
+default_input_len = 7
 input1 = {
     "class": "file",
     "name": "first_input",
@@ -275,7 +275,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(len(job_desc["output"]["nextflow_log"]), 1)
 
         # the output files will be: nxf_runtime.config, ls_folder.txt, cat_file.txt
-        self.assertEqual(len(job_desc["output"]["output_files"]), 3)
+        self.assertEqual(len(job_desc["output"]["published_files"]), 3)
 
     def test_dx_build_nextflow_with_destination(self):
         pipeline_name = "hello"
