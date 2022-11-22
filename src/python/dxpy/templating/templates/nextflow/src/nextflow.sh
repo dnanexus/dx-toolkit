@@ -154,7 +154,17 @@ get_resume_session_id() {
 
 restore_cache() {
   # download latest cache.tar from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
-  PREV_JOB_CACHE_FILE=$(dx ls $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar -l 2>/dev/null | sort -r | head -1 | grep 'file-[a-zA-Z0-9]*' -o) ||
+  PREV_JOB_CACHE_FILE=$(
+    dx api system findDataObjects \
+      '{"visibility": "either", 
+      "name":"cache.tar", 
+      "scope": {"project": "'$DX_PROJECT_CONTEXT_ID'", 
+      "folder": "/.nextflow_cache_db/'$NXF_UUID'", "recurse": false}, 
+      "describe": true}' 2>/dev/null |
+      jq -r '.results | sort_by(.describe.modified)[-1] | .id // empty'
+  )
+
+  [[ -n $PREV_JOB_CACHE_FILE ]] ||
     dx-jobutil-report-error "Cannot find any $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide a valid sessionID."
 
   local ret
