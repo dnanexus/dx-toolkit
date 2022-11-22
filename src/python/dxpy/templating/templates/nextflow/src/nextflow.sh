@@ -157,10 +157,12 @@ restore_cache() {
   PREV_JOB_CACHE_FILE=$(
     dx api system findDataObjects \
       '{"visibility": "either", 
-      "name":"cache.tar", 
-      "scope": {"project": "'$DX_PROJECT_CONTEXT_ID'", 
-      "folder": "/.nextflow_cache_db/'$NXF_UUID'", "recurse": false}, 
-      "describe": true}' 2>/dev/null |
+        "name":"cache.tar",
+        "scope": {
+          "project": "'$DX_PROJECT_CONTEXT_ID'", 
+          "folder": "/.nextflow_cache_db/'$NXF_UUID'", 
+          "recurse": false}, 
+        "describe": true}' 2>/dev/null |
       jq -r '.results | sort_by(.describe.modified)[-1] | .id // empty'
   )
 
