@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * support for `--destination` in `nextflow build --repository`
+* `resume` and `preserve_cache` input arguments to Nextflow applet to support Nextflow resume functionality
 
 ## [333.0] - 2022.11.04 - beta
 

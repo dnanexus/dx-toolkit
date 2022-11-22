@@ -42,12 +42,27 @@
       "help": "Shows additional information in the job logs. If true, the execution log messages from Nextflow will also be included.",
       "class": "boolean",
       "default": false
+    },
+    {
+      "name": "resume",
+      "label": "Resume",
+      "help": "Unique ID of the previous session to be resumed. If 'true' or 'last' is provided instead of the sessionID, will resume the latest resumable session run by an applet with the same name in the current project in the last 6 months.",
+      "class": "string",
+      "optional": true
+    },
+    {
+      "name": "preserve_cache",
+      "label": "Preserve Cache",
+      "help": "Enable storing pipeline cache and local working files to the current project. If true, local working files and cache files will be uploaded to the platform, so the current session could be resumed in the future",
+      "class": "boolean",
+      "default": false
     }
   ],
   "outputSpec": [
     {
-      "name": "output_files",
-      "label": "Output files of Nextflow pipeline",
+      "name": "published_files",
+      "label": "Published files of Nextflow pipeline",
+      "help": "Output files published by current Nextflow pipeline and uploaded to the job output destination.",
       "class": "array:file",
       "optional": true
     },
