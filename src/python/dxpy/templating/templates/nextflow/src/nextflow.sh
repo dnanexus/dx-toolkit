@@ -146,8 +146,8 @@ get_resume_session_id() {
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   [[ "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]] ||
     dx-jobutil-report-error "Invalid resume value. Please provide either \"true\", \"last\", or \"sessionID\". 
-    If a sessionID was provided, Nextflow cached content could not found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/. 
-    Please provide the exact sessionID for \"resume\" value or run without resume."
+    If a sessionID was provided, Nextflow cached content could not be found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/. 
+    Please provide the exact sessionID for \"resume\" or run without resume."
 
   NXF_UUID=$PREV_JOB_SESSION_ID
 }
