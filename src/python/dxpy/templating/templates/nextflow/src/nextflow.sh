@@ -146,12 +146,14 @@ get_resume_session_id() {
 
 restore_cache() {
   # download latest cache.tar from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
-  PREV_JOB_CACHE_FILE=$(dx ls $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar -l | sort -r | head -1 | grep 'file-[a-zA-Z0-9]*' -o)
+  PREV_JOB_CACHE_FILE=$(dx ls $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar -l 2>/dev/null | sort -r | head -1 | grep 'file-[a-zA-Z0-9]*' -o) ||
+    dx-jobutil-report-error "Cannot find any $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide a valide sessionID."
+
   local ret
   ret=$(dx download $PREV_JOB_CACHE_FILE --no-progress -f -o cache.tar 2>&1) ||
     {
       if [[ $ret == *"FileNotFoundError"* || $ret == *"ResolutionError"* ]]; then
-        dx-jobutil-report-error "Nextflow cached content cannot be found as $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide the exact sessionID for \”resume\” value or run without resume."
+        dx-jobutil-report-error "Nextflow cached content cannot be downloaded from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/cache.tar. Please provide the exact sessionID for \”resume\” value or run without resume."
       else
         dx-jobutil-report-error "$ret"
       fi
