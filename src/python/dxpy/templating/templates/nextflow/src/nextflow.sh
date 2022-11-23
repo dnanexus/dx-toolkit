@@ -297,9 +297,9 @@ main() {
   #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
-  export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
+  export NXF_PLUGINS_DEFAULT=nextaur@1.2.0
   export NXF_EXECUTOR='dnanexus'
-
+  echo ${NXF_PLUGINS_DEFAULT}
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
