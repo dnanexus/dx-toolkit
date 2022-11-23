@@ -1,3 +1,15 @@
+dx-toolkit (0.334.0) trusty; urgency=medium
+
+  * Added: '--external-upload-restricted' flag for `dx update project` and `dx find projects`
+  * Added: Support for '--destination' in `nextflow build --repository`
+  * Added: `resume` and `preserve_cache` input arguments to Nextflow applets
+  * Added: Error handling with Nextflow's errorStrategy
+  * Added: `region` argument to `DXProject.new()`
+  * Fixed: Retrieving session config when no parent process exists
+  * Fixed: Error describing global workflows by adding a resources container as a hint
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 23 Nov 2022 21:53:17 +0000
+
 dx-toolkit (0.333.0) trusty; urgency=medium
 
   * Added: `nextflow run` command in the log for debugging
