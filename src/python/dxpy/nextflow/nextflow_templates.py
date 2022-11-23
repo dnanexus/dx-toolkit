@@ -4,7 +4,7 @@ from .nextflow_utils import (get_template_dir, get_source_file_name, get_resourc
                                           get_importer_name, get_regional_options)
 import json
 import os
-from dxpy.compat import USING_PYTHON2
+from dxpy.compat import USING_PYTHON2,sys_encoding
 
 
 def get_nextflow_dxapp(custom_inputs=None, name="", region="aws:us-east-1"):
@@ -59,11 +59,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     """
     if custom_inputs is None:
         custom_inputs = []
-    
-    read_mode = "r"
-    if USING_PYTHON2:
-        read_mode = "rb"
-    with open(os.path.join(str(get_template_dir()), get_source_file_name()), read_mode) as f:
+    with open(os.path.join(str(get_template_dir()), get_source_file_name()), 'r') as f:
         src = f.read()
 
     required_runtime_params = ""
@@ -94,7 +90,12 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
-    src = src.replace("@@RESOURCES_SUBPATH@@",
+    if USING_PYTHON2:
+        src = src.replace("@@RESOURCES_SUBPATH@@",
+                      get_resources_subpath(resources_dir).encode(sys_encoding))
+    else:
+        src = src.replace("@@RESOURCES_SUBPATH@@",
                       get_resources_subpath(resources_dir))
+        
     return src
 
