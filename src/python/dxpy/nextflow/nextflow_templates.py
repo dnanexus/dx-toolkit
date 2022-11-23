@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
+from .nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
                                           get_importer_name, get_regional_options)
 import json
 import os
