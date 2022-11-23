@@ -87,15 +87,21 @@ class TestNextflowTemplates(DXTestCase):
         self.assertEqual(len(dxapp.get("inputSpec")),
                          default_input_len + len(inputs))
 
+    @unittest.skipIf(USING_PYTHON2,
+        'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
     def test_src_basic(self):
         src = get_nextflow_src()
         self.assertTrue("#!/usr/bin/env bash" in src)
         self.assertTrue("nextflow" in src)
 
+    @unittest.skipIf(USING_PYTHON2,
+        'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
     def test_src_profile(self):
         src = get_nextflow_src(profile="test_profile")
         self.assertTrue("-profile test_profile" in src)
 
+    @unittest.skipIf(USING_PYTHON2,
+        'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
     def test_src_inputs(self):
         src = get_nextflow_src(custom_inputs=[input1, input2])
         self.assertTrue("if [ -n \"${}\" ];".format(input2.get("name")) in src)

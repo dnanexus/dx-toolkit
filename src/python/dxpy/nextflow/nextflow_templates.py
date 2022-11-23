@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
+from .nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
                                           get_importer_name, get_regional_options)
 import json
 import os
+from dxpy.compat import USING_PYTHON2,sys_encoding
 
 
 def get_nextflow_dxapp(custom_inputs=None, name="", region="aws:us-east-1"):
@@ -89,7 +90,12 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
-    src = src.replace("@@RESOURCES_SUBPATH@@",
+    if USING_PYTHON2:
+        src = src.replace("@@RESOURCES_SUBPATH@@",
+                      get_resources_subpath(resources_dir).encode(sys_encoding))
+    else:
+        src = src.replace("@@RESOURCES_SUBPATH@@",
                       get_resources_subpath(resources_dir))
+        
     return src
 

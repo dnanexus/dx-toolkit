@@ -20,7 +20,7 @@ def get_resources_dir_name(resources_dir):
     return os.path.basename(os.path.abspath(resources_dir))
 
 def get_resources_subpath(resources_dir):
-    return "/home/dnanexus/" + get_resources_dir_name(resources_dir)
+    return os.path.join("/home/dnanexus/", get_resources_dir_name(resources_dir))
 
 def get_importer_name():
     return "nextflow_pipeline_importer"
