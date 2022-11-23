@@ -2317,10 +2317,10 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         caller_applet_id = dxpy.api.applet_new(caller_applet_spec)['id']
 
         # "dx describe output" should have applet/workflow/record ids in bundledDepends
-        caller_applet_desc = run('dx describe {}'.format(caller_applet_id))
-        self.assertIn(bundled_applet_id.replace('applet-', ''), caller_applet_desc)
-        self.assertIn(bundled_wf_id.replace('workflow-', ''), caller_applet_desc)
-        self.assertIn(bundled_record_id.replace('record-', ''), caller_applet_desc)
+        caller_applet_desc = run('dx describe {}'.format(caller_applet_id)).decode().replace(' ', '').replace('\n', '')
+        self.assertIn(bundled_applet_id, caller_applet_desc)
+        self.assertIn(bundled_wf_id, caller_applet_desc)
+        self.assertIn(bundled_record_id, caller_applet_desc)
 
         # "dx describe --json" output should have applet/workflow/file ids in bundledDepends
         caller_applet_desc_json = run('dx describe {} --json'.format(caller_applet_id))
