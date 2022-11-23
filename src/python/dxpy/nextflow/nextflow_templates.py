@@ -4,6 +4,7 @@ from dxpy.nextflow.nextflow_utils import (get_template_dir, get_source_file_name
                                           get_importer_name, get_regional_options)
 import json
 import os
+from dxpy.compat import USING_PYTHON2
 
 
 def get_nextflow_dxapp(custom_inputs=None, name="", region="aws:us-east-1"):
@@ -58,7 +59,11 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     """
     if custom_inputs is None:
         custom_inputs = []
-    with open(os.path.join(str(get_template_dir()), get_source_file_name()), 'r') as f:
+    
+    read_mode = "r"
+    if USING_PYTHON2:
+        read_mode = "rb"
+    with open(os.path.join(str(get_template_dir()), get_source_file_name()), read_mode) as f:
         src = f.read()
 
     required_runtime_params = ""
