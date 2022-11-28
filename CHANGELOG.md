@@ -21,7 +21,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * retrieving session config when no parent process exists
 * an issue with describing global workflows by adding a resources container as a hint for describing underlying workflows
 
-## [333.0] - 2022.11.04 - stable
+## [333.0] - 2022.11.23 - stable
 
 ### Added
 
@@ -38,7 +38,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Set `restartableEntryPoints` to "all" in the nextflow pipeline applet's `runsSpec`
 
 
-## [332.0] - 2022.11.04 - stable
+## [332.0] - 2022.11.04
 
 ### Added
 
