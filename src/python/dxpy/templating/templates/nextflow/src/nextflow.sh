@@ -303,6 +303,8 @@ main() {
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
+  required_inputs=""
+  @@REQUIRED_RUNTIME_PARAMS@@
 
   # get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
@@ -365,7 +367,7 @@ main() {
     $RESUME_CMD \
     $nextflow_run_opts \
     $nextflow_pipeline_params \
-    @@REQUIRED_RUNTIME_PARAMS@@
+    $required_inputs
       "
 
   trap on_exit EXIT
