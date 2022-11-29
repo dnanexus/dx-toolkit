@@ -407,6 +407,14 @@ nf_task_exit() {
   # error code is managed by nextflow via .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
   dx-jobutil-add-output exit_code $exit_code --class=int
+  if [ $exit_code -ne 0 ]; then
+    properties=$(dx describe ${DX_JOB_ID} --json 2>/dev/null | jq -r ".properties")
+    if [[ $properties != "null" ]]; then
+      if [[ $(jq .nextflow_errorStrategy <<<${properties} -r) == "terminate" ]]; then
+        exit $exit_code
+      fi
+    fi
+  fi
 }
 
 nf_task_entry() {
