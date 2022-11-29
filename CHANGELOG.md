@@ -6,12 +6,22 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [334.0] - beta
+
 ### Added
 
-* support for `--destination` in `nextflow build --repository`
-* `resume` and `preserve_cache` input arguments to Nextflow applet to support Nextflow resume functionality
+* `--external-upload-restricted` flag for `dx update project` and `dx find projects`
+* Support for `--destination` in `nextflow build --repository`
+* `resume` and `preserve_cache` input arguments to Nextflow applets to support Nextflow resume functionality
+* Support for error handling with Nextflow's errorStrategy
+* `region` argument to `DXProject.new()`
 
-## [333.0] - 2022.11.04 - beta
+### Fixed
+
+* retrieving session config when no parent process exists
+* an issue with describing global workflows by adding a resources container as a hint for describing underlying workflows
+
+## [333.0] - 2022.11.23 - stable
 
 ### Added
 
@@ -28,7 +38,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Set `restartableEntryPoints` to "all" in the nextflow pipeline applet's `runsSpec`
 
 
-## [332.0] - 2022.11.04 - stable
+## [332.0] - 2022.11.04
 
 ### Added
 

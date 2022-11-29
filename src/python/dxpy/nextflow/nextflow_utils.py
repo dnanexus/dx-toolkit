@@ -20,7 +20,7 @@ def get_resources_dir_name(resources_dir):
     return os.path.basename(os.path.abspath(resources_dir))
 
 def get_resources_subpath(resources_dir):
-    return "/home/dnanexus/" + get_resources_dir_name(resources_dir)
+    return os.path.join("/home/dnanexus/", get_resources_dir_name(resources_dir))
 
 def get_importer_name():
     return "nextflow_pipeline_importer"
@@ -62,23 +62,45 @@ def get_regional_options(region):
     return regional_options
 
 def get_nextflow_assets(region):
+    # The order of assets in the tuple is: nextaur, nextflow
     prod_assets = {
-        "aws:ap-southeast-2": ("record-GGbPk785py8Kz5bj4xJqBQ1x", "record-GGbPv285K56b6YXp4x0yx4Xg"),
-        "aws:eu-central-1": ("record-GGbPk5j49jj85Jbg4vQVXy38", "record-GGbPpyj48GgbqqGk4x4FzYgP"),
-        "aws:eu-west-2": ("record-GGbPkGjJ0pX15P8f4vgX0G0q", "record-GGbPqp0JkzF2XyxP50xKyGbp"),
-        "aws:us-east-1": ("record-GGbP68Q0qg6877g84xQXqB0F", "record-GGbKvfQ0Yy4JPBbP4vfF5P3z"),
-        "azure:westeurope": ("record-GGbPpQQBZGZP29Yg4xZpgxZP", "record-GGbPq00BXKVBBgk14x8pQj3K"),
-        "azure:westus": ("record-GGbPpQj9vGQzFq8y4xG102Zz", "record-GGbPq089xQvJBjkG4vbPg0Kg"),
-        "aws:eu-west-2-g": ("record-GGbPk72KX7VbgXp34y4z119x", "record-GGbPqXpKyyZzyfPg4yX55JXb")
+        "aws:ap-southeast-2": ("record-GJz3Z305Pz847pgx1bb06z77",
+                               "record-GGbPv285K56b6YXp4x0yx4Xg"),
+        "aws:eu-central-1": ("record-GJz3b084XQ6b1xBvPp5p9gzy",
+                             "record-GGbPpyj48GgbqqGk4x4FzYgP"),
+        "aws:eu-west-2": ("record-GJz3fY8JzkG6vjpF9g6F3K1Q",
+                          "record-GGbPqp0JkzF2XyxP50xKyGbp"),
+        "aws:us-east-1": ("record-GJypQY00gqbQpyg19z29fvp7",
+                          "record-GJypP1j0PqVPQ3YkJgq1B8Bq"),
+        "azure:westeurope": ("record-GJz3kJQBFzvf3ZXYGJvv2JPB",
+                             "record-GGbPq00BXKVBBgk14x8pQj3K"),
+        "azure:westus": ("record-GJz3KfQ9Z5BQfJY19k0BYZ4Q",
+                         "record-GGbPq089xQvJBjkG4vbPg0Kg"),
+        "aws:eu-west-2-g": ("record-GJz3qgXKJbGVpF80K6gzjPQJ",
+                            "record-GGbPqXpKyyZzyfPg4yX55JXb")
     }
     stg_assets = {
-        "aws:ap-southeast-2": ("record-GGbJz3j52fYPG2fp8Y1Q3vvG", "record-GGbVF5857Zj7PbQQ8FP1KKxX"),
-        "aws:eu-central-1": ("record-GGbJz204G2gQ2bpj8BzyYQzj", "record-GGbVBb84ZBgV92b98Yz263QK"),
-        "aws:eu-west-2": ("record-GGbJz10JpGq192b98Yz21pJQ", "record-GGbVBp8JXvXj0ZZJ8Y2KYjj7"),
-        "aws:us-east-1": ("record-GGb8zb801pBqB2PF8XjBf7Px", "record-GG23y1j00vk1BJ5zKzykGXvY"),
-        "azure:westeurope": ("record-GGbJyZ8BP1f3X0xP8GkgJP41", "record-GGbVFZjBQZzGv2p88F39ZJY3"),
-        "azure:westus": ("record-GGbJy489qFGpB0468YFXxyX5", "record-GGbVG009zzFX6fg18YKxKXy7"),
-        "aws:eu-west-2-g": ("record-GGbJyxpKkJJFB2PF8XjBpV00", "record-GGbVBv2KqxX767f98FXG6p0Q")
+        "aws:ap-southeast-2": (
+            "record-GJyfpF85VFv6BBp54pxQJ3zv",
+            "record-GJyfYx85FpVKxgxg4kQj67yB"),
+        "aws:eu-central-1": (
+            "record-GJyfpB04kJjF7gFV4pB3QkZQ",
+            "record-GJyfYkj4XGF5YV9x4kk7XG0K"),
+        "aws:eu-west-2": (
+            "record-GJyfkfQJK0PYf9fF4k5VgbFy",
+            "record-GJyfY7jJ079q7gFV4pB3QkZ5"),
+        "aws:us-east-1": (
+            "record-GJyfgjQ0Q6vF7gFV4pB3QkZF",
+            "record-GJyfG8j0pVx67bq751qkgPfV"),
+        "azure:westeurope": (
+            "record-GJyfpq0BZkFYvfp34kx605F1",
+            "record-GJyfZ8QB80fbb8064pKz991Z"),
+        "azure:westus": (
+            "record-GJyfpx091jJYvfp34kx605F3",
+            "record-GJyfZBQ9k78f7bq751qkgPg1"),
+        "aws:eu-west-2-g": (
+            "record-GJyfkpXKgjpf7bq751qkgPgG",
+            "record-GJyfY8pKbPb3vfp34kx605BY")
     }
 
     try:
@@ -86,4 +108,3 @@ def get_nextflow_assets(region):
         return prod_assets[region]
     except ResourceNotFound:
         return stg_assets[region]
-
