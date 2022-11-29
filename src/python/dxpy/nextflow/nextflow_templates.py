@@ -82,9 +82,9 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
             # required_inputs variable is initialized in the nextflow.sh script template
             required_runtime_params = required_runtime_params + '''
             if [ -n "${}" ]; then
-                required_inputs="${{required_inputs}} --{}=${}" 
+                required_inputs="${{required_inputs}} --{}={}" 
             fi
-            '''.format(i['name'], i['name'], i['name'])
+            '''.format(i['name'], i['name'], value)
 
     profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
