@@ -111,7 +111,7 @@ on_exit() {
 
   # upload the log file and published files if any
   mkdir -p /home/dnanexus/out/published_files
-  find . -type f -newermt "$BEGIN_TIME" -exec mv {} /home/dnanexus/out/published_files/ \;
+  find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
 
   dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
   # done
