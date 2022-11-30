@@ -104,10 +104,16 @@ class TestNextflowTemplates(DXTestCase):
         'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
     def test_src_inputs(self):
         src = get_nextflow_src(custom_inputs=[input1, input2])
-        self.assertTrue("if [ -n \"${}\" ];".format(input2.get("name")) in src)
-        self.assertTrue("--{}=${}".format(input2.get("name"), input2.get("name")))
+
         self.assertTrue("if [ -n \"${}\" ];".format(input1.get("name")) in src)
-        self.assertTrue("--{}=${}".format(input1.get("name"), input1.get("name")))
+        value1 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input1.get(
+            "name")
+        self.assertTrue("--{}={}".format(input1.get("name"), value1) in src)
+
+        self.assertTrue("if [ -n \"${}\" ];".format(input2.get("name")) in src)
+        value2 = '${%s}' % input2.get("name")
+        self.assertTrue("--{}={}".format(input2.get("name"), value2) in src)
+
 
     def test_prepare_inputs(self):
         inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
