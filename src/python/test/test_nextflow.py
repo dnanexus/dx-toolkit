@@ -54,6 +54,18 @@ input2 = {
     "help": "second input",
     "label": "Test2"
 }
+input3 = {
+    "class": "file",
+    "name": "third_input",
+    "help": "(Nextflow pipeline optional)third input",
+    "label": "Test3"
+}
+input4 = {
+    "class": "file",
+    "name": "fourth_input",
+    "help": "(Nextflow pipeline required)fourth input",
+    "label": "Test4"
+}
 
 
 class TestNextflowTemplates(DXTestCase):
@@ -103,7 +115,7 @@ class TestNextflowTemplates(DXTestCase):
     @unittest.skipIf(USING_PYTHON2,
         'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
     def test_src_inputs(self):
-        src = get_nextflow_src(custom_inputs=[input1, input2])
+        src = get_nextflow_src(custom_inputs=[input1, input2, input3, input4])
 
         self.assertTrue("if [ -n \"${}\" ];".format(input1.get("name")) in src)
         value1 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input1.get(
@@ -114,6 +126,16 @@ class TestNextflowTemplates(DXTestCase):
         value2 = '${%s}' % input2.get("name")
         self.assertTrue("--{}={}".format(input2.get("name"), value2) in src)
 
+        self.assertTrue("if [ -n \"${}\" ];".format(input3.get("name")) in src)
+        value3 = '\\"dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)\\"' % input3.get(
+            "name")
+        self.assertTrue("echo params.{}={} >> nxf_runtime.config".format(
+            input3.get("name"), value3) in src)
+
+        self.assertTrue("if [ -n \"${}\" ];".format(input4.get("name")) in src)
+        value4 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input4.get(
+            "name")
+        self.assertTrue("--{}={}".format(input4.get("name"), value4) in src)
 
     def test_prepare_inputs(self):
         inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
