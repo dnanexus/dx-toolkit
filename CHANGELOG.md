@@ -6,6 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Group name for developer options in Nextflow pipeline applet
+
+### Fixed
+
+* Printing too many environment values with debug set to true
+* Preserving folder structure when publishing Nextflow output files
+* Missing required inputs passed to `nextflow run`
+
 ## [334.0] - beta
 
 ### Added
