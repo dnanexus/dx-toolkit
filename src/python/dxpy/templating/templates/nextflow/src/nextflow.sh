@@ -418,7 +418,7 @@ nf_task_entry() {
   # capture the exit code
   trap nf_task_exit EXIT
   # run the task
-  dx cat "${cmd_launcher_file}" > .command.run
+  dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
   set +e
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
