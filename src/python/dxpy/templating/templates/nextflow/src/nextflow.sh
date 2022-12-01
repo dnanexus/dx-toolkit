@@ -411,7 +411,6 @@ nf_task_exit() {
 
 nf_task_entry() {
   # enable debugging mode
-  [[ $NXF_DEBUG ]] && set -x
   if [ -n "$docker_creds" ]; then
     dx-registry-login
   fi
@@ -420,6 +419,7 @@ nf_task_entry() {
   # run the task
   dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
   set +e
+  [[ $NXF_DEBUG ]] && set -x
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
   dx set_properties ${DX_JOB_ID} exit_code=$exit_code
