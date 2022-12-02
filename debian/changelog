@@ -1,3 +1,12 @@
+dx-toolkit (0.335.0) trusty; urgency=medium
+
+  * Added: Group name for developer options in Nextflow pipeline applet
+  * Fixed: Printing too many environment values with debug set to true (Nextflow)
+  * Fixed: Missing required inputs passed to nextflow run
+  * Fixed: Preserving folder structure when publishing Nextflow output files
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 02 Dec 2022 22:23:03 +0000
+
 dx-toolkit (0.334.0) trusty; urgency=medium
 
   * Added: '--external-upload-restricted' flag for `dx update project` and `dx find projects`
