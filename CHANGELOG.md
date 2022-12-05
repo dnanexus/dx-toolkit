@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [335.0] - beta
+
 ### Added
 
 * Group name for developer options in Nextflow pipeline applet
@@ -16,7 +18,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Preserving folder structure when publishing Nextflow output files
 * Missing required inputs passed to `nextflow run`
 
-## [334.0] - beta
+## [334.0] - 2022.12.2 - stable
 
 ### Added
 
@@ -31,7 +33,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * retrieving session config when no parent process exists
 * an issue with describing global workflows by adding a resources container as a hint for describing underlying workflows
 
-## [333.0] - 2022.11.23 - stable
+## [333.0] - 2022.11.23
 
 ### Added
 
