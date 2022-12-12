@@ -5759,7 +5759,7 @@ parser_find_projects.add_argument('--created-before',
                                   help='''Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the project was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for projects created earlier than 2 days ago)''')
 parser_find_projects.add_argument('--region', help='Restrict the search to the provided region')
 parser_find_projects.add_argument('--external-upload-restricted', choices=["true", "false"],
-                                   help="Whether uploads of file and table data to the project should be restricted")
+                                   help="If set to true, only externalUploadRestricted projects will be retrieved. If set to false, only projects that are not externalUploadRestricted will be retrieved.")
 parser_find_projects.set_defaults(func=find_projects)
 register_parser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 
