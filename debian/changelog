@@ -1,3 +1,9 @@
+dx-toolkit (0.336.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 12 Dec 2022 22:01:13 +0000
+
 dx-toolkit (0.335.0) trusty; urgency=medium
 
   * Added: Group name for developer options in Nextflow pipeline applet
