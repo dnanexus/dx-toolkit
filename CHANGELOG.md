@@ -6,7 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [335.0] - beta
+## [336.0] - beta
+
+* No significant changes
+
+## [335.0] - 2022.12.12 - stable
 
 ### Added
 
@@ -18,7 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Preserving folder structure when publishing Nextflow output files
 * Missing required inputs passed to `nextflow run`
 
-## [334.0] - 2022.12.2 - stable
+## [334.0] - 2022.12.2
 
 ### Added
 
