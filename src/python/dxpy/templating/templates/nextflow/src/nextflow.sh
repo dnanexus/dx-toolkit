@@ -291,6 +291,9 @@ main() {
     dx-registry-login
   fi
 
+  # set docker timeout variables
+  export DOCKER_CLIENT_TIMEOUT=120
+  export COMPOSE_HTTP_TIMEOUT=120
   # set default NXF env constants
   export NXF_DOCKER_LEGACY=true
   #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
@@ -413,6 +416,9 @@ nf_task_entry() {
   if [ -n "$docker_creds" ]; then
     dx-registry-login
   fi
+  # set docker timeout variables
+  export DOCKER_CLIENT_TIMEOUT=120
+  export COMPOSE_HTTP_TIMEOUT=120
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
