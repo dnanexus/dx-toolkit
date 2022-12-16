@@ -406,6 +406,14 @@ nf_task_exit() {
   # mark the job as successful in any case, real task
   # error code is managed by nextflow via .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
+
+ terminate_record=$(dx find data --name $DX_JOB_ID --path /.terminate/ --class record --brief | head -n 1)
+  if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
+    echo $terminate_record
+    sleep 240
+    exit;
+  fi
+
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
