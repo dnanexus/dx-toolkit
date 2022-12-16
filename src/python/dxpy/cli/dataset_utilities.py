@@ -155,6 +155,8 @@ def extract_dataset(args):
     if args.fields:
         if args.sql:
             file_name_suffix = '.data.sql'
+        elif resp["downloadRestricted"]:
+            err_exit('Insufficient permissions due to the project policy')
         else:
             file_name_suffix = out_extension
         
