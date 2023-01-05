@@ -90,7 +90,7 @@ def get_nextflow_assets(region):
             "record-GK4z96jJ903jKV7PPFk47zbg",
             "record-GJyfY7jJ079q7gFV4pB3QkZ5"),
         "aws:us-east-1": (
-            "record-GK4z5xQ0bf7BbQzQPJ4Zb7yB",
+            "record-GKzzYB808k04Yjf5g7J1bKvp",
             "record-GJyfG8j0pVx67bq751qkgPfV"),
         "azure:westeurope": (
             "record-GK4zB00Bbvb7gJ40PGXbzyqX",

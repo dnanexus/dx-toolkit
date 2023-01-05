@@ -291,12 +291,21 @@ main() {
   fi
 
   if [ -n "$docker_creds" ]; then
-    dx-registry-login
+#    dx-registry-login
+    local tmp=$(mktemp -t nxf.XXXXXXXXXX)
+    dx download $(jq '."$dnanexus_link"' <<<${docker_creds} -r) -o $tmp --no-progress -f
+    dc=$(dx upload $tmp --brief --wait)
+    echo $dc
+    echo "HeRTE"
+    export NXF_DOCKER_CREDS_FILE=dx://$(jq '."id"' <<<${dc} -r)
   fi
 
   # set default NXF env constants
   export NXF_DOCKER_LEGACY=true
-  #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
+
+
+#  export NXF_DOCKER_CREDS_FILE=$docker_creds
+#  jq '."$dnanexus_link".id'
   #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
@@ -413,9 +422,9 @@ nf_task_exit() {
 }
 
 nf_task_entry() {
-  if [ -n "$docker_creds" ]; then
-    dx-registry-login
-  fi
+#  if [ -n "$docker_creds" ]; then
+#    dx-registry-login
+#  fi
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
