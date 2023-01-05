@@ -8,6 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Exposed help messages for `dx build --nextflow`
 * Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
 
 ## [336.0] - beta
