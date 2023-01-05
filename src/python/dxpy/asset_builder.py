@@ -204,7 +204,7 @@ def build_asset(args):
         if args.visibility:
             asset_conf["hidden"] = (args.visibility == 'hidden')
         if not asset_conf.get("hidden"):
-            asset_conf["hidden"] = True
+            asset_conf["hidden"] = False
 
         with tempfile.NamedTemporaryFile(dir=args.src_dir, suffix=".json", mode='w+') as temp_asset_conf:
             json.dump(asset_conf, temp_asset_conf)
