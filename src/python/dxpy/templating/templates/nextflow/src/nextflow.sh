@@ -54,7 +54,10 @@ on_exit() {
   properties=$(dx describe ${DX_JOB_ID} --json 2>/dev/null | jq -r ".properties")
   if [[ $properties != "null" ]]; then
     if [[ $(jq .nextflow_errorStrategy <<<${properties} -r) == "ignore" ]]; then
-      echo "ignore had happened"
+      ignored_subjobs=$(jq .nextflow_errored_subjobs <<<${properties} -r)
+      if [[ ${ignored_subjobs} != "null" ]]; then
+        echo "Subjob(s) ${ignored_subjobs} run(s) into Nextflow process errors. \"ignore\" errorStrategy were applied."
+      fi
     fi
   fi
   set +x
