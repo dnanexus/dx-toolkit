@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Exposed help messages for `dx build --nextflow`
+
 ## [336.0] - beta
 
 * No significant changes
