@@ -2106,7 +2106,7 @@ def find_executions(args):
     include_internetUsageIPs = args.verbose and args.json
     if args.classname == 'job':
         describe_args = {
-        "defaultFields": True, 
+        "defaultFields": True,
         "fields": {
             "runInput": include_io,
             "originalInput": include_io,
@@ -2630,7 +2630,7 @@ def build(args):
         """
         if args.mode == "app" and args.destination != '.':
             build_parser.error("--destination cannot be used when creating an app (only an applet)")
-        
+
         if args.mode == "globalworkflow" and args.destination != '.':
             build_parser.error("--destination cannot be used when creating a global workflow (only a workflow)")
 
@@ -2836,7 +2836,7 @@ def list_database_files(args):
             if entity_result_class != 'database':
                 err_exit('Error: The given object is of class ' + entity_result_class +
                  ' but an object of class database was expected', 3)
-            
+
         results = dxpy.api.database_list_folder(
             entity_result['id'],
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
@@ -3072,7 +3072,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                 print()
         else: # if run_kwargs["priority"] is None
             run_kwargs["priority"] = "high"
-    
+
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
         executable_desc = executable_describe or executable.describe()
@@ -3926,35 +3926,35 @@ def archive(args):
         api_errors = [InvalidState, ResourceNotFound, PermissionDenied]
         try:
             res = request_func(target_project, request_input)
-        except Exception as e:            
+        except Exception as e:
             eprint("Failed request: {}".format(request_input))
             if type(e) in api_errors:
                 eprint("     API error: {}. {}".format(e.name, e.msg))
-            else: 
+            else:
                 eprint("     Unexpected error: {}".format(format_exception(e)))
-            
+
             err_exit("Failed request: {}. {}".format(request_input, format_exception(e)), code=3)
-        return res              
+        return res
 
     def get_valid_archival_input(args, target_files, target_folder, target_project):
         request_input = {}
-        if target_files: 
+        if target_files:
             target_files = list(target_files)
             request_input = {"files": target_files}
         elif target_folder:
             request_input = {"folder": target_folder, "recurse":args.recurse}
         else:
             err_exit("No input file/folder is found in project {}".format(target_project), code=3)
-        
-        request_mode = args.request_mode    
+
+        request_mode = args.request_mode
         options = {}
         if request_mode == "archival":
             options = {"allCopies": args.all_copies}
             request_func = dxpy.api.project_archive
         elif request_mode == "unarchival":
             options = {"rate": args.rate}
-            request_func = dxpy.api.project_unarchive        
-        
+            request_func = dxpy.api.project_unarchive
+
         request_input.update(options)
         return request_mode, request_func, request_input
 
@@ -3962,7 +3962,7 @@ def archive(args):
         target_project = None
         target_folder = None
         target_files = set()
-        
+
         paths = [split_unescaped(':', path, include_empty_strings=True) for path in args.path]
         possible_projects = set()
         possible_folder = set()
@@ -3970,13 +3970,13 @@ def archive(args):
 
         # Step 0: parse input paths into projects and objects
         for p in paths:
-            if len(p)>2: 
+            if len(p)>2:
                 err_exit("Path '{}' is invalid. Please check the inputs or check --help for example inputs.".format(":".join(p)), code=3)
             elif len(p) == 2:
                 possible_projects.add(p[0])
             elif len(p) == 1:
                 possible_projects.add('')
-            
+
             obj = p[-1]
             if obj[-1] == '/':
                 folder, entity_name = clean_folder_path(('' if obj.startswith('/') else '/') + obj)
@@ -3986,7 +3986,7 @@ def archive(args):
                     possible_folder.add(folder)
             else:
                 possible_files.add(obj)
-        
+
         # Step 1: find target project
         for proj in possible_projects:
             # is project ID
@@ -4003,7 +4003,7 @@ def archive(args):
                     project_results = list(dxpy.find_projects(name=proj, describe=True))
                 except:
                     err_exit("Cannot find project with name {}".format(proj), code=3)
-                
+
                 if project_results:
                     choice = pick(["{} ({})".format(result['describe']['name'], result['id']) for result in project_results], allow_mult=False)
                     proj = project_results[choice]['id']
@@ -4024,7 +4024,7 @@ def archive(args):
             err_exit("Only one folder is allowed for each request. Please check the inputs or check --help for example inputs.".format(p), code=3)
         if possible_folder and possible_files:
             err_exit('Expecting either a single folder or a list of files for each API request', code=3)
-        
+
         # Step 3: assign target folder or target files
         if possible_folder:
             target_folder = possible_folder.pop()
@@ -4037,11 +4037,11 @@ def archive(args):
                 # is folderpath/filename
                 else:
                     folderpath, filename = clean_folder_path(('' if obj.startswith('/') else '/') + fp)
-                    try: 
+                    try:
                         file_results = list(dxpy.find_data_objects(classname="file", name=filename,project=target_project,folder=folderpath,describe=True,recurse=False))
                     except:
                         err_exit("Input '{}' is not found as a file in project '{}'".format(fp, target_project), code=3)
-                    
+
                     if not file_results:
                         err_exit("Input '{}' is not found as a file in project '{}'".format(fp, target_project), code=3)
                     # elif file_results
@@ -4051,24 +4051,24 @@ def archive(args):
                             target_files.update([file['id'] for file in file_results])
                         else:
                             target_files.add(file_results[choice]['id'])
-                    else: 
+                    else:
                         target_files.update([file['id'] for file in file_results])
-        
+
         return target_files, target_folder, target_project
 
     # resolve paths  
     target_files, target_folder, target_project = get_archival_paths(args)
-    
+
     # set request command and add additional options
     request_mode, request_func, request_input = get_valid_archival_input(args, target_files, target_folder, target_project)
-                 
+
     # ask for confirmation if needed
     if args.confirm and INTERACTIVE_CLI:
         if request_mode == "archival":
             if target_files:
                 counts = len(target_files)
                 print('Will tag {} file(s) for archival in {}'.format(counts,target_project))
-            else: 
+            else:
                 print('Will tag file(s) for archival in folder {}:{} {}recursively'.format(target_project, target_folder, 'non-' if not args.recurse else ''))
         elif request_mode == "unarchival":
             dryrun_request_input = copy.deepcopy(request_input)
@@ -4078,17 +4078,17 @@ def archive(args):
 
         if not prompt_for_yn('Confirm all paths?', default=True):
             parser.exit(0)
-    
+
     # send request and display final results
     res = send_archive_request(target_project, request_input, request_func)
-    
+
     if not args.quiet:
         print()
         if request_mode == "archival":
             print('Tagged {} file(s) for archival in {}'.format(res["count"],target_project))
         elif request_mode == "unarchival":
             print('Tagged {} file(s) for unarchival, totalling {} GB, costing ${}'.format(res["files"], res["size"],res["cost"]/1000))
-        print()    
+        print()
 
 def print_help(args):
     if args.command_or_category is None:
@@ -4671,6 +4671,7 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
 
 app_and_globalworkflow_options = build_parser.add_argument_group('Options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
 applet_and_workflow_options = build_parser.add_argument_group('Options for creating applets or workflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is NOT specified)')
+nextflow_options = build_parser.add_argument_group('Options for creating Nextflow applets', '(Only valid when --nextflow is specified)')
 
 # COMMON OPTIONS
 build_parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
@@ -4687,7 +4688,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json (default: current directory).", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json or *.nf (for --nextflow option). (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4784,19 +4785,26 @@ build_parser.add_argument('--keep-open', help=fill("Do not close workflow after 
                                                    width_adjustment=-24), action='store_true')
 
 # --nextflow
-build_parser.add_argument('--nextflow', help=argparse.SUPPRESS, action='store_true')
+build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet.",
+                                                   width_adjustment=-24), action='store_true')
 
 # --profile
-build_parser.add_argument('--profile', help=argparse.SUPPRESS, dest="profile")
+nextflow_options.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline.",
+                                                   width_adjustment=-24), dest="profile")
 
 # --repository
-build_parser.add_argument('--repository', help=argparse.SUPPRESS, dest="repository")
-# --tag
-build_parser.add_argument('--repository-tag', help=argparse.SUPPRESS, dest="tag")
+nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Incompatible with --remote.",
+                                                   width_adjustment=-24), dest="repository")
+
+# --repository-tag
+nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for Git repository. Can be used only with --repository.",
+                                                   width_adjustment=-24), dest="tag")
 
 # --git-credentials
-build_parser.add_argument('--git-credentials', help=argparse.SUPPRESS,
-                              dest="git_credentials").completer = DXPathCompleter(classes=['file'])
+nextflow_options.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. "
+                                                        "Can be used only with --repository. More information about the file syntax can be found"
+                                                        " at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
+                                                   width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
@@ -5178,7 +5186,7 @@ parser_run.add_argument('--delay-workspace-destruction',
 parser_run.add_argument('--priority',
                         choices=['low', 'normal', 'high'],
                         help=fill('Request a scheduling priority for all resulting jobs. ' +
-                                  'Defaults to high when --watch, --ssh, or --allow-ssh flags are used.', 
+                                  'Defaults to high when --watch, --ssh, or --allow-ssh flags are used.',
                                   width_adjustment=-24))
 parser_run.add_argument('--head-job-on-demand', action='store_true',
                         help=fill('Requests that the head job of an app or applet be run in an on-demand instance. ' +
@@ -5962,10 +5970,10 @@ register_parser(parser_publish)
 #####################################
 # archive
 #####################################
-                               
+
 parser_archive = subparsers.add_parser(
-    'archive', 
-    help='Requests for the specified set files or for the files in a single specified folder in one project to be archived on the platform', 
+    'archive',
+    help='Requests for the specified set files or for the files in a single specified folder in one project to be archived on the platform',
     description=
 '''
 Requests for {} or for the files in {} in {} to be archived on the platform.
@@ -5992,27 +6000,27 @@ EXAMPLES:
   parents=[all_arg],
   prog='dx archive')
 
-parser_archive.add_argument('-q', '--quiet', help='Do not print extra info messages', 
+parser_archive.add_argument('-q', '--quiet', help='Do not print extra info messages',
                             action='store_true')
 parser_archive.add_argument(
-    '--all-copies', 
-    dest = "all_copies", 
-    help=fill('If true, archive all the copies of files in projects with the same billTo org.' ,width_adjustment=-24)+ '\n'+ fill('See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24), 
+    '--all-copies',
+    dest = "all_copies",
+    help=fill('If true, archive all the copies of files in projects with the same billTo org.' ,width_adjustment=-24)+ '\n'+ fill('See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24),
                             default=False, action='store_true')
 parser_archive.add_argument(
     '-y','--yes', dest='confirm',
-    help=fill('Do not ask for confirmation.' , width_adjustment=-24), 
+    help=fill('Do not ask for confirmation.' , width_adjustment=-24),
     default=True, action='store_false')
 parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_archive.add_argument(
-    'path', 
+    'path',
     help=fill('May refer to a single folder or specify up to 1000 files inside a project.',width_adjustment=-24),
-    default=[], nargs='+').completer = DXPathCompleter() 
+    default=[], nargs='+').completer = DXPathCompleter()
 
 parser_archive_output = parser_archive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <count> file(s) for archival"')
 
-parser_archive.set_defaults(func=archive, request_mode = "archival")  
+parser_archive.set_defaults(func=archive, request_mode = "archival")
 register_parser(parser_archive, categories='fs')
 
 #####################################
@@ -6020,8 +6028,8 @@ register_parser(parser_archive, categories='fs')
 #####################################
 
 parser_unarchive = subparsers.add_parser(
-    'unarchive', 
-    help='Requests for the specified set files or for the files in a single specified folder in one project to be unarchived on the platform.',    
+    'unarchive',
+    help='Requests for the specified set files or for the files in a single specified folder in one project to be unarchived on the platform.',
     description=
 '''
 Requests for {} or for the files in {} in {} to be unarchived on the platform.
@@ -6047,20 +6055,20 @@ EXAMPLES:
     parents=[all_arg],
     prog='dx unarchive')
 
-parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+ 
+parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+
 fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
 
 parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_unarchive.add_argument(
     '-y','--yes', dest='confirm',
-    help=fill('Do not ask for confirmation.' , width_adjustment=-24), 
+    help=fill('Do not ask for confirmation.' , width_adjustment=-24),
     default=True, action='store_false')
 parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
 
 parser_unarchive.add_argument(
-    'path', 
+    'path',
     help=fill('May refer to a single folder or specify up to 1000 files inside a project.', width_adjustment=-24),
-    default=[], nargs='+').completer = DXPathCompleter() 
+    default=[], nargs='+').completer = DXPathCompleter()
 
 parser_unarchive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <> file(s) for unarchival, totalling <> GB, costing <> "')
 parser_unarchive.set_defaults(func=archive, request_mode="unarchival")
