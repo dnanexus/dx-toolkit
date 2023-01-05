@@ -185,7 +185,6 @@ def build_asset(args):
     try:
         asset_conf = parse_asset_spec(args.src_dir)
         validate_conf(asset_conf)
-        asset_conf_file = os.path.join(args.src_dir, "dxasset.json")
 
         dxpy.api.system_whoami()
         dest_project_name, dest_folder_name, dest_asset_name = parse_destination(args.destination)
@@ -202,7 +201,22 @@ def build_asset(args):
         if not args.json:
             print("Uploading input files for the AssetBuilder", file=sys.stderr)
 
-        conf_file = dx_upload(asset_conf_file, dest_project_name, dest_folder_name, args.json)
+        if args.visibility:
+            asset_conf["hidden"] = (args.visibility == 'hidden')
+        if not asset_conf.get("hidden"):
+            asset_conf["hidden"] = True
+
+        with tempfile.NamedTemporaryFile(dir=args.src_dir, suffix=".json", mode='w+') as temp_asset_conf:
+            json.dump(asset_conf, temp_asset_conf)
+            temp_asset_conf.flush()
+            conf_file = dxpy.upload_local_file(
+                file=temp_asset_conf,
+                project=dest_project_name,
+                folder=dest_folder_name,
+                name="dxasset.json",
+                wait_on_close=True,
+                show_progress=args.json)
+
         make_file = get_asset_make(args.src_dir, dest_project_name, dest_folder_name, args.json)
         asset_file = get_asset_tarball(asset_conf['name'], args.src_dir, dest_project_name,
                                        dest_folder_name, args.json)
