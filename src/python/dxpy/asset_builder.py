@@ -201,8 +201,14 @@ def build_asset(args):
         if not args.json:
             print("Uploading input files for the AssetBuilder", file=sys.stderr)
 
-        if args.visibility:
+        # hide nextflow & nextaur asset records
+        if (str(asset_conf['name']) in ["nextflow", "nextaur"]):
+            asset_conf["hidden"] = True
+        # override visibility using runtime setting
+        elif args.visibility:
             asset_conf["hidden"] = (args.visibility == 'hidden')
+        
+        # set visibility to false if not been specified yet
         if not asset_conf.get("hidden"):
             asset_conf["hidden"] = False
 
