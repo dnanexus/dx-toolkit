@@ -56,7 +56,7 @@ on_exit() {
     if [[ $(jq .nextflow_errorStrategy <<<${properties} -r) == "ignore" ]]; then
       ignored_subjobs=$(jq .nextflow_errored_subjobs <<<${properties} -r)
       if [[ ${ignored_subjobs} != "null" ]]; then
-        echo "Subjob(s) ${ignored_subjobs} run(s) into Nextflow process errors. \"ignore\" errorStrategy were applied."
+        echo "Subjob(s) ${ignored_subjobs} ran into Nextflow process errors. \"ignore\" errorStrategy was applied."
       fi
     fi
   fi
