@@ -4824,7 +4824,7 @@ parser_build_asset.add_argument("--no-watch", help=fill("Don't watch the real-ti
                                 action="store_false", dest="watch")
 parser_build_asset.add_argument("--priority", choices=['normal', 'high'], help=argparse.SUPPRESS)
 parser_build_asset.add_argument('--visibility', choices=['hidden', 'visible'],
-                                   help='Visibility that the asset record should have', default='hidden')
+                                   help='Visibility that the asset record should have')
 parser_build_asset.set_defaults(func=build_asset)
 register_parser(parser_build_asset)
 
