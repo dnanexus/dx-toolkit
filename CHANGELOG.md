@@ -6,6 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Upgraded Nextflow plugin version to 1.4.0
+* Failed Nextflow subjobs with 'terminate' errorStrategy finish in 'failed' state
+
 ## [336.0] - beta
 
 * No significant changes
