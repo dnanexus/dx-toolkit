@@ -1012,8 +1012,23 @@ def get_destination_region(destination):
         dest_project_id, _, _ = parse_destination(destination)
     else:
         dest_project_id = dxpy.WORKSPACE_ID
+
+    
     return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
 
+def verify_nf_lic(destination):
+    if destination:
+        dest_project_id, _, _ = parse_destination(destination)
+    else:
+        dest_project_id = dxpy.WORKSPACE_ID
+    try:
+        features = dxpy.DXHTTPRequest("/" + dest_project_id + "/checkFeatureAccess", {"features": ["dxNextflow"]})['features']
+        # Expecting output {'features': {'dxNextflow': True}}
+        dx_nextflow_lic = features.get("dxNextflow", False)
+        if not dx_nextflow_lic:
+            raise dxpy.exceptions.PermissionDenied("billTo of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com")
+    except dxpy.exceptions.InvalidInput:
+        pass
 
 def _build_app(args, extra_args):
     """Builds an app or applet and returns the resulting executable ID
@@ -1025,6 +1040,12 @@ def _build_app(args, extra_args):
     resources_dir = None
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
+
+    if args.nextflow:
+        print("verifying Nextflow license")
+        print(extra_args)
+        verify_nf_lic(args.destination)
+
     if args.nextflow and not args.repository:
         source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
         resources_dir = args.src_dir
