@@ -1016,13 +1016,22 @@ def get_destination_region(destination):
     
     return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
 
-def verify_nf_lic(destination):
-    if destination:
-        dest_project_id, _, _ = parse_destination(destination)
-    else:
-        dest_project_id = dxpy.WORKSPACE_ID
+def verify_nf_lic(destination, extra_args):
+    
+    def get_project_to_check():
+        # extra args overrides the destination argument
+        # so we're checking it first
+        if "project" in extra_args:
+            return extra_args["project"]
+        if destination:
+            dest_project_id, _, _ = parse_destination(destination)
+            return dest_project_id
+        else:
+            return dxpy.WORKSPACE_ID
+
+    dest_project_to_check = get_project_to_check()
     try:
-        features = dxpy.DXHTTPRequest("/" + dest_project_id + "/checkFeatureAccess", {"features": ["dxNextflow"]})['features']
+        features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]})['features']
         # Expecting output {'features': {'dxNextflow': True}}
         dx_nextflow_lic = features.get("dxNextflow", False)
         if not dx_nextflow_lic:
@@ -1042,9 +1051,7 @@ def _build_app(args, extra_args):
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
 
     if args.nextflow:
-        print("verifying Nextflow license")
-        print(extra_args)
-        verify_nf_lic(args.destination)
+        verify_nf_lic(args.destination, extra_args)
 
     if args.nextflow and not args.repository:
         source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
