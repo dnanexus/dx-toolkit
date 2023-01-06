@@ -6,10 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Added
+### Changed
 
-* Exposed help messages for `dx build --nextflow`
+* Upgraded Nextflow plugin version to 1.4.0
+* Failed Nextflow subjobs with 'terminate' errorStrategy finish in 'failed' state
 * Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
+* Exposed help messages for `dx build --nextflow`
 
 ## [336.0] - beta
 
