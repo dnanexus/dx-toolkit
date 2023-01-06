@@ -407,9 +407,11 @@ nf_task_exit() {
   # error code is managed by nextflow via .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
 
- terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID --brief | head -n 1)
+  # Make sure that subjob with errorStrategy == terminate end in 'failed' state
+  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID --brief | head -n 1)
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
     echo $terminate_record
+    # waiting for headjob to kill the whole tree. If it should happen in 240 seconds.
     sleep 240
     exit;
   fi
