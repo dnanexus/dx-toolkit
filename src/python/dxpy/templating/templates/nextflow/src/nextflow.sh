@@ -280,7 +280,7 @@ main() {
   fi
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.3.1
+  NXF_PLUGINS_VERSION=1.4.0
 
   # check if all run opts provided by user are supported
   validate_run_opts
