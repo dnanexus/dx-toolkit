@@ -93,7 +93,7 @@
     "network": [
       "*"
     ],
-    "project": "CONTRIBUTE",
+    "project": "UPLOAD",
     "allProjects": "VIEW"
   },
   "ignoreReuse": true
