@@ -410,10 +410,11 @@ nf_task_exit() {
   # Make sure that subjob with errorStrategy == terminate end in 'failed' state
   terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID --brief | head -n 1)
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
-    echo $terminate_record
-    # waiting for headjob to kill the whole tree. If it should happen in 240 seconds.
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
+    echo "Waiting for the headjob to kill the job tree..."
     sleep 240
-    exit;
+    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+    exit
   fi
 
   dx-jobutil-add-output exit_code $exit_code --class=int
