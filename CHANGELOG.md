@@ -11,6 +11,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Exposed help messages for `dx build --nextflow`
 * Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
 
+### Changed
+
+* Upgraded Nextflow plugin version to 1.4.0
+
 ## [336.0] - beta
 
 * No significant changes
