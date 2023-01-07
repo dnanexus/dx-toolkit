@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [337.0] - beta
+
 ### Changed
 
 * Upgraded Nextflow plugin version to 1.4.0
@@ -13,11 +15,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
 * Exposed help messages for `dx build --nextflow`
 
-## [336.0] - beta
+## [336.0] - 2023.1.7 - stable
 
 * No significant changes
 
-## [335.0] - 2022.12.12 - stable
+## [335.0] - 2022.12.12
 
 ### Added
 
