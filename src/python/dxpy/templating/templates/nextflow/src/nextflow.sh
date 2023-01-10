@@ -283,8 +283,8 @@ main() {
   NXF_PLUGINS_VERSION=1.4.0
   
   # unset properties
-  previous_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -cr '.properties | with_entries(select(.key | startswith("nextflow")) | .value |=null)')
-  [[ $previous_job_properties == '{}' ]] || dx api "$DX_JOB_ID" setProperties '{"properties":'"$previous_job_properties"'}'
+  cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
+  [[ -z $cloned_job_properties ]] || dx unset_properties $DX_JOB_ID $cloned_job_properties
 
   # check if all run opts provided by user are supported
   validate_run_opts
