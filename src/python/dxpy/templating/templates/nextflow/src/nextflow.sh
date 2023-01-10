@@ -437,6 +437,6 @@ nf_task_entry() {
   # run the task
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
-  dx set_properties ${DX_JOB_ID} exit_code=$exit_code
+  dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
 }
