@@ -281,6 +281,10 @@ main() {
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   NXF_PLUGINS_VERSION=1.4.0
+  
+  # unset properties
+  previous_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -cr '.properties | with_entries(select(.key | startswith("nextflow")) | .value |=null)')
+  [[ $previous_job_properties == '{}' ]] || dx api "$DX_JOB_ID" setProperties '{"properties":'"$previous_job_properties"'}'
 
   # check if all run opts provided by user are supported
   validate_run_opts
