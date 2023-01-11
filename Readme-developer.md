@@ -51,7 +51,7 @@ https://documentation.dnanexus.com/downloads
 
 # Building inside docker 
 
-To avoid lengthy installation of dependencies on osx and simultaneous installations of development versions of dx-toolkit, you can build your dev-version of `dx-toolkit` in the docker container. 
+To avoid lengthy installation of dependencies on OS X and simultaneous installations of development versions of dx-toolkit, you can build your dev-version of `dx-toolkit` in the docker container. 
 
 1. Start `python:3.9-bullseye` in the interactive mode, mounting the repo you are working on (`<local_path_to_repo>/dx-toolkit`):
 
