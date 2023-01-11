@@ -1,4 +1,4 @@
-Building on OS X 10.9 & 11.4
+Building from source
 =====================
 
 **NOTE:** This document is intended for developers who wish to build the dx-toolkit SDK and command-line tools from source.
@@ -6,6 +6,8 @@ Building on OS X 10.9 & 11.4
 Instead of building from source, most users can install the prebuilt DNAnexus Platform SDK for OS X (a.k.a. dx-toolkit) release available for download at:
 
 https://documentation.dnanexus.com/downloads
+
+# Building on OS X 10.9 & 11.4
 
 ### Setup steps
 ---------------
@@ -45,6 +47,28 @@ https://documentation.dnanexus.com/downloads
     # add following export on MacOS 11.4 (workaround for Boost lib dependency on icu4c):
     export LIBRARY_PATH=${LIBRARY_PATH}:/usr/local/opt/icu4c/lib
     make
+    ```
+
+# Building inside docker 
+
+To avoid lengthy installation of dependencies on osx and simultaneous installations of development versions of dx-toolkit, you can build your dev-version of `dx-toolkit` in the docker container. 
+
+1. Start `python:3.9-bullseye` in the interactive mode, mounting the repo you are working on (`<local_path_to_repo>/dx-toolkit`):
+
+    ```
+    # from root folder of dx-tollkit
+    docker run -v `pwd`:/dx-toolkit -w /dx-toolkit -it --rm --entrypoint=/bin/bash python:3.9-bullseye
+    ```
+2. From the interactive shell install `dx-toolkit`:
+
+    ```
+    python -m pip install src/python/ --upgrade
+    ```
+3. Log in and use the container while developing. To rebuild, just save the work and run the step 2 again. 
+
+Also, you can isntall the the `dx-toolkit` from remote like so: 
+    ```
+    python3 -m pip install --upgrade 'git+https://github.com/dnanexus/dx-toolkit.git@master#egg=dxpy&subdirectory=src/python'
     ```
 
 ### Upload agent build setup steps
