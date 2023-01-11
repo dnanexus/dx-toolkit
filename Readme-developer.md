@@ -59,17 +59,17 @@ To avoid lengthy installation of dependencies on OS X and simultaneous installat
     # from root folder of dx-tollkit
     docker run -v `pwd`:/dx-toolkit -w /dx-toolkit -it --rm --entrypoint=/bin/bash python:3.9-bullseye
     ```
-2. From the interactive shell install `dx-toolkit`:
-
-    ```
-    python -m pip install src/python/ --upgrade
-    ```
+2. From the interactive shell install `dx-toolkit`.
+    - **A.** Use local source:
+        ```
+        python -m pip install src/python/ --upgrade
+        ```
+    - **B.** Use remote source:
+        ```
+        python3 -m pip install --upgrade 'git+https://github.com/dnanexus/dx-toolkit.git@master#egg=dxpy&subdirectory=src/python'
+        ```
 3. Log in and use the container while developing. To rebuild, just save the work and run the step 2 again. 
 
-Also, you can isntall the the `dx-toolkit` from remote like so: 
-    ```
-    python3 -m pip install --upgrade 'git+https://github.com/dnanexus/dx-toolkit.git@master#egg=dxpy&subdirectory=src/python'
-    ```
 
 ### Upload agent build setup steps
 ----------------------------------
