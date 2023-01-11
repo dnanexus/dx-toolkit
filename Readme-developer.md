@@ -66,7 +66,7 @@ To avoid lengthy installation of dependencies on OS X and simultaneous installat
     ```
 3. Log in and use the container while developing. To rebuild, just save the work and run the step 2 again. 
 
-Also, you can isntall the the `dx-toolkit` from remote like so: 
+Also, you can install the `dx-toolkit` from remote like so: 
     ```
     python3 -m pip install --upgrade 'git+https://github.com/dnanexus/dx-toolkit.git@master#egg=dxpy&subdirectory=src/python'
     ```
