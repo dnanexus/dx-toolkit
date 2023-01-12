@@ -45,7 +45,12 @@ def extract_dataset(args):
     Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.
     """
     print("Testing build.")
-    if not args.dump_dataset_dictionary and args.fields is None:
+    if (
+        not args.dump_dataset_dictionary
+        and not args.list_fields
+        and not args.list_entities
+        and args.fields is None
+    ):
         err_exit(
             "Must provide at least one of the following options: --fields or --dump-dataset-dictionary"
         )
@@ -339,6 +344,25 @@ def extract_dataset(args):
             output_file_coding=output_file_coding,
             sep=delimiter,
         )
+
+    if args.list_entities:
+        # sep = delimiter if delimiter else "\n"
+        print(*rec_descriptor.model["entities"].keys(), sep=delimiter)
+        # [print(f"{entity}\n") for entity in rec_descriptor.model["entities"].keys()]
+
+    if args.list_fields:
+        entities = rec_descriptor.model["entities"]
+        if args.entity:
+            entities = {k: v for (k, v) in entities.items() if k in args.entity}
+        for entity, value in entities.items():
+
+            print(
+                *[f"{entity}.{field}" for field in value["fields"].keys()],
+                sep=delimiter,
+            )
+
+            # for field in value["fields"].keys():
+            #     print(f"{entity}.{field}{delimiter}")
 
 
 def csv_from_json(
