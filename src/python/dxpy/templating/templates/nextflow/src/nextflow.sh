@@ -281,6 +281,10 @@ main() {
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   NXF_PLUGINS_VERSION=1.4.0
+  
+  # unset properties
+  cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
+  [[ -z $cloned_job_properties ]] || dx unset_properties "$DX_JOB_ID" $cloned_job_properties
 
   # check if all run opts provided by user are supported
   validate_run_opts
@@ -437,6 +441,6 @@ nf_task_entry() {
   # run the task
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
-  dx set_properties ${DX_JOB_ID} exit_code=$exit_code
+  dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
 }
