@@ -297,7 +297,7 @@ main() {
     dc=$(dx upload $tmp --brief --wait)
     echo $dc
     echo "HeRTE"
-    export NXF_DOCKER_CREDS_FILE=dx://$(jq '."id"' <<<${dc} -r)
+    export NXF_DOCKER_CREDS_FILE=dx://${dc}
   fi
 
   # set default NXF env constants
