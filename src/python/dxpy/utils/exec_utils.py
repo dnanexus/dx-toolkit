@@ -349,11 +349,9 @@ class DXExecDependencyInstaller(object):
     def generate_shellcode(self, dep_group):
         base_apt_shellcode = "export DEBIAN_FRONTEND=noninteractive && apt-get install --yes --no-install-recommends {p}"
         dx_apt_update_shellcode = "apt-get update -o Dir::Etc::sourcelist=sources.list.d/nucleus.list -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0"
-        change_apt_archive = r"sed -i -e s?http://.*.ec2.archive.ubuntu.com?http://us.archive.ubuntu.com? /etc/apt/sources.list"
-        apt_err_msg = "APT failed, retrying with full update against ubuntu.com"
-        apt_shellcode_template = "({dx_upd} && {inst}) || (echo {e}; {change_apt_archive} && apt-get update && {inst})"
+        apt_err_msg = "APT failed, retrying with full update against official package repository"
+        apt_shellcode_template = "({dx_upd} && {inst}) || (echo {e}; apt-get update && {inst})"
         apt_shellcode = apt_shellcode_template.format(dx_upd=dx_apt_update_shellcode,
-                                                      change_apt_archive=change_apt_archive,
                                                       inst=base_apt_shellcode,
                                                       e=apt_err_msg)
         def make_pm_atoms(packages, version_separator="="):
