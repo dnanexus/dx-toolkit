@@ -220,10 +220,7 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
         url, headers = dxdatabase.get_download_url(src_filename=src_filename, project=project, **kwargs)
         # No sub ranges for database file downloads
         sub_range = False
-        data_url = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
-        do_debug("dxdatabase_functions.py get_chunk - data_url = {}".format(data_url))
-        # 'data_url' is the s3 URL, so read again, just like in DNAxFileSystem
-        data = dxpy._dxhttp_read_range(data_url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
+        data = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
         return part_id_to_get, data
 
     def chunk_requests():
