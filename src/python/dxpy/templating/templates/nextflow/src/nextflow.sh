@@ -7,32 +7,33 @@ DOCKER_CREDS_FILENAME=dx_docker_creds
 CREDENTIALS=${HOME}/credentials
 
 dx-registry-login() {
-dx download "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" -o $CREDENTIALS
+  if [ ! -f $CREDENTIALS ]; then
+    dx download "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" -o $CREDENTIALS
+  fi
+  command -v docker >/dev/null 2>&1 || (echo "ERROR: docker is required when running with the Docker credentials."; exit 1)
 
-command -v docker >/dev/null 2>&1 || (echo "ERROR: docker is required when running with the Docker credentials."; exit 1)
+  export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
+  export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
+  export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
+  if [[  -z $REGISTRY_ORGANIZATION || $REGISTRY_ORGANIZATION == "null" ]]; then
+      export REGISTRY_ORGANIZATION=$REGISTRY_USERNAME
+  fi
 
-export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
-export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
-export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
-if [[  -z $REGISTRY_ORGANIZATION || $REGISTRY_ORGANIZATION == "null" ]]; then
-    export REGISTRY_ORGANIZATION=$REGISTRY_USERNAME
-fi
+  if [[ -z $REGISTRY || $REGISTRY == "null" \
+        || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
+      echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
+      echo "{"
+      echo "    docker_registry: {"
+      echo "        registry": "<Docker registry name, e.g. quay.io or docker.io>",
+      echo "        username": "<registry login name>",
+      echo "        organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
+      echo "        token": "<API token>"
+      echo "    }"
+      echo "}"
+      exit 1
+  fi
 
-if [[ -z $REGISTRY || $REGISTRY == "null" \
-      || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
-    echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
-    echo "{"
-    echo "    docker_registry: {"
-    echo "        registry": "<Docker registry name, e.g. quay.io or docker.io>",
-    echo "        username": "<registry login name>",
-    echo "        organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
-    echo "        token": "<API token>"
-    echo "    }"
-    echo "}"
-    exit 1
-fi
-
-jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
+  jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
 }
 
 generate_runtime_config() {
