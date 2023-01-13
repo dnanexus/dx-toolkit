@@ -294,7 +294,7 @@ main() {
   fi
 
   if [ -n "$docker_creds" ]; then
-    dx mkdir $DOCKER_CREDS_FOLDER
+    dx mkdir -p $DOCKER_CREDS_FOLDER
     dx download "$(jq '."$dnanexus_link"' <<<${docker_creds} -r)" -o $CREDENTIALS --no-progress -f
     dx upload $CREDENTIALS --brief --wait --destination "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" --
     dx-registry-login
