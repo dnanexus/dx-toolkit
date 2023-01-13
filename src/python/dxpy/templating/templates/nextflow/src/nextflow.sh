@@ -2,9 +2,12 @@
 
 set -f
 
-dx-registry-login() {
+DOCKER_CREDS_FOLDER=/docker/credentials/
+DOCKER_CREDS_FILENAME=dx_docker_creds
 CREDENTIALS=${HOME}/credentials
-dx download "${docker_creds}" -o $CREDENTIALS
+
+dx-registry-login() {
+dx download "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" -o $CREDENTIALS
 
 command -v docker >/dev/null 2>&1 || (echo "ERROR: docker is required when running with the Docker credentials."; exit 1)
 
@@ -291,13 +294,10 @@ main() {
   fi
 
   if [ -n "$docker_creds" ]; then
-#    dx-registry-login
-    local tmp=$(mktemp -t nxf.XXXXXXXXXX)
-    dx download $(jq '."$dnanexus_link"' <<<${docker_creds} -r) -o $tmp --no-progress -f
-    dc=$(dx upload $tmp --brief --wait)
-    echo $dc
-    echo "HeRTE"
-    export NXF_DOCKER_CREDS_FILE=dx://${dc}
+    dx mkdir $DOCKER_CREDS_FOLDER
+    dx download "$(jq '."$dnanexus_link"' <<<${docker_creds} -r)" -o $CREDENTIALS --no-progress -f
+    dx upload $CREDENTIALS --brief --wait --destination "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" --
+    dx-registry-login
   fi
 
   # set default NXF env constants
@@ -422,9 +422,10 @@ nf_task_exit() {
 }
 
 nf_task_entry() {
-#  if [ -n "$docker_creds" ]; then
-#    dx-registry-login
-#  fi
+  docker_credentials=$(dx find data --path "$DOCKER_CREDS_FOLDER" --name $"DOCKER_CREDS_FILENAME")
+  if [ -n "$docker_credentials" ]; then
+    dx-registry-login
+  fi
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
