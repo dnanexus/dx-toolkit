@@ -6,16 +6,24 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Added
+## [337.0] - beta
 
-* Exposed help messages for `dx build --nextflow`
+### Changed
+
+* Upgraded Nextflow plugin version to 1.4.0
+* Failed Nextflow subjobs with 'terminate' errorStrategy finish in 'failed' state
 * Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
+* Exposed help messages for `dx build --nextflow`
 
-## [336.0] - beta
+### Fixed
+
+* Unset Nextflow related properites cloned from a previous Nextflow job when using `dx run --clone`
+
+## [336.0] - 2023.1.7 - stable
 
 * No significant changes
 
-## [335.0] - 2022.12.12 - stable
+## [335.0] - 2022.12.12
 
 ### Added
 

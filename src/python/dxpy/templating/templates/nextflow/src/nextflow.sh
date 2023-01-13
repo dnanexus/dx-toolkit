@@ -284,7 +284,11 @@ main() {
   fi
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.3.1
+  NXF_PLUGINS_VERSION=1.4.0
+  
+  # unset properties
+  cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
+  [[ -z $cloned_job_properties ]] || dx unset_properties "$DX_JOB_ID" $cloned_job_properties
 
   # check if all run opts provided by user are supported
   validate_run_opts
@@ -414,6 +418,17 @@ nf_task_exit() {
   # mark the job as successful in any case, real task
   # error code is managed by nextflow via .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
+
+  # Make sure that subjob with errorStrategy == terminate end in 'failed' state
+  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID --brief | head -n 1)
+  if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
+    echo "Waiting for the headjob to kill the job tree..."
+    sleep 240
+    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+    exit
+  fi
+
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
@@ -432,6 +447,6 @@ nf_task_entry() {
   # run the task
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
-  dx set_properties ${DX_JOB_ID} exit_code=$exit_code
+  dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
 }

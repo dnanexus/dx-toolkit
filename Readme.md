@@ -30,6 +30,26 @@ Client](https://documentation.dnanexus.com/getting-started/tutorials/cli-quickst
 utilities, and you will be able to use DNAnexus API bindings in the supported
 languages.
 
+### Building inside docker 
+To avoid lengthy installation of dependencies on OS X and simultaneous installations of development versions of `dx-toolkit` on the system, you can build your dev-version of `dx-toolkit` in a separate docker container. 
+
+1. Start `python:3.9-bullseye` in the interactive mode, mounting the repo you are working on (`<local_path_to_repo>/dx-toolkit`):
+
+    ```
+    # from root folder of dx-tollkit
+    docker run -v `pwd`:/dx-toolkit -w /dx-toolkit -it --rm --entrypoint=/bin/bash python:3.9-bullseye
+    ```
+2. From the interactive shell install `dx-toolkit`.
+    - **A.** Use local source:
+        ```
+        python -m pip install src/python/ --upgrade
+        ```
+    - **B.** Use remote source:
+        ```
+        python3 -m pip install --upgrade 'git+https://github.com/dnanexus/dx-toolkit.git@master#egg=dxpy&subdirectory=src/python'
+        ```
+3. Log in, install dependencies(if needed) and use the container while developing. To rebuild, just save the work and run the step 2 again.
+
 Supported languages
 -------------------
 

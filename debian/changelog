@@ -1,3 +1,12 @@
+dx-toolkit (0.337.0) trusty; urgency=medium
+
+  * Changed: Upgraded Nextflow plugin version to 1.4.0
+  * Changed: Failed Nextflow subjobs with 'terminate' errorStrategy finish in 'failed' state
+  * Changed: Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
+  * Changed: Exposed help messages for `dx build --nextflow` 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 07 Jan 2023 13:19:29 +0000
+
 dx-toolkit (0.336.0) trusty; urgency=medium
 
   * No significant changes

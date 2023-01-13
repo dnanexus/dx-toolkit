@@ -350,6 +350,37 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         # are not printed
         self.assertNotIn("Launching", watched_run_output)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_run_nextflow_by_cloning(self):
+        pipeline_name = "hello"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(
+            run("dx build --nextflow --json " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+
+        orig_job = applet.run({
+            "preserve_cache": True,
+            "debug" : True
+        })
+
+        orig_job.wait_on_done()
+        orig_job_desc = orig_job.describe()
+        self.assertDictSubsetOf({"nextflow_executable": "hello",
+                                "nextflow_preserve_cache": "true"}, orig_job_desc["properties"])
+
+        orig_job.set_properties(
+            {"extra_user_prop": "extra_value", "nextflow_preserve_cache": "invalid_boolean", "nextflow_nonexistent_prop": "nonexistent_nextflow_prop_value"})
+
+        new_job_id = run("dx run --clone " +
+                         orig_job.get_id() + " --brief -y ").strip()
+        dxpy.DXJob(new_job_id).wait_on_done()
+        new_job_desc = dxpy.api.job_describe(new_job_id)
+        self.assertDictSubsetOf({"nextflow_executable": "hello", "nextflow_preserve_cache": "true",
+                                "extra_user_prop": "extra_value"}, new_job_desc["properties"])
+        self.assertNotIn("nextflow_nonexistent_prop", new_job_desc["properties"])
+
     # @unittest.skipUnless(testutil.TEST_RUN_JOBS,
     #                      'skipping tests that would run jobs')
     # def test_dx_run_nextflow_with_unsupported_runtime_opts(self):
