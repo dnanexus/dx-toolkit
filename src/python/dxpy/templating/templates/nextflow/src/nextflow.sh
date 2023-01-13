@@ -424,9 +424,15 @@ nf_task_exit() {
 
 nf_task_entry() {
   docker_credentials=$(dx find data --path "$DOCKER_CREDS_FOLDER" --name $"DOCKER_CREDS_FILENAME")
+  echo "docker creds "
+  echo "$docker_credentials"
+  echo "docker creds"
   if [ -n "$docker_credentials" ]; then
     dx-registry-login
   fi
+  echo $CREDENTIALS
+  echo "CREDENTAISLS"
+  cat $CREDENTIALS
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
