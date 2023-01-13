@@ -425,6 +425,8 @@ nf_task_exit() {
 nf_task_entry() {
   docker_credentials=$(dx find data --path "$DOCKER_CREDS_FOLDER" --name $"DOCKER_CREDS_FILENAME")
   echo "docker creds "
+  echo "$(dx ls /docker/credentials/)"
+  echo "$(dx cat /docker/credentials/dx_docker_creds)"
   echo "$docker_credentials"
   echo "docker creds"
   if [ -n "$docker_credentials" ]; then
