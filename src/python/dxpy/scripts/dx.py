@@ -3057,6 +3057,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "detach": args.detach,
         "cost_limit": args.cost_limit,
         "rank": args.rank,
+        "max_tree_spot_wait_time": normalize_timedelta(args.max_tree_spot_wait_time)//1000 if args.max_tree_spot_wait_time else None,
+        "max_job_spot_wait_time": normalize_timedelta(args.max_job_spot_wait_time)//1000 if args.max_job_spot_wait_time else None,
         "extra_args": args.extra_args
     }
 
@@ -3102,6 +3104,9 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                        "Unexpected side effects or failures may occur if the executable has not " +
                        "been written to behave well when restarted."))
             print()
+
+    if run_kwargs["priority"] == "low" and (run_kwargs["max_tree_spot_wait_time"] is not None or run_kwargs["max_job_spot_wait_time"] is not None):
+        err_exit(exception=DXCLIError('Cannot use --max-tree-spot-wait-time and/or --max-job-spot-wait-time when --priority is set to \'low\''))
 
     if not args.brief:
         if isinstance(executable, dxpy.DXWorkflow):
@@ -5252,6 +5257,8 @@ parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job befor
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
 parser_run.add_argument('-r', '--rank', type=int, help='Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', default=None)
+parser_run.add_argument('--max-tree-spot-wait-time', help='The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)')
+parser_run.add_argument('--max-job-spot-wait-time', help='The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)')
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None, head_job_on_demand=None)
 register_parser(parser_run, categories='exec')
