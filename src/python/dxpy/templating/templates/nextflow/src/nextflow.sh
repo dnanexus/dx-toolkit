@@ -6,11 +6,22 @@ DOCKER_CREDS_FOLDER=/docker/credentials/
 DOCKER_CREDS_FILENAME=dx_docker_creds
 CREDENTIALS=${HOME}/credentials
 
-dx-registry-login() {
+
+# Logs the user to the docker registry.
+# Uses docker credentials that have to be in $CREDENTIALS location.
+# Format of the file:
+#      {
+#          docker_registry: {
+#              "registry": "<Docker registry name, e.g. quay.io or docker.io>",
+#              "username": "<registry login name>",
+#              "organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
+#              "token": "<API token>"
+#          }
+#      }
+docker_registry_login() {
   if [ ! -f $CREDENTIALS ]; then
     dx download "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" -o $CREDENTIALS
   fi
-  command -v docker >/dev/null 2>&1 || (echo "ERROR: docker is required when running with the Docker credentials."; exit 1)
 
   export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
   export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
@@ -302,7 +313,7 @@ main() {
     dx mkdir -p $DOCKER_CREDS_FOLDER
     dx download "$(jq '."$dnanexus_link"' <<<${docker_creds} -r)" -o $CREDENTIALS --no-progress -f
     dx upload $CREDENTIALS --brief --wait --destination "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}"
-    dx-registry-login
+    docker_registry_login
   fi
 
   # set default NXF env constants
@@ -435,7 +446,7 @@ nf_task_exit() {
 nf_task_entry() {
   docker_credentials=$(dx find data --path "$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
   if [ -n "$docker_credentials" ]; then
-    dx-registry-login
+    docker_registry_login
   fi
   # capture the exit code
   trap nf_task_exit EXIT
