@@ -197,3 +197,51 @@ def flatten_json_array(json_string, array_name):
         result = flatten_regexp.sub('"{}": [\\1 '.format(array_name), result)
     result = re.sub('"{}": \\[(.*)\r?\n\\s*\\]'.format(array_name), '"{}": [\\1]'.format(array_name), result, flags=re.MULTILINE)
     return result
+
+def format_duration(duration, in_seconds=False, largest_units=None, auto_singulars=False):
+    """
+    Formats duration to a human readable form - e.g. 5 days 10 hours 1 second
+
+    :param duration: Duration in miliseconds or seconds (see in_seconds)
+    :type duration: int
+    :param in_seconds: Whether the given duration is in seconds
+    :type in_seconds: bool
+    :param largest_unit: Largest unit to be displayed. Allowed values are miliseconds, seconds, minutes, hours, days and years
+    :type largest_unit: str
+    :param auto_singulars: Automatically use singular when value of given is 1
+    :type auto_singulars: bool
+    """
+
+    units = [
+        ('miliseconds', 1000) if not in_seconds else ("", 1),
+        ('seconds', 60),
+        ('minutes', 60),
+        ('hours', 24),
+        ('days', 365),
+        ('years', None)
+    ]
+
+    if largest_unit is None:
+        largest_unit = units[-1][0]
+    elif largest_unit not in map(lambda x: x[0], units):
+        raise ValueError('Invalid resolution')
+
+    duration_str = ""
+
+    for name, diviser in units:
+        if duration == 0:
+            break
+
+        if largest_unit == name:
+            diviser = None
+
+        val = duration % diviser if diviser else duration
+        if val != 0:
+            duration_str = str(val) + ' ' + (name if not auto_singulars or val > 1 else name[:-1]) + ', ' + duration_str
+
+        if diviser is None:
+            break
+
+        duration //= diviser
+
+    return duration_str.strip(', ')

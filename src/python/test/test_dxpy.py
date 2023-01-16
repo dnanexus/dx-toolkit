@@ -2460,6 +2460,15 @@ class TestPrettyPrint(unittest.TestCase):
         self.assertEqual(pretty_print.escape_unicode_string("\n\\"), "\\n\\\\")
         self.assertEqual(pretty_print.escape_unicode_string("ïñtérnaçiònale"), "ïñtérnaçiònale")
 
+    def test_format_duration(self):
+        self.assertEqual(pretty_print.format_duration(1), "1 miliseconds")
+        self.assertEqual(pretty_print.format_duration(1, in_seconds=True), "1 seconds")
+        self.assertEqual(pretty_print.format_duration(1, in_seconds=True, auto_singulars=True), "1 second")
+        self.assertEqual(pretty_print.format_duration(129 * 60, in_seconds=True, largest_units="minutes"), "129 minutes")
+        self.assertEqual(pretty_print.format_duration(129 * 60, in_seconds=True, largest_units="days"), "2 hours, 9 minutes")
+        self.assertEqual(pretty_print.format_duration(365 * 24 * 60 * 60 + 8 * 60 * 60 + 1 * 60 + 3, in_seconds=True), "1 years, 8 hours, 1 minutes, 3 seconds")
+        self.assertEqual(pretty_print.format_duration(365 * 24 * 60 * 60 + 8 * 60 * 60 + 1 * 60 + 3, in_seconds=True, auto_singulars=True), "1 year, 8 hours, 1 minute, 3 seconds")
+
 class TestWarn(unittest.TestCase):
     def test_warn(self):
         warn("testing, one two three...")
