@@ -6,7 +6,6 @@ DOCKER_CREDS_FOLDER=/docker/credentials/
 DOCKER_CREDS_FILENAME=dx_docker_creds
 CREDENTIALS=${HOME}/credentials
 
-
 # Logs the user to the docker registry.
 # Uses docker credentials that have to be in $CREDENTIALS location.
 # Format of the file:
@@ -34,11 +33,11 @@ docker_registry_login() {
         || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
       echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
       echo "{"
-      echo "    docker_registry: {"
-      echo "        registry": "<Docker registry name, e.g. quay.io or docker.io>",
-      echo "        username": "<registry login name>",
-      echo "        organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
-      echo "        token": "<API token>"
+      echo "    \"docker_registry\": {"
+      echo "        \"registry\": \"<Docker registry name, e.g. quay.io or docker.io>\"",
+      echo "        \"username\": \"<registry login name>\"",
+      echo "        \"organization\": \"<(optional, default value equals username) organization as defined by DockerHub or Quay.io>\"",
+      echo "        \"token\": \"<API token>\""
       echo "    }"
       echo "}"
       exit 1
