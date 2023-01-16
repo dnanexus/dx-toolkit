@@ -23,6 +23,15 @@ import re, collections
 from .printing import (GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC)
 from ..compat import str, Mapping
 
+TIME_UNITS = [
+    ('miliseconds', 1000),
+    ('seconds', 60),
+    ('minutes', 60),
+    ('hours', 24),
+    ('days', 365),
+    ('years', None)
+]
+
 REPLACEMENT_TABLE = (
     '\\x00',    #  0x00 -> NULL
     '\\x01',    #  0x01 -> START OF HEADING
@@ -212,21 +221,17 @@ def format_duration(duration, in_seconds=False, largest_units=None, auto_singula
     :type auto_singulars: bool
     """
 
-    units = [
-        ('miliseconds', 1000) if not in_seconds else ("", 1),
-        ('seconds', 60),
-        ('minutes', 60),
-        ('hours', 24),
-        ('days', 365),
-        ('years', None)
-    ]
+    units = TIME_UNITS[1:] if in_seconds else TIME_UNITS
 
     if largest_units is None:
         largest_units = units[-1][0]
     elif largest_units not in map(lambda x: x[0], units):
-        raise ValueError('Invalid resolution')
+        raise ValueError('Invalid largest units specified')
 
-    duration_str = ""
+    if duration == 0:
+        return '0 ' + units[0][0]
+
+    duration_str = ''
 
     for name, diviser in units:
         if duration == 0:
@@ -237,7 +242,7 @@ def format_duration(duration, in_seconds=False, largest_units=None, auto_singula
 
         val = duration % diviser if diviser else duration
         if val != 0:
-            duration_str = str(val) + ' ' + (name if not auto_singulars or val > 1 else name[:-1]) + ', ' + duration_str
+            duration_str = str(val) + ' ' + (name[:-1] if auto_singulars and val == 1 else name) + ', ' + duration_str
 
         if diviser is None:
             break

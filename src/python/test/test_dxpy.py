@@ -2461,6 +2461,8 @@ class TestPrettyPrint(unittest.TestCase):
         self.assertEqual(pretty_print.escape_unicode_string("ïñtérnaçiònale"), "ïñtérnaçiònale")
 
     def test_format_duration(self):
+        self.assertEqual(pretty_print.format_duration(0), "0 miliseconds")
+        self.assertEqual(pretty_print.format_duration(0, in_seconds=True), "0 seconds")
         self.assertEqual(pretty_print.format_duration(1), "1 miliseconds")
         self.assertEqual(pretty_print.format_duration(1, in_seconds=True), "1 seconds")
         self.assertEqual(pretty_print.format_duration(1, in_seconds=True, auto_singulars=True), "1 second")
