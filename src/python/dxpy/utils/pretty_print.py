@@ -206,8 +206,8 @@ def format_duration(duration, in_seconds=False, largest_units=None, auto_singula
     :type duration: int
     :param in_seconds: Whether the given duration is in seconds
     :type in_seconds: bool
-    :param largest_unit: Largest unit to be displayed. Allowed values are miliseconds, seconds, minutes, hours, days and years
-    :type largest_unit: str
+    :param largest_units: Largest unit to be displayed. Allowed values are miliseconds, seconds, minutes, hours, days and years
+    :type largest_units: str
     :param auto_singulars: Automatically use singular when value of given is 1
     :type auto_singulars: bool
     """
@@ -221,9 +221,9 @@ def format_duration(duration, in_seconds=False, largest_units=None, auto_singula
         ('years', None)
     ]
 
-    if largest_unit is None:
-        largest_unit = units[-1][0]
-    elif largest_unit not in map(lambda x: x[0], units):
+    if largest_units is None:
+        largest_units = units[-1][0]
+    elif largest_units not in map(lambda x: x[0], units):
         raise ValueError('Invalid resolution')
 
     duration_str = ""
@@ -232,7 +232,7 @@ def format_duration(duration, in_seconds=False, largest_units=None, auto_singula
         if duration == 0:
             break
 
-        if largest_unit == name:
+        if largest_units == name:
             diviser = None
 
         val = duration % diviser if diviser else duration
