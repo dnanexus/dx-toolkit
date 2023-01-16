@@ -3105,9 +3105,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                        "been written to behave well when restarted."))
             print()
 
-    if run_kwargs["priority"] == "low" and (run_kwargs["max_tree_spot_wait_time"] is not None or run_kwargs["max_job_spot_wait_time"] is not None):
-        err_exit(exception=DXCLIError('Cannot use --max-tree-spot-wait-time and/or --max-job-spot-wait-time when --priority is set to \'low\''))
-
     if not args.brief:
         if isinstance(executable, dxpy.DXWorkflow):
             try:
