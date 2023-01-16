@@ -31,7 +31,7 @@ from collections import defaultdict
 
 import dxpy
 from .printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter, fill)
-from .pretty_print import format_duration
+from .pretty_print import format_timedelta
 from ..compat import basestring, USING_PYTHON2
 
 def JOB_STATES(state):
@@ -916,9 +916,9 @@ def print_execution_desc(desc):
     if not desc.get('isFree') and desc.get('totalPrice') is not None:
         print_field('Total Price', format_currency(desc['totalPrice'], meta=desc['currency']))
     if desc.get('maxTreeSpotWaitTime'):
-        print_field('Max Tree Spot Wait Time', format_duration(desc.get('maxTreeSpotWaitTime'), in_seconds=True))
+        print_field('Max Tree Spot Wait Time', format_timedelta(desc.get('maxTreeSpotWaitTime'), in_seconds=True))
     if desc.get('maxJobSpotWaitTime'):
-        print_field('Max Job Spot Wait Time', format_duration(desc.get('maxJobSpotWaitTime'), in_seconds=True))
+        print_field('Max Job Spot Wait Time', format_timedelta(desc.get('maxJobSpotWaitTime'), in_seconds=True))
     if desc.get('invoiceMetadata'):
         print_json_field("Invoice Metadata", desc['invoiceMetadata'])
     if desc.get('sshHostKey'):
