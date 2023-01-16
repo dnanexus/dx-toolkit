@@ -9553,7 +9553,7 @@ parser_extract_dataset.add_argument(
     nargs="?",
     const=",",
     default=",",
-    help="Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used",
+    help="Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used e.g. --delim=$'\t'",
 )
 parser_extract_dataset.add_argument(
     "-o",
@@ -9573,9 +9573,8 @@ parser_extract_dataset.add_argument(
     help="List all the entities available in the dataset specified. The entity will be listed one per line, unless otherwise specified with `--delim`",
 )
 parser_extract_dataset.add_argument(
-    "--entity",
-    nargs="*",
-    help="List all the fields in the entity specified. Must be used together with `--list-fields`. The fields will be separated by comma, unless specified by `--delim`. ,  The retrieved field names will be presented as <entity_name>.<field_name>",
+    "--entities",
+    help="List all the fields in the entity specified. Must be used together with “--list-fields”. The fields will be separated by comma, unless specified by “--delim”. ,  The retrieved field names will be presented as <entity_name>.<field_name>. When multiple entities are specified, use comma as the delimiter.",
 )
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)

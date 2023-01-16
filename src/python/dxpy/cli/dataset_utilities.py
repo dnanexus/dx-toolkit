@@ -44,7 +44,6 @@ def extract_dataset(args):
     """
     Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.
     """
-    print("Testing build.")
     if (
         not args.dump_dataset_dictionary
         and not args.list_fields
@@ -52,8 +51,34 @@ def extract_dataset(args):
         and args.fields is None
     ):
         err_exit(
-            "Must provide at least one of the following options: --fields or --dump-dataset-dictionary"
+            "Must provide at least one of the following options: --fields, --dump-dataset-dictionary, --list-fields, --list-entities"
         )
+    # Listing restricted options TODO - add proper flag form and print that.
+    listing_restricted = {
+        "dump_dataset_dictionary": False,
+        "sql": False,
+        "fields": None,
+        "output": None,
+    }
+
+    if args.list_fields:
+        listing_restricted["list_entities"] = False
+        error_list = []
+        for option, value in listing_restricted.items():
+            if args.__dict__[option] != value:
+                error_list.append(option)
+        if error_list:
+            err_exit(f"--list-fields cannot be specified with: {error_list}")
+
+    if args.list_entities:
+        listing_restricted["list_fields"] = False
+        listing_restricted["entities"] = None
+        error_list = []
+        for option, value in listing_restricted.items():
+            if args.__dict__[option] != value:
+                error_list.append(option)
+        if error_list:
+            err_exit(f"--list-entities cannot be specified with: {error_list}")
 
     if len(args.delim) == 1 and args.delim != '"':
         delimiter = str(args.delim)
@@ -346,23 +371,27 @@ def extract_dataset(args):
         )
 
     if args.list_entities:
-        # sep = delimiter if delimiter else "\n"
-        print(*rec_descriptor.model["entities"].keys(), sep=delimiter)
-        # [print(f"{entity}\n") for entity in rec_descriptor.model["entities"].keys()]
+        print(delimiter.join(rec_descriptor.model["entities"].keys()))
 
     if args.list_fields:
+        fields = []
         entities = rec_descriptor.model["entities"]
-        if args.entity:
-            entities = {k: v for (k, v) in entities.items() if k in args.entity}
+        error_list = []
+        if args.entities:
+            entities = {}
+            for entity in args.entities.split(","):
+                if entity in rec_descriptor.model["entities"].keys():
+                    entities[entity] = rec_descriptor.model["entities"][entity]
+                else:
+                    error_list.append(entity)
+            if error_list:
+                err_exit(
+                    "The following entity/entities cannot be found: %r" % error_list
+                )
         for entity, value in entities.items():
-
-            print(
-                *[f"{entity}.{field}" for field in value["fields"].keys()],
-                sep=delimiter,
-            )
-
-            # for field in value["fields"].keys():
-            #     print(f"{entity}.{field}{delimiter}")
+            for field in value["fields"].keys():
+                fields.append(f"{entity}.{field}")
+        print(delimiter.join(fields))
 
 
 def csv_from_json(
