@@ -23,6 +23,15 @@ import re, collections
 from .printing import (GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC)
 from ..compat import str, Mapping
 
+TIME_UNITS = [
+    ('miliseconds', 1000),
+    ('seconds', 60),
+    ('minutes', 60),
+    ('hours', 24),
+    ('days', 365),
+    ('years', None)
+]
+
 REPLACEMENT_TABLE = (
     '\\x00',    #  0x00 -> NULL
     '\\x01',    #  0x01 -> START OF HEADING
@@ -197,3 +206,47 @@ def flatten_json_array(json_string, array_name):
         result = flatten_regexp.sub('"{}": [\\1 '.format(array_name), result)
     result = re.sub('"{}": \\[(.*)\r?\n\\s*\\]'.format(array_name), '"{}": [\\1]'.format(array_name), result, flags=re.MULTILINE)
     return result
+
+def format_timedelta(timedelta, in_seconds=False, largest_units=None, auto_singulars=False):
+    """
+    Formats timedelta (duration) to a human readable form
+
+    :param timedelta: Duration in miliseconds or seconds (see in_seconds)
+    :type timedelta: int
+    :param in_seconds: Whether the given duration is in seconds
+    :type in_seconds: bool
+    :param largest_units: Largest unit to be displayed. Allowed values are miliseconds, seconds, minutes, hours, days and years
+    :type largest_units: str
+    :param auto_singulars: Automatically use singular when value of given is 1
+    :type auto_singulars: bool
+    """
+
+    units = TIME_UNITS[1:] if in_seconds else TIME_UNITS
+
+    if largest_units is None:
+        largest_units = units[-1][0]
+    elif largest_units not in map(lambda x: x[0], units):
+        raise ValueError('Invalid largest units specified')
+
+    if timedelta == 0:
+        return '0 ' + units[0][0]
+
+    out_str = ''
+
+    for name, diviser in units:
+        if timedelta == 0:
+            break
+
+        if largest_units == name:
+            diviser = None
+
+        val = timedelta % diviser if diviser else timedelta
+        if val != 0:
+            out_str = str(val) + ' ' + (name[:-1] if auto_singulars and val == 1 else name) + ', ' + out_str
+
+        if diviser is None:
+            break
+
+        timedelta //= diviser
+
+    return out_str.strip(', ')
