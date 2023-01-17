@@ -1030,9 +1030,11 @@ def verify_nf_license(destination, extra_args):
     dest_project_to_check = get_project_to_check()
     features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]})['features']
     # Expecting output {'features': {'dxNextflow': True}}
+    
     dx_nextflow_lic = features.get("dxNextflow", False)
     if not dx_nextflow_lic:
-        raise dxpy.exceptions.PermissionDenied("billTo of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com")
+        billTo = dxpy.api.project_describe(dest_project_to_check, input_params={"fields": {"billTo": True}})["billTo"]
+        raise dxpy.exceptions.PermissionDenied("billTo " + billTo + " of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com")
 
 def _build_app(args, extra_args):
     """Builds an app or applet and returns the resulting executable ID
