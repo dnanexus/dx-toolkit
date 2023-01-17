@@ -417,10 +417,10 @@ nf_task_exit() {
   # Make sure that subjob with errorStrategy == terminate end in 'failed' state
   terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID --brief | head -n 1)
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
-    echo "Waiting for the headjob to kill the job tree..."
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate or retry."
+    echo "Waiting for the headjob to decide whether to terminate the job tree. Job will continue in a few seconds if not killed by this termination."
     sleep 240
-    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+    echo "The job tree was not terminated by the headjob. Exiting."
     exit
   fi
 
