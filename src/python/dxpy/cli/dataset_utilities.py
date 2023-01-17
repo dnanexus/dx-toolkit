@@ -26,6 +26,7 @@ import os
 import re
 import csv
 import dxpy
+import codecs
 
 from ..utils.printing import fill
 from ..bindings import DXRecord
@@ -53,7 +54,7 @@ def extract_dataset(args):
         err_exit(
             "Must provide at least one of the following options: --fields, --dump-dataset-dictionary, --list-fields, --list-entities"
         )
-    # Listing restricted options TODO - add proper flag form and print that.
+
     listing_restricted = {
         "dump_dataset_dictionary": False,
         "sql": False,
@@ -61,27 +62,28 @@ def extract_dataset(args):
         "output": None,
     }
 
+    def check_options(args, restricted):
+        error_list = []
+        for option, value in restricted.items():
+            if args.__dict__[option] != value:
+                error_list.append(f"--{option.replace('_', '-')}")
+        return error_list
+
     if args.list_fields:
         listing_restricted["list_entities"] = False
-        error_list = []
-        for option, value in listing_restricted.items():
-            if args.__dict__[option] != value:
-                error_list.append(option)
+        error_list = check_options(args, listing_restricted)
         if error_list:
             err_exit(f"--list-fields cannot be specified with: {error_list}")
 
     if args.list_entities:
         listing_restricted["list_fields"] = False
         listing_restricted["entities"] = None
-        error_list = []
-        for option, value in listing_restricted.items():
-            if args.__dict__[option] != value:
-                error_list.append(option)
+        error_list = check_options(args, listing_restricted)
         if error_list:
             err_exit(f"--list-entities cannot be specified with: {error_list}")
 
-    if len(args.delim) == 1 and args.delim != '"':
-        delimiter = str(args.delim)
+    delimiter = codecs.decode(args.delim, "unicode_escape")
+    if len(delimiter) == 1 and delimiter != '"':
         if delimiter == ",":
             out_extension = ".csv"
         elif delimiter == "\t":
@@ -370,9 +372,11 @@ def extract_dataset(args):
             sep=delimiter,
         )
 
+    # List entities
     if args.list_entities:
         print(delimiter.join(rec_descriptor.model["entities"].keys()))
 
+    # List fields
     if args.list_fields:
         fields = []
         entities = rec_descriptor.model["entities"]

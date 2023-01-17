@@ -9553,7 +9553,7 @@ parser_extract_dataset.add_argument(
     nargs="?",
     const=",",
     default=",",
-    help="Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used e.g. --delim=$'\t'",
+    help="Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used",
 )
 parser_extract_dataset.add_argument(
     "-o",
@@ -9564,17 +9564,17 @@ parser_extract_dataset.add_argument(
     "--list-fields",
     action="store_true",
     default=False,
-    help="List all the fields available in the dataset specified. The fields will be separated by comma, unless specified by `--delim`, in the format of entity.field_name",
+    help='List all the fields available in the dataset specified. The fields will be separated by comma, unless specified by "--delim", in the format of entity.field_name',
 )
 parser_extract_dataset.add_argument(
     "--list-entities",
     action="store_true",
     default=False,
-    help="List all the entities available in the dataset specified. The entity will be listed one per line, unless otherwise specified with `--delim`",
+    help='List all the entities available in the dataset specified. The entity will be listed one per line, unless otherwise specified with "--delim"',
 )
 parser_extract_dataset.add_argument(
     "--entities",
-    help="List all the fields in the entity specified. Must be used together with “--list-fields”. The fields will be separated by comma, unless specified by “--delim”. ,  The retrieved field names will be presented as <entity_name>.<field_name>. When multiple entities are specified, use comma as the delimiter.",
+    help='List all the fields in the entity specified. Must be used together with "--list-fields". The fields will be separated by comma, unless specified by "--delim". The retrieved field names will be presented as <entity_name>.<field_name>. When multiple entities are specified, use comma as the delimiter.',
 )
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)

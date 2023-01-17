@@ -98,6 +98,32 @@ class TestDXExtractDataset(unittest.TestCase):
         stdout = process.communicate()[0]
         self.assertTrue("Error: path already exists" in stdout.strip())
         shutil.rmtree(out_directory)
+    
+    def test_list_entities(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        truth_output = "test,patient,trial_visit,baseline,hospital,doctor"
+        cmd = ["dx", "extract_dataset", dataset_record, "--list-entities"]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+        stdout = process.communicate()[0]
+        self.assertTrue(truth_output in stdout)
+
+    def test_list_fields(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        truth_output = "test.test_id,test.test_visit_id,test.test_date,test.test_type,test.results,test.result_cat"
+        entities = "test"
+        cmd = ["dx", "extract_dataset", dataset_record, "--list-fields", "--entities", entities]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+        stdout = process.communicate()[0]
+        self.assertTrue(truth_output in stdout)
+
+    def test_list_fields_negative(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        expected_error_message = "The following entity/entities cannot be found: ['tests']"
+        entities = "tests"
+        cmd = ["dx", "extract_dataset", dataset_record, "--list-fields","--entities", entities]
+        process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
+        stderr = process.communicate()[1]
+        self.assertTrue(expected_error_message in stderr)
 
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
