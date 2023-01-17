@@ -1034,7 +1034,7 @@ def verify_nf_license(destination, extra_args):
     dx_nextflow_lic = features.get("dxNextflow", False)
     if not dx_nextflow_lic:
         billTo = dxpy.api.project_describe(dest_project_to_check, input_params={"fields": {"billTo": True}})["billTo"]
-        raise dxpy.exceptions.PermissionDenied("billTo " + billTo + " of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com", 403)
+        raise dxpy.app_builder.AppBuilderException("PermissionDenied: billTo " + billTo + " of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com")
 
 def _build_app(args, extra_args):
     """Builds an app or applet and returns the resulting executable ID
