@@ -1025,7 +1025,7 @@ def verify_nf_license(destination, extra_args):
             dest_project_id, _, _ = parse_destination(destination)
             return dest_project_id
         else:
-            return dxpy.DX_PROJECT_CONTEXT_ID
+            return dxpy.PROJECT_CONTEXT_ID
 
     dest_project_to_check = get_project_to_check()
     features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]})['features']
