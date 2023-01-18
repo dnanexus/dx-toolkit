@@ -447,7 +447,7 @@ nf_task_exit() {
 }
 
 nf_task_entry() {
-  docker_credentials=$(dx find data --path "$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
+  docker_credentials=$(dx find data --path "$DX_WORKSPACE_ID:$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
   if [ -n "$docker_credentials" ]; then
     docker_registry_login
   fi
