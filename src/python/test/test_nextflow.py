@@ -26,7 +26,7 @@ import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
 
 import uuid
-from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
+from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, DXTestCaseBuildApps, run, chdir, temporary_project)
 import dxpy_testutil as testutil
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError
@@ -366,6 +366,33 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
     #     job_desc = dxpy.describe(job.get_id())
     #     self.assertEqual(job_desc["failureReason"], "AppError")
     #     self.assertIn("Please remove workDir specification", job_desc["failureMessage"])
+
+@unittest.skipUnless(testutil.TEST_ISOLATED_ENV, 'skipping test that requires presence of test org, project, and user')
+class TestDXNextflowBuildLicense(DXTestCaseBuildApps):
+    @classmethod
+    def setUpClass(cls):
+        cls.org_id = "org-piratelabs"
+        cls.user_alice = "user-alice"  # ADMIN
+        cls.user_bob = "user-bob"
+        dxpy.api.org_invite(cls.org_id, {"invitee": cls.user_bob})  # Invite user_bob as MEMEBER of org-piratelabs
+        cls.project_ppb = "project-0000000000000000000000pb"  # public project in "org-piratelabs"
+
+    @classmethod
+    def tearDownClass(cls):
+        dxpy.api.org_remove_member(cls.org_id, {"user": cls.user_bob})
+
+    def test_dx_build_in_project_without_license(self):
+        with temporary_project() as project_1:
+            project1_id = project_1.get_id()
+            self.assertEqual(dxpy.api.project_describe(project1_id)['billTo'], "user-jenkins")
+            dxpy.api.project_update(project1_id, {"billTo": self.org_id})
+            self.assertEqual(dxpy.api.project_describe(project1_id)['billTo'], self.org_id)
+
+            pipeline_name = "hello"
+            applet_dir = self.write_nextflow_applet_directory(
+                pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+            with self.assertSubprocessFailure(stderr_regexp='error: argument --level: expected one argument', exit_code=2):
+                json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
