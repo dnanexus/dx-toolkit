@@ -1,0 +1,37 @@
+{
+    "title": "Genotype Schema",
+    "$id": "/genotype_schema",
+    "description": "A description of the genotype section of the variant filter input JSON",
+    "type": "object",
+    "definitions": {
+        "genotype": {
+            "properties": {
+                "genotype": {
+                    "anyOf": [
+                        {
+                            "description": "type of the genotype",
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "ref",
+                                    "het",
+                                    "hom-alt",
+                                    "het-alt",
+                                    "half"
+                                ]
+                            }
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string",
+                            "enum": "*"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,39 @@
+{
+    "title": "Location Schema",
+    "$id": "/location_schema",
+    "description": "A description of the location section of the variant filter input JSON",
+    "type": "array",
+    "definitions": {
+        "location": {
+            "items": {
+                "type": "object",
+                "properties": {
+                    "chromosome": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "X",
+                                    "Y"
+                                ]
+                            },
+                            {
+                                "type": "integer",
+                                "min": 0,
+                                "max": 23
+                            }
+                        ]
+                    },
+                    "starting_position": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "end_position": {
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                }
+            }
+        }
+    }
+}

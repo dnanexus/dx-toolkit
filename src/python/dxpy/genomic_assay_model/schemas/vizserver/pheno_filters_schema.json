@@ -1,0 +1,52 @@
+{
+    "title": "Pheno Filters Schema",
+    "$id": "/pheno_filters_schema",
+    "description": "A description",
+    "type": "object",
+    "properties": {
+        "compound": {
+            "type": "array",
+            "items": {
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "logic": {
+                        "type": "string",
+                        "enum": [
+                            "and",
+                            "or"
+                        ]
+                    },
+                    "filters": {
+                        "type": "object"
+                    },
+                    "entity": {
+                        "type": "object",
+                        "properties": {
+                            "logic": {
+                                "type": "string",
+                                "enum": [
+                                    "and",
+                                    "or"
+                                ]
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "operator": {
+                                "type": "string"
+                            },
+                            "children": {
+                                "type": "array"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "logic": {
+            "$ref": "./logic_schema.json#/definitions/logic"
+        }
+    }
+}

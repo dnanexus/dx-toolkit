@@ -1,0 +1,20 @@
+{
+    "title": "Entity Schema",
+    "$id": "/entity_schema",
+    "description": "A description of the entity object",
+    "type": "object",
+    "definitions": {
+        "properties": {
+            "operator": {
+                "type": "string"
+            },
+            "name": {
+                "type": "string"
+            },
+            "children": {
+                "type": "array",
+                "items": {}
+            }
+        }
+    }
+}

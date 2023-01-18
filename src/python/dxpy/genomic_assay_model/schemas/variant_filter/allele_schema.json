@@ -1,0 +1,152 @@
+{
+    "title": "Allele Schema",
+    "$id": "/allele_schema",
+    "description": "A description of the allele section of the variant filter input JSON",
+    "type": "object",
+    "definitions": {
+        "allele": {
+            "properties": {
+                "id": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "description": "ID of an allele"
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "*"
+                            ]
+                        }
+                    ]
+                },
+                "rsid": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "description": "RSID of an allele"
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "*"
+                            ]
+                        }
+                    ]
+                },
+                "type": {
+                    "anyOf": [
+                        {
+                            "type": "array",
+                            "description": "Type of allele. Accepted values are “SNP”, “Ins”, “Del”, “Mixed”.",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "SNP",
+                                    "Ins",
+                                    "Del",
+                                    "Mixed"
+                                ]
+                            }
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string",
+                            "enum": "*"
+                        }
+                    ]
+                },
+                "ref": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "description": "reference allele"
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string",
+                            "enum": "*"
+                        }
+                    ]
+                },
+                "alt": {
+                    "anyOf": [
+                        {
+                            "type": "string",
+                            "description": "Alternative allele"
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string",
+                            "enum": "*"
+                        }
+                    ]
+                },
+                "dataset_alt_af": {
+                    "anyOf": [
+                        {
+                            "description": "Dataset alternate allele frequency",
+                            "properties": {
+                                "min": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "exclusiveMaxium": 1
+                                },
+                                "max": {
+                                    "type": "number",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 1
+                                }
+                            }
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string",
+                            "enum": "*"
+                        }
+                    ]
+                },
+                "gnomad_alt_af": {
+                    "anyOf": [
+                        {
+                            "description": "gnomAD alternate allele frequency",
+                            "properties": {
+                                "min": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "exclusiveMaxium": 1
+                                },
+                                "max": {
+                                    "type": "number",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 1
+                                }
+                            }
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string",
+                            "enum": "*"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
