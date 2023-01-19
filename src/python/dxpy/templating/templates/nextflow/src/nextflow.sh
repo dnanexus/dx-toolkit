@@ -439,7 +439,6 @@ nf_task_entry() {
   # capture the exit code
   trap nf_task_exit EXIT
 
-  export -f nxf_dx_upload
   # remove the line in .command.run to disable printing env vars if debugging is on
   dx cat "${TASK_WORKDIR}/.command.run" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
   set +e
