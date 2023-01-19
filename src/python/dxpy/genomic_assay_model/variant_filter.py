@@ -209,6 +209,9 @@ class Annotation:
             }
         if annotation_filter == {}:
             return None
+
+        annotation_filter["logic"] = "and"
+        annotation_filter["name"] = "genotype"
         return annotation_filter
 
 
@@ -261,19 +264,20 @@ class VariantFilter:
         if len(location_filter_list) > 1:
             location_filter["compound"].append({"logic": "or"})
 
+        # Note that the location filter needs to be handled slightly differently
         all_filters = []
         if allele_filter:
             all_filters.append(allele_filter)
         if genotype_filter:
             all_filters.append(genotype_filter)
-        if location_filter:
-            all_filters.append(location_filter)
         if annotation_filter:
             all_filters.append(annotation_filter)
 
         compiled_filter["filters"]["assay_filter"]["compound"] = [
             {"filters": x} for x in all_filters
         ]
+
+        compiled_filter["filters"]["assay_filter"]["compound"].append(location_filter)
 
         if len(all_filters) > 0:
             compiled_filter["logic"] = "and"
