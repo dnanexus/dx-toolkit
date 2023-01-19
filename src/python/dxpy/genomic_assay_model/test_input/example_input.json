@@ -25,12 +25,12 @@
         {
             "chromosome": 1,
             "starting_position": 10000,
-            "end_position": 20000
+            "ending_position": 20000
         },
         {
             "chromosome": "X",
             "starting_position": 500,
-            "end_position": 1700
+            "ending_position": 1700
         }
     ],
     "annotation": {

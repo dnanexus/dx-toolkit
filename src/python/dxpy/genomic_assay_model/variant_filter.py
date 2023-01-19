@@ -1,9 +1,7 @@
 import json
 
-# Temporarily hardcode some variables that we will eventually get from the command line
 
-
-class allele:
+class Allele:
     def __init__(self, allele_dict={}):
         self.id = allele_dict.get("id") or None
         self.rsid = allele_dict.get("rsid") or None
@@ -68,7 +66,7 @@ class allele:
         return allele_filter
 
 
-class genotype:
+class Genotype:
     def __init__(self, genotype_dict={}):
         # TODO: see if we can name this differently
 
@@ -98,7 +96,7 @@ class genotype:
         return genotype_filter
 
 
-class location:
+class Location:
     def __init__(self, location_dict={}):
         # Note that the location object is a single element in the list given on the "location" line
 
@@ -143,8 +141,10 @@ class location:
         # The filters within a single location are related by and, but the relationship between location filters is or
         location_filter["logic"] = "and"
 
+        return location_filter
 
-class annotation:
+
+class Annotation:
     def __init__(self, annotation_dict={}):
         self.gene_name = annotation_dict.get("gene_name") or None
         self.gene_id = annotation_dict.get("gene_id") or None
@@ -207,9 +207,12 @@ class annotation:
                 "condition": "in",
                 "values": self.hgvs_p,
             }
+        if annotation_filter == {}:
+            return None
+        return annotation_filter
 
 
-class variant_filter:
+class VariantFilter:
     def __init__(self, full_input_json_path, name, id):
         # Initialize
         # json automatically converts null in JSON to None
@@ -220,28 +223,28 @@ class variant_filter:
             full_input_json = json.load(infile)
 
         if "allele" in full_input_json:
-            self.allele = allele(full_input_json["allele"])
+            self.allele = Allele(full_input_json["allele"])
         else:
-            self.allele = allele()
+            self.allele = Allele()
 
         if "genotype" in full_input_json:
-            self.genotype = genotype(full_input_json["genotype"])
+            self.genotype = Genotype(full_input_json["genotype"])
         else:
-            self.genotype = genotype()
+            self.genotype = Genotype()
 
         # I don't love this because it could lead to self.json being either a list of location objects or a string
         if "location" in full_input_json:
             if isinstance(full_input_json["location"], list):
-                self.location = [location(x) for x in full_input_json["location"]]
+                self.location = [Location(x) for x in full_input_json["location"]]
             elif isinstance(full_input_json["location"], str):
                 self.location = full_input_json["location"]
         else:
-            self.location = location()
+            self.location = Location()
 
         if "annotation" in full_input_json:
-            self.annotation = annotation(full_input_json["annotation"])
+            self.annotation = Annotation(full_input_json["annotation"])
         else:
-            self.annotation = annotation()
+            self.annotation = Annotation()
 
     def compile_filters(self):
         allele_filter = self.allele.generate_filter()
@@ -253,14 +256,10 @@ class variant_filter:
             "filters": {"assay_filter": {"id": self.id, "name": self.name}}
         }
 
-        # Todo fix
-        location_filter = {
-            "compound": [{"filter": x} for x in location_filter_list].append(
-                {"logic": "and"}
-            )
-        }
-        if len(location_filter_list > 1):
-            location_filter["filter"]["logic"] = "or"
+        location_filter = {"compound": [{"filter": x} for x in location_filter_list]}
+
+        if len(location_filter_list) > 1:
+            location_filter["compound"].append({"logic": "or"})
 
         all_filters = []
         if allele_filter:
@@ -276,7 +275,23 @@ class variant_filter:
             {"filters": x} for x in all_filters
         ]
 
-        if len(all_filters > 0):
+        if len(all_filters) > 0:
+            compiled_filter["logic"] = "and"
             return compiled_filter
         else:
             return {}
+
+
+if __name__ == "__main__":
+    # Temporarily hardcode some variables that we will eventually get from the command line
+    json_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/example_input.json"
+    output_file = "test_output/test_output.json"
+    name = "testname"
+    id = "testid"
+
+    parsed_filter = VariantFilter(json_path, name, id)
+    vizserver_json = parsed_filter.compile_filters()
+
+    # Write to a file for examination
+    with open(output_file, "w") as outfile:
+        json.dump(vizserver_json, outfile)
