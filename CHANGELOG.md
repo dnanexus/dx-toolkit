@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## Added
+
+* Nextflow pipelines support private docker images on subjob level
+
 ## [337.0] - beta
 
 ### Changed
