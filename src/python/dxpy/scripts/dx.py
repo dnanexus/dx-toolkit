@@ -42,6 +42,7 @@ from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
 from ..cli.dataset_utilities import extract_dataset
+from ..cli.dataset_utilities import extract_assay
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -6092,6 +6093,24 @@ parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const='
 parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output). If not supplied, output will create a file with a default name in the current folder')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
+
+#####################################
+# extract_assay
+#####################################
+parser_extract_assay = subparsers.add_parser('extract_assay germline', help="Retrieve the selected data or generate SQL to retrieve the data from an geno assay in a dataset or cohort based on provided rules.",
+                                   description="Retrieve the selected data or generate SQL to retrieve the data from an geno assay in a dataset or cohort based on provided rules.",
+                                   prog='dx extract_assay germline')
+parser_extract_assay.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the record-id in current selected project) or name.')
+parser_extract_assay.add_argument('--list-assays', action="store_true", default=False, help='List germline assays available for query in the specified Dataset or Cohort object.')
+parser_extract_assay.add_argument('--assay-name', action="store_true", help='Specify the germline assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”.')
+parser_extract_assay.add_argument('--variant-filter', action="store_true", default=False, help='If a JSON file (.json extension) or a  JSON object, as a  string, specifying criterias of what variants to retrieve is provided, then a list of variants (with annotation) will be returned.')
+parser_extract_assay.add_argument('--variant-filter-help', action="store_true", default=False, help='Return a help text including a paragraph of description and a json template of the filter.')
+parser_extract_assay.add_argument('-list-samples', action="store_true", default=False, help='List all the sampleIDs available in the assay.')
+parser_extract_assay.add_argument('--sample', action="store_true", default=False, help='If used without --variant-filter, and if no value is provided for --sample, then a list of all sample IDs for the assay will be returned. If used with --variant-filter, and if a value is provided for --sample, then values for the specified IDs will be returned. If a csv file (.csv extension) is supplied, only the first column will be read. It is recommended to have the file contain a single column (without a header) of sample IDs, where there is one unique ID per row.')
+parser_extract_assay.add_argument('--sql', action="store_true", default=False, help='If the flag is provided, a SQL statement will be returned instead of data.')
+parser_extract_assay.add_argument('-o', '--output', help='Path to store the output file.')
+parser_extract_assay.set_defaults(func=extract_assay)
+register_parser(parser_extract_assay)
 
 #####################################
 # help

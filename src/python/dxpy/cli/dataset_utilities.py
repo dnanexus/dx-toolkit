@@ -241,6 +241,11 @@ def extract_dataset(args):
         write_ot = rec_dict.write(output_file_data=output_file_data, output_file_entity=output_file_entity,
                                   output_file_coding=output_file_coding, sep=delimiter)
 
+def extract_assay(args):
+    """
+       Retrieve the selected data or generate SQL to retrieve the data from an geno assay in a dataset or cohort based on provided rules. 
+    """
+
 def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[], column_names=[]):
     if print_to_stdout:
         fields_output = sys.stdout
