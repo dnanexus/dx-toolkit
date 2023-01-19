@@ -6,9 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## Added
+### Added
 
-* Nextflow pipelines support private docker images on subjob level
+* Support for Granular Spot wait times in `dx run` using `--max-tree-spot-wait-time` and `--max-job-spot-wait-time`
+* Printing of Spot wait times in `dx describe` for jobs and workflows
+* Nextflow pipelines support private Docker images on subjob level
 
 ## [337.0] - beta
 

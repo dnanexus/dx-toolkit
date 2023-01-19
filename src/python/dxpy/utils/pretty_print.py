@@ -215,9 +215,9 @@ def format_timedelta(timedelta, in_seconds=False, largest_units=None, auto_singu
     :type timedelta: int
     :param in_seconds: Whether the given duration is in seconds
     :type in_seconds: bool
-    :param largest_units: Largest unit to be displayed. Allowed values are miliseconds, seconds, minutes, hours, days and years
+    :param largest_units: Largest units to be displayed. Allowed values are miliseconds, seconds, minutes, hours, days and years
     :type largest_units: str
-    :param auto_singulars: Automatically use singular when value of given is 1
+    :param auto_singulars: Automatically use singular when value of given units is 1
     :type auto_singulars: bool
     """
 
