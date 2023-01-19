@@ -10,7 +10,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Support for Granular Spot wait times in `dx run` using `--max-tree-spot-wait-time` and `--max-job-spot-wait-time`
 * Printing of Spot wait times in `dx describe` for jobs and workflows
-* Nextflow pipelines support private Docker images on subjob level
+* Support for private Docker images in Nextflow pipelines on subjob level
+
+### Fixed
+
+* How `dx get database` command reads from the API server with the API proxy interceptor
+* Regex global flags in path matching to support Py3.11
+* `dx run --clone` for Nextflow jobs (clear cloned job's properties)
 
 ## [337.0] - beta
 
