@@ -245,6 +245,8 @@ def extract_assay(args):
     """
        Retrieve the selected data or generate SQL to retrieve the data from an geno assay in a dataset or cohort based on provided rules. 
     """
+    if args.variant_filter_help:
+        print('# Usage: dx extract_assay germline PATH --variant-filter=<JSON>\n#\n# Return a set of genomic variants based on the filters provided.\n# The following categories and filters are accepted:\n#    allele:\n#      id, rsid, type, dataset_alt_af, gnomad_alt_af\n#    genotype:\n#      type\n#    location:\n#      chromosome, starting_position, end_position\n#    annotation:\n#      gene_name, gene_id, feature_id, consequences, putative_impact, hgvs_c, hgvs_p\n#\n# An example JSON to provide these filters is the following:\n{\n   “allele”: {\n   “id”: [”1_1000_A_T”,”2_1000_G_C”],\n    “rsid”: [”rs11111”,”rs22222”],\n    “type”: [”SNP”,”Del”,”Ins”],\n    “dataset_alt_af”:\n   {min:0, max: 0.5},\n    “gnomad_alt_af”: {min:0.001, max: 0.05}\n  },\n  “genotype”: {\n    “genotype”: [“het”, “hom-alt”]\n  },\n  “location”: [\n    {“chromosome”:”1”, “starting_position”:”10000”, “end_position”: “20000” },\n    {“chromosome”:”X”, “starting_position”:”500”, “end_position”: “1700” }\n   ],\n  “annotation”: {\n    “gene_name”: [“BRCA2”],\n    “gene_id”: [“ENST00000302118],\n    “feature_id”: [“ENST00000302118.5”],\n    “consequences”: [“5 prime UTR variant”],\n    “putative_impact”: [“MODIFIER”],\n    “hgvs_c”: [“c.-49A>G”],\n    “hgvs_p”: [“p.Gly2Asp”]\n  }\n}')
 
 def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[], column_names=[]):
     if print_to_stdout:
