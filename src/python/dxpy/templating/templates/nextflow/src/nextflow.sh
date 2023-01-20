@@ -298,7 +298,7 @@ main() {
   fi
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.4.0
+  NXF_PLUGINS_VERSION=1.5.0
   
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
