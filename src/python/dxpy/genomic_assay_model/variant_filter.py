@@ -18,8 +18,6 @@ class Allele:
         else:
             table = "allele"
 
-        # This bit looks like a serious violation of DRY principle, but
-
         # Generate filter for id
         if self.id and self.id != "*":
             filter_key = "{}${}".format(table, "a_id")
@@ -31,7 +29,6 @@ class Allele:
         # Generate filter for type, which is a list
         if self.type and self.type != "*":
             filter_key = "{}${}".format(table, "allele_type")
-            # TODO Might need to use a condition other than "is" here
             allele_filter[filter_key] = {"condition": "in", "values": self.type}
         if self.ref and self.ref != "*":
             # TODO ref might have been removed from the spec
@@ -40,16 +37,16 @@ class Allele:
         if self.dataset_alt_af and self.dataset_alt_af != "*":
             # TODO: Can this and the following filter have just min or max, or will they always have both?
             filter_key = "{}${}".format(table, "alt_freq")
-            minimum = self.dataset_alt_af["min"]
-            maximum = self.dataset_alt_af["max"]
+            minimum = float(self.dataset_alt_af["min"])
+            maximum = float(self.dataset_alt_af["max"])
             allele_filter[filter_key] = {
                 "condition": "between",
                 "values": [minimum, maximum],
             }
         if self.gnomad_alt_af and self.gnomad_alt_af != "*":
             filter_key = "{}${}".format(table, "alt_freq")
-            minimum = self.gnomad_alt_af["min"]
-            maximum = self.gnomad_alt_af["max"]
+            minimum = float(self.gnomad_alt_af["min"])
+            maximum = float(self.gnomad_alt_af["max"])
             allele_filter[filter_key] = {
                 "condition": "between",
                 "values": [minimum, maximum],
@@ -216,7 +213,7 @@ class Annotation:
 
 
 class VariantFilter:
-    def __init__(self, full_input_json_path, name, id):
+    def __init__(self, full_input_json_path, name, id, sample=None):
         # Initialize
         # json automatically converts null in JSON to None
         self.name = name
@@ -260,6 +257,7 @@ class VariantFilter:
         }
 
         location_filter = {"compound": [{"filter": x} for x in location_filter_list]}
+        location_filter["compound"].append({"name": "location"})
 
         if len(location_filter_list) > 1:
             location_filter["compound"].append({"logic": "or"})
@@ -294,8 +292,8 @@ if __name__ == "__main__":
     id = "testid"
 
     parsed_filter = VariantFilter(json_path, name, id)
-    vizserver_json = parsed_filter.compile_filters()
+    vizserver_dict = parsed_filter.compile_filters()
 
     # Write to a file for examination
     with open(output_file, "w") as outfile:
-        json.dump(vizserver_json, outfile)
+        json.dump(vizserver_dict, outfile)
