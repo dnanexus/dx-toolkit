@@ -18,6 +18,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Regex global flags in path matching to support Py3.11
 * `dx run --clone` for Nextflow jobs (clear cloned job's properties)
 
+### Changed
+
+* Upgraded Nextflow plugin version to 1.5.0
+
 ## [337.0] - beta
 
 ### Changed
