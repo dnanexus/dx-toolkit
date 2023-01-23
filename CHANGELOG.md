@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [337.0] - beta
+
 ### Added
 
 * Support for Granular Spot wait times in `dx run` using `--max-tree-spot-wait-time` and `--max-job-spot-wait-time`
@@ -14,7 +16,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* How `dx get database` command reads from the API server with the API proxy interceptor
+* `dx get database` command reads from the API server with the API proxy interceptor
 * Regex global flags in path matching to support Py3.11
 * `dx run --clone` for Nextflow jobs (clear cloned job's properties)
 
@@ -22,7 +24,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Upgraded Nextflow plugin version to 1.5.0
 
-## [337.0] - beta
+## [337.0] - 2023.1.20 - stable
 
 ### Changed
 
