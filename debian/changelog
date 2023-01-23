@@ -1,3 +1,31 @@
+dx-toolkit (0.338.0) trusty; urgency=medium
+
+  * Added: Support for Granular Spot wait times in dx run using --max-tree-spot-wait-time and --max-job-spot-wait-time
+  * Added: Printing of Spot wait times in dx describe for jobs and workflows
+  * Added: Support for private Docker images in Nextflow pipelines on subjob level
+  * Fixed: How dx get database command reads from the API server with the API proxy interceptor
+  * Fixed: Regex global flags in path matching to support Python 3.11
+  * Fixed: dx run --clone for Nextflow jobs (clear cloned job's properties)
+  * Changed: Upgraded Nextflow plugin version to 1.5.0
+
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 21 Jan 2023 04:17:21 +0000
+
+dx-toolkit (0.337.0) trusty; urgency=medium
+
+  * Changed: Upgraded Nextflow plugin version to 1.4.0
+  * Changed: Failed Nextflow subjobs with 'terminate' errorStrategy finish in 'failed' state
+  * Changed: Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
+  * Changed: Exposed help messages for `dx build --nextflow` 
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 07 Jan 2023 13:19:29 +0000
+
+dx-toolkit (0.336.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 12 Dec 2022 22:01:13 +0000
+
 dx-toolkit (0.335.0) trusty; urgency=medium
 
   * Added: Group name for developer options in Nextflow pipeline applet

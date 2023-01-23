@@ -6,7 +6,42 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [335.0] - beta
+## [337.0] - beta
+
+### Added
+
+* Support for Granular Spot wait times in `dx run` using `--max-tree-spot-wait-time` and `--max-job-spot-wait-time`
+* Printing of Spot wait times in `dx describe` for jobs and workflows
+* Support for private Docker images in Nextflow pipelines on subjob level
+
+### Fixed
+
+* `dx get database` command reads from the API server with the API proxy interceptor
+* Regex global flags in path matching to support Py3.11
+* `dx run --clone` for Nextflow jobs (clear cloned job's properties)
+
+### Changed
+
+* Upgraded Nextflow plugin version to 1.5.0
+
+## [337.0] - 2023.1.20 - stable
+
+### Changed
+
+* Upgraded Nextflow plugin version to 1.4.0
+* Failed Nextflow subjobs with 'terminate' errorStrategy finish in 'failed' state
+* Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
+* Exposed help messages for `dx build --nextflow`
+
+### Fixed
+
+* Unset Nextflow related properites cloned from a previous Nextflow job when using `dx run --clone`
+
+## [336.0] - 2023.1.7 - stable
+
+* No significant changes
+
+## [335.0] - 2022.12.12
 
 ### Added
 
@@ -18,7 +53,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Preserving folder structure when publishing Nextflow output files
 * Missing required inputs passed to `nextflow run`
 
-## [334.0] - 2022.12.2 - stable
+## [334.0] - 2022.12.2
 
 ### Added
 
