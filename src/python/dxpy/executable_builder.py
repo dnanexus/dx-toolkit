@@ -98,6 +98,34 @@ def delete_temporary_projects(projects):
         except Exception:
             pass
 
+def get_valid_bill_to(bill_to, executable_builder_exception):
+    """
+    Check if the requesting user can perform billable activities on behalf of the billTo
+    If not specified, default to the billTo of the requesting user
+    otherwise it must be either the ID of the requesting user, 
+    or an org of which the requesting user is a member with 'allowBillableActivities' permission
+    """
+    user_id = dxpy.whoami()
+    if not bill_to:
+        return dxpy.api.user_describe(user_id)['billTo']
+
+    exception_msg = None
+    if bill_to.startswith('user-') and bill_to != user_id:
+        exception_msg = 'Cannot request another user to be the "billTo"'
+    elif bill_to.startswith('org-'):
+        try:
+            member_access = dxpy.api.org_describe(bill_to)
+            if not member_access['allowBillableActivities']:
+                exception_msg='You are not a member in {} with allowBillableActivities permission. Please check the billing policy of the org.'.format(bill_to)
+        except:
+            exception_msg='Cannot retrieve billing information for {}. Please check your access level and the billing policy of the org.'.format(bill_to)
+    else:
+        exception_msg='The field "billTo" must be a valid ID of a user/org.'
+    
+    if exception_msg:
+        raise executable_builder_exception(exception_msg)
+    
+    return bill_to
 
 def verify_developer_rights(prefixed_name):
     """
@@ -118,7 +146,7 @@ def verify_developer_rights(prefixed_name):
         describe_method = dxpy.api.global_workflow_describe
         exception_msg = \
             'A global workflow with the given name already exists and you are not a developer of that workflow'
-
+    
     name_already_exists = True
     is_developer = False
     version = None
@@ -152,7 +180,7 @@ def verify_developer_rights(prefixed_name):
     return FoundExecutable(name=name_without_prefix, version=version, id=executable_id)
 
 
-def assert_consistent_regions(from_spec, from_command_line, builder_exception):
+def assert_consistent_regions(from_spec, from_command_line, executable_builder_exception):
     """
     Verifies the regions passed with --region CLI argument and the ones
     specified in regionalOptions are the same (if both CLI and spec were used)
@@ -160,10 +188,10 @@ def assert_consistent_regions(from_spec, from_command_line, builder_exception):
     if from_spec is None or from_command_line is None:
         return
     if set(from_spec) != set(from_command_line):
-        raise builder_exception("--region and the 'regionalOptions' key in the JSON file do not agree")
+        raise executable_builder_exception("--region and the 'regionalOptions' key in the JSON file do not agree")
 
 
-def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exeception):
+def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exception):
     """
     Validates the "regionalOptions" field and verifies all the regions used
     in "regionalOptions" have the same options.
@@ -172,14 +200,14 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exece
     json_fn = 'dxapp.json' if exec_type == 'app' else 'dxworkflow.json'
 
     if not isinstance(reg_options_spec, dict):
-        raise executable_builder_exeception("The field 'regionalOptions' in  must be a mapping")
+        raise executable_builder_exception("The field 'regionalOptions' in  must be a mapping")
     if not reg_options_spec:
-        raise executable_builder_exeception(
+        raise executable_builder_exception(
             "The field 'regionalOptions' in " + json_fn + " must be a non-empty mapping")
     regional_options_list = list(reg_options_spec.items())
     for region, opts_for_region in regional_options_list:
         if not isinstance(opts_for_region, dict):
-            raise executable_builder_exeception("The field 'regionalOptions['" + region +
+            raise executable_builder_exception("The field 'regionalOptions['" + region +
                             "']' in " + json_fn + " must be a mapping")
         if set(opts_for_region.keys()) != set(regional_options_list[0][1].keys()):
             if set(opts_for_region.keys()) - set(regional_options_list[0][1].keys()):
@@ -188,18 +216,29 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exece
             else:
                 with_key, without_key = regional_options_list[0][0], region
                 key_name = next(iter(set(regional_options_list[0][1].keys()) - set(opts_for_region.keys())))
-            raise executable_builder_exeception(
+            raise executable_builder_exception(
                 "All regions in regionalOptions must specify the same options; " +
-                "%s was given for %s but not for %s" % (key_name, with_key, without_key)
+                "{} was given for {} but not for {}" .format (key_name, with_key, without_key)
             )
 
         if exec_type == 'app':
             for key in opts_for_region:
                 if key in json_spec.get('runSpec', {}):
-                    raise executable_builder_exeception(
+                    raise executable_builder_exception(
                     key + " cannot be given in both runSpec and in regional options for " + region)
 
-def get_enabled_regions(exec_type, json_spec, from_command_line, executable_builder_exeception):
+def get_permitted_regions(bill_to, executable_builder_exception):
+    """
+    Validates requested bill_to and returns the set of its permitted regions.
+    """
+    billable_regions = set()
+    try:
+        billable_regions= set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
+    except:
+        raise executable_builder_exception("Failed to get permitted regions of {}".format(bill_to))
+    return billable_regions
+
+def get_enabled_regions(exec_type, json_spec, from_command_line, executable_builder_exception):
     """
     Return a list of regions in which the global executable (app or global workflow)
     will be enabled, based on the "regionalOption" in their JSON specification
@@ -211,16 +250,16 @@ def get_enabled_regions(exec_type, json_spec, from_command_line, executable_buil
     :type json_spec: dict or None.
     :param from_command_line: The regional options specified on the command-line via --region.
     :type from_command_line: list or None.
-    :param builder_exception: Exception that will be thrown.
-    :type builder_exception: AppBuilderException or WorkflowBuilderException.
+    :param executable_builder_exception: Exception that will be thrown.
+    :type executable_builder_exception: AppBuilderException or WorkflowBuilderException.
     """
 
     from_spec = json_spec.get('regionalOptions')
 
     if from_spec is not None:
-        assert_consistent_reg_options(exec_type, json_spec, executable_builder_exeception)
+        assert_consistent_reg_options(exec_type, json_spec, executable_builder_exception)
 
-    assert_consistent_regions(from_spec, from_command_line, executable_builder_exeception)
+    assert_consistent_regions(from_spec, from_command_line, executable_builder_exception)
 
     enabled_regions = None
     if from_spec is not None:

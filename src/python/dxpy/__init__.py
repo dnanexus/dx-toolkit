@@ -148,7 +148,6 @@ from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 from random import randint
 from requests.auth import AuthBase
 from requests.packages import urllib3
-from requests.packages.urllib3.packages.ssl_match_hostname import match_hostname
 from threading import Lock
 from . import ssh_tunnel_app_support
 
@@ -174,14 +173,6 @@ def configure_urllib3():
     # Disable verbose urllib3 warnings and log messages
     urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
     logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
-
-    # Trust DNAnexus S3 upload tunnel
-    def _match_hostname(cert, hostname):
-        if hostname == "ul.cn.dnanexus.com":
-            hostname = "s3.amazonaws.com"
-        match_hostname(cert, hostname)
-
-    urllib3.connection.match_hostname = _match_hostname
 
 configure_urllib3()
 
@@ -256,7 +247,7 @@ def _get_env_var_proxy(print_proxy=False):
           file=sys.stderr)
   return proxy
 
-def _get_pool_manager(verify, cert_file, key_file):
+def _get_pool_manager(verify, cert_file, key_file, ssl_context=None):
     global _pool_manager
     default_pool_args = dict(maxsize=32,
                              cert_reqs=ssl.CERT_REQUIRED,
@@ -284,6 +275,7 @@ def _get_pool_manager(verify, cert_file, key_file):
         pool_args = dict(default_pool_args,
                          cert_file=cert_file,
                          key_file=key_file,
+                         ssl_context=ssl_context,
                          ca_certs=verify or os.environ.get('DX_CA_CERT') or requests.certs.where())
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
@@ -343,9 +335,11 @@ def _is_retryable_exception(e):
     if isinstance(e, urllib3.exceptions.NewConnectionError):
         return True
     if isinstance(e, requests.exceptions.SSLError):
-        errmsg = str(e)
-        if "EOF occurred in violation of protocol" in errmsg:
-            return True
+        return True
+    if isinstance(e, urllib3.exceptions.SSLError):
+        return True
+    if isinstance(e, ssl.SSLError):
+        return True
     return False
 
 def _extract_msg_from_last_exception():
@@ -564,7 +558,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     if auth:
         auth(_RequestForAuth(method, url, headers))
 
-    pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file")}
+    pool_args = {arg: kwargs.pop(arg, None) for arg in ("verify", "cert_file", "key_file", "ssl_context")}
     test_retry = kwargs.pop("_test_retry_http_request", False)
 
     # data is a sequence/buffer or a dict
@@ -1042,7 +1036,7 @@ def append_underlying_workflow_describe(globalworkflow_desc):
 
     for region, config in globalworkflow_desc['regionalOptions'].items():
         workflow_id = config['workflow']
-        workflow_desc = dxpy.api.workflow_describe(workflow_id)
+        workflow_desc = dxpy.api.workflow_describe(workflow_id, input_params={"project": config["resources"]})
         globalworkflow_desc['regionalOptions'][region]['workflowDescribe'] = workflow_desc
     return globalworkflow_desc
 

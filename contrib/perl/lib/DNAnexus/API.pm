@@ -557,6 +557,104 @@ sub databaseListFolder($;$%) {
 }
 
 
+sub dbclusterAddTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTags', $input_params, %kwargs);
+}
+
+
+sub dbclusterAddTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/addTypes', $input_params, %kwargs);
+}
+
+
+sub dbclusterDescribe($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/describe', $input_params, %kwargs);
+}
+
+
+sub dbclusterGetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/getDetails', $input_params, %kwargs);
+}
+
+
+sub dbclusterNew(;$%) {
+    my ($input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/dbcluster/new', $input_params, %kwargs);
+}
+
+
+sub dbclusterRemoveTags($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTags', $input_params, %kwargs);
+}
+
+
+sub dbclusterRemoveTypes($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/removeTypes', $input_params, %kwargs);
+}
+
+
+sub dbclusterRename($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/rename', $input_params, %kwargs);
+}
+
+
+sub dbclusterSetDetails($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setDetails', $input_params, %kwargs);
+}
+
+
+sub dbclusterSetProperties($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setProperties', $input_params, %kwargs);
+}
+
+
+sub dbclusterSetVisibility($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/setVisibility', $input_params, %kwargs);
+}
+
+
+sub dbclusterStart($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/start', $input_params, %kwargs);
+}
+
+
+sub dbclusterStop($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/stop', $input_params, %kwargs);
+}
+
+
+sub dbclusterTerminate($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/terminate', $input_params, %kwargs);
+}
+
+
 sub fileAddTags($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
@@ -820,6 +918,13 @@ sub jobTerminate($;$%) {
     my ($object_id, $input_params, %kwargs) = @_;
     %kwargs = () unless %kwargs;
     return DXHTTPRequest('/'.$object_id.'/terminate', $input_params, %kwargs);
+}
+
+
+sub jobUpdate($;$%) {
+    my ($object_id, $input_params, %kwargs) = @_;
+    %kwargs = () unless %kwargs;
+    return DXHTTPRequest('/'.$object_id.'/update', $input_params, %kwargs);
 }
 
 
@@ -1475,5 +1580,5 @@ sub workflowNew(;$%) {
 
 
 our @ISA = "Exporter";
-our @EXPORT_OK = qw(analysisAddTags analysisDescribe analysisRemoveTags analysisSetProperties analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appValidateBatch appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletValidateBatch appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder databaseAddTags databaseAddTypes databaseClose databaseDescribe databaseGetDetails databaseListProjects databaseRelocate databaseRemoveTags databaseRemoveTypes databaseRename databaseSetDetails databaseSetProperties databaseSetVisibility databaseDownloadFile databaseListFolder fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew globalWorkflowAddAuthorizedUsers globalWorkflowAddCategories globalWorkflowAddDevelopers globalWorkflowAddTags globalWorkflowDelete globalWorkflowDescribe globalWorkflowListAuthorizedUsers globalWorkflowListCategories globalWorkflowListDevelopers globalWorkflowPublish globalWorkflowRemoveAuthorizedUsers globalWorkflowRemoveCategories globalWorkflowRemoveDevelopers globalWorkflowRemoveTags globalWorkflowRun globalWorkflowUpdate globalWorkflowNew jobAddTags jobDescribe jobGetLog jobRemoveTags jobSetProperties jobTerminate jobNew notificationsGet notificationsMarkRead orgDescribe orgFindMembers orgFindProjects orgFindApps orgInvite orgRemoveMember orgSetMemberAccess orgUpdate orgNew projectAddTags projectArchive projectUnarchive projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectTransfer projectUpdate projectUpdateSponsorship projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemDescribeDataObjects systemDescribeExecutions systemDescribeProjects systemFindAffiliates systemFindApps systemFindDataObjects systemFindGlobalWorkflows systemResolveDataObjects systemFindExecutions systemFindAnalyses systemFindDatabases systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemFindOrgs systemGenerateBatchInputs systemGlobalSearch systemGreet systemHeaders systemShortenURL systemWhoami userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowDryRun workflowGetDetails workflowIsStageCompatible workflowListProjects workflowMoveStage workflowOverwrite workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowValidateBatch workflowSetDetails workflowSetProperties workflowSetVisibility workflowUpdate workflowUpdateStageExecutable workflowNew);
+our @EXPORT_OK = qw(analysisAddTags analysisDescribe analysisRemoveTags analysisSetProperties analysisTerminate appAddAuthorizedUsers appAddCategories appAddDevelopers appAddTags appDelete appDescribe appGet appInstall appListAuthorizedUsers appListCategories appListDevelopers appPublish appRemoveAuthorizedUsers appRemoveCategories appRemoveDevelopers appRemoveTags appRun appValidateBatch appUninstall appUpdate appNew appletAddTags appletDescribe appletGet appletGetDetails appletListProjects appletRemoveTags appletRename appletValidateBatch appletRun appletSetProperties appletNew containerClone containerDescribe containerDestroy containerListFolder containerMove containerNewFolder containerRemoveFolder containerRemoveObjects containerRenameFolder databaseAddTags databaseAddTypes databaseClose databaseDescribe databaseGetDetails databaseListProjects databaseRelocate databaseRemoveTags databaseRemoveTypes databaseRename databaseSetDetails databaseSetProperties databaseSetVisibility databaseDownloadFile databaseListFolder dbclusterAddTags dbclusterAddTypes dbclusterDescribe dbclusterGetDetails dbclusterNew dbclusterRemoveTags dbclusterRemoveTypes dbclusterRename dbclusterSetDetails dbclusterSetProperties dbclusterSetVisibility dbclusterStart dbclusterStop dbclusterTerminate fileAddTags fileAddTypes fileClose fileDescribe fileDownload fileGetDetails fileListProjects fileRemoveTags fileRemoveTypes fileRename fileSetDetails fileSetProperties fileSetVisibility fileUpload fileNew globalWorkflowAddAuthorizedUsers globalWorkflowAddCategories globalWorkflowAddDevelopers globalWorkflowAddTags globalWorkflowDelete globalWorkflowDescribe globalWorkflowListAuthorizedUsers globalWorkflowListCategories globalWorkflowListDevelopers globalWorkflowPublish globalWorkflowRemoveAuthorizedUsers globalWorkflowRemoveCategories globalWorkflowRemoveDevelopers globalWorkflowRemoveTags globalWorkflowRun globalWorkflowUpdate globalWorkflowNew jobAddTags jobDescribe jobGetLog jobRemoveTags jobSetProperties jobTerminate jobUpdate jobNew notificationsGet notificationsMarkRead orgDescribe orgFindMembers orgFindProjects orgFindApps orgInvite orgRemoveMember orgSetMemberAccess orgUpdate orgNew projectAddTags projectArchive projectUnarchive projectClone projectDecreasePermissions projectDescribe projectDestroy projectInvite projectLeave projectListFolder projectMove projectNewFolder projectRemoveFolder projectRemoveObjects projectRemoveTags projectRenameFolder projectSetProperties projectTransfer projectUpdate projectUpdateSponsorship projectNew recordAddTags recordAddTypes recordClose recordDescribe recordGetDetails recordListProjects recordRemoveTags recordRemoveTypes recordRename recordSetDetails recordSetProperties recordSetVisibility recordNew systemDescribeDataObjects systemDescribeExecutions systemDescribeProjects systemFindAffiliates systemFindApps systemFindDataObjects systemFindGlobalWorkflows systemResolveDataObjects systemFindExecutions systemFindAnalyses systemFindDatabases systemFindJobs systemFindProjects systemFindUsers systemFindProjectMembers systemFindOrgs systemGenerateBatchInputs systemGlobalSearch systemGreet systemHeaders systemShortenURL systemWhoami userDescribe userUpdate workflowAddStage workflowAddTags workflowAddTypes workflowClose workflowDescribe workflowDryRun workflowGetDetails workflowIsStageCompatible workflowListProjects workflowMoveStage workflowOverwrite workflowRemoveStage workflowRemoveTags workflowRemoveTypes workflowRename workflowRun workflowValidateBatch workflowSetDetails workflowSetProperties workflowSetVisibility workflowUpdate workflowUpdateStageExecutable workflowNew);
 

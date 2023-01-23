@@ -94,8 +94,8 @@ find_executions_args.add_argument('--app', '--applet', '--executable', dest='exe
 find_executions_args.add_argument('--state', help=fill('State of the job, e.g. \"done\", \"failed\"', width_adjustment=-24))
 find_executions_args.add_argument('--origin', help=fill('Job ID of the top-level job', width_adjustment=-24)) # Redundant but might as well
 find_executions_args.add_argument('--parent', help=fill('Job ID of the parent job; implies --all-jobs', width_adjustment=-24))
-find_executions_args.add_argument('--created-after', help=fill('Date (e.g. 2012-01-01) or integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
-find_executions_args.add_argument('--created-before', help=fill('Date (e.g. 2012-01-01) or integer timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+find_executions_args.add_argument('--created-after', help=fill('Date (e.g. --created-after="2021-12-01" or --created-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-after=1642196636000) after which the job was last created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-after=-2d for executions created in the last 2 days)', width_adjustment=-24))
+find_executions_args.add_argument('--created-before', help=fill('Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the job was last created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for executions created earlier than 2 days ago)', width_adjustment=-24))
 find_executions_args.add_argument('--no-subjobs', help=fill('Do not show any subjobs', width_adjustment=-24), action='store_true')
 find_executions_args.add_argument('--root-execution', '--root', help=fill('Execution ID of the top-level (user-initiated) job or analysis', width_adjustment=-24))
 find_executions_args.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
@@ -144,7 +144,7 @@ def process_dataobject_args(args):
     process_properties_args(args)
 
     # Visibility
-    args.hidden = (args.hidden == 'hidden')
+    args.hidden = (args.hidden == 'hidden' or args.hidden is True)
 
     # Details
     if args.details is not None:
@@ -351,8 +351,9 @@ def get_update_project_args(args):
         input_params['allowedExecutables'] = args.allowed_executables
     if args.unset_allowed_executables:
         input_params['allowedExecutables'] = None
+    if args.external_upload_restricted is not None:
+        input_params['externalUploadRestricted'] = True if args.external_upload_restricted == 'true' else False
     return input_params
-
 
 def process_phi_param(args):
     if args.containsPHI is not None:
@@ -360,3 +361,7 @@ def process_phi_param(args):
             args.containsPHI = True
         elif args.containsPHI == "false":
             args.containsPHI = False
+
+def process_external_upload_restricted_param(args):
+    if args.external_upload_restricted is not None:
+        args.external_upload_restricted = (args.external_upload_restricted == "true")

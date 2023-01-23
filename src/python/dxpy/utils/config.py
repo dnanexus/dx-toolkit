@@ -25,7 +25,12 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, json, time
 import platform
-from collections import MutableMapping
+try:
+    # Python 3
+    from collections.abc import MutableMapping
+except ImportError:
+    # Python 2.7
+    from collections import MutableMapping
 from shutil import rmtree
 
 import dxpy
@@ -196,6 +201,8 @@ class DXConfig(MutableMapping):
                         rmtree(os.path.join(sessions_dir, session_dir), ignore_errors=True)
 
             parent_process = Process(os.getpid()).parent()
+            if parent_process is None:
+                parent_process = Process(os.getpid())
             default_session_dir = os.path.join(sessions_dir, str(parent_process.pid))
             while parent_process is not None and parent_process.pid != 0:
                 session_dir = os.path.join(sessions_dir, str(parent_process.pid))

@@ -573,7 +573,7 @@ class DXTestCaseBuildWorkflows(DXTestCase):
                             "executable": self.test_applet_id,
                             "input": {"number": 777},
                             "folder": "/stage_0_output",
-                            "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
+                            "executionPolicy": {"onNonRestartableFailure": "failStage"},
                             "systemRequirements": {"main": {"instanceType": "mem1_ssd1_x2"}}},
                            {"id": "stage_1",
                             "executable": self.test_applet_id,
@@ -649,6 +649,42 @@ class DXTestCaseBuildApps(DXTestCase):
                 code_file.write(code_content)
         return p
 
+
+class DXTestCaseBuildNextflowApps(DXTestCase):
+    """
+    This class adds methods to ``DXTestCase`` related to app creation,
+    app destruction, and extraction of app data as local files.
+    """
+
+    base_nextflow_nf = "nextflow/hello/main.nf"
+
+    def setUp(self):
+        super(DXTestCaseBuildNextflowApps, self).setUp()
+        self.temp_file_path = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_file_path)
+        super(DXTestCaseBuildNextflowApps, self).tearDown()
+
+    def write_nextflow_applet_directory(self, applet_name, existing_nf_file_path=None, nf_file_name="main.nf", nf_file_content="\n"):
+        # Note: if called twice with the same app_name, will overwrite
+        # the dxapp.json and the nf file (if specified) but will not
+        # remove any other files that happened to be present;
+        # applet_name will be the name of the folder storing the pipeline
+        p = os.path.join(self.temp_file_path, applet_name)
+        pb = p.encode("utf-8")
+        try:
+            os.mkdir(pb)
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        if existing_nf_file_path:
+            # copy the nf file to the temporary pipeline directory
+            shutil.copyfile(existing_nf_file_path, p + "/" + os.path.basename(existing_nf_file_path))
+        else:
+            with open(os.path.join(pb, nf_file_name.encode("utf-8")), 'w') as nf_file:
+                nf_file.write(nf_file_content)
+        return p
 
 class TemporaryFile:
     ''' A wrapper class around a NamedTemporaryFile. Intended for use inside a 'with' statement.

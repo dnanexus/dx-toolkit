@@ -31,7 +31,8 @@ from collections import defaultdict
 
 import dxpy
 from .printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter, fill)
-from ..compat import basestring
+from .pretty_print import format_timedelta
+from ..compat import basestring, USING_PYTHON2
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -318,20 +319,19 @@ def render_bundleddepends(thing):
     from ..exceptions import DXError
     bundles = []
     for item in thing:
-        bundle_asset_record = dxpy.DXFile(item["id"]["$dnanexus_link"]).get_properties().get("AssetBundle")
+        bundle_dxlink = item["id"]["$dnanexus_link"]
         asset = None
-
-        if bundle_asset_record:
-            asset = dxpy.DXRecord(bundle_asset_record)
-
-        if asset:
+        if bundle_dxlink.startswith("file-"):
             try:
-                bundles.append(asset.describe().get("name") + " (" + asset.get_id() + ")")
+                bundle_asset_record = dxpy.DXFile(bundle_dxlink).get_properties().get("AssetBundle")
+                if bundle_asset_record:
+                    asset = dxpy.DXRecord(bundle_asset_record)
+                    bundles.append(asset.describe().get("name") + " (" + asset.get_id() + ")")
             except DXError:
                 asset = None
 
         if not asset:
-            bundles.append(item["name"] + " (" + item["id"]["$dnanexus_link"] + ")")
+            bundles.append(item["name"] + " (" + bundle_dxlink + ")")
 
     return bundles
 
@@ -381,7 +381,7 @@ def render_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp//1000).ctime()
 
 
-FIELD_NAME_WIDTH = 22
+FIELD_NAME_WIDTH = 28
 
 
 def print_field(label, value):
@@ -756,10 +756,15 @@ def print_data_obj_desc(desc, verbose=False):
 def printable_ssh_host_key(ssh_host_key):
     try:
         keygen = subprocess.Popen(["ssh-keygen", "-lf", "/dev/stdin"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        (stdout, stderr) = keygen.communicate(ssh_host_key)
+        if USING_PYTHON2:
+            (stdout, stderr) = keygen.communicate(ssh_host_key)
+        else:
+            (stdout, stderr) = keygen.communicate(ssh_host_key.encode())
     except:
         return ssh_host_key.strip()
     else:
+        if not USING_PYTHON2:
+            stdout =  stdout.decode()
         return stdout.replace(" no comment", "").strip()
 
 
@@ -774,7 +779,8 @@ def print_execution_desc(desc):
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
-                         'priority', 'sshHostKey']
+                         'priority', 'sshHostKey', 'internetUsageIPs', 'spotWaitTime', 'maxTreeSpotWaitTime',
+                         'maxJobSpotWaitTime']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -910,10 +916,19 @@ def print_execution_desc(desc):
                     print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
     if not desc.get('isFree') and desc.get('totalPrice') is not None:
         print_field('Total Price', format_currency(desc['totalPrice'], meta=desc['currency']))
+    if desc.get('spotWaitTime') is not None:
+        print_field('Spot Wait Time', format_timedelta(desc.get('spotWaitTime'), in_seconds=True))
+    if desc.get('maxTreeSpotWaitTime') is not None:
+        print_field('Max Tree Spot Wait Time', format_timedelta(desc.get('maxTreeSpotWaitTime'), in_seconds=True))
+    if desc.get('maxJobSpotWaitTime') is not None:
+        print_field('Max Job Spot Wait Time', format_timedelta(desc.get('maxJobSpotWaitTime'), in_seconds=True))
     if desc.get('invoiceMetadata'):
         print_json_field("Invoice Metadata", desc['invoiceMetadata'])
     if desc.get('sshHostKey'):
         print_nofill_field("SSH Host Key", printable_ssh_host_key(desc['sshHostKey']))
+    if 'internetUsageIPs' in desc:
+        print_json_field("Internet Usage IPs", desc['internetUsageIPs'])
+
 
     for field in desc:
         if field not in recognized_fields:
@@ -979,7 +994,8 @@ def format_currency(value, meta, currency_locale=None):
 
 def print_user_desc(desc):
     print_field("ID", desc["id"])
-    print_field("Name", desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"])
+    if "first" in desc and "middle" in desc and "last" in desc: 
+        print_field("Name", desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"])
     if "email" in desc:
         print_field("Email", desc["email"])
 

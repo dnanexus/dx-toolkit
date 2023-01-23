@@ -40,13 +40,6 @@
         }
       }
     },
-    "aws:cn-north-1": {
-      "systemRequirements": {
-        "*": {
-          "instanceType": "mem2_ssd1_x2"
-        }
-      }
-    },
     "aws:eu-central-1": {
       "systemRequirements": {
         "*": {

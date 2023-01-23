@@ -34,7 +34,7 @@ from . import DXDataObject
 from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO, basestring, USING_PYTHON2
+from ..compat import BytesIO, basestring, USING_PYTHON2, md5_hasher
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -673,7 +673,7 @@ class DXFile(DXDataObject):
         if index is not None:
             req_input["index"] = int(index)
 
-        md5 = hashlib.md5()
+        md5 = md5_hasher()
         if hasattr(data, 'seek') and hasattr(data, 'tell'):
             # data is a buffer; record initial position (so we can rewind back)
             rewind_input_buffer_offset = data.tell()
@@ -709,6 +709,7 @@ class DXFile(DXDataObject):
         # The file upload API requires us to get a pre-authenticated upload URL (and headers for it) every time we
         # attempt an upload. Because DXHTTPRequest will retry requests under retryable conditions, we give it a callback
         # to ask us for a new upload URL every time it attempts a request (instead of giving them directly).
+
         dxpy.DXHTTPRequest(get_upload_url_and_headers,
                            data,
                            jsonify_data=False,
@@ -725,6 +726,10 @@ class DXFile(DXDataObject):
 
         if report_progress_fn is not None:
             report_progress_fn(self, len(data))
+
+    def wait_until_parts_uploaded(self, **kwargs):
+        self._wait_until_parts_uploaded(self, **kwargs)
+
 
     def get_download_url(self, duration=None, preauthenticated=False, filename=None, project=None, **kwargs):
         """

@@ -29,9 +29,9 @@ import os, sys, json, re
 
 import dxpy
 from .describe import get_ls_l_desc
-from ..exceptions import DXError
 from ..compat import str, input, basestring
 from ..cli import try_call, INTERACTIVE_CLI
+from ..exceptions import DXCLIError, DXError
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''
@@ -53,6 +53,10 @@ def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False,
 
     At most one of allow_mult and more_choices should be set to True.
     '''
+    if len(choices) == 1:
+        choice = 0
+        return choice
+    
     for i in range(len(choices)):
         prefix = str(i) + ') '
         lines = choices[i].split("\n")
@@ -111,7 +115,7 @@ def paginate_and_pick(generator, render_fn=str, filter_fn=None, page_len=10, **p
             else:
                 if filter_fn(possible_next):
                     results.append(possible_next)
-                any_results = True
+            any_results = True
         if not any_results:
             return "none found"
         elif len(results) == 0:
@@ -154,6 +158,9 @@ def is_data_obj_id(string):
 
 def is_container_id(string):
     return is_hashid(string) and (string.startswith('project-') or string.startswith('container-'))
+
+def is_project_id(string):
+    return is_hashid(string) and string.startswith('project-')
 
 def is_analysis_id(string):
     return is_hashid(string) and string.startswith('analysis-')
@@ -675,13 +682,11 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
         # TODO: find a good way to check if folder exists and expected=folder
         return False, project, folderpath, None
     elif is_hashid(entity_name):
-
+        entity_class = entity_name.split("-")[0]
         found_valid_class = True
-        if expected_classes is not None:
+        if expected_classes is not None and entity_class not in expected_classes:
             found_valid_class = False
-            for klass in expected_classes:
-                if entity_name.startswith(klass):
-                    found_valid_class = True
+
         if not found_valid_class:
             return False, None, None, None
 
@@ -1171,7 +1176,6 @@ def get_global_exec_from_path(path):
         return get_app_from_path(path)
     elif path.startswith('globalworkflow-'):
         return get_global_workflow_from_path(path)
-
     # If the path doesn't include a prefix, we must try describing
     # as an app and, if that fails, as a global workflow
     desc = get_app_from_path(path)
@@ -1266,8 +1270,14 @@ def get_exec_handler(path, alias=None):
         else:
             raise DXError('The executable class {} is not supported'.format(desc['class']))
 
+    def path_starts_with_non_global_prefix(path):
+        return path.startswith('workflow-') or path.startswith('applet-')
+
     # First attempt to resolve a global executable: app or global workflow
-    global_exec_desc = get_global_exec_from_path(path)
+    # skip if it has non-global prefix
+    global_exec_desc = None
+    if not path_starts_with_non_global_prefix(path):
+        global_exec_desc = get_global_exec_from_path(path)
 
     if alias is None:
         try:

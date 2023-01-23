@@ -38,6 +38,7 @@ from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
 import dxpy.app_builder as app_builder
 import dxpy.executable_builder as executable_builder
+import dxpy.workflow_builder as workflow_builder
 
 from dxpy.compat import USING_PYTHON2
 
@@ -918,6 +919,9 @@ class TestFolder(unittest.TestCase):
             self.assertTrue(os.path.isfile(filename))
             self.assertEqual("{}-th\n file\n content\n".format(i + 3), self.read_entire_file(filename))
 
+        # DEVEX-2023 Do not create incorrect empty folders that share the same prefix for recursive download
+        # Check that /a/lpha does not exist
+        dxproject.new_folder("/alpha", parents=True)
         # Checking download to existing structure
         dxpy.download_folder(self.proj_id, a_dest_dir, folder="/a", overwrite=True)
         path = []
@@ -926,6 +930,8 @@ class TestFolder(unittest.TestCase):
             filename = os.path.join(os.path.join(*path), "file_{}.txt".format(i + 2))
             self.assertTrue(os.path.isfile(filename))
             self.assertEqual("{}-th\n file\n content\n".format(i + 2), self.read_entire_file(filename))
+        self.assertFalse(os.path.isdir(os.path.join(a_dest_dir, 'pha')))
+        
 
         # Checking download to existing structure fails w/o overwrite flag
         with self.assertRaises(DXFileError):
@@ -2435,6 +2441,15 @@ class TestDXSearch(testutil.DXTestCaseCompat):
             for method in methods:
                 with self.assertRaises(DXError):
                     method(**query)
+    
+    def test_find_one_fails_if_zero_ok_not_bool(self):
+        with self.assertRaises(DXError):
+            dxpy.find_one_project(1)
+        with self.assertRaises(DXError):
+            dxpy.find_one_data_object("foo")
+        with self.assertRaises(DXError):
+            dxpy.find_one_app([])
+
 
 class TestPrettyPrint(unittest.TestCase):
     def test_string_escaping(self):
@@ -2444,6 +2459,17 @@ class TestPrettyPrint(unittest.TestCase):
         self.assertEqual(pretty_print.escape_unicode_string("foo\n\t\rbar"), "foo\\n\\t\\rbar")
         self.assertEqual(pretty_print.escape_unicode_string("\n\\"), "\\n\\\\")
         self.assertEqual(pretty_print.escape_unicode_string("ïñtérnaçiònale"), "ïñtérnaçiònale")
+
+    def test_format_timedelta(self):
+        self.assertEqual(pretty_print.format_timedelta(0), "0 miliseconds")
+        self.assertEqual(pretty_print.format_timedelta(0, in_seconds=True), "0 seconds")
+        self.assertEqual(pretty_print.format_timedelta(1), "1 miliseconds")
+        self.assertEqual(pretty_print.format_timedelta(1, in_seconds=True), "1 seconds")
+        self.assertEqual(pretty_print.format_timedelta(1, in_seconds=True, auto_singulars=True), "1 second")
+        self.assertEqual(pretty_print.format_timedelta(129 * 60, in_seconds=True, largest_units="minutes"), "129 minutes")
+        self.assertEqual(pretty_print.format_timedelta(129 * 60, in_seconds=True, largest_units="days"), "2 hours, 9 minutes")
+        self.assertEqual(pretty_print.format_timedelta(365 * 24 * 60 * 60 + 8 * 60 * 60 + 1 * 60 + 3, in_seconds=True), "1 years, 8 hours, 1 minutes, 3 seconds")
+        self.assertEqual(pretty_print.format_timedelta(365 * 24 * 60 * 60 + 8 * 60 * 60 + 1 * 60 + 3, in_seconds=True, auto_singulars=True), "1 year, 8 hours, 1 minute, 3 seconds")
 
 class TestWarn(unittest.TestCase):
     def test_warn(self):
@@ -2524,6 +2550,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
         res = dxpy.DXHTTPRequest("/system/whoami", {}, want_full_response=True)
         self.assertTrue("CONTENT-type" in res.headers)
 
+    @unittest.skip("skipping per DEVEX-2161")
     def test_ssl_options(self):
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=False)
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where())
@@ -3172,6 +3199,83 @@ class TestAppBuilderUtils(unittest.TestCase):
         with self.assertRaises(app_builder.AppBuilderException):
             assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"], app_builder.AppBuilderException)
 
+class TestWorkflowBuilderUtils(testutil.DXTestCaseBuildWorkflows):
+    def setUp(self):
+        super(TestWorkflowBuilderUtils, self).setUp()
+        self.temp_file_path = tempfile.mkdtemp()
+        self.dxworkflow_spec = self.create_dxworkflow_spec()
+        self.workflow_dir = self.write_workflow_directory('test_clean_workflow_spec', 
+        json.dumps(self.dxworkflow_spec))
+    
+    def create_dxworkflow_spec(self):
+        dxworkflow_spec = {"name": "my_workflow",
+         "title": "This is a beautiful workflow",
+         "summary": "", # empty string
+         "project": self.project,
+         "types": [], # empty array
+         "tags": ["dxCompiler"],
+         "outputFolder": None, # empty value
+         "description":"",
+         "properties": {}, # empty dict
+         "details": {"detail1": "", # empty value
+                    "version": "2.8.1-SNAPSHOT",
+                    "detail3": []},
+         "dxapi": "1.0.0",
+         "stages": [{"id": "stage_0",
+                     "name": "stage_0_name",
+                     "executable": self.test_applet_id,
+                     "input": {"number": 777},
+                     "folder": "/stage_0_output",
+                     "executionPolicy": {
+                         "restartOn": {}, # nested empty value
+                         "onNonRestartableFailure": "failStage"},
+                     "systemRequirements": {"main": {"instanceType": "mem1_ssd1_x2"}}},
+                    {"id": "stage_1",
+                     "folder": None, # nested empty value
+                     "executable": self.test_applet_id,
+                     "input": {"number": {"$dnanexus_link": {"stage": "stage_0",
+                                                             "outputField": "number"}}}}]}
+        return dxworkflow_spec
+
+    def tearDown(self):
+        super(TestWorkflowBuilderUtils, self).tearDown()
+
+    def test_clean_json_spec(self):
+        '''
+        Test the cleanup function used when dx build --globalworkflow --from
+        Empty key value pairs in the source workflow spec need to be removed, for example "folder",
+        when the source spec is fetched from dxCompiler workflow
+        '''
+        cleanup_empty_keys = workflow_builder._cleanup_empty_keys
+        
+        # case 1: if building from dxworkflow.json
+        with open(os.path.join(self.workflow_dir, "dxworkflow.json")) as json_spec_file:
+            json_spec_from_file = dxpy.utils.json_load_raise_on_duplicates(json_spec_file)
+        clean_json_spec = cleanup_empty_keys(json_spec_from_file)
+
+        for e in ["types", "description", "properties"]:
+            self.assertNotIn(e, clean_json_spec)
+        
+        self.assertEqual({'version': '2.8.1-SNAPSHOT'}, clean_json_spec["details"])
+
+        self.assertNotIn("restartOn", clean_json_spec["stages"][0]["executionPolicy"])
+        for e in ["folder","executionPolicy","systemRequirements"]:
+            self.assertNotIn(e, clean_json_spec["stages"][1])
+        
+        # build a test workflow with the cleaned json spec, and fetch its description
+        # which will add some fields that are empty
+        workflow_id = dxpy.api.workflow_new(clean_json_spec)["id"]
+        json_spec_from_workflow = dxpy.DXWorkflow(workflow_id).describe(fields={"properties","details"},default_fields=True)
+
+        clean_json_spec = cleanup_empty_keys(json_spec_from_workflow)
+        for e in ["types", "description", "properties"]:
+            self.assertNotIn(e, clean_json_spec)
+        
+        self.assertEqual({'version': '2.8.1-SNAPSHOT'}, clean_json_spec["details"])
+
+        self.assertNotIn("restartOn", clean_json_spec["stages"][0]["executionPolicy"])
+        for e in ["folder","executionPolicy","systemRequirements"]:
+            self.assertNotIn(e, clean_json_spec["stages"][1])
 
 class TestApiWrappers(unittest.TestCase):
     @pytest.mark.TRACEABILITY_MATRIX

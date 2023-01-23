@@ -511,6 +511,118 @@ module DX
       return DX::http_request("/#{object_id}/listFolder", input_params, opts)
     end
 
+    # Invokes the /dbcluster-xxxx/addTags API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags
+    def self.dbcluster_add_tags(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addTags", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/addTypes API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes
+    def self.dbcluster_add_types(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/addTypes", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/describe API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe
+    def self.dbcluster_describe(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/describe", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/getDetails API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails
+    def self.dbcluster_get_details(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/getDetails", input_params, opts)
+    end
+
+    # Invokes the /dbcluster/new API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new
+    def self.dbcluster_new(input_params={}, opts={})
+      opts = { "always_retry" => false }.merge(opts)
+      return DX::http_request("/dbcluster/new", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/removeTags API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags
+    def self.dbcluster_remove_tags(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeTags", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/removeTypes API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes
+    def self.dbcluster_remove_types(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/removeTypes", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/rename API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename
+    def self.dbcluster_rename(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/rename", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/setDetails API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails
+    def self.dbcluster_set_details(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setDetails", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/setProperties API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties
+    def self.dbcluster_set_properties(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setProperties", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/setVisibility API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility
+    def self.dbcluster_set_visibility(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/setVisibility", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/start API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start
+    def self.dbcluster_start(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/start", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/stop API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop
+    def self.dbcluster_stop(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/stop", input_params, opts)
+    end
+
+    # Invokes the /dbcluster-xxxx/terminate API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate
+    def self.dbcluster_terminate(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/terminate", input_params, opts)
+    end
+
     # Invokes the /file-xxxx/addTags API method.
     #
     # For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags
@@ -813,6 +925,14 @@ module DX
     def self.job_terminate(object_id, input_params={}, opts={})
       opts = { "always_retry" => true }.merge(opts)
       return DX::http_request("/#{object_id}/terminate", input_params, opts)
+    end
+
+    # Invokes the /job-xxxx/update API method.
+    #
+    # For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-update
+    def self.job_update(object_id, input_params={}, opts={})
+      opts = { "always_retry" => true }.merge(opts)
+      return DX::http_request("/#{object_id}/update", input_params, opts)
     end
 
     # Invokes the /job/new API method.

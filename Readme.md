@@ -30,6 +30,26 @@ Client](https://documentation.dnanexus.com/getting-started/tutorials/cli-quickst
 utilities, and you will be able to use DNAnexus API bindings in the supported
 languages.
 
+### Building inside docker 
+To avoid lengthy installation of dependencies on OS X and simultaneous installations of development versions of `dx-toolkit` on the system, you can build your dev-version of `dx-toolkit` in a separate docker container. 
+
+1. Start `python:3.9-bullseye` in the interactive mode, mounting the repo you are working on (`<local_path_to_repo>/dx-toolkit`):
+
+    ```
+    # from root folder of dx-tollkit
+    docker run -v `pwd`:/dx-toolkit -w /dx-toolkit -it --rm --entrypoint=/bin/bash python:3.9-bullseye
+    ```
+2. From the interactive shell install `dx-toolkit`.
+    - **A.** Use local source:
+        ```
+        python -m pip install src/python/ --upgrade
+        ```
+    - **B.** Use remote source:
+        ```
+        python3 -m pip install --upgrade 'git+https://github.com/dnanexus/dx-toolkit.git@master#egg=dxpy&subdirectory=src/python'
+        ```
+3. Log in, install dependencies(if needed) and use the container while developing. To rebuild, just save the work and run the step 2 again.
+
 Supported languages
 -------------------
 
@@ -53,11 +73,15 @@ toolkit that doesn't require them.
 
 **Note:** There is a known incompatibility (in compiling dxcpp) when using GCC 4.7 with Boost 1.49. Please either use the GCC 4.6 series, or Boost 1.50+.
 
+### Ubuntu 20.04
+
+    sudo apt install python-is-python3 python3-venv libssl-dev flex bison libffi-dev
+
 ### Ubuntu 16.04
 
     sudo apt install make python-setuptools python-pip python-virtualenv python-dev \
       gcc g++ cmake libboost-all-dev libcurl4-openssl-dev zlib1g-dev libbz2-dev flex bison \
-      openssl libssl-dev autoconf
+      openssl libssl-dev autoconf git curl
 
 If your locale is not configured properly, you might need to run following commands as well (i.e. when working from Cloud Workstation):
     

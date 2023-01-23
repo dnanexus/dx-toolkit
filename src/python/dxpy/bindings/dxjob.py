@@ -187,12 +187,14 @@ class DXJob(DXObject):
                 verify_string_dxid(dxid, self._class)
         self._dxid = dxid
 
-    def describe(self, fields=None, io=None, **kwargs):
+    def describe(self, fields=None, defaultFields=None, io=None, **kwargs):
         """
         :param fields: dict where the keys are field names that should
             be returned, and values should be set to True (by default,
             all fields are returned)
         :type fields: dict
+        :param defaultFields: include default fields when fields is supplied
+        :type defaultFields: bool
         :param io: Include input and output fields in description;
             cannot be provided with *fields*; default is True if
             *fields* is not provided (deprecated)
@@ -213,6 +215,8 @@ class DXJob(DXObject):
         describe_input = {}
         if fields is not None:
             describe_input['fields'] = fields
+        if defaultFields is not None:
+            describe_input['defaultFields'] = defaultFields
         if io is not None:
             describe_input['io'] = io
         self._desc = dxpy.api.job_describe(self._dxid, describe_input, **kwargs)
@@ -241,6 +245,18 @@ class DXJob(DXObject):
         """
 
         dxpy.api.job_remove_tags(self._dxid, {"tags": tags}, **kwargs)
+
+    def update(self, allow_ssh, **kwargs):
+        """
+        :param allow_ssh: Allowable IP ranges to set for SSH access to the job
+        :type allow_ssh: list of strings
+
+        Updates a job's allowSSH field, overwrites existing values
+
+        """
+
+        dxpy.api.job_update(self._dxid, {"allowSSH": allow_ssh}, **kwargs)
+
 
     def set_properties(self, properties, **kwargs):
         """

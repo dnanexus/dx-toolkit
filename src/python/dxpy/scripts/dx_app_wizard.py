@@ -272,7 +272,7 @@ array:boolean  array:int      boolean        hash           string''')
 
     if 'inputSpec' in app_json:
         for param in app_json['inputSpec']:
-            may_be_missing = param['optional'] and "default" not in param
+            may_be_missing = param.get('optional') and "default" not in param
             if param['class'] == 'file':
                 param_list = optional_file_input_names if may_be_missing else required_file_input_names
             elif param['class'] == 'array:file':

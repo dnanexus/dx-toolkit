@@ -68,11 +68,6 @@ dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__fi
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
 backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_backports.txt"))]
 
-# If on Windows, also depend on colorama, which translates ANSI terminal color control sequences into whatever cmd.exe uses.
-if platform.system() == 'Windows':
-    dependencies = [d for d in dependencies if not (d.startswith('distribute'))]
-    dependencies.append("colorama==0.2.4")
-
 if sys.version_info[0] < 3:
     dependencies.extend(backports_dependencies)
 
@@ -91,7 +86,7 @@ setup(
     description='DNAnexus Platform API bindings for Python',
     long_description=readme_content,
     long_description_content_type="text/markdown",
-    author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Ohad Rodeh, Phil Sung',
+    author='Aleksandra Zalcman, Andrey Kislyuk, Anurag Biyani, Geet Duggal, Katherine Lai, Kurt Jensen, Marek Hrvol, Ohad Rodeh, Phil Sung',
     author_email='support@dnanexus.com',
     url='https://github.com/dnanexus/dx-toolkit',
     zip_safe=False,
@@ -104,6 +99,7 @@ setup(
     },
     install_requires = dependencies,
     extras_require={
+        'pandas': ["pandas==1.3.5; python_version>='3.7'", "pandas>=0.23.3,<=0.25.3; python_version>='3.5.3' and python_version<'3.7'", "pandas>=0.23.3,< 0.25.0; python_version<'3.5.3'"],
         'xattr': ["xattr==0.9.6; sys_platform == 'linux2' or sys_platform == 'linux'"]
     },
     tests_require = test_dependencies,

@@ -1,0 +1,100 @@
+{
+  "title": "Nextflow Pipeline",
+  "summary": "Nextflow Pipeline",
+  "dxapi": "1.0.0",
+  "version": "1.0.0",
+  "types": ["nextflow"],
+  "inputSpec": [
+    {
+      "name": "nextflow_run_opts",
+      "label": "Nextflow Run Options",
+      "help": "Additional run arguments for Nextflow (e.g. -profile docker).",
+      "class": "string",
+      "group": "Nextflow options",
+      "optional": true
+    },
+    {
+      "name": "nextflow_top_level_opts",
+      "label": "Nextflow Top-level Options",
+      "help": "Additional top-level options for Nextflow (e.g. -quiet).",
+      "class": "string",
+      "group": "Nextflow options",
+      "optional": true
+    },
+    {
+      "name": "nextflow_pipeline_params",
+      "label": "Nextflow Pipeline Parameters",
+      "help": "Additional pipeline parameters for Nextflow. Must be preceded with double dash characters (e.g. --foo, which can be accessed in the pipeline script using the params.foo identifier).",
+      "class": "string",
+      "group": "Additional pipeline parameters",
+      "optional": true
+    },
+    {
+      "name": "docker_creds",
+      "label": "Docker Credentials",
+      "help": "Docker credentials used to obtain private docker images.",
+      "class": "file",
+      "optional": true
+    },
+    {
+      "name": "debug",
+      "label": "Debug Mode",
+      "help": "Shows additional information in the job log. If true, the execution log messages from Nextflow will also be included.",
+      "class": "boolean",
+      "group": "Advanced Executable Development Options",
+      "default": false
+    },
+    {
+      "name": "resume",
+      "label": "Resume",
+      "help": "Unique ID of the previous session to be resumed. If 'true' or 'last' is provided instead of the sessionID, will resume the latest resumable session run by an applet with the same name in the current project in the last 6 months.",
+      "class": "string",
+      "group": "Advanced Executable Development Options",
+      "optional": true
+    },
+    {
+      "name": "preserve_cache",
+      "label": "Preserve Cache",
+      "help": "Enable storing pipeline cache and local working files to the current project. If true, local working files and cache files will be uploaded to the platform, so the current session could be resumed in the future",
+      "class": "boolean",
+      "group": "Advanced Executable Development Options",
+      "default": false
+    }
+  ],
+  "outputSpec": [
+    {
+      "name": "published_files",
+      "label": "Published files of Nextflow pipeline",
+      "help": "Output files published by current Nextflow pipeline and uploaded to the job output destination.",
+      "class": "array:file",
+      "optional": true
+    },
+    {
+      "name": "nextflow_log",
+      "label": "Log file of Nextflow pipeline",
+      "class": "file",
+      "optional": true
+    }
+  ],
+  "runSpec": {
+    "headJobOnDemand": true,
+    "restartableEntryPoints": "all",
+    "interpreter": "bash",
+    "execDepends": [],
+    "distribution": "Ubuntu",
+    "release": "20.04",
+    "version": "0"
+  },
+  "details": {
+    "whatsNew": "1.0.0: Initial version"
+  },
+  "categories": [],
+  "access": {
+    "network": [
+      "*"
+    ],
+    "project": "UPLOAD",
+    "allProjects": "VIEW"
+  },
+  "ignoreReuse": true
+}

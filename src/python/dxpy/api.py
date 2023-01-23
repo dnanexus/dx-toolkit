@@ -518,6 +518,118 @@ def database_list_folder(object_id, input_params={}, always_retry=True, **kwargs
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def dbcluster_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/addTags API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-addtags
+    """
+    return DXHTTPRequest('/%s/addTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_add_types(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/addTypes API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-addtypes
+    """
+    return DXHTTPRequest('/%s/addTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_describe(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/describe API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-describe
+    """
+    return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_get_details(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/getDetails API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-getdetails
+    """
+    return DXHTTPRequest('/%s/getDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_new(input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /dbcluster/new API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-new
+    """
+    return DXHTTPRequest('/dbcluster/new', input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/removeTags API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/tags#api-method-class-xxxx-removetags
+    """
+    return DXHTTPRequest('/%s/removeTags' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_remove_types(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/removeTypes API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/types#api-method-class-xxxx-removetypes
+    """
+    return DXHTTPRequest('/%s/removeTypes' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_rename(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/rename API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/name#api-method-class-xxxx-rename
+    """
+    return DXHTTPRequest('/%s/rename' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_set_details(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/setDetails API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/details-and-links#api-method-class-xxxx-setdetails
+    """
+    return DXHTTPRequest('/%s/setDetails' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_set_properties(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/setProperties API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-metadata/properties#api-method-class-xxxx-setproperties
+    """
+    return DXHTTPRequest('/%s/setProperties' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_set_visibility(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/setVisibility API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-object-lifecycle/visibility#api-method-class-xxxx-setvisibility
+    """
+    return DXHTTPRequest('/%s/setVisibility' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_start(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/start API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-start
+    """
+    return DXHTTPRequest('/%s/start' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_stop(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/stop API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-stop
+    """
+    return DXHTTPRequest('/%s/stop' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def dbcluster_terminate(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/terminate API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-terminate
+    """
+    return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def file_add_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /file-xxxx/addTags API method.
@@ -840,6 +952,14 @@ def job_terminate(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-terminate
     """
     return DXHTTPRequest('/%s/terminate' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def job_update(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /job-xxxx/update API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-update
+    """
+    return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def job_new(input_params={}, always_retry=True, **kwargs):
     """

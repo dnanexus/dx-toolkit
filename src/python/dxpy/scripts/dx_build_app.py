@@ -37,6 +37,9 @@ import dxpy.workflow_builder
 import dxpy.executable_builder
 from .. import logger
 
+from dxpy.nextflow.nextflow_builder import build_pipeline_from_repository, prepare_nextflow
+from dxpy.nextflow.nextflow_utils import get_resources_subpath
+
 from ..utils import json_load_raise_on_duplicates
 from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError, is_container_id
 from ..utils.completer import LocalCompleter
@@ -194,7 +197,7 @@ def _lint(dxapp_json_filename, mode):
     if 'name' in app_spec:
         if app_spec['name'] != app_spec['name'].lower():
             logger.warn('name "%s" should be all lowercase' % (app_spec['name'],))
-        if dirname != app_spec['name']:
+        if dirname != app_spec['name'] and not os.path.abspath(dxapp_json_filename).startswith("/tmp") and not dirname.startswith("."):
             logger.warn('app name "%s" does not match containing directory "%s"' % (app_spec['name'], dirname))
     else:
         logger.warn('app is missing a name, please add one in the "name" field of dxapp.json')
@@ -284,13 +287,26 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
                     'Skipping bash syntax check due to unavailability of bash on Windows.')
         else:
             subprocess.check_output(["/bin/bash", "-n", filename], stderr=subprocess.STDOUT)
-
-    if override_lang == 'python2.7':
+    python_unsure = False
+    if override_lang == 'python2.7' and USING_PYTHON2:
+        checker_fn = check_python
+    elif override_lang == 'python3' and not USING_PYTHON2:
         checker_fn = check_python
     elif override_lang == 'bash':
         checker_fn = check_bash
     elif filename.endswith('.py'):
         checker_fn = check_python
+        # don't enforce and ignore if the shebang is ambiguous and we're not sure
+        # that the file version is the same as the one we're running
+        read_mode = "r"
+        if USING_PYTHON2:
+            read_mode = "rb"
+        with open(filename, read_mode) as f:
+            first_line = f.readline()
+            if not (('python3' in first_line and not USING_PYTHON2) or
+                    ('python2' in first_line and USING_PYTHON2)):
+                enforce = False
+                python_unsure = True
     elif filename.endswith('.sh'):
         checker_fn = check_bash
     else:
@@ -314,6 +330,8 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         if enforce:
             raise DXSyntaxError(filename + " has a syntax error")
     except py_compile.PyCompileError as e:
+        if python_unsure:
+            print("Unsure if " + filename + " is using Python 2 or Python 3, the following error might not be relevant", file=sys.stderr)
         print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
         if USING_PYTHON2:
             errmsg = e.msg
@@ -344,7 +362,7 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
             warn_message += 'for distribution is \"Ubuntu\" and release - \"14.04\".'
             logger.warn(warn_message)
 
-        if manifest['runSpec']['interpreter'] in ["python2.7", "bash"]:
+        if manifest['runSpec']['interpreter'] in ["python2.7", "bash", "python3"]:
             if "file" in manifest['runSpec']:
                 entry_point_file = os.path.abspath(os.path.join(src_dir, manifest['runSpec']['file']))
                 try:
@@ -487,7 +505,7 @@ def _parse_app_spec(src_dir):
             raise dxpy.app_builder.AppBuilderException("Could not parse dxapp.json file as JSON: " + str(e.args))
 
 def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
-                      version_override=None, bill_to_override=None, dx_toolkit_autodep="stable",
+                      version_override=None, bill_to_override=None,
                       do_version_autonumbering=True, do_try_update=True, do_parallel_build=True,
                       do_check_syntax=True, region=None, watch=True):
     if mode == 'app':
@@ -508,7 +526,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
     temp_dir = tempfile.mkdtemp()
 
-    build_options = {'dx_toolkit_autodep': dx_toolkit_autodep}
+    build_options = {}
 
     if version_override:
         build_options['version_override'] = version_override
@@ -681,10 +699,10 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         shutil.rmtree(temp_dir)
 
 
-def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_to_override=None,
+def build_app_from(applet_desc, version, publish=False, do_try_update=True, bill_to_override=None,
                    return_object_dump=False, confirm=True, brief=False, **kwargs):
 
-    applet_desc = dxpy.api.applet_describe(applet_id)
+    applet_id = applet_desc["id"]
     app_name = applet_desc["name"]
     dxpy.executable_builder.verify_developer_rights('app-' + app_name)
     if not brief:
@@ -708,7 +726,7 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
         "details", "access", "ignoreReuse"
     )
     inherited_metadata = {}
-    for field in fields_to_inherit: 
+    for field in fields_to_inherit:
         if field in applet_desc:
             inherited_metadata[field] = applet_desc[field]
 
@@ -716,7 +734,7 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
     for field in required_non_empty:
         if field not in inherited_metadata or not inherited_metadata[field]:
             inherited_metadata[field] = applet_desc["name"]
-    
+
     app_id = dxpy.app_builder.create_app_multi_region(regional_options,
                                                       app_name,
                                                       None,
@@ -743,9 +761,9 @@ def build_app_from(applet_id, version, publish=False, do_try_update=True, bill_t
 def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publish=False, destination_override=None,
                              version_override=None, bill_to_override=None, use_temp_build_project=True,
                              do_parallel_build=True, do_version_autonumbering=True, do_try_update=True,
-                             dx_toolkit_autodep="stable", do_check_syntax=True, dry_run=False,
+                             do_check_syntax=True, dry_run=False,
                              return_object_dump=False, confirm=True, ensure_upload=False, force_symlinks=False,
-                             region=None, brief=False, **kwargs):
+                             region=None, brief=False, resources_dir=None, worker_resources_subpath="", **kwargs):
     dxpy.app_builder.build(src_dir, parallel_build=do_parallel_build)
     app_json = _parse_app_spec(src_dir)
 
@@ -761,7 +779,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
 
     enabled_regions = dxpy.app_builder.get_enabled_regions(app_json, region)
 
-    # Cannot build multi-region app if `use_temp_build_project` is falsy.
+    # Cannot build multi-region app if `use_temp_build_project` is false.
     if enabled_regions is not None and len(enabled_regions) > 1 and not use_temp_build_project:
         raise dxpy.app_builder.AppBuilderException("Cannot specify --no-temp-build-project when building multi-region apps")
 
@@ -769,6 +787,12 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     projects_by_region = None
     if mode == "applet" and destination_override:
         working_project, override_folder, override_applet_name = parse_destination(destination_override)
+        if kwargs.get("name"):
+            if override_applet_name:
+                logger.warning("Name of the applet is set in both destination and extra args! "
+                               "\"{}\" will be used!".format(kwargs.get("name")))
+            override_applet_name = kwargs.get("name")
+
         region = dxpy.api.project_describe(working_project,
                                            input_params={"fields": {"region": True}})["region"]
         projects_by_region = {region: working_project}
@@ -832,7 +856,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             projects_by_region = {region: dest_project}
 
             if not overwrite and not archive:
-                # If we cannot overwite or archive an existing applet and an
+                # If we cannot overwrite or archive an existing applet and an
                 # applet in the destination exists with the same name as this
                 # one, then we should err out *before* uploading resources.
                 try:
@@ -849,10 +873,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     msg = "An applet already exists at {} (id {}) and neither".format(dest_path, result["id"])
                     msg += " -f/--overwrite nor -a/--archive were given."
                     raise dxpy.app_builder.AppBuilderException(msg)
-
-        if "buildOptions" in app_json:
-            if app_json["buildOptions"].get("dx_toolkit_autodep") is False:
-                dx_toolkit_autodep = False
 
         if dry_run:
             # Set a dummy "projects_by_region" so that we can exercise the dry
@@ -878,7 +898,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                 folder=override_folder,
                 ensure_upload=ensure_upload,
                 force_symlinks=force_symlinks,
-                brief=brief) if not dry_run else []
+                brief=brief,
+                resources_dir=resources_dir,
+                worker_resources_subpath=worker_resources_subpath) if not dry_run else []
 
         # TODO: Clean up these applets if the app build fails.
         applet_ids_by_region = {}
@@ -893,7 +915,6 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
                     project=project,
                     override_folder=override_folder,
                     override_name=override_applet_name,
-                    dx_toolkit_autodep=dx_toolkit_autodep,
                     dry_run=dry_run,
                     brief=brief,
                     **kwargs)
@@ -979,6 +1000,41 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         if using_temp_project:
             dxpy.executable_builder.delete_temporary_projects(list(projects_by_region.values()))
 
+def get_destination_region(destination):
+    """
+    :param destination: The destination path for building the applet, as given by the --destination option to "dx build". Will be in the form [PROJECT_NAME_OR_ID:][/[FOLDER/][NAME]].
+    :type destination: str
+
+    :returns: The name of the region in which the applet will be built, e.g. 'aws:us-east-1'. It doesn't take into account the destination project specified in dxapp.json.
+    :rtype: str
+    """
+    if destination:
+        dest_project_id, _, _ = parse_destination(destination)
+    else:
+        dest_project_id = dxpy.WORKSPACE_ID
+    return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
+
+def verify_nf_license(destination, extra_args):
+    
+    def get_project_to_check():
+        # extra args overrides the destination argument
+        # so we're checking it first
+        if "project" in extra_args:
+            return extra_args["project"]
+        if destination:
+            dest_project_id, _, _ = parse_destination(destination)
+            return dest_project_id
+        else:
+            return dxpy.PROJECT_CONTEXT_ID
+
+    dest_project_to_check = get_project_to_check()
+    features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
+    # Expecting output {'features': {'dxNextflow': True}}
+    
+    dx_nextflow_lic = features.get("dxNextflow", False)
+    if not dx_nextflow_lic:
+        billTo = dxpy.api.project_describe(dest_project_to_check, input_params={"fields": {"billTo": True}})["billTo"]
+        raise dxpy.app_builder.AppBuilderException("PermissionDenied: billTo " + billTo + " of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com")
 
 def _build_app(args, extra_args):
     """Builds an app or applet and returns the resulting executable ID
@@ -987,74 +1043,65 @@ def _build_app(args, extra_args):
     TODO: remote app builds still return None, but we should fix this.
 
     """
+    resources_dir = None
+    source_dir = args.src_dir
+    worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
 
+    if args.nextflow:
+        verify_nf_license(args.destination, extra_args)
+
+    if args.nextflow and not args.repository:
+        source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
+        resources_dir = args.src_dir
+        worker_resources_subpath = get_resources_subpath(resources_dir)
     if args._from:
         # BUILD FROM EXISTING APPLET
-        try:
-            output = build_app_from(
-                args._from,
-                [args.version_override],
-                publish=args.publish,
-                do_try_update=args.update,
-                bill_to_override=args.bill_to,
-                confirm=args.confirm,
-                return_object_dump=args.json,
-                brief=args.brief,
-                **extra_args
-            )
-            if output is not None and args.run is None:
-                print(json.dumps(output))
-
-        except dxpy.app_builder.AppBuilderException as e:
-            # AppBuilderException represents errors during app building
-            # that could reasonably have been anticipated by the user.
-            print("Error: %s" % (e.args,), file=sys.stderr)
-            sys.exit(3)
-        except dxpy.exceptions.DXAPIError as e:
-            print("Error: %s" % (e,), file=sys.stderr)
-            sys.exit(3)
+        output = build_app_from(
+            args._from,
+            [args.version_override],
+            publish=args.publish,
+            do_try_update=args.update,
+            bill_to_override=args.bill_to,
+            confirm=args.confirm,
+            return_object_dump=args.json,
+            brief=args.brief,
+            **extra_args
+        )
+        if output is not None and args.run is None:
+            print(json.dumps(output))
 
         return output['id']
 
-    if not args.remote:
+    if not args.remote and not args.repository:  # building with NF repository is implicitly remote
         # LOCAL BUILD
+        output = build_and_upload_locally(
+            source_dir,
+            args.mode,
+            overwrite=args.overwrite,
+            archive=args.archive,
+            publish=args.publish,
+            destination_override=args.destination,
+            version_override=args.version_override,
+            bill_to_override=args.bill_to,
+            use_temp_build_project=args.use_temp_build_project,
+            do_parallel_build=args.parallel_build,
+            do_version_autonumbering=args.version_autonumbering,
+            do_try_update=args.update,
+            do_check_syntax=args.check_syntax,
+            ensure_upload=args.ensure_upload,
+            force_symlinks=args.force_symlinks,
+            dry_run=args.dry_run,
+            confirm=args.confirm,
+            return_object_dump=args.json,
+            region=args.region,
+            brief=args.brief,
+            resources_dir=resources_dir,
+            worker_resources_subpath=worker_resources_subpath,
+            **extra_args
+            )
 
-        try:
-            output = build_and_upload_locally(
-                args.src_dir,
-                args.mode,
-                overwrite=args.overwrite,
-                archive=args.archive,
-                publish=args.publish,
-                destination_override=args.destination,
-                version_override=args.version_override,
-                bill_to_override=args.bill_to,
-                use_temp_build_project=args.use_temp_build_project,
-                do_parallel_build=args.parallel_build,
-                do_version_autonumbering=args.version_autonumbering,
-                do_try_update=args.update,
-                dx_toolkit_autodep=args.dx_toolkit_autodep,
-                do_check_syntax=args.check_syntax,
-                ensure_upload=args.ensure_upload,
-                force_symlinks=args.force_symlinks,
-                dry_run=args.dry_run,
-                confirm=args.confirm,
-                return_object_dump=args.json,
-                region=args.region,
-                brief=args.brief,
-                **extra_args
-                )
-
-            if output is not None and args.run is None:
-                print(json.dumps(output))
-        except dxpy.app_builder.AppBuilderException as e:
-            # AppBuilderException represents errors during app or applet building
-            # that could reasonably have been anticipated by the user.
-            print("Error: %s" % (e.args,), file=sys.stderr)
-            sys.exit(3)
-        except dxpy.exceptions.DXAPIError as e:
-            print("Error: %s" % (e,), file=sys.stderr)
-            sys.exit(3)
+        if output is not None and args.run is None:
+            print(json.dumps(output))
 
         if args.dry_run:
             return None
@@ -1063,33 +1110,22 @@ def _build_app(args, extra_args):
 
     else:
         # REMOTE BUILD
-
-        try:
-            app_json = _parse_app_spec(args.src_dir)
-            _check_suggestions(app_json, publish=args.publish)
-            _verify_app_source_dir(args.src_dir, args.mode)
-            if args.mode == "app" and not args.dry_run:
-                dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
-        except dxpy.app_builder.AppBuilderException as e:
-            print("Error: %s" % (e.args,), file=sys.stderr)
-            sys.exit(3)
-
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
         # options through to the interior call of dx_build_app(let).
         if args.dry_run:
-            parser.error('--remote cannot be combined with --dry-run')
+            parser.error('--remote and --repository cannot be combined with --dry-run')
         if args.overwrite:
-            parser.error('--remote cannot be combined with --overwrite/-f')
+            parser.error('--remote and --repository cannot be combined with --overwrite/-f')
         if args.archive:
-            parser.error('--remote cannot be combined with --archive/-a')
+            parser.error('--remote and --repository cannot be combined with --archive/-a')
 
         # The following flags are probably not useful in conjunction
         # with --remote.
         if args.json:
-            parser.error('--remote cannot be combined with --json')
+            parser.error('--remote and --repository cannot be combined with --json')
         if not args.use_temp_build_project:
-            parser.error('--remote cannot be combined with --no-temp-build-project')
+            parser.error('--remote and --repository cannot be combined with --no-temp-build-project')
 
         if isinstance(args.region, list) and len(args.region) > 1:
             parser.error('--region can only be specified once for remote builds')
@@ -1108,15 +1144,31 @@ def _build_app(args, extra_args):
             more_kwargs['do_parallel_build'] = False
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
+        if args.nextflow and args.repository is not None:
+            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.git_credentials,
+                                                  args.brief, args.destination, extra_args)
+        app_json = _parse_app_spec(source_dir)
+        _check_suggestions(app_json, publish=args.publish)
+        _verify_app_source_dir(source_dir, args.mode)
+        if args.mode == "app" and not args.dry_run:
+            dxpy.executable_builder.verify_developer_rights('app-' + app_json['name'])
 
-        return _build_app_remote(args.mode, args.src_dir, destination_override=args.destination,
-                                 publish=args.publish, dx_toolkit_autodep=args.dx_toolkit_autodep,
+        return _build_app_remote(args.mode, source_dir, destination_override=args.destination,
+                                 publish=args.publish,
                                  region=region, watch=args.watch, **more_kwargs)
 
 
 def build(args):
-    executable_id = _build_app(args,
-                               json.loads(args.extra_args) if args.extra_args else {})
+    try:
+        executable_id = _build_app(args, json.loads(args.extra_args) if args.extra_args else {})
+    except dxpy.app_builder.AppBuilderException as e:
+        # AppBuilderException represents errors during app building
+        # that could reasonably have been anticipated by the user.
+        print("Error: %s" % (e.args,), file=sys.stderr)
+        sys.exit(3)
+    except dxpy.exceptions.DXAPIError as e:
+        print("Error: %s" % (e,), file=sys.stderr)
+        sys.exit(3)
     if args.run is not None:
         if executable_id is None:
             raise AssertionError('Expected executable_id to be set here')

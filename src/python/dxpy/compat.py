@@ -16,7 +16,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, io, locale, threading
+import os, sys, io, locale, threading, hashlib
 from io import TextIOWrapper
 from contextlib import contextmanager
 try:
@@ -38,6 +38,7 @@ if USING_PYTHON2:
     from cStringIO import StringIO
     from httplib import BadStatusLine
     from repr import Repr
+    from collections import Mapping
     BytesIO = StringIO
     builtin_str = str
     bytes = str
@@ -90,6 +91,7 @@ else:
     from http.client import BadStatusLine
     from reprlib import Repr
     import shlex
+    from collections.abc import Mapping
     builtin_str = str
     str = str
     bytes = bytes
@@ -220,3 +222,11 @@ def unwrap_stream(stream_name):
     finally:
         if wrapped_stream:
             setattr(sys, stream_name, wrapped_stream)
+
+# Support FIPS enabled Python
+def md5_hasher():
+    try:
+        md5_hasher = hashlib.new('md5', usedforsecurity=False)
+    except:
+        md5_hasher = hashlib.new('md5')
+    return md5_hasher
