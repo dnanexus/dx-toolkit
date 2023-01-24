@@ -2,34 +2,52 @@
 
 set -f
 
-dx-registry-login() {
+DOCKER_CREDS_FOLDER=/docker/credentials/
+DOCKER_CREDS_FILENAME=dx_docker_creds
 CREDENTIALS=${HOME}/credentials
-dx download "${docker_creds}" -o $CREDENTIALS
 
-command -v docker >/dev/null 2>&1 || (echo "ERROR: docker is required when running with the Docker credentials."; exit 1)
+# Logs the user to the docker registry.
+# Uses docker credentials that have to be in $CREDENTIALS location.
+# Format of the file:
+#      {
+#          docker_registry: {
+#              "registry": "<Docker registry name, e.g. quay.io or docker.io>",
+#              "username": "<registry login name>",
+#              "organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
+#              "token": "<API token>"
+#          }
+#      }
+docker_registry_login() {
+  if [ ! -f $CREDENTIALS ]; then
+    dx download "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" -o $CREDENTIALS
+  fi
 
-export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
-export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
-export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
-if [[  -z $REGISTRY_ORGANIZATION || $REGISTRY_ORGANIZATION == "null" ]]; then
-    export REGISTRY_ORGANIZATION=$REGISTRY_USERNAME
-fi
+  export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
+  export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
+  export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
+  if [[  -z $REGISTRY_ORGANIZATION || $REGISTRY_ORGANIZATION == "null" ]]; then
+      export REGISTRY_ORGANIZATION=$REGISTRY_USERNAME
+  fi
 
-if [[ -z $REGISTRY || $REGISTRY == "null" \
-      || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
-    echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
-    echo "{"
-    echo "    docker_registry: {"
-    echo "        registry": "<Docker registry name, e.g. quay.io or docker.io>",
-    echo "        username": "<registry login name>",
-    echo "        organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
-    echo "        token": "<API token>"
-    echo "    }"
-    echo "}"
-    exit 1
-fi
+  if [[ -z $REGISTRY || $REGISTRY == "null" \
+        || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
+      echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
+      echo "{"
+      echo "    \"docker_registry\": {"
+      echo "        \"registry\": \"<Docker registry name, e.g. quay.io or docker.io>\"",
+      echo "        \"username\": \"<registry login name>\"",
+      echo "        \"organization\": \"<(optional, default value equals username) organization as defined by DockerHub or Quay.io>\"",
+      echo "        \"token\": \"<API token>\""
+      echo "    }"
+      echo "}"
+      exit 1
+  fi
 
-jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
+  jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
+  if [ ! $? -eq 0 ]; then
+      echo "Docker authentication failed, please check if the docker credentials file is correct." 1>&2
+      exit 2
+  fi
 }
 
 generate_runtime_config() {
@@ -278,7 +296,7 @@ main() {
   fi
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.4.0
+  NXF_PLUGINS_VERSION=1.5.0
   
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
@@ -293,13 +311,14 @@ main() {
   fi
 
   if [ -n "$docker_creds" ]; then
-    dx-registry-login
+    dx mkdir -p $DOCKER_CREDS_FOLDER
+    dx download "$(jq '."$dnanexus_link"' <<<${docker_creds} -r)" -o $CREDENTIALS --no-progress -f
+    dx upload $CREDENTIALS --brief --wait --destination "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}"
+    docker_registry_login
   fi
 
   # set default NXF env constants
   export NXF_DOCKER_LEGACY=true
-  #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
-  #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
   export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
@@ -433,8 +452,9 @@ nf_task_exit() {
 }
 
 nf_task_entry() {
-  if [ -n "$docker_creds" ]; then
-    dx-registry-login
+  docker_credentials=$(dx find data --path "$DX_WORKSPACE_ID:$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
+  if [ -n "$docker_credentials" ]; then
+    docker_registry_login
   fi
   # capture the exit code
   trap nf_task_exit EXIT
