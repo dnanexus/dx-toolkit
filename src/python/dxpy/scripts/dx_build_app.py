@@ -1023,8 +1023,10 @@ def verify_nf_license(destination, extra_args):
             return extra_args["project"]
         if destination:
             # "." is the default value set for args.destination which is
-            # resolved to the workspace container. For the purpose of
-            # feature switch check, we will use the project context ID
+            # resolved to the workspace container when run from the worker.
+            # For the purpose of feature switch check, we will use the project
+            # context ID (which requires VIEW project access for the job
+            # that builds the pipeline)
             if destination == "." or destination.startswith("container-"):
                 return dxpy.PROJECT_CONTEXT_ID
             else:
