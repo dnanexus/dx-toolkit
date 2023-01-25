@@ -320,8 +320,8 @@ main() {
   fi
 
   # set docker timeout variables
-  export DOCKER_CLIENT_TIMEOUT=120
-  export COMPOSE_HTTP_TIMEOUT=120
+  export DOCKER_CLIENT_TIMEOUT=500
+  export COMPOSE_HTTP_TIMEOUT=500
   # set default NXF env constants
   export NXF_DOCKER_LEGACY=true
   export NXF_HOME=/opt/nextflow
