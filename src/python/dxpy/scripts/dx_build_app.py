@@ -1047,10 +1047,8 @@ def _build_app(args, extra_args):
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
 
-    if args.nextflow:
-        verify_nf_license(args.destination, extra_args)
-
     if args.nextflow and not args.repository:
+        verify_nf_license(args.destination, extra_args)
         source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
@@ -1145,6 +1143,7 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
         if args.nextflow and args.repository is not None:
+            # Feature switch if verified remotely
             return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.git_credentials,
                                                   args.brief, args.destination, extra_args)
         app_json = _parse_app_spec(source_dir)
