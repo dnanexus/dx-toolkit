@@ -1022,10 +1022,20 @@ def verify_nf_license(destination, extra_args):
         if "project" in extra_args:
             return extra_args["project"]
         if destination:
-            dest_project_id, _, _ = parse_destination(destination)
+            # "." is the default value set for args.destination which is
+            # resolved to the workspace container. For the purpose of
+            # feature switch check, we will use the project context ID
+            if destination == "." or destination.startswith("container-"):
+                return dxpy.PROJECT_CONTEXT_ID
+            else:
+                dest_project_id, _, _ = parse_destination(destination)
             return dest_project_id
         else:
             return dxpy.PROJECT_CONTEXT_ID
+
+    dest_project_to_check = get_project_to_check()
+    features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
+    # Expecting output {'features': {'dxNextflow': True}}
 
     dest_project_to_check = get_project_to_check()
     features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
@@ -1047,8 +1057,10 @@ def _build_app(args, extra_args):
     source_dir = args.src_dir
     worker_resources_subpath = ""  # no subpath, files will be saved to root directory by default.
 
-    if args.nextflow and not args.repository:
+    if args.nextflow:
         verify_nf_license(args.destination, extra_args)
+
+    if args.nextflow and not args.repository:
         source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
@@ -1143,7 +1155,6 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
         if args.nextflow and args.repository is not None:
-            # Feature switch if verified remotely so we won't be doing it here
             return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.git_credentials,
                                                   args.brief, args.destination, extra_args)
         app_json = _parse_app_spec(source_dir)
