@@ -1022,26 +1022,15 @@ def verify_nf_license(destination, extra_args):
         if "project" in extra_args:
             return extra_args["project"]
         if destination:
-            # "." is the default value set for args.destination which is
-            # resolved to the workspace container when run from the worker.
-            # For the purpose of feature switch check, we will use the project
-            # context ID (which requires VIEW project access for the job
-            # that builds the pipeline)
-            if destination == "." or destination.startswith("container-"):
-                return dxpy.PROJECT_CONTEXT_ID
-            else:
-                dest_project_id, _, _ = parse_destination(destination)
+            dest_project_id, _, _ = parse_destination(destination)
+            if dest_project_id.startswith("container-"):
+                dest_project_id = dxpy.PROJECT_CONTEXT_ID
             return dest_project_id
         else:
             return dxpy.PROJECT_CONTEXT_ID
 
     dest_project_to_check = get_project_to_check()
     features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
-    # Expecting output {'features': {'dxNextflow': True}}
-
-    dest_project_to_check = get_project_to_check()
-    features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
-    # Expecting output {'features': {'dxNextflow': True}}
     
     dx_nextflow_lic = features.get("dxNextflow", False)
     if not dx_nextflow_lic:
