@@ -438,7 +438,7 @@ nf_task_exit() {
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
     echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
     echo "Waiting for the headjob to kill the job tree..."
-    sleep 50
+    sleep 240
     echo "This subjob was not killed in time, exiting to prevent excessive waiting."
     exit
   fi
