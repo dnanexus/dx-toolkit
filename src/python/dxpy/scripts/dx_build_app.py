@@ -1015,7 +1015,7 @@ def get_destination_region(destination):
     return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
 
 def verify_nf_license(destination, extra_args):
-    
+
     def get_project_to_check():
         # extra args overrides the destination argument
         # so we're checking it first
@@ -1023,18 +1023,18 @@ def verify_nf_license(destination, extra_args):
             return extra_args["project"]
         if destination:
             dest_project_id, _, _ = parse_destination(destination)
+            # checkFeatureAccess is not implemented on the container
+            if dest_project_id.startswith("container-"):
+                dest_project_id = dxpy.PROJECT_CONTEXT_ID
             return dest_project_id
         else:
             return dxpy.PROJECT_CONTEXT_ID
 
     dest_project_to_check = get_project_to_check()
     features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
-    # Expecting output {'features': {'dxNextflow': True}}
-    
     dx_nextflow_lic = features.get("dxNextflow", False)
     if not dx_nextflow_lic:
-        billTo = dxpy.api.project_describe(dest_project_to_check, input_params={"fields": {"billTo": True}})["billTo"]
-        raise dxpy.app_builder.AppBuilderException("PermissionDenied: billTo " + billTo + " of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com")
+        raise dxpy.app_builder.AppBuilderException("PermissionDenied: billTo of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com")
 
 def _build_app(args, extra_args):
     """Builds an app or applet and returns the resulting executable ID
