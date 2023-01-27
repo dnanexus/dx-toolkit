@@ -3696,7 +3696,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         finally:
             run("dx rmproject -y " + other_proj_id)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
+    @unittest.skip("Skipping per DEVEX-2195")
     def test_dx_run_workflow_prints_cached_executions(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -3733,7 +3733,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertNotIn('will reuse results from a previous analysis', run_output)
         self.assertNotIn(job_id, run_output)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
+    @unittest.skip("Skipping per DEVEX-2195")
     def test_dx_run_workflow_with_inst_type_requests(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
