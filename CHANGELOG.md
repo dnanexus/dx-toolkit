@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Feature switch check for Nextflow pipeline build in an app execution environment
+* Nextflow errorStrategy retry ends in 'failed' state if last retry fails
 
 ## [338.0] - beta
 
