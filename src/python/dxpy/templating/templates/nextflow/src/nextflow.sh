@@ -450,6 +450,7 @@ nf_task_exit() {
     while true
     do
         echo "Sleeping for 10 seconds"
+        dx describe $DX_JOB_ID --json | jq .properties -r
         errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
         if [ "$errorStrategy_set" = "retry" ]; then
           break
