@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Feature switch check for Nextflow pipeline build in an app execution environment
+
 ## [338.0] - beta
 
 ### Added
