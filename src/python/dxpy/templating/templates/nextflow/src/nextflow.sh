@@ -447,20 +447,22 @@ nf_task_exit() {
 
   if [ "$exit_code" -ne "0" ] && [ -n "${retry_record}" ]; then
     wait_period=0
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
+    echo "Waiting for the headjob to kill the job tree or for instruction to continue"
+
     while true
     do
-        echo "Sleeping for 10 seconds"
         dx describe $DX_JOB_ID --json | jq .properties -r
         errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
         if [ "$errorStrategy_set" = "retry" ]; then
           break
         fi
-        # Here 300 is 300 seconds i.e. 5 minutes * 60 = 300 sec
         wait_period=$(($wait_period+10))
-        if [ $wait_period -gt $wait_time ];then
+        if [ $wait_period -ge $wait_time ];then
            echo "This subjob was not killed in time, exiting to prevent excessive waiting."
            break
         else
+           echo "No instruction to continue was given. Waiting for 10 seconds"
            sleep 10
         fi
     done
