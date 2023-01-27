@@ -6097,20 +6097,55 @@ register_parser(parser_extract_dataset)
 #####################################
 # extract_assay
 #####################################
-parser_extract_assay = subparsers.add_parser('extract_assay germline', help="Retrieve the selected data or generate SQL to retrieve the data from an geno assay in a dataset or cohort based on provided rules.",
-                                   description="Retrieve the selected data or generate SQL to retrieve the data from an geno assay in a dataset or cohort based on provided rules.",
-                                   prog='dx extract_assay germline')
-parser_extract_assay.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the record-id in current selected project) or name.')
-parser_extract_assay.add_argument('--list-assays', action="store_true", default=False, help='List germline assays available for query in the specified Dataset or Cohort object.')
-parser_extract_assay.add_argument('--assay-name', action="store_true", help='Specify the germline assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”.')
-parser_extract_assay.add_argument('--variant-filter', action="store_true", default=False, help='If a JSON file (.json extension) or a  JSON object, as a  string, specifying criterias of what variants to retrieve is provided, then a list of variants (with annotation) will be returned.')
-parser_extract_assay.add_argument('--variant-filter-help', action="store_true", default=False, help='Return a help text including a paragraph of description and a json template of the filter.')
-parser_extract_assay.add_argument('-list-samples', action="store_true", default=False, help='List all the sampleIDs available in the assay.')
-parser_extract_assay.add_argument('--sample', action="store_true", default=False, help='If used without --variant-filter, and if no value is provided for --sample, then a list of all sample IDs for the assay will be returned. If used with --variant-filter, and if a value is provided for --sample, then values for the specified IDs will be returned. If a csv file (.csv extension) is supplied, only the first column will be read. It is recommended to have the file contain a single column (without a header) of sample IDs, where there is one unique ID per row.')
-parser_extract_assay.add_argument('--sql', action="store_true", default=False, help='If the flag is provided, a SQL statement will be returned instead of data.')
-parser_extract_assay.add_argument('-o', '--output', help='Path to store the output file.')
-parser_extract_assay.set_defaults(func=extract_assay)
+parser_extract_assay = subparsers.add_parser("extract_assay",
+    help="Retrieve the selected data or generate SQL to retrieve the data from a geno assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from a geno assay in a dataset or cohort based on provided rules.",
+    prog="dx extract_assay")
+subparsers_extract_assay = parser_extract_assay.add_subparsers(parser_class=DXArgumentParser)
+parser_extract_assay.metavar = 'class'
 register_parser(parser_extract_assay)
+
+parser_extract_assay_germline = subparsers_extract_assay.add_parser("germline",
+    help='Retrieve the selected data or generate SQL to retrieve the data from a geno assay in a dataset or cohort based on provided rules.',
+    description='Retrieve the selected data or generate SQL to retrieve the data from a geno assay in a dataset or cohort based on provided rules.',
+    prog="dx extract_assay germline")
+parser_extract_assay_germline.add_argument("path",
+    help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the record-id in current selected project) or name.')
+parser_extract_assay_germline.add_argument("--list-assays",
+    action="store_true",
+    default=False,
+    help='List germline assays available for query in the specified Dataset or Cohort object.')
+parser_extract_assay_germline.add_argument("--assay-name",
+    action="store_true",
+    help='Specify the germline assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”.')
+parser_extract_assay_germline.add_argument("--retrieve-alleles",
+    action="store_true",
+    default=False,
+    help='If a JSON file (.json extension) or a  JSON object, as a  string, specifying criterias of what alleles to retrieve is provided, then a list of allele IDs with additional information will be returned.')
+parser_extract_assay_germline.add_argument("--retrieve-alleles-template",
+    action="store_true",
+    default=False,
+    help='Return a json template of the allele filter.')
+parser_extract_assay_germline.add_argument("--retrieve-annotation",
+    action="store_true",
+    default=False,
+    help='Option to allow users to return annotation information for specific alleles with IDs specified. Accepting strings or a csv file. If csv file is provided, it is recommended to have the file containing a single column (without header) of alleleIDs, where there is one unique ID per row.')
+parser_extract_assay_germline.add_argument("--retrieve-samples",
+    action="store_true",
+    default=False,
+    help='If a JSON file (.json extension) or a  JSON object, as a  string, specifying criterias of what samples to retrieve is provided, then a list of sample IDs and its associated alleleIDs will be returned.')
+parser_extract_assay_germline.add_argument("-list-samples",
+    action="store_true",
+    default=False,
+    help='List all the sampleIDs available in the assay.')
+# parser_extract_assay_germline.add_argument('--sample', action="store_true", default=False, help='If used without --variant-filter, and if no value is provided for --sample, then a list of all sample IDs for the assay will be returned. If used with --variant-filter, and if a value is provided for --sample, then values for the specified IDs will be returned. If a csv file (.csv extension) is supplied, only the first column will be read. It is recommended to have the file contain a single column (without a header) of sample IDs, where there is one unique ID per row.')
+parser_extract_assay_germline.add_argument("--sql",
+    action="store_true",
+    default=False,
+    help='If the flag is provided, a SQL statement will be returned instead of data.')
+parser_extract_assay_germline.add_argument("-o", "--output", help='Path to store the output file.')
+parser_extract_assay_germline.set_defaults(func=extract_assay)
+register_parser(parser_extract_assay_germline)
 
 #####################################
 # help
