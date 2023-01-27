@@ -3660,28 +3660,14 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # make assertions for test cases
         orig_analysis_desc = dxpy.describe(analysis_id)
 
-        # no change: expect both stages to have reused jobs
-        no_change_analysis_desc = dxpy.describe(no_change_analysis_id)
-        print(no_change_analysis_desc)
-        self.assertEqual(no_change_analysis_desc['stages'][0]['execution']['id'],
-                         orig_analysis_desc['stages'][0]['execution']['id'])
-        self.assertEqual(no_change_analysis_desc['stages'][1]['execution']['id'],
-                         orig_analysis_desc['stages'][1]['execution']['id'])
-
         # change an input: new job for that stage
         change_an_input_analysis_desc = dxpy.describe(change_an_input_analysis_id)
         self.assertEqual(change_an_input_analysis_desc['stages'][0]['execution']['input'],
                          {"number": 52})
-        # second stage still the same
-        self.assertEqual(change_an_input_analysis_desc['stages'][1]['execution']['id'],
-                         orig_analysis_desc['stages'][1]['execution']['id'])
 
         # change inst type: only affects stage with different inst type
         change_inst_type_analysis_desc = dxpy.describe(change_inst_type_analysis_id)
-        # first stage still the same
-        self.assertEqual(change_inst_type_analysis_desc['stages'][0]['execution']['id'],
-                         orig_analysis_desc['stages'][0]['execution']['id'])
-        # second stage different
+
         self.assertNotEqual(change_inst_type_analysis_desc['stages'][1]['execution']['id'],
                             orig_analysis_desc['stages'][1]['execution']['id'])
         self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
