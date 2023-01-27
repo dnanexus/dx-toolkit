@@ -464,11 +464,6 @@ nf_task_exit() {
            sleep 10
         fi
     done
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
-    echo "Waiting for the headjob to kill the job tree..."
-    sleep 240
-    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-    exit
   fi
 
   dx-jobutil-add-output exit_code $exit_code --class=int
