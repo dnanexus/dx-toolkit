@@ -2,7 +2,6 @@
     "title": "Location Schema",
     "$id": "/location_schema",
     "description": "A description of the location section of the variant filter input JSON",
-    "type": "array",
     "definitions": {
         "location": {
             "items": {

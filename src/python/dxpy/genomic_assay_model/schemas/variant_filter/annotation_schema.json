@@ -34,7 +34,7 @@
                         }
                     ]
                 },
-                "transcript_id": {
+                "feature_id": {
                     "anyOf": [
                         {
                             "type": "string"
