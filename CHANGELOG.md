@@ -24,6 +24,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx get database` command reads from the API server with the API proxy interceptor
 * Regex global flags in path matching to support Py3.11
 * `dx run --clone` for Nextflow jobs (clear cloned job's properties)
+* Do not rewrite ubuntu repo mirror after failed execDepends install
 
 ### Changed
 
