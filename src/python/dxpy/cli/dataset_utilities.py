@@ -37,25 +37,8 @@ from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
 
-def extract_dataset(args):
-    """
-       Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data. 
-    """
-    if not args.dump_dataset_dictionary and args.fields is None:
-        err_exit('Must provide at least one of the following options: --fields or --dump-dataset-dictionary')
-
-    if len(args.delim) == 1 and args.delim != '"':
-        delimiter = str(args.delim)
-        if delimiter == ",":
-            out_extension = ".csv"
-        elif delimiter == "\t":
-            out_extension = ".tsv"
-        else:
-            out_extension = ".txt"
-    else:
-        err_exit('Invalid delimiter specified')
-    
-    project, path, entity_result = resolve_existing_path(args.path)
+def resolve_validate_path(path):
+    project, path, entity_result = resolve_existing_path(path)
 
     if project is None:
         raise ResolutionError('Unable to resolve "' + args.path +
@@ -84,6 +67,56 @@ def extract_dataset(args):
         dataset_project = resp['datasetRecordProject']
     else:
         err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % resp['recordTypes'])
+
+    return project, path, entity_result, resp
+
+def extract_dataset(args):
+    """
+       Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data. 
+    """
+    if not args.dump_dataset_dictionary and args.fields is None:
+        err_exit('Must provide at least one of the following options: --fields or --dump-dataset-dictionary')
+
+    if len(args.delim) == 1 and args.delim != '"':
+        delimiter = str(args.delim)
+        if delimiter == ",":
+            out_extension = ".csv"
+        elif delimiter == "\t":
+            out_extension = ".tsv"
+        else:
+            out_extension = ".txt"
+    else:
+        err_exit('Invalid delimiter specified')
+    
+    project, path, entity_result, resp = resolve_validate_path(args.path)
+
+    # if project is None:
+    #     raise ResolutionError('Unable to resolve "' + args.path +
+    #                               '" to a data object or folder name in a project')
+    # elif project != entity_result['describe']['project']:
+    #     raise ResolutionError('Unable to resolve "' + args.path +
+    #                               '" to a data object or folder name in \'' + project + "'")
+
+    # if entity_result['describe']['class'] != 'record':
+    #     err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % entity_result['describe']['class'])
+
+    # try:
+    #     resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
+    #                                     {"project": project, "cohortBrowser": False} )
+    # except PermissionDenied:
+    #     err_exit("Insufficient permissions", expected_exceptions=(PermissionDenied,))
+    # except (InvalidInput, InvalidState):
+    #     err_exit('%r : Invalid cohort or dataset' % entity_result['id'], expected_exceptions=(InvalidInput, InvalidState,))
+    # except Exception as details:
+    #     err_exit(str(details))
+
+    # if resp['datasetVersion'] != '3.0':
+    #     err_exit('%r : Invalid version of cohort or dataset. Version must be 3.0' % resp['datasetVersion'])
+
+    # if ("Dataset" in resp['recordTypes']) or ("CohortBrowser" in resp['recordTypes']):
+    #     dataset_project = resp['datasetRecordProject']
+    # else:
+    #     err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % resp['recordTypes'])
 
     dataset_id = resp['dataset']
     out_directory = ""
