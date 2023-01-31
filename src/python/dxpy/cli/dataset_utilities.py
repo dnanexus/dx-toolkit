@@ -68,7 +68,7 @@ def resolve_validate_path(path):
     else:
         err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % resp['recordTypes'])
 
-    return project, path, entity_result, resp
+    return project, resp, dataset_project
 
 def extract_dataset(args):
     """
@@ -88,35 +88,7 @@ def extract_dataset(args):
     else:
         err_exit('Invalid delimiter specified')
     
-    project, path, entity_result, resp = resolve_validate_path(args.path)
-
-    # if project is None:
-    #     raise ResolutionError('Unable to resolve "' + args.path +
-    #                               '" to a data object or folder name in a project')
-    # elif project != entity_result['describe']['project']:
-    #     raise ResolutionError('Unable to resolve "' + args.path +
-    #                               '" to a data object or folder name in \'' + project + "'")
-
-    # if entity_result['describe']['class'] != 'record':
-    #     err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % entity_result['describe']['class'])
-
-    # try:
-    #     resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
-    #                                     {"project": project, "cohortBrowser": False} )
-    # except PermissionDenied:
-    #     err_exit("Insufficient permissions", expected_exceptions=(PermissionDenied,))
-    # except (InvalidInput, InvalidState):
-    #     err_exit('%r : Invalid cohort or dataset' % entity_result['id'], expected_exceptions=(InvalidInput, InvalidState,))
-    # except Exception as details:
-    #     err_exit(str(details))
-
-    # if resp['datasetVersion'] != '3.0':
-    #     err_exit('%r : Invalid version of cohort or dataset. Version must be 3.0' % resp['datasetVersion'])
-
-    # if ("Dataset" in resp['recordTypes']) or ("CohortBrowser" in resp['recordTypes']):
-    #     dataset_project = resp['datasetRecordProject']
-    # else:
-    #     err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % resp['recordTypes'])
+    project, resp, dataset_project = resolve_validate_path(args.path)
 
     dataset_id = resp['dataset']
     out_directory = ""
