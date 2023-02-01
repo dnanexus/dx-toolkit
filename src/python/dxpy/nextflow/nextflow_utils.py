@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-import os, errno
+
+from os import path, makedirs
+import errno
 import dxpy
 import json
 from dxpy.exceptions import ResourceNotFound
@@ -17,21 +19,21 @@ def get_resources_dir_name(resources_dir):
     """
     if resources_dir == None:
         return ''
-    return os.path.basename(os.path.abspath(resources_dir))
+    return path.basename(path.abspath(resources_dir))
 
 def get_resources_subpath(resources_dir):
-    return os.path.join("/home/dnanexus/", get_resources_dir_name(resources_dir))
+    return path.join("/home/dnanexus/", get_resources_dir_name(resources_dir))
 
 def get_importer_name():
     return "nextflow_pipeline_importer"
 
 def get_template_dir():
-    return os.path.join(os.path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
+    return path.join(path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
 def write_exec(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())
     try:
-        os.makedirs(os.path.dirname(os.path.abspath(exec_file)))
+        makedirs(path.dirname(path.abspath(exec_file)))
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
@@ -62,17 +64,20 @@ def get_regional_options(region):
     return regional_options
 
 def get_nextflow_assets(region):
+    basepath = path.dirname(__file__)
     # The order of assets in the tuple is: nextaur, nextflow
-    nextaur_assets = "./nextaur_assets.json"
-    nextflow_assets = "./nextflow_assets.json"
+    nextaur_assets = path.join(basepath, "nextaur_assets.json")
+    nextflow_assets = path.join(basepath, "nextflow_assets.json")
     try:
-        with open(nextaur_assets, 'w') as nextaur_f, open(nextflow_assets, 'w') as nextflow_f:
-            nextaur, nextflow = json.load(nextaur_f)[region], json.load(nextflow_f)[region]
+        with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f:
+            nextaur = json.load(nextaur_f)[region]
+            nextflow = json.load(nextflow_f)[region]
         dxpy.describe(nextaur, fields={})
         return nextaur, nextflow
     except ResourceNotFound:
-        nextaur_assets = "./nextaur_assets.staging.json"
-        nextflow_assets = "./nextflow_assets.staging.json"
-        with open(nextaur_assets, 'w') as nextaur_f, open(nextflow_assets, 'w') as nextflow_f:
+        nextaur_assets = path.join(basepath, "nextaur_assets.staging.json")
+        nextflow_assets = path.join(basepath, "nextflow_assets.staging.json")
+
+        with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f:
             return json.load(nextaur_f)[region], json.load(nextflow_f)[region]
 
