@@ -119,7 +119,7 @@ class TestDXDocker(DXTestCase):
         run("dx-docker run julia:0.5.0 julia -E 'println(\"hello world\")'")
 
     def test_dx_docker_run_rm(self):
-        run("dx-docker run --rm ubuntu ls")
+        run("dx-docker run --rm ubuntu:22.04 ls")
 
     def test_dx_docker_set_env(self):
         dx_docker_out = run("dx-docker run --env HOME=/somethingelse busybox env")
