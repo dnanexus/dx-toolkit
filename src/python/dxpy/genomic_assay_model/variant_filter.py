@@ -44,7 +44,7 @@ class Allele:
                 "values": [minimum, maximum],
             }
         if self.gnomad_alt_af and self.gnomad_alt_af != "*":
-            filter_key = "{}${}".format(table, "alt_freq")
+            filter_key = "{}${}".format(table, "Gnomad201_alt_freq")
             minimum = float(self.gnomad_alt_af["min"])
             maximum = float(self.gnomad_alt_af["max"])
             allele_filter[filter_key] = {
@@ -145,7 +145,7 @@ class Annotation:
     def __init__(self, annotation_dict={}):
         self.gene_name = annotation_dict.get("gene_name") or None
         self.gene_id = annotation_dict.get("gene_id") or None
-        self.feature_id = annotation_dict.get("feature_id") or None
+        self.transcript_id = annotation_dict.get("transcript_id") or None
         self.consequences = annotation_dict.get("consequences") or None
         self.putative_impact = annotation_dict.get("putative_impact") or None
         self.hgvs_c = annotation_dict.get("hgvs_c") or None
@@ -173,11 +173,11 @@ class Annotation:
                 "condition": "in",
                 "values": self.gene_id,
             }
-        if self.feature_id and self.feature_id != "*":
+        if self.transcript_id and self.transcript_id != "*":
             filter_key = "{}${}".format(table, "feature_id")
             annotation_filter[filter_key] = {
                 "condition": "in",
-                "values": self.feature_id,
+                "values": self.transcript_id,
             }
 
         if self.consequences and self.consequences != "*":
@@ -213,14 +213,11 @@ class Annotation:
 
 
 class VariantFilter:
-    def __init__(self, full_input_json_path, name, id, sample=None):
+    def __init__(self, full_input_json, name, id, sample=None):
         # Initialize
         # json automatically converts null in JSON to None
         self.name = name
         self.id = id
-
-        with open(full_input_json_path, "r") as infile:
-            full_input_json = json.load(infile)
 
         if "allele" in full_input_json:
             self.allele = Allele(full_input_json["allele"])
@@ -253,10 +250,10 @@ class VariantFilter:
         annotation_filter = self.annotation.generate_filter()
 
         compiled_filter = {
-            "filters": {"assay_filter": {"id": self.id, "name": self.name}}
+            "filters": {"assay_filters": {"id": self.id, "name": self.name}}
         }
 
-        location_filter = {"compound": [{"filter": x} for x in location_filter_list]}
+        location_filter = {"compound": [{"filters": x} for x in location_filter_list]}
         location_filter["compound"].append({"name": "location"})
 
         if len(location_filter_list) > 1:
@@ -271,11 +268,11 @@ class VariantFilter:
         if annotation_filter:
             all_filters.append(annotation_filter)
 
-        compiled_filter["filters"]["assay_filter"]["compound"] = [
+        compiled_filter["filters"]["assay_filters"]["compound"] = [
             {"filters": x} for x in all_filters
         ]
 
-        compiled_filter["filters"]["assay_filter"]["compound"].append(location_filter)
+        compiled_filter["filters"]["assay_filters"]["compound"].append(location_filter)
 
         if len(all_filters) > 0:
             compiled_filter["logic"] = "and"
@@ -291,7 +288,10 @@ if __name__ == "__main__":
     name = "testname"
     id = "testid"
 
-    parsed_filter = VariantFilter(json_path, name, id)
+    with open(json_path, "r") as infile:
+        full_input_json = json.load(infile)
+
+    parsed_filter = VariantFilter(full_input_json, name, id)
     vizserver_dict = parsed_filter.compile_filters()
 
     # Write to a file for examination
