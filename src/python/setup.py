@@ -80,8 +80,8 @@ for directory, subdirectories, files in os.walk("dxpy/templating/templates"):
     directory = directory[len("dxpy/templating/"):]
     template_files.extend([os.path.join(directory, _file) for _file in files])
 
-files = os.listdir("dxpy/nextflow")
-nextflow_records = list(filter(lambda file: file[-5:] == ".json", files))
+nextflow_files = os.listdir("dxpy/nextflow")
+nextflow_records = list(filter(lambda file: file[-5:] == ".json", nextflow_files))
 
 
 setup(
