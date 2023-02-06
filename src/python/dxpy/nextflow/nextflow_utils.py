@@ -50,7 +50,7 @@ def get_regional_options(region):
         region: {
             "systemRequirements": {
                 "*": {
-                    "instanceType": "mem1_ssd1_v2_x2"
+                    "instanceType": get_instance_type(region)
                 }
             },
             "assetDepends": [
@@ -67,8 +67,8 @@ def get_instance_type(region):
         "aws:eu-central-1": "mem1_ssd1_v2_x2",
         "aws:eu-west-2": "mem1_ssd1_v2_x2",
         "aws:us-east-1": "mem1_ssd1_v2_x2",
-        "azure:westeurope": "azure:mem2_ssd1_v2_x2",
-        "azure:westus": "azure:mem2_ssd1_v2_x2",
+        "azure:westeurope": "azure:mem1_ssd1_x2",
+        "azure:westus": "azure:mem1_ssd1_x2",
         "aws:eu-west-2-g": "mem1_ssd1_v2_x2"
     }.get(region)
     if not instance_type:
