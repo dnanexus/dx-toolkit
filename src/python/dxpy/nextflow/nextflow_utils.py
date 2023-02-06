@@ -61,6 +61,21 @@ def get_regional_options(region):
     }
     return regional_options
 
+def get_instance_type(region):
+    instance_type = {
+        "aws:ap-southeast-2": "mem1_ssd1_v2_x2",
+        "aws:eu-central-1": "mem1_ssd1_v2_x2",
+        "aws:eu-west-2": "mem1_ssd1_v2_x2",
+        "aws:us-east-1": "mem1_ssd1_v2_x2",
+        "azure:westeurope": "azure:mem2_ssd1_v2_x2",
+        "azure:westus": "azure:mem2_ssd1_v2_x2",
+        "aws:eu-west-2-g": "mem1_ssd1_v2_x2"
+    }.get(region)
+    if not instance_type:
+        raise dxpy.exceptions.ResourceNotFound("Instance type is not specified for region {}.".format(region))
+    return instance_type
+
+
 def get_nextflow_assets(region):
     # The order of assets in the tuple is: nextaur, nextflow
     prod_assets = {
