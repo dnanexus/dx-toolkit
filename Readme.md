@@ -1,5 +1,5 @@
 DNAnexus Platform SDK
-=====================
+======================
 
 * **To download pre-built packages for your platform, see https://documentation.dnanexus.com/downloads.**
 
