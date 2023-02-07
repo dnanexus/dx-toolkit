@@ -7,9 +7,27 @@ output_file = "test_output/test_output.json"
 name = "testname"
 id = "testid"
 
+# Create a dictionary relating the fields in each input file to the table that they
+# need to filter data in
+# As of now, the allele and annotation files get all their data from the allele and
+# annotation tables respectively, only the sample file references data in multiple tables
+file_to_table = {}
+file_to_table["sample"]["allele_id"] = "allele"
+file_to_table["sample"]["sample_id"] = "sample"
+file_to_table["sample"]["genotype"] = "genotype"
+
+
 # Create a dictionary for converting the friendly names used by the user to the
 # columns as they appear in the GAM tables
-column_conversion = {"allele": {}, "genotype": {}, "location": {}, "annotation": {}}
+column_conversion = {
+    "sample": {},
+    "allele": {},
+    "genotype": {},
+    "location": {},
+    "annotation": {},
+}
+
+column_conversion["sample"] = {"sample_id": "sample_id"}
 
 column_conversion["allele"] = {
     "id": "a_id",
@@ -38,6 +56,9 @@ column_conversion["annotation"] = {
 
 # Create a dictionary for determining the correct condition to use with each field
 column_conditions = {}
+
+column_conditions["sample"]["sample_id"] = "in"
+
 column_conditions["allele"] = {}
 column_conditions["allele"]["id"] = "in"
 column_conditions["allele"]["rsid"] = "in"
