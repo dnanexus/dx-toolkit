@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* Nextflow - updated default instance types in Azure region
+* Nextflow - updated default instance types based on destination region
 
 ## [339.0] - beta
 
