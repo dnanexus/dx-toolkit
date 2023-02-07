@@ -1,5 +1,5 @@
 DNAnexus Platform SDK
-=====================
+======================
 
 **To install the `dx` CLI and the Python SDK for your platform run `python3 -m pip install dxpy`**
 
