@@ -1,0 +1,31 @@
+{
+    "rsid": [
+        "rs11111",
+        "rs22222"
+    ],
+    "type": [
+        "SNP",
+        "Del",
+        "Ins"
+    ],
+    "dataset_alt_af": {
+        "min": 0.001,
+        "max": 0.05
+    },
+    "gnomad_alt_af": {
+        "min": 0.001,
+        "max": 0.05
+    },
+    "location": [
+        {
+            "chromosome": "1",
+            "starting_position": "10000",
+            "ending_position": "20000"
+        },
+        {
+            "chromosome": "X",
+            "starting_position": "500",
+            "ending_position": "1700"
+        }
+    ]
+}

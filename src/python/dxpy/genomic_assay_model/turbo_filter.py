@@ -1,9 +1,9 @@
 import json
-
+import argparse
 
 # Temporarily hardcode some variables that we will eventually get from the command line
-json_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/example_input.json"
-output_file = "test_output/test_output.json"
+json_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/allele_filter.json"
+output_file = "test_output/sample_output.json"
 name = "testname"
 id = "testid"
 
@@ -12,6 +12,7 @@ id = "testid"
 # As of now, the allele and annotation files get all their data from the allele and
 # annotation tables respectively, only the sample file references data in multiple tables
 file_to_table = {}
+file_to_table["sample"] = {}
 file_to_table["sample"]["allele_id"] = "allele"
 file_to_table["sample"]["sample_id"] = "sample"
 file_to_table["sample"]["genotype"] = "genotype"
@@ -23,30 +24,31 @@ column_conversion = {
     "sample": {},
     "allele": {},
     "genotype": {},
-    "location": {},
     "annotation": {},
 }
 
 column_conversion["sample"] = {"sample_id": "sample_id"}
 
 column_conversion["allele"] = {
+    "allele_id": "a_id",
     "id": "a_id",
     "rsid": "dbsnp151_rsid",
     "type": "allele_type",
     "ref": "ref",
     "dataset_alt_af": "alt_freq",
     "gnomad_alt_af": "Gnomad201_alt_freq",
-}
-column_conversion["genotype"] = {"genotype": "type"}
-column_conversion["location"] = {
     "chromosome": "chr",
     "starting_position": "pos",
     "ending_position": "pos",
 }
+column_conversion["genotype"] = {"genotype": "type"}
+
 column_conversion["annotation"] = {
+    "allele_id": "allele",
     "gene_name": "gene_name",
     "gene_id": "gene_id",
     "transcript_id": "feature_id",
+    "feature_id": "feature_id",
     "consequences": "effect",
     "putative_impact": "putative_impact",
     "hgvs_c": "hgcs_c",
@@ -55,30 +57,39 @@ column_conversion["annotation"] = {
 
 
 # Create a dictionary for determining the correct condition to use with each field
-column_conditions = {}
+column_conditions = {
+    "sample": {},
+    "allele": {},
+    "genotype": {},
+    "location": {},
+    "annotation": {},
+}
 
 column_conditions["sample"]["sample_id"] = "in"
 
 column_conditions["allele"] = {}
+column_conditions["allele"]["allele_id"] = "in"
 column_conditions["allele"]["id"] = "in"
 column_conditions["allele"]["rsid"] = "in"
 column_conditions["allele"]["type"] = "in"
 column_conditions["allele"]["ref"] = "in"
 column_conditions["allele"]["dataset_alt_af"] = "between"
 column_conditions["allele"]["gnomad_alt_af"] = "between"
+# For use by location blocks
+column_conditions["allele"]["chromosome"] = "is"
+column_conditions["allele"]["starting_position"] = "greater-than"
+column_conditions["allele"]["ending_position"] = "less-than"
 
 column_conditions["genotype"] = {}
 column_conditions["genotype"]["genotype"] = "in"
 
-column_conditions["location"] = {}
-column_conditions["location"]["chromosome"] = "is"
-column_conditions["location"]["starting_position"] = "greater-than"
-column_conditions["location"]["ending_position"] = "less-than"
 
 column_conditions["annotation"] = {}
+column_conditions["annotation"]["allele_id"] = "in"
 column_conditions["annotation"]["gene_name"] = "in"
 column_conditions["annotation"]["gene_id"] = "in"
 column_conditions["annotation"]["transcript_id"] = "in"
+column_conditions["annotation"]["feature_id"] = "in"
 column_conditions["annotation"]["consequences"] = "in"
 column_conditions["annotation"]["putative_impact"] = "in"
 column_conditions["annotation"]["hgvs_c"] = "in"
@@ -99,26 +110,45 @@ def AtomicFilter(table, friendly_name, condition, values):
 if __name__ == "__main__":
 
     with open(json_path, "r") as infile:
-        full_input_json = json.load(infile)
+        full_input_dict = json.load(infile)
 
     # There are three possible types of input JSON: a sample filter, an allele filter,
     # and an annotation filter
 
-    # Case 1: sample filter
+    filter_file = "allele"
+    filters_dict = {}
+    table = filter_file
 
-    for table in ["allele", "genotype", "annotation"]:
-        table_dict = full_input_json[table]
+    for key in full_input_dict.keys():
+        # Override the table name if we are working with a sample filter, as this filter
+        # hits multiple table
+        if filter_file == "sample":
+            table = file_to_table[filter_file][key]
 
-        for key in table_dict.keys():
+        # Location needs to be handled slightly differently
+        if key == "location":
+            location_list = full_input_dict["location"]
+            for location in location_list:
+                for location_element in location.keys():
+                    condition = column_conditions["allele"][location_element]
+                    print(
+                        AtomicFilter(
+                            "allele",
+                            location_element,
+                            condition,
+                            location[location_element],
+                        )
+                    )
+
+        else:
             condition = column_conditions[table][key]
-            value = table_dict[key]
 
-            if not (table_dict[key] == "*" or table_dict[key] == None):
+            if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
                 print(
                     AtomicFilter(
                         table,
                         key,
                         condition,
-                        table_dict[key],
+                        full_input_dict[key],
                     )
                 )
