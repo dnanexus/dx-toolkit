@@ -46,11 +46,12 @@ def write_dxapp(folder, content):
 
 def get_regional_options(region):
     nextflow_asset, nextaur_asset = get_nextflow_assets(region)
+    regional_instance_type = get_instance_type(region)
     regional_options = {
         region: {
             "systemRequirements": {
                 "*": {
-                    "instanceType": get_instance_type(region)
+                    "instanceType": regional_instance_type
                 }
             },
             "assetDepends": [
