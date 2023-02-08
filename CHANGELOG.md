@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Nextflow - updated default instance types based on destination region
+
 ### Fixed
 
 * Nextflow errorStrategy retry ends in 'failed' state if last retry fails
