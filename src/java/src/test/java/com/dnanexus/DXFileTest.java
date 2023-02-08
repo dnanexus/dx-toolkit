@@ -621,4 +621,22 @@ public class DXFileTest {
 
         Assert.assertArrayEquals(uploadBytes, bytesFromDownloadStream);
     }
+
+    @Test
+    public void testDownloadFileWithoutProject() throws IOException {
+        // Initialize file 
+        byte[] uploadBytes = new byte[5 * 1024 * 1024];
+        new Random().nextBytes(uploadBytes);
+
+        DXFile f = DXFile.newFile().setProject(testProject).build();
+        f = DXFile.newFile().setProject(testProject).build();
+        f.uploadChunkSize = 5 * 1024 * 1024;
+        f.upload(uploadBytes);
+        f.closeAndWait();
+        // Initialize file without project ID and download
+        DXFile g = DXFile.getInstance(f.dxId);
+        byte[] downloadBytes = g.downloadBytes();
+        Assert.assertArrayEquals(uploadBytes, downloadBytes);
+    }
+
 }
