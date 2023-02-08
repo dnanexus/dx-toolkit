@@ -106,8 +106,14 @@ setup(
     },
     install_requires = dependencies,
     extras_require={
-        'pandas': ["pandas==1.3.5; python_version>='3.7'", "pandas>=0.23.3,<=0.25.3; python_version>='3.5.3' and python_version<'3.7'", "pandas>=0.23.3,< 0.25.0; python_version<'3.5.3'"],
-        'xattr': ["xattr==0.10.1; sys_platform == 'linux2' or sys_platform == 'linux'"]
+        'pandas': ["pandas==1.3.5; python_version>='3.7'",
+                   "pandas>=0.23.3,<=0.25.3; python_version>='3.5.3' and python_version<'3.7'",
+                   "pandas>=0.23.3,< 0.25.0; python_version<'3.5.3'"],
+        'xattr': ["xattr==0.10.1; sys_platform == 'linux2' or sys_platform == 'linux'"],
+        'snowflake': ["cryptography==39.0.0; python_version>='3.7'",
+                      "pyOpenSSL==22.0.0; python_version>='3.7'", # officially 22.0.0
+                      "snowflake-connector-python==3.0.0; python_version>='3.7'"
+                      ]
     },
     tests_require = test_dependencies,
     test_suite = "test",
