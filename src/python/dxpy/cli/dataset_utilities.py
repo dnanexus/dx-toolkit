@@ -26,6 +26,7 @@ import os
 import re
 import csv
 import dxpy
+import codecs
 from ..utils.printing import (fill)
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
@@ -41,11 +42,46 @@ def extract_dataset(args):
     """
        Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data. 
     """
-    if not args.dump_dataset_dictionary and args.fields is None:
-        err_exit('Must provide at least one of the following options: --fields or --dump-dataset-dictionary')
+    if (
+        not args.dump_dataset_dictionary
+        and not args.list_fields
+        and not args.list_entities
+        and args.fields is None
+    ):
+        err_exit(
+            "Must provide at least one of the following options: --fields, --dump-dataset-dictionary, --list-fields, --list-entities"
+        )
 
-    if len(args.delim) == 1 and args.delim != '"':
-        delimiter = str(args.delim)
+    listing_restricted = {
+        "dump_dataset_dictionary": False,
+        "sql": False,
+        "fields": None,
+        "output": None,
+        "delim": ","
+    }
+
+    def check_options(args, restricted):
+        error_list = []
+        for option, value in restricted.items():
+            if args.__dict__[option] != value:
+                error_list.append(f"--{option.replace('_', '-')}")
+        return error_list
+
+    if args.list_fields:
+        listing_restricted["list_entities"] = False
+        error_list = check_options(args, listing_restricted)
+        if error_list:
+            err_exit(f"--list-fields cannot be specified with: {error_list}")
+
+    if args.list_entities:
+        listing_restricted["list_fields"] = False
+        listing_restricted["entities"] = None
+        error_list = check_options(args, listing_restricted)
+        if error_list:
+            err_exit(f"--list-entities cannot be specified with: {error_list}")
+
+    delimiter = codecs.decode(args.delim, "unicode_escape")
+    if len(delimiter) == 1 and delimiter != '"':
         if delimiter == ",":
             out_extension = ".csv"
         elif delimiter == "\t":
@@ -240,6 +276,42 @@ def extract_dataset(args):
         rec_dict = rec_descriptor.get_dictionary()
         write_ot = rec_dict.write(output_file_data=output_file_data, output_file_entity=output_file_entity,
                                   output_file_coding=output_file_coding, sep=delimiter)
+
+    #Listing section
+    if args.list_entities or args.list_fields:
+        delimiter="\n"
+        present_entities=[]
+        # retrieve entity names, titles and main entity
+        for entity in sorted(rec_descriptor.model["entities"].keys()):
+            present_entities.append((rec_descriptor.model["entities"][entity]["name"], rec_descriptor.model["entities"][entity]["entity_title"]))
+            if rec_descriptor.model["entities"][entity]["is_main_entity"] is True:
+                main_entity=entity
+
+
+        # List entities
+        if args.list_entities:
+            print(delimiter.join([f"{e[1]}\t{e[2]}" for e in present_entities]))
+
+        # List fields
+        if args.list_fields:
+            entities_to_list_fields = rec_descriptor.model["entities"][main_entity]
+            if args.entities:
+                entities_to_list_fields = {}
+                error_list = []
+                for entity in sorted(args.entities.split(",")): 
+                    if entity in present_entities:
+                        entities_to_list_fields[entity] = rec_descriptor.model["entities"][entity]
+                    else:
+                        error_list.append(entity)
+                if error_list:
+                    err_exit(
+                        "The following entity/entities cannot be found: %r" % error_list
+                    )
+            fields = []
+            for entity, value in entities_to_list_fields.items():
+                for field in sorted(value["fields"].keys()):
+                    fields.append(f"{entity}.{field}")
+            print(delimiter.join(fields))
 
 def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[], column_names=[]):
     if print_to_stdout:
