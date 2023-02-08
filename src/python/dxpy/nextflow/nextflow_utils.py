@@ -64,10 +64,10 @@ def get_regional_options(region):
     return regional_options
 
 def get_nextflow_assets(region):
-    basepath = path.dirname(__file__)
+    nextflow_basepath = path.join(path.dirname(dxpy.__file__), 'nextflow')
     # The order of assets in the tuple is: nextaur, nextflow
-    nextaur_assets = path.join(basepath, "nextaur_assets.json")
-    nextflow_assets = path.join(basepath, "nextflow_assets.json")
+    nextaur_assets = path.join(nextflow_basepath, "nextaur_assets.json")
+    nextflow_assets = path.join(nextflow_basepath, "nextflow_assets.json")
     try:
         with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f:
             nextaur = json.load(nextaur_f)[region]
@@ -75,8 +75,8 @@ def get_nextflow_assets(region):
         dxpy.describe(nextaur, fields={})
         return nextaur, nextflow
     except ResourceNotFound:
-        nextaur_assets = path.join(basepath, "nextaur_assets.staging.json")
-        nextflow_assets = path.join(basepath, "nextflow_assets.staging.json")
+        nextaur_assets = path.join(nextflow_basepath, "nextaur_assets.staging.json")
+        nextflow_assets = path.join(nextflow_basepath, "nextflow_assets.staging.json")
 
         with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f:
             return json.load(nextaur_f)[region], json.load(nextflow_f)[region]
