@@ -6090,6 +6090,9 @@ parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separat
 parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (string) will be returned to query the set of entity.fields, instead of returning stored values from the set of entity.fields')
 parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const=',', default=',', help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
 parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output). If not supplied, output will create a file with a default name in the current folder')
+parser_extract_dataset.add_argument( "--list-fields", action="store_true", default=False, help='List the names and titles of all fields available in the dataset specified. When not specified together with –entities, it will return all the fields from the main entity. Output will be a two column table, field names and field titles, separated by a tab, where field names will be of the format, “<entity name>.<field name>” and field titles will be of the format, “<field title>”.')
+parser_extract_dataset.add_argument( "--list-entities", action="store_true", default=False, help='List the names and titles of all the entities available in the dataset specified. Output will be a two column table, entity names and entity titles, separated by a tab.')
+parser_extract_dataset.add_argument("--entities", help='Similar output to "--list-fields", however using "--entities" will allow for specific entities to be specified. When multiple entities are specified, use comma as the delimiter. For example, "--list-fields --entities "entityA,entityB,entityC""')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
 
