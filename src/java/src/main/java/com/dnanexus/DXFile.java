@@ -276,10 +276,22 @@ public class DXFile extends DXDataObject {
         private final long readStart;
         // Counter used for ramping
         private int request = 1;
+        private final long fileSize;
+        private DXContainer projectOrContainer;
 
         private FileApiInputStream(long readStart, long readEnd, PartDownloader downloader) {
+            // Retrive the project or container ID if not already known
+            projectOrContainer = getProject();
+            if (projectOrContainer == null) {
+                Describe desc = describe(DXDataObject.DescribeOptions.get().withCustomFields("project", "size"));
+                projectOrContainer = desc.getProject();
+                fileSize = desc.getSize();
+            } else {
+                Describe desc = describe(DXDataObject.DescribeOptions.get().withCustomFields("size"));
+                fileSize = desc.getSize();
+            }
             // API call returns URL and headers for HTTP GET requests
-            JsonNode output = apiCallOnObject("download", MAPPER.valueToTree(new FileDownloadRequest(true)),
+            JsonNode output = apiCallOnObject("download", MAPPER.valueToTree(new FileDownloadRequest(true, projectOrContainer.getId())),
                     RetryStrategy.SAFE_TO_RETRY);
             try {
                 apiResponse = MAPPER.treeToValue(output, FileDownloadResponse.class);
@@ -287,13 +299,13 @@ public class DXFile extends DXDataObject {
                 throw new RuntimeException(e);
             }
 
-            partsMetadata = describe(DXDataObject.DescribeOptions.get().withCustomFields("parts"));
+            partsMetadata = describe(DXDataObject.DescribeOptions.get().inProject(projectOrContainer).withCustomFields("parts"));
 
             // Get a sorted list of file parts
             fileParts = partsMetadata.getFilePartsList();
 
             if (readEnd == -1) {
-                readEnd = describe().getSize();
+                readEnd = fileSize;
             }
             Preconditions.checkArgument(readEnd >= readStart, "The start byte cannot be larger than the end byte");
             this.readStart = readStart;
@@ -372,7 +384,7 @@ public class DXFile extends DXDataObject {
                     long chunkSize = getNextChunkSize();
 
                     // API request to download bytes
-                    long endRange = Math.min(nextByteFromApi + chunkSize, describe().getSize());
+                    long endRange = Math.min(nextByteFromApi + chunkSize, fileSize);
                     byte[] bytesFromApiCall = this.downloader.get(apiResponse.url, nextByteFromApi, endRange - 1);
 
                     // Stream of bytes retrieved from the API call pre-checksum
@@ -497,9 +509,12 @@ public class DXFile extends DXDataObject {
     private static class FileDownloadRequest {
         @JsonProperty("preauthenticated")
         private boolean preauth;
+        @JsonProperty("project")
+        private String projectOrContainerId;
 
-        private FileDownloadRequest(boolean preauth) {
+        private FileDownloadRequest(boolean preauth, String projectOrContainerId) {
             this.preauth = preauth;
+            this.projectOrContainerId = projectOrContainerId;
         }
     }
 
