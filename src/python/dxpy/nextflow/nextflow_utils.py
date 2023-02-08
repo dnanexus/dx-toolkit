@@ -46,11 +46,12 @@ def write_dxapp(folder, content):
 
 def get_regional_options(region):
     nextflow_asset, nextaur_asset = get_nextflow_assets(region)
+    regional_instance_type = get_instance_type(region)
     regional_options = {
         region: {
             "systemRequirements": {
                 "*": {
-                    "instanceType": "mem1_ssd1_v2_x2"
+                    "instanceType": regional_instance_type
                 }
             },
             "assetDepends": [
@@ -60,6 +61,21 @@ def get_regional_options(region):
         }
     }
     return regional_options
+
+def get_instance_type(region):
+    instance_type = {
+        "aws:ap-southeast-2": "mem1_ssd1_v2_x2",
+        "aws:eu-central-1": "mem1_ssd1_v2_x2",
+        "aws:eu-west-2": "mem1_ssd1_v2_x2",
+        "aws:us-east-1": "mem1_ssd1_v2_x2",
+        "azure:westeurope": "azure:mem1_ssd1_x2",
+        "azure:westus": "azure:mem1_ssd1_x2",
+        "aws:eu-west-2-g": "mem1_ssd1_v2_x2"
+    }.get(region)
+    if not instance_type:
+        raise dxpy.exceptions.ResourceNotFound("Instance type is not specified for region {}.".format(region))
+    return instance_type
+
 
 def get_nextflow_assets(region):
     # The order of assets in the tuple is: nextaur, nextflow
