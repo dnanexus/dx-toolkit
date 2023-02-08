@@ -277,41 +277,54 @@ def extract_dataset(args):
         write_ot = rec_dict.write(output_file_data=output_file_data, output_file_entity=output_file_entity,
                                   output_file_coding=output_file_coding, sep=delimiter)
 
-    #Listing section
-    if args.list_entities or args.list_fields:
-        delimiter="\n"
-        present_entities=[]
-        # retrieve entity names, titles and main entity
-        for entity in sorted(rec_descriptor.model["entities"].keys()):
-            present_entities.append((rec_descriptor.model["entities"][entity]["name"], rec_descriptor.model["entities"][entity]["entity_title"]))
-            if rec_descriptor.model["entities"][entity]["is_main_entity"] is True:
-                main_entity=entity
-
-
+    # Listing section
+    if args.list_entities or args.list_fields:  
+        # Retrieve entity names, titles and main entity
+        entity_names_and_titles, _main_entity = retrieve_entities(rec_descriptor.model)
         # List entities
         if args.list_entities:
-            print(delimiter.join([f"{e[1]}\t{e[2]}" for e in present_entities]))
-
+            print("\n".join(entity_names_and_titles))
         # List fields
         if args.list_fields:
-            entities_to_list_fields = rec_descriptor.model["entities"][main_entity]
-            if args.entities:
-                entities_to_list_fields = {}
-                error_list = []
-                for entity in sorted(args.entities.split(",")): 
-                    if entity in present_entities:
-                        entities_to_list_fields[entity] = rec_descriptor.model["entities"][entity]
-                    else:
-                        error_list.append(entity)
-                if error_list:
-                    err_exit(
-                        "The following entity/entities cannot be found: %r" % error_list
-                    )
-            fields = []
-            for entity, value in entities_to_list_fields.items():
-                for field in sorted(value["fields"].keys()):
-                    fields.append(f"{entity}.{field}")
-            print(delimiter.join(fields))
+            list_fields(rec_descriptor.model, _main_entity, args)
+
+
+def retrieve_entities(model) -> tuple:
+    """
+        Retrievs the entities in form of <entity_name>\t<entity_title> and identifies main entity
+    """
+    entity_names_and_titles = []
+    for entity in sorted(model["entities"].keys()):
+        entity_names_and_titles.append(f'{model["entities"][entity]["name"]}\t{model["entities"][entity]["entity_title"]}')
+        if model["entities"][entity]["is_main_entity"] is True:
+            main_entity=entity
+    return entity_names_and_titles, main_entity
+
+
+def list_fields(model, main_entity, args):
+    """
+        Listing fileds in the model in form at <entity>.<field_name>\t<field_title> for specified list of entities
+    """
+    present_entities=sorted(model["entities"].keys())
+    entities_to_list_fields = {main_entity: model["entities"][main_entity]}
+    if args.entities:
+        entities_to_list_fields = {}
+        error_list = []
+        for entity in sorted(args.entities.split(",")): 
+            if entity in present_entities:
+                entities_to_list_fields[entity] = model["entities"][entity]
+            else:
+                error_list.append(entity)
+        if error_list:
+            err_exit(
+                "The following entity/entities cannot be found: %r" % error_list
+            )
+    fields = []
+    for entity, value in entities_to_list_fields.items():
+        for field in sorted(value["fields"].keys()):
+            fields.append(f'{entity}.{value["fields"][field]["name"]}\t{value["fields"][field]["title"]}')
+    print("\n".join(fields))
+
 
 def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=[], column_names=[]):
     if print_to_stdout:
