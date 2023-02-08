@@ -3,7 +3,7 @@ import argparse
 
 # Temporarily hardcode some variables that we will eventually get from the command line
 json_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/allele_filter.json"
-output_file = "test_output/sample_output.json"
+output_file = "test_output/allele_output.json"
 name = "testname"
 id = "testid"
 
@@ -103,7 +103,7 @@ def AtomicFilter(table, friendly_name, condition, values):
         values = [float(values["min"]), float(values["max"])]
     if condition == "less-than" or condition == "greater-than":
         values = int(values)
-    listed_filter = [{filter_key: {"condition": condition, "values": values}}]
+    listed_filter = {filter_key: [{"condition": condition, "values": values}]}
     return listed_filter
 
 
@@ -127,11 +127,17 @@ if __name__ == "__main__":
 
         # Location needs to be handled slightly differently
         if key == "location":
+            location_compound = {"compound": []}
             location_list = full_input_dict["location"]
+            grouped_location_filter = {}
             for location in location_list:
+                # The grouped filters object consisting of up to three atomic filters
+
+                atomic_location_filters = {}
                 for location_element in location.keys():
                     condition = column_conditions["allele"][location_element]
-                    print(
+                    # One atomic filter each for chromsome, starting location, and ending location
+                    atomic_location_filters.update(
                         AtomicFilter(
                             "allele",
                             location_element,
@@ -139,12 +145,16 @@ if __name__ == "__main__":
                             location[location_element],
                         )
                     )
+                grouped_location_filter["filters"] = atomic_location_filters
+            location_compound["compound"] = grouped_location_filter
+            location_compound["compound"]["logic"] = "or"
+            location_compound["compound"]["name"] = "allele location"
 
         else:
             condition = column_conditions[table][key]
 
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
-                print(
+                filters_dict.update(
                     AtomicFilter(
                         table,
                         key,
@@ -152,3 +162,10 @@ if __name__ == "__main__":
                         full_input_dict[key],
                     )
                 )
+    final_dict = {"filters": {"assay_filter": {"name": name, "id": id, "compound": []}}}
+    final_dict["filters"]["assay_filter"]["compound"].append({"filters": filters_dict})
+    final_dict["filters"]["assay_filter"]["compound"].append(location_compound)
+    final_dict["filters"]["assay_filter"]["compound"].append({"logic": "and"})
+
+    with open(output_file, "w") as outfile:
+        json.dump(final_dict, outfile)
