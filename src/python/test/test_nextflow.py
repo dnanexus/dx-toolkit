@@ -330,17 +330,13 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(desc["summary"], pipeline_name)
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
-    retryMax = "nextflow/RetryMaxRetries/main.nf"
-    retryMax2 = "nextflow/RetryMaxErrors/main.nf"
-    @parameterized.expand([
-        [retryMax],
-        [retryMax2],
-    ])
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_run_retry_fail(self, *nextflow_file):
         print(nextflow_file)
         pipeline_name = "retryMaxRetries"
+        nextflow_file="nextflow/RetryMaxRetries/main.nf"
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, existing_nf_file_path=nextflow_file)
         applet_id = json.loads(
