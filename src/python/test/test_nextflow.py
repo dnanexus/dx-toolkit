@@ -342,6 +342,13 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         job = applet.run({})
         self.assertRaises(dxpy.exceptions.DXJobFailureError, job.wait_on_done)
         desc = job.describe()
+        from time import sleep
+        i = 0
+        while desc["state"] != "failed" and i < 30:
+            sleep(5)
+            desc=job.describe()
+            i = i + 1
+
         self.assertEqual(desc.get("properties",{}).get("nextflow_errorStrategy"), "retry-exceedsMaxValue")
         self.assertEqual(desc.get("state"), "failed")
         errored_subjob=dxpy.DXJob(desc.get("properties",{})["nextflow_errored_subjob"])
