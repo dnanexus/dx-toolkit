@@ -64,21 +64,21 @@ def extract_dataset(args):
         error_list = []
         for option, value in restricted.items():
             if args.__dict__[option] != value:
-                error_list.append(f"--{option.replace('_', '-')}")
+                error_list.append("--{}".format(option.replace('_', '-')))
         return error_list
 
     if args.list_fields:
         listing_restricted["list_entities"] = False
         error_list = check_options(args, listing_restricted)
         if error_list:
-            err_exit(f"--list-fields cannot be specified with: {error_list}")
+            err_exit("--list-fields cannot be specified with: {}".format(error_list))
 
     if args.list_entities:
         listing_restricted["list_fields"] = False
         listing_restricted["entities"] = None
         error_list = check_options(args, listing_restricted)
         if error_list:
-            err_exit(f"--list-entities cannot be specified with: {error_list}")
+            err_exit("--list-entities cannot be specified with: {}".format(error_list))
 
     delimiter = codecs.decode(args.delim, "unicode_escape")
     if len(delimiter) == 1 and delimiter != '"':
@@ -289,13 +289,13 @@ def extract_dataset(args):
             list_fields(rec_descriptor.model, _main_entity, args)
 
 
-def retrieve_entities(model) -> tuple:
+def retrieve_entities(model):
     """
         Retrievs the entities in form of <entity_name>\t<entity_title> and identifies main entity
     """
     entity_names_and_titles = []
     for entity in sorted(model["entities"].keys()):
-        entity_names_and_titles.append(f'{model["entities"][entity]["name"]}\t{model["entities"][entity]["entity_title"]}')
+        entity_names_and_titles.append("{}\t{}".format(entity, model["entities"][entity]["entity_title"]))
         if model["entities"][entity]["is_main_entity"] is True:
             main_entity=entity
     return entity_names_and_titles, main_entity
@@ -305,14 +305,14 @@ def list_fields(model, main_entity, args):
     """
         Listing fileds in the model in form at <entity>.<field_name>\t<field_title> for specified list of entities
     """
-    present_entities=sorted(model["entities"].keys())
-    entities_to_list_fields = {main_entity: model["entities"][main_entity]}
+    present_entities=model["entities"].keys()
+    entities_to_list_fields = [model["entities"][main_entity]]
     if args.entities:
-        entities_to_list_fields = {}
+        entities_to_list_fields = []
         error_list = []
         for entity in sorted(args.entities.split(",")): 
             if entity in present_entities:
-                entities_to_list_fields[entity] = model["entities"][entity]
+                entities_to_list_fields.append(model["entities"][entity])
             else:
                 error_list.append(entity)
         if error_list:
@@ -320,9 +320,9 @@ def list_fields(model, main_entity, args):
                 "The following entity/entities cannot be found: %r" % error_list
             )
     fields = []
-    for entity, value in entities_to_list_fields.items():
-        for field in sorted(value["fields"].keys()):
-            fields.append(f'{entity}.{value["fields"][field]["name"]}\t{value["fields"][field]["title"]}')
+    for entity in entities_to_list_fields:
+        for field in sorted(entity["fields"].keys()):
+            fields.append("{}.{}\t{}".format(entity["name"], field, entity["fields"][field]["title"]))
     print("\n".join(fields))
 
 
