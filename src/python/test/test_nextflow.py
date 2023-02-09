@@ -341,7 +341,6 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         applet = dxpy.DXApplet(applet_id)
         job = applet.run({})
         self.assertRaises(dxpy.exceptions.DXJobFailureError, job.wait_on_done)
-        self.assert
         desc = job.describe()
         self.assertEqual(desc.get("properties",{}).get("nextflow_errorStrategy"), "retry-exceedsMaxValue")
         self.assertEqual(desc.get("state"), "failed")
