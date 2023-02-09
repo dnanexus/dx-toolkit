@@ -1,0 +1,9 @@
+{
+  "aws:ap-southeast-2": "record-GP5Bf385XGYQv71K5V25Q520",
+  "aws:eu-central-1": "record-GP5Bjqj4b633kF765jB330F2",
+  "aws:eu-west-2": "record-GP5BgFjJXG2z2qk35G48f0vB",
+  "aws:us-east-1": "record-GP5BV700z3VxZ9xq5Qy3v962",
+  "azure:westeurope": "record-GP5BZY0BKYf82PqX5kz6p875",
+  "azure:westus": "record-GP5BvZ890PK82PqX5kz6p94b",
+  "aws:eu-west-2-g": "record-GP5Bp72KQ7b12Kx45vjfxF04"
+}
