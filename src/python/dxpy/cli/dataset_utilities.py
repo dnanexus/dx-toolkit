@@ -80,7 +80,7 @@ def extract_dataset(args):
         if error_list:
             err_exit("--list-entities cannot be specified with: {}".format(error_list))
 
-    delimiter = codecs.decode(args.delim, "unicode_escape")
+    delimiter = str(codecs.decode(args.delim, "unicode_escape"))
     if len(delimiter) == 1 and delimiter != '"':
         if delimiter == ",":
             out_extension = ".csv"
