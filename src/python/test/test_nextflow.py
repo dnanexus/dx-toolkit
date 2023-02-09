@@ -330,9 +330,9 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(desc["summary"], pipeline_name)
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
-    @parameterized([
-        "nextflow/RetryMaxRetries/main.nf",
-        "nextflow/RetryMaxErrors/main.nf",
+    @parameterized.expand([
+        ["nextflow/RetryMaxRetries/main.nf"],
+        ["nextflow/RetryMaxErrors/main.nf"],
     ])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
