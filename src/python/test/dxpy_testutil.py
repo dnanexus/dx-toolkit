@@ -657,7 +657,6 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     """
 
     base_nextflow_nf = "nextflow/hello/main.nf"
-    retry_nextflow_nf = "nextflow/RetryMaxRetries/main.nf"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()
