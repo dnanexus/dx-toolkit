@@ -339,7 +339,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         applet_id = json.loads(
             run("dx build --nextflow --json " + applet_dir))["id"]
         applet = dxpy.DXApplet(applet_id)
-        job = applet.run()
+        job = applet.run({})
         job.wait_on_done()
         desc = job.describe()
         self.assertEqual(desc.get("properties",{}).get("nextflow_errorStrategy"), "retry-exceedsMaxValue")
