@@ -328,7 +328,31 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(desc["name"], "MyApplet")
         self.assertEqual(desc["title"], pipeline_name)
         self.assertEqual(desc["summary"], pipeline_name)
+
+
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_run_retry_fail(self):
+        pipeline_name = "retryMaxRetries"
+        nextflow_file = "nextflow/RetryMaxRetries/main.nf"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, existing_nf_file_path=nextflow_file)
+        applet_id = json.loads(
+            run("dx build --nextflow --json " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+
+        job = applet.run({})
+        self.assertRaises(dxpy.exceptions.DXJobFailureError, job.wait_on_done)
+        desc = job.describe()
+        self.assertEqual(desc.get("properties", {}).get("nextflow_errorStrategy"), "retry-exceedsMaxValue")
+
+        errored_subjob = dxpy.DXJob(desc.get("properties", {})["nextflow_errored_subjob"])
+        self.assertRaises(dxpy.exceptions.DXJobFailureError, errored_subjob.wait_on_done)
+        subjob_desc = errored_subjob.describe()
+        self.assertEqual(subjob_desc.get("properties").get("nextflow_errorStrategy"), "retry-exceedsMaxValue")
+        self.assertEqual(subjob_desc.get("properties").get("nextflow_errored_subjob"), "self")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
@@ -392,7 +416,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
     #     job = applet.run({
     #                      "nextflow_run_opts": "-w user_workdir",
     #     })
-        
+
     #     job.wait_on_done()
     #     job_desc = dxpy.describe(job.get_id())
     #     self.assertEqual(job_desc["failureReason"], "AppError")

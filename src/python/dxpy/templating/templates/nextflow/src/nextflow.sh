@@ -298,7 +298,7 @@ main() {
   fi
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.5.0
+  NXF_PLUGINS_VERSION=1.6.0
   
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
@@ -434,13 +434,38 @@ nf_task_exit() {
   if [ -z ${exit_code} ]; then export exit_code=0; fi
 
   # Make sure that subjob with errorStrategy == terminate end in 'failed' state
-  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID --brief | head -n 1)
+  wait_time=240
+  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
+  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
     echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
     echo "Waiting for the headjob to kill the job tree..."
-    sleep 240
+    sleep $wait_time
     echo "This subjob was not killed in time, exiting to prevent excessive waiting."
     exit
+  fi
+
+  if [ "$exit_code" -ne "0" ] && [ -n "${retry_record}" ]; then
+    wait_period=0
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
+    echo "Waiting for the headjob to kill the job tree or for instruction to continue"
+
+    while true
+    do
+        dx describe $DX_JOB_ID --json | jq .properties -r
+        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
+        if [ "$errorStrategy_set" = "retry" ]; then
+          break
+        fi
+        wait_period=$(($wait_period+10))
+        if [ $wait_period -ge $wait_time ];then
+           echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+           break
+        else
+           echo "No instruction to continue was given. Waiting for 10 seconds"
+           sleep 10
+        fi
+    done
   fi
 
   dx-jobutil-add-output exit_code $exit_code --class=int
