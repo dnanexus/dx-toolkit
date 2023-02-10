@@ -316,8 +316,8 @@ class TestDXBashHelpers(DXTestCase):
             except:
                 import subprocess
                 result = subprocess.run(['dx', 'watch', '--no-wait', job_id], stdout=subprocess.PIPE)
+                print("SEARCH FOR THIS HERE")
                 print(result.stdout.decode('utf-8'))
-                print(result.stderr.decode('utf-8'))
                 raise
 
 
