@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [340.0] - beta
+
 ### Changed
 
 * Upgraded Nextflow plugin version to 1.6.0
@@ -15,11 +17,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Nextflow errorStrategy retry ends in 'failed' state if last retry fails
 
-## [339.0] - beta
+## [339.0] - 2023.2.10 - stable
 
 * No significant changes
 
-## [338.1] - 2023.1.27 - stable
+## [338.1] - 2023.1.27
 
 ### Added
 
