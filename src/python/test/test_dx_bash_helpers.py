@@ -311,7 +311,15 @@ class TestDXBashHelpers(DXTestCase):
             cmd_args = ['dx', 'run', '--yes', '--brief', applet_id]
             cmd_args.extend(applet_args)
             job_id = run(cmd_args, env=env).strip()
-            dxpy.DXJob(job_id).wait_on_done()
+            try:
+                dxpy.DXJob(job_id).wait_on_done()
+            except:
+                import subprocess
+                result = subprocess.run(['dx', 'watch', '--no-wait', job_id], stdout=subprocess.PIPE)
+                print(result.stdout.decode('utf-8'))
+                print(result.stderr.decode('utf-8'))
+                raise
+
 
             # Run the applet --- this will not create the seq3 output file.
             # This should cause an exception from the job manager.
