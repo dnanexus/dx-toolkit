@@ -8,6 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
+* Upgraded Nextflow plugin version to 1.6.0
 * Nextflow - updated default instance types based on destination region
 
 ### Fixed
