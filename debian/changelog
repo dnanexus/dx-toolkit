@@ -1,3 +1,11 @@
+dx-toolkit (0.340.0) trusty; urgency=medium
+
+  * Changed: Upgraded Nextflow plugin version to 1.6.0
+  * Changed: Nextflow - updated default instance types based on destination region
+  * Fixed: Nextflow errorStrategy retry ends in 'failed' state if last retry fails
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 10 Feb 2023 19:00:03 +0000
+
 dx-toolkit (0.339.0) trusty; urgency=medium
 
   * No significant changes
