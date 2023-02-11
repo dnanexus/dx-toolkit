@@ -28,7 +28,7 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 	
 	export DXPY_WHEEL_FILENAME=$$(basename python/dist/dxpy-*.whl) ; \
 		unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/$${DXPY_WHEEL_FILENAME}[xattr]
-	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)"
+	mv "$(DNANEXUS_HOME)"/lib/python?.{?,??}/site-packages "$(PYTHON_LIBDIR)"
 
 
 # Installation
