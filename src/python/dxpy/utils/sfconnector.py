@@ -14,8 +14,8 @@ class DXSFConnector(ABC):
         'account': "dummy_account",
         'warehouse': "dummy_warehouse",
         'role': "default",
-        'host': "{}/SF-ROUTES/".format(dxpy.APISERVER_HOST),
-        'port': dxpy.APISERVER_PORT,
+        'host': "{}".format(dxpy.APISERVER_HOST,dxpy.APISERVER_PORT),
+        'port': "{}/SF-ROUTE".format(dxpy.APISERVER_PORT),
         'protocol': dxpy.APISERVER_PROTOCOL
     }
 
