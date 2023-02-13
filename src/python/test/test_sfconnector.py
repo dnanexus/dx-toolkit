@@ -3,6 +3,8 @@ import unittest
 from dxpy.utils.sfconnector import DXSFConnector
 from dxpy.utils.sfconnector import InvalidSFAuthentication
 
+# TODO Currently we need to plug in the credentials manually to run this test. This will be refactored later
+#   once we figure out the right way to test Snowflake feature.
 @unittest.skip
 class DXSFConnectorTests(unittest.TestCase):
 
