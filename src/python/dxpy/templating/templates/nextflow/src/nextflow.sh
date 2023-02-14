@@ -300,11 +300,14 @@ main() {
   # Disable dnanexus apt proxy
   rm /etc/apt/apt.conf.d/99dnanexus
   # Install docker 20.10.23
-  echo $VERSION
   export VERSION="20.10.23"
   echo "Installing Docker $VERSION"
   curl -fsSL https://get.docker.com -o get-docker.sh
-  sh get-docker.sh
+  if [[ $debug == true ]]; then
+      sh get-docker.sh
+  else
+      sh get-docker.sh 2>/dev/null
+  fi
   unset VERSION
   docker --version
 
