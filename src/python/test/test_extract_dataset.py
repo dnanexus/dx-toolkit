@@ -99,6 +99,40 @@ class TestDXExtractDataset(unittest.TestCase):
         self.assertTrue("Error: path already exists" in stdout.strip())
         shutil.rmtree(out_directory)
 
+    def test_list_entities(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        truth_output = "baseline\tBaseline Test\ndoctor\tDoctors\nhospital\tHospitals\npatient\tPatients\ntest\tTests Performed\ntrial_visit\tVisits"
+        cmd = ["dx", "extract_dataset", dataset_record, "--list-entities"]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+        stdout = process.communicate()[0]
+        self.assertTrue(truth_output in stdout)
+    
+    def test_list_entities_negative(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        expected_error_message = "--list-entities cannot be specified with: ['--sql']"
+        cmd = ["dx", "extract_dataset", dataset_record, "--list-entities", "--sql"]
+        process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
+        stderr = process.communicate()[1]
+        self.assertTrue(expected_error_message in stderr)
+
+    def test_list_fields(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        truth_output = "test.result_cat\tResult Class\ntest.results\tRaw Result\ntest.test_date\tTest Date\ntest.test_id\tTest ID\ntest.test_type\tTest\ntest.test_visit_id\ttest_visit_id"
+        entities = "test"
+        cmd = ["dx", "extract_dataset", dataset_record, "--list-fields", "--entities", entities]
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
+        stdout = process.communicate()[0]
+        self.assertTrue(truth_output in stdout)
+
+    def test_list_fields_negative(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        expected_error_message = "The following entity/entities cannot be found: ['tests']"
+        entities = "tests"
+        cmd = ["dx", "extract_dataset", dataset_record, "--list-fields","--entities", entities]
+        process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
+        stderr = process.communicate()[1]
+        self.assertTrue(expected_error_message in stderr)
+
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
         with chdir(truth_files_directory):

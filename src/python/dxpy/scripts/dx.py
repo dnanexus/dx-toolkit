@@ -6081,8 +6081,8 @@ register_parser(parser_unarchive, categories='fs')
 #####################################
 # extract_dataset
 #####################################
-parser_extract_dataset = subparsers.add_parser('extract_dataset', help="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.",
-                                   description="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.",
+parser_extract_dataset = subparsers.add_parser('extract_dataset', help="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data. Listing options enable enumeration of the entities and their respective fields in the dataset.",
+                                   description="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data. Provides listing options for entities and fields.",
                                    prog='dx extract_dataset')
 parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where "record-id" indicates the record ID in the currently selected project) or name')
 parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the three dictionary files, <record_name>.data_dictionary.csv, <record_name>.entity_dictionary.csv, and <record_name>.codings.csv will be generated. Files will be comma delimited and written to the local working directory, unless otherwise specified using --delimiter and --output arguments. If any of the three dictionary files does not contain data (i.e. the dictionary is empty), then that particular file will not be created.')
@@ -6090,6 +6090,9 @@ parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separat
 parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (string) will be returned to query the set of entity.fields, instead of returning stored values from the set of entity.fields')
 parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const=',', default=',', help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
 parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output). If not supplied, output will create a file with a default name in the current folder')
+parser_extract_dataset.add_argument( "--list-fields", action="store_true", default=False, help='List the names and titles of all fields available in the dataset specified. When not specified together with "–-entities", it will return all the fields from the main entity. Output will be a two column table, field names and field titles, separated by a tab, where field names will be of the format, "<entity name>.<field name>" and field titles will be of the format, "<field title>".')
+parser_extract_dataset.add_argument( "--list-entities", action="store_true", default=False, help='List the names and titles of all the entities available in the dataset specified. Output will be a two column table, entity names and entity titles, separated by a tab.')
+parser_extract_dataset.add_argument("--entities", help='Similar output to "--list-fields", however using "--entities" will allow for specific entities to be specified. When multiple entities are specified, use comma as the delimiter. For example: "--list-fields --entities entityA,entityB,entityC"')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
 
