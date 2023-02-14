@@ -306,7 +306,7 @@ main() {
   if [[ $debug == true ]]; then
       sh get-docker.sh
   else
-      sh get-docker.sh 2>/dev/null
+      sh get-docker.sh &>/dev/null
   fi
   unset VERSION
   docker --version
