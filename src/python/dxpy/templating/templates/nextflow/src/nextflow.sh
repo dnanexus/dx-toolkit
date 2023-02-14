@@ -297,6 +297,17 @@ main() {
     set -x
   fi
 
+  # Disable dnanexus apt proxy
+  rm /etc/apt/apt.conf.d/99dnanexus
+  # Install docker 20.10.23
+  echo $VERSION
+  export VERSION="20.10.23"
+  echo "Installing Docker $VERSION"
+  curl -fsSL https://get.docker.com -o get-docker.sh
+  sh get-docker.sh
+  unset VERSION
+  echo "Done installing Docker"
+
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   NXF_PLUGINS_VERSION=1.6.0
   
