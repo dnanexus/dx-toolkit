@@ -306,7 +306,7 @@ main() {
   curl -fsSL https://get.docker.com -o get-docker.sh
   sh get-docker.sh
   unset VERSION
-  echo "Done installing Docker"
+  docker --version
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   NXF_PLUGINS_VERSION=1.6.0
