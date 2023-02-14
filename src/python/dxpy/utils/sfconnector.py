@@ -31,7 +31,7 @@ class DXSFConnector(ABC):
         try:
             self._ctx = snowflake.connector.connect(**self.config)
         except Exception as e:
-            raise InvalidSFAuthentication(e)
+            raise SFConnectionError(e)
 
     def cursor(self):
         """Return a SnowflakeCursor object
@@ -45,14 +45,14 @@ class DXSFConnector(ABC):
             self._ctx.close()
 
 
-class InvalidSFAuthentication(DXError):
-    ''' Raised when invalid snowflake credentials used for Snowflake connection. '''
+class SFConnectionError(DXError):
+    ''' Raised when unable to establish Snowflake connection'''
 
     def __init__(self, error):
         self.error = error
 
     def error_message(self):
-        return "Snowflake Authentication Error " + self.error.msg
+        return "Snowflake Connection Error " + self.error.msg
 
     def __str__(self):
         return self.error_message()
