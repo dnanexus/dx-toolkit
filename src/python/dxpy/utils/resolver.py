@@ -29,9 +29,9 @@ import os, sys, json, re
 
 import dxpy
 from .describe import get_ls_l_desc
-from ..exceptions import DXError
 from ..compat import str, input, basestring
 from ..cli import try_call, INTERACTIVE_CLI
+from ..exceptions import DXCLIError, DXError
 
 def pick(choices, default=None, str_choices=None, prompt=None, allow_mult=False, more_choices=False):
     '''
@@ -158,6 +158,9 @@ def is_data_obj_id(string):
 
 def is_container_id(string):
     return is_hashid(string) and (string.startswith('project-') or string.startswith('container-'))
+
+def is_project_id(string):
+    return is_hashid(string) and string.startswith('project-')
 
 def is_analysis_id(string):
     return is_hashid(string) and string.startswith('analysis-')
@@ -1173,7 +1176,6 @@ def get_global_exec_from_path(path):
         return get_app_from_path(path)
     elif path.startswith('globalworkflow-'):
         return get_global_workflow_from_path(path)
-
     # If the path doesn't include a prefix, we must try describing
     # as an app and, if that fails, as a global workflow
     desc = get_app_from_path(path)
@@ -1268,8 +1270,14 @@ def get_exec_handler(path, alias=None):
         else:
             raise DXError('The executable class {} is not supported'.format(desc['class']))
 
+    def path_starts_with_non_global_prefix(path):
+        return path.startswith('workflow-') or path.startswith('applet-')
+
     # First attempt to resolve a global executable: app or global workflow
-    global_exec_desc = get_global_exec_from_path(path)
+    # skip if it has non-global prefix
+    global_exec_desc = None
+    if not path_starts_with_non_global_prefix(path):
+        global_exec_desc = get_global_exec_from_path(path)
 
     if alias is None:
         try:

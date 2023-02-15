@@ -115,35 +115,6 @@ stage 'Build'
                 deleteDir()
             }
         },
-        "osx-10.10" : {
-            node('idna'){
-                deleteDir()
-                sh """
-                    git clone https://github.com/dnanexus/dx-toolkit.git
-                    commit_hash=\"${env.commit_hash}\"
-                    mkdir \"${env.commit_hash}\"
-                    cd dx-toolkit
-                    
-                    git checkout \$commit_hash
-                    export LC_ALL=en.UTF-8
-                    
-                    export CPATH=/opt/local/include
-                    export CC=clang
-                    export CXX=clang++
-                    export CXXFLAGS="-stdlib=libc++ -mmacosx-version-min=10.7"
-
-                    # For the Python cryptography package:
-                    export CRYPTOGRAPHY_OSX_NO_LINK_FLAGS=1
-                    export LDFLAGS="/opt/local/lib/libssl.a /opt/local/lib/libcrypto.a"
-                    export CPPFLAGS="-I/opt/local/include"
-
-                    build/package.sh osx
-                    mv dx-toolkit-*-osx.tar.gz ../\$commit_hash/
-                """
-                archive "${env.commit_hash}/dx-toolkit-*-osx.tar.gz"
-                deleteDir()
-            }
-        },
         "windows" : {
             node('windowsprodbuilds') {
                 echo "Deleting workspace"

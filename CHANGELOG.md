@@ -6,20 +6,213 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [324.0] - beta
+## [340.0] - beta
 
-## Fixed
+### Changed
+
+* Upgraded Nextflow plugin version to 1.6.0
+* Nextflow - updated default instance types based on destination region
+
+### Fixed
+
+* Nextflow errorStrategy retry ends in 'failed' state if last retry fails
+
+## [339.0] - 2023.2.10 - stable
+
+* No significant changes
+
+## [338.1] - 2023.1.27
+
+### Added
+
+* Support for Granular Spot wait times in `dx run` using `--max-tree-spot-wait-time` and `--max-job-spot-wait-time`
+* Printing of Spot wait times in `dx describe` for jobs and workflows
+* Support for private Docker images in Nextflow pipelines on subjob level
+
+### Fixed
+
+* Feature switch check for Nextflow pipeline build in an app execution environment
+* `dx get database` command reads from the API server with the API proxy interceptor
+* Regex global flags in path matching to support Py3.11
+* `dx run --clone` for Nextflow jobs (clear cloned job's properties)
+* Do not rewrite ubuntu repo mirror after failed execDepends install
+
+### Changed
+
+* Upgraded Nextflow plugin version to 1.5.0
+
+## [337.0] - 2023.1.20
+
+### Changed
+
+* Upgraded Nextflow plugin version to 1.4.0
+* Failed Nextflow subjobs with 'terminate' errorStrategy finish in 'failed' state
+* Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
+* Exposed help messages for `dx build --nextflow`
+
+## [336.0] - 2023.1.7
+
+* No significant changes
+
+## [335.0] - 2022.12.12
+
+### Added
+
+* Group name for developer options in Nextflow pipeline applet
+
+### Fixed
+
+* Printing too many environment values with debug set to true
+* Preserving folder structure when publishing Nextflow output files
+* Missing required inputs passed to `nextflow run`
+
+## [334.0] - 2022.12.2
+
+### Added
+
+* `--external-upload-restricted` flag for `dx update project` and `dx find projects`
+* Support for `--destination` in `nextflow build --repository`
+* `resume` and `preserve_cache` input arguments to Nextflow applets to support Nextflow resume functionality
+* Support for error handling with Nextflow's errorStrategy
+* `region` argument to `DXProject.new()`
+
+### Fixed
+
+* retrieving session config when no parent process exists
+* an issue with describing global workflows by adding a resources container as a hint for describing underlying workflows
+
+## [333.0] - 2022.11.23
+
+### Added
+
+* `nextflow run` command in the log for easier debugging
+
+### Fixed
+
+* Overriding config arguments with an empty string for Nextflow pipelines
+
+### Changed
+
+* `psutil` version to 5.9.3 which includes wheelfiles for macOS arm64
+* Set ignore reuse in the nextflow applet template
+* Set `restartableEntryPoints` to "all" in the nextflow pipeline applet's `runsSpec`
+
+
+## [332.0] - 2022.11.04
+
+### Added
+
+* A warning for `dx build` when app(let)'s name is set both in `--extra-args` and `--destination`
+
+### Fixed
+
+* An error when setting app(let)s name in `dx build` (now the name set via `--extra-args` properly overrides the one set via `--destination`)
+*  `dx build --nextflow --repository` returns json instead of a simple string
+
+### Changed
+
+*  Help for building Nextflow pipelines is suppressed
+
+## [331.0] - 2022.10.14
+
+### Added
+
+* Added: `dx find jobs --json` and `dx describe --verbose job-xxxx` with --verbose argument return field internetUsageIPs if the caller is an org admin and the org has jobInternetUsageMonitoring enabled
+* Nextflow applets no longer have default arguments and required inputs
+
+### Fixed
+
+* `dx describe user-xxxx` will not try to print the name if it is not present in the API response
+ 
+## [330.0] - 2022.10.4
+
+### Added
+
+* Initial support for Nextflow
+* pyreadline3 dependency for Windows with Python >= 3.5
+
+### Fixed 
+
+* Do not check python3 syntax with python2 and vice versa in `dx build`
+* `dx build` properly verifies the applet's name given in the `extra-args` parameter
+
+## [329.0] - 2022.9.23
+
+### Added
+
+* `dx extract_dataset` command
+* Optional pandas dependency for dxpy
+
+### Changed
+- `dxpy.find_one_project`, `dxpy.find_one_data_object`, `dxpy.find_one_app` raise `DXError` if `zero_ok` argument is not a `bool`
+
+## [328.0] - 2022.9.8
+
+### Added
+
+* `--head-job-on-demand` argument for `dx run app(let)-xxxx` 
+* `--head-job-on-demand` argument for `dx-jobutil-new-job`
+* `--on-behalf-of <org>` argument for `dx new user`
+
+### Changed 
+
+* dx-toolkit never included in execDepends when building app(lets) with `dx build`
+
+### Deprecated
+
+* `--no-dx-toolkit-autodep` option for dx build
+
+### Fixed
+
+* Reduce the number of API calls for `dx run applet-xxxx` and `dx run workflow-xxxx`
+* `dx upload f1 f2 --visibility hidden` now correctly marks both files as hidden
+* `dx upload` retry on all types of SSL errors 
+
+## [327.1] - 2022.8.12
+
+### Fixed
+
+* Parsing ignoreReuse in `dx build` of workflow
+
+### Changed
+
+* DXHTTPRequest to pass ssl_context
+
+## [326.1] - 2022.7.7 
+
+### Added
+
+* '--rank' argument for `dx run`
+
+### Fixed
+
+* Do not use job's workspace container ID in /applet-xxxx/run for detached jobs
+
+## [325.1] - 2022.5.25
+
+### Fixed
+
+* `dx describe` of executable with bundledDepends that is not an asset
+* Building globalworkflow from existing workflow with `dx build --from`
+
+## [324.1] - 2022.5.13
+
+### Fixed
 
 * Improvements to symlink downloading reliability by solely using `aria2c` and enhancing options around its use (removes `wget` option for downloading symlinked files, adds the ability to set max tries for aria2c, adds `-c` flag for continuing downloads, removes the `--check-certificate=false` option).
 * `dx build` comparison of workflow directory to workflow name
 * Set project argument for `dx run --detach` when executed from inside a job
 
-## Changed
+### Changed
 
 * Removed `wget` option for downloading symlinked files
 * Bump allowed requests dxpy dependency version to 2.27.1
 
-## [323.0] - 2022.4.28 - stable
+### Added
+
+* New argument `symlink_max_tries` for `dxpy.download_dxfile()` with default value of 15
+
+## [323.0] - 2022.4.28
 
 ### Changed
 
@@ -371,7 +564,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Precise debian package build target
 
-## [290.1] - 2019.11.21 stable
+## [290.1] - 2019.11.21
 
 ### Changed
 
@@ -433,7 +626,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Only require futures package for python 2.7
 * Upgrade build dependencies for pip, setuptools, and wheel
 
-## [284.0] - 2019.06.13 stable
+## [284.0] - 2019.06.13
 
 ### Added
 

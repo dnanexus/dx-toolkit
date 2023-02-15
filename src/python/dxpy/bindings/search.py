@@ -434,7 +434,7 @@ def find_analyses(*args, **kwargs):
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=False, explicit_perms=None, region=None,
                   public=None, created_after=None, created_before=None, billed_to=None,
-                  limit=None, return_handler=False, first_page_size=100, containsPHI=None, **kwargs):
+                  limit=None, return_handler=False, first_page_size=100, containsPHI=None, externalUploadRestricted=None, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -476,6 +476,9 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :param containsPHI: If set to true, only returns projects that contain PHI.
         If set to false, only returns projects that do not contain PHI.
     :type containsPHI: boolean
+    :param externalUploadRestricted: If set to true, only returns projects with externalUploadRestricted enabled. 
+        If set to false, only returns projects that do not have externalUploadRestricted enabled. 
+    :type externalUploadRestricted: boolean
     :rtype: generator
 
     Returns a generator that yields all projects that match the query.
@@ -523,6 +526,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
         query["limit"] = limit
     if containsPHI is not None:
         query["containsPHI"] = containsPHI
+    if externalUploadRestricted is not None:
+        query["externalUploadRestricted"] = externalUploadRestricted
 
     return _find(dxpy.api.system_find_projects, query, limit, return_handler, first_page_size, **kwargs)
 
@@ -662,6 +667,9 @@ def find_global_workflows(name=None, name_mode='exact', category=None,
                                   first_page_size=first_page_size, **kwargs)
 
 def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
+    # users often incorrectly pass strings to zero_ok, fail fast in that case
+    if not isinstance(zero_ok, bool):
+        raise DXError('_find_one: Unexpected value found for argument zero_ok, it should be a bool')
     kwargs["limit"] = 1 if more_ok else 2
     response = method(**kwargs)
     result = next(response, None)
@@ -683,6 +691,7 @@ def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -703,6 +712,7 @@ def find_one_project(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -723,6 +733,7 @@ def find_one_app(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if

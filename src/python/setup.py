@@ -80,6 +80,10 @@ for directory, subdirectories, files in os.walk("dxpy/templating/templates"):
     directory = directory[len("dxpy/templating/"):]
     template_files.extend([os.path.join(directory, _file) for _file in files])
 
+nextflow_files = os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'nextflow'))
+nextflow_records = list(filter(lambda file: file[-5:] == ".json", nextflow_files))
+
+
 setup(
     name='dxpy',
     version=version,
@@ -92,13 +96,14 @@ setup(
     zip_safe=False,
     license='Apache Software License',
     packages = find_packages(exclude=['test']),
-    package_data={'dxpy.templating': template_files},
+    package_data={'dxpy.templating': template_files, 'dxpy.nextflow': nextflow_records},
     scripts = glob.glob(os.path.join(os.path.dirname(__file__), 'scripts', 'dx*')),
     entry_points = {
         "console_scripts": scripts,
     },
     install_requires = dependencies,
     extras_require={
+        'pandas': ["pandas==1.3.5; python_version>='3.7'", "pandas>=0.23.3,<=0.25.3; python_version>='3.5.3' and python_version<'3.7'", "pandas>=0.23.3,< 0.25.0; python_version<'3.5.3'"],
         'xattr': ["xattr==0.9.6; sys_platform == 'linux2' or sys_platform == 'linux'"]
     },
     tests_require = test_dependencies,

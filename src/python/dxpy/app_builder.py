@@ -192,7 +192,7 @@ def _fix_perm_filter(tar_obj):
     return tar_obj
 
 
-def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False):
+def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, force_symlinks=False, brief=False, resources_dir=None, worker_resources_subpath=""):
     """
     :param ensure_upload: If True, will bypass checksum of resources directory
                           and upload resources bundle unconditionally;
@@ -207,15 +207,24 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                            result in a broken link within the resource directory
                            unless you really know what you're doing.
     :type force_symlinks: boolean
+    :param resources_dir: Directory with resources to be archived and uploaded. If not given, uses `resources/`.
+    :type resources_dir: str
+    :param worker_resources_subpath: Path that will be prepended to the default directory where files are extracted on the worker.
+                                     Default is empty string, therefore files would be extracted directly to the root folder.
+                                     Example: If "home/dnanexus" is given, files will be extracted into /home/dnanexus.
+    :type worker_resources_subpath: str
     :returns: A list (possibly empty) of references to the generated archive(s)
     :rtype: list
 
-    If it exists, archives and uploads the contents of the
-    ``resources/`` subdirectory of *src_dir* to a new remote file
+    If resources_dir exists, archives and uploads the contents of the resources_dir
+    (usually ``resources/``) subdirectory of *src_dir* to a new remote file
     object, and returns a list describing a single bundled dependency in
     the form expected by the ``bundledDepends`` field of a run
     specification. Returns an empty list, if no archive was created.
     """
+    if not resources_dir:
+        resources_dir = os.path.join(src_dir, "resources")
+
     applet_spec = _get_applet_spec(src_dir)
 
     if project is None:
@@ -224,7 +233,6 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
         dest_project = project
         applet_spec['project'] = project
 
-    resources_dir = os.path.join(src_dir, "resources")
     if os.path.exists(resources_dir) and len(os.listdir(resources_dir)) > 0:
         target_folder = applet_spec['folder'] if 'folder' in applet_spec else folder
 
@@ -273,8 +281,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
                 # add an entry in the tar file for the current directory, but
                 # do not recurse!
-                tar_fh.add(dirname, arcname='.' + relative_dirname, recursive=False, filter=_fix_perm_filter)
-
+                tar_fh.add(dirname, arcname=worker_resources_subpath + relative_dirname, recursive=False, filter=_fix_perm_filter)
                 # Canonicalize the order of subdirectories; this is the order in
                 # which they will be visited by os.walk
                 subdirs.sort()
@@ -337,9 +344,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
                     # If we are to dereference, use the target fn
                     if deref_link:
                         true_filename = os.path.realpath(true_filename)
-
-                    tar_fh.add(true_filename, arcname='.' + relative_filename, filter=_fix_perm_filter)
-
+                    tar_fh.add(true_filename, arcname=worker_resources_subpath + relative_filename, filter=_fix_perm_filter)
                 # end for filename in sorted(files)
 
             # end for dirname, subdirs, files in os.walk(resources_dir):
@@ -426,7 +431,7 @@ def upload_resources(src_dir, project=None, folder='/', ensure_upload=False, for
 
 
 def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overwrite=False, archive=False,
-                  project=None, override_folder=None, override_name=None, dx_toolkit_autodep="stable",
+                  project=None, override_folder=None, override_name=None,
                   dry_run=False, brief=False, **kwargs):
     """
     Creates a new applet object.
@@ -437,11 +442,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
     :type override_folder: str
     :param override_name: name for the resulting applet which, if specified, overrides that given in dxapp.json
     :type override_name: str
-    :param dx_toolkit_autodep: What type of dx-toolkit dependency to
-        inject if none is present. "stable" for the APT package; "git"
-        for HEAD of dx-toolkit master branch; or False for no
-        dependency.
-    :type dx_toolkit_autodep: boolean or string
 
     """
     applet_spec = _get_applet_spec(src_dir)
@@ -612,34 +612,6 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
         else:
             raise AppBuilderException("No asset bundle was found that matched the specification %s"
                                       % (json.dumps(asset)))
-
-    # Include the DNAnexus client libraries as an execution dependency, if they are not already
-    # there
-    if dx_toolkit_autodep == "git":
-        dx_toolkit_dep = {"name": "dx-toolkit",
-                          "package_manager": "git",
-                          "url": "git://github.com/dnanexus/dx-toolkit.git",
-                          "tag": "master",
-                          "build_commands": "make install DESTDIR=/ PREFIX=/opt/dnanexus"}
-    elif dx_toolkit_autodep == "stable":
-        dx_toolkit_dep = {"name": "dx-toolkit", "package_manager": "apt"}
-    elif dx_toolkit_autodep:
-        raise AppBuilderException("dx_toolkit_autodep must be one of 'stable', 'git', or False; got %r instead" % (dx_toolkit_autodep,))
-
-    if dx_toolkit_autodep:
-        applet_spec["runSpec"].setdefault("execDepends", [])
-        exec_depends = applet_spec["runSpec"]["execDepends"]
-        if type(exec_depends) is not list or any(type(dep) is not dict for dep in exec_depends):
-            raise AppBuilderException("Expected runSpec.execDepends to be an array of objects")
-        dx_toolkit_dep_found = any(dep.get('name') in DX_TOOLKIT_PKGS or dep.get('url') in DX_TOOLKIT_GIT_URLS for dep in exec_depends)
-        if not dx_toolkit_dep_found:
-            exec_depends.append(dx_toolkit_dep)
-            if dx_toolkit_autodep == "git":
-                applet_spec.setdefault("access", {})
-                applet_spec["access"].setdefault("network", [])
-                # Note: this can be set to "github.com" instead of "*" if the build doesn't download any deps
-                if "*" not in applet_spec["access"]["network"]:
-                    applet_spec["access"]["network"].append("*")
 
     merge(applet_spec, kwargs)
 

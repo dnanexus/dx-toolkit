@@ -144,7 +144,7 @@ def process_dataobject_args(args):
     process_properties_args(args)
 
     # Visibility
-    args.hidden = (args.hidden == 'hidden')
+    args.hidden = (args.hidden == 'hidden' or args.hidden is True)
 
     # Details
     if args.details is not None:
@@ -351,8 +351,9 @@ def get_update_project_args(args):
         input_params['allowedExecutables'] = args.allowed_executables
     if args.unset_allowed_executables:
         input_params['allowedExecutables'] = None
+    if args.external_upload_restricted is not None:
+        input_params['externalUploadRestricted'] = True if args.external_upload_restricted == 'true' else False
     return input_params
-
 
 def process_phi_param(args):
     if args.containsPHI is not None:
@@ -360,3 +361,7 @@ def process_phi_param(args):
             args.containsPHI = True
         elif args.containsPHI == "false":
             args.containsPHI = False
+
+def process_external_upload_restricted_param(args):
+    if args.external_upload_restricted is not None:
+        args.external_upload_restricted = (args.external_upload_restricted == "true")
