@@ -1,0 +1,26 @@
+[
+    {
+        "annotation$a_id": "annotation$a_id"
+    },
+    {
+        "annotation$gene_name": "annotation$gene_name"
+    },
+    {
+        "annotation$gene_id": "annotation$gene_id"
+    },
+    {
+        "annotation$transcript_id": "annotation$transcript_id"
+    },
+    {
+        "annotation$consequences": "annotation$consequences"
+    },
+    {
+        "annotation$putative_impact": "annotation$putative_impact"
+    },
+    {
+        "annotation$hgvs_c": "annotation$hgvs_c"
+    },
+    {
+        "annotation$hgvs_p": "annotation$hgvs_p"
+    }
+]

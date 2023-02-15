@@ -1,0 +1,206 @@
+{
+    "project_context": "project-GFG8VPj0gJv4k9jV234KBZpB",
+    "fields": [
+        {
+            "genotype$a_id": "genotype$a_id"
+        },
+        {
+            "genotype$sample_id": "genotype$sample_id"
+        },
+        {
+            "genotype$locus_id": "genotype$locus_id"
+        },
+        {
+            "genotype$pos": "genotype$pos"
+        },
+        {
+            "genotype$type": "genotype$type"
+        },
+        {
+            "genotype$genotype_quality": "genotype$genotype_quality"
+        },
+        {
+            "genotype$depth": "genotype$depth"
+        },
+        {
+            "genotype$ref_yn": "genotype$ref_yn"
+        },
+        {
+            "genotype$chr": "genotype$chr"
+        },
+        {
+            "genotype$bin": "genotype$bin"
+        },
+        {
+            "allele$a_id": "allele$a_id"
+        },
+        {
+            "allele$locus_id": "allele$locus_id"
+        },
+        {
+            "allele$dbsnp151_rsid": "allele$dbsnp151_rsid"
+        },
+        {
+            "allele$chr": "allele$chr"
+        },
+        {
+            "allele$pos": "allele$pos"
+        },
+        {
+            "allele$end_pos": "allele$end_pos"
+        },
+        {
+            "allele$ref": "allele$ref"
+        },
+        {
+            "allele$alt": "allele$alt"
+        },
+        {
+            "allele$norm_pos": "allele$norm_pos"
+        },
+        {
+            "allele$norm_end_pos": "allele$norm_end_pos"
+        },
+        {
+            "allele$norm_ref": "allele$norm_ref"
+        },
+        {
+            "allele$norm_alt": "allele$norm_alt"
+        },
+        {
+            "allele$qual": "allele$qual"
+        },
+        {
+            "allele$filter": "allele$filter"
+        },
+        {
+            "allele$allele_type": "allele$allele_type"
+        },
+        {
+            "allele$worst_effect": "allele$worst_effect"
+        },
+        {
+            "allele$gnomad201_alt_freq": "allele$gnomad201_alt_freq"
+        },
+        {
+            "allele$alt_freq": "allele$alt_freq"
+        },
+        {
+            "allele$ref_freq": "allele$ref_freq"
+        },
+        {
+            "allele$nc_freq": "allele$nc_freq"
+        },
+        {
+            "allele$gt_freq": "allele$gt_freq"
+        },
+        {
+            "allele$gt_count": "allele$gt_count"
+        },
+        {
+            "allele$alt_count": "allele$alt_count"
+        },
+        {
+            "allele$ref_count": "allele$ref_count"
+        },
+        {
+            "allele$nc_count": "allele$nc_count"
+        },
+        {
+            "allele$bin": "allele$bin"
+        },
+        {
+            "annotation$a_id": "annotation$a_id"
+        },
+        {
+            "annotation$allele": "annotation$allele"
+        },
+        {
+            "annotation$effect": "annotation$effect"
+        },
+        {
+            "annotation$putative_impact": "annotation$putative_impact"
+        },
+        {
+            "annotation$gene_name": "annotation$gene_name"
+        },
+        {
+            "annotation$gene_id": "annotation$gene_id"
+        },
+        {
+            "annotation$feature_type": "annotation$feature_type"
+        },
+        {
+            "annotation$feature_id": "annotation$feature_id"
+        },
+        {
+            "annotation$transcript_biotype": "annotation$transcript_biotype"
+        },
+        {
+            "annotation$rank": "annotation$rank"
+        },
+        {
+            "annotation$total": "annotation$total"
+        },
+        {
+            "annotation$hgvs_c": "annotation$hgvs_c"
+        },
+        {
+            "annotation$hgvs_p": "annotation$hgvs_p"
+        },
+        {
+            "annotation$cdna_position": "annotation$cdna_position"
+        },
+        {
+            "annotation$cdna_len": "annotation$cdna_len"
+        },
+        {
+            "annotation$cds_position": "annotation$cds_position"
+        },
+        {
+            "annotation$cds_len": "annotation$cds_len"
+        },
+        {
+            "annotation$protein_position": "annotation$protein_position"
+        },
+        {
+            "annotation$protein_len": "annotation$protein_len"
+        },
+        {
+            "annotation$distance": "annotation$distance"
+        },
+        {
+            "annotation$pos": "annotation$pos"
+        },
+        {
+            "annotation$chr": "annotation$chr"
+        },
+        {
+            "annotation$bin": "annotation$bin"
+        }
+    ],
+    "stat": "raw",
+    "order_by": [
+        {
+            "genotype$a_id": "asc"
+        }
+    ],
+    "filters": {
+        "assay_filters": {
+            "compound": [
+                {
+                    "name": "genotype",
+                    "logic": "and",
+                    "filters": {},
+                    "entity": {
+                        "logic": "and",
+                        "name": "genotype",
+                        "operator": "exists",
+                        "children": []
+                    }
+                }
+            ],
+            "logic": "and"
+        }
+    }
+}

@@ -1,0 +1,11 @@
+[
+    {
+        "allele$a_id": "allele$a_id"
+    },
+    {
+        "sample$sample_id": "sample$sample_id"
+    },
+    {
+        "genotype$type": "genotype$type"
+    }
+]

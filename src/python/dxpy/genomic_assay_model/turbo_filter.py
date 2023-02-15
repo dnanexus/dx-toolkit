@@ -1,11 +1,8 @@
 import json
 import argparse
+import dxpy
+from ..utils.resolver import resolve_existing_path
 
-# Temporarily hardcode some variables that we will eventually get from the command line
-json_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/allele_filter.json"
-output_file = "test_output/allele_output.json"
-name = "testname"
-id = "testid"
 
 # Create a dictionary relating the fields in each input file to the table that they
 # need to filter data in
@@ -95,6 +92,10 @@ column_conditions["annotation"]["putative_impact"] = "in"
 column_conditions["annotation"]["hgvs_c"] = "in"
 column_conditions["annotation"]["hgvs_p"] = "in"
 
+# Section for defining returned columns for each of the three filter types
+with open("assets/allele_return_columns.json", "r") as infile:
+    allele_return_columns = json.load(infile)
+
 
 def AtomicFilter(table, friendly_name, condition, values):
     column_name = column_conversion[table][friendly_name]
@@ -107,23 +108,19 @@ def AtomicFilter(table, friendly_name, condition, values):
     return listed_filter
 
 
-if __name__ == "__main__":
-
-    with open(json_path, "r") as infile:
-        full_input_dict = json.load(infile)
+def GenerateAssayFilter(full_input_dict, name, id, filter_type):
+    # filter_type = allele,annotation, sample
 
     # There are three possible types of input JSON: a sample filter, an allele filter,
     # and an annotation filter
-
-    filter_file = "allele"
     filters_dict = {}
-    table = filter_file
+    table = filter_type
 
     for key in full_input_dict.keys():
         # Override the table name if we are working with a sample filter, as this filter
         # hits multiple table
-        if filter_file == "sample":
-            table = file_to_table[filter_file][key]
+        if filter_type == "sample":
+            table = file_to_table[filter_type][key]
 
         # Location needs to be handled slightly differently
         if key == "location":
@@ -162,10 +159,52 @@ if __name__ == "__main__":
                         full_input_dict[key],
                     )
                 )
-    final_dict = {"filters": {"assay_filter": {"name": name, "id": id, "compound": []}}}
-    final_dict["filters"]["assay_filter"]["compound"].append({"filters": filters_dict})
-    final_dict["filters"]["assay_filter"]["compound"].append(location_compound)
-    final_dict["filters"]["assay_filter"]["compound"].append({"logic": "and"})
+    final_filter_dict = {"assay_filter": {"name": name, "id": id, "compound": []}}
+
+    final_filter_dict["assay_filter"]["compound"].append({"filters": filters_dict})
+    final_filter_dict["assay_filter"]["compound"].append(location_compound)
+    final_filter_dict["assay_filter"]["compound"].append({"logic": "and"})
+
+    return final_filter_dict
+
+
+def FinalPayload(assay_filter, fields, project_context, filter_type):
+    final_payload = {}
+    final_payload["project_context"] = project_context
+    final_payload["fields"] = fields
+    final_payload["stat"] = "raw"
+
+    if filter_type == "allele":
+        order_by = [{"allele$allele_id": "asc"}]
+    elif filter_type == "annotation":
+        order_by = [{"annotation$a_id": "asc"}]
+    elif filter_type == "sample":
+        order_by = [{"sample$sample_id": "asc"}]
+    final_payload["order_by"] = order_by
+
+    final_payload["filters"] = assay_filter
+    return final_payload
+
+
+if __name__ == "__main__":
+    # Temporarily hardcode some variables that we will eventually get from the command line
+    json_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/allele_filter.json"
+    output_file = "test_output/final_payload.json"
+    name = "testname"
+    id = "testid"
+    filter_type = "allele"
+    project_context = "project-GFG8VPj0gJv4k9jV234KBZpB"
+
+    project, path, entity_result = resolve_existing_path(args.path)
+
+    with open(json_path, "r") as infile:
+        full_input_dict = json.load(infile)
+
+    assay_filter = GenerateAssayFilter(full_input_dict, name, id, filter_type)
+
+    final_payload = FinalPayload(
+        assay_filter, allele_return_columns, project_context, filter_type
+    )
 
     with open(output_file, "w") as outfile:
-        json.dump(final_dict, outfile)
+        json.dump(final_payload, outfile)

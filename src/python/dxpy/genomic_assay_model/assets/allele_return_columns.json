@@ -1,0 +1,32 @@
+[
+    {
+        "allele$a_id": "allele$a_id"
+    },
+    {
+        "allele$chr": "allele$chr"
+    },
+    {
+        "allele$pos": "allele$pos"
+    },
+    {
+        "allele$ref": "allele$ref"
+    },
+    {
+        "allele$alt": "allele$alt"
+    },
+    {
+        "allele$rsid": "allele$rsid"
+    },
+    {
+        "allele$allele_type": "phenotype$p53_i0"
+    },
+    {
+        "allele$dataset_alt_freq": "allele$dataset_alt_freq"
+    },
+    {
+        "allele$gnomad_alt_freq": "allele$gnomad_alt_freq"
+    },
+    {
+        "allele$worst_effect": "allele$worst_effect"
+    }
+]
