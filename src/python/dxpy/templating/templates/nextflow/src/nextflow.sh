@@ -486,6 +486,20 @@ nf_task_exit() {
 }
 
 nf_task_entry() {
+  # Disable dnanexus apt proxy
+  rm /etc/apt/apt.conf.d/99dnanexus
+  # Install docker 20.10.23
+  export VERSION="20.10.23"
+  echo "Installing Docker $VERSION"
+  curl -fsSL https://get.docker.com -o get-docker.sh
+  if [[ $debug == true ]]; then
+      sh get-docker.sh
+  else
+      sh get-docker.sh &>/dev/null
+  fi
+  unset VERSION
+  docker --version
+
   docker_credentials=$(dx find data --path "$DX_WORKSPACE_ID:$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
   if [ -n "$docker_credentials" ]; then
     docker_registry_login
