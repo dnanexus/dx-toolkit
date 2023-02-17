@@ -1,11 +1,17 @@
 [
     {
-        "allele$a_id": "allele$a_id"
+        "allele_id": "allele$a_id"
     },
     {
-        "sample$sample_id": "sample$sample_id"
+        "sample_id": "sample$sample_id"
     },
     {
-        "genotype$type": "genotype$type"
+        "chromosome": "allele$chr"
+    },
+    {
+        "starting_position": "allele$pos"
+    },
+    {
+        "genotype": "genotype$type"
     }
 ]

@@ -1,7 +1,9 @@
 import json
 import argparse
 import dxpy
-from ..utils.resolver import resolve_existing_path
+
+# from ..utils.resolver import resolve_existing_path
+# from ..cli.dataset_utilities import DXDataset
 
 
 # Create a dictionary relating the fields in each input file to the table that they
@@ -92,13 +94,10 @@ column_conditions["annotation"]["putative_impact"] = "in"
 column_conditions["annotation"]["hgvs_c"] = "in"
 column_conditions["annotation"]["hgvs_p"] = "in"
 
-# Section for defining returned columns for each of the three filter types
-with open("assets/allele_return_columns.json", "r") as infile:
-    allele_return_columns = json.load(infile)
 
-
-def AtomicFilter(table, friendly_name, condition, values):
+def BasicFilter(table, friendly_name, values):
     column_name = column_conversion[table][friendly_name]
+    condition = column_conditions[table][friendly_name]
     filter_key = "{}${}".format(table, column_name)
     if condition == "between":
         values = [float(values["min"]), float(values["max"])]
@@ -106,6 +105,30 @@ def AtomicFilter(table, friendly_name, condition, values):
         values = int(values)
     listed_filter = {filter_key: [{"condition": condition, "values": values}]}
     return listed_filter
+
+
+def LocationFilter(table, location):
+    # A location filter has two atomic filters with the exact same key.  Thus, the two filters
+    # need to be in the list under the table$column key
+    chr_filter = BasicFilter(
+        table,
+        "chromosome",
+        location["chromosome"],
+    )
+    pos_key = "{}$pos".format(table)
+    # first handle starting_position
+    starting_filter = {
+        "condition": column_conditions[table]["starting_position"],
+        "values": int(location["starting_position"]),
+    }
+    ending_filter = {
+        "condition": column_conditions[table]["ending_position"],
+        "values": int(location["ending_position"]),
+    }
+    position_filter = {pos_key: [starting_filter, ending_filter]}
+    location_filter = {"filters": position_filter}
+    location_filter["filters"]["logic"] = "and"
+    return location_filter
 
 
 def GenerateAssayFilter(full_input_dict, name, id, filter_type):
@@ -126,60 +149,56 @@ def GenerateAssayFilter(full_input_dict, name, id, filter_type):
         if key == "location":
             location_compound = {"compound": []}
             location_list = full_input_dict["location"]
-            grouped_location_filter = {}
+            grouped_location_filter = []
             for location in location_list:
                 # The grouped filters object consisting of up to three atomic filters
+                location_filter = LocationFilter(table, location)
+                grouped_location_filter.append(location_filter)
 
-                atomic_location_filters = {}
-                for location_element in location.keys():
-                    condition = column_conditions["allele"][location_element]
-                    # One atomic filter each for chromsome, starting location, and ending location
-                    atomic_location_filters.update(
-                        AtomicFilter(
-                            "allele",
-                            location_element,
-                            condition,
-                            location[location_element],
-                        )
-                    )
-                grouped_location_filter["filters"] = atomic_location_filters
             location_compound["compound"] = grouped_location_filter
-            location_compound["compound"]["logic"] = "or"
-            location_compound["compound"]["name"] = "allele location"
+            location_compound["compound"][0]["logic"] = "or"
+            location_compound["compound"][0]["name"] = "allele location"
 
         else:
-            condition = column_conditions[table][key]
-
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
                 filters_dict.update(
-                    AtomicFilter(
+                    BasicFilter(
                         table,
                         key,
-                        condition,
                         full_input_dict[key],
                     )
                 )
-    final_filter_dict = {"assay_filter": {"name": name, "id": id, "compound": []}}
+    final_filter_dict = {"assay_filters": {"name": name, "id": id, "compound": []}}
 
-    final_filter_dict["assay_filter"]["compound"].append({"filters": filters_dict})
-    final_filter_dict["assay_filter"]["compound"].append(location_compound)
-    final_filter_dict["assay_filter"]["compound"].append({"logic": "and"})
+    final_filter_dict["assay_filters"]["compound"].append({"filters": filters_dict})
+    final_filter_dict["assay_filters"]["compound"][0]["filters"]["logic"] = "and"
+    final_filter_dict["assay_filters"]["compound"].append(location_compound)
+    final_filter_dict["assay_filters"]["compound"].append({"logic": "and"})
 
     return final_filter_dict
 
 
-def FinalPayload(assay_filter, fields, project_context, filter_type):
+def FinalPayload(assay_filter, project_context, filter_type):
     final_payload = {}
     final_payload["project_context"] = project_context
-    final_payload["fields"] = fields
     final_payload["stat"] = "raw"
+
+    # Section for defining returned columns for each of the three filter types
 
     if filter_type == "allele":
         order_by = [{"allele$allele_id": "asc"}]
+        with open("assets/allele_return_columns.json", "r") as infile:
+            fields = json.load(infile)
     elif filter_type == "annotation":
         order_by = [{"annotation$a_id": "asc"}]
+        with open("assets/annotation_return_columns.json", "r") as infile:
+            fields = json.load(infile)
     elif filter_type == "sample":
         order_by = [{"sample$sample_id": "asc"}]
+        with open("assets/sample_return_columns.json", "r") as infile:
+            fields = json.load(infile)
+
+    final_payload["fields"] = fields
     final_payload["order_by"] = order_by
 
     final_payload["filters"] = assay_filter
@@ -190,21 +209,28 @@ if __name__ == "__main__":
     # Temporarily hardcode some variables that we will eventually get from the command line
     json_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/allele_filter.json"
     output_file = "test_output/final_payload.json"
+
+    filter_type = "allele"
+    record_id = "record-FyFPyz0071F54Zjb32vG82Gj"
+    project_id = "project-FkyXg38071F1vGy2GyXyYYQB"
+
+    # project_context, path, entity_result = resolve_existing_path(
+    #    "{}:{}".format(project_id, record_id)
+    # )
+    # rec_descriptor = DXDataset(record_id, project=project_id).get_descriptor()
+    # rec_dict = rec_descriptor.get_dictionary()
+
+    # Name and ID, and context will come from the descriptor, which is processed upstream of this script
     name = "testname"
     id = "testid"
-    filter_type = "allele"
-    project_context = "project-GFG8VPj0gJv4k9jV234KBZpB"
-
-    project, path, entity_result = resolve_existing_path(args.path)
+    project_context = "context"
 
     with open(json_path, "r") as infile:
         full_input_dict = json.load(infile)
 
     assay_filter = GenerateAssayFilter(full_input_dict, name, id, filter_type)
 
-    final_payload = FinalPayload(
-        assay_filter, allele_return_columns, project_context, filter_type
-    )
+    final_payload = FinalPayload(assay_filter, project_context, filter_type)
 
     with open(output_file, "w") as outfile:
         json.dump(final_payload, outfile)

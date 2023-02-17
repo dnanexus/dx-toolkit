@@ -1,26 +1,26 @@
 [
     {
-        "annotation$a_id": "annotation$a_id"
+        "allele_id": "annotation$a_id"
     },
     {
-        "annotation$gene_name": "annotation$gene_name"
+        "gene_name": "annotation$gene_name"
     },
     {
-        "annotation$gene_id": "annotation$gene_id"
+        "gene_id": "annotation$gene_id"
     },
     {
-        "annotation$transcript_id": "annotation$transcript_id"
+        "feature_id": "annotation$transcript_id"
     },
     {
-        "annotation$consequences": "annotation$consequences"
+        "consequences": "annotation$consequences"
     },
     {
-        "annotation$putative_impact": "annotation$putative_impact"
+        "putative_impact": "annotation$putative_impact"
     },
     {
-        "annotation$hgvs_c": "annotation$hgvs_c"
+        "hgvs_c": "annotation$hgvs_c"
     },
     {
-        "annotation$hgvs_p": "annotation$hgvs_p"
+        "hgvs_p": "annotation$hgvs_p"
     }
 ]

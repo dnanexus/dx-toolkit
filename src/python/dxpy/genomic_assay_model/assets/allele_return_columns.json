@@ -1,32 +1,32 @@
 [
     {
-        "allele$a_id": "allele$a_id"
+        "allele_id": "allele$a_id"
     },
     {
-        "allele$chr": "allele$chr"
+        "chromosome": "allele$chr"
     },
     {
-        "allele$pos": "allele$pos"
+        "starting_position": "allele$pos"
     },
     {
-        "allele$ref": "allele$ref"
+        "ref": "allele$ref"
     },
     {
-        "allele$alt": "allele$alt"
+        "alt": "allele$alt"
     },
     {
-        "allele$rsid": "allele$rsid"
+        "rsid": "allele$rsid"
     },
     {
-        "allele$allele_type": "phenotype$p53_i0"
+        "allele_type": "phenotype$p53_i0"
     },
     {
-        "allele$dataset_alt_freq": "allele$dataset_alt_freq"
+        "dataset_alt_freq": "allele$dataset_alt_freq"
     },
     {
-        "allele$gnomad_alt_freq": "allele$gnomad_alt_freq"
+        "gnomad_alt_freq": "allele$gnomad_alt_freq"
     },
     {
-        "allele$worst_effect": "allele$worst_effect"
+        "aworst_effect": "allele$worst_effect"
     }
 ]
