@@ -18,7 +18,7 @@
         "rsid": "allele$rsid"
     },
     {
-        "allele_type": "phenotype$p53_i0"
+        "allele_type": "allele$allele_type"
     },
     {
         "dataset_alt_freq": "allele$dataset_alt_freq"

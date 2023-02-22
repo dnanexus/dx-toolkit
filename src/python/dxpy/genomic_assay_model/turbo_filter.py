@@ -110,7 +110,7 @@ def BasicFilter(table, friendly_name, values):
 def LocationFilter(table, location):
     # A location filter has two atomic filters with the exact same key.  Thus, the two filters
     # need to be in the list under the table$column key
-    chr_filter = BasicFilter(
+    filter_group = BasicFilter(
         table,
         "chromosome",
         location["chromosome"],
@@ -125,9 +125,9 @@ def LocationFilter(table, location):
         "condition": column_conditions[table]["ending_position"],
         "values": int(location["ending_position"]),
     }
-    position_filter = {pos_key: [starting_filter, ending_filter]}
-    location_filter = {"filters": position_filter}
-    location_filter["filters"]["logic"] = "and"
+    filter_group[pos_key] = [starting_filter, ending_filter]
+    location_filter = {"filters": filter_group}
+    location_filter["logic"] = "and"
     return location_filter
 
 
@@ -156,8 +156,8 @@ def GenerateAssayFilter(full_input_dict, name, id, filter_type):
                 grouped_location_filter.append(location_filter)
 
             location_compound["compound"] = grouped_location_filter
-            location_compound["compound"][0]["logic"] = "or"
-            location_compound["compound"][0]["name"] = "allele location"
+            location_compound["logic"] = "or"
+            location_compound["name"] = "location"
 
         else:
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
@@ -171,9 +171,9 @@ def GenerateAssayFilter(full_input_dict, name, id, filter_type):
     final_filter_dict = {"assay_filters": {"name": name, "id": id, "compound": []}}
 
     final_filter_dict["assay_filters"]["compound"].append({"filters": filters_dict})
-    final_filter_dict["assay_filters"]["compound"][0]["filters"]["logic"] = "and"
+    final_filter_dict["assay_filters"]["compound"][0]["logic"] = "and"
     final_filter_dict["assay_filters"]["compound"].append(location_compound)
-    final_filter_dict["assay_filters"]["compound"].append({"logic": "and"})
+    final_filter_dict["assay_filters"]["logic"] = "and"
 
     return final_filter_dict
 
@@ -181,7 +181,9 @@ def GenerateAssayFilter(full_input_dict, name, id, filter_type):
 def FinalPayload(assay_filter, project_context, filter_type):
     final_payload = {}
     final_payload["project_context"] = project_context
-    final_payload["stat"] = "raw"
+    # This might be set automatically depending on whether the raw or raw-query
+    # API is selected, if not we need to set it here
+    # final_payload["stat"] = "raw"
 
     # Section for defining returned columns for each of the three filter types
 
@@ -200,8 +202,8 @@ def FinalPayload(assay_filter, project_context, filter_type):
 
     final_payload["fields"] = fields
     final_payload["order_by"] = order_by
-
     final_payload["filters"] = assay_filter
+    final_payload["validate_geno_bins"] = True
     return final_payload
 
 
