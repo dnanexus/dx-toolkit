@@ -166,8 +166,8 @@ get_resume_session_id() {
 
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   [[ "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]] ||
-    dx-jobutil-report-error "Invalid resume value. Please provide either \"true\", \"last\", or \"sessionID\". 
-    If a sessionID was provided, Nextflow cached content could not be found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/. 
+    dx-jobutil-report-error "Invalid resume value. Please provide either \"true\", \"last\", or \"sessionID\".
+    If a sessionID was provided, Nextflow cached content could not be found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/.
     Please provide the exact sessionID for \"resume\" or run without resume."
 
   NXF_UUID=$PREV_JOB_SESSION_ID
@@ -177,12 +177,12 @@ restore_cache() {
   # download latest cache.tar from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
   PREV_JOB_CACHE_FILE=$(
     dx api system findDataObjects \
-      '{"visibility": "either", 
+      '{"visibility": "either",
         "name":"cache.tar",
         "scope": {
-          "project": "'$DX_PROJECT_CONTEXT_ID'", 
-          "folder": "/.nextflow_cache_db/'$NXF_UUID'", 
-          "recurse": false}, 
+          "project": "'$DX_PROJECT_CONTEXT_ID'",
+          "folder": "/.nextflow_cache_db/'$NXF_UUID'",
+          "recurse": false},
         "describe": true}' 2>/dev/null |
       jq -r '.results | sort_by(.describe.created)[-1] | .id // empty'
   )
@@ -256,8 +256,8 @@ check_running_jobs() {
   )
 
   [[ -n $FIRST_RESUMED_JOB && $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
-    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
-    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
+    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID.
+    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun,
     or run without preserve_cache set to true."
 }
 
@@ -298,8 +298,8 @@ main() {
   fi
 
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.6.0
-  
+  NXF_PLUGINS_VERSION=1.6.1
+
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
   [[ -z $cloned_job_properties ]] || dx unset_properties "$DX_JOB_ID" $cloned_job_properties
@@ -416,7 +416,7 @@ main() {
       disown $LOG_MONITOR_PID
       set -x
     fi
-    
+
     wait $NXF_EXEC_PID
     ret=$?
     exit $ret
