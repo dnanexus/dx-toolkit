@@ -73,7 +73,11 @@ from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, 
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
                               print_ls_l_desc, get_ls_l_desc_fields, get_io_desc, get_find_executions_string)
 from ..system_requirements import SystemRequirementsDict
-
+try:
+   from urllib.parse import urlparse
+except:
+    # Python 2
+   from urlparse import urlparse
 try:
     import colorama
     colorama.init()
@@ -3731,7 +3735,11 @@ def ssh(args, ssh_config_verified=False):
         if job_desc.get('httpsApp', {}).get('dns', {}).get('url') is not None:
             https_app_enabled_job = True
             url = job_desc['httpsApp']['dns']['url']
-            host = url[8:] if url.startswith('https://') else url
+            host = urlparse(url).hostname
+            # If the hostname is not parsed properly revert back to default behavior
+            if host is None:
+                host = job_desc.get('host')
+                https_app_enabled_job = False
         host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
         ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
