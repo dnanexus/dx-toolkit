@@ -12,8 +12,8 @@ import dxpy
 # annotation tables respectively, only the sample file references data in multiple tables
 file_to_table = {}
 file_to_table["sample"] = {}
-file_to_table["sample"]["allele_id"] = "allele"
-file_to_table["sample"]["sample_id"] = "sample"
+file_to_table["sample"]["allele_id"] = "genotype"
+file_to_table["sample"]["sample_id"] = "genotype"
 file_to_table["sample"]["genotype"] = "genotype"
 
 
@@ -26,7 +26,11 @@ column_conversion = {
     "annotation": {},
 }
 
-column_conversion["sample"] = {"sample_id": "sample_id"}
+column_conversion["sample"] = {
+    "sample_id": "sample_id",
+    "allele_id": "a_id",
+    "genotype": "type",
+}
 
 column_conversion["allele"] = {
     "allele_id": "a_id",
@@ -81,6 +85,8 @@ column_conditions["allele"]["ending_position"] = "less-than"
 
 column_conditions["genotype"] = {}
 column_conditions["genotype"]["genotype"] = "in"
+column_conditions["genotype"]["allele_id"] = "in"
+column_conditions["genotype"]["sample_id"] = "in"
 
 
 column_conditions["annotation"] = {}
