@@ -3689,7 +3689,8 @@ def verify_ssh_config():
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
         err_exit(args.job_id + " does not look like a DNAnexus job ID")
-    job_desc = try_call(dxpy.describe, args.job_id)
+    ssh_desc_fields = {"state":True, "sshHostKey": True, "httpsApp": True, "sshPort": True, "host": True, "allowSSH": True}
+    job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
         err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
@@ -3721,7 +3722,7 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
         time.sleep(1)
-        job_desc = dxpy.describe(args.job_id)
+        job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
         sys.stdout.flush()
     sys.stdout.write("\n")
@@ -3740,13 +3741,13 @@ def ssh(args, ssh_config_verified=False):
             if https_host is not None:
                 host = https_host
                 known_host = https_host
-        host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
+        host_key = job_desc.get('sshHostKey')
         ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
             break
         else:
             time.sleep(1)
-            job_desc = dxpy.describe(args.job_id)
+            job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
             sys.stdout.write(".")
             sys.stdout.flush()
     sys.stdout.write("\n")
@@ -3812,7 +3813,7 @@ def ssh(args, ssh_config_verified=False):
     ssh_args += args.ssh_args
     exit_code = subprocess.call(ssh_args)
     try:
-        job_desc = dxpy.describe(args.job_id)
+        job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         if args.check_running and job_desc['state'] == 'running':
             msg = "Job {job_id} is still running. Terminate now?".format(job_id=args.job_id)
             if prompt_for_yn(msg, default=False):
