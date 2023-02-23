@@ -4564,7 +4564,7 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
                                         parents=[json_arg, no_color_arg, delim_arg, env_args],
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
-parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
+parser_describe.add_argument('--verbose', help='Include additional metadata', action='store_true')
 parser_describe.add_argument('--name', help='Only print the matching names, one per line', action='store_true')
 parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24),
                              action='store_true')
