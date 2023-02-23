@@ -73,7 +73,11 @@ from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, 
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
                               print_ls_l_desc, get_ls_l_desc_fields, get_io_desc, get_find_executions_string)
 from ..system_requirements import SystemRequirementsDict
-
+try:
+   from urllib.parse import urlparse
+except:
+    # Python 2
+   from urlparse import urlparse
 try:
     import colorama
     colorama.init()
@@ -3685,7 +3689,8 @@ def verify_ssh_config():
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
         err_exit(args.job_id + " does not look like a DNAnexus job ID")
-    job_desc = try_call(dxpy.describe, args.job_id)
+    ssh_desc_fields = {"state":True, "sshHostKey": True, "httpsApp": True, "sshPort": True, "host": True, "allowSSH": True}
+    job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
         err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
@@ -3717,23 +3722,32 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
         time.sleep(1)
-        job_desc = dxpy.describe(args.job_id)
+        job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
         sys.stdout.flush()
     sys.stdout.write("\n")
 
     sys.stdout.write("Resolving job hostname and SSH host key...")
     sys.stdout.flush()
+
+    known_host = "{job_id}.dnanex.us".format(job_id=args.job_id)
     host, host_key, ssh_port = None, None, None
     for i in range(90):
         host = job_desc.get('host')
-        host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
+        url = job_desc.get('httpsApp', {}).get('dns', {}).get('url')
+        if url is not None:
+            https_host = urlparse(url).hostname
+            # If the hostname is not parsed properly revert back to default behavior
+            if https_host is not None:
+                host = https_host
+                known_host = https_host
+        host_key = job_desc.get('sshHostKey')
         ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
             break
         else:
             time.sleep(1)
-            job_desc = dxpy.describe(args.job_id)
+            job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
             sys.stdout.write(".")
             sys.stdout.flush()
     sys.stdout.write("\n")
@@ -3744,7 +3758,7 @@ def ssh(args, ssh_config_verified=False):
 
     known_hosts_file = os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_known_hosts')
     with open(known_hosts_file, 'a') as fh:
-        fh.write("{job_id}.dnanex.us {key}\n".format(job_id=args.job_id, key=host_key.rstrip()))
+        fh.write("{known_host} {key}\n".format(known_host=known_host, key=host_key.rstrip()))
 
     import socket
     connected = False
@@ -3790,7 +3804,7 @@ def ssh(args, ssh_config_verified=False):
 
     print("Connecting to {}:{}".format(host, ssh_port))
     ssh_args = ['ssh', '-i', os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_id'),
-                '-o', 'HostKeyAlias={}.dnanex.us'.format(args.job_id),
+                '-o', 'HostKeyAlias={}'.format(known_host),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
                 '-p', str(ssh_port), '-l', 'dnanexus', host]
     if args.ssh_proxy:
@@ -3799,7 +3813,7 @@ def ssh(args, ssh_config_verified=False):
     ssh_args += args.ssh_args
     exit_code = subprocess.call(ssh_args)
     try:
-        job_desc = dxpy.describe(args.job_id)
+        job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         if args.check_running and job_desc['state'] == 'running':
             msg = "Job {job_id} is still running. Terminate now?".format(job_id=args.job_id)
             if prompt_for_yn(msg, default=False):
