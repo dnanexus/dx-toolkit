@@ -315,7 +315,7 @@ main() {
   # check if all run opts provided by user are supported
   validate_run_opts
 
-  # Check if already hit limit of past sessions stored in cache
+  # Check if limit reached for Nextflow sessions preserved in this project's cache
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage
   fi
