@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Script that is used to run both the main Nextflow orchestrator job
+# and the Nextflow task sub-jobs.
+
 set -f
 
 DOCKER_CREDS_FOLDER=/docker/credentials/
@@ -66,6 +69,7 @@ generate_runtime_config() {
   fi
 }
 
+# On exit, for the main Nextflow orchestrator job
 on_exit() {
   ret=$?
 
@@ -289,6 +293,7 @@ dx_path() {
   esac
 }
 
+# Entry point for the main Nextflow orchestrator job
 main() {
   if [[ $debug == true ]]; then
     export NXF_DEBUG=2
@@ -340,7 +345,7 @@ main() {
   # get current executable name
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
 
-  # set/create current session id
+  # If resuming session, use resume id; otherwise create id for this session
   if [[ -n $resume ]]; then
     get_resume_session_id
   else
@@ -422,6 +427,7 @@ main() {
     exit $ret
 }
 
+# On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   ret=$?
   if [ -f .command.log ]; then
@@ -471,6 +477,7 @@ nf_task_exit() {
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
+# Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
   docker_credentials=$(dx find data --path "$DX_WORKSPACE_ID:$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
   if [ -n "$docker_credentials" ]; then
