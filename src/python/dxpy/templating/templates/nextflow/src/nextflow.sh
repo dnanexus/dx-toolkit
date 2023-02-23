@@ -103,9 +103,7 @@ on_exit() {
     # wrap cache folder and upload cache.tar
     if [[ -n "$(ls -A .nextflow)" ]]; then
       tar -cf cache.tar .nextflow
-
-      CACHE_ID=$(dx upload "cache.tar" --path "$DX_CACHEDIR/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
-        echo "Upload cache of current session as file: $CACHE_ID" &&
+      nxf_dx_upload "cache.tar" "$DX_CACHEDIR/$NXF_UUID" &&
         rm -f cache.tar ||
         echo "Failed to upload cache of current session $NXF_UUID"
     else
@@ -422,10 +420,17 @@ main() {
     exit $ret
 }
 
+nxf_dx_upload() {
+    local name=$1
+    local target=${2%/}
+    escape_name="${name//:/\\:}"
+    dx upload "$name" --path "$target/$escape_name" --no-progress --brief --wait -p -r | (echo -n "Upload $name to $target/$escape_name: " && cat) || true
+}
+
 nf_task_exit() {
   ret=$?
   if [ -f .command.log ]; then
-    dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
+    nxf_dx_upload .command.log "$TASK_WORKDIR"
   else
     >&2 echo "Missing Nextflow .command.log file"
   fi
@@ -478,8 +483,9 @@ nf_task_entry() {
   fi
   # capture the exit code
   trap nf_task_exit EXIT
+
   # remove the line in .command.run to disable printing env vars if debugging is on
-  dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
+  dx cat "${TASK_WORKDIR}/.command.run" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
   set +e
   # enable debugging mode
   [[ $NXF_DEBUG ]] && set -x
