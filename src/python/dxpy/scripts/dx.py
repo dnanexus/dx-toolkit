@@ -3728,18 +3728,18 @@ def ssh(args, ssh_config_verified=False):
 
     sys.stdout.write("Resolving job hostname and SSH host key...")
     sys.stdout.flush()
+
+    known_host = "{job_id}.dnanex.us".format(job_id=args.job_id)
     host, host_key, ssh_port = None, None, None
-    https_app_enabled_job = False
     for i in range(90):
         host = job_desc.get('host')
-        if job_desc.get('httpsApp', {}).get('dns', {}).get('url') is not None:
-            https_app_enabled_job = True
-            url = job_desc['httpsApp']['dns']['url']
-            host = urlparse(url).hostname
+        url = job_desc.get('httpsApp', {}).get('dns', {}).get('url')
+        if url is not None:
+            https_host = urlparse(url).hostname
             # If the hostname is not parsed properly revert back to default behavior
-            if host is None:
-                host = job_desc.get('host')
-                https_app_enabled_job = False
+            if https_host is not None:
+                host = https_host
+                known_host = https_host
         host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
         ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
@@ -3756,9 +3756,6 @@ def ssh(args, ssh_config_verified=False):
         err_exit(msg.format(args.job_id))
 
     known_hosts_file = os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_known_hosts')
-    known_host = "{job_id}.dnanex.us".format(job_id=args.job_id)
-    if https_app_enabled_job:
-        known_host = host
     with open(known_hosts_file, 'a') as fh:
         fh.write("{known_host} {key}\n".format(known_host=known_host, key=host_key.rstrip()))
 
