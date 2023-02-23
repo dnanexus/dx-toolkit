@@ -217,11 +217,13 @@ restore_cache() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
+# Have to ask user to empty the cache if limit exceeded because Nextflow only
+# has UPLOAD access to project
 check_cache_db_storage() {
   MAX_CACHE_STORAGE=20
   existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
   [[ $existing_cache -le MAX_CACHE_STORAGE ]] ||
-    dx-jobutil-report-error "The number of preserved sessions is already at the limit (N=20) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true. "
+    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
 }
 
 validate_run_opts() {
@@ -302,6 +304,7 @@ main() {
     set -x
   fi
 
+  # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   NXF_PLUGINS_VERSION=1.6.0
   
@@ -312,7 +315,7 @@ main() {
   # check if all run opts provided by user are supported
   validate_run_opts
 
-  # check if the number of preserved cache in current project does not exceed the limit (20)
+  # Check if already hit limit of past sessions stored in cache
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage
   fi
