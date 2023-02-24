@@ -6,6 +6,20 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Support for using `dx ssh` to connect to job's httpsApp hostname
+* Enhancements to the `dx extract_dataset` utility
+
+### Changed
+
+* Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
+* Increased HTTP timeout to 15 minutes to synchronize with the API server
+ 
+### Fixed
+
+* Helpstring of '--verbose' arg
+
 ## [340.0] - beta
 
 ### Changed
