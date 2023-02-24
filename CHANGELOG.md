@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Upgraded Nextflow plugin version to 1.6.1
+
 ## [340.0] - beta
 
 ### Changed
