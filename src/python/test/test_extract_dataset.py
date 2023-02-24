@@ -109,11 +109,12 @@ class TestDXExtractDataset(unittest.TestCase):
     
     def test_list_entities_negative(self):
         dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
-        expected_error_message = "--list-entities cannot be specified with: ['--sql']"
+        expected_error_contents = ["--list-entities cannot be specified with:", "--sql"]
         cmd = ["dx", "extract_dataset", dataset_record, "--list-entities", "--sql"]
         process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
         stderr = process.communicate()[1]
-        self.assertTrue(expected_error_message in stderr)
+        for error_content in expected_error_contents:
+            self.assertTrue(error_content in stderr)
 
     def test_list_fields(self):
         dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
@@ -126,12 +127,13 @@ class TestDXExtractDataset(unittest.TestCase):
 
     def test_list_fields_negative(self):
         dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
-        expected_error_message = "The following entity/entities cannot be found: ['tests']"
+        expected_error_contents = ["The following entity/entities cannot be found:", "tests"]
         entities = "tests"
         cmd = ["dx", "extract_dataset", dataset_record, "--list-fields","--entities", entities]
         process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
         stderr = process.communicate()[1]
-        self.assertTrue(expected_error_message in stderr)
+        for error_content in expected_error_contents:
+            self.assertTrue(error_content in stderr)
 
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
