@@ -6,29 +6,32 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [341.0] - beta
+
 ### Added
 
-* Support for using `dx ssh` to connect to job's httpsApp hostname
-* Enhancements to the `dx extract_dataset` utility
-
+* `dx ssh` to connect to job's public hostname if job is httpsApp enabled
+* '--list-fields', '--list-entities', '--entities' arguments for `dx extract_dataset`
+* 
 ### Changed
 
 * Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
-* Increased HTTP timeout to 15 minutes to synchronize with the API server
+* Increased dxpy HTTP timeout to 15 minutes
  
 ### Fixed
 
 * Helpstring of '--verbose' arg
 
-## [340.0] - beta
+## [340.1] - 2023.2.25 - stable
 
 ### Changed
 
-* Upgraded Nextflow plugin version to 1.6.0
 * Nextflow - updated default instance types based on destination region
+* Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
 
 ### Fixed
 
+* Use project ID for file-xxxx/describe API calls in dxjava DXFile
 * Nextflow errorStrategy retry ends in 'failed' state if last retry fails
 
 ## [339.0] - 2023.2.10 - stable
