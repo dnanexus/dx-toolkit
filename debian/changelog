@@ -1,3 +1,9 @@
+dx-toolkit (0.340.1) trusty; urgency=medium
+
+  * Changed: Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 25 Feb 2023 13:47:02 +0000
+
 dx-toolkit (0.340.0) trusty; urgency=medium
 
   * Changed: Upgraded Nextflow plugin version to 1.6.0
