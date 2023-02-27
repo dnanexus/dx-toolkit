@@ -34,7 +34,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Use project ID for file-xxxx/describe API calls in dxjava DXFile
 * Nextflow errorStrategy retry ends in 'failed' state if last retry fails
 
-## [339.0] - 2023.2.10 - stable
+## [339.0] - 2023.2.10
 
 * No significant changes
 
