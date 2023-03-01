@@ -15,18 +15,18 @@
         "alt": "allele$alt"
     },
     {
-        "rsid": "allele$rsid"
+        "rsid": "allele$dbsnp151_rsid"
     },
     {
         "allele_type": "allele$allele_type"
     },
     {
-        "dataset_alt_freq": "allele$dataset_alt_freq"
+        "dataset_alt_freq": "allele$alt_freq"
     },
     {
-        "gnomad_alt_freq": "allele$gnomad_alt_freq"
+        "gnomad_alt_freq": "allele$gnomad201_alt_freq"
     },
     {
-        "aworst_effect": "allele$worst_effect"
+        "worst_effect": "allele$worst_effect"
     }
 ]

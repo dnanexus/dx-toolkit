@@ -1,0 +1,33 @@
+{
+    "sample": {
+        "sample_id": "in"
+    },
+    "allele": {
+        "allele_id": "in",
+        "id": "in",
+        "rsid": "in",
+        "type": "in",
+        "ref": "in",
+        "dataset_alt_af": "between",
+        "gnomad_alt_af": "between",
+        "chromosome": "is",
+        "starting_position": "greater-than",
+        "ending_position": "less-than"
+    },
+    "genotype": {
+        "genotype": "in",
+        "allele_id": "in",
+        "sample_id": "in"
+    },
+    "annotation": {
+        "allele_id": "in",
+        "gene_name": "in",
+        "gene_id": "in",
+        "transcript_id": "in",
+        "feature_id": "in",
+        "consequences": "in",
+        "putative_impact": "in",
+        "hgvs_c": "in",
+        "hgvs_p": "in"
+    }
+}

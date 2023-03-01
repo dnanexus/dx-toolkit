@@ -6,99 +6,23 @@ import dxpy
 # from ..cli.dataset_utilities import DXDataset
 
 
-# Create a dictionary relating the fields in each input file to the table that they
+# A dictionary relating the fields in each input file to the table that they
 # need to filter data in
 # As of now, the allele and annotation files get all their data from the allele and
 # annotation tables respectively, only the sample file references data in multiple tables
-file_to_table = {}
-file_to_table["sample"] = {}
-file_to_table["sample"]["allele_id"] = "genotype"
-file_to_table["sample"]["sample_id"] = "genotype"
-file_to_table["sample"]["genotype"] = "genotype"
 
+with open("assets/file_to_table.json", "r") as infile:
+    file_to_table = json.load(infile)
 
-# Create a dictionary for converting the friendly names used by the user to the
-# columns as they appear in the GAM tables
-column_conversion = {
-    "sample": {},
-    "allele": {},
-    "genotype": {},
-    "annotation": {},
-}
+# A dictionary relating the user-facing names of columns to their actual column
+# names in the CLIGAM tables
+with open("assets/column_conversion.json", "r") as infile:
+    column_conversion = json.load(infile)
 
-column_conversion["sample"] = {
-    "sample_id": "sample_id",
-    "allele_id": "a_id",
-    "genotype": "type",
-}
-
-column_conversion["allele"] = {
-    "allele_id": "a_id",
-    "id": "a_id",
-    "rsid": "dbsnp151_rsid",
-    "type": "allele_type",
-    "ref": "ref",
-    "dataset_alt_af": "alt_freq",
-    "gnomad_alt_af": "Gnomad201_alt_freq",
-    "chromosome": "chr",
-    "starting_position": "pos",
-    "ending_position": "pos",
-}
-column_conversion["genotype"] = {"genotype": "type"}
-
-column_conversion["annotation"] = {
-    "allele_id": "allele",
-    "gene_name": "gene_name",
-    "gene_id": "gene_id",
-    "transcript_id": "feature_id",
-    "feature_id": "feature_id",
-    "consequences": "effect",
-    "putative_impact": "putative_impact",
-    "hgvs_c": "hgcs_c",
-    "hgvs_p": "hgvs_p",
-}
-
-
-# Create a dictionary for determining the correct condition to use with each field
-column_conditions = {
-    "sample": {},
-    "allele": {},
-    "genotype": {},
-    "location": {},
-    "annotation": {},
-}
-
-column_conditions["sample"]["sample_id"] = "in"
-
-column_conditions["allele"] = {}
-column_conditions["allele"]["allele_id"] = "in"
-column_conditions["allele"]["id"] = "in"
-column_conditions["allele"]["rsid"] = "in"
-column_conditions["allele"]["type"] = "in"
-column_conditions["allele"]["ref"] = "in"
-column_conditions["allele"]["dataset_alt_af"] = "between"
-column_conditions["allele"]["gnomad_alt_af"] = "between"
-# For use by location blocks
-column_conditions["allele"]["chromosome"] = "is"
-column_conditions["allele"]["starting_position"] = "greater-than"
-column_conditions["allele"]["ending_position"] = "less-than"
-
-column_conditions["genotype"] = {}
-column_conditions["genotype"]["genotype"] = "in"
-column_conditions["genotype"]["allele_id"] = "in"
-column_conditions["genotype"]["sample_id"] = "in"
-
-
-column_conditions["annotation"] = {}
-column_conditions["annotation"]["allele_id"] = "in"
-column_conditions["annotation"]["gene_name"] = "in"
-column_conditions["annotation"]["gene_id"] = "in"
-column_conditions["annotation"]["transcript_id"] = "in"
-column_conditions["annotation"]["feature_id"] = "in"
-column_conditions["annotation"]["consequences"] = "in"
-column_conditions["annotation"]["putative_impact"] = "in"
-column_conditions["annotation"]["hgvs_c"] = "in"
-column_conditions["annotation"]["hgvs_p"] = "in"
+# A dictionary relating the user-facing names of columns to the condition that needs
+# to be applied in the basic filter for the column
+with open("assets/column_conditions.json", "r") as infile:
+    column_conditions = json.load(infile)
 
 
 def BasicFilter(table, friendly_name, values):
@@ -109,7 +33,21 @@ def BasicFilter(table, friendly_name, values):
         values = [float(values["min"]), float(values["max"])]
     if condition == "less-than" or condition == "greater-than":
         values = int(values)
-    listed_filter = {filter_key: [{"condition": condition, "values": values}]}
+
+    # Check if we need to add geno bins as well
+    # This is only necessary for gene_id and a_id.  For rsid the vizserver calculates it itself
+    if column_name == "gene_id" or column_name == "gene_name":
+        listed_filter = {
+            filter_key: [
+                {
+                    "condition": condition,
+                    "values": values,
+                    "geno_bins": [{"chr": "3", "start": 1000, "end": 2000}],
+                }
+            ]
+        }
+    else:
+        listed_filter = {filter_key: [{"condition": condition, "values": values}]}
     return listed_filter
 
 
@@ -194,15 +132,15 @@ def FinalPayload(assay_filter, project_context, filter_type):
     # Section for defining returned columns for each of the three filter types
 
     if filter_type == "allele":
-        order_by = [{"allele$allele_id": "asc"}]
+        order_by = [{"allele_id": "asc"}]
         with open("assets/allele_return_columns.json", "r") as infile:
             fields = json.load(infile)
     elif filter_type == "annotation":
-        order_by = [{"annotation$a_id": "asc"}]
+        order_by = [{"allele_id": "asc"}]
         with open("assets/annotation_return_columns.json", "r") as infile:
             fields = json.load(infile)
     elif filter_type == "sample":
-        order_by = [{"sample$sample_id": "asc"}]
+        order_by = [{"sample_id": "asc"}]
         with open("assets/sample_return_columns.json", "r") as infile:
             fields = json.load(infile)
 
@@ -220,7 +158,7 @@ if __name__ == "__main__":
 
     filter_type = "allele"
     record_id = "record-FyFPyz0071F54Zjb32vG82Gj"
-    project_id = "project-FkyXg38071F1vGy2GyXyYYQB"
+    project_context = "project-FkyXg38071F1vGy2GyXyYYQB"
 
     # project_context, path, entity_result = resolve_existing_path(
     #    "{}:{}".format(project_id, record_id)
@@ -229,9 +167,8 @@ if __name__ == "__main__":
     # rec_dict = rec_descriptor.get_dictionary()
 
     # Name and ID, and context will come from the descriptor, which is processed upstream of this script
-    name = "testname"
-    id = "testid"
-    project_context = "context"
+    name = "veo_demo_dataset_assay"
+    id = "da6a4ffc-7571-4b2f-853d-445460a18396"
 
     with open(json_path, "r") as infile:
         full_input_dict = json.load(infile)
