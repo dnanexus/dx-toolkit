@@ -6,7 +6,42 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [337.0] - beta
+## [340.0] - beta
+
+### Changed
+
+* Upgraded Nextflow plugin version to 1.6.0
+* Nextflow - updated default instance types based on destination region
+
+### Fixed
+
+* Nextflow errorStrategy retry ends in 'failed' state if last retry fails
+
+## [339.0] - 2023.2.10 - stable
+
+* No significant changes
+
+## [338.1] - 2023.1.27
+
+### Added
+
+* Support for Granular Spot wait times in `dx run` using `--max-tree-spot-wait-time` and `--max-job-spot-wait-time`
+* Printing of Spot wait times in `dx describe` for jobs and workflows
+* Support for private Docker images in Nextflow pipelines on subjob level
+
+### Fixed
+
+* Feature switch check for Nextflow pipeline build in an app execution environment
+* `dx get database` command reads from the API server with the API proxy interceptor
+* Regex global flags in path matching to support Py3.11
+* `dx run --clone` for Nextflow jobs (clear cloned job's properties)
+* Do not rewrite ubuntu repo mirror after failed execDepends install
+
+### Changed
+
+* Upgraded Nextflow plugin version to 1.5.0
+
+## [337.0] - 2023.1.20
 
 ### Changed
 
@@ -15,11 +50,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
 * Exposed help messages for `dx build --nextflow`
 
-### Fixed
-
-* Unset Nextflow related properites cloned from a previous Nextflow job when using `dx run --clone`
-
-## [336.0] - 2023.1.7 - stable
+## [336.0] - 2023.1.7
 
 * No significant changes
 
@@ -533,7 +564,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Precise debian package build target
 
-## [290.1] - 2019.11.21 stable
+## [290.1] - 2019.11.21
 
 ### Changed
 
@@ -595,7 +626,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Only require futures package for python 2.7
 * Upgrade build dependencies for pip, setuptools, and wheel
 
-## [284.0] - 2019.06.13 stable
+## [284.0] - 2019.06.13
 
 ### Added
 

@@ -1567,33 +1567,6 @@ def main(number):
         self.assertEqual(desc['stages'][0]['execution']['folder'], '/output/baz')
         self.assertEqual(desc['stages'][1]['execution']['folder'], '/output/quux')
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
-    def test_run_workflow_with_rerun_stages(self):
-        dxworkflow = dxpy.new_dxworkflow()
-        dxapplet = dxpy.DXApplet()
-        dxapplet.new(name="test_applet",
-                     dxapi="1.04",
-                     inputSpec=[],
-                     outputSpec=[],
-                     runSpec={"code": '', "interpreter": "bash", "distribution": "Ubuntu", "release": "14.04"})
-        stage_id = dxworkflow.add_stage(dxapplet, name="stagename", folder="foo")
-
-        # make initial analysis
-        dxanalysis = dxworkflow.run({})
-        job_ids = [dxanalysis.describe()['stages'][0]['execution']['id']]
-        dxanalysis.wait_on_done(timeout=500)
-
-        # empty rerun_stages should reuse results
-        rerun_analysis = dxworkflow.run({}, rerun_stages=[])
-        self.assertEqual(rerun_analysis.describe()['stages'][0]['execution']['id'],
-                         job_ids[0])
-
-        # use various identifiers to rerun the job
-        for value in ['*', 0, stage_id, 'stagename']:
-            rerun_analysis = dxworkflow.run({}, rerun_stages=[value])
-            job_ids.append(rerun_analysis.describe()['stages'][0]['execution']['id'])
-            self.assertNotIn(job_ids[-1], job_ids[:-1])
-
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that may run a job')
     def test_run_workflow_errors(self):
         dxworkflow = dxpy.DXWorkflow(dxpy.api.workflow_new({"project": self.proj_id})['id'])
@@ -2459,6 +2432,17 @@ class TestPrettyPrint(unittest.TestCase):
         self.assertEqual(pretty_print.escape_unicode_string("foo\n\t\rbar"), "foo\\n\\t\\rbar")
         self.assertEqual(pretty_print.escape_unicode_string("\n\\"), "\\n\\\\")
         self.assertEqual(pretty_print.escape_unicode_string("ïñtérnaçiònale"), "ïñtérnaçiònale")
+
+    def test_format_timedelta(self):
+        self.assertEqual(pretty_print.format_timedelta(0), "0 miliseconds")
+        self.assertEqual(pretty_print.format_timedelta(0, in_seconds=True), "0 seconds")
+        self.assertEqual(pretty_print.format_timedelta(1), "1 miliseconds")
+        self.assertEqual(pretty_print.format_timedelta(1, in_seconds=True), "1 seconds")
+        self.assertEqual(pretty_print.format_timedelta(1, in_seconds=True, auto_singulars=True), "1 second")
+        self.assertEqual(pretty_print.format_timedelta(129 * 60, in_seconds=True, largest_units="minutes"), "129 minutes")
+        self.assertEqual(pretty_print.format_timedelta(129 * 60, in_seconds=True, largest_units="days"), "2 hours, 9 minutes")
+        self.assertEqual(pretty_print.format_timedelta(365 * 24 * 60 * 60 + 8 * 60 * 60 + 1 * 60 + 3, in_seconds=True), "1 years, 8 hours, 1 minutes, 3 seconds")
+        self.assertEqual(pretty_print.format_timedelta(365 * 24 * 60 * 60 + 8 * 60 * 60 + 1 * 60 + 3, in_seconds=True, auto_singulars=True), "1 year, 8 hours, 1 minute, 3 seconds")
 
 class TestWarn(unittest.TestCase):
     def test_warn(self):

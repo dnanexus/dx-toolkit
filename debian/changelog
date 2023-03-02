@@ -1,3 +1,30 @@
+dx-toolkit (0.340.0) trusty; urgency=medium
+
+  * Changed: Upgraded Nextflow plugin version to 1.6.0
+  * Changed: Nextflow - updated default instance types based on destination region
+  * Fixed: Nextflow errorStrategy retry ends in 'failed' state if last retry fails
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 10 Feb 2023 19:00:03 +0000
+
+dx-toolkit (0.339.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 27 Jan 2023 17:32:58 +0000
+
+dx-toolkit (0.338.0) trusty; urgency=medium
+
+  * Added: Support for Granular Spot wait times in dx run using --max-tree-spot-wait-time and --max-job-spot-wait-time
+  * Added: Printing of Spot wait times in dx describe for jobs and workflows
+  * Added: Support for private Docker images in Nextflow pipelines on subjob level
+  * Fixed: How dx get database command reads from the API server with the API proxy interceptor
+  * Fixed: Regex global flags in path matching to support Python 3.11
+  * Fixed: dx run --clone for Nextflow jobs (clear cloned job's properties)
+  * Changed: Upgraded Nextflow plugin version to 1.5.0
+
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 21 Jan 2023 04:17:21 +0000
+
 dx-toolkit (0.337.0) trusty; urgency=medium
 
   * Changed: Upgraded Nextflow plugin version to 1.4.0

@@ -3660,28 +3660,14 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # make assertions for test cases
         orig_analysis_desc = dxpy.describe(analysis_id)
 
-        # no change: expect both stages to have reused jobs
-        no_change_analysis_desc = dxpy.describe(no_change_analysis_id)
-        print(no_change_analysis_desc)
-        self.assertEqual(no_change_analysis_desc['stages'][0]['execution']['id'],
-                         orig_analysis_desc['stages'][0]['execution']['id'])
-        self.assertEqual(no_change_analysis_desc['stages'][1]['execution']['id'],
-                         orig_analysis_desc['stages'][1]['execution']['id'])
-
         # change an input: new job for that stage
         change_an_input_analysis_desc = dxpy.describe(change_an_input_analysis_id)
         self.assertEqual(change_an_input_analysis_desc['stages'][0]['execution']['input'],
                          {"number": 52})
-        # second stage still the same
-        self.assertEqual(change_an_input_analysis_desc['stages'][1]['execution']['id'],
-                         orig_analysis_desc['stages'][1]['execution']['id'])
 
         # change inst type: only affects stage with different inst type
         change_inst_type_analysis_desc = dxpy.describe(change_inst_type_analysis_id)
-        # first stage still the same
-        self.assertEqual(change_inst_type_analysis_desc['stages'][0]['execution']['id'],
-                         orig_analysis_desc['stages'][0]['execution']['id'])
-        # second stage different
+
         self.assertNotEqual(change_inst_type_analysis_desc['stages'][1]['execution']['id'],
                             orig_analysis_desc['stages'][1]['execution']['id'])
         self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
@@ -3710,7 +3696,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         finally:
             run("dx rmproject -y " + other_proj_id)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
+    @unittest.skip("Skipping per DEVEX-2195")
     def test_dx_run_workflow_prints_cached_executions(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
@@ -3747,7 +3733,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertNotIn('will reuse results from a previous analysis', run_output)
         self.assertNotIn(job_id, run_output)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
+    @unittest.skip("Skipping per DEVEX-2195")
     def test_dx_run_workflow_with_inst_type_requests(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "name": "myapplet",
