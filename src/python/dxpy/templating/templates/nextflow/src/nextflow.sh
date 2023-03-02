@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Script that is used to run both the main Nextflow orchestrator job
+# and the Nextflow task sub-jobs.
+
 set -f
 
 DOCKER_CREDS_FOLDER=/docker/credentials/
@@ -66,6 +69,7 @@ generate_runtime_config() {
   fi
 }
 
+# On exit, for the main Nextflow orchestrator job
 on_exit() {
   ret=$?
 
@@ -213,11 +217,13 @@ restore_cache() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
+# Have to ask user to empty the cache if limit exceeded because Nextflow only
+# has UPLOAD access to project
 check_cache_db_storage() {
   MAX_CACHE_STORAGE=20
   existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
   [[ $existing_cache -le MAX_CACHE_STORAGE ]] ||
-    dx-jobutil-report-error "The number of preserved sessions is already at the limit (N=20) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true. "
+    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
 }
 
 validate_run_opts() {
@@ -289,6 +295,7 @@ dx_path() {
   esac
 }
 
+# Entry point for the main Nextflow orchestrator job
 main() {
   if [[ $debug == true ]]; then
     export NXF_DEBUG=2
@@ -297,9 +304,10 @@ main() {
     set -x
   fi
 
+  # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.6.0
-  
+  NXF_PLUGINS_VERSION=1.6.1
+
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
   [[ -z $cloned_job_properties ]] || dx unset_properties "$DX_JOB_ID" $cloned_job_properties
@@ -307,7 +315,7 @@ main() {
   # check if all run opts provided by user are supported
   validate_run_opts
 
-  # check if the number of preserved cache in current project does not exceed the limit (20)
+  # Check if limit reached for Nextflow sessions preserved in this project's cache
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage
   fi
@@ -320,6 +328,9 @@ main() {
   fi
 
   # set default NXF env constants
+
+  # Disable use of newer flag --cpus when running Docker
+  # Can be enabled when Docker version on DNAnexus workers supports it
   export NXF_DOCKER_LEGACY=true
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
@@ -340,7 +351,7 @@ main() {
   # get current executable name
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
 
-  # set/create current session id
+  # If resuming session, use resume id; otherwise create id for this session
   if [[ -n $resume ]]; then
     get_resume_session_id
   else
@@ -422,6 +433,7 @@ main() {
     exit $ret
 }
 
+# On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   ret=$?
   if [ -f .command.log ]; then
@@ -471,6 +483,7 @@ nf_task_exit() {
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
+# Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
   docker_credentials=$(dx find data --path "$DX_WORKSPACE_ID:$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
   if [ -n "$docker_credentials" ]; then
