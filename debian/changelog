@@ -1,3 +1,13 @@
+dx-toolkit (0.341.0) trusty; urgency=medium
+
+  * Added: '--list-fields', '--list-entities', '--entities' arguments for `dx extract_dataset`
+  * Added: `dx ssh` to connect to job's public hostname if job is httpsApp enabled
+  * Fixed: Helpstring of '--verbose' arg
+  * Changed: Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
+  * Changed: Increased dxpy HTTP timeout to 15 minutes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 25 Feb 2023 13:43:02 +0000
+
 dx-toolkit (0.340.0) trusty; urgency=medium
 
   * Changed: Upgraded Nextflow plugin version to 1.6.0
