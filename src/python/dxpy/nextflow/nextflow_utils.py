@@ -47,7 +47,7 @@ def write_dxapp(folder, content):
         json.dump(content, dxapp)
 
 def get_regional_options(region):
-    nextflow_asset, nextaur_asset = get_nextflow_assets(region)
+    nextaur_asset, nextflow_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
     regional_options = {
         region: {
