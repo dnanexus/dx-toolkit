@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts is set to 3.
+
 ## [341.0] - beta
 
 ### Added
