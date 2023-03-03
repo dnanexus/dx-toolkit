@@ -41,7 +41,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import (extract_dataset, extract_assay)
+from ..cli.dataset_utilities import (extract_dataset, extract_assay_germline)
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -6129,58 +6129,65 @@ parser_extract_assay_germline = subparsers_extract_assay.add_parser(
     "germline",
     help="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
     description="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
-    formatter_class=RawTextHelpFormatter
+    formatter_class=argparse.RawTextHelpFormatter
 )
 
 parser_extract_assay_germline.add_argument(
     "path",
+    type=str,
     help='The name or project-id:record-id of a v3.0 Dataset or Cohort object ID, where "record-id" indicates the record-id in current selected project.',
 )
 parser_extract_assay_germline.add_argument(
     "--list-assays",
     action="store_true",
-    default=False,
     help="List genetic variant assays available for query in the specified Dataset or Cohort object.",
 )
 parser_extract_assay_germline.add_argument(
     "--assay-name",
-    action="store_true",
+    default=None,
     help="Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
 )
 parser_extract_assay_germline.add_argument(
     "--retrieve-allele",
-    action="store_true",
-    default=False,
-    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of alleles to retrieve. Returns a list of allele IDs with additional information.",
+    type=str,
+    const='{}', 
+    default='{}',
+    nargs='?',
+    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of alleles to retrieve. Returns a list of allele IDs with additional information. Use --json-help for additional information on how to use this option.",
 )
 parser_extract_assay_germline.add_argument(
     "--retrieve-annotation",
-    action="store_true",
-    default=False,
-    help="Option to allow users to return annotation information for specific alleles with IDs specified. Accepted input is either a string or a file. If a file is provided, the file must contain a single column (without header) of allele IDs, where there is one unique ID per row and having one of the following extensions, “.csv”, “.tsv”, or “.txt”.",
+    type=str,
+    const='{}',
+    default='{}',
+    nargs='?',
+    help="Option to allow users to return annotation information for specific alleles with IDs specified. Accepted input is either a string or a file. If a file is provided, the file must contain a single column (without header) of allele IDs, where there is one unique ID per row and having one of the following extensions, “.csv”, “.tsv”, or “.txt”. Use --json-help for additional information on how to use this option.",
 )
 parser_extract_assay_germline.add_argument(
     "--retrieve-sample",
-    action="store_true",
-    default=False,
-    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of samples to retrieve. Returns a list of sample IDs and associated allele IDs.",
+    type=str,
+    const='{}',
+    default='{}',
+    nargs='?',
+    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of samples to retrieve. Returns a list of sample IDs and associated allele IDs. Use --json-help for additional information on how to use this option.",
 )
 parser_extract_assay_germline.add_argument(
-    "-list-samples",
+    '--json-help',
+    help=argparse.SUPPRESS,
     action="store_true",
-    default=False,
-    help="List all the sampleIDs available in the assay.",
-)
+    )
 parser_extract_assay_germline.add_argument(
     "--sql",
     action="store_true",
-    default=False,
     help="If the flag is provided, a SQL statement will be returned instead of data.",
 )
 parser_extract_assay_germline.add_argument(
-    "-o", "--output", help="Path to store the output file."
+    "-o", "--output", 
+    type=str,
+    default=None,
+    help="Path to store the output file."
 )
-parser_extract_assay_germline.set_defaults(func=extract_assay)
+parser_extract_assay_germline.set_defaults(func=extract_assay_germline)
 register_parser(parser_extract_assay_germline)
 
 #####################################
