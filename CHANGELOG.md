@@ -6,11 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [342.0] - beta
+
+### Added
+
+* Pretty-print spotCostSavings field in dx describe`job-xxxx`
+
 ### Changed
 
 * Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts is set to 3.
 
-## [341.0] - beta
+## [341.0] - 2023.3.3 - stable
 
 ### Added
 
@@ -26,7 +32,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Helpstring of '--verbose' arg
 
-## [340.1] - 2023.2.25 - stable
+## [340.1] - 2023.2.25
 
 ### Changed
 
