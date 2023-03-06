@@ -1183,6 +1183,7 @@ def describe(args):
         # Attempt to resolve name
         # First, if it looks like a hash id, do that.
         json_input = {}
+        extra_fields = []
         json_input["properties"] = True
         if args.name and (args.verbose or args.details or args.json):
             raise DXCLIError('Cannot request --name in addition to one of --verbose, --details, or --json')
@@ -1202,8 +1203,14 @@ def describe(args):
 
         if is_job_id(args.path):
             if args.verbose:
-                json_input['defaultFields'] = True
-                json_input['fields'] = {'internetUsageIPs': True}
+                extra_fields.append('internetUsageIPs')
+
+        if is_job_id(args.path) or is_analysis_id(args.path):
+            extra_fields.append('spotCostSavings')
+
+        if len(extra_fields) > 0:
+            json_input['defaultFields'] = True
+            json_input['fields'] = {field: True for field in extra_fields}
 
         # Otherwise, attempt to look for it as a data object or
         # execution
