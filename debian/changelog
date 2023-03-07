@@ -1,3 +1,10 @@
+dx-toolkit (0.342.0) trusty; urgency=medium
+
+  * Added: Pretty-print spotCostSavings field in dx describe`job-xxxx`
+  * Changed: Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts is set to 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 03 Mar 2023 21:49:32 +0000
+
 dx-toolkit (0.341.0) trusty; urgency=medium
 
   * Added: '--list-fields', '--list-entities', '--entities' arguments for `dx extract_dataset`
