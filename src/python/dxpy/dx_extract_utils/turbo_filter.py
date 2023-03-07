@@ -8,17 +8,17 @@ import argparse
 # annotation tables respectively, only the sample file references data in multiple tables
 
 # TODO remove this for now and place somewhere else
-with open("assets/file_to_table.json", "r") as infile:
+with open("file_to_table.json", "r") as infile:
     file_to_table = json.load(infile)
 
 # A dictionary relating the user-facing names of columns to their actual column
 # names in the CLIGAM tables
-with open("assets/column_conversion.json", "r") as infile:
+with open("column_conversion.json", "r") as infile:
     column_conversion = json.load(infile)
 
 # A dictionary relating the user-facing names of columns to the condition that needs
 # to be applied in the basic filter for the column
-with open("assets/column_conditions.json", "r") as infile:
+with open("column_conditions.json", "r") as infile:
     column_conditions = json.load(infile)
 
 
@@ -138,15 +138,15 @@ def FinalPayload(assay_filter, project_context, filter_type):
 
     if filter_type == "allele":
         order_by = [{"allele_id": "asc"}]
-        with open("assets/return_columns_allele.json", "r") as infile:
+        with open("return_columns_allele.json", "r") as infile:
             fields = json.load(infile)
     elif filter_type == "annotation":
         order_by = [{"allele_id": "asc"}]
-        with open("assets/return_columns_annotation.json", "r") as infile:
+        with open("return_columns_annotation.json", "r") as infile:
             fields = json.load(infile)
     elif filter_type == "sample":
         order_by = [{"sample_id": "asc"}]
-        with open("assets/return_columns_sample.json", "r") as infile:
+        with open("return_columns_sample.json", "r") as infile:
             fields = json.load(infile)
 
     final_payload["fields"] = fields
@@ -189,7 +189,7 @@ if __name__ == "__main__":
         full_input_dict = json.load(infile)
 
     # Check JSON against schema
-    schema_file = "schemas/retrieve_{}_schema.json".format(args.type)
+    schema_file = "retrieve_{}_schema.json".format(args.type)
     with open(schema_file, "r") as infile:
         json_schema = json.load(infile)
 
