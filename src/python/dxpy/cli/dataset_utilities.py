@@ -89,14 +89,14 @@ def resolve_validate_path(path):
         )
 
     if ("Dataset" in resp["recordTypes"]) or ("CohortBrowser" in resp["recordTypes"]):
-        project = resp["datasetRecordProject"]
+        dataset_project = resp["datasetRecordProject"]
     else:
         err_exit(
             "%r : Invalid path. The path must point to a record type of cohort or dataset"
             % resp["recordTypes"]
         )
 
-    return project, entity_result, resp
+    return project, entity_result, resp, dataset_project
 
 
 def raw_query_api_call(resp, payload):
@@ -105,7 +105,7 @@ def raw_query_api_call(resp, payload):
         resp_raw_query = dxpy.DXHTTPRequest(
             resource=resource_val, data=payload, prepend_srv=False
         )
-    # except to see if timeout
+
     except Exception as details:
         err_exit((str(details)))
     sql_results = resp_raw_query["sql"] + ";"
@@ -122,6 +122,9 @@ def raw_api_call(resp, payload):
             if resp_raw["error"]["type"] == "InvalidInput":
                 print("Insufficient permissions due to the project policy.")
                 print(resp_raw["error"]["message"])
+            elif resp_raw["error"]["type"] == "QueryTimeOut":
+                print(resp_raw["error"]["message"])
+                print("Please consider using ‘--sql’ option to generate the SQL query and query via a private compute cluster.")
             else:
                 print(resp_raw["error"])
             sys.exit(1)
@@ -183,7 +186,7 @@ def extract_dataset(args):
     else:
         err_exit('Invalid delimiter specified')
 
-    project, entity_result, resp = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
 
     dataset_id = resp['dataset']
     out_directory = ""
@@ -284,7 +287,7 @@ def extract_dataset(args):
     if file_already_exist:
         err_exit("Error: path already exists {path}".format(path=file_already_exist))
 
-    rec_descriptor = DXDataset(dataset_id, project=project).get_descriptor()
+    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
     if args.fields is not None:
         fields_list = ''.join(args.fields).split(',')
         error_list = []
@@ -345,17 +348,21 @@ def extract_dataset(args):
 
 def get_assays(rec_descriptor, assay_type):
     assay_list = rec_descriptor.assays
-    selected_type_assays = []
-    other_assays = []
+    selected_type_assay_names = []
+    selected_type_assay_ids = []
+    other_assay_names = []
+    other_assay_ids = []
     if not assay_list:
         err_exit("No valid assays in the dataset.")
     else:
         for a in assay_list:
             if a["generalized_assay_model"] == assay_type:
-                selected_type_assays.append(a["name"])
+                selected_type_assay_names.append(a["name"])
+                selected_type_assay_ids.append(a["id"])
             else:
-                other_assays.append(a["name"])
-    return selected_type_assays, other_assays
+                other_assay_names.append(a["name"])
+                other_assay_ids.append(a["id"])
+    return selected_type_assay_names, selected_type_assay_ids, other_assay_names, other_assay_ids
 
 
 def extract_assay_germline(args):
@@ -440,26 +447,27 @@ def extract_assay_germline(args):
             )
 
     ######## Data Processing ########
-    project, entity_result, resp = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
     dataset_id = resp["dataset"]
-    rec_descriptor = DXDataset(dataset_id, project=project).get_descriptor()
+    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
     #### Get names of genetic assays ####
     if args.list_assays:
-        geno_assays, other_assays = get_assays(
+        geno_assay_names, geno_assay_ids, other_assay_names,  other_assay_ids= get_assays(
             rec_descriptor, assay_type="genetic_variant"
         )
-        if not geno_assays:
+        if not geno_assay_names:
             err_exit("There's no genetic assay in the dataset provided.")
         else:
-            print(*geno_assays, sep="\n")
+            print(*geno_assay_names, sep="\n")
 
     #### Decide which assay is to be queried ####
-    geno_assays, other_assays = get_assays(rec_descriptor, assay_type="genetic_variant")
-    selected_assay = geno_assays[0]
+    geno_assay_names, geno_assay_ids, other_assay_names,  other_assay_ids = get_assays(rec_descriptor, assay_type="genetic_variant")
+    selected_assay_name = geno_assay_names[0]
+    selected_assay_id = geno_assay_ids[0]
     if args.assay_name:
-        if args.assay_name not in geno_assays:
-            if args.assay_name in other_assays:
+        if args.assay_name not in geno_assay_names:
+            if args.assay_name in other_assay_names:
                 err_exit(
                     "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the - -list-assays flag."
                 )
@@ -470,7 +478,7 @@ def extract_assay_germline(args):
                     )
                 )
         else:
-            selected_assay = args.assay_name
+            selected_assay_name = args.assay_name
 
     #### Decide output method based on --output and --sql ####
     if args.sql:
@@ -509,89 +517,92 @@ def extract_assay_germline(args):
         err_exit("Cannot specify the output to be an existing file.")
 
     # TODO: remove hardcoded payload after adding payload retrieval function
-    payload = {
-        "project_context": "project-FkyXg38071F1vGy2GyXyYYQB",
-        "fields": [
-            {"allele_id": "allele$a_id"},
-            {"chromosome": "allele$chr"},
-            {"starting_position": "allele$pos"},
-            {"ref": "allele$ref"},
-            {"alt": "allele$alt"},
-            {"rsid": "allele$dbsnp151_rsid"},
-            {"allele_type": "allele$allele_type"},
-            {"dataset_alt_freq": "allele$alt_freq"},
-            {"gnomad_alt_freq": "allele$gnomad201_alt_freq"},
-            {"worst_effect": "allele$worst_effect"},
-        ],
-        "order_by": [{"allele_id": "asc"}],
-        "filters": {
-            "assay_filters": {
-                "name": "veo_demo_dataset_assay",
-                "id": "da6a4ffc-7571-4b2f-853d-445460a18396",
-                "compound": [
-                    {
-                        "filters": {
-                            "allele$dbsnp151_rsid": [
-                                {
-                                    "condition": "in",
-                                    "values": ["rs1387234741", "rs1487242024"],
-                                }
-                            ],
-                            "allele$allele_type": [
-                                {"condition": "in", "values": [
-                                    "SNP", "Del", "Ins"]}
-                            ],
-                            "allele$alt_freq": [
-                                {"condition": "between",
-                                    "values": [0.001, 0.5]}
-                            ],
-                            "allele$gnomad201_alt_freq": [
-                                {"condition": "between",
-                                    "values": [0.001, 0.5]}
-                            ],
-                        },
-                        "logic": "and",
-                    },
-                    {
-                        "compound": [
-                            {
-                                "filters": {
-                                    "allele$chr": [{"condition": "is", "values": "21"}],
-                                    "allele$pos": [
-                                        {
-                                            "condition": "greater-than",
-                                            "values": 8987000,
-                                        },
-                                        {"condition": "less-than",
-                                            "values": 8987100},
-                                    ],
-                                },
-                                "logic": "and",
-                            },
-                            {
-                                "filters": {
-                                    "allele$chr": [{"condition": "is", "values": "21"}],
-                                    "allele$pos": [
-                                        {
-                                            "condition": "greater-than",
-                                            "values": 8986900,
-                                        },
-                                        {"condition": "less-than",
-                                            "values": 8987000},
-                                    ],
-                                },
-                                "logic": "and",
-                            },
-                        ],
-                        "logic": "or",
-                        "name": "location",
-                    },
-                ],
-                "logic": "and",
-            }
-        },
-        "validate_geno_bins": True,
-    }
+    # payload = {
+    #     "project_context": "project-FkyXg38071F1vGy2GyXyYYQB",
+    #     "fields": [
+    #         {"allele_id": "allele$a_id"},
+    #         {"chromosome": "allele$chr"},
+    #         {"starting_position": "allele$pos"},
+    #         {"ref": "allele$ref"},
+    #         {"alt": "allele$alt"},
+    #         {"rsid": "allele$dbsnp151_rsid"},
+    #         {"allele_type": "allele$allele_type"},
+    #         {"dataset_alt_freq": "allele$alt_freq"},
+    #         {"gnomad_alt_freq": "allele$gnomad201_alt_freq"},
+    #         {"worst_effect": "allele$worst_effect"},
+    #     ],
+    #     "order_by": [{"allele_id": "asc"}],
+    #     "filters": {
+    #         "assay_filters": {
+    #             "name": "veo_demo_dataset_assay",
+    #             "id": "da6a4ffc-7571-4b2f-853d-445460a18396",
+    #             "compound": [
+    #                 {
+    #                     "filters": {
+    #                         "allele$dbsnp151_rsid": [
+    #                             {
+    #                                 "condition": "in",
+    #                                 "values": ["rs1387234741", "rs1487242024"],
+    #                             }
+    #                         ],
+    #                         "allele$allele_type": [
+    #                             {"condition": "in", "values": [
+    #                                 "SNP", "Del", "Ins"]}
+    #                         ],
+    #                         "allele$alt_freq": [
+    #                             {"condition": "between",
+    #                                 "values": [0.001, 0.5]}
+    #                         ],
+    #                         "allele$gnomad201_alt_freq": [
+    #                             {"condition": "between",
+    #                                 "values": [0.001, 0.5]}
+    #                         ],
+    #                     },
+    #                     "logic": "and",
+    #                 },
+    #                 {
+    #                     "compound": [
+    #                         {
+    #                             "filters": {
+    #                                 "allele$chr": [{"condition": "is", "values": "21"}],
+    #                                 "allele$pos": [
+    #                                     {
+    #                                         "condition": "greater-than",
+    #                                         "values": 8987000,
+    #                                     },
+    #                                     {"condition": "less-than",
+    #                                         "values": 8987100},
+    #                                 ],
+    #                             },
+    #                             "logic": "and",
+    #                         },
+    #                         {
+    #                             "filters": {
+    #                                 "allele$chr": [{"condition": "is", "values": "21"}],
+    #                                 "allele$pos": [
+    #                                     {
+    #                                         "condition": "greater-than",
+    #                                         "values": 8986900,
+    #                                     },
+    #                                     {"condition": "less-than",
+    #                                         "values": 8987000},
+    #                                 ],
+    #                             },
+    #                             "logic": "and",
+    #                         },
+    #                     ],
+    #                     "logic": "or",
+    #                     "name": "location",
+    #                 },
+    #             ],
+    #             "logic": "and",
+    #         }
+    #     },
+    #     "validate_geno_bins": True,
+    # }
+
+    # Timeout payload
+    payload = {'project_context': 'project-FkyXg38071F1vGy2GyXyYYQB', 'fields': [{'allele.a_id': 'allele$a_id'}, {'annotation$gene_name': 'annotation$gene_name'}], 'filters': {'pheno_filters': {'compound': [{'name': 'phenotype', 'logic': 'and', 'filters': {}, 'entity': {'logic': 'and', 'name': 'participant', 'operator': 'exists', 'children': []}}], 'logic': 'and'}, 'assay_filters': {'compound': [{'name': 'genotype', 'logic': 'and', 'filters': {'annotation$gene_name': [{'condition': 'in', 'values': ['PGBD2'], 'geno_bins': [{'chr': '1', 'start': '248906196', 'end': '248919946'}]}]}}], 'logic': 'and'}, 'logic': 'and'}}
     
     # TODO: replace payload_retrieval_function by actual function name and uncomment
     # if "--retrieve-allele" in args_list:
@@ -600,6 +611,11 @@ def extract_assay_germline(args):
     #     payload = payload_retrieval_function(assay=selected_assay, filter="annotation")
     # elif "--retrieve-sample" in args_list:
     #     payload = payload_retrieval_function(assay=selected_assay, filter="sample")
+
+    if "CohortBrowser" in resp['recordTypes']:
+        if resp.get('baseSql'):
+            payload['base_sql'] = resp.get('baseSql')
+        payload['filters'] = resp['filters']
 
     #### Run api call to get sql or extract data ####
     if (any(x in args_list for x in retrieve_args_list)):
