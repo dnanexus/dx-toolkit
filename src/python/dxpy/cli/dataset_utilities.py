@@ -89,7 +89,7 @@ def resolve_validate_path(path):
         )
 
     if ("Dataset" in resp["recordTypes"]) or ("CohortBrowser" in resp["recordTypes"]):
-        dataset_project = resp["datasetRecordProject"]
+        project = resp["datasetRecordProject"]
     else:
         err_exit(
             "%r : Invalid path. The path must point to a record type of cohort or dataset"
@@ -101,7 +101,6 @@ def resolve_validate_path(path):
 
 def raw_query_api_call(resp, payload):
     resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/raw-query"
-    print(resource_val)
     try:
         resp_raw_query = dxpy.DXHTTPRequest(
             resource=resource_val, data=payload, prepend_srv=False
@@ -184,7 +183,7 @@ def extract_dataset(args):
     else:
         err_exit('Invalid delimiter specified')
 
-    dataset_project, entity_result, resp = resolve_validate_path(args.path)
+    project, entity_result, resp = resolve_validate_path(args.path)
 
     dataset_id = resp['dataset']
     out_directory = ""
@@ -285,7 +284,7 @@ def extract_dataset(args):
     if file_already_exist:
         err_exit("Error: path already exists {path}".format(path=file_already_exist))
 
-    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    rec_descriptor = DXDataset(dataset_id, project=project).get_descriptor()
     if args.fields is not None:
         fields_list = ''.join(args.fields).split(',')
         error_list = []
@@ -300,11 +299,11 @@ def extract_dataset(args):
         if error_list:
             err_exit('The following fields cannot be found: %r' % error_list)
 
-        payload = {"project_context":dataset_project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
+        payload = {"project_context":project, "fields":[{item:'$'.join(item.split('.'))} for item in fields_list]}
         if "CohortBrowser" in resp['recordTypes']:
             if resp.get('baseSql'):
                 payload['base_sql'] = resp.get('baseSql')
-                payload['filters'] = resp['filters']
+            payload['filters'] = resp['filters']
 
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
@@ -441,9 +440,9 @@ def extract_assay_germline(args):
             )
 
     ######## Data Processing ########
-    dataset_project, entity_result, resp = resolve_validate_path(args.path)
+    project, entity_result, resp = resolve_validate_path(args.path)
     dataset_id = resp["dataset"]
-    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    rec_descriptor = DXDataset(dataset_id, project=project).get_descriptor()
 
     #### Get names of genetic assays ####
     if args.list_assays:
