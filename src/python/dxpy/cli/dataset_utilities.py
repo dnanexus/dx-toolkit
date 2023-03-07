@@ -39,6 +39,101 @@ from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState,
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
 
+# TODO: import payload_retrieval_function
+
+def resolve_validate_path(path):
+    project, path, entity_result = resolve_existing_path(path)
+
+    if project is None:
+        raise ResolutionError(
+            'Unable to resolve "'
+            + path
+            + '" to a data object or folder name in a project'
+        )
+    elif project != entity_result["describe"]["project"]:
+        raise ResolutionError(
+            'Unable to resolve "'
+            + path
+            + "\" to a data object or folder name in '"
+            + project
+            + "'"
+        )
+
+    if entity_result["describe"]["class"] != "record":
+        err_exit(
+            "%r : Invalid path. The path must point to a record type of cohort or dataset"
+            % entity_result["describe"]["class"]
+        )
+
+    try:
+        resp = dxpy.DXHTTPRequest(
+            "/" + entity_result["id"] + "/visualize",
+            {"project": project, "cohortBrowser": False},
+        )
+    except PermissionDenied:
+        err_exit("Insufficient permissions", expected_exceptions=(PermissionDenied,))
+    except (InvalidInput, InvalidState):
+        err_exit(
+            "%r : Invalid cohort or dataset" % entity_result["id"],
+            expected_exceptions=(
+                InvalidInput,
+                InvalidState,
+            ),
+        )
+    except Exception as details:
+        err_exit(str(details))
+
+    if resp["datasetVersion"] != "3.0":
+        err_exit(
+            "%r : Invalid version of cohort or dataset. Version must be 3.0"
+            % resp["datasetVersion"]
+        )
+
+    if ("Dataset" in resp["recordTypes"]) or ("CohortBrowser" in resp["recordTypes"]):
+        dataset_project = resp["datasetRecordProject"]
+    else:
+        err_exit(
+            "%r : Invalid path. The path must point to a record type of cohort or dataset"
+            % resp["recordTypes"]
+        )
+
+    return project, entity_result, resp, dataset_project
+
+
+def raw_query_api_call(resp, payload):
+    resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/raw-query"
+    try:
+        resp_raw_query = dxpy.DXHTTPRequest(
+            resource=resource_val, data=payload, prepend_srv=False
+        )
+
+    except Exception as details:
+        err_exit((str(details)))
+    sql_results = resp_raw_query["sql"] + ";"
+    return sql_results
+
+
+def raw_api_call(resp, payload):
+    resource_val = resp["url"] + "/data/3.0/" + resp["dataset"] + "/raw"
+    try:
+        resp_raw = dxpy.DXHTTPRequest(
+            resource=resource_val, data=payload, prepend_srv=False
+        )
+        if "error" in resp_raw.keys():
+            if resp_raw["error"]["type"] == "InvalidInput":
+                print("Insufficient permissions due to the project policy.")
+                print(resp_raw["error"]["message"])
+            elif resp_raw["error"]["type"] == "QueryTimeOut":
+                print(resp_raw["error"]["message"])
+                print("Please consider using ‘--sql’ option to generate the SQL query and query via a private compute cluster.")
+            else:
+                print(resp_raw["error"])
+            sys.exit(1)
+    except Exception as details:
+        err_exit((str(details)))
+    return resp_raw
+
+
 def extract_dataset(args):
     """
        Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data. 
@@ -91,36 +186,8 @@ def extract_dataset(args):
             out_extension = ".txt"
     else:
         err_exit('Invalid delimiter specified')
-    
-    project, path, entity_result = resolve_existing_path(args.path)
 
-    if project is None:
-        raise ResolutionError('Unable to resolve "' + args.path +
-                                  '" to a data object or folder name in a project')
-    elif project != entity_result['describe']['project']:
-        raise ResolutionError('Unable to resolve "' + args.path +
-                                  '" to a data object or folder name in \'' + project + "'")
-
-    if entity_result['describe']['class'] != 'record':
-        err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % entity_result['describe']['class'])
-
-    try:
-        resp = dxpy.DXHTTPRequest('/' + entity_result['id'] + '/visualize',
-                                        {"project": project, "cohortBrowser": False} )
-    except PermissionDenied:
-        err_exit("Insufficient permissions", expected_exceptions=(PermissionDenied,))
-    except (InvalidInput, InvalidState):
-        err_exit('%r : Invalid cohort or dataset' % entity_result['id'], expected_exceptions=(InvalidInput, InvalidState,))
-    except Exception as details:
-        err_exit(str(details))
-
-    if resp['datasetVersion'] != '3.0':
-        err_exit('%r : Invalid version of cohort or dataset. Version must be 3.0' % resp['datasetVersion'])
-
-    if ("Dataset" in resp['recordTypes']) or ("CohortBrowser" in resp['recordTypes']):
-        dataset_project = resp['datasetRecordProject']
-    else:
-        err_exit('%r : Invalid path. The path must point to a record type of cohort or dataset' % resp['recordTypes'])
+    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
 
     dataset_id = resp['dataset']
     out_directory = ""
@@ -243,31 +310,21 @@ def extract_dataset(args):
             payload['filters'] = resp['filters']
 
         if args.sql:
-            resource_val = resp['url'] + '/viz-query/3.0/' + resp['dataset'] + '/raw-query'
-            try:
-                resp_raw_query = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
-            except Exception as details:
-                err_exit((str(details)))
-            sql_results = resp_raw_query['sql'] + ';'
+            sql_results = raw_query_api_call(resp, payload)
             if print_to_stdout:
                 print(sql_results)
             else:
                 with open(out_file_field, 'w') as f:
                     print(sql_results, file=f)
         else:
-            resource_val = resp['url'] + '/data/3.0/' + resp['dataset'] + '/raw'
-            try:
-                resp_raw = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
-                if 'error' in resp_raw.keys():
-                    if resp_raw['error']['type'] == 'InvalidInput':
-                        print("Insufficient permissions due to the project policy.")
-                        print(resp_raw['error']['message'])
-                    else:
-                        print(resp_raw['error'])
-                    sys.exit(1)
-            except Exception as details:
-                err_exit((str(details)))
-            csv_from_json(out_file_name=out_file_field, print_to_stdout=print_to_stdout, sep=delimiter, raw_results=resp_raw['results'], column_names=fields_list)
+            resp_raw = raw_api_call(resp, payload)
+            csv_from_json(
+                out_file_name=out_file_field,
+                print_to_stdout=print_to_stdout,
+                sep=delimiter,
+                raw_results=resp_raw["results"],
+                column_names=fields_list,
+            )
 
     elif args.sql:
         err_exit('`--sql` passed without `--fields`')
@@ -289,6 +346,295 @@ def extract_dataset(args):
         if args.list_fields:
             list_fields(rec_descriptor.model, _main_entity, args)
 
+
+def get_assays(rec_descriptor, assay_type):
+    assay_list = rec_descriptor.assays
+    selected_type_assay_names = []
+    selected_type_assay_ids = []
+    other_assay_names = []
+    other_assay_ids = []
+    if not assay_list:
+        err_exit("No valid assays in the dataset.")
+    else:
+        for a in assay_list:
+            if a["generalized_assay_model"] == assay_type:
+                selected_type_assay_names.append(a["name"])
+                selected_type_assay_ids.append(a["id"])
+            else:
+                other_assay_names.append(a["name"])
+                other_assay_ids.append(a["id"])
+    return selected_type_assay_names, selected_type_assay_ids, other_assay_names, other_assay_ids
+
+
+def extract_assay_germline(args):
+    """
+    Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.
+    """
+    ######## Input combination validation ########
+    args_list = sys.argv[3:]
+    retrieve_args_list = [
+        "--retrieve-allele",
+        "--retrieve-annotation",
+        "--retrieve-sample",
+    ]
+
+    #### Check if valid options are passed with the --json-help flag ####
+    if args.json_help:
+        if not (any(x in args_list for x in retrieve_args_list)):
+            err_exit(
+                "Please specify one of the following: --retrieve-allele, --retrieve-sample or --retrieve-annotation” for details on the corresponding json template and filter definition."
+            )
+        elif args.list_assays or args.assay_name or args.sql or args.output:
+            err_exit(
+                "Please check to make sure the parameters are set properly. --json-help cannot be specified with options other than --retrieve-annotation/--retrieve-allele/--retrieve-sample"
+            )
+
+    #### Check if the retrieve options are passed correctly, print help if needed ####
+    if "--retrieve-allele" in args_list:
+        if any(
+            x in args_list for x in ["--retrieve-annotation", "--retrieve-sample"]
+        ):
+            err_exit(
+                "Please specify only one of the the following: --retrieve-allele, --retrieve-sample or --retrieve-annotation for details on the corresponding json template and filter definition."
+            )
+        else:
+            if args.json_help:
+                print(
+                    "A JSON object, either in a file (.json extension) or as a string, specifying criteria of alleles to retrieve. Returns a list of allele IDs with additional information.\nExample --retrieve-allele json filter\n{\n  “rsid”: [”rs11111”,”rs22222”],\n  “type”: [”SNP”,”Del”,”Ins”],\n  “dataset_alt_af”: {“min”:0.001, “max”: 0.05},\n  “gnomad_alt_af”: {“min”:0.001, “max”: 0.05},\n  “location”: [\n    {\n      “chromosome”:”1”,\n      “starting_position”:”10000”,\n      “ending_position”:“20000”\n    },\n    {\n      “chromosome”:”X”,\n      “starting_position”:”500”,\n      “ending_position”: “1700”\n    }\n  ]\n}\nAvailable filters:\n    -allele_id: Allele ID in the database\n    -chromosome: Chromosome where the allele locates\n    -starting_position: Starting position of the allele\n    -ref: Reference allele\n    -alt: Alt allele of the record\n    -rsid: A list of rsID associated with the allele\n    -allele_type: Type of the allele, possible information is “SNP”, “Ins”, “Del”, “Mixed”\n    -dataset_alt_freq: Allele frequency of the dataset\n    -gnomad_alt_freq: Allele frequency from gnomAD\n    -worst_effect: [“gene_name1:worst_effect1”, “gene_name2:worst_effect2”...]"
+                )
+                sys.exit(0)
+    elif "--retrieve-annotation" in args_list:
+        if (any(
+            x in args_list for x in ["--retrieve-sample"]
+        )):
+            err_exit(
+                "Please specify only one of the the following: --retrieve-allele, --retrieve-sample or --retrieve-annotation for details on the corresponding json template and filter definition."
+            )
+        else:
+            if args.json_help:
+                print(
+                    "Option to allow users to return annotation information for specific alleles with IDs specified. Accepted input is either a string or a file. If a file is provided, the file must contain a single column (without header) of allele IDs, where there is one unique ID per row and having one of the following extensions, “.csv”, “.tsv”, or “.txt”. Specify additional “--json-help” to get detailed information on the json format and filters.\nExample --retrieve-annotation json filter\n{\n  “allele_id”:[”1_1000_A_T”,”2_1000_G_C”],\n  “gene_name”: [“BRCA2”],\n  “gene_id”: [“ENST00000302118”],\n  “feature_id”: [“ENST00000302118.5”],\n  “consequences”: [“5 prime UTR variant”],\n  “putative_impact”: [“MODIFIER”],\n  “hgvs_c”: [“c.-49A>G”],\n  “hgvs_p”: [“p.Gly2Asp”]\n}\nAvailable filters:\n    -annotation_source: Annotation tool:version\n    -allele_id: Id of the allele\n    -gene_name: Name of the gene (HGNC) where it overlaps with the allele\n    -gene_Id: Gene ID\n    -feature_Id: Feature ID from snpEff annotation, most common seen as transcript ID: https://pcingola.github.io/SnpEff/se_inputoutput/#ann-field-vcf-output-files \n    -consequences: Corresponding to “effect” from SnpEff annotation\n    -putative_impact: A simple estimation of putative impact. Possible values are HIGH,MODERATE, LOW, MODIFIER\n    -hgvs_c: Variant using HGVS notation (DNA level)\n    -hgvs_p: If variant is coding, this field describes the variant using HGVS notation (Protein level)"
+                )
+                sys.exit(0)
+    elif "--retrieve-sample" in args_list:
+        if args.json_help:
+            print(
+                "A JSON object, either in a file (.json extension) or as a string, specifying criteria of samples to retrieve. Returns a list of sample IDs and associated allele IDs.\nAvailable filters:\n    -sample_id: ID of the sample\n    -allele_id: ID of the allele\n    -locus_id: ID of the locus\n    -chr: Chromosome of the allele\n    -pos: Starting position of the allele\n    -ref: Reference sequence\n    -alt: Allele sequence\n    -genotype: Genotype type of the sample for the particular allele. One of [“hom-alt”, “het-ref”, “het-alt”, “half”]")
+            sys.exit(0)
+
+    #### Validate that other arguments are not passed with --list-assays ####
+    if args.list_assays:
+        if args.sql:
+            err_exit("The flag, --sql, cannot be used with --list-assays.")
+        elif args.output:
+            err_exit(
+                "When --list-assays is specified, output is to STDOUT. “--output” may not be supplied."
+            )
+        elif any(x in args_list for x in (retrieve_args_list + ["--assay-name"])):
+            err_exit("--list-assays cannot be presented with other options.")
+
+    #### Validate that a retrieve option is passed with --assay-name ####
+    if args.assay_name:
+        if not (any(x in args_list for x in retrieve_args_list)):
+            err_exit(
+                "--assay-name must be used with one of --retrieve-allele,--retrieve-annotation, --retrieve-sample."
+            )
+    
+    #### Validate that a retrieve option is passed with --sql ####
+    if args.sql:
+        if not (any(x in args_list for x in retrieve_args_list)):
+            err_exit(
+                "When --sql provided, must also provide at least one of the three options: --retrieve-allele <JSON>; --retrieve-sample <JSON>; --retrieve-annotation <JSON>."
+            )
+
+    ######## Data Processing ########
+    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    dataset_id = resp["dataset"]
+    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+
+    #### Get names of genetic assays ####
+    if args.list_assays:
+        geno_assay_names, geno_assay_ids, other_assay_names,  other_assay_ids= get_assays(
+            rec_descriptor, assay_type="genetic_variant"
+        )
+        if not geno_assay_names:
+            err_exit("There's no genetic assay in the dataset provided.")
+        else:
+            print(*geno_assay_names, sep="\n")
+
+    #### Decide which assay is to be queried ####
+    geno_assay_names, geno_assay_ids, other_assay_names,  other_assay_ids = get_assays(rec_descriptor, assay_type="genetic_variant")
+    selected_assay_name = geno_assay_names[0]
+    selected_assay_id = geno_assay_ids[0]
+    if args.assay_name:
+        if args.assay_name not in geno_assay_names:
+            if args.assay_name in other_assay_names:
+                err_exit(
+                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the - -list-assays flag."
+                )
+            else:
+                err_exit(
+                    "Assay {assay_name} does not exist in the {path}.".format(
+                        assay_name=args.assay_name, path=args.path
+                    )
+                )
+        else:
+            selected_assay_name = args.assay_name
+
+    #### Decide output method based on --output and --sql ####
+    if args.sql:
+        file_name_suffix = ".data.sql"
+    else:
+        file_name_suffix = ".tsv"
+    file_already_exist = []
+    files_to_check = []
+
+    print_to_stdout = False
+    if args.output is None:
+        out_directory = os.getcwd()
+        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
+        files_to_check.append(out_file)
+    elif args.output == "-":
+        print_to_stdout = True
+    elif os.path.exists(args.output):
+        if os.path.isdir(args.output):
+            err_exit("--output should be a file, not a directory.")
+        else:
+            file_already_exist.append(args.output)
+    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
+        args.output
+    ):
+        out_file = args.output
+    else:
+        err_exit(
+            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
+        )
+
+    for file in files_to_check:
+        if os.path.exists(file):
+            file_already_exist.append(file)
+
+    if file_already_exist:
+        err_exit("Cannot specify the output to be an existing file.")
+
+    # TODO: remove hardcoded payload after adding payload retrieval function
+    # payload = {
+    #     "project_context": "project-FkyXg38071F1vGy2GyXyYYQB",
+    #     "fields": [
+    #         {"allele_id": "allele$a_id"},
+    #         {"chromosome": "allele$chr"},
+    #         {"starting_position": "allele$pos"},
+    #         {"ref": "allele$ref"},
+    #         {"alt": "allele$alt"},
+    #         {"rsid": "allele$dbsnp151_rsid"},
+    #         {"allele_type": "allele$allele_type"},
+    #         {"dataset_alt_freq": "allele$alt_freq"},
+    #         {"gnomad_alt_freq": "allele$gnomad201_alt_freq"},
+    #         {"worst_effect": "allele$worst_effect"},
+    #     ],
+    #     "order_by": [{"allele_id": "asc"}],
+    #     "filters": {
+    #         "assay_filters": {
+    #             "name": "veo_demo_dataset_assay",
+    #             "id": "da6a4ffc-7571-4b2f-853d-445460a18396",
+    #             "compound": [
+    #                 {
+    #                     "filters": {
+    #                         "allele$dbsnp151_rsid": [
+    #                             {
+    #                                 "condition": "in",
+    #                                 "values": ["rs1387234741", "rs1487242024"],
+    #                             }
+    #                         ],
+    #                         "allele$allele_type": [
+    #                             {"condition": "in", "values": [
+    #                                 "SNP", "Del", "Ins"]}
+    #                         ],
+    #                         "allele$alt_freq": [
+    #                             {"condition": "between",
+    #                                 "values": [0.001, 0.5]}
+    #                         ],
+    #                         "allele$gnomad201_alt_freq": [
+    #                             {"condition": "between",
+    #                                 "values": [0.001, 0.5]}
+    #                         ],
+    #                     },
+    #                     "logic": "and",
+    #                 },
+    #                 {
+    #                     "compound": [
+    #                         {
+    #                             "filters": {
+    #                                 "allele$chr": [{"condition": "is", "values": "21"}],
+    #                                 "allele$pos": [
+    #                                     {
+    #                                         "condition": "greater-than",
+    #                                         "values": 8987000,
+    #                                     },
+    #                                     {"condition": "less-than",
+    #                                         "values": 8987100},
+    #                                 ],
+    #                             },
+    #                             "logic": "and",
+    #                         },
+    #                         {
+    #                             "filters": {
+    #                                 "allele$chr": [{"condition": "is", "values": "21"}],
+    #                                 "allele$pos": [
+    #                                     {
+    #                                         "condition": "greater-than",
+    #                                         "values": 8986900,
+    #                                     },
+    #                                     {"condition": "less-than",
+    #                                         "values": 8987000},
+    #                                 ],
+    #                             },
+    #                             "logic": "and",
+    #                         },
+    #                     ],
+    #                     "logic": "or",
+    #                     "name": "location",
+    #                 },
+    #             ],
+    #             "logic": "and",
+    #         }
+    #     },
+    #     "validate_geno_bins": True,
+    # }
+
+    # Timeout payload
+    payload = {'project_context': 'project-FkyXg38071F1vGy2GyXyYYQB', 'fields': [{'allele.a_id': 'allele$a_id'}, {'annotation$gene_name': 'annotation$gene_name'}], 'filters': {'pheno_filters': {'compound': [{'name': 'phenotype', 'logic': 'and', 'filters': {}, 'entity': {'logic': 'and', 'name': 'participant', 'operator': 'exists', 'children': []}}], 'logic': 'and'}, 'assay_filters': {'compound': [{'name': 'genotype', 'logic': 'and', 'filters': {'annotation$gene_name': [{'condition': 'in', 'values': ['PGBD2'], 'geno_bins': [{'chr': '1', 'start': '248906196', 'end': '248919946'}]}]}}], 'logic': 'and'}, 'logic': 'and'}}
+    
+    # TODO: replace payload_retrieval_function by actual function name and uncomment
+    # if "--retrieve-allele" in args_list:
+    #     payload = payload_retrieval_function(assay = selected_assay, filter="allele")
+    # elif "--retrieve-annotation" in args_list:
+    #     payload = payload_retrieval_function(assay=selected_assay, filter="annotation")
+    # elif "--retrieve-sample" in args_list:
+    #     payload = payload_retrieval_function(assay=selected_assay, filter="sample")
+
+    if "CohortBrowser" in resp['recordTypes']:
+        if resp.get('baseSql'):
+            payload['base_sql'] = resp.get('baseSql')
+        payload['filters'] = resp['filters']
+
+    #### Run api call to get sql or extract data ####
+    if (any(x in args_list for x in retrieve_args_list)):
+        if args.sql:
+            sql_results = raw_query_api_call(resp, payload)
+            if print_to_stdout:
+                print(sql_results)
+            else:
+                with open(out_file, "w") as sql_file:
+                    print(sql_results, file=sql_file)
+        else:
+            resp_raw = raw_api_call(resp, payload)
+            csv_from_json(
+                out_file_name=out_file,
+                print_to_stdout=print_to_stdout,
+                sep="\t",
+                raw_results=resp_raw["results"],
+            )
 
 def retrieve_entities(model):
     """
@@ -451,7 +797,6 @@ class DXDatasetDictionary():
     """
         A class to represent data, coding and entity dictionaries based on the descriptor. 
         All 3 dictionaries will have the same internal representation as dictionaries of string to pandas dataframe.
-
         Attributes
             data - dictionary of entity name to pandas dataframe representing entity with fields, relationships, etc.
             entity - dictionary of entity name to pandas dataframe representing entity title, etc.
