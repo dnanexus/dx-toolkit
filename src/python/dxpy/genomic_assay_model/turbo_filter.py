@@ -1,16 +1,13 @@
 import json
+from jsonschema import validate
 import argparse
-import dxpy
-
-# from ..utils.resolver import resolve_existing_path
-# from ..cli.dataset_utilities import DXDataset
-
 
 # A dictionary relating the fields in each input file to the table that they
 # need to filter data in
 # As of now, the allele and annotation files get all their data from the allele and
 # annotation tables respectively, only the sample file references data in multiple tables
 
+# TODO remove this for now and place somewhere else
 with open("assets/file_to_table.json", "r") as infile:
     file_to_table = json.load(infile)
 
@@ -26,6 +23,10 @@ with open("assets/column_conditions.json", "r") as infile:
 
 
 def BasicFilter(table, friendly_name, values):
+    # A low-level filter consisting of a dictionary with one key defining the table and column
+    # and values defining the user-provided value to be compared to, and the logical operator
+    # used to do the comparison
+
     column_name = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
     filter_key = "{}${}".format(table, column_name)
@@ -42,7 +43,7 @@ def BasicFilter(table, friendly_name, values):
                 {
                     "condition": condition,
                     "values": values,
-                    "geno_bins": [{"chr": "3", "start": 1000, "end": 2000}],
+                    "geno_bins": [{"chr": "18", "start": 47000, "end": 48000}],
                 }
             ]
         }
@@ -52,15 +53,16 @@ def BasicFilter(table, friendly_name, values):
 
 
 def LocationFilter(table, location):
-    # A location filter has two atomic filters with the exact same key.  Thus, the two filters
-    # need to be in the list under the table$column key
+    # A location filter has two atomic filters for pos with the exact same key.  Thus, the two filters
+    # need to be in the list under the table$column key.  There is a third filter defining the chromosome
+    # The three basic filters in a location filter are related to each other by "and"
     filter_group = BasicFilter(
         table,
         "chromosome",
         location["chromosome"],
     )
     pos_key = "{}$pos".format(table)
-    # first handle starting_position
+    # Note that the starting and ending filter objects are both values within the same allele$pos key
     starting_filter = {
         "condition": column_conditions[table]["starting_position"],
         "values": int(location["starting_position"]),
@@ -76,12 +78,14 @@ def LocationFilter(table, location):
 
 
 def GenerateAssayFilter(full_input_dict, name, id, filter_type):
-    # filter_type = allele,annotation, sample
+    # Generate the entire assay filters object by reading the filter JSON, making the relevant
+    # Basic and Location filters, and creating the structure that relates them logically
 
     # There are three possible types of input JSON: a sample filter, an allele filter,
     # and an annotation filter
     filters_dict = {}
     table = filter_type
+    location_compound = None
 
     for key in full_input_dict.keys():
         # Override the table name if we are working with a sample filter, as this filter
@@ -116,7 +120,8 @@ def GenerateAssayFilter(full_input_dict, name, id, filter_type):
 
     final_filter_dict["assay_filters"]["compound"].append({"filters": filters_dict})
     final_filter_dict["assay_filters"]["compound"][0]["logic"] = "and"
-    final_filter_dict["assay_filters"]["compound"].append(location_compound)
+    if location_compound:
+        final_filter_dict["assay_filters"]["compound"].append(location_compound)
     final_filter_dict["assay_filters"]["logic"] = "and"
 
     return final_filter_dict
@@ -133,49 +138,70 @@ def FinalPayload(assay_filter, project_context, filter_type):
 
     if filter_type == "allele":
         order_by = [{"allele_id": "asc"}]
-        with open("assets/allele_return_columns.json", "r") as infile:
+        with open("assets/return_columns_allele.json", "r") as infile:
             fields = json.load(infile)
     elif filter_type == "annotation":
         order_by = [{"allele_id": "asc"}]
-        with open("assets/annotation_return_columns.json", "r") as infile:
+        with open("assets/return_columns_annotation.json", "r") as infile:
             fields = json.load(infile)
     elif filter_type == "sample":
         order_by = [{"sample_id": "asc"}]
-        with open("assets/sample_return_columns.json", "r") as infile:
+        with open("assets/return_columns_sample.json", "r") as infile:
             fields = json.load(infile)
 
     final_payload["fields"] = fields
     final_payload["order_by"] = order_by
-    final_payload["filters"] = assay_filter
+    final_payload["raw_filters"] = assay_filter
     final_payload["validate_geno_bins"] = True
     return final_payload
 
 
 if __name__ == "__main__":
     # Temporarily hardcode some variables that we will eventually get from the command line
-    json_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/allele_filter.json"
-    output_file = "test_output/final_payload.json"
-
-    filter_type = "allele"
-    record_id = "record-FyFPyz0071F54Zjb32vG82Gj"
-    project_context = "project-FkyXg38071F1vGy2GyXyYYQB"
-
-    # project_context, path, entity_result = resolve_existing_path(
-    #    "{}:{}".format(project_id, record_id)
-    # )
-    # rec_descriptor = DXDataset(record_id, project=project_id).get_descriptor()
-    # rec_dict = rec_descriptor.get_dictionary()
-
+    # args.filter = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/unit_tests/allele_01.json"
+    # output_file = "test_output/allele_01_output.json"
+    # filter_type = "allele"
+    # project_context = "project-FkyXg38071F1vGy2GyXyYYQB"
     # Name and ID, and context will come from the descriptor, which is processed upstream of this script
-    name = "veo_demo_dataset_assay"
-    id = "da6a4ffc-7571-4b2f-853d-445460a18396"
+    # name = "veo_demo_dataset_assay"
+    # id = "da6a4ffc-7571-4b2f-853d-445460a18396"
 
-    with open(json_path, "r") as infile:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--filter", help="path to filter JSON file", required=True)
+    parser.add_argument("--output", help="path to output file", required=True)
+    parser.add_argument(
+        "--type",
+        help="type of filter being applied",
+        choices=["allele", "annotation", "sample"],
+        required=True,
+    )
+    parser.add_argument(
+        "--project-context",
+        help="project ID of parent project of record",
+        required=True,
+    )
+    parser.add_argument("--name", help="name of assay", required=True)
+    parser.add_argument("--id", help="ID of assay", required=True)
+
+    args = parser.parse_args()
+
+    with open(args.filter, "r") as infile:
         full_input_dict = json.load(infile)
 
-    assay_filter = GenerateAssayFilter(full_input_dict, name, id, filter_type)
+    # Check JSON against schema
+    schema_file = "schemas/retrieve_{}_schema.json".format(args.type)
+    with open(schema_file, "r") as infile:
+        json_schema = json.load(infile)
 
-    final_payload = FinalPayload(assay_filter, project_context, filter_type)
+    try:
+        validate(full_input_dict, json_schema)
+        print("JSON file {} is valid".format(args.filter))
+    except Exception as inst:
+        print(inst)
 
-    with open(output_file, "w") as outfile:
+    assay_filter = GenerateAssayFilter(full_input_dict, args.name, args.id, args.type)
+
+    final_payload = FinalPayload(assay_filter, args.project_context, args.type)
+
+    with open(args.output, "w") as outfile:
         json.dump(final_payload, outfile)

@@ -5,7 +5,7 @@
     "allele": {
         "allele_id": "in",
         "id": "in",
-        "rsid": "in",
+        "rsid": "any",
         "type": "in",
         "ref": "in",
         "dataset_alt_af": "between",
