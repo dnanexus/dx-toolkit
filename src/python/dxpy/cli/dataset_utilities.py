@@ -258,7 +258,7 @@ def extract_dataset(args):
             file_name_suffix = '.data.sql'
         else:
             file_name_suffix = out_extension
-
+        
         if args.output is None:
             out_directory = os.getcwd()
             out_file_field = os.path.join(out_directory, resp['recordName'] + file_name_suffix)
@@ -277,10 +277,11 @@ def extract_dataset(args):
         else:
             err_exit("Error: {path} could not be found".format(path=os.path.dirname(args.output)))
 
+    
     for file in files_to_check:
         if os.path.exists(file):
             file_already_exist.append(file)
-
+    
     if file_already_exist:
         err_exit("Error: path already exists {path}".format(path=file_already_exist))
 
@@ -295,8 +296,7 @@ def extract_dataset(args):
             elif entity_field[0] not in rec_descriptor.model["entities"].keys() or \
                entity_field[1] not in rec_descriptor.model["entities"][entity_field[0]]["fields"].keys():
                error_list.append(entry)
-
-
+        
         if error_list:
             err_exit('The following fields cannot be found: %r' % error_list)
 
@@ -325,15 +325,15 @@ def extract_dataset(args):
 
     elif args.sql:
         err_exit('`--sql` passed without `--fields`')
-
-
+        
+    
     if args.dump_dataset_dictionary:
         rec_dict = rec_descriptor.get_dictionary()
         write_ot = rec_dict.write(output_file_data=output_file_data, output_file_entity=output_file_entity,
                                   output_file_coding=output_file_coding, sep=delimiter)
 
     # Listing section
-    if args.list_entities or args.list_fields:
+    if args.list_entities or args.list_fields:  
         # Retrieve entity names, titles and main entity
         entity_names_and_titles, _main_entity = retrieve_entities(rec_descriptor.model)
         # List entities
@@ -671,12 +671,12 @@ def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=
 
     if not print_to_stdout:
         fields_output.close()
-
+    
 class DXDataset(DXRecord):
     """
         A class to handle record objects of type Dataset. 
         Inherits from DXRecord, but automatically populates default fields, details and properties.
-
+        
         Attributes:
             All the same as DXRecord
             name - from record details
@@ -706,7 +706,7 @@ class DXDataset(DXRecord):
         self.description = self.details.get('description')
         self.schema = self.details.get('schema')
         self.version = self.details.get('version')
-
+    
     def get_descriptor(self):
         if self.descriptor is None:
             self.descriptor = DXDatasetDescriptor(self.descriptor_dxfile, schema=self.schema)
@@ -720,7 +720,7 @@ class DXDataset(DXRecord):
 class DXDatasetDescriptor():
     """
         A class to represent a parsed descriptor of a Dataset record object. 
-
+        
         Attributes
             Representation of JSON object stored in descriptor file
         Functions
@@ -739,7 +739,7 @@ class DXDatasetDescriptor():
                 obj = json.loads(jsonstr, object_pairs_hook=collections.OrderedDict)
             else:
                 obj = json.load(f, object_pairs_hook=collections.OrderedDict)
-
+        
         for key in obj:
             setattr(self,key, obj[key])
         self.schema = kwargs.get('schema')
@@ -751,18 +751,16 @@ class DXDatasetDictionary():
     """
         A class to represent data, coding and entity dictionaries based on the descriptor. 
         All 3 dictionaries will have the same internal representation as dictionaries of string to pandas dataframe.
-
         Attributes
             data - dictionary of entity name to pandas dataframe representing entity with fields, relationships, etc.
             entity - dictionary of entity name to pandas dataframe representing entity title, etc.
             coding - dictionary of coding name to pandas dataframe representing codes, their hierarchy (if applicable) and their meanings
     """
-
     def __init__(self, descriptor):
         self.data_dictionary =  self.load_data_dictionary(descriptor)
         self.coding_dictionary = self.load_coding_dictionary(descriptor)
         self.entity_dictionary = self.load_entity_dictionary(descriptor)
-
+    
     def load_data_dictionary(self, descriptor):
         """
             Processes data dictionary from descriptor
@@ -770,16 +768,16 @@ class DXDatasetDictionary():
         eblocks = collections.OrderedDict()
         join_path_to_entity_field = collections.OrderedDict()
         for entity_name in descriptor.model['entities']:
-            eblocks[entity_name] = self.create_entity_dframe(descriptor.model['entities'][entity_name],
-                                                             is_primary_entity=(entity_name == descriptor.model["global_primary_key"]["entity"]),
-                                                             global_primary_key=(descriptor.model["global_primary_key"]))
+            eblocks[entity_name] = self.create_entity_dframe(descriptor.model['entities'][entity_name], 
+                                        is_primary_entity=(entity_name==descriptor.model["global_primary_key"]["entity"]),
+                                        global_primary_key=(descriptor.model["global_primary_key"]))
 
             join_path_to_entity_field.update(self.get_join_path_to_entity_field_map(descriptor.model['entities'][entity_name]))
 
         edges = []
         for ji in descriptor.join_info:
             skip_edge = False
-
+            
             for path in [ji["joins"][0]["to"], ji["joins"][0]["from"]]:
                 if path not in join_path_to_entity_field:
                     skip_edge = True
@@ -809,9 +807,9 @@ class DXDatasetDictionary():
             Returns DataDictionary pandas DataFrame for an entity.
         """
         required_columns = [
-            "entity",
-            "name",
-            "type",
+            "entity", 
+            "name", 
+            "type", 
             "primary_key_type"
         ]
 
@@ -830,10 +828,10 @@ class DXDatasetDictionary():
             "units"
         ]
         dataset_datatype_dict = {"integer": "integer",
-            "double": "float",
-            "date": "date",
-            "datetime": "datetime",
-            "string": "string"
+                                     "double": "float",
+                                     "date": "date",
+                                     "datetime": "datetime",
+                                     "string": "string"
         }
         dcols = {col: [] for col in required_columns + extra_cols}
         dcols["entity"] = [entity["name"]] * len(entity["fields"])
@@ -860,8 +858,8 @@ class DXDatasetDictionary():
             dcols["is_multi_select"].append("yes" if field_dict["is_multi_select"] else "")
             dcols["is_sparse_coding"].append("yes" if field_dict["is_sparse_coding"] else "")
             dcols["linkout"].append(field_dict["linkout"])
-            dcols["longitudinal_axis_type"].append(field_dict["longitudinal_axis_type"]
-                                                   if field_dict["longitudinal_axis_type"] else "")
+            dcols["longitudinal_axis_type"].append(field_dict["longitudinal_axis_type"] 
+                                                    if field_dict["longitudinal_axis_type"] else "")
             dcols["title"].append(field_dict["title"])
             dcols["units"].append(field_dict["units"])
 
@@ -881,9 +879,9 @@ class DXDatasetDictionary():
         for field in entity["fields"]:
             field_value = entity["fields"][field]["mapping"]
             db_tb_col_path = "{}${}${}".format(field_value["database_name"], field_value["table"], field_value["column"])
-            join_path_to_entity_field[db_tb_col_path] = (entity["name"], field)
+            join_path_to_entity_field[db_tb_col_path] = (entity["name"],field)
 
-            if field_value["database_unique_name"] and database_unique_name_regex.match(field_value["database_unique_name"]):
+            if field_value["database_unique_name"] and database_unique_name_regex.match(field_value["database_unique_name"]):  
                 unique_db_tb_col_path = "{}${}${}".format(field_value["database_unique_name"], field_value["table"], field_value["column"])
                 join_path_to_entity_field[unique_db_tb_col_path] = (entity["name"], field)
             elif field_value["database_name"] and field_value["database_id"] and database_id_regex.match(field_value["database_name"]):
@@ -900,6 +898,7 @@ class DXDatasetDictionary():
         column_from = join_info_joins["joins"][0]["from"]
         edge["source_entity"], edge["source_field"] = join_path_to_entity_field[column_to]
         edge["destination_entity"], edge["destination_field"] = join_path_to_entity_field[column_from]
+        edge["relationship"] = join_info_joins["relationship"]
         return edge
 
     def load_coding_dictionary(self, descriptor):
@@ -909,6 +908,7 @@ class DXDatasetDictionary():
         cblocks = collections.OrderedDict()
         for entity in descriptor.model['entities']:
             for field in descriptor.model['entities'][entity]["fields"]:
+                coding_name_value = descriptor.model['entities'][entity]["fields"][field]["coding_name"]
                 if coding_name_value and coding_name_value not in cblocks:
                     cblocks[coding_name_value] = self.create_coding_name_dframe(descriptor.model, entity, field, coding_name_value)
         return cblocks
@@ -920,7 +920,6 @@ class DXDatasetDictionary():
         dcols = {}
         if model['entities'][entity]["fields"][field]["is_hierarchical"]:
             displ_ord = 0
-
             def unpack_hierarchy(nodes, parent_code, displ_ord):
                 """Serialize the node hierarchy by depth-first traversal.
 
@@ -944,12 +943,12 @@ class DXDatasetDictionary():
                 "code": all_codes,
                 "parent_code": parents,
                 "meaning": [model["codings"][coding_name_value]["codes_to_meanings"][c] for c in all_codes],
-                "concept": [model["codings"][coding_name_value]["codes_to_concepts"][c] if
-                            (model["codings"][coding_name_value]["codes_to_concepts"] and
+                "concept": [model["codings"][coding_name_value]["codes_to_concepts"][c] if 
+                            (model["codings"][coding_name_value]["codes_to_concepts"] and 
                             c in model["codings"][coding_name_value]["codes_to_concepts"].keys()) else None for c in all_codes],
                 "display_order": displ_ord
             })
-
+            
         else:
             # No hierarchy; just unpack the codes dictionary
             codes, meanings = zip(*model["codings"][coding_name_value]["codes_to_meanings"].items())
@@ -958,10 +957,10 @@ class DXDatasetDictionary():
             else:
                 concepts = [None] * len(codes)
             display_order = [int(model["codings"][coding_name_value]["display"].index(c) + 1) for c in codes]
-            dcols.update({"code": codes, "meaning": meanings,"concept": concepts, "display_order": display_order})
+            dcols.update({"code": codes, "meaning": meanings, "concept": concepts, "display_order": display_order})
 
         dcols["coding_name"] = [coding_name_value] * len(dcols["code"])
-
+        
         try:
             dframe = pd.DataFrame(dcols)
         except ValueError as exc:
@@ -977,12 +976,12 @@ class DXDatasetDictionary():
         for entity_name in descriptor.model['entities']:
             entity = descriptor.model['entities'][entity_name]
             entity_dictionary[entity_name] = pd.DataFrame.from_dict([{
-                        "entity": entity_name,
-                        "entity_title": entity.get('entity_title'),
-                        "entity_label_singular": entity.get('entity_label_singular'),
-                        "entity_label_plural": entity.get('entity_label_plural'),
-                        "entity_description": entity.get('entity_description')
-                    }])
+                "entity": entity_name,
+                "entity_title": entity.get('entity_title'),
+                "entity_label_singular": entity.get('entity_label_singular'),
+                "entity_label_plural": entity.get('entity_label_plural'),
+                "entity_description": entity.get('entity_description')
+            }])
         return entity_dictionary
 
     def write(self, output_file_data="", output_file_entity="", output_file_coding="", sep=","):
@@ -995,7 +994,6 @@ class DXDatasetDictionary():
             index=False,
             na_rep="",
         )
-
         def sort_dataframe_columns(dframe, required_columns):
             """Sort dataframe columns alphabetically but with `required_columns` first."""
             extra_cols = dframe.columns.difference(required_columns)
@@ -1008,11 +1006,13 @@ class DXDatasetDictionary():
             return sort_dataframe_columns(df, required_columns)
 
         if self.data_dictionary:
-            data_dframe = as_dataframe(self.data_dictionary, required_columns=["entity", "name", "type", "primary_key_type"])
+            data_dframe = as_dataframe(self.data_dictionary, required_columns = ["entity", "name", "type", "primary_key_type"])
+            data_dframe.to_csv(output_file_data, **csv_opts)
 
         if self.coding_dictionary:
             coding_dframe = as_dataframe(self.coding_dictionary, required_columns=["coding_name", "code", "meaning"])
-
+            coding_dframe.to_csv(output_file_coding, **csv_opts)
+        
         if self.entity_dictionary:
             entity_dframe = as_dataframe(self.entity_dictionary, required_columns=["entity", "entity_title"])
             entity_dframe.to_csv(output_file_entity, **csv_opts)
