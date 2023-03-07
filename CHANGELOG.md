@@ -6,7 +6,69 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [337.0] - beta
+## [342.0] - beta
+
+### Added
+
+* Pretty-print spotCostSavings field in dx describe`job-xxxx`
+
+### Changed
+
+* Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts is set to 3.
+
+## [341.0] - 2023.3.3 - stable
+
+### Added
+
+* `dx ssh` to connect to job's public hostname if job is httpsApp enabled
+* '--list-fields', '--list-entities', '--entities' arguments for `dx extract_dataset`
+* 
+### Changed
+
+* Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
+* Increased dxpy HTTP timeout to 15 minutes
+ 
+### Fixed
+
+* Helpstring of '--verbose' arg
+
+## [340.1] - 2023.2.25
+
+### Changed
+
+* Nextflow - updated default instance types based on destination region
+* Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
+
+### Fixed
+
+* Use project ID for file-xxxx/describe API calls in dxjava DXFile
+* Nextflow errorStrategy retry ends in 'failed' state if last retry fails
+
+## [339.0] - 2023.2.10
+
+* No significant changes
+
+## [338.1] - 2023.1.27
+
+### Added
+
+* Support for Granular Spot wait times in `dx run` using `--max-tree-spot-wait-time` and `--max-job-spot-wait-time`
+* Printing of Spot wait times in `dx describe` for jobs and workflows
+* Support for private Docker images in Nextflow pipelines on subjob level
+
+### Fixed
+
+* Feature switch check for Nextflow pipeline build in an app execution environment
+* `dx get database` command reads from the API server with the API proxy interceptor
+* Regex global flags in path matching to support Py3.11
+* `dx run --clone` for Nextflow jobs (clear cloned job's properties)
+* Do not rewrite ubuntu repo mirror after failed execDepends install
+
+### Changed
+
+* Upgraded Nextflow plugin version to 1.5.0
+
+## [337.0] - 2023.1.20
 
 ### Changed
 
@@ -15,11 +77,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Updated Nextflow last error message in case 'ignore' errorStrategy is applied.
 * Exposed help messages for `dx build --nextflow`
 
-### Fixed
-
-* Unset Nextflow related properites cloned from a previous Nextflow job when using `dx run --clone`
-
-## [336.0] - 2023.1.7 - stable
+## [336.0] - 2023.1.7
 
 * No significant changes
 
@@ -533,7 +591,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Precise debian package build target
 
-## [290.1] - 2019.11.21 stable
+## [290.1] - 2019.11.21
 
 ### Changed
 
@@ -595,7 +653,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Only require futures package for python 2.7
 * Upgrade build dependencies for pip, setuptools, and wheel
 
-## [284.0] - 2019.06.13 stable
+## [284.0] - 2019.06.13
 
 ### Added
 

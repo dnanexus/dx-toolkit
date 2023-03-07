@@ -41,7 +41,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import extract_dataset
+from ..cli.dataset_utilities import (extract_dataset, extract_assay_germline)
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -73,7 +73,11 @@ from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, 
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
                               print_ls_l_desc, get_ls_l_desc_fields, get_io_desc, get_find_executions_string)
 from ..system_requirements import SystemRequirementsDict
-
+try:
+   from urllib.parse import urlparse
+except:
+    # Python 2
+   from urlparse import urlparse
 try:
     import colorama
     colorama.init()
@@ -3685,7 +3689,8 @@ def verify_ssh_config():
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
         err_exit(args.job_id + " does not look like a DNAnexus job ID")
-    job_desc = try_call(dxpy.describe, args.job_id)
+    ssh_desc_fields = {"state":True, "sshHostKey": True, "httpsApp": True, "sshPort": True, "host": True, "allowSSH": True}
+    job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
         err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
@@ -3717,23 +3722,32 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
         time.sleep(1)
-        job_desc = dxpy.describe(args.job_id)
+        job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
         sys.stdout.flush()
     sys.stdout.write("\n")
 
     sys.stdout.write("Resolving job hostname and SSH host key...")
     sys.stdout.flush()
+
+    known_host = "{job_id}.dnanex.us".format(job_id=args.job_id)
     host, host_key, ssh_port = None, None, None
     for i in range(90):
         host = job_desc.get('host')
-        host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
+        url = job_desc.get('httpsApp', {}).get('dns', {}).get('url')
+        if url is not None:
+            https_host = urlparse(url).hostname
+            # If the hostname is not parsed properly revert back to default behavior
+            if https_host is not None:
+                host = https_host
+                known_host = https_host
+        host_key = job_desc.get('sshHostKey')
         ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
             break
         else:
             time.sleep(1)
-            job_desc = dxpy.describe(args.job_id)
+            job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
             sys.stdout.write(".")
             sys.stdout.flush()
     sys.stdout.write("\n")
@@ -3744,7 +3758,7 @@ def ssh(args, ssh_config_verified=False):
 
     known_hosts_file = os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_known_hosts')
     with open(known_hosts_file, 'a') as fh:
-        fh.write("{job_id}.dnanex.us {key}\n".format(job_id=args.job_id, key=host_key.rstrip()))
+        fh.write("{known_host} {key}\n".format(known_host=known_host, key=host_key.rstrip()))
 
     import socket
     connected = False
@@ -3790,7 +3804,7 @@ def ssh(args, ssh_config_verified=False):
 
     print("Connecting to {}:{}".format(host, ssh_port))
     ssh_args = ['ssh', '-i', os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_id'),
-                '-o', 'HostKeyAlias={}.dnanex.us'.format(args.job_id),
+                '-o', 'HostKeyAlias={}'.format(known_host),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
                 '-p', str(ssh_port), '-l', 'dnanexus', host]
     if args.ssh_proxy:
@@ -3799,7 +3813,7 @@ def ssh(args, ssh_config_verified=False):
     ssh_args += args.ssh_args
     exit_code = subprocess.call(ssh_args)
     try:
-        job_desc = dxpy.describe(args.job_id)
+        job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         if args.check_running and job_desc['state'] == 'running':
             msg = "Job {job_id} is still running. Terminate now?".format(job_id=args.job_id)
             if prompt_for_yn(msg, default=False):
@@ -4564,7 +4578,7 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
                                         parents=[json_arg, no_color_arg, delim_arg, env_args],
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
-parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
+parser_describe.add_argument('--verbose', help='Include additional metadata', action='store_true')
 parser_describe.add_argument('--name', help='Only print the matching names, one per line', action='store_true')
 parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24),
                              action='store_true')
@@ -6081,8 +6095,8 @@ register_parser(parser_unarchive, categories='fs')
 #####################################
 # extract_dataset
 #####################################
-parser_extract_dataset = subparsers.add_parser('extract_dataset', help="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.",
-                                   description="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.",
+parser_extract_dataset = subparsers.add_parser('extract_dataset', help="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data. Listing options enable enumeration of the entities and their respective fields in the dataset.",
+                                   description="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data. Provides listing options for entities and fields.",
                                    prog='dx extract_dataset')
 parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where "record-id" indicates the record ID in the currently selected project) or name')
 parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the three dictionary files, <record_name>.data_dictionary.csv, <record_name>.entity_dictionary.csv, and <record_name>.codings.csv will be generated. Files will be comma delimited and written to the local working directory, unless otherwise specified using --delimiter and --output arguments. If any of the three dictionary files does not contain data (i.e. the dictionary is empty), then that particular file will not be created.')
@@ -6090,8 +6104,91 @@ parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separat
 parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (string) will be returned to query the set of entity.fields, instead of returning stored values from the set of entity.fields')
 parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const=',', default=',', help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
 parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output). If not supplied, output will create a file with a default name in the current folder')
+parser_extract_dataset.add_argument( "--list-fields", action="store_true", default=False, help='List the names and titles of all fields available in the dataset specified. When not specified together with "–-entities", it will return all the fields from the main entity. Output will be a two column table, field names and field titles, separated by a tab, where field names will be of the format, "<entity name>.<field name>" and field titles will be of the format, "<field title>".')
+parser_extract_dataset.add_argument( "--list-entities", action="store_true", default=False, help='List the names and titles of all the entities available in the dataset specified. Output will be a two column table, entity names and entity titles, separated by a tab.')
+parser_extract_dataset.add_argument("--entities", help='Similar output to "--list-fields", however using "--entities" will allow for specific entities to be specified. When multiple entities are specified, use comma as the delimiter. For example: "--list-fields --entities entityA,entityB,entityC"')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
+
+#####################################
+# extract_assay
+#####################################
+parser_extract_assay = subparsers.add_parser(
+    "extract_assay",
+    help="Retrieve the selected data or generate SQL to retrieve the data from a genetic variant or somatic assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from a genetic variant or somatic assay in a dataset or cohort based on provided rules.",
+    prog="dx extract_assay",
+)
+subparsers_extract_assay = parser_extract_assay.add_subparsers(
+    parser_class=DXArgumentParser
+)
+parser_extract_assay.metavar = "class"
+register_parser(parser_extract_assay)
+
+parser_extract_assay_germline = subparsers_extract_assay.add_parser(
+    "germline",
+    help="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
+    formatter_class=argparse.RawTextHelpFormatter
+)
+
+parser_extract_assay_germline.add_argument(
+    "path",
+    type=str,
+    help='The name or project-id:record-id of a v3.0 Dataset or Cohort object ID, where "record-id" indicates the record-id in current selected project.',
+)
+parser_extract_assay_germline.add_argument(
+    "--list-assays",
+    action="store_true",
+    help="List genetic variant assays available for query in the specified Dataset or Cohort object.",
+)
+parser_extract_assay_germline.add_argument(
+    "--assay-name",
+    default=None,
+    help="Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
+)
+parser_extract_assay_germline.add_argument(
+    "--retrieve-allele",
+    type=str,
+    const='{}', 
+    default='{}',
+    nargs='?',
+    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of alleles to retrieve. Returns a list of allele IDs with additional information. Use --json-help for additional information on how to use this option.",
+)
+parser_extract_assay_germline.add_argument(
+    "--retrieve-annotation",
+    type=str,
+    const='{}',
+    default='{}',
+    nargs='?',
+    help="Option to allow users to return annotation information for specific alleles with IDs specified. Accepted input is either a string or a file. If a file is provided, the file must contain a single column (without header) of allele IDs, where there is one unique ID per row and having one of the following extensions, “.csv”, “.tsv”, or “.txt”. Use --json-help for additional information on how to use this option.",
+)
+parser_extract_assay_germline.add_argument(
+    "--retrieve-sample",
+    type=str,
+    const='{}',
+    default='{}',
+    nargs='?',
+    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of samples to retrieve. Returns a list of sample IDs and associated allele IDs. Use --json-help for additional information on how to use this option.",
+)
+parser_extract_assay_germline.add_argument(
+    '--json-help',
+    help=argparse.SUPPRESS,
+    action="store_true",
+    )
+parser_extract_assay_germline.add_argument(
+    "--sql",
+    action="store_true",
+    help="If the flag is provided, a SQL statement will be returned instead of data.",
+)
+parser_extract_assay_germline.add_argument(
+    "-o", "--output", 
+    type=str,
+    default=None,
+    help="Path to store the output file."
+)
+parser_extract_assay_germline.set_defaults(func=extract_assay_germline)
+register_parser(parser_extract_assay_germline)
 
 #####################################
 # help

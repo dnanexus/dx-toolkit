@@ -1,35 +1,56 @@
 #!/usr/bin/env bash
 
+# Script that is used to run both the main Nextflow orchestrator job
+# and the Nextflow task sub-jobs.
+
 set -f
 
-dx-registry-login() {
+DOCKER_CREDS_FOLDER=/docker/credentials/
+DOCKER_CREDS_FILENAME=dx_docker_creds
 CREDENTIALS=${HOME}/credentials
-dx download "${docker_creds}" -o $CREDENTIALS
 
-command -v docker >/dev/null 2>&1 || (echo "ERROR: docker is required when running with the Docker credentials."; exit 1)
+# Logs the user to the docker registry.
+# Uses docker credentials that have to be in $CREDENTIALS location.
+# Format of the file:
+#      {
+#          docker_registry: {
+#              "registry": "<Docker registry name, e.g. quay.io or docker.io>",
+#              "username": "<registry login name>",
+#              "organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
+#              "token": "<API token>"
+#          }
+#      }
+docker_registry_login() {
+  if [ ! -f $CREDENTIALS ]; then
+    dx download "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" -o $CREDENTIALS
+  fi
 
-export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
-export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
-export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
-if [[  -z $REGISTRY_ORGANIZATION || $REGISTRY_ORGANIZATION == "null" ]]; then
-    export REGISTRY_ORGANIZATION=$REGISTRY_USERNAME
-fi
+  export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
+  export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
+  export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
+  if [[  -z $REGISTRY_ORGANIZATION || $REGISTRY_ORGANIZATION == "null" ]]; then
+      export REGISTRY_ORGANIZATION=$REGISTRY_USERNAME
+  fi
 
-if [[ -z $REGISTRY || $REGISTRY == "null" \
-      || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
-    echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
-    echo "{"
-    echo "    docker_registry: {"
-    echo "        registry": "<Docker registry name, e.g. quay.io or docker.io>",
-    echo "        username": "<registry login name>",
-    echo "        organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
-    echo "        token": "<API token>"
-    echo "    }"
-    echo "}"
-    exit 1
-fi
+  if [[ -z $REGISTRY || $REGISTRY == "null" \
+        || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
+      echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
+      echo "{"
+      echo "    \"docker_registry\": {"
+      echo "        \"registry\": \"<Docker registry name, e.g. quay.io or docker.io>\"",
+      echo "        \"username\": \"<registry login name>\"",
+      echo "        \"organization\": \"<(optional, default value equals username) organization as defined by DockerHub or Quay.io>\"",
+      echo "        \"token\": \"<API token>\""
+      echo "    }"
+      echo "}"
+      exit 1
+  fi
 
-jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
+  jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
+  if [ ! $? -eq 0 ]; then
+      echo "Docker authentication failed, please check if the docker credentials file is correct." 1>&2
+      exit 2
+  fi
 }
 
 generate_runtime_config() {
@@ -48,6 +69,7 @@ generate_runtime_config() {
   fi
 }
 
+# On exit, for the main Nextflow orchestrator job
 on_exit() {
   ret=$?
 
@@ -195,11 +217,13 @@ restore_cache() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
+# Have to ask user to empty the cache if limit exceeded because Nextflow only
+# has UPLOAD access to project
 check_cache_db_storage() {
   MAX_CACHE_STORAGE=20
   existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
   [[ $existing_cache -le MAX_CACHE_STORAGE ]] ||
-    dx-jobutil-report-error "The number of preserved sessions is already at the limit (N=20) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true. "
+    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
 }
 
 validate_run_opts() {
@@ -271,6 +295,7 @@ dx_path() {
   esac
 }
 
+# Entry point for the main Nextflow orchestrator job
 main() {
   if [[ $debug == true ]]; then
     export NXF_DEBUG=2
@@ -279,9 +304,10 @@ main() {
     set -x
   fi
 
+  # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.4.0
-  
+  NXF_PLUGINS_VERSION=1.6.2
+
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
   [[ -z $cloned_job_properties ]] || dx unset_properties "$DX_JOB_ID" $cloned_job_properties
@@ -289,19 +315,23 @@ main() {
   # check if all run opts provided by user are supported
   validate_run_opts
 
-  # check if the number of preserved cache in current project does not exceed the limit (20)
+  # Check if limit reached for Nextflow sessions preserved in this project's cache
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage
   fi
 
   if [ -n "$docker_creds" ]; then
-    dx-registry-login
+    dx mkdir -p $DOCKER_CREDS_FOLDER
+    dx download "$(jq '."$dnanexus_link"' <<<${docker_creds} -r)" -o $CREDENTIALS --no-progress -f
+    dx upload $CREDENTIALS --brief --wait --destination "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}"
+    docker_registry_login
   fi
 
   # set default NXF env constants
+
+  # Disable use of newer flag --cpus when running Docker
+  # Can be enabled when Docker version on DNAnexus workers supports it
   export NXF_DOCKER_LEGACY=true
-  #export NXF_DOCKER_CREDS_FILE=$docker_creds_file
-  #[[ $scm_file ]] && export NXF_SCM_FILE=$(dx_path $scm_file 'Nextflow CSM file')
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
   export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
@@ -321,7 +351,7 @@ main() {
   # get current executable name
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
 
-  # set/create current session id
+  # If resuming session, use resume id; otherwise create id for this session
   if [[ -n $resume ]]; then
     get_resume_session_id
   else
@@ -403,6 +433,7 @@ main() {
     exit $ret
 }
 
+# On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   ret=$?
   if [ -f .command.log ]; then
@@ -415,21 +446,48 @@ nf_task_exit() {
   if [ -z ${exit_code} ]; then export exit_code=0; fi
 
   # Make sure that subjob with errorStrategy == terminate end in 'failed' state
-  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID --brief | head -n 1)
+  wait_time=240
+  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
+  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
     echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
     echo "Waiting for the headjob to kill the job tree..."
-    sleep 240
+    sleep $wait_time
     echo "This subjob was not killed in time, exiting to prevent excessive waiting."
     exit
+  fi
+
+  if [ "$exit_code" -ne "0" ] && [ -n "${retry_record}" ]; then
+    wait_period=0
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
+    echo "Waiting for the headjob to kill the job tree or for instruction to continue"
+
+    while true
+    do
+        dx describe $DX_JOB_ID --json | jq .properties -r
+        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
+        if [ "$errorStrategy_set" = "retry" ]; then
+          break
+        fi
+        wait_period=$(($wait_period+10))
+        if [ $wait_period -ge $wait_time ];then
+           echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+           break
+        else
+           echo "No instruction to continue was given. Waiting for 10 seconds"
+           sleep 10
+        fi
+    done
   fi
 
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
+# Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
-  if [ -n "$docker_creds" ]; then
-    dx-registry-login
+  docker_credentials=$(dx find data --path "$DX_WORKSPACE_ID:$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
+  if [ -n "$docker_credentials" ]; then
+    docker_registry_login
   fi
   # capture the exit code
   trap nf_task_exit EXIT
