@@ -1,3 +1,9 @@
+dx-toolkit (0.342.1) trusty; urgency=medium
+
+  * Fixed: Do not print job runtime if stopppedRunning not in describe
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 08 Mar 2023 21:34:49 +0000
+
 dx-toolkit (0.342.0) trusty; urgency=medium
 
   * Added: Pretty-print spotCostSavings field in dx describe`job-xxxx`
