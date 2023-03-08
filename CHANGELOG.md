@@ -10,7 +10,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Pretty-printing of Spot Cost Savings in `dx describe` for jobs and analyses
+* Pretty-printing additional fields for Granular Spot Wait Times in `dx describe` for jobs and analyses
 
 ### Changed
 
