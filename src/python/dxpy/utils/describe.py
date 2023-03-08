@@ -1164,7 +1164,7 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
     if desc['class'] == 'job':
         # Only print runtime if it ever started running
         if desc.get('startedRunning'):
-            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
+            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output'] and desc.get('stoppedRunning'):
                 runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])//1000)
                 cached_and_runtime_strs.append("runtime " + str(runtime))
             elif desc['state'] == 'running':
