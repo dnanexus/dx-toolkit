@@ -6,13 +6,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [343.0] - beta
+
 ### Changed
 
 * Released Nextaur 1.6.3 (includes updated wait times for file upload and close)
 * Upgraded Nextflow to 22.10.7
 * Removed Nextflow assets from aws:eu-west-2
 
-## [342.0] - beta
+## [342.1] - 2023.3.8 - stable
 
 ### Added
 
@@ -22,7 +24,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts is set to 3
 
-## [341.0] - 2023.3.3 - stable
+### Fixed
+
+* `dx find jobs` if stopppedRunning not in describe output
+
+## [341.0] - 2023.3.3
 
 ### Added
 
