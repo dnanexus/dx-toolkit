@@ -10,7 +10,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Pretty-print spotCostSavings field in dx describe`job-xxxx`
+* Pretty-printing of Spot Cost Savings in `dx describe` for jobs and analyses
 
 ### Changed
 
