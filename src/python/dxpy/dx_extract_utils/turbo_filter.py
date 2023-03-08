@@ -1,5 +1,7 @@
 import json
 from jsonschema import validate
+from ..exceptions import err_exit
+from ..cli.dataset_utilities import retrieve_geno_bins
 import argparse
 
 # A dictionary relating the fields in each input file to the table that they
@@ -31,19 +33,29 @@ def BasicFilter(table, friendly_name, values):
     condition = column_conditions[table][friendly_name]
     filter_key = "{}${}".format(table, column_name)
     if condition == "between":
-        values = [float(values["min"]), float(values["max"])]
+        min_val = float(values["min"])
+        max_val = float(values["max"])
+        if min_val > max_val:
+            print(
+                "min value greater than max value for filter {}".format(friendly_name)
+            )
+            raise err_exit
+        values = [min_val, max_val]
     if condition == "less-than" or condition == "greater-than":
         values = int(values)
 
     # Check if we need to add geno bins as well
     # This is only necessary for gene_id and a_id.  For rsid the vizserver calculates it itself
     if column_name == "gene_id" or column_name == "gene_name":
+        genome_reference = "GRCh38.92"
         listed_filter = {
             filter_key: [
                 {
                     "condition": condition,
                     "values": values,
-                    "geno_bins": [{"chr": "18", "start": 47000, "end": 48000}],
+                    "geno_bins": retrieve_geno_bins(
+                        values, args.project_context, "GRCh38.92"
+                    ),
                 }
             ]
         }
@@ -127,7 +139,13 @@ def GenerateAssayFilter(full_input_dict, name, id, filter_type):
     return final_filter_dict
 
 
-def FinalPayload(assay_filter, project_context, filter_type):
+def FinalPayload(full_input_dict, name, id, project_context, filter_type):
+
+    # First, ensure that the JSON is valid
+    ValidateJSON(full_input_dict, filter_type)
+    # Second, generate the assay filter component of the payload
+    assay_filter = GenerateAssayFilter(full_input_dict, name, id, filter_type)
+
     final_payload = {}
     final_payload["project_context"] = project_context
     # This might be set automatically depending on whether the raw or raw-query
@@ -154,6 +172,21 @@ def FinalPayload(assay_filter, project_context, filter_type):
     final_payload["raw_filters"] = assay_filter
     final_payload["validate_geno_bins"] = True
     return final_payload
+
+
+def ValidateJSON(filter, type):
+    # Check JSON against schema
+    # Errors out if JSON is invalid, continues otherwise
+    schema_file = "retrieve_{}_schema.json".format(type)
+    with open(schema_file, "r") as infile:
+        json_schema = json.load(infile)
+
+    try:
+        validate(full_input_dict, json_schema)
+        print("JSON file {} is valid".format(filter))
+    except Exception as inst:
+        print(inst)
+        raise err_exit
 
 
 if __name__ == "__main__":
@@ -188,20 +221,9 @@ if __name__ == "__main__":
     with open(args.filter, "r") as infile:
         full_input_dict = json.load(infile)
 
-    # Check JSON against schema
-    schema_file = "retrieve_{}_schema.json".format(args.type)
-    with open(schema_file, "r") as infile:
-        json_schema = json.load(infile)
-
-    try:
-        validate(full_input_dict, json_schema)
-        print("JSON file {} is valid".format(args.filter))
-    except Exception as inst:
-        print(inst)
-
-    assay_filter = GenerateAssayFilter(full_input_dict, args.name, args.id, args.type)
-
-    final_payload = FinalPayload(assay_filter, args.project_context, args.type)
+    final_payload = FinalPayload(
+        full_input_dict, args.name, args.id, args.project_context, args.type
+    )
 
     with open(args.output, "w") as outfile:
         json.dump(final_payload, outfile)
