@@ -175,7 +175,6 @@ def FinalPayload(
     final_payload["project_context"] = project_context
     # This might be set automatically depending on whether the raw or raw-query
     # API is selected, if not we need to set it here
-    # final_payload["stat"] = "raw"
 
     # Section for defining returned columns for each of the three filter types
 
@@ -195,7 +194,6 @@ def FinalPayload(
     final_payload["fields"] = fields
     final_payload["order_by"] = order_by
     final_payload["raw_filters"] = assay_filter
-    final_payload["validate_geno_bins"] = True
     return final_payload
 
 
