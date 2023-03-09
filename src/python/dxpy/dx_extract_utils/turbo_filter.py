@@ -24,7 +24,9 @@ with open("column_conditions.json", "r") as infile:
     column_conditions = json.load(infile)
 
 
-def BasicFilter(table, friendly_name, values):
+def BasicFilter(
+    table, friendly_name, values, project_context=None, genome_reference=None
+):
     # A low-level filter consisting of a dictionary with one key defining the table and column
     # and values defining the user-provided value to be compared to, and the logical operator
     # used to do the comparison
@@ -36,10 +38,10 @@ def BasicFilter(table, friendly_name, values):
         min_val = float(values["min"])
         max_val = float(values["max"])
         if min_val > max_val:
-            print(
+            err_exit(
                 "min value greater than max value for filter {}".format(friendly_name)
             )
-            raise err_exit
+
         values = [min_val, max_val]
     if condition == "less-than" or condition == "greater-than":
         values = int(values)
@@ -54,7 +56,7 @@ def BasicFilter(table, friendly_name, values):
                     "condition": condition,
                     "values": values,
                     "geno_bins": retrieve_geno_bins(
-                        values, args.project_context, "GRCh38.92"
+                        values, project_context, genome_reference
                     ),
                 }
             ]
@@ -89,7 +91,14 @@ def LocationFilter(table, location):
     return location_filter
 
 
-def GenerateAssayFilter(full_input_dict, name, id, filter_type):
+def GenerateAssayFilter(
+    full_input_dict,
+    name,
+    id,
+    project_context,
+    genome_reference,
+    filter_type,
+):
     # Generate the entire assay filters object by reading the filter JSON, making the relevant
     # Basic and Location filters, and creating the structure that relates them logically
 
@@ -126,6 +135,8 @@ def GenerateAssayFilter(full_input_dict, name, id, filter_type):
                         table,
                         key,
                         full_input_dict[key],
+                        project_context,
+                        genome_reference,
                     )
                 )
     final_filter_dict = {"assay_filters": {"name": name, "id": id, "compound": []}}
@@ -139,12 +150,26 @@ def GenerateAssayFilter(full_input_dict, name, id, filter_type):
     return final_filter_dict
 
 
-def FinalPayload(full_input_dict, name, id, project_context, filter_type):
+def FinalPayload(
+    full_input_dict,
+    name,
+    id,
+    project_context,
+    genome_reference,
+    filter_type,
+):
 
     # First, ensure that the JSON is valid
     ValidateJSON(full_input_dict, filter_type)
     # Second, generate the assay filter component of the payload
-    assay_filter = GenerateAssayFilter(full_input_dict, name, id, filter_type)
+    assay_filter = GenerateAssayFilter(
+        full_input_dict,
+        name,
+        id,
+        project_context,
+        genome_reference,
+        filter_type,
+    )
 
     final_payload = {}
     final_payload["project_context"] = project_context
@@ -182,23 +207,13 @@ def ValidateJSON(filter, type):
         json_schema = json.load(infile)
 
     try:
-        validate(full_input_dict, json_schema)
+        validate(filter, json_schema)
         print("JSON file {} is valid".format(filter))
     except Exception as inst:
-        print(inst)
-        raise err_exit
+        err_exit(inst)
 
 
 if __name__ == "__main__":
-    # Temporarily hardcode some variables that we will eventually get from the command line
-    # args.filter = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/genomic_assay_model/test_input/unit_tests/allele_01.json"
-    # output_file = "test_output/allele_01_output.json"
-    # filter_type = "allele"
-    # project_context = "project-FkyXg38071F1vGy2GyXyYYQB"
-    # Name and ID, and context will come from the descriptor, which is processed upstream of this script
-    # name = "veo_demo_dataset_assay"
-    # id = "da6a4ffc-7571-4b2f-853d-445460a18396"
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--filter", help="path to filter JSON file", required=True)
     parser.add_argument("--output", help="path to output file", required=True)
@@ -215,6 +230,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--name", help="name of assay", required=True)
     parser.add_argument("--id", help="ID of assay", required=True)
+    parser.add_argument("--reference", help="genome reference", default="GRCh38.92")
 
     args = parser.parse_args()
 
@@ -222,7 +238,12 @@ if __name__ == "__main__":
         full_input_dict = json.load(infile)
 
     final_payload = FinalPayload(
-        full_input_dict, args.name, args.id, args.project_context, args.type
+        full_input_dict,
+        args.name,
+        args.id,
+        args.project_context,
+        args.reference,
+        args.type,
     )
 
     with open(args.output, "w") as outfile:
