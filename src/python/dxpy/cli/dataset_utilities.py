@@ -27,19 +27,18 @@ import re
 import csv
 import dxpy
 import codecs
-import subprocess
-from ..utils.printing import (fill)
+from ..utils.printing import fill
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
 from ..utils.file_handle import as_handle
-from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState, ResourceNotFound
+from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState
+
+# from ..dx_extract_utils.turbo_filter import ValidateJSON, FinalPayload
 
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
-
-# TODO: import payload_retrieval_function
 
 def resolve_validate_path(path):
     project, path, entity_result = resolve_existing_path(path)
@@ -125,7 +124,9 @@ def raw_api_call(resp, payload):
                 print(resp_raw["error"]["message"])
             elif resp_raw["error"]["type"] == "QueryTimeOut":
                 print(resp_raw["error"]["message"])
-                print("Please consider using ‘--sql’ option to generate the SQL query and query via a private compute cluster.")
+                print(
+                    "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster."
+                )
             else:
                 print(resp_raw["error"])
             sys.exit(1)
@@ -347,23 +348,24 @@ def extract_dataset(args):
             list_fields(rec_descriptor.model, _main_entity, args)
 
 
-def get_assays(rec_descriptor, assay_type):
+def get_assay_info(rec_descriptor, assay_type):
     assay_list = rec_descriptor.assays
-    selected_type_assay_names = []
-    selected_type_assay_ids = []
-    other_assay_names = []
-    other_assay_ids = []
+    selected_type_assays = []
+    other_assays = []
     if not assay_list:
         err_exit("No valid assays in the dataset.")
     else:
         for a in assay_list:
             if a["generalized_assay_model"] == assay_type:
-                selected_type_assay_names.append(a["name"])
-                selected_type_assay_ids.append(a["id"])
+                # selected_type_assays[a["name"]]=a["uuid"]
+                selected_type_assays.append(a)
             else:
-                other_assay_names.append(a["name"])
-                other_assay_ids.append(a["id"])
-    return selected_type_assay_names, selected_type_assay_ids, other_assay_names, other_assay_ids
+                # other_assays[a["name"]]=a["uuid"]
+                other_assays.append(a)
+    return (
+        selected_type_assays,
+        other_assays
+    )
 
 
 def extract_assay_germline(args):
@@ -377,7 +379,6 @@ def extract_assay_germline(args):
         "--retrieve-annotation",
         "--retrieve-sample",
     ]
-
     #### Check if valid options are passed with the --json-help flag ####
     if args.json_help:
         if not (any(x in args_list for x in retrieve_args_list)):
@@ -391,9 +392,7 @@ def extract_assay_germline(args):
 
     #### Check if the retrieve options are passed correctly, print help if needed ####
     if "--retrieve-allele" in args_list:
-        if any(
-            x in args_list for x in ["--retrieve-annotation", "--retrieve-sample"]
-        ):
+        if any(x in args_list for x in ["--retrieve-annotation", "--retrieve-sample"]):
             err_exit(
                 "Please specify only one of the the following: --retrieve-allele, --retrieve-sample or --retrieve-annotation for details on the corresponding json template and filter definition."
             )
@@ -404,9 +403,7 @@ def extract_assay_germline(args):
                 )
                 sys.exit(0)
     elif "--retrieve-annotation" in args_list:
-        if (any(
-            x in args_list for x in ["--retrieve-sample"]
-        )):
+        if any(x in args_list for x in ["--retrieve-sample"]):
             err_exit(
                 "Please specify only one of the the following: --retrieve-allele, --retrieve-sample or --retrieve-annotation for details on the corresponding json template and filter definition."
             )
@@ -421,6 +418,50 @@ def extract_assay_germline(args):
             print(
                 "A JSON object, either in a file (.json extension) or as a string, specifying criteria of samples to retrieve. Returns a list of sample IDs and associated allele IDs.\nAvailable filters:\n    -sample_id: ID of the sample\n    -allele_id: ID of the allele\n    -locus_id: ID of the locus\n    -chr: Chromosome of the allele\n    -pos: Starting position of the allele\n    -ref: Reference sequence\n    -alt: Allele sequence\n    -genotype: Genotype type of the sample for the particular allele. One of [“hom-alt”, “het-ref”, “het-alt”, “half”]")
             sys.exit(0)
+
+    #### Validate json filters ####
+    def json_validation_function(filter_type, args_list, args):
+        filter_arg = "args.retrieve_" + filter_type
+        filter_value = eval(filter_arg)
+        filter = {}
+        if filter_value.startswith("{") and filter_value.endswith("}"):
+            if filter_value == "{}":
+                if "{}" in args_list:
+                    err_exit(
+                        "Json for “--retrieve-{filter_type}” does not contain valid filter information.".format(filter_type=filter_type))
+                else:
+                    err_exit(
+                        "No filter is given to “--retrieve-{filter_type}”.".format(filter_type=filter_type))
+            else:
+                try:
+                    filter = json.loads(filter_value)
+                except:
+                    err_exit("JSON for variant filters is malformatted.")
+        elif filter_value.endswith(".json"):
+            if os.path.isfile(filter_value):
+                print("file exists")
+                if os.stat(filter_value).st_size == 0:
+                    err_exit(
+                        "Json for “--retrieve-{filter_type}” does not contain valid filter information.".format(filter_type)
+                        )
+                else:    
+                    try:
+                        filter = json.load(filter_value)
+                    except:
+                        err_exit("JSON for variant filters is malformatted.")
+            else:
+                err_exit("Json file {filter_json} provided does not exist".format(
+                    filter_json=filter_value))
+        # ValidateJSON function from turbo_filter.py
+        # ValidateJSON(filter, filter_type)
+        return filter
+
+    if args.retrieve_allele and "--retrieve-allele" in args_list:
+        filter_dict = json_validation_function("allele", args_list, args)
+    elif args.retrieve_annotation and "--retrieve-annotation" in args_list:
+        filter_dict = json_validation_function("annotation", args_list, args)
+    elif args.retrieve_sample and "--retrieve-sample" in args_list:
+        filter_dict = json_validation_function("sample", args_list, args)
 
     #### Validate that other arguments are not passed with --list-assays ####
     if args.list_assays:
@@ -439,7 +480,7 @@ def extract_assay_germline(args):
             err_exit(
                 "--assay-name must be used with one of --retrieve-allele,--retrieve-annotation, --retrieve-sample."
             )
-    
+
     #### Validate that a retrieve option is passed with --sql ####
     if args.sql:
         if not (any(x in args_list for x in retrieve_args_list)):
@@ -454,23 +495,31 @@ def extract_assay_germline(args):
 
     #### Get names of genetic assays ####
     if args.list_assays:
-        geno_assay_names, geno_assay_ids, other_assay_names,  other_assay_ids= get_assays(
-            rec_descriptor, assay_type="genetic_variant"
-        )
-        if not geno_assay_names:
+        (
+            geno_assays,
+            other_assays
+        ) = get_assay_info(rec_descriptor, assay_type="genetic_variant")
+        if not geno_assays:
             err_exit("There's no genetic assay in the dataset provided.")
         else:
-            print(*geno_assay_names, sep="\n")
+            # print(*geno_assays.keys(), sep="\n")
+            for a in geno_assays:
+                print(a["name"])
 
     #### Decide which assay is to be queried ####
-    geno_assay_names, geno_assay_ids, other_assay_names,  other_assay_ids = get_assays(rec_descriptor, assay_type="genetic_variant")
-    selected_assay_name = geno_assay_names[0]
-    selected_assay_id = geno_assay_ids[0]
+    (
+        geno_assays,
+        other_assays
+    ) = get_assay_info(rec_descriptor, assay_type="genetic_variant")
+    # selected_assay_name = list(geno_assays.keys())[0]
+    # selected_assay_id = list(geno_assays.values())[0]
+    selected_assay_name = geno_assays[0]["name"]
+    selected_assay_id = geno_assays[0]["uuid"]
     if args.assay_name:
-        if args.assay_name not in geno_assay_names:
-            if args.assay_name in other_assay_names:
+        if args.assay_name not in list(geno_assays.keys()):
+            if args.assay_name in list(other_assays.keys()):
                 err_exit(
-                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the - -list-assays flag."
+                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the --list-assays flag."
                 )
             else:
                 err_exit(
@@ -480,6 +529,12 @@ def extract_assay_germline(args):
                 )
         else:
             selected_assay_name = args.assay_name
+            selected_assay_id = geno_assays[args.assay_name]
+        
+        selected_ref_genome = "GRCh38.92"
+        for a in geno_assays:
+            if a["name"] == selected_assay_name and a["reference_genome"]:
+                selected_ref_genome = a["reference_genome"]["name"]
 
     #### Decide output method based on --output and --sql ####
     if args.sql:
@@ -607,19 +662,19 @@ def extract_assay_germline(args):
     
     # TODO: replace payload_retrieval_function by actual function name and uncomment
     # if "--retrieve-allele" in args_list:
-    #     payload = payload_retrieval_function(assay = selected_assay, filter="allele")
+    #     payload = payload_retrieval_function(assay_name = selected_assay_name, assay_id = selected_assay_id, ref_genome = selected_ref_genome, filter="allele")
     # elif "--retrieve-annotation" in args_list:
-    #     payload = payload_retrieval_function(assay=selected_assay, filter="annotation")
+    #     payload = payload_retrieval_function(assay_name = selected_assay_name, assay_id = selected_assay_id, ref_genome = selected_ref_genome, filter="annotation")
     # elif "--retrieve-sample" in args_list:
-    #     payload = payload_retrieval_function(assay=selected_assay, filter="sample")
+    #     payload = payload_retrieval_function(assay_name = selected_assay_name, assay_id = selected_assay_id, ref_genome = selected_ref_genome, filter="sample")
 
-    if "CohortBrowser" in resp['recordTypes']:
-        if resp.get('baseSql'):
-            payload['base_sql'] = resp.get('baseSql')
-        payload['filters'] = resp['filters']
+    if "CohortBrowser" in resp["recordTypes"]:
+        if resp.get("baseSql"):
+            payload["base_sql"] = resp.get("baseSql")
+        payload["filters"] = resp["filters"]
 
     #### Run api call to get sql or extract data ####
-    if (any(x in args_list for x in retrieve_args_list)):
+    if any(x in args_list for x in retrieve_args_list):
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
             if print_to_stdout:
@@ -635,6 +690,7 @@ def extract_assay_germline(args):
                 sep="\t",
                 raw_results=resp_raw["results"],
             )
+
 
 def retrieve_entities(model):
     """
@@ -687,36 +743,6 @@ def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=
 
     if not print_to_stdout:
         fields_output.close()
-
-def retrieve_geno_bins(list_of_genes,project,genome_reference):
-    project_desc = dxpy.describe(project)
-    geno_positions = []
-    geno_reference_basepath = os.path.join(os.path.dirname(dxpy.__file__), 'dx_extract_utils')
-
-    try:
-        with open(os.path.join(geno_reference_basepath, "Homo_sapiens_genes_manifest.json"), 'r') as geno_bin_manifest:
-            r = json.load(geno_bin_manifest)
-        dxpy.describe(r[genome_reference][project_desc['region']])
-    except ResourceNotFound:
-        with open(os.path.join(geno_reference_basepath, "Homo_sapiens_genes_manifest_staging.json"), 'r') as geno_bin_manifest:
-            r = json.load(geno_bin_manifest)
-    
-    geno_bins = subprocess.check_output(["dx", "cat", r[genome_reference][project_desc['region']]])
-    geno_bins_json = json.loads(geno_bins)
-    invalid_genes = []
- 
-    for gene in list_of_genes:
-        bin = geno_bins_json.get(gene)
-        if bin is None:
-            invalid_genes.append(gene)
-        else:
-            bin.pop("strand")
-            geno_positions.append(bin)
-
-    if invalid_genes:
-            err_exit('Following gene names or IDs are invalid: %r' % invalid_genes)
-    
-    return geno_positions
     
 class DXDataset(DXRecord):
     """
