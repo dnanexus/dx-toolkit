@@ -143,16 +143,11 @@ def GenerateAssayFilter(
 
 
 def FinalPayload(
-    full_input_dict,
-    name,
-    id,
-    project_context,
-    genome_reference,
-    filter_type,
+    full_input_dict, name, id, project_context, genome_reference, filter_type, sql_flag
 ):
 
     # First, ensure that the JSON is valid
-    ValidateJSON(full_input_dict, filter_type)
+    ValidateJSON(full_input_dict, filter_type, sql_flag)
     # Second, generate the assay filter component of the payload
     assay_filter = GenerateAssayFilter(
         full_input_dict,
@@ -231,6 +226,11 @@ if __name__ == "__main__":
     parser.add_argument("--name", help="name of assay", required=True)
     parser.add_argument("--id", help="ID of assay", required=True)
     parser.add_argument("--reference", help="genome reference", default="GRCh38.92")
+    parser.add_argument(
+        "--sql_flag",
+        help="set to true if intention is to use raw-query which only returns sql",
+        default=False,
+    )
 
     args = parser.parse_args()
 
@@ -244,6 +244,7 @@ if __name__ == "__main__":
         args.project_context,
         args.reference,
         args.type,
+        args.sql_flag,
     )
 
     with open(args.output, "w") as outfile:
