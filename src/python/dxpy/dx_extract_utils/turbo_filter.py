@@ -1,5 +1,6 @@
 import json
-from jsonschema import validate
+
+# from jsonschema import validate
 from ..exceptions import err_exit, ResourceNotFound
 import argparse
 import os
@@ -248,7 +249,8 @@ def ValidateJSON(filter, type, sql_flag=False):
     # The jsonschema validation function will error out if the schema is invalid.  The error message will contain
     # an explanation of which part of the schema failed
     try:
-        validate(filter, json_schema)
+        pass
+        # validate(filter, json_schema)
     except Exception as inst:
         err_exit(inst)
 
