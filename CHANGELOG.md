@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Pretty-printing Preserve Job Outputs Folder field in `dx describe` for jobs and analyses
+
 ## [343.0] - beta
 
 ### Changed
