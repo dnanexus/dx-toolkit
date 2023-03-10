@@ -24,6 +24,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * A project (a container providing features for data sharing and collaboration).
@@ -217,6 +221,244 @@ public class DXProject extends DXContainer {
         this.apiCallOnObject("destroy",
                 MAPPER.valueToTree(new ProjectTerminateRequest(terminateJobs)),
                 RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    public ArchiveRequestBuilder archive() {
+        return new ArchiveRequestBuilder();
+    }
+
+    public UnarchiveRequestBuilder unarchive() {
+        return new UnarchiveRequestBuilder();
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    private static class ArchiveRequest {
+        @JsonProperty
+        private final List<String> files;
+        @JsonProperty
+        private final String folder;
+        @JsonProperty
+        private final Boolean recurse;
+        @JsonProperty
+        private final Boolean allCopies;
+
+        public ArchiveRequest(List<String> files, String folder, Boolean recurse, Boolean allCopies) {
+            this.files = files.isEmpty() ? null : files;
+            this.folder = folder;
+            this.recurse = recurse;
+            this.allCopies = allCopies;
+        }
+
+    }
+
+    public class ArchiveRequestBuilder {
+        private static final String FILE_NULL_ERR = "file may not be null";
+        private static final String FILES_LIST_NULL_ERR = "files collection may not be null";
+        private static final String FILES_FOLDER_NONEXCLUSIVE_ERR = "Files and folder params are mutually exclusive";
+        private final List<String> files = Lists.newArrayList();
+        private String folder;
+        private Boolean recurse;
+        private Boolean allCopies;
+
+        public ArchiveRequestBuilder addFile(DXFile file) {
+            return addFile(Preconditions.checkNotNull(file, FILE_NULL_ERR).getId());
+        }
+
+        public ArchiveRequestBuilder addFiles(DXFile... files) {
+            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
+            return addFiles(Lists.newArrayList(files));
+        }
+        public ArchiveRequestBuilder addFiles(List<DXFile> files) {
+            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
+            for (DXFile file : files) {
+                addFile(file);
+            }
+            return this;
+        }
+
+        public ArchiveRequestBuilder addFile(String file) {
+            Preconditions.checkState(this.folder == null, FILES_FOLDER_NONEXCLUSIVE_ERR);
+            files.add(Preconditions.checkNotNull(file, FILE_NULL_ERR));
+            return this;
+        }
+
+        public ArchiveRequestBuilder addFiles(String... files) {
+            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
+            return addFiles(Lists.newArrayList(files));
+        }
+
+        public ArchiveRequestBuilder addFiles(Collection<String> files) {
+            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
+            for (String file : files) {
+                addFile(file);
+            }
+            return this;
+        }
+
+        public ArchiveRequestBuilder setFolder(String folder) {
+            return setFolder(folder, null);
+        }
+
+        public ArchiveRequestBuilder setFolder(String folder, Boolean recurse) {
+            Preconditions.checkState(this.files.isEmpty(), FILES_FOLDER_NONEXCLUSIVE_ERR);
+            Preconditions.checkState(this.folder == null, "Cannot call setFolder more than once");
+            this.folder = Preconditions.checkNotNull(folder, "folder may not be null");
+            this.recurse = recurse;
+            return this;
+        }
+
+        public ArchiveRequestBuilder setAllCopies(Boolean allCopies) {
+            Preconditions.checkState(this.allCopies == null,
+                    "Cannot call setAllCopies more than once");
+            this.allCopies = allCopies;
+            return this;
+        }
+
+        public ArchiveResults execute() {
+            return DXJSON.safeTreeToValue(apiCallOnObject("archive",
+                    MAPPER.valueToTree(new ArchiveRequest(files, folder, recurse, allCopies)),
+                    RetryStrategy.SAFE_TO_RETRY), ArchiveResults.class);
+        }
+
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ArchiveResults {
+        @JsonProperty
+        private int count;
+
+        public int getCount() {
+            return count;
+        }
+
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    private static class UnarchiveRequest {
+        @JsonProperty
+        private final List<String> files;
+        @JsonProperty
+        private final String folder;
+        @JsonProperty
+        private final Boolean recurse;
+        @JsonProperty
+        private final UnarchivingRate rate;
+        @JsonProperty
+        private final Boolean dryRun;
+
+        public UnarchiveRequest(List<String> files, String folder, Boolean recurse, UnarchivingRate rate, Boolean dryRun) {
+            this.files = files.isEmpty() ? null : files;
+            this.folder = folder;
+            this.recurse = recurse;
+            this.rate = rate;
+            this.dryRun = dryRun;
+        }
+
+    }
+
+    public class UnarchiveRequestBuilder {
+        private static final String FILE_NULL_ERR = "file may not be null";
+        private static final String FILES_LIST_NULL_ERR = "files collection may not be null";
+        private static final String FILES_FOLDER_NONEXCLUSIVE_ERR = "Files and folder params are mutually exclusive";
+        private final List<String> files = Lists.newArrayList();
+        private String folder;
+        private Boolean recurse;
+        private UnarchivingRate rate;
+        private Boolean dryRun;
+
+        public UnarchiveRequestBuilder addFile(DXFile file) {
+            return addFile(Preconditions.checkNotNull(file, FILE_NULL_ERR).getId());
+        }
+
+        public UnarchiveRequestBuilder addFiles(DXFile... files) {
+            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
+            return addFiles(Lists.newArrayList(files));
+        }
+        public UnarchiveRequestBuilder addFiles(List<DXFile> files) {
+            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
+            for (DXFile file : files) {
+                addFile(file);
+            }
+            return this;
+        }
+
+        public UnarchiveRequestBuilder addFile(String file) {
+            Preconditions.checkState(this.folder == null, FILES_FOLDER_NONEXCLUSIVE_ERR);
+            files.add(Preconditions.checkNotNull(file, FILE_NULL_ERR));
+            return this;
+        }
+
+        public UnarchiveRequestBuilder addFiles(String... files) {
+            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
+            return addFiles(Lists.newArrayList(files));
+        }
+
+        public UnarchiveRequestBuilder addFiles(Collection<String> files) {
+            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
+            for (String file : files) {
+                addFile(file);
+            }
+            return this;
+        }
+
+        public UnarchiveRequestBuilder setFolder(String folder) {
+            return setFolder(folder, null);
+        }
+
+        public UnarchiveRequestBuilder setFolder(String folder, Boolean recurse) {
+            Preconditions.checkState(this.files.isEmpty(), FILES_FOLDER_NONEXCLUSIVE_ERR);
+            Preconditions.checkState(this.folder == null, "Cannot call setFolder more than once");
+            this.folder = Preconditions.checkNotNull(folder, "folder may not be null");
+            this.recurse = recurse;
+            return this;
+        }
+
+        public UnarchiveRequestBuilder setRate(UnarchivingRate rate) {
+            Preconditions.checkState(this.rate == null,
+                    "Cannot call setRate more than once");
+            this.rate = rate;
+            return this;
+        }
+
+        public UnarchiveRequestBuilder setDryRun(Boolean dryRun) {
+            Preconditions.checkState(this.dryRun == null,
+                    "Cannot call setDryRun more than once");
+            this.dryRun = dryRun;
+            return this;
+        }
+
+        public UnarchiveResult execute() {
+            return DXJSON.safeTreeToValue(apiCallOnObject("unarchive",
+                    MAPPER.valueToTree(new UnarchiveRequest(files, folder, recurse, rate, dryRun)),
+                    RetryStrategy.SAFE_TO_RETRY), UnarchiveResult.class);
+        }
+
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class UnarchiveResult {
+        @JsonProperty
+        private int files;
+        @JsonProperty
+        private int size;
+        @JsonProperty
+        private float cost;
+
+        protected UnarchiveResult() {
+        }
+
+        public int getFiles() {
+            return files;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        public float getCost() {
+            return cost;
+        }
+
     }
 
     // The following unimplemented methods are sorted in approximately
