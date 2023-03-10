@@ -4,8 +4,17 @@
     "description": "A description of the allele JSON file",
     "type": "object",
     "additionalProperties": false,
-    "required": [
-        "location"
+    "anyOf": [
+        {
+            "required": [
+                "location"
+            ]
+        },
+        {
+            "required": [
+                "rsid"
+            ]
+        }
     ],
     "properties": {
         "rsid": {

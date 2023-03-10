@@ -177,9 +177,9 @@ def FinalPayload(
         order_by = [{"allele_id": "asc"}]
         with open("return_columns_annotation.json", "r") as infile:
             fields = json.load(infile)
-    elif filter_type == "sample":
+    elif filter_type == "genotype":
         order_by = [{"sample_id": "asc"}]
-        with open("return_columns_sample.json", "r") as infile:
+        with open("return_columns_genotype.json", "r") as infile:
             fields = json.load(infile)
 
     final_payload["fields"] = fields
@@ -188,7 +188,7 @@ def FinalPayload(
     return final_payload
 
 
-def ValidateJSON(filter, type):
+def ValidateJSON(filter, type, sql_flag=False):
     # Check JSON against schema
     # Errors out if JSON is invalid, continues otherwise
     schema_file = "retrieve_{}_schema.json".format(type)
