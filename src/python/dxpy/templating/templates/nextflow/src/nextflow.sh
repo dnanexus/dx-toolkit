@@ -301,10 +301,11 @@ main() {
     export NXF_DEBUG=2
     TRACE_CMD="-trace nextflow.plugin"
     env | grep -v DX_SECURITY_CONTEXT | sort
-    # TODO revert
-    /usr/bin/dx-dstat 5
     set -x
   fi
+
+  # TODO revert
+  /usr/bin/dx-dstat 5
 
   # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
