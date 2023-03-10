@@ -249,7 +249,6 @@ def ValidateJSON(filter, type, sql_flag=False):
     # an explanation of which part of the schema failed
     try:
         validate(filter, json_schema)
-        print("JSON file is valid".format(filter))
     except Exception as inst:
         err_exit(inst)
 
