@@ -688,36 +688,7 @@ def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=
     if not print_to_stdout:
         fields_output.close()
 
-def retrieve_geno_bins(list_of_genes,project,genome_reference):
-    project_desc = dxpy.describe(project)
-    geno_positions = []
-    geno_reference_basepath = os.path.join(os.path.dirname(dxpy.__file__), 'dx_extract_utils')
 
-    try:
-        with open(os.path.join(geno_reference_basepath, "Homo_sapiens_genes_manifest.json"), 'r') as geno_bin_manifest:
-            r = json.load(geno_bin_manifest)
-        dxpy.describe(r[genome_reference][project_desc['region']])
-    except ResourceNotFound:
-        with open(os.path.join(geno_reference_basepath, "Homo_sapiens_genes_manifest_staging.json"), 'r') as geno_bin_manifest:
-            r = json.load(geno_bin_manifest)
-    
-    geno_bins = subprocess.check_output(["dx", "cat", r[genome_reference][project_desc['region']]])
-    geno_bins_json = json.loads(geno_bins)
-    invalid_genes = []
- 
-    for gene in list_of_genes:
-        bin = geno_bins_json.get(gene)
-        if bin is None:
-            invalid_genes.append(gene)
-        else:
-            bin.pop("strand")
-            geno_positions.append(bin)
-
-    if invalid_genes:
-            err_exit('Following gene names or IDs are invalid: %r' % invalid_genes)
-    
-    return geno_positions
-    
 class DXDataset(DXRecord):
     """
         A class to handle record objects of type Dataset. 
