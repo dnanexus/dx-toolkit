@@ -132,6 +132,7 @@ def GenerateAssayFilter(
                 )
     final_filter_dict = {"assay_filters": {"name": name, "id": id, "compound": []}}
 
+    # Additional structure of the payload
     final_filter_dict["assay_filters"]["compound"].append({"filters": filters_dict})
     final_filter_dict["assay_filters"]["compound"][0]["logic"] = "and"
     if location_compound:
@@ -191,10 +192,20 @@ def FinalPayload(
 def ValidateJSON(filter, type, sql_flag=False):
     # Check JSON against schema
     # Errors out if JSON is invalid, continues otherwise
-    schema_file = "retrieve_{}_schema.json".format(type)
+
+    # If the sql flag is given, versions of the allele and annotation schema that do not have required fields
+    # must be used
+    if sql_flag and (filter == "allele" or filter == "annotation"):
+        schema_file = "retrieve_{}_schema_sql.json".format(type)
+    else:
+        schema_file = "retrieve_{}_schema.json".format(type)
+
+    # Open the schema asset
     with open(schema_file, "r") as infile:
         json_schema = json.load(infile)
 
+    # The jsonschema validation function will error out if the schema is invalid.  The error message will contain
+    # an explanation of which part of the schema failed
     try:
         validate(filter, json_schema)
         print("JSON file {} is valid".format(filter))
