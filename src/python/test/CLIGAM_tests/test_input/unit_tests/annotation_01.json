@@ -1,0 +1,21 @@
+{
+    "allele_id": [
+        "1_1000_A_T",
+        "2_1000_G_C"
+    ],
+    "gene_name": [
+        "BRCA2"
+    ],
+    "consequences": [
+        "5 prime UTR variant"
+    ],
+    "putative_impact": [
+        "MODIFIER"
+    ],
+    "hgvs_c": [
+        "c.-49A>G"
+    ],
+    "hgvs_p": [
+        "p.Gly2Asp"
+    ]
+}

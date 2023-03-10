@@ -743,7 +743,8 @@ def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=
 
     if not print_to_stdout:
         fields_output.close()
-    
+
+
 class DXDataset(DXRecord):
     """
         A class to handle record objects of type Dataset. 

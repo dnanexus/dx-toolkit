@@ -1,0 +1,36 @@
+{
+    "title": "Retrieve Sample Schema",
+    "$id": "/retrieve_sample_schema",
+    "description": "A description of the retrieve sample JSON file",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "allele_id"
+    ],
+    "properties": {
+        "allele_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "sample_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "genotype": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "hom",
+                    "het-ref",
+                    "het-alt",
+                    "alt"
+                ]
+            }
+        }
+    }
+}
