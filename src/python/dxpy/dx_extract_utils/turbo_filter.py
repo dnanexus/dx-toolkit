@@ -194,7 +194,7 @@ def FinalPayload(
 ):
 
     # First, ensure that the JSON is valid
-    ValidateJSON(full_input_dict, filter_type, sql_flag)
+    # ValidateJSON(full_input_dict, filter_type, sql_flag)
     # Second, generate the assay filter component of the payload
     assay_filter = GenerateAssayFilter(
         full_input_dict,
