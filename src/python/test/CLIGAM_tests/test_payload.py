@@ -2,8 +2,8 @@
 import json
 from dxpy.dx_extract_utils.turbo_filter import FinalPayload
 
-filter = "/dx-toolkit/src/python/test/CLIGAM_tests/test_input/unit_tests/allele_01.json"
-output = "~/allele_01_output.json"
+filter = "/dx-toolkit/src/python/test/CLIGAM_tests/test_input/unit_tests/allele_malformatted.json"
+output = "~/allele_malformatted_output.json"
 type = "allele"
 project_context = "project-FkyXg38071F1vGy2GyXyYYQB"
 name = "veo_demo_dataset_assay"
