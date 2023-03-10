@@ -9,10 +9,6 @@ import argparse
 # As of now, the allele and annotation files get all their data from the allele and
 # annotation tables respectively, only the sample file references data in multiple tables
 
-# TODO remove this for now and place somewhere else
-with open("file_to_table.json", "r") as infile:
-    file_to_table = json.load(infile)
-
 # A dictionary relating the user-facing names of columns to their actual column
 # names in the CLIGAM tables
 with open("column_conversion.json", "r") as infile:
@@ -109,11 +105,6 @@ def GenerateAssayFilter(
     location_compound = None
 
     for key in full_input_dict.keys():
-        # Override the table name if we are working with a sample filter, as this filter
-        # hits multiple table
-        if filter_type == "sample":
-            table = file_to_table[filter_type][key]
-
         # Location needs to be handled slightly differently
         if key == "location":
             location_compound = {"compound": []}
