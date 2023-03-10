@@ -9,11 +9,14 @@ project_context = "project-FkyXg38071F1vGy2GyXyYYQB"
 name = "veo_demo_dataset_assay"
 id = "da6a4ffc-7571-4b2f-853d-445460a18396"
 ref_genome = "GRCh38.92"
+sql_flag = False
 
 
 with open(filter, "r") as infile:
     filter_dict = json.load(infile)
-full_payload = FinalPayload(filter_dict, name, id, project_context, ref_genome, type)
+full_payload = FinalPayload(
+    filter_dict, name, id, project_context, ref_genome, type, sql_flag
+)
 
 print(full_payload)
 
