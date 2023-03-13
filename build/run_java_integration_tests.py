@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function, unicode_literals
+
 import argparse
 import os
 import subprocess
@@ -27,10 +29,11 @@ def run():
         subprocess.check_call(["make", "java"], cwd=os.path.join(TOOLKIT_ROOT_DIR, "src"))
         subprocess.check_call(make_cmd, cwd=os.path.join(TOOLKIT_ROOT_DIR, "src", "java"))
     except subprocess.CalledProcessError as e:
-        print "Tests failed, printing out error reports:"
+        print("Tests failed, printing out error reports:")
         for filename in os.listdir(os.path.join(TOOLKIT_ROOT_DIR, "src/java/target/surefire-reports")):
             if filename.startswith("com.dnanexus."):
-                print open(os.path.join(TOOLKIT_ROOT_DIR, "src/java/target/surefire-reports", filename)).read().strip()
+                with open(os.path.join(TOOLKIT_ROOT_DIR, "src/java/target/surefire-reports", filename)) as fh:
+                    print(fh.read().strip())
         raise e
 
 if __name__ == '__main__':
