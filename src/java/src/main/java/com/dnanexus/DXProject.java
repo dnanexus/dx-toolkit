@@ -227,7 +227,7 @@ public class DXProject extends DXContainer {
      * Move specified files or folder to an archive storage to save on storage costs.
      *
      * <p>
-     * Example uses:
+     * Example use:
      * </p>
      *
      * <pre>
@@ -236,7 +236,7 @@ public class DXProject extends DXContainer {
      * DXFile f2 = DXFile.getInstance(&quot;file-yyyy&quot;);
      * ArchiveResults r = project.archive().addFiles(f1, f2).execute();
      * // Archive folder
-     * ArchiveResults r = project.archive().setFolder(&quot;/folder&quot;).setRecurse(true).execute();
+     * ArchiveResults r = project.archive().setFolder(&quot;/folder&quot;, true).execute();
      * </pre>
      *
      * @return a newly initialized {@code ArchiveRequestBuilder}
@@ -247,6 +247,19 @@ public class DXProject extends DXContainer {
 
     /**
      * Retrieve specified files or folder from an archive storage.
+     *
+     * <p>
+     * Example use:
+     * </p>
+     *
+     * <pre>
+     * // Unarchive using file id
+     * DXFile f1 = DXFile.getInstance(&quot;file-xxxx&quot;);
+     * DXFile f2 = DXFile.getInstance(&quot;file-yyyy&quot;);
+     * ArchiveResults r = project.unarchive().addFiles(f1, f2).execute();
+     * // Unarchive folder
+     * ArchiveResults r = project.unarchive().setFolder(&quot;/folder&quot;, true).execute();
+     * </pre>
      *
      * @return a newly initialized {@code UnarchiveRequestBuilder}
      */
