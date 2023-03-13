@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Nextflow profiles runtime overriding fix
+
 ## [343.0] - beta
 
 ### Changed
