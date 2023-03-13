@@ -302,7 +302,7 @@ public class DXProject extends DXContainer {
          * Adds the file to the list of files for archival.
          *
          * <p>
-         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * This method may be called multiple times during the construction of a request, and is mutually exclusive
          * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
          * </p>
          *
@@ -322,7 +322,7 @@ public class DXProject extends DXContainer {
          * Adds the files to the list of files for archival.
          *
          * <p>
-         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * This method may be called multiple times during the construction of a request, and is mutually exclusive
          * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
          * </p>
          *
@@ -339,7 +339,7 @@ public class DXProject extends DXContainer {
          * Adds the files to the list of files for archival.
          *
          * <p>
-         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * This method may be called multiple times during the construction of a request, and is mutually exclusive
          * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
          * </p>
          *
@@ -487,7 +487,7 @@ public class DXProject extends DXContainer {
          * Adds the file to the list of files for unarchiving.
          *
          * <p>
-         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * This method may be called multiple times during the construction of a request, and is mutually exclusive
          * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
          * </p>
          *
@@ -507,7 +507,7 @@ public class DXProject extends DXContainer {
          * Adds the files to the list of files for unarchiving.
          *
          * <p>
-         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * This method may be called multiple times during the construction of a request, and is mutually exclusive
          * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
          * </p>
          *
@@ -524,7 +524,7 @@ public class DXProject extends DXContainer {
          * Adds the files to the list of files for unarchiving.
          *
          * <p>
-         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * This method may be called multiple times during the construction of a request, and is mutually exclusive
          * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
          * </p>
          *
