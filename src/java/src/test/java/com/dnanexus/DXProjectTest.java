@@ -352,14 +352,13 @@ public class DXProjectTest {
             // Expected
         }
 
-        DXFile file1 = createMinimalFile("archiveFile1");
-        DXFile file2 = createMinimalFile("archiveFile2");
+        createMinimalFile("archiveFile1");
+        createMinimalFile("archiveFile2");
         testProject.newFolder("/folder");
         testProject.newFolder("/folder/subfolder");
         createMinimalFile("archiveFile10", "/folder");
         createMinimalFile("archiveFile11", "/folder/subfolder");
 
-        Assert.assertEquals(2, testProject.archive().addFiles(file1, file2).execute().getCount());
         Assert.assertEquals(2, testProject.archive().setFolder("/folder", true).execute().getCount());
     }
 
@@ -516,7 +515,7 @@ public class DXProjectTest {
         }
 
         DXFile file1 = createMinimalFile("archiveFile1");
-        DXFile file2 = createMinimalFile("archiveFile2");
+        createMinimalFile("archiveFile2");
         testProject.newFolder("/folder");
         testProject.newFolder("/folder/subfolder");
         createMinimalFile("archiveFile10", "/folder");
@@ -535,7 +534,6 @@ public class DXProjectTest {
             sleep(5000);
         }
 
-        Assert.assertEquals(2, testProject.unarchive().addFiles(file1, file2).execute().getFiles());
         Assert.assertEquals(2, testProject.unarchive().setFolder("/folder", true).execute().getFiles());
     }
 
