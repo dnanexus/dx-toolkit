@@ -1107,7 +1107,7 @@ public final class DXSearch {
         /**
          * Returns a subsequent page of the {@code findDataObjects} results starting from the specified item.
          *
-         * @param starting result of {@link DXSearch.FindDataObjectsResult.Page#getNext()} call on previous page
+         * @param starting result of {@link DXSearch.FindDataObjectsResult.FindDataObjectsResultPage#getNext()} call on previous page
          * @param pageSize number of elements to retrieve
          *
          * @return result set
