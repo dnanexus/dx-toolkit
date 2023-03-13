@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Added support for file (un)archival in DXJava
+* Added `archivalStatus` field to DXFile describe in DXJava
+* Added `archivalStatus` filtering support to DXSearch in DXJava
+
 ## [343.0] - beta
 
 ### Changed
