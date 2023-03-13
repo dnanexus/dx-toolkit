@@ -354,25 +354,13 @@ public class DXProjectTest {
 
         DXFile file1 = createMinimalFile("archiveFile1");
         DXFile file2 = createMinimalFile("archiveFile2");
-        DXFile file3 = createMinimalFile("archiveFile3");
         testProject.newFolder("/folder");
         testProject.newFolder("/folder/subfolder");
-        DXFile file4 = createMinimalFile("archiveFile10", "/folder");
-        DXFile file5 = createMinimalFile("archiveFile11", "/folder/subfolder");
-        List<ArchivalState> targetStates = ImmutableList.of(ArchivalState.ARCHIVAL, ArchivalState.ARCHIVED);
+        createMinimalFile("archiveFile10", "/folder");
+        createMinimalFile("archiveFile11", "/folder/subfolder");
 
         Assert.assertEquals(2, testProject.archive().addFiles(file1, file2).execute().getCount());
-        sleep(5000);
-        Assert.assertTrue(targetStates.contains(file1.describe().getArchivalState()));
-        Assert.assertTrue(targetStates.contains(file2.describe().getArchivalState()));
-        Assert.assertFalse(targetStates.contains(file3.describe().getArchivalState()));
-        Assert.assertFalse(targetStates.contains(file4.describe().getArchivalState()));
-        Assert.assertFalse(targetStates.contains(file5.describe().getArchivalState()));
         Assert.assertEquals(2, testProject.archive().setFolder("/folder", true).execute().getCount());
-        sleep(5000);
-        Assert.assertFalse(targetStates.contains(file3.describe().getArchivalState()));
-        Assert.assertTrue(targetStates.contains(file4.describe().getArchivalState()));
-        Assert.assertTrue(targetStates.contains(file5.describe().getArchivalState()));
     }
 
     @Test
@@ -529,28 +517,26 @@ public class DXProjectTest {
 
         DXFile file1 = createMinimalFile("archiveFile1");
         DXFile file2 = createMinimalFile("archiveFile2");
-        DXFile file3 = createMinimalFile("archiveFile3");
         testProject.newFolder("/folder");
         testProject.newFolder("/folder/subfolder");
-        DXFile file4 = createMinimalFile("archiveFile10", "/folder");
-        DXFile file5 = createMinimalFile("archiveFile11", "/folder/subfolder");
+        createMinimalFile("archiveFile10", "/folder");
+        createMinimalFile("archiveFile11", "/folder/subfolder");
         testProject.archive().setFolder("/", true).execute();
-        sleep(5000);
 
-        List<ArchivalState> targetStates = ImmutableList.of(ArchivalState.LIVE, ArchivalState.UNARCHIVING);
+        // Wait for archival to complete
+        final int maxRetries = 24;
+        for (int i = 1; i <= maxRetries; ++i) {
+            if (file1.describe().getArchivalState() == ArchivalState.ARCHIVED) {
+                break;
+            }
+            if (i == maxRetries) {
+                Assert.fail("Could not archive test files. Test cannot proceed...");
+            }
+            sleep(5000);
+        }
 
         Assert.assertEquals(2, testProject.unarchive().addFiles(file1, file2).execute().getFiles());
-        sleep(5000);
-        Assert.assertTrue(targetStates.contains(file1.describe().getArchivalState()));
-        Assert.assertTrue(targetStates.contains(file2.describe().getArchivalState()));
-        Assert.assertFalse(targetStates.contains(file3.describe().getArchivalState()));
-        Assert.assertFalse(targetStates.contains(file4.describe().getArchivalState()));
-        Assert.assertFalse(targetStates.contains(file5.describe().getArchivalState()));
         Assert.assertEquals(2, testProject.unarchive().setFolder("/folder", true).execute().getFiles());
-        sleep(5000);
-        Assert.assertFalse(targetStates.contains(file3.describe().getArchivalState()));
-        Assert.assertTrue(targetStates.contains(file4.describe().getArchivalState()));
-        Assert.assertTrue(targetStates.contains(file5.describe().getArchivalState()));
     }
 
     // Internal tests

@@ -360,6 +360,18 @@ public class DXSearchTest {
         DXFile fileArchived = createMinimalFile("fileArchived");
         testProject.archive().addFile(fileArchived).execute();
 
+        // Wait for archival to complete
+        final int maxRetries = 24;
+        for (int i = 1; i <= maxRetries; ++i) {
+            if (fileArchived.describe().getArchivalState() == ArchivalState.ARCHIVED) {
+                break;
+            }
+            if (i == maxRetries) {
+                Assert.fail("Could not archive test file. Test cannot proceed...");
+            }
+            sleep(5000);
+        }
+
         // Empty archival state does not affect file retrieval
         assertEqualsAnyOrder(DXSearch.findDataObjects().withClassFile().inFolder(testProject, "/")
                 .execute().asList(), fileLive1, fileLive2, fileArchived);
