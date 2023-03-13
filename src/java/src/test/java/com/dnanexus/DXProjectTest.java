@@ -514,18 +514,18 @@ public class DXProjectTest {
             // Expected
         }
 
-        DXFile file1 = createMinimalFile("archiveFile1");
+        createMinimalFile("archiveFile1");
         createMinimalFile("archiveFile2");
         testProject.newFolder("/folder");
         testProject.newFolder("/folder/subfolder");
-        createMinimalFile("archiveFile10", "/folder");
-        createMinimalFile("archiveFile11", "/folder/subfolder");
+        DXFile file1 = createMinimalFile("archiveFile10", "/folder");
+        DXFile file2 = createMinimalFile("archiveFile11", "/folder/subfolder");
         testProject.archive().setFolder("/", true).execute();
 
         // Wait for archival to complete
         final int maxRetries = 24;
         for (int i = 1; i <= maxRetries; ++i) {
-            if (file1.describe().getArchivalState() == ArchivalState.ARCHIVED) {
+            if (file1.describe().getArchivalState() == ArchivalState.ARCHIVED && file2.describe().getArchivalState() == ArchivalState.ARCHIVED) {
                 break;
             }
             if (i == maxRetries) {
