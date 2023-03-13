@@ -223,10 +223,33 @@ public class DXProject extends DXContainer {
                 RetryStrategy.SAFE_TO_RETRY);
     }
 
+    /**
+     * Move specified files or folder to an archive storage to save on storage costs.
+     *
+     * <p>
+     * Example uses:
+     * </p>
+     *
+     * <pre>
+     * // Archive using file id
+     * DXFile f1 = DXFile.getInstance(&quot;file-xxxx&quot;);
+     * DXFile f2 = DXFile.getInstance(&quot;file-yyyy&quot;);
+     * ArchiveResults r = project.archive().addFiles(f1, f2).execute();
+     * // Archive folder
+     * ArchiveResults r = project.archive().setFolder(&quot;/folder&quot;).setRecurse(true).execute();
+     * </pre>
+     *
+     * @return a newly initialized {@code ArchiveRequestBuilder}
+     */
     public ArchiveRequestBuilder archive() {
         return new ArchiveRequestBuilder();
     }
 
+    /**
+     * Retrieve specified files or folder from an archive storage.
+     *
+     * @return a newly initialized {@code UnarchiveRequestBuilder}
+     */
     public UnarchiveRequestBuilder unarchive() {
         return new UnarchiveRequestBuilder();
     }
@@ -242,17 +265,19 @@ public class DXProject extends DXContainer {
         @JsonProperty
         private final Boolean allCopies;
 
-        public ArchiveRequest(List<String> files, String folder, Boolean recurse, Boolean allCopies) {
-            this.files = files.isEmpty() ? null : files;
-            this.folder = folder;
-            this.recurse = recurse;
-            this.allCopies = allCopies;
+        public ArchiveRequest(ArchiveRequestBuilder b) {
+            this.files = b.files.isEmpty() ? null : b.files;
+            this.folder = b.folder;
+            this.recurse = b.recurse;
+            this.allCopies = b.allCopies;
         }
 
     }
 
+    /**
+     * Builder for archive requests.
+     */
     public class ArchiveRequestBuilder {
-        private static final String FILE_NULL_ERR = "file may not be null";
         private static final String FILES_LIST_NULL_ERR = "files collection may not be null";
         private static final String FILES_FOLDER_NONEXCLUSIVE_ERR = "Files and folder params are mutually exclusive";
         private final List<String> files = Lists.newArrayList();
@@ -260,15 +285,56 @@ public class DXProject extends DXContainer {
         private Boolean recurse;
         private Boolean allCopies;
 
+        /**
+         * Adds the file to the list of files for archival.
+         *
+         * <p>
+         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
+         * </p>
+         *
+         * @param file {@code DXFile} instance to be archived
+         *
+         * @return the same builder object
+         */
         public ArchiveRequestBuilder addFile(DXFile file) {
-            return addFile(Preconditions.checkNotNull(file, FILE_NULL_ERR).getId());
+            Preconditions.checkState(this.folder == null, FILES_FOLDER_NONEXCLUSIVE_ERR);
+            files.add(Preconditions.checkNotNull(
+                    Preconditions.checkNotNull(file, "file may not be null").getId(),
+                    "file id may not be null"));
+            return this;
         }
 
+        /**
+         * Adds the files to the list of files for archival.
+         *
+         * <p>
+         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
+         * </p>
+         *
+         * @param files list of {@code DXFile} instances to be archived
+         *
+         * @return the same builder object
+         */
         public ArchiveRequestBuilder addFiles(DXFile... files) {
             Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
             return addFiles(Lists.newArrayList(files));
         }
-        public ArchiveRequestBuilder addFiles(List<DXFile> files) {
+
+        /**
+         * Adds the files to the list of files for archival.
+         *
+         * <p>
+         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
+         * </p>
+         *
+         * @param files collection of {@code DXFile} instances to be archived
+         *
+         * @return the same builder object
+         */
+        public ArchiveRequestBuilder addFiles(Collection<DXFile> files) {
             Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
             for (DXFile file : files) {
                 addFile(file);
@@ -276,29 +342,35 @@ public class DXProject extends DXContainer {
             return this;
         }
 
-        public ArchiveRequestBuilder addFile(String file) {
-            Preconditions.checkState(this.folder == null, FILES_FOLDER_NONEXCLUSIVE_ERR);
-            files.add(Preconditions.checkNotNull(file, FILE_NULL_ERR));
-            return this;
-        }
-
-        public ArchiveRequestBuilder addFiles(String... files) {
-            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
-            return addFiles(Lists.newArrayList(files));
-        }
-
-        public ArchiveRequestBuilder addFiles(Collection<String> files) {
-            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
-            for (String file : files) {
-                addFile(file);
-            }
-            return this;
-        }
-
+        /**
+         * Sets folder for archival.
+         *
+         * <p>
+         * This method may only be called once during the construction of a request, and is mutually exclusive with
+         * {@link #addFile(DXFile)}, {@link #addFiles(DXFile...)}, and {@link #addFiles(Collection)}.
+         * </p>
+         *
+         * @param folder path to folder to be archived
+         *
+         * @return the same builder object
+         */
         public ArchiveRequestBuilder setFolder(String folder) {
             return setFolder(folder, null);
         }
 
+        /**
+         * Sets folder for archival.
+         *
+         * <p>
+         * This method may only be called once during the construction of a request, and is mutually exclusive with
+         * {@link #addFile(DXFile)}, {@link #addFiles(DXFile...)}, and {@link #addFiles(Collection)}.
+         * </p>
+         *
+         * @param folder path to folder to be archived
+         * @param recurse whether to archive all files in subfolders of {@code folder}
+         *
+         * @return the same builder object
+         */
         public ArchiveRequestBuilder setFolder(String folder, Boolean recurse) {
             Preconditions.checkState(this.files.isEmpty(), FILES_FOLDER_NONEXCLUSIVE_ERR);
             Preconditions.checkState(this.folder == null, "Cannot call setFolder more than once");
@@ -307,6 +379,16 @@ public class DXProject extends DXContainer {
             return this;
         }
 
+        /**
+         * Sets flag to enforce the transition of files into {@link ArchivalState#ARCHIVED} state. If true, archive all
+         * the copies of files in projects with the same {@code billTo} org. If false, archive only the copy of the file
+         * in the current project, while other copies of the file in the rest projects with the same {@code billTo} org
+         * will stay in the live state.
+         *
+         * @param allCopies whether to enforce archival of all copies of files within the same {@code billTo} org
+         *
+         * @return the same builder object
+         */
         public ArchiveRequestBuilder setAllCopies(Boolean allCopies) {
             Preconditions.checkState(this.allCopies == null,
                     "Cannot call setAllCopies more than once");
@@ -314,19 +396,39 @@ public class DXProject extends DXContainer {
             return this;
         }
 
+        /**
+         * Executes the request.
+         *
+         * @return execution results
+         */
         public ArchiveResults execute() {
             return DXJSON.safeTreeToValue(apiCallOnObject("archive",
-                    MAPPER.valueToTree(new ArchiveRequest(files, folder, recurse, allCopies)),
+                    MAPPER.valueToTree(new ArchiveRequest(this)),
                     RetryStrategy.SAFE_TO_RETRY), ArchiveResults.class);
+        }
+
+        @VisibleForTesting
+        JsonNode buildRequestHash() {
+            // Use this method to test the JSON hash created by a particular
+            // builder call without actually executing the request.
+            return MAPPER.valueToTree(new ArchiveRequest(this));
         }
 
     }
 
+    /**
+     * Results of archive request.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ArchiveResults {
         @JsonProperty
         private int count;
 
+        /**
+         * Returns number of files tagged for archival.
+         *
+         * @return number of files tagged for archival
+         */
         public int getCount() {
             return count;
         }
@@ -346,18 +448,20 @@ public class DXProject extends DXContainer {
         @JsonProperty
         private final Boolean dryRun;
 
-        public UnarchiveRequest(List<String> files, String folder, Boolean recurse, UnarchivingRate rate, Boolean dryRun) {
-            this.files = files.isEmpty() ? null : files;
-            this.folder = folder;
-            this.recurse = recurse;
-            this.rate = rate;
-            this.dryRun = dryRun;
+        public UnarchiveRequest(UnarchiveRequestBuilder b) {
+            this.files = b.files.isEmpty() ? null : b.files;
+            this.folder = b.folder;
+            this.recurse = b.recurse;
+            this.rate = b.rate;
+            this.dryRun = b.dryRun;
         }
 
     }
 
+    /**
+     * Builder for unarchive requests.
+     */
     public class UnarchiveRequestBuilder {
-        private static final String FILE_NULL_ERR = "file may not be null";
         private static final String FILES_LIST_NULL_ERR = "files collection may not be null";
         private static final String FILES_FOLDER_NONEXCLUSIVE_ERR = "Files and folder params are mutually exclusive";
         private final List<String> files = Lists.newArrayList();
@@ -366,15 +470,56 @@ public class DXProject extends DXContainer {
         private UnarchivingRate rate;
         private Boolean dryRun;
 
+        /**
+         * Adds the file to the list of files for unarchiving.
+         *
+         * <p>
+         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
+         * </p>
+         *
+         * @param file {@code DXFile} instance to be unarchived
+         *
+         * @return the same builder object
+         */
         public UnarchiveRequestBuilder addFile(DXFile file) {
-            return addFile(Preconditions.checkNotNull(file, FILE_NULL_ERR).getId());
+            Preconditions.checkState(this.folder == null, FILES_FOLDER_NONEXCLUSIVE_ERR);
+            files.add(Preconditions.checkNotNull(
+                    Preconditions.checkNotNull(file, "file may not be null").getId(),
+                    "file id may not be null"));
+            return this;
         }
 
+        /**
+         * Adds the files to the list of files for unarchiving.
+         *
+         * <p>
+         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
+         * </p>
+         *
+         * @param files list of {@code DXFile} instances to be unarchived
+         *
+         * @return the same builder object
+         */
         public UnarchiveRequestBuilder addFiles(DXFile... files) {
             Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
             return addFiles(Lists.newArrayList(files));
         }
-        public UnarchiveRequestBuilder addFiles(List<DXFile> files) {
+
+        /**
+         * Adds the files to the list of files for unarchiving.
+         *
+         * <p>
+         * This method may be called multiple time during the construction of a request, and is mutually exclusive
+         * with {@link #setFolder(String)} and {@link #setFolder(String, Boolean)}.
+         * </p>
+         *
+         * @param files collection of {@code DXFile} instances to be unarchived
+         *
+         * @return the same builder object
+         */
+        public UnarchiveRequestBuilder addFiles(Collection<DXFile> files) {
             Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
             for (DXFile file : files) {
                 addFile(file);
@@ -382,29 +527,35 @@ public class DXProject extends DXContainer {
             return this;
         }
 
-        public UnarchiveRequestBuilder addFile(String file) {
-            Preconditions.checkState(this.folder == null, FILES_FOLDER_NONEXCLUSIVE_ERR);
-            files.add(Preconditions.checkNotNull(file, FILE_NULL_ERR));
-            return this;
-        }
-
-        public UnarchiveRequestBuilder addFiles(String... files) {
-            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
-            return addFiles(Lists.newArrayList(files));
-        }
-
-        public UnarchiveRequestBuilder addFiles(Collection<String> files) {
-            Preconditions.checkNotNull(files, FILES_LIST_NULL_ERR);
-            for (String file : files) {
-                addFile(file);
-            }
-            return this;
-        }
-
+        /**
+         * Sets folder for unarchiving.
+         *
+         * <p>
+         * This method may only be called once during the construction of a request, and is mutually exclusive with
+         * {@link #addFile(DXFile)}, {@link #addFiles(DXFile...)}, and {@link #addFiles(Collection)}.
+         * </p>
+         *
+         * @param folder path to folder to be unarchived
+         *
+         * @return the same builder object
+         */
         public UnarchiveRequestBuilder setFolder(String folder) {
             return setFolder(folder, null);
         }
 
+        /**
+         * Sets folder for unarchiving.
+         *
+         * <p>
+         * This method may only be called once during the construction of a request, and is mutually exclusive with
+         * {@link #addFile(DXFile)}, {@link #addFiles(DXFile...)}, and {@link #addFiles(Collection)}.
+         * </p>
+         *
+         * @param folder path to folder to be unarchived
+         * @param recurse whether to unarchive all files in subfolders of {@code folder}
+         *
+         * @return the same builder object
+         */
         public UnarchiveRequestBuilder setFolder(String folder, Boolean recurse) {
             Preconditions.checkState(this.files.isEmpty(), FILES_FOLDER_NONEXCLUSIVE_ERR);
             Preconditions.checkState(this.folder == null, "Cannot call setFolder more than once");
@@ -413,12 +564,32 @@ public class DXProject extends DXContainer {
             return this;
         }
 
+        /**
+         * Sets the speed at which the files in this request are unarchived.
+         *
+         * <p>
+         * Valid only for AWS.
+         * </p>
+         *
+         * @param rate speed of unarchiving
+         *
+         * @return the same builder object
+         */
         public UnarchiveRequestBuilder setRate(UnarchivingRate rate) {
             Preconditions.checkState(this.rate == null,
                     "Cannot call setRate more than once");
             this.rate = rate;
             return this;
         }
+
+        /**
+         * Sets dry-run mode. If true, only display the output of the API call without executing
+         * the unarchival process.
+         *
+         * @param dryRun whether the unarchival process should be actually executed or not
+         *
+         * @return the same builder object
+         */
 
         public UnarchiveRequestBuilder setDryRun(Boolean dryRun) {
             Preconditions.checkState(this.dryRun == null,
@@ -427,16 +598,31 @@ public class DXProject extends DXContainer {
             return this;
         }
 
-        public UnarchiveResult execute() {
+        /**
+         * Executes the request.
+         *
+         * @return execution results
+         */
+        public UnarchiveResults execute() {
             return DXJSON.safeTreeToValue(apiCallOnObject("unarchive",
-                    MAPPER.valueToTree(new UnarchiveRequest(files, folder, recurse, rate, dryRun)),
-                    RetryStrategy.SAFE_TO_RETRY), UnarchiveResult.class);
+                    MAPPER.valueToTree(new UnarchiveRequest(this)),
+                    RetryStrategy.SAFE_TO_RETRY), UnarchiveResults.class);
+        }
+
+        @VisibleForTesting
+        JsonNode buildRequestHash() {
+            // Use this method to test the JSON hash created by a particular
+            // builder call without actually executing the request.
+            return MAPPER.valueToTree(new UnarchiveRequest(this));
         }
 
     }
 
+    /**
+     * Results of unarchive request.
+     */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class UnarchiveResult {
+    public static class UnarchiveResults {
         @JsonProperty
         private int files;
         @JsonProperty
@@ -444,17 +630,32 @@ public class DXProject extends DXContainer {
         @JsonProperty
         private float cost;
 
-        protected UnarchiveResult() {
+        protected UnarchiveResults() {
         }
 
+        /**
+         * Returns the number of files that will be unarchived.
+         *
+         * @return number of files that will be unarchived
+         */
         public int getFiles() {
             return files;
         }
 
+        /**
+         * Returns the size of the data (in GB) that will be unarchived.
+         *
+         * @return size of the data that will be unarchived
+         */
         public int getSize() {
             return size;
         }
 
+        /**
+         * Returns total cost (in millidollars) that will be charged for the unarchival request.
+         *
+         * @return total cost that will be charged for the unarchival request
+         */
         public float getCost() {
             return cost;
         }

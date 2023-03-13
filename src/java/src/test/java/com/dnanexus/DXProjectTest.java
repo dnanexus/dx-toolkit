@@ -17,7 +17,12 @@
 package com.dnanexus;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.List;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,6 +51,40 @@ public class DXProjectTest {
     public void tearDown() {
         if (testProject != null) {
             testProject.destroy();
+        }
+    }
+
+    private DXFile createMinimalFile(String name) {
+        return createMinimalFile(name, null);
+    }
+
+    private DXFile createMinimalFile(String name, String folder) {
+        DXFile.Builder fileBuilder = DXFile.newFile()
+                .setProject(testProject)
+                .setName(name);
+
+        if (folder != null) {
+            fileBuilder.setFolder(folder);
+        }
+
+        DXFile file = fileBuilder.build();
+        try {
+            file.upload("content".getBytes());
+        } catch(Exception ex) {
+            Assert.fail("Creation of test file " + (folder != null ? folder : "/") + "/" + name + " failed!");
+        }
+        file.closeAndWait();
+        return file;
+    }
+
+    /**
+     * Delayes execution by i milliseconds.
+     */
+    private void sleep(int i) {
+        try {
+            Thread.sleep(i);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
@@ -173,6 +212,345 @@ public class DXProjectTest {
         Assert.assertEquals("Java test project", p.describe().getName());
 
         // System.out.println(p.getId());
+    }
+
+    @Test
+    public void testArchive() throws IOException {
+        this.testProject = DXProject.newProject().setName("DXProjectTest").build();
+
+        final DXFile fakeFile = DXFile.getInstance("file-" + Strings.repeat("x", 24));
+        List<DXFile> fakeFiles = Lists.newArrayList();
+        for (int i = 0; i < 10; ++i) {
+            fakeFiles.add(DXFile.getInstance("file-" + Strings.padStart(String.valueOf(i), 24, '0')));
+        }
+        String fakeJson = "{\"files\": [";
+        for (DXFile f : fakeFiles) {
+            fakeJson += "\"" + f.getId() + "\",";
+        }
+        fakeJson = fakeJson.substring(0, fakeJson.length() - 1) + "]}";
+
+        // Test all possible methods and their repetitive calls
+        Assert.assertEquals(DXJSON.parseJson(fakeJson), testProject.archive()
+                .addFile(fakeFiles.get(0))
+                .addFiles(fakeFiles.get(1), fakeFiles.get(2))
+                .addFiles(ImmutableList.of(fakeFiles.get(3), fakeFiles.get(4)))
+                .addFile(fakeFiles.get(5))
+                .addFiles(fakeFiles.get(6), fakeFiles.get(7))
+                .addFiles(ImmutableList.of(fakeFiles.get(8), fakeFiles.get(9)))
+                .buildRequestHash());
+
+        Assert.assertEquals(DXJSON.parseJson("{\"folder\": \"/folder\"}"), testProject.archive()
+                .setFolder("/folder").buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"folder\": \"/folder\", \"recurse\": true}"), testProject.archive()
+                .setFolder("/folder", true).buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"folder\": \"/folder\", \"recurse\": false}"), testProject.archive()
+                .setFolder("/folder", false).buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"allCopies\": true}"), testProject.archive()
+                .setAllCopies(true).buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"allCopies\": false}"), testProject.archive()
+                .setAllCopies(false).buildRequestHash());
+
+        // null params
+        try {
+            testProject.archive().addFile(null);
+            Assert.fail("Expected archival to fail due to null file");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().addFiles(fakeFile, null);
+            Assert.fail("Expected archival to fail due to null file");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().addFiles(ImmutableList.of(fakeFile, null));
+            Assert.fail("Expected archival to fail due to null file");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().setFolder(null);
+            Assert.fail("Expected archival to fail due to null folder");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().setFolder(null, true);
+            Assert.fail("Expected archival to fail due to null folder");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        // files and folder mutual exclusivity
+        try {
+            testProject.archive().addFile(fakeFile).setFolder("/folder");
+            Assert.fail("Expected archival to fail due to the mutual exclusivity of files and folder");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().addFile(fakeFile).setFolder("/folder", true);
+            Assert.fail("Expected archival to fail due to the mutual exclusivity of files and folder");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().setFolder("/folder").addFile(fakeFile);
+            Assert.fail("Expected archival to fail due to the mutual exclusivity of files and folder");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().setFolder("/folder", true).addFile(fakeFile);
+            Assert.fail("Expected archival to fail due to the mutual exclusivity of files and folder");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        // setFolder single call restriction
+        try {
+            testProject.archive().setFolder("/folder").setFolder("/folder2");
+            Assert.fail("Expected archival to fail because setFolder should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().setFolder("/folder", true).setFolder("/folder2");
+            Assert.fail("Expected archival to fail because setFolder should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().setFolder("/folder").setFolder("/folder2", true);
+            Assert.fail("Expected archival to fail because setFolder should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.archive().setFolder("/folder", true).setFolder("/folder2", true);
+            Assert.fail("Expected archival to fail because setFolder should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        // setAllCopies single call restriction
+        try {
+            testProject.archive().setAllCopies(true).setAllCopies(true);
+            Assert.fail("Expected archival to fail because setAllCopies should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        DXFile file1 = createMinimalFile("archiveFile1");
+        DXFile file2 = createMinimalFile("archiveFile2");
+        DXFile file3 = createMinimalFile("archiveFile3");
+        testProject.newFolder("/folder");
+        testProject.newFolder("/folder/subfolder");
+        DXFile file4 = createMinimalFile("archiveFile10", "/folder");
+        DXFile file5 = createMinimalFile("archiveFile11", "/folder/subfolder");
+        List<ArchivalState> targetStates = ImmutableList.of(ArchivalState.ARCHIVAL, ArchivalState.ARCHIVED);
+
+        Assert.assertEquals(2, testProject.archive().addFiles(file1, file2).execute().getCount());
+        sleep(5000);
+        Assert.assertTrue(targetStates.contains(file1.describe().getArchivalState()));
+        Assert.assertTrue(targetStates.contains(file2.describe().getArchivalState()));
+        Assert.assertFalse(targetStates.contains(file3.describe().getArchivalState()));
+        Assert.assertFalse(targetStates.contains(file4.describe().getArchivalState()));
+        Assert.assertFalse(targetStates.contains(file5.describe().getArchivalState()));
+        Assert.assertEquals(2, testProject.archive().setFolder("/folder", true).execute().getCount());
+        sleep(5000);
+        Assert.assertFalse(targetStates.contains(file3.describe().getArchivalState()));
+        Assert.assertTrue(targetStates.contains(file4.describe().getArchivalState()));
+        Assert.assertTrue(targetStates.contains(file5.describe().getArchivalState()));
+    }
+
+    @Test
+    public void testUnarchive() throws IOException, InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+        this.testProject = DXProject.newProject().setName("DXProjectTest").build();
+
+        final DXFile fakeFile = DXFile.getInstance("file-" + Strings.repeat("x", 24));
+        List<DXFile> fakeFiles = Lists.newArrayList();
+        for (int i = 0; i < 10; ++i) {
+            fakeFiles.add(DXFile.getInstance("file-" + Strings.padStart(String.valueOf(i), 24, '0')));
+        }
+        String fakeJson = "{\"files\": [";
+        for (DXFile f : fakeFiles) {
+            fakeJson += "\"" + f.getId() + "\",";
+        }
+        fakeJson = fakeJson.substring(0, fakeJson.length() - 1) + "]}";
+
+        // Test all possible methods and their repetitive calls
+        Assert.assertEquals(DXJSON.parseJson(fakeJson), testProject.unarchive()
+                .addFile(fakeFiles.get(0))
+                .addFiles(fakeFiles.get(1), fakeFiles.get(2))
+                .addFiles(ImmutableList.of(fakeFiles.get(3), fakeFiles.get(4)))
+                .addFile(fakeFiles.get(5))
+                .addFiles(fakeFiles.get(6), fakeFiles.get(7))
+                .addFiles(ImmutableList.of(fakeFiles.get(8), fakeFiles.get(9)))
+                .buildRequestHash());
+
+        Assert.assertEquals(DXJSON.parseJson("{\"folder\": \"/folder\"}"), testProject.unarchive()
+                .setFolder("/folder").buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"folder\": \"/folder\", \"recurse\": true}"), testProject.unarchive()
+                .setFolder("/folder", true).buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"folder\": \"/folder\", \"recurse\": false}"), testProject.unarchive()
+                .setFolder("/folder", false).buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"dryRun\": true}"), testProject.unarchive()
+                .setDryRun(true).buildRequestHash());
+        Assert.assertEquals(DXJSON.parseJson("{\"dryRun\": false}"), testProject.unarchive()
+                .setDryRun(false).buildRequestHash());
+        Method rateGetValue = UnarchivingRate.class.getDeclaredMethod("getValue");
+        rateGetValue.setAccessible(true);
+        for (UnarchivingRate rate : UnarchivingRate.values()) {
+            Assert.assertEquals(DXJSON.parseJson("{\"rate\": \"" + rateGetValue.invoke(rate) + "\"}"), testProject.unarchive()
+                    .setRate(rate).buildRequestHash());
+        }
+
+        // null params
+        try {
+            testProject.unarchive().addFile(null);
+            Assert.fail("Expected archival to fail due to null file");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().addFiles(fakeFile, null);
+            Assert.fail("Expected archival to fail due to null file");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().addFiles(ImmutableList.of(fakeFile, null));
+            Assert.fail("Expected archival to fail due to null file");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().setFolder(null);
+            Assert.fail("Expected archival to fail due to null folder");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().setFolder(null, true);
+            Assert.fail("Expected archival to fail due to null folder");
+        } catch (NullPointerException ex) {
+            // Expected
+        }
+
+        // files and folder mutual exclusivity
+        try {
+            testProject.unarchive().addFile(fakeFile).setFolder("/folder");
+            Assert.fail("Expected archival to fail due to the mutual exclusivity of files and folder");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().addFile(fakeFile).setFolder("/folder", true);
+            Assert.fail("Expected archival to fail due to the mutual exclusivity of files and folder");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().setFolder("/folder").addFile(fakeFile);
+            Assert.fail("Expected archival to fail due to the mutual exclusivity of files and folder");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().setFolder("/folder", true).addFile(fakeFile);
+            Assert.fail("Expected archival to fail due to the mutual exclusivity of files and folder");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        // setFolder single call restriction
+        try {
+            testProject.unarchive().setFolder("/folder").setFolder("/folder2");
+            Assert.fail("Expected archival to fail because setFolder should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().setFolder("/folder", true).setFolder("/folder2");
+            Assert.fail("Expected archival to fail because setFolder should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().setFolder("/folder").setFolder("/folder2", true);
+            Assert.fail("Expected archival to fail because setFolder should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        try {
+            testProject.unarchive().setFolder("/folder", true).setFolder("/folder2", true);
+            Assert.fail("Expected archival to fail because setFolder should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        // setRate single call restriction
+        try {
+            testProject.unarchive().setRate(UnarchivingRate.EXPEDITED).setRate(UnarchivingRate.EXPEDITED);
+            Assert.fail("Expected archival to fail because setRate should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        // setDryRun single call restriction
+        try {
+            testProject.unarchive().setDryRun(true).setDryRun(true);
+            Assert.fail("Expected archival to fail because setDryRun should be callable only once");
+        } catch (IllegalStateException ex) {
+            // Expected
+        }
+
+        DXFile file1 = createMinimalFile("archiveFile1");
+        DXFile file2 = createMinimalFile("archiveFile2");
+        DXFile file3 = createMinimalFile("archiveFile3");
+        testProject.newFolder("/folder");
+        testProject.newFolder("/folder/subfolder");
+        DXFile file4 = createMinimalFile("archiveFile10", "/folder");
+        DXFile file5 = createMinimalFile("archiveFile11", "/folder/subfolder");
+        testProject.archive().setFolder("/", true).execute();
+        sleep(5000);
+
+        List<ArchivalState> targetStates = ImmutableList.of(ArchivalState.LIVE, ArchivalState.UNARCHIVING);
+
+        Assert.assertEquals(2, testProject.unarchive().addFiles(file1, file2).execute().getFiles());
+        sleep(5000);
+        Assert.assertTrue(targetStates.contains(file1.describe().getArchivalState()));
+        Assert.assertTrue(targetStates.contains(file2.describe().getArchivalState()));
+        Assert.assertFalse(targetStates.contains(file3.describe().getArchivalState()));
+        Assert.assertFalse(targetStates.contains(file4.describe().getArchivalState()));
+        Assert.assertFalse(targetStates.contains(file5.describe().getArchivalState()));
+        Assert.assertEquals(2, testProject.unarchive().setFolder("/folder", true).execute().getFiles());
+        sleep(5000);
+        Assert.assertFalse(targetStates.contains(file3.describe().getArchivalState()));
+        Assert.assertTrue(targetStates.contains(file4.describe().getArchivalState()));
+        Assert.assertTrue(targetStates.contains(file5.describe().getArchivalState()));
     }
 
     // Internal tests

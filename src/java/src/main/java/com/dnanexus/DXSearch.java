@@ -589,8 +589,8 @@ public final class DXSearch {
          * specified, the default is to return all objects regardless their archival state.
          *
          * <p>
-         * Please note archival states are support only for "file" class (use {@link #withClassFile()}) and
-         * requires specified project and folder (use either {@link #inFolder(DXContainer, String)} or
+         * Please note archival states are supported only for "file" class (use {@link #withClassFile()}). This filter
+         * requires project and folder (can be root "/") to be specified (use either {@link #inFolder(DXContainer, String)} or
          * {@link #inFolderOrSubfolders(DXContainer, String)}).
          * </p>
          *
