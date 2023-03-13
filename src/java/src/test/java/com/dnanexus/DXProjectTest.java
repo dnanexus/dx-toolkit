@@ -534,6 +534,7 @@ public class DXProjectTest {
             sleep(5000);
         }
 
+        sleep(5000);
         Assert.assertEquals(2, testProject.unarchive().setFolder("/folder", true).execute().getFiles());
     }
 
