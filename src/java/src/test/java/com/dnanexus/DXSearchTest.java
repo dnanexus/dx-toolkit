@@ -353,7 +353,7 @@ public class DXSearchTest {
         assertEqualsAnyOrder(DXSearch.findDataObjects().withIdsIn(ImmutableList.of(moo, invisible))
                 .withVisibility(VisibilityQuery.EITHER).execute().asList(), moo, invisible);
 
-        // withArchiveState
+        // withArchivalState
 
         DXFile fileLive1 = createMinimalFile("fileLive1");
         DXFile fileLive2 = createMinimalFile("fileLive2");
@@ -377,7 +377,7 @@ public class DXSearchTest {
         try {
             DXSearch.findDataObjects().inFolder(testProject, "/")
                     .withArchivalState(ArchivalState.LIVE).execute().asList();
-            Assert.fail("Search should not work without class 'file' --> check API spec and update javadoc!");
+            Assert.fail("Expected search to fail due to missing 'class=File'");
         } catch (Exception ex) {
             // Expected
         }
@@ -385,7 +385,7 @@ public class DXSearchTest {
         try {
             DXSearch.findDataObjects().withClassFile()
                     .withArchivalState(ArchivalState.LIVE).execute().asList();
-            Assert.fail("Search should not work without 'project' and 'folder' --> check API spec and update javadoc!");
+            Assert.fail("Expected search to fail due to missing 'project' and 'folder' fields");
         } catch (Exception ex) {
             // Expected
         }

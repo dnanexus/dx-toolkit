@@ -594,7 +594,7 @@ public final class DXSearch {
          * {@link #inFolderOrSubfolders(DXContainer, String)}).
          * </p>
          *
-         * @param archivalState enum value specifying what files archival states can be returned.
+         * @param archivalState enum value specifying what files archival states can be returned
          *
          * @return the same builder object
          */
