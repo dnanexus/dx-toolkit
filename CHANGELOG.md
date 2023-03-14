@@ -15,7 +15,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* Released Nextaur 1.6.3 (includes updated wait times for file upload and close)
+* Released Nextaur 1.6.3. It includes updates to wait times for file upload and closing, and a fix to default Nextflow config path
 * Upgraded Nextflow to 22.10.7
 * Removed Nextflow assets from aws:eu-west-2
 
@@ -23,11 +23,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Pretty-printing additional fields for Granular Spot Wait Times in `dx describe` for jobs and analyses
+* Pretty-printing additional fields for Granular Wait Times in `dx describe` for jobs and analyses
 
 ### Changed
 
-* Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts is set to 3
+* Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts used for file downloads is set to 3
 
 ### Fixed
 
@@ -54,7 +54,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Nextflow - updated default instance types based on destination region
-* Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
 
 ### Fixed
 
