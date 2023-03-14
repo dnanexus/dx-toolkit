@@ -1,3 +1,12 @@
+dx-toolkit (0.343.0) trusty; urgency=medium
+
+  * Fixed: Do not print job runtime if stopppedRunning not in describe
+  * Changed: Released Nextaur 1.6.3 (includes updated wait times for file upload and close)
+  * Changed: Upgraded Nextflow to 22.10.7
+  * Changed: Removed Nextflow assets from aws:eu-west-2
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 08 Mar 2023 21:33:21 +0000
+
 dx-toolkit (0.342.0) trusty; urgency=medium
 
   * Added: Pretty-print spotCostSavings field in dx describe`job-xxxx`
