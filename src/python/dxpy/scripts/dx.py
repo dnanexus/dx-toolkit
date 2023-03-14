@@ -3063,7 +3063,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "rank": args.rank,
         "max_tree_spot_wait_time": normalize_timedelta(args.max_tree_spot_wait_time)//1000 if args.max_tree_spot_wait_time else None,
         "max_job_spot_wait_time": normalize_timedelta(args.max_job_spot_wait_time)//1000 if args.max_job_spot_wait_time else None,
-        "preserve_job_outputs": True if args.preserve_job_outputs else args.preserve_job_outputs_folder,
+        "preserve_job_outputs": True if args.preserve_job_outputs else {"folder": args.preserve_job_outputs_folder},
         "extra_args": args.extra_args
     }
 
