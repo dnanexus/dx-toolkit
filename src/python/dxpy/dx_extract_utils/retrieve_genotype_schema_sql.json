@@ -1,0 +1,33 @@
+{
+    "title": "Retrieve genotype Schema SQL",
+    "$id": "/retrieve_genotype_schema_sql",
+    "description": "A description of the retrieve genotype JSON file",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "allele_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "sample_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "genotype": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "hom",
+                    "het-ref",
+                    "het-alt",
+                    "alt"
+                ]
+            }
+        }
+    }
+}

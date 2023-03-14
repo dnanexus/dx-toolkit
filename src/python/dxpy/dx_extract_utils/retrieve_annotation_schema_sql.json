@@ -1,6 +1,6 @@
 {
-    "title": "Retrieve Annotation Schema",
-    "$id": "/retrieve_annotation_schema",
+    "title": "Retrieve Annotation Schema SQL",
+    "$id": "/retrieve_annotation_schema_sql",
     "description": "A description of the retrieve annotation JSON file",
     "type": "object",
     "additionalProperties": false,

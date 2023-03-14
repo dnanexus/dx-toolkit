@@ -1,6 +1,6 @@
 {
-    "title": "Retrieve Allele Schema",
-    "$id": "/retrieve_allele_schema",
+    "title": "Retrieve Allele Schema SQL",
+    "$id": "/retrieve_allele_schema_sql",
     "description": "A description of the allele JSON file",
     "type": "object",
     "additionalProperties": false,
