@@ -6,18 +6,56 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [340.0] - beta
+## [343.0] - beta
 
 ### Changed
 
-* Upgraded Nextflow plugin version to 1.6.0
+* Released Nextaur 1.6.3. It includes updates to wait times for file upload and closing, and a fix to default Nextflow config path
+* Upgraded Nextflow to 22.10.7
+* Removed Nextflow assets from aws:eu-west-2
+
+## [342.1] - 2023.3.8 - stable
+
+### Added
+
+* Pretty-printing additional fields for Granular Wait Times in `dx describe` for jobs and analyses
+
+### Changed
+
+* Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts used for file downloads is set to 3
+
+### Fixed
+
+* `dx find jobs` if stopppedRunning not in describe output
+
+## [341.0] - 2023.3.3
+
+### Added
+
+* `dx ssh` to connect to job's public hostname if job is httpsApp enabled
+* '--list-fields', '--list-entities', '--entities' arguments for `dx extract_dataset`
+* 
+### Changed
+
+* Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
+* Increased dxpy HTTP timeout to 15 minutes
+ 
+### Fixed
+
+* Helpstring of '--verbose' arg
+
+## [340.1] - 2023.2.25
+
+### Changed
+
 * Nextflow - updated default instance types based on destination region
 
 ### Fixed
 
+* Use project ID for file-xxxx/describe API calls in dxjava DXFile
 * Nextflow errorStrategy retry ends in 'failed' state if last retry fails
 
-## [339.0] - 2023.2.10 - stable
+## [339.0] - 2023.2.10
 
 * No significant changes
 

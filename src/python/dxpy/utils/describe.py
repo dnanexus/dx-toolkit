@@ -780,7 +780,7 @@ def print_execution_desc(desc):
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
                          'priority', 'sshHostKey', 'internetUsageIPs', 'spotWaitTime', 'maxTreeSpotWaitTime',
-                         'maxJobSpotWaitTime']
+                         'maxJobSpotWaitTime', 'spotCostSavings']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -916,6 +916,8 @@ def print_execution_desc(desc):
                     print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
     if not desc.get('isFree') and desc.get('totalPrice') is not None:
         print_field('Total Price', format_currency(desc['totalPrice'], meta=desc['currency']))
+    if desc.get('spotCostSavings') is not None:
+        print_field('Spot Cost Savings', format_currency(desc['spotCostSavings'], meta=desc['currency']))
     if desc.get('spotWaitTime') is not None:
         print_field('Spot Wait Time', format_timedelta(desc.get('spotWaitTime'), in_seconds=True))
     if desc.get('maxTreeSpotWaitTime') is not None:
@@ -1162,7 +1164,7 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
     if desc['class'] == 'job':
         # Only print runtime if it ever started running
         if desc.get('startedRunning'):
-            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
+            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output'] and desc.get('stoppedRunning'):
                 runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])//1000)
                 cached_and_runtime_strs.append("runtime " + str(runtime))
             elif desc['state'] == 'running':

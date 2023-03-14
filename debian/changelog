@@ -1,3 +1,29 @@
+dx-toolkit (0.343.0) trusty; urgency=medium
+
+  * Fixed: Do not print job runtime if stopppedRunning not in describe
+  * Changed: Released Nextaur 1.6.3 (includes updated wait times for file upload and close)
+  * Changed: Upgraded Nextflow to 22.10.7
+  * Changed: Removed Nextflow assets from aws:eu-west-2
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 08 Mar 2023 21:33:21 +0000
+
+dx-toolkit (0.342.0) trusty; urgency=medium
+
+  * Added: Pretty-print spotCostSavings field in dx describe`job-xxxx`
+  * Changed: Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts is set to 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 03 Mar 2023 21:49:32 +0000
+
+dx-toolkit (0.341.0) trusty; urgency=medium
+
+  * Added: '--list-fields', '--list-entities', '--entities' arguments for `dx extract_dataset`
+  * Added: `dx ssh` to connect to job's public hostname if job is httpsApp enabled
+  * Fixed: Helpstring of '--verbose' arg
+  * Changed: Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
+  * Changed: Increased dxpy HTTP timeout to 15 minutes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Sat, 25 Feb 2023 13:43:02 +0000
+
 dx-toolkit (0.340.0) trusty; urgency=medium
 
   * Changed: Upgraded Nextflow plugin version to 1.6.0
