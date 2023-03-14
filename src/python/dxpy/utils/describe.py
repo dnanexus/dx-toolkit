@@ -849,7 +849,7 @@ def print_execution_desc(desc):
     print_nofill_field("Output", get_io_field(desc["output"]))
     if 'folder' in desc:
         print_field('Output folder', desc['folder'])
-    print_field('Preserve Job Outputs Folder', desc['preserveJobOutputs']['folder'] if desc.get('preserveJobOutputs') else '-')
+    print_field('Preserve Job Outputs Folder', desc['preserveJobOutputs']['folder'] if desc.get('preserveJobOutputs') and 'folder' in desc['preserveJobOutputs'] else '-')
     print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", render_timestamp(desc['created']))
     if 'startedRunning' in desc:
