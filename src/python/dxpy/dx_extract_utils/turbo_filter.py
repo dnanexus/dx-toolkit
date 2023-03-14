@@ -7,6 +7,9 @@ import os
 import dxpy
 import subprocess
 
+extract_utils_basepath = os.path.join(
+    os.path.dirname(dxpy.__file__), "dx_extract_utils"
+)
 
 # A dictionary relating the fields in each input file to the table that they
 # need to filter data in
@@ -15,25 +18,22 @@ import subprocess
 
 # A dictionary relating the user-facing names of columns to their actual column
 # names in the CLIGAM tables
-with open("column_conversion.json", "r") as infile:
+with open(os.path.join(extract_utils_basepath, "column_conversion.json"), "r") as infile:
     column_conversion = json.load(infile)
 
 # A dictionary relating the user-facing names of columns to the condition that needs
 # to be applied in the basic filter for the column
-with open("column_conditions.json", "r") as infile:
+with open(os.path.join(extract_utils_basepath, "column_conditions.json"), "r") as infile:
     column_conditions = json.load(infile)
 
 
 def retrieve_geno_bins(list_of_genes, project, genome_reference):
     project_desc = dxpy.describe(project)
     geno_positions = []
-    geno_reference_basepath = os.path.join(
-        os.path.dirname(dxpy.__file__), "dx_extract_utils"
-    )
 
     try:
         with open(
-            os.path.join(geno_reference_basepath, "Homo_sapiens_genes_manifest.json"),
+            os.path.join(extract_utils_basepath, "Homo_sapiens_genes_manifest.json"),
             "r",
         ) as geno_bin_manifest:
             r = json.load(geno_bin_manifest)
@@ -41,7 +41,7 @@ def retrieve_geno_bins(list_of_genes, project, genome_reference):
     except ResourceNotFound:
         with open(
             os.path.join(
-                geno_reference_basepath, "Homo_sapiens_genes_manifest_staging.json"
+                extract_utils_basepath, "Homo_sapiens_genes_manifest_staging.json"
             ),
             "r",
         ) as geno_bin_manifest:
@@ -214,15 +214,15 @@ def FinalPayload(
 
     if filter_type == "allele":
         order_by = [{"allele_id": "asc"}]
-        with open("return_columns_allele.json", "r") as infile:
+        with open(os.path.join(extract_utils_basepath, "return_columns_allele.json"), "r") as infile:
             fields = json.load(infile)
     elif filter_type == "annotation":
         order_by = [{"allele_id": "asc"}]
-        with open("return_columns_annotation.json", "r") as infile:
+        with open(os.path.join(extract_utils_basepath, "return_columns_annotation.json"), "r") as infile:
             fields = json.load(infile)
     elif filter_type == "genotype":
         order_by = [{"sample_id": "asc"}]
-        with open("return_columns_genotype.json", "r") as infile:
+        with open(os.path.join(extract_utils_basepath, "return_columns_genotype.json"), "r") as infile:
             fields = json.load(infile)
 
     final_payload["fields"] = fields
@@ -243,16 +243,10 @@ def ValidateJSON(filter, type, sql_flag=False):
         schema_file = "retrieve_{}_schema.json".format(type)
 
     # Open the schema asset
-    with open(schema_file, "r") as infile:
+    with open(os.path.join(extract_utils_basepath, schema_file), "r") as infile:
         json_schema = json.load(infile)
 
-    # The jsonschema validation function will error out if the schema is invalid.  The error message will contain
-    # an explanation of which part of the schema failed
-    try:
-        # pass
-        validate(filter, json_schema)
-    except Exception as inst:
-        err_exit(inst.message)
+    validate(filter, json_schema)
 
 
 if __name__ == "__main__":
