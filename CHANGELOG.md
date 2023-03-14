@@ -8,8 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Support for Preserve Job Outputs in `dx run` using `--preserve-job-outputs` and `--preserve-job-outputs-folder`
-* Pretty-printing Preserve Job Outputs Folder field in `dx describe` for jobs and analyses
+* `dx run` support for `--preserve-job-outputs` and `--preserve-job-outputs-folder` inputs
+* `dx describe` for jobs and analyses outputs `Preserve Job Outputs Folder` field
 
 ## [343.0] - beta
 
