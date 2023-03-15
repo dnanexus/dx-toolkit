@@ -3039,6 +3039,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         if 'All' in args.debug_on:
             args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
 
+    preserve_job_outputs = None
+    if args.preserve_job_outputs:
+        preserve_job_outputs = True
+    elif args.preserve_job_outputs_folder is not None:
+        preserve_job_outputs = {"folder": args.preserve_job_outputs_folder}
+
     run_kwargs = {
         "project": dest_proj,
         "folder": dest_path,
@@ -3063,6 +3069,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "rank": args.rank,
         "max_tree_spot_wait_time": normalize_timedelta(args.max_tree_spot_wait_time)//1000 if args.max_tree_spot_wait_time else None,
         "max_job_spot_wait_time": normalize_timedelta(args.max_job_spot_wait_time)//1000 if args.max_job_spot_wait_time else None,
+        "preserve_job_outputs": preserve_job_outputs,
         "extra_args": args.extra_args
     }
 
@@ -5267,9 +5274,23 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
 parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination. In case of workflows it is cost of the "
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
-parser_run.add_argument('-r', '--rank', type=int, help='Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', default=None)
-parser_run.add_argument('--max-tree-spot-wait-time', help='The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)')
-parser_run.add_argument('--max-job-spot-wait-time', help='The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)')
+parser_run.add_argument('-r', '--rank', type=int, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24), default=None)
+parser_run.add_argument('--max-tree-spot-wait-time', help=fill('The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_run.add_argument('--max-job-spot-wait-time', help=fill('The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+
+preserve_outputs = parser_run.add_mutually_exclusive_group()
+preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
+                              help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
+                                        "root execution into the \"intermediateJobOutputs\" subfolder under the output "
+                                        "folder for the root execution.",
+                                        width_adjustment=-24))
+preserve_outputs.add_argument('--preserve-job-outputs-folder', metavar="JOB_OUTPUTS_FOLDER",
+                              help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
+                                        "root execution to a folder in the project. JOB_OUTPUTS_FOLDER starting with '/' "
+                                        "refers to an absolute path within the project, otherwise, it refers to a subfolder "
+                                        "under root execution's output folder.",
+                                        width_adjustment=-24))
+
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None, head_job_on_demand=None)
 register_parser(parser_run, categories='exec')

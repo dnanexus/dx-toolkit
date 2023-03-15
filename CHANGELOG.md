@@ -6,6 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx run` support for `--preserve-job-outputs` and `--preserve-job-outputs-folder` inputs
+* `dx describe` for jobs and analyses outputs `Preserve Job Outputs Folder` field
+
 ## [343.0] - beta
 
 ### Changed
