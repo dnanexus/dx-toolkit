@@ -305,7 +305,7 @@ main() {
   fi
 
   # TODO revert
-  /usr/bin/dx-dstat 5
+  /usr/bin/dx-dstat 60
 
   # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
