@@ -5274,9 +5274,9 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
 parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination. In case of workflows it is cost of the "
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
-parser_run.add_argument('-r', '--rank', type=int, help='Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', default=None)
-parser_run.add_argument('--max-tree-spot-wait-time', help='The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)')
-parser_run.add_argument('--max-job-spot-wait-time', help='The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)')
+parser_run.add_argument('-r', '--rank', type=int, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24), default=None)
+parser_run.add_argument('--max-tree-spot-wait-time', help=fill('The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_run.add_argument('--max-job-spot-wait-time', help=fill('The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 
 preserve_outputs = parser_run.add_mutually_exclusive_group()
 preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
