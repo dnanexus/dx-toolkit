@@ -191,7 +191,6 @@ def GenerateAssayFilter(
 
 def FinalPayload(
     full_input_dict, name, id, project_context, genome_reference, filter_type
-    # , sql_flag
 ):
 
     # First, ensure that the JSON is valid
@@ -237,24 +236,23 @@ def FinalPayload(
     return final_payload, field_names
 
 
-def ValidateJSON(filter, type
-# , sql_flag=False
-):
+def ValidateJSON(filter, type):
     # Check JSON against schema
     # Errors out if JSON is invalid, continues otherwise
 
-    # If the sql flag is given, versions of the allele and annotation schema that do not have required fields
-    # must be used
-    # if sql_flag and (filter == "allele" or filter == "annotation"):
-    #     schema_file = "retrieve_{}_schema_sql.json".format(type)
-    # else:
     schema_file = "retrieve_{}_schema.json".format(type)
 
     # Open the schema asset
     with open(os.path.join(extract_utils_basepath, schema_file), "r") as infile:
         json_schema = json.load(infile)
 
-    validate(filter, json_schema)
+    # The jsonschema validation function will error out if the schema is invalid.  The error message will contain
+    # an explanation of which part of the schema failed
+    try:
+        # pass
+        validate(filter, json_schema)
+    except Exception as inst:
+        err_exit(inst.message)
 
 
 if __name__ == "__main__":

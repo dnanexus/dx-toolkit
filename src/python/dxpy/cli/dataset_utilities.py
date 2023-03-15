@@ -458,18 +458,8 @@ def extract_assay_germline(args):
                 err_exit("Json file {filter_json} provided does not exist".format(
                     filter_json=filter_value))
         
-        if "--sql" not in args_list:
-            if "--retrieve-allele" in args_list and not any(x in filter.keys() for x in ["rsid", "location"]):
-                err_exit("When --sql is not supplied and --retrieve-allele is specified, the respective JSON filter must include (at least) one of [“rsid”, “location”]")
-            if "--retrieve-annotation" in args_list and not any(x in filter.keys() for x in ["allele_id", "gene_name", "gene_id", "transcript_id"]):
-                err_exit(
-                    "When --sql is not supplied and --retrieve-annotation is specified, the respective JSON filter must include (at least) one of [“allele_id”, “gene_name”, “gene_id”, “transcript_id”]")
-        
-        try:
-            ValidateJSON(filter, filter_type)
-        except jsonschema.exceptions.ValidationError as json_validation_error:
-            err_exit("json_validation_error.message",
-                     expected_exceptions=jsonschema.exceptions.ValidationError)
+        ValidateJSON(filter, filter_type)
+
         return filter
 
     if args.retrieve_allele and "--retrieve-allele" in args_list:
@@ -518,7 +508,6 @@ def extract_assay_germline(args):
         if not geno_assays:
             err_exit("There's no genetic assay in the dataset provided.")
         else:
-            # print(*geno_assays.keys(), sep="\n")
             for a in geno_assays:
                 print(a["name"])
 
@@ -604,7 +593,6 @@ def extract_assay_germline(args):
 
     #### Run api call to get sql or extract data ####
     if any(x in args_list for x in retrieve_args_list):
-        print(payload)
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
             if print_to_stdout:
@@ -622,7 +610,6 @@ def extract_assay_germline(args):
                 raw_results=resp_raw["results"],
                 column_names=fields_list,
             )
-
 
 def retrieve_entities(model):
     """
