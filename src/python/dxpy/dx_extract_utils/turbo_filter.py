@@ -76,7 +76,7 @@ def BasicFilter(
 
     column_name = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
-    filter_key = "{}${}".format(table, column_name)
+    filter_key = "allele$a_id" if table == "annotation" and friendly_name == "allele_id" else "{}${}".format(table, column_name)
     if condition == "between":
         min_val = float(values["min"])
         max_val = float(values["max"])
@@ -190,7 +190,8 @@ def GenerateAssayFilter(
 
 
 def FinalPayload(
-    full_input_dict, name, id, project_context, genome_reference, filter_type, sql_flag
+    full_input_dict, name, id, project_context, genome_reference, filter_type
+    # , sql_flag
 ):
 
     # First, ensure that the JSON is valid
@@ -228,19 +229,26 @@ def FinalPayload(
     final_payload["fields"] = fields
     final_payload["order_by"] = order_by
     final_payload["raw_filters"] = assay_filter
-    return final_payload
+
+    field_names = []
+    for f in fields:
+        field_names.append(list(f.keys())[0])
+
+    return final_payload, field_names
 
 
-def ValidateJSON(filter, type, sql_flag=False):
+def ValidateJSON(filter, type
+# , sql_flag=False
+):
     # Check JSON against schema
     # Errors out if JSON is invalid, continues otherwise
 
     # If the sql flag is given, versions of the allele and annotation schema that do not have required fields
     # must be used
-    if sql_flag and (filter == "allele" or filter == "annotation"):
-        schema_file = "retrieve_{}_schema_sql.json".format(type)
-    else:
-        schema_file = "retrieve_{}_schema.json".format(type)
+    # if sql_flag and (filter == "allele" or filter == "annotation"):
+    #     schema_file = "retrieve_{}_schema_sql.json".format(type)
+    # else:
+    schema_file = "retrieve_{}_schema.json".format(type)
 
     # Open the schema asset
     with open(os.path.join(extract_utils_basepath, schema_file), "r") as infile:
