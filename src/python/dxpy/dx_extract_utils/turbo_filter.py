@@ -270,7 +270,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--type",
         help="type of filter being applied",
-        choices=["allele", "annotation", "sample"],
+        choices=["allele", "annotation", "genotype"],
         required=True,
     )
     parser.add_argument(
