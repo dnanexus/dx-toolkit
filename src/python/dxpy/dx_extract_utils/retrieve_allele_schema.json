@@ -22,7 +22,8 @@
             "description": "list of rsIDs of alleles",
             "items": {
                 "type": "string"
-            }
+            },
+            "maxItems": 100
         },
         "type": {
             "type": "array",
@@ -34,7 +35,8 @@
                     "Del",
                     "Mixed"
                 ]
-            }
+            },
+            "maxItems": 4
         },
         "dataset_alt_af": {
             "type": "object",
@@ -80,7 +82,8 @@
                     "ending_position": {
                         "type": "string"
                     }
-                }
+                },
+                "maxItems": 100
             }
         }
     }
