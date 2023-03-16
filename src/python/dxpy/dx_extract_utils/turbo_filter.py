@@ -18,12 +18,16 @@ extract_utils_basepath = os.path.join(
 
 # A dictionary relating the user-facing names of columns to their actual column
 # names in the CLIGAM tables
-with open(os.path.join(extract_utils_basepath, "column_conversion.json"), "r") as infile:
+with open(
+    os.path.join(extract_utils_basepath, "column_conversion.json"), "r"
+) as infile:
     column_conversion = json.load(infile)
 
 # A dictionary relating the user-facing names of columns to the condition that needs
 # to be applied in the basic filter for the column
-with open(os.path.join(extract_utils_basepath, "column_conditions.json"), "r") as infile:
+with open(
+    os.path.join(extract_utils_basepath, "column_conditions.json"), "r"
+) as infile:
     column_conditions = json.load(infile)
 
 
@@ -74,9 +78,13 @@ def BasicFilter(
     # and values defining the user-provided value to be compared to, and the logical operator
     # used to do the comparison
 
-    column_name = column_conversion[table][friendly_name]
+    filter_key = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
-    filter_key = "allele$a_id" if table in ("annotation", "genotype") and friendly_name == "allele_id" else "{}${}".format(table, column_name)
+    # filter_key = (
+    #    "allele$a_id"
+    #    if table in ("annotation", "genotype") and friendly_name == "allele_id"
+    #    else "{}${}".format(table, column_name)
+    # )
     if condition == "between":
         min_val = float(values["min"])
         max_val = float(values["max"])
@@ -91,7 +99,7 @@ def BasicFilter(
 
     # Check if we need to add geno bins as well
     # This is only necessary for gene_id and a_id.  For rsid the vizserver calculates it itself
-    if column_name == "gene_id" or column_name == "gene_name":
+    if friendly_name == "gene_id" or friendly_name == "gene_name":
         genome_reference = "GRCh38.92"
         listed_filter = {
             filter_key: [
@@ -214,15 +222,21 @@ def FinalPayload(
 
     if filter_type == "allele":
         order_by = [{"allele_id": "asc"}]
-        with open(os.path.join(extract_utils_basepath, "return_columns_allele.json"), "r") as infile:
+        with open(
+            os.path.join(extract_utils_basepath, "return_columns_allele.json"), "r"
+        ) as infile:
             fields = json.load(infile)
     elif filter_type == "annotation":
         order_by = [{"allele_id": "asc"}]
-        with open(os.path.join(extract_utils_basepath, "return_columns_annotation.json"), "r") as infile:
+        with open(
+            os.path.join(extract_utils_basepath, "return_columns_annotation.json"), "r"
+        ) as infile:
             fields = json.load(infile)
     elif filter_type == "genotype":
         order_by = [{"sample_id": "asc"}]
-        with open(os.path.join(extract_utils_basepath, "return_columns_genotype.json"), "r") as infile:
+        with open(
+            os.path.join(extract_utils_basepath, "return_columns_genotype.json"), "r"
+        ) as infile:
             fields = json.load(infile)
 
     final_payload["fields"] = fields
