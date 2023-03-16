@@ -17,17 +17,19 @@
         "ending_position": "pos"
     },
     "genotype": {
-        "genotype": "type"
+        "genotype": "type",
+        "sample_id": "sample_id",
+        "allele_id": "a_id"
     },
     "annotation": {
-        "allele_id": "allele",
+        "allele_id": "a_id",
         "gene_name": "gene_name",
         "gene_id": "gene_id",
         "transcript_id": "feature_id",
         "feature_id": "feature_id",
         "consequences": "effect",
         "putative_impact": "putative_impact",
-        "hgvs_c": "hgcs_c",
+        "hgvs_c": "hgvs_c",
         "hgvs_p": "hgvs_p"
     }
 }

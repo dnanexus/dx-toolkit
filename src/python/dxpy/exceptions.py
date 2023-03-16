@@ -20,7 +20,12 @@ Exceptions for the :mod:`dxpy` package.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import sys, json, traceback, errno, socket
+import sys
+import json
+import traceback
+import errno
+import socket
+import jsonschema
 import requests
 from requests.exceptions import HTTPError
 
@@ -232,7 +237,10 @@ network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
                       HTTPError,
                       socket.error)
 
-default_expected_exceptions = network_exceptions + (DXAPIError,
+json_exceptions = (json.decoder.JSONDecodeError,
+                   jsonschema.exceptions.ValidationError)
+
+default_expected_exceptions = network_exceptions + json_exceptions + (DXAPIError,
                                                     DXCLIError,
                                                     KeyboardInterrupt)
 

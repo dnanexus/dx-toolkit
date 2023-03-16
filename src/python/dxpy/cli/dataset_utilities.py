@@ -27,6 +27,8 @@ import re
 import csv
 import dxpy
 import codecs
+import subprocess
+import jsonschema
 from ..utils.printing import fill
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink
@@ -35,7 +37,7 @@ from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
 from ..utils.file_handle import as_handle
 from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState
 
-# from ..dx_extract_utils.turbo_filter import ValidateJSON, FinalPayload
+from ..dx_extract_utils.turbo_filter import ValidateJSON, FinalPayload
 
 database_unique_name_regex = re.compile('^database_\w{24}__\w+$')
 database_id_regex = re.compile('^database-\\w{24}$')
@@ -357,10 +359,8 @@ def get_assay_info(rec_descriptor, assay_type):
     else:
         for a in assay_list:
             if a["generalized_assay_model"] == assay_type:
-                # selected_type_assays[a["name"]]=a["uuid"]
                 selected_type_assays.append(a)
             else:
-                # other_assays[a["name"]]=a["uuid"]
                 other_assays.append(a)
     return (
         selected_type_assays,
@@ -377,24 +377,24 @@ def extract_assay_germline(args):
     retrieve_args_list = [
         "--retrieve-allele",
         "--retrieve-annotation",
-        "--retrieve-sample",
+        "--retrieve-genotype",
     ]
     #### Check if valid options are passed with the --json-help flag ####
     if args.json_help:
         if not (any(x in args_list for x in retrieve_args_list)):
             err_exit(
-                "Please specify one of the following: --retrieve-allele, --retrieve-sample or --retrieve-annotation” for details on the corresponding json template and filter definition."
+                "Please specify one of the following: --retrieve-allele, --retrieve-genotype or --retrieve-annotation” for details on the corresponding json template and filter definition."
             )
         elif args.list_assays or args.assay_name or args.sql or args.output:
             err_exit(
-                "Please check to make sure the parameters are set properly. --json-help cannot be specified with options other than --retrieve-annotation/--retrieve-allele/--retrieve-sample"
+                "Please check to make sure the parameters are set properly. --json-help cannot be specified with options other than --retrieve-annotation/--retrieve-allele/--retrieve-genotype"
             )
 
     #### Check if the retrieve options are passed correctly, print help if needed ####
     if "--retrieve-allele" in args_list:
-        if any(x in args_list for x in ["--retrieve-annotation", "--retrieve-sample"]):
+        if any(x in args_list for x in ["--retrieve-annotation", "--retrieve-genotype"]):
             err_exit(
-                "Please specify only one of the the following: --retrieve-allele, --retrieve-sample or --retrieve-annotation for details on the corresponding json template and filter definition."
+                "Please specify only one of the the following: --retrieve-allele, --retrieve-genotype or --retrieve-annotation for details on the corresponding json template and filter definition."
             )
         else:
             if args.json_help:
@@ -403,9 +403,9 @@ def extract_assay_germline(args):
                 )
                 sys.exit(0)
     elif "--retrieve-annotation" in args_list:
-        if any(x in args_list for x in ["--retrieve-sample"]):
+        if any(x in args_list for x in ["--retrieve-genotype"]):
             err_exit(
-                "Please specify only one of the the following: --retrieve-allele, --retrieve-sample or --retrieve-annotation for details on the corresponding json template and filter definition."
+                "Please specify only one of the the following: --retrieve-allele, --retrieve-genotype or --retrieve-annotation for details on the corresponding json template and filter definition."
             )
         else:
             if args.json_help:
@@ -413,7 +413,7 @@ def extract_assay_germline(args):
                     "Option to allow users to return annotation information for specific alleles with IDs specified. Accepted input is either a string or a file. If a file is provided, the file must contain a single column (without header) of allele IDs, where there is one unique ID per row and having one of the following extensions, “.csv”, “.tsv”, or “.txt”. Specify additional “--json-help” to get detailed information on the json format and filters.\nExample --retrieve-annotation json filter\n{\n  “allele_id”:[”1_1000_A_T”,”2_1000_G_C”],\n  “gene_name”: [“BRCA2”],\n  “gene_id”: [“ENST00000302118”],\n  “feature_id”: [“ENST00000302118.5”],\n  “consequences”: [“5 prime UTR variant”],\n  “putative_impact”: [“MODIFIER”],\n  “hgvs_c”: [“c.-49A>G”],\n  “hgvs_p”: [“p.Gly2Asp”]\n}\nAvailable filters:\n    -annotation_source: Annotation tool:version\n    -allele_id: Id of the allele\n    -gene_name: Name of the gene (HGNC) where it overlaps with the allele\n    -gene_Id: Gene ID\n    -feature_Id: Feature ID from snpEff annotation, most common seen as transcript ID: https://pcingola.github.io/SnpEff/se_inputoutput/#ann-field-vcf-output-files \n    -consequences: Corresponding to “effect” from SnpEff annotation\n    -putative_impact: A simple estimation of putative impact. Possible values are HIGH,MODERATE, LOW, MODIFIER\n    -hgvs_c: Variant using HGVS notation (DNA level)\n    -hgvs_p: If variant is coding, this field describes the variant using HGVS notation (Protein level)"
                 )
                 sys.exit(0)
-    elif "--retrieve-sample" in args_list:
+    elif "--retrieve-genotype" in args_list:
         if args.json_help:
             print(
                 "A JSON object, either in a file (.json extension) or as a string, specifying criteria of samples to retrieve. Returns a list of sample IDs and associated allele IDs.\nAvailable filters:\n    -sample_id: ID of the sample\n    -allele_id: ID of the allele\n    -locus_id: ID of the locus\n    -chr: Chromosome of the allele\n    -pos: Starting position of the allele\n    -ref: Reference sequence\n    -alt: Allele sequence\n    -genotype: Genotype type of the sample for the particular allele. One of [“hom-alt”, “het-ref”, “het-alt”, “half”]")
@@ -435,33 +435,37 @@ def extract_assay_germline(args):
             else:
                 try:
                     filter = json.loads(filter_value)
-                except:
-                    err_exit("JSON for variant filters is malformatted.")
+                except Exception as json_error:
+                    err_exit("JSON for variant filters is malformatted.",
+                             expected_exceptions=json.decoder.JSONDecodeError)
         elif filter_value.endswith(".json"):
             if os.path.isfile(filter_value):
-                print("file exists")
                 if os.stat(filter_value).st_size == 0:
                     err_exit(
                         "Json for “--retrieve-{filter_type}” does not contain valid filter information.".format(filter_type)
                         )
-                else:    
+                else:
+                    json_file = open(filter_value)
                     try:
-                        filter = json.load(filter_value)
-                    except:
-                        err_exit("JSON for variant filters is malformatted.")
+                        filter = json.load(json_file)
+                        json_file.close()
+                    except Exception as json_error:
+                        err_exit("JSON for variant filters is malformatted.",
+                                 expected_exceptions=jsonschema.exceptions.ValidationError)
             else:
                 err_exit("Json file {filter_json} provided does not exist".format(
                     filter_json=filter_value))
-        # ValidateJSON function from turbo_filter.py
-        # ValidateJSON(filter, filter_type)
+        
+        ValidateJSON(filter, filter_type)
+
         return filter
 
     if args.retrieve_allele and "--retrieve-allele" in args_list:
         filter_dict = json_validation_function("allele", args_list, args)
     elif args.retrieve_annotation and "--retrieve-annotation" in args_list:
         filter_dict = json_validation_function("annotation", args_list, args)
-    elif args.retrieve_sample and "--retrieve-sample" in args_list:
-        filter_dict = json_validation_function("sample", args_list, args)
+    elif args.retrieve_genotype and "--retrieve-genotype" in args_list:
+        filter_dict = json_validation_function("genotype", args_list, args)
 
     #### Validate that other arguments are not passed with --list-assays ####
     if args.list_assays:
@@ -478,14 +482,14 @@ def extract_assay_germline(args):
     if args.assay_name:
         if not (any(x in args_list for x in retrieve_args_list)):
             err_exit(
-                "--assay-name must be used with one of --retrieve-allele,--retrieve-annotation, --retrieve-sample."
+                "--assay-name must be used with one of --retrieve-allele,--retrieve-annotation, --retrieve-genotype."
             )
 
     #### Validate that a retrieve option is passed with --sql ####
     if args.sql:
         if not (any(x in args_list for x in retrieve_args_list)):
             err_exit(
-                "When --sql provided, must also provide at least one of the three options: --retrieve-allele <JSON>; --retrieve-sample <JSON>; --retrieve-annotation <JSON>."
+                "When --sql provided, must also provide at least one of the three options: --retrieve-allele <JSON>; --retrieve-genotype <JSON>; --retrieve-annotation <JSON>."
             )
 
     ######## Data Processing ########
@@ -502,17 +506,14 @@ def extract_assay_germline(args):
         if not geno_assays:
             err_exit("There's no genetic assay in the dataset provided.")
         else:
-            # print(*geno_assays.keys(), sep="\n")
             for a in geno_assays:
                 print(a["name"])
 
-    #### Decide which assay is to be queried ####
+    #### Decide which assay is to be queried and which ref genome is to be used ####
     (
         geno_assays,
         other_assays
     ) = get_assay_info(rec_descriptor, assay_type="genetic_variant")
-    # selected_assay_name = list(geno_assays.keys())[0]
-    # selected_assay_id = list(geno_assays.values())[0]
     selected_assay_name = geno_assays[0]["name"]
     selected_assay_id = geno_assays[0]["uuid"]
     if args.assay_name:
@@ -531,10 +532,10 @@ def extract_assay_germline(args):
             selected_assay_name = args.assay_name
             selected_assay_id = geno_assays[args.assay_name]
         
-        selected_ref_genome = "GRCh38.92"
-        for a in geno_assays:
-            if a["name"] == selected_assay_name and a["reference_genome"]:
-                selected_ref_genome = a["reference_genome"]["name"]
+    selected_ref_genome = "GRCh38.92"
+    for a in geno_assays:
+        if a["name"] == selected_assay_name and a["reference_genome"]:
+            selected_ref_genome = a["reference_genome"]["name"]
 
     #### Decide output method based on --output and --sql ####
     if args.sql:
@@ -543,6 +544,7 @@ def extract_assay_germline(args):
         file_name_suffix = ".tsv"
     file_already_exist = []
     files_to_check = []
+    out_file = ""
 
     print_to_stdout = False
     if args.output is None:
@@ -571,102 +573,16 @@ def extract_assay_germline(args):
 
     if file_already_exist:
         err_exit("Cannot specify the output to be an existing file.")
-
-    # TODO: remove hardcoded payload after adding payload retrieval function
-    # payload = {
-    #     "project_context": "project-FkyXg38071F1vGy2GyXyYYQB",
-    #     "fields": [
-    #         {"allele_id": "allele$a_id"},
-    #         {"chromosome": "allele$chr"},
-    #         {"starting_position": "allele$pos"},
-    #         {"ref": "allele$ref"},
-    #         {"alt": "allele$alt"},
-    #         {"rsid": "allele$dbsnp151_rsid"},
-    #         {"allele_type": "allele$allele_type"},
-    #         {"dataset_alt_freq": "allele$alt_freq"},
-    #         {"gnomad_alt_freq": "allele$gnomad201_alt_freq"},
-    #         {"worst_effect": "allele$worst_effect"},
-    #     ],
-    #     "order_by": [{"allele_id": "asc"}],
-    #     "filters": {
-    #         "assay_filters": {
-    #             "name": "veo_demo_dataset_assay",
-    #             "id": "da6a4ffc-7571-4b2f-853d-445460a18396",
-    #             "compound": [
-    #                 {
-    #                     "filters": {
-    #                         "allele$dbsnp151_rsid": [
-    #                             {
-    #                                 "condition": "in",
-    #                                 "values": ["rs1387234741", "rs1487242024"],
-    #                             }
-    #                         ],
-    #                         "allele$allele_type": [
-    #                             {"condition": "in", "values": [
-    #                                 "SNP", "Del", "Ins"]}
-    #                         ],
-    #                         "allele$alt_freq": [
-    #                             {"condition": "between",
-    #                                 "values": [0.001, 0.5]}
-    #                         ],
-    #                         "allele$gnomad201_alt_freq": [
-    #                             {"condition": "between",
-    #                                 "values": [0.001, 0.5]}
-    #                         ],
-    #                     },
-    #                     "logic": "and",
-    #                 },
-    #                 {
-    #                     "compound": [
-    #                         {
-    #                             "filters": {
-    #                                 "allele$chr": [{"condition": "is", "values": "21"}],
-    #                                 "allele$pos": [
-    #                                     {
-    #                                         "condition": "greater-than",
-    #                                         "values": 8987000,
-    #                                     },
-    #                                     {"condition": "less-than",
-    #                                         "values": 8987100},
-    #                                 ],
-    #                             },
-    #                             "logic": "and",
-    #                         },
-    #                         {
-    #                             "filters": {
-    #                                 "allele$chr": [{"condition": "is", "values": "21"}],
-    #                                 "allele$pos": [
-    #                                     {
-    #                                         "condition": "greater-than",
-    #                                         "values": 8986900,
-    #                                     },
-    #                                     {"condition": "less-than",
-    #                                         "values": 8987000},
-    #                                 ],
-    #                             },
-    #                             "logic": "and",
-    #                         },
-    #                     ],
-    #                     "logic": "or",
-    #                     "name": "location",
-    #                 },
-    #             ],
-    #             "logic": "and",
-    #         }
-    #     },
-    #     "validate_geno_bins": True,
-    # }
-
-    # Timeout payload
-    payload = {'project_context': 'project-FkyXg38071F1vGy2GyXyYYQB', 'fields': [{'allele.a_id': 'allele$a_id'}, {'annotation$gene_name': 'annotation$gene_name'}], 'filters': {'pheno_filters': {'compound': [{'name': 'phenotype', 'logic': 'and', 'filters': {}, 'entity': {'logic': 'and', 'name': 'participant', 'operator': 'exists', 'children': []}}], 'logic': 'and'}, 'assay_filters': {'compound': [{'name': 'genotype', 'logic': 'and', 'filters': {'annotation$gene_name': [{'condition': 'in', 'values': ['PGBD2'], 'geno_bins': [{'chr': '1', 'start': '248906196', 'end': '248919946'}]}]}}], 'logic': 'and'}, 'logic': 'and'}}
     
-    # TODO: replace payload_retrieval_function by actual function name and uncomment
-    # if "--retrieve-allele" in args_list:
-    #     payload = payload_retrieval_function(assay_name = selected_assay_name, assay_id = selected_assay_id, ref_genome = selected_ref_genome, filter="allele")
-    # elif "--retrieve-annotation" in args_list:
-    #     payload = payload_retrieval_function(assay_name = selected_assay_name, assay_id = selected_assay_id, ref_genome = selected_ref_genome, filter="annotation")
-    # elif "--retrieve-sample" in args_list:
-    #     payload = payload_retrieval_function(assay_name = selected_assay_name, assay_id = selected_assay_id, ref_genome = selected_ref_genome, filter="sample")
+    if "--retrieve-allele" in args_list:
+        payload, fields_list = FinalPayload(
+            full_input_dict=filter_dict, name = selected_assay_name, id = selected_assay_id, project_context = project, genome_reference = selected_ref_genome, filter_type = "allele")
+    elif "--retrieve-annotation" in args_list:
+        payload, fields_list = FinalPayload(
+            full_input_dict=filter_dict, name=selected_assay_name, id=selected_assay_id, project_context=project, genome_reference=selected_ref_genome, filter_type="annotation")
+    elif "--retrieve-genotype" in args_list:
+        payload, fields_list = FinalPayload(
+            full_input_dict=filter_dict, name=selected_assay_name, id=selected_assay_id, project_context=project, genome_reference=selected_ref_genome, filter_type="genotype")
 
     if "CohortBrowser" in resp["recordTypes"]:
         if resp.get("baseSql"):
@@ -684,11 +600,13 @@ def extract_assay_germline(args):
                     print(sql_results, file=sql_file)
         else:
             resp_raw = raw_api_call(resp, payload)
+
             csv_from_json(
                 out_file_name=out_file,
                 print_to_stdout=print_to_stdout,
                 sep="\t",
                 raw_results=resp_raw["results"],
+                column_names=fields_list,
             )
 
 
