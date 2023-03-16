@@ -7,41 +7,33 @@ import os
 import dxpy
 import subprocess
 
+asset_basepath = os.path.join(os.path.dirname(dxpy.__file__), "dx_extract_utils")
 
 # A dictionary relating the user-facing names of columns to their actual column
 # names in the CLIGAM tables
-with open(
-    "/dx-toolkit/src/python/dxpy/dx_extract_utils/column_conversion.json", "r"
-) as infile:
+with open(os.path.join(asset_basepath, "column_conversion.json"), "r") as infile:
     column_conversion = json.load(infile)
 
 # A dictionary relating the user-facing names of columns to the condition that needs
 # to be applied in the basic filter for the column
-with open(
-    "/dx-toolkit/src/python/dxpy/dx_extract_utils/column_conditions.json", "r"
-) as infile:
+with open(os.path.join(asset_basepath, "column_conditions.json"), "r") as infile:
     column_conditions = json.load(infile)
 
 
 def retrieve_geno_bins(list_of_genes, project, genome_reference):
     project_desc = dxpy.describe(project)
     geno_positions = []
-    geno_reference_basepath = os.path.join(
-        os.path.dirname(dxpy.__file__), "dx_extract_utils"
-    )
 
     try:
         with open(
-            os.path.join(geno_reference_basepath, "Homo_sapiens_genes_manifest.json"),
+            os.path.join(asset_basepath, "Homo_sapiens_genes_manifest.json"),
             "r",
         ) as geno_bin_manifest:
             r = json.load(geno_bin_manifest)
         dxpy.describe(r[genome_reference][project_desc["region"]])
     except ResourceNotFound:
         with open(
-            os.path.join(
-                geno_reference_basepath, "Homo_sapiens_genes_manifest_staging.json"
-            ),
+            os.path.join(asset_basepath, "Homo_sapiens_genes_manifest_staging.json"),
             "r",
         ) as geno_bin_manifest:
             r = json.load(geno_bin_manifest)
@@ -219,15 +211,21 @@ def FinalPayload(
 
     if filter_type == "allele":
         order_by = [{"allele_id": "asc"}]
-        with open("return_columns_allele.json", "r") as infile:
+        with open(
+            os.path.join(asset_basepath, "return_columns_allele.json"), "r"
+        ) as infile:
             fields = json.load(infile)
     elif filter_type == "annotation":
         order_by = [{"allele_id": "asc"}]
-        with open("return_columns_annotation.json", "r") as infile:
+        with open(
+            os.path.join(asset_basepath, "return_columns_annotation.json"), "r"
+        ) as infile:
             fields = json.load(infile)
     elif filter_type == "genotype":
         order_by = [{"sample_id": "asc"}]
-        with open("return_columns_genotype.json", "r") as infile:
+        with open(
+            os.path.join(asset_basepath, "return_columns_genotype.json"), "r"
+        ) as infile:
             fields = json.load(infile)
 
     final_payload["fields"] = fields
