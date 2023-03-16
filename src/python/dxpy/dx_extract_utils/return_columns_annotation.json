@@ -9,10 +9,10 @@
         "gene_id": "annotation$gene_id"
     },
     {
-        "feature_id": "annotation$transcript_id"
+        "feature_id": "annotation$feature_id"
     },
     {
-        "consequences": "annotation$consequences"
+        "consequences": "annotation$effect"
     },
     {
         "putative_impact": "annotation$putative_impact"

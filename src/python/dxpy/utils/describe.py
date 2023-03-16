@@ -780,7 +780,7 @@ def print_execution_desc(desc):
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
                          'priority', 'sshHostKey', 'internetUsageIPs', 'spotWaitTime', 'maxTreeSpotWaitTime',
-                         'maxJobSpotWaitTime', 'spotCostSavings']
+                         'maxJobSpotWaitTime', 'spotCostSavings', 'preserveJobOutputs']
 
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -849,6 +849,7 @@ def print_execution_desc(desc):
     print_nofill_field("Output", get_io_field(desc["output"]))
     if 'folder' in desc:
         print_field('Output folder', desc['folder'])
+    print_field('Preserve Job Outputs Folder', desc['preserveJobOutputs']['folder'] if desc.get('preserveJobOutputs') and 'folder' in desc['preserveJobOutputs'] else '-')
     print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", render_timestamp(desc['created']))
     if 'startedRunning' in desc:
@@ -1164,7 +1165,7 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
     if desc['class'] == 'job':
         # Only print runtime if it ever started running
         if desc.get('startedRunning'):
-            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
+            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output'] and desc.get('stoppedRunning'):
                 runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])//1000)
                 cached_and_runtime_strs.append("runtime " + str(runtime))
             elif desc['state'] == 'running':

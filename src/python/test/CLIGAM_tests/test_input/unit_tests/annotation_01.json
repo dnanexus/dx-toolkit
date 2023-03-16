@@ -7,7 +7,8 @@
         "BRCA2"
     ],
     "consequences": [
-        "5 prime UTR variant"
+        "splice_region_variant",
+        "stop_retained_variant"
     ],
     "putative_impact": [
         "MODIFIER"

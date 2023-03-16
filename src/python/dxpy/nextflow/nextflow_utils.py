@@ -68,7 +68,6 @@ def get_instance_type(region):
     instance_type = {
         "aws:ap-southeast-2": "mem1_ssd1_v2_x2",
         "aws:eu-central-1": "mem1_ssd1_v2_x2",
-        "aws:eu-west-2": "mem1_ssd1_v2_x2",
         "aws:us-east-1": "mem1_ssd1_v2_x2",
         "azure:westeurope": "azure:mem1_ssd1_x2",
         "azure:westus": "azure:mem1_ssd1_x2",
