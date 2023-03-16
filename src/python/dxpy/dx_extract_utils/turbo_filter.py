@@ -76,7 +76,7 @@ def BasicFilter(
 
     column_name = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
-    filter_key = "allele$a_id" if table == "annotation" and friendly_name == "allele_id" else "{}${}".format(table, column_name)
+    filter_key = "allele$a_id" if table in ("annotation", "genotype") and friendly_name == "allele_id" else "{}${}".format(table, column_name)
     if condition == "between":
         min_val = float(values["min"])
         max_val = float(values["max"])

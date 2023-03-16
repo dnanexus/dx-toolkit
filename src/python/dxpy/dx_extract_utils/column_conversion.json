@@ -17,7 +17,9 @@
         "ending_position": "pos"
     },
     "genotype": {
-        "genotype": "type"
+        "genotype": "type",
+        "sample_id": "sample_id",
+        "allele_id": "a_id"
     },
     "annotation": {
         "allele_id": "a_id",
