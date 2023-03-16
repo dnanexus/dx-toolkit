@@ -78,19 +78,13 @@ def BasicFilter(
     # and values defining the user-provided value to be compared to, and the logical operator
     # used to do the comparison
 
-    # Allele and annotation filters only reference the allele and annotation tables respectively
-    # but the genotype filter references the genotype table and the allele table
-    # If the table is genotype, check if we need to replace it with the allele table
-    if table == "genotype" and friendly_name == "allele_id":
-        table = "allele"
-
-    column_name = column_conversion[table][friendly_name]
+    filter_key = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
-    filter_key = (
-        "allele$a_id"
-        if table in ("annotation", "genotype") and friendly_name == "allele_id"
-        else "{}${}".format(table, column_name)
-    )
+    # filter_key = (
+    #    "allele$a_id"
+    #    if table in ("annotation", "genotype") and friendly_name == "allele_id"
+    #    else "{}${}".format(table, column_name)
+    # )
     if condition == "between":
         min_val = float(values["min"])
         max_val = float(values["max"])
@@ -105,7 +99,7 @@ def BasicFilter(
 
     # Check if we need to add geno bins as well
     # This is only necessary for gene_id and a_id.  For rsid the vizserver calculates it itself
-    if column_name == "gene_id" or column_name == "gene_name":
+    if friendly_name == "gene_id" or friendly_name == "gene_name":
         genome_reference = "GRCh38.92"
         listed_filter = {
             filter_key: [
@@ -282,7 +276,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--type",
         help="type of filter being applied",
-        choices=["allele", "annotation", "genotype"],
+        choices=["allele", "annotation", "sample"],
         required=True,
     )
     parser.add_argument(
