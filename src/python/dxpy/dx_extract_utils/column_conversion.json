@@ -1,5 +1,5 @@
 {
-    "sample": {
+    "genotype": {
         "sample_id": "sample_id",
         "allele_id": "a_id",
         "genotype": "type"
@@ -15,9 +15,6 @@
         "chromosome": "chr",
         "starting_position": "pos",
         "ending_position": "pos"
-    },
-    "genotype": {
-        "genotype": "type"
     },
     "annotation": {
         "allele_id": "allele",

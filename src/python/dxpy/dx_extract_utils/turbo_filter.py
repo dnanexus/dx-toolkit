@@ -8,19 +8,21 @@ import dxpy
 import subprocess
 
 
-# A dictionary relating the fields in each input file to the table that they
-# need to filter data in
-# As of now, the allele and annotation files get all their data from the allele and
-# annotation tables respectively, only the sample file references data in multiple tables
+# A dictionary relating the fields in the genotype filter to the table it gets its data from
+
 
 # A dictionary relating the user-facing names of columns to their actual column
 # names in the CLIGAM tables
-with open("column_conversion.json", "r") as infile:
+with open(
+    "/dx-toolkit/src/python/dxpy/dx_extract_utils/column_conversion.json", "r"
+) as infile:
     column_conversion = json.load(infile)
 
 # A dictionary relating the user-facing names of columns to the condition that needs
 # to be applied in the basic filter for the column
-with open("column_conditions.json", "r") as infile:
+with open(
+    "/dx-toolkit/src/python/dxpy/dx_extract_utils/column_conditions.json", "r"
+) as infile:
     column_conditions = json.load(infile)
 
 
