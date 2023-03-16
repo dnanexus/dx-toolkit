@@ -9,7 +9,7 @@ import subprocess
 
 
 # A dictionary relating the fields in the genotype filter to the table it gets its data from
-
+genotype_tables = {"allele_id": "allele", "ref": "allele", "alt": "allele"}
 
 # A dictionary relating the user-facing names of columns to their actual column
 # names in the CLIGAM tables
@@ -75,6 +75,12 @@ def BasicFilter(
     # A low-level filter consisting of a dictionary with one key defining the table and column
     # and values defining the user-provided value to be compared to, and the logical operator
     # used to do the comparison
+
+    # Allele and annotation filters only reference the allele and annotation tables respectively
+    # but the genotype filter references the genotype table and the allele table
+    # If the table is genotype, check if we need to replace it with the allele table
+    if table == "genotype":
+        table = genotype_tables.get(friendly_name, "genotype")
 
     column_name = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
