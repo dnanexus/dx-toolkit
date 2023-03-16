@@ -1,6 +1,6 @@
 {
-    "title": "Retrieve Sample Schema",
-    "$id": "/retrieve_sample_schema",
+    "title": "Retrieve Genotype Schema",
+    "$id": "/retrieve_genotype_schema",
     "description": "A description of the retrieve sample JSON file",
     "type": "object",
     "additionalProperties": false,
