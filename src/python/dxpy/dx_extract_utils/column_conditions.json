@@ -22,7 +22,7 @@
         "gene_id": "in",
         "transcript_id": "in",
         "feature_id": "in",
-        "consequences": "in",
+        "consequences": "any",
         "putative_impact": "in",
         "hgvs_c": "in",
         "hgvs_p": "in"
