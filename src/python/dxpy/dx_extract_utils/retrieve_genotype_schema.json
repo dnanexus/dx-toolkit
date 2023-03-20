@@ -12,13 +12,15 @@
             "type": "array",
             "items": {
                 "type": "string"
-            }
+            },
+            "maxItems": 1000
         },
         "sample_id": {
             "type": "array",
             "items": {
                 "type": "string"
-            }
+            },
+            "maxItems": 100
         },
         "genotype": {
             "type": "array",
@@ -30,7 +32,8 @@
                     "het-alt",
                     "alt"
                 ]
-            }
+            },
+            "maxItems": 4
         }
     }
 }
