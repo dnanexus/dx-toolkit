@@ -322,10 +322,8 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
                          'skipping tests that would run jobs')
     def test_dx_run_override_profile(self):
         pipeline_name = "profile_test"
-        self.write_nextflow_applet_directory(pipeline_name, nf_file_name="nextflow.config", existing_nf_file_path="nextflow/profile/nextflow.config")
-        self.write_nextflow_applet_directory(pipeline_name, nf_file_name="conf/second.config", existing_nf_file_path="nextflow/profile/conf/second.config")
-        self.write_nextflow_applet_directory(pipeline_name, nf_file_name="conf/test.config", existing_nf_file_path="nextflow/profile/conf/test.config")
-        applet_dir = self.write_nextflow_applet_directory(pipeline_name, nf_file_name="main.nf", existing_nf_file_path="nextflow/profile/main.nf")
+
+        applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, "nextflow/profile/")
         applet_id = json.loads(run(
             "dx build --nextflow --profile second '{}' --json".format(applet_dir)))["id"]
 
@@ -338,13 +336,8 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
             job_handler.wait_on_done()
         except Exception:
             print("job failed...")
-        try:
-            watched_run_output = run("dx watch {} --no-follow".format(job_id))
-            print(watched_run_output)
-        except Exception:
-            print("dx watch failed...")
-            job_desc = dxpy.describe(job_id)
-            print(job_desc)
+        watched_run_output = run("dx watch {} --no-follow".format(job_id))
+        print(watched_run_output)
 
         self.assertTrue("second_config world!" in watched_run_output, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
         self.assertTrue("test_config world!" not in watched_run_output, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
