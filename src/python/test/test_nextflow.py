@@ -335,10 +335,11 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         job_handler = dxpy.DXJob(job_id)
         job_handler.wait_on_done()
         print("HERE1")
+        watched_run_output = run("dx watch {}".format(job_id))
         print("HERE2")
 
-        # self.assertTrue("second_config world!" in job_log, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
-        # self.assertTrue("test_config world!" not in job_log, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
+        self.assertTrue("second_config world!" in watched_run_output, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
+        self.assertTrue("test_config world!" not in watched_run_output, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
 
     def test_dx_build_nextflow_with_destination(self):
         pipeline_name = "hello"
