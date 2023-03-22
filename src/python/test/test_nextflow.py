@@ -325,7 +325,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, nf_file_name="main.nf", existing_nf_file_path="nextflow/profile/main.nf")
         applet_id = json.loads(run(
-            "dx build --nextflow '{}' --profile test --json".format(applet_dir)))["id"]
+            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
 
 
         job_id = run(
