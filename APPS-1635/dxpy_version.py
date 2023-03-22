@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
 
 """
-utils __init__.py
-from .toolkit_version import version as TOOLKIT_VERSION
-__version__ = TOOLKIT_VERSION
-"""
-
-"""
 parser.add_argument('--version', action=PrintDXVersion, nargs=0, help="show program's version number and exit")
 """
 
