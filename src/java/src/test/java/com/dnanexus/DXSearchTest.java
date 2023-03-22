@@ -107,7 +107,7 @@ public class DXSearchTest {
         return applet;
     }
 
-    private DXFile createMinimalFile(String name) {
+    private DXFile uploadMinimalFile(String name) {
         DXFile file = DXFile.newFile()
                 .setProject(testProject)
                 .setName(name)
@@ -355,9 +355,9 @@ public class DXSearchTest {
 
         // withArchivalState
 
-        DXFile fileLive1 = createMinimalFile("fileLive1");
-        DXFile fileLive2 = createMinimalFile("fileLive2");
-        DXFile fileArchived = createMinimalFile("fileArchived");
+        DXFile fileLive1 = uploadMinimalFile("fileLive1");
+        DXFile fileLive2 = uploadMinimalFile("fileLive2");
+        DXFile fileArchived = uploadMinimalFile("fileArchived");
         testProject.archive().addFile(fileArchived).execute();
 
         // Wait for archival to complete

@@ -224,7 +224,7 @@ public class DXProject extends DXContainer {
     }
 
     /**
-     * Move specified files or folder to an archive storage to save on storage costs.
+     * Request specified files or folder to be archived.
      *
      * <p>
      * Example use:
@@ -246,7 +246,7 @@ public class DXProject extends DXContainer {
     }
 
     /**
-     * Retrieve specified files or folder from an archive storage.
+     * Request specified files or folder to be unarchived.
      *
      * <p>
      * Example use:

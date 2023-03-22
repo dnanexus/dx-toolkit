@@ -54,11 +54,11 @@ public class DXProjectTest {
         }
     }
 
-    private DXFile createMinimalFile(String name) {
-        return createMinimalFile(name, null);
+    private DXFile uploadMinimalFile(String name) {
+        return uploadMinimalFile(name, null);
     }
 
-    private DXFile createMinimalFile(String name, String folder) {
+    private DXFile uploadMinimalFile(String name, String folder) {
         DXFile.Builder fileBuilder = DXFile.newFile()
                 .setProject(testProject)
                 .setName(name);
@@ -352,12 +352,12 @@ public class DXProjectTest {
             // Expected
         }
 
-        createMinimalFile("archiveFile1");
-        createMinimalFile("archiveFile2");
+        uploadMinimalFile("archiveFile1");
+        uploadMinimalFile("archiveFile2");
         testProject.newFolder("/folder");
         testProject.newFolder("/folder/subfolder");
-        createMinimalFile("archiveFile10", "/folder");
-        createMinimalFile("archiveFile11", "/folder/subfolder");
+        uploadMinimalFile("archiveFile10", "/folder");
+        uploadMinimalFile("archiveFile11", "/folder/subfolder");
 
         Assert.assertEquals(2, testProject.archive().setFolder("/folder", true).execute().getCount());
     }
@@ -514,12 +514,12 @@ public class DXProjectTest {
             // Expected
         }
 
-        createMinimalFile("archiveFile1");
-        createMinimalFile("archiveFile2");
+        uploadMinimalFile("archiveFile1");
+        uploadMinimalFile("archiveFile2");
         testProject.newFolder("/folder");
         testProject.newFolder("/folder/subfolder");
-        DXFile file1 = createMinimalFile("archiveFile10", "/folder");
-        DXFile file2 = createMinimalFile("archiveFile11", "/folder/subfolder");
+        DXFile file1 = uploadMinimalFile("archiveFile10", "/folder");
+        DXFile file2 = uploadMinimalFile("archiveFile11", "/folder/subfolder");
         testProject.archive().setFolder("/", true).execute();
 
         // Wait for archival to complete
