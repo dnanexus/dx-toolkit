@@ -335,9 +335,9 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         ).strip()
         job_handler = dxpy.DXJob(job_id)
         # job_handler.wait_on_done()
-        time.sleep(80)
+        time.sleep(150)
         print("HERE1")
-        watched_run_output = run("dx watch {}".format(job_id))
+        watched_run_output = run("dx watch {} --no-follow".format(job_id))
         print(watched_run_output)
         print("HERE2")
 
