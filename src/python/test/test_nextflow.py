@@ -334,11 +334,9 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         ).strip()
         job_handler = dxpy.DXJob(job_id)
         job_handler.wait_on_done()
-        job_log = run(
-            "dx watch --no-follow {job_id}".format(job_id=job_id)
-        )
-
-        print(job_log)
+        print("HERE1")
+        job_log = run("dx watch --no-follow {job_id}".format(job_id=job_id))
+        print("HERE2")
 
         self.assertTrue("second_config world!" in job_log, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
         self.assertTrue("test_config world!" not in job_log, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
