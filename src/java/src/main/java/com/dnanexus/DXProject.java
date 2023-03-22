@@ -256,9 +256,9 @@ public class DXProject extends DXContainer {
      * // Unarchive using file id
      * DXFile f1 = DXFile.getInstance(&quot;file-xxxx&quot;);
      * DXFile f2 = DXFile.getInstance(&quot;file-yyyy&quot;);
-     * ArchiveResults r = project.unarchive().addFiles(f1, f2).execute();
+     * UnarchiveResults r = project.unarchive().addFiles(f1, f2).execute();
      * // Unarchive folder
-     * ArchiveResults r = project.unarchive().setFolder(&quot;/folder&quot;, true).execute();
+     * UnarchiveResults r = project.unarchive().setFolder(&quot;/folder&quot;, true).execute();
      * </pre>
      *
      * @return a newly initialized {@code UnarchiveRequestBuilder}
