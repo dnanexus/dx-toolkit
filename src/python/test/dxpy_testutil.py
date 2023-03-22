@@ -670,11 +670,10 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
         p = os.path.join(self.temp_file_path, applet_name)
         pb = p.encode("utf-8")
         try:
-            os.mkdir(pb)
+            shutil.copytree(existing_nf_directory_path, pb)
         except OSError as e:
             if e.errno != 17:  # directory already exists
                 raise e
-        shutil.copytree(existing_nf_directory_path, pb)
         return p
 
 
