@@ -326,7 +326,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         applet_id = json.loads(run(
             "dx build --nextflow '{}' --profile test --json".format(applet_dir)))["id"]
 
-        run_profile = "-profile second"
+        run_profile = "'-profile second'"
 
         job_id = run(
             "dx run {applet_id} -idebug=true -inextflow_run_opts={profile} -i --folder :/test-cat-ls/ -y --brief".format(
