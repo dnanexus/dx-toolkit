@@ -317,6 +317,32 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         # the output files will be: ls_folder.txt, cat_file.txt
         self.assertEqual(len(job_desc["output"]["published_files"]), 2)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_run_override_profile(self):
+        pipeline_name = "profile_test"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, nf_file_name="main.nf", existing_nf_file_path="nextflow/profile/main.nf")
+        applet_id = json.loads(run(
+            "dx build --nextflow '{}' --profile test --json".format(applet_dir)))["id"]
+
+        run_profile = "-profile second"
+
+        job_id = run(
+            "dx run {applet_id} -idebug=true -inextflow_run_opts={profile} -i --folder :/test-cat-ls/ -y --brief".format(
+                applet_id=applet_id, pipeline_args=pipeline_args, profile=run_profile)
+        ).strip()
+        job_handler = dxpy.DXJob(job_id)
+        job_handler.wait_on_done()
+        job_log = run(
+            "dx watch --no-follow {job_id}".format(job_id=job_id)
+        )
+
+        print(job_log)
+
+        self.assertTrue("second_config world!" in job_log, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
+        self.assertTrue("test_config world!" not in job_log, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
+
     def test_dx_build_nextflow_with_destination(self):
         pipeline_name = "hello"
         applet_dir = self.write_nextflow_applet_directory(
