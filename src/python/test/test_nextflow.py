@@ -321,7 +321,6 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_run_override_profile(self):
-        self.project = "project-FpGpg8Q0k25YQ1k53YF8YxkG"
         pipeline_name = "profile_test"
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, nf_file_name="main.nf", existing_nf_file_path="nextflow/profile/main.nf")
