@@ -325,11 +325,9 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
         applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, "nextflow/profile/")
         applet_id = json.loads(run(
-            "dx build --nextflow --profile second '{}' --json".format(applet_dir)))["id"]
-
-
+            "dx build --nextflow --profile test '{}' --json".format(applet_dir)))["id"]
         job_id = run(
-            "dx run {applet_id} -y --brief".format(applet_id=applet_id)
+            "dx run {applet_id} -y -inextflow_run_opts=\"-profile second\" --brief".format(applet_id=applet_id)
         ).strip()
         job_handler = dxpy.DXJob(job_id)
         try:
