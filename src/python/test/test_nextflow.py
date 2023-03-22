@@ -21,6 +21,7 @@ from parameterized import parameterized
 
 import os
 import sys
+import time
 import unittest
 import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
@@ -326,10 +327,10 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         applet_id = json.loads(run(
             "dx build --nextflow '{}' --profile test --json".format(applet_dir)))["id"]
 
-        run_profile = "'-profile second'"
+        run_profile = "\"-profile second\""
 
         job_id = run(
-            "dx run {applet_id}  -inextflow_run_opts={profile} -y --brief".format(
+            "dx run {applet_id}  -inextflow_run_opts=\"-profile second\" -y --brief".format(
                 applet_id=applet_id, profile=run_profile)
         ).strip()
         job_handler = dxpy.DXJob(job_id)
@@ -337,6 +338,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         time.sleep(80)
         print("HERE1")
         watched_run_output = run("dx watch {}".format(job_id))
+        print(watched_run_output)
         print("HERE2")
 
         self.assertTrue("second_config world!" in watched_run_output, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
