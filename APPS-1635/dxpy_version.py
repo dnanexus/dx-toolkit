@@ -6,14 +6,23 @@ from .toolkit_version import version as TOOLKIT_VERSION
 __version__ = TOOLKIT_VERSION
 """
 
-import sys
+"""
+parser.add_argument('--version', action=PrintDXVersion, nargs=0, help="show program's version number and exit")
+"""
 
-sys.path.insert(0, '../')
-import src.python.dxpy.utils as utils
+"""
+class PrintDXVersion(argparse.Action):
+    # Prints to stdout instead of the default stderr that argparse
+    # uses (note: default changes to stdout in 3.4)
+    def __call__(self, parser, namespace, values, option_string=None):
+        print('dx v%s' % (dxpy.TOOLKIT_VERSION,))
+        parser.exit(0)
+"""
+
+import dxpy
 
 def project_available_instance_types():
-    v = utils.toolkit_version.version
-    print(v)
+    print(dxpy.TOOLKIT_VERSION)
 
 if __name__ == "__main__":
     project_available_instance_types()
