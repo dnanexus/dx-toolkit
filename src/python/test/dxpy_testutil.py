@@ -668,8 +668,6 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
 
     def write_nextflow_applet_directory_from_folder(self, applet_name, existing_nf_directory_path):
         p = os.path.join(self.temp_file_path, applet_name)
-        print(p)
-        print(existing_nf_directory_path)
         try:
             shutil.copytree(existing_nf_directory_path, p)
         except OSError as e:
