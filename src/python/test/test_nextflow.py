@@ -329,7 +329,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         run_profile = "'-profile second'"
 
         job_id = run(
-            "dx run {applet_id} -idebug=true -inextflow_run_opts={profile} -i --folder :/test-cat-ls/ -y --brief".format(
+            "dx run {applet_id} -idebug=true -inextflow_run_opts={profile} -y --brief".format(
                 applet_id=applet_id, profile=run_profile)
         ).strip()
         job_handler = dxpy.DXJob(job_id)
