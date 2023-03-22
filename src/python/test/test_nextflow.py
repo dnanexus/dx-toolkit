@@ -21,7 +21,6 @@ from parameterized import parameterized
 
 import os
 import sys
-import time
 import unittest
 import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
