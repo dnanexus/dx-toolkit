@@ -20,7 +20,7 @@
                 "type": "string"
             }
         },
-        "genotype": {
+        "genotype_type": {
             "type": "array",
             "items": {
                 "type": "string",
