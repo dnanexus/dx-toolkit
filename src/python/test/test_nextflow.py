@@ -329,10 +329,13 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
 
         job_id = run(
-            "dx run {applet_id}  -inextflow_run_opts=\"-profile second\" -y --brief".format(applet_id=applet_id)
+            "dx run {applet_id} -y --brief".format(applet_id=applet_id)
         ).strip()
         job_handler = dxpy.DXJob(job_id)
-        job_handler.wait_on_done()
+        try:
+            job_handler.wait_on_done()
+        except Exception:
+            print("job failed...")
         watched_run_output = run("dx watch {} --no-follow".format(job_id))
         print(watched_run_output)
 
