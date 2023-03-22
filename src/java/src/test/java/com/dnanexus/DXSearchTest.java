@@ -107,6 +107,21 @@ public class DXSearchTest {
         return applet;
     }
 
+    private DXFile uploadMinimalFile(String name) {
+        DXFile file = DXFile.newFile()
+                .setProject(testProject)
+                .setName(name)
+                .build();
+
+        try {
+            file.upload("content".getBytes());
+        } catch (Exception ex) {
+            Assert.fail("Creation of test file '" + name + "' failed!");
+        }
+        file.closeAndWait();
+        return file;
+    }
+
     /**
       * Delayes execution by i milliseconds.
       */
@@ -337,6 +352,55 @@ public class DXSearchTest {
                 .execute().asList(), moo);
         assertEqualsAnyOrder(DXSearch.findDataObjects().withIdsIn(ImmutableList.of(moo, invisible))
                 .withVisibility(VisibilityQuery.EITHER).execute().asList(), moo, invisible);
+
+        // withArchivalState
+
+        DXFile fileLive1 = uploadMinimalFile("fileLive1");
+        DXFile fileLive2 = uploadMinimalFile("fileLive2");
+        DXFile fileArchived = uploadMinimalFile("fileArchived");
+        testProject.archive().addFile(fileArchived).execute();
+
+        // Wait for archival to complete
+        final int maxRetries = 24;
+        for (int i = 1; i <= maxRetries; ++i) {
+            if (fileArchived.describe().getArchivalState() == ArchivalState.ARCHIVED) {
+                break;
+            }
+            if (i == maxRetries) {
+                Assert.fail("Could not archive test file. Test cannot proceed...");
+            }
+            sleep(5000);
+        }
+
+        // Empty archival state does not affect file retrieval
+        assertEqualsAnyOrder(DXSearch.findDataObjects().withClassFile().inFolder(testProject, "/")
+                .execute().asList(), fileLive1, fileLive2, fileArchived);
+        assertEqualsAnyOrder(DXSearch.findDataObjects().withClassFile().inFolder(testProject, "/")
+                .withArchivalState(ArchivalState.LIVE).execute().asList(), fileLive1, fileLive2);
+        assertEqualsAnyOrder(DXSearch.findDataObjects().withClassFile().inFolder(testProject, "/")
+                .withArchivalState(ArchivalState.ARCHIVED).execute().asList(), fileArchived);
+
+        // We may search by any archival state
+        for (ArchivalState state : ArchivalState.values()) {
+            DXSearch.findDataObjects().withClassFile().inFolder(testProject, "/").withArchivalState(state)
+                    .execute().asList();
+        }
+
+        try {
+            DXSearch.findDataObjects().inFolder(testProject, "/")
+                    .withArchivalState(ArchivalState.LIVE).execute().asList();
+            Assert.fail("Expected search to fail due to missing 'class=File'");
+        } catch (Exception ex) {
+            // Expected
+        }
+
+        try {
+            DXSearch.findDataObjects().withClassFile()
+                    .withArchivalState(ArchivalState.LIVE).execute().asList();
+            Assert.fail("Expected search to fail due to missing 'project' and 'folder' fields");
+        } catch (Exception ex) {
+            // Expected
+        }
 
         // TODO: withLinkTo, withMinimumAccessLevel
 

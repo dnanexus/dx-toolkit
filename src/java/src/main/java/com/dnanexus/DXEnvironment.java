@@ -67,7 +67,7 @@ public class DXEnvironment implements AutoCloseable {
 
         /**
          * Creates a Builder object using the JSON config in the file
-         * <tt>~/.dnanexus_config/environment.json</tt>.
+         * <code>~/.dnanexus_config/environment.json</code>.
          *
          * @return new Builder object
          */
@@ -115,7 +115,7 @@ public class DXEnvironment implements AutoCloseable {
 
         /**
          * Initializes a Builder object using JSON config in the file
-         * <tt>~/.dnanexus_config/environment.json</tt>.
+         * <code>~/.dnanexus_config/environment.json</code>.
          *
          * @deprecated Use {@link #fromDefaults()} instead
          */
@@ -386,8 +386,6 @@ public class DXEnvironment implements AutoCloseable {
 
         /**
          * Disables automatic retry of HTTP requests.
-         *
-         * @param disableRetryLogic boolean
          *
          * @return the same Builder object
          */

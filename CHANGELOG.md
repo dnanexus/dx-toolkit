@@ -8,6 +8,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Added support for file (un)archival in DXJava
+* Added `archivalStatus` field to DXFile describe in DXJava
+* Added `archivalStatus` filtering support to DXSearch in DXJava
 * `dx run` support for `--preserve-job-outputs` and `--preserve-job-outputs-folder` inputs
 * `dx describe` for jobs and analyses outputs `Preserve Job Outputs Folder` field
 

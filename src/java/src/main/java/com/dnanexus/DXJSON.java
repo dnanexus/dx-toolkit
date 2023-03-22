@@ -65,7 +65,7 @@ public class DXJSON {
      *                     .addAllStrings(ImmutableList.of("Bar", "Baz"))
      *                     .build()}</pre>
      *
-     * when serialized, produces the JSON array <tt>["Foo", "Bar", "Baz"]</tt>.
+     * when serialized, produces the JSON array <code>["Foo", "Bar", "Baz"]</code>.
      */
     public static class ArrayBuilder {
         private final boolean isEmpty;
@@ -165,7 +165,7 @@ public class DXJSON {
      *                      .put("key2", 12321)
      *                      .build()}</pre>
      *
-     * when serialized, produces the JSON object <tt>{"key1": "a-string", "key2": 12321}</tt>.
+     * when serialized, produces the JSON object <code>{"key1": "a-string", "key2": 12321}</code>.
      */
     public static class ObjectBuilder {
         private final boolean isEmpty;
