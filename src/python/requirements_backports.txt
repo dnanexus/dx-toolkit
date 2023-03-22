@@ -1,2 +1,2 @@
 futures>=3.2; python_version == "2.7"
-backports.ssl_match_hostname==3.5.0.1
+backports.ssl_match_hostname==3.7.0.1
