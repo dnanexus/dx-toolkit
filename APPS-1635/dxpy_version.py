@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 
-import subprocess
+"""
+utils __init__.py
+from .toolkit_version import version as TOOLKIT_VERSION
+__version__ = TOOLKIT_VERSION
+"""
+
+import sys
+
+sys.path.insert(0, '../')
+import src.python.dxpy.utils as utils
 
 def project_available_instance_types():
-    v = subprocess.check_output(
-        ["dx", "--version"],
-        text=True
-    )
+    v = utils.toolkit_version.version
     print(v)
 
 if __name__ == "__main__":
