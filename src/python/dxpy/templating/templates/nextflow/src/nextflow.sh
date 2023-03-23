@@ -398,6 +398,14 @@ main() {
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
+  profile_arg="@@PROFILE_ARG@@"
+  if [ -n "$profile_arg" ]; then
+    if [[ "$nextflow_run_opts" == *"-profile "* ]]; then
+      echo "Profile was given in run options... overriding the default profile ($profile_arg)"
+      profile_arg=""
+    fi
+  fi
+
   # execution starts
   NEXTFLOW_CMD="nextflow \
     ${TRACE_CMD} \
@@ -405,7 +413,7 @@ main() {
     ${RUNTIME_CONFIG_CMD} \
     -log ${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
-    @@PROFILE_ARG@@ \
+    $profile_arg \
     -name $DX_JOB_ID \
     $RESUME_CMD \
     $nextflow_run_opts \

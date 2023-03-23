@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Nextflow profiles runtime overriding fix
+
 ### Added
 
 * Added support for file (un)archival in DXJava
