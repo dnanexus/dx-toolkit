@@ -12,7 +12,7 @@
         "ending_position": "less-than"
     },
     "genotype": {
-        "genotype": "in",
+        "genotype_type": "in",
         "allele_id": "in",
         "sample_id": "in"
     },

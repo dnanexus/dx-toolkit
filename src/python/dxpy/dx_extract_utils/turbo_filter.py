@@ -11,11 +11,6 @@ extract_utils_basepath = os.path.join(
     os.path.dirname(dxpy.__file__), "dx_extract_utils"
 )
 
-# A dictionary relating the fields in each input file to the table that they
-# need to filter data in
-# As of now, the allele and annotation files get all their data from the allele and
-# annotation tables respectively, only the sample file references data in multiple tables
-
 # A dictionary relating the user-facing names of columns to their actual column
 # names in the CLIGAM tables
 with open(
@@ -72,7 +67,7 @@ def retrieve_geno_bins(list_of_genes, project, genome_reference):
 
 
 def BasicFilter(
-    table, friendly_name, values, project_context=None, genome_reference=None
+    table, friendly_name, values=[], project_context=None, genome_reference=None
 ):
     # A low-level filter consisting of a dictionary with one key defining the table and column
     # and values defining the user-provided value to be compared to, and the logical operator
@@ -80,11 +75,7 @@ def BasicFilter(
 
     filter_key = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
-    # filter_key = (
-    #    "allele$a_id"
-    #    if table in ("annotation", "genotype") and friendly_name == "allele_id"
-    #    else "{}${}".format(table, column_name)
-    # )
+
     if condition == "between":
         min_val = float(values["min"])
         max_val = float(values["max"])
@@ -117,29 +108,40 @@ def BasicFilter(
     return listed_filter
 
 
-def LocationFilter(table, location):
-    # A location filter has two atomic filters for pos with the exact same key.  Thus, the two filters
-    # need to be in the list under the table$column key.  There is a third filter defining the chromosome
-    # The three basic filters in a location filter are related to each other by "and"
-    filter_group = BasicFilter(
-        table,
-        "chromosome",
-        location["chromosome"],
-    )
-    pos_key = "{}$pos".format(table)
-    # Note that the starting and ending filter objects are both values within the same allele$pos key
-    starting_filter = {
-        "condition": column_conditions[table]["starting_position"],
-        "values": int(location["starting_position"]),
+def LocationFilter(location_list):
+    # A location filter is actually an allele$a_id filter with no filter values
+    # The geno_bins perform the actual location filtering
+    # On the raw_filters route, the items within the geno_bins list are related by "or"
+
+    location_aid_filter = {
+        "allele$a_id": [
+            {
+                "condition": "in",
+                "values": [],
+                "geno_bins": [],
+            }
+        ]
     }
-    ending_filter = {
-        "condition": column_conditions[table]["ending_position"],
-        "values": int(location["ending_position"]),
-    }
-    filter_group[pos_key] = [starting_filter, ending_filter]
-    location_filter = {"filters": filter_group}
-    location_filter["logic"] = "and"
-    return location_filter
+
+    for location in location_list:
+        # First, ensure that the geno bins width isn't greater than 250 megabases
+        start = int(location["starting_position"])
+        end = int(location["ending_position"])
+        if end - start > 250000000:
+            err_exit(
+                "Error in location {}\nLocation filters may not specify regions larger than 250 megabases".format(
+                    location
+                )
+            )
+
+        location_aid_filter["allele$a_id"][0]["geno_bins"].append(
+            {
+                "chr": location["chromosome"],
+                "start": start,
+                "end": end,
+            }
+        )
+    return location_aid_filter
 
 
 def GenerateAssayFilter(
@@ -153,26 +155,16 @@ def GenerateAssayFilter(
     # Generate the entire assay filters object by reading the filter JSON, making the relevant
     # Basic and Location filters, and creating the structure that relates them logically
 
-    # There are three possible types of input JSON: a sample filter, an allele filter,
+    # There are three possible types of input JSON: a genotype filter, an allele filter,
     # and an annotation filter
     filters_dict = {}
     table = filter_type
-    location_compound = None
 
     for key in full_input_dict.keys():
         # Location needs to be handled slightly differently
         if key == "location":
-            location_compound = {"compound": []}
             location_list = full_input_dict["location"]
-            grouped_location_filter = []
-            for location in location_list:
-                # The grouped filters object consisting of up to three atomic filters
-                location_filter = LocationFilter(table, location)
-                grouped_location_filter.append(location_filter)
-
-            location_compound["compound"] = grouped_location_filter
-            location_compound["logic"] = "or"
-            location_compound["name"] = "location"
+            location_aid_filter = LocationFilter(location_list)
 
         else:
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
@@ -189,10 +181,15 @@ def GenerateAssayFilter(
 
     # Additional structure of the payload
     final_filter_dict["assay_filters"]["compound"].append({"filters": filters_dict})
+    # The general filters are related by "and"
     final_filter_dict["assay_filters"]["compound"][0]["logic"] = "and"
-    if location_compound:
-        final_filter_dict["assay_filters"]["compound"].append(location_compound)
-    final_filter_dict["assay_filters"]["logic"] = "and"
+    # Add the location filter as a second part of the compound if it exists
+    if location_aid_filter:
+        final_filter_dict["assay_filters"]["compound"].append(
+            {"filters": location_aid_filter}
+        )
+        # The location filter is related to the general filters by "and"
+        final_filter_dict["assay_filters"]["logic"] = "and"
 
     return final_filter_dict
 
@@ -241,8 +238,8 @@ def FinalPayload(
 
     final_payload["fields"] = fields
     final_payload["order_by"] = order_by
+    final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter
-
     field_names = []
     for f in fields:
         field_names.append(list(f.keys())[0])

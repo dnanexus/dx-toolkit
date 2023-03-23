@@ -22,7 +22,7 @@
             },
             "maxItems": 1000
         },
-        "genotype": {
+        "genotype_type": {
             "type": "array",
             "items": {
                 "type": "string",

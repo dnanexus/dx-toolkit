@@ -12,7 +12,7 @@
         "ending_position": "allele$pos"
     },
     "genotype": {
-        "genotype": "genotype$type",
+        "genotype_type": "genotype$type",
         "sample_id": "genotype$sample_id",
         "allele_id": "allele$a_id"
     },
