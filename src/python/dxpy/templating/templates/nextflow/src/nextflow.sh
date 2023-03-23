@@ -424,6 +424,7 @@ main() {
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
   echo "=== NF command      :" $NEXTFLOW_CMD
+  echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
   echo "============================================================="
 
     $NEXTFLOW_CMD & NXF_EXEC_PID=$!
