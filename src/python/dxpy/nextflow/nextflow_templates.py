@@ -94,6 +94,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
+    src = src.replace("@@DXPY_BUILD_VERSION@@", TOOLKIT_VERSION)
     if USING_PYTHON2:
         src = src.replace("@@RESOURCES_SUBPATH@@",
                       get_resources_subpath(resources_dir).encode(sys_encoding))

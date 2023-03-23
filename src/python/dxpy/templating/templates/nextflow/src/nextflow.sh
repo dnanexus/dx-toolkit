@@ -295,8 +295,14 @@ dx_path() {
   esac
 }
 
+print_dxpy_build_version() {
+  echo 'Applet built with dxpy version @@DXPY_BUILD_VERSION@@'
+}
+
 # Entry point for the main Nextflow orchestrator job
 main() {
+  print_dxpy_build_version
+
   if [[ $debug == true ]]; then
     export NXF_DEBUG=2
     TRACE_CMD="-trace nextflow.plugin"
