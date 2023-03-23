@@ -6,6 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Nextflow profiles runtime overriding fix
+
+### Added
+
+* Added support for file (un)archival in DXJava
+* Added `archivalStatus` field to DXFile describe in DXJava
+* Added `archivalStatus` filtering support to DXSearch in DXJava
+* Record the dxpy version used for Nextflow build in applet's metadata and job log
+
+### Changed
+
+* Nextflow pipeline head job defaults to instance types mem2_ssd1_v2_x4 (AWS), azure:mem2_ssd1_x4 (Azure). No change to Nextflow task job instance types.
+
 ## [343.0] - beta
 
 ### Changed
