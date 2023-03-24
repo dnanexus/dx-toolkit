@@ -160,6 +160,7 @@ def GenerateAssayFilter(
     filters_dict = {}
     table = filter_type
 
+    location_aid_filter = None
     for key in full_input_dict.keys():
         # Location needs to be handled slightly differently
         if key == "location":
