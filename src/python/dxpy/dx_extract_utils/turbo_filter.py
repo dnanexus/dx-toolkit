@@ -76,6 +76,7 @@ def BasicFilter(
     filter_key = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
 
+    # Input validation.  Check that the user hasn't provided an invalid min/max in any fields
     if condition == "between":
         min_val = float(values["min"])
         max_val = float(values["max"])
@@ -87,6 +88,24 @@ def BasicFilter(
         values = [min_val, max_val]
     if condition == "less-than" or condition == "greater-than":
         values = int(values)
+
+    # Check for special cases where the user-input values need to be changed before creating payload
+    # Case 1: genotype filter, genotype_type field, hom changes to hom-alt
+    if table == "genotype" and friendly_name == "genotype_type":
+        values = [x if x != "hom" else "hom-alt" for x in values]
+    # Case 2: Some fields need to be changed to upper case
+    if friendly_name in [
+        "allele_id",
+        "gene_name",
+        "gene_id",
+        "feature_id",
+        "putative_impact",
+    ]:
+        values = [x.upper() for x in values]
+    # Case 3: Consequences needs everything lower except "_UTR"
+    if friendly_name == "consequences":
+        values = [x.lower() for x in values]
+        values = [x.replace("_utr", "_UTR") for x in values]
 
     # Check if we need to add geno bins as well
     # This is only necessary for gene_id and a_id.  For rsid the vizserver calculates it itself
