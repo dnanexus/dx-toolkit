@@ -30,7 +30,7 @@
                     "hom",
                     "het-ref",
                     "het-alt",
-                    "alt"
+                    "half"
                 ]
             },
             "maxItems": 4
