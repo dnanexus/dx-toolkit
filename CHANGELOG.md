@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Released Nextaur 1.6.4. It includes minor fixes and default headjob instance update (mem2_ssd1_v2_x4 for AWS, mem2_ssd1_x4 for Azure)
+
 ### Fixed
 
 * Nextflow profiles runtime overriding fix
