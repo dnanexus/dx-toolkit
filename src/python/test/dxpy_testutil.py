@@ -666,6 +666,16 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
         shutil.rmtree(self.temp_file_path)
         super(DXTestCaseBuildNextflowApps, self).tearDown()
 
+    def write_nextflow_applet_directory_from_folder(self, applet_name, existing_nf_directory_path):
+        p = os.path.join(self.temp_file_path, applet_name)
+        try:
+            shutil.copytree(existing_nf_directory_path, p)
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        return p
+
+
     def write_nextflow_applet_directory(self, applet_name, existing_nf_file_path=None, nf_file_name="main.nf", nf_file_content="\n"):
         # Note: if called twice with the same app_name, will overwrite
         # the dxapp.json and the nf file (if specified) but will not

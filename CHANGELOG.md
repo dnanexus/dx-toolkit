@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Nextflow profiles runtime overriding fix
+
 ### Added
 
 * Added support for file (un)archival in DXJava
@@ -13,6 +17,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Added `archivalStatus` filtering support to DXSearch in DXJava
 * `dx run` support for `--preserve-job-outputs` and `--preserve-job-outputs-folder` inputs
 * `dx describe` for jobs and analyses outputs `Preserve Job Outputs Folder` field
+* Record the dxpy version used for Nextflow build in applet's metadata and job log
 
 ### Changed
 
