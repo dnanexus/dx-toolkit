@@ -105,7 +105,8 @@ def BasicFilter(
     # Case 3: Consequences needs everything lower except "_UTR"
     if friendly_name == "consequences":
         values = [x.lower() for x in values]
-        values = [x.replace("_utr", "_UTR") for x in values]
+        # Note, this could cause a bug if there is a word containing "utr" that isn't intended to mean UTR
+        values = [x.replace("utr", "UTR") for x in values]
 
     # Check if we need to add geno bins as well
     # This is only necessary for gene_id and a_id.  For rsid the vizserver calculates it itself
@@ -264,6 +265,8 @@ def FinalPayload(
     for f in fields:
         field_names.append(list(f.keys())[0])
 
+    # TODO remove this
+    print(final_payload)
     return final_payload, field_names
 
 
