@@ -1,7 +1,4 @@
 {
-    "sample": {
-        "sample_id": "in"
-    },
     "allele": {
         "allele_id": "in",
         "id": "in",
@@ -15,7 +12,7 @@
         "ending_position": "less-than"
     },
     "genotype": {
-        "genotype": "in",
+        "genotype_type": "in",
         "allele_id": "in",
         "sample_id": "in"
     },

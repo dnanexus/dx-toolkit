@@ -125,6 +125,8 @@ public final class DXSearch {
         private final TimeIntervalQuery modified;
         @JsonProperty
         private final TimeIntervalQuery created;
+        @JsonProperty
+        private final ArchivalState archivalState;
 
         @JsonProperty
         private final DescribeParameters describe;
@@ -159,6 +161,7 @@ public final class DXSearch {
             this.level = previousQuery.level;
             this.modified = previousQuery.modified;
             this.created = previousQuery.created;
+            this.archivalState = previousQuery.archivalState;
             this.describe = previousQuery.describe;
 
             this.starting = (starting == null || starting.isNull()) ? null : starting;
@@ -197,6 +200,7 @@ public final class DXSearch {
             this.scope = builder.scopeQuery;
             this.sortBy = builder.sortByQuery;
             this.level = builder.level;
+            this.archivalState = builder.archivalState;
 
             if (builder.modifiedBefore != null || builder.modifiedAfter != null) {
                 this.modified =
@@ -243,6 +247,7 @@ public final class DXSearch {
         private Date createdBefore;
         private Date createdAfter;
         private DescribeParameters describe;
+        private ArchivalState archivalState;
 
         private final DXEnvironment env;
 
@@ -576,6 +581,28 @@ public final class DXSearch {
             this.nameQuery =
                     new NameQuery.RegexpNameQuery(Preconditions.checkNotNull(regexp,
                             "regexp may not be null"), caseInsensitive ? "i" : null);
+            return this;
+        }
+
+        /**
+         * Only returns files with the specified archival state. If not
+         * specified, the default is to return all objects regardless their archival state.
+         *
+         * <p>
+         * Please note archival states are supported only for "file" class (use {@link #withClassFile()}). This filter
+         * requires project and folder (can be root "/") to be specified (use either {@link #inFolder(DXContainer, String)} or
+         * {@link #inFolderOrSubfolders(DXContainer, String)}).
+         * </p>
+         *
+         * @param archivalState enum value specifying what files archival states can be returned
+         *
+         * @return the same builder object
+         */
+        public FindDataObjectsRequestBuilder<T> withArchivalState(ArchivalState archivalState) {
+            Preconditions.checkState(this.archivalState == null,
+                    "Cannot call withArchivalState more than once");
+            this.archivalState =
+                    Preconditions.checkNotNull(archivalState, "archivalState may not be null");
             return this;
         }
 
@@ -1080,7 +1107,7 @@ public final class DXSearch {
         /**
          * Returns a subsequent page of the {@code findDataObjects} results starting from the specified item.
          *
-         * @param starting result of {@link DXSearch.FindDataObjectsResult.Page#getNext()} call on previous page
+         * @param starting result of {@link DXSearch.FindDataObjectsResult.FindDataObjectsResultPage#getNext()} call on previous page
          * @param pageSize number of elements to retrieve
          *
          * @return result set

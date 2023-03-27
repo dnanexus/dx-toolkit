@@ -66,12 +66,12 @@ def get_regional_options(region):
 
 def get_instance_type(region):
     instance_type = {
-        "aws:ap-southeast-2": "mem1_ssd1_v2_x2",
-        "aws:eu-central-1": "mem1_ssd1_v2_x2",
-        "aws:us-east-1": "mem1_ssd1_v2_x2",
-        "azure:westeurope": "azure:mem1_ssd1_x2",
-        "azure:westus": "azure:mem1_ssd1_x2",
-        "aws:eu-west-2-g": "mem1_ssd1_v2_x2"
+        "aws:ap-southeast-2": "mem2_ssd1_v2_x4",
+        "aws:eu-central-1": "mem2_ssd1_v2_x4",
+        "aws:us-east-1": "mem2_ssd1_v2_x4",
+        "azure:westeurope": "azure:mem2_ssd1_x4",
+        "azure:westus": "azure:mem2_ssd1_x4",
+        "aws:eu-west-2-g": "mem2_ssd1_v2_x4"
     }.get(region)
     if not instance_type:
         raise dxpy.exceptions.ResourceNotFound("Instance type is not specified for region {}.".format(region))

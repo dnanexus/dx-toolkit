@@ -1,3 +1,16 @@
+dx-toolkit (0.344.0) trusty; urgency=medium
+
+  * Added: Support for file (un)archival in DXJava
+  * Added: archivalStatus field to DXFile describe in DXJava
+  * Added: archivalStatus filtering support to DXSearch in DXJava
+  * Added: `dx run` support for '--preserve-job-outputs' and '--preserve-job-outputs' parameter
+  * Added: `dx describe` for jobs and alayses outputs 'Preserve Job Outputs Folder' field
+  * Added: Record the dxpy version used for the Nextflow build in applet's metadata and job log
+  * Fixed: Nextflow profiles runtime overriding fix
+  * Changed: Released Nextaur 1.6.4. It includes a fix to folder download, minor fixes and default headjob instance update (mem2_ssd1_v2_x4 for AWS, mem2_ssd1_x4 for Azure)
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 24 Mar 2023 21:10:14 +0000
+
 dx-toolkit (0.343.0) trusty; urgency=medium
 
   * Fixed: Do not print job runtime if stopppedRunning not in describe

@@ -1,6 +1,6 @@
 {
-    "title": "Retrieve Sample Schema",
-    "$id": "/retrieve_sample_schema",
+    "title": "Retrieve Genotype Schema",
+    "$id": "/retrieve_genotype_schema",
     "description": "A description of the retrieve sample JSON file",
     "type": "object",
     "additionalProperties": false,
@@ -12,15 +12,17 @@
             "type": "array",
             "items": {
                 "type": "string"
-            }
+            },
+            "maxItems": 1000
         },
         "sample_id": {
             "type": "array",
             "items": {
                 "type": "string"
-            }
+            },
+            "maxItems": 1000
         },
-        "genotype": {
+        "genotype_type": {
             "type": "array",
             "items": {
                 "type": "string",
@@ -28,9 +30,10 @@
                     "hom",
                     "het-ref",
                     "het-alt",
-                    "alt"
+                    "half"
                 ]
-            }
+            },
+            "maxItems": 4
         }
     }
 }
