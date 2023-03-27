@@ -175,6 +175,8 @@ public class DXFile extends DXDataObject {
         private Map<Integer, PartValue> parts;
         @JsonProperty
         private Long size;
+        @JsonProperty
+        private ArchivalState archivalState;
 
         private Describe() {
             super();
@@ -245,6 +247,17 @@ public class DXFile extends DXDataObject {
             Preconditions.checkState(this.size != null,
                     "file size is not accessible because it was not retrieved with the describe call");
             return size;
+        }
+
+        /**
+         * Returns the archival state of the file.
+         *
+         * @return archival state of file
+         */
+        public ArchivalState getArchivalState() {
+            Preconditions.checkState(this.archivalState != null,
+                    "archival state is not accessible because it was not retrieved with the describe call");
+            return archivalState;
         }
     }
 

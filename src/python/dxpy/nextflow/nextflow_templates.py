@@ -4,6 +4,7 @@ from .nextflow_utils import (get_template_dir, get_source_file_name, get_resourc
                                           get_importer_name, get_regional_options)
 import json
 import os
+from dxpy import TOOLKIT_VERSION
 from dxpy.compat import USING_PYTHON2,sys_encoding
 
 
@@ -39,8 +40,11 @@ def get_nextflow_dxapp(custom_inputs=None, name="", region="aws:us-east-1"):
     dxapp["title"] = name
     dxapp["summary"] = name
     dxapp["regionalOptions"] = get_regional_options(region)
+
+    # Record dxpy version used for this Nextflow build
+    dxapp["details"]["dxpyBuildVersion"] = TOOLKIT_VERSION
     if os.environ.get("DX_JOB_ID") is None or not is_importer_job():
-        dxapp["details"] = {"repository": "local"}
+        dxapp["details"]["repository"] = "local"
     return dxapp
 
 
@@ -90,6 +94,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
+    src = src.replace("@@DXPY_BUILD_VERSION@@", TOOLKIT_VERSION)
     if USING_PYTHON2:
         src = src.replace("@@RESOURCES_SUBPATH@@",
                       get_resources_subpath(resources_dir).encode(sys_encoding))
