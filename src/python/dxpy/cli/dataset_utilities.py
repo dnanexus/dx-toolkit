@@ -35,7 +35,7 @@ from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
 from ..utils.file_handle import as_handle
-from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState
+from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState, ResourceNotFound
 
 from ..dx_extract_utils.turbo_filter import ValidateJSON, FinalPayload
 
