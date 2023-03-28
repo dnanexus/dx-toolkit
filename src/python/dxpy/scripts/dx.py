@@ -6182,10 +6182,10 @@ parser_extract_assay_germline.add_argument(
     const='{}',
     default='{}',
     nargs='?',
-    help="Option to allow users to return annotation information for specific alleles with IDs specified. Accepted input is either a string or a file. If a file is provided, the file must contain a single column (without header) of allele IDs, where there is one unique ID per row and having one of the following extensions, “.csv”, “.tsv”, or “.txt”. Use --json-help for additional information on how to use this option.",
+    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria to retrieve corresponding alleles and their annotation. Specify additional “--json-help” to get detailed information on the json format and filters.",
 )
 parser_extract_assay_germline.add_argument(
-    "--retrieve-sample",
+    "--retrieve-genotype",
     type=str,
     const='{}',
     default='{}',
