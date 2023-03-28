@@ -90,3 +90,5 @@ test-job-workspaces
 *.traceability.*.csv
 
 .vscode/
+.metals/
+

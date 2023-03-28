@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Released Nextaur 1.6.4. It includes a fix to folder download, minor fixes and default headjob instance update (mem2_ssd1_v2_x4 for AWS, mem2_ssd1_x4 for Azure)
+
 ### Fixed
 
 * Nextflow profiles runtime overriding fix
@@ -15,6 +19,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Added support for file (un)archival in DXJava
 * Added `archivalStatus` field to DXFile describe in DXJava
 * Added `archivalStatus` filtering support to DXSearch in DXJava
+* `dx run` support for `--preserve-job-outputs` and `--preserve-job-outputs-folder` inputs
+* `dx describe` for jobs and analyses outputs `Preserve Job Outputs Folder` field
+* Record the dxpy version used for Nextflow build in applet's metadata and job log
 
 ### Changed
 
