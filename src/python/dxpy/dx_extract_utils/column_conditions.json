@@ -1,15 +1,9 @@
 {
     "allele": {
-        "allele_id": "in",
-        "id": "in",
         "rsid": "any",
         "type": "in",
-        "ref": "in",
         "dataset_alt_af": "between",
-        "gnomad_alt_af": "between",
-        "chromosome": "is",
-        "starting_position": "greater-than",
-        "ending_position": "less-than"
+        "gnomad_alt_af": "between"
     },
     "genotype": {
         "genotype_type": "in",
@@ -20,7 +14,6 @@
         "allele_id": "in",
         "gene_name": "in",
         "gene_id": "in",
-        "transcript_id": "in",
         "feature_id": "in",
         "consequences": "any",
         "putative_impact": "in",
