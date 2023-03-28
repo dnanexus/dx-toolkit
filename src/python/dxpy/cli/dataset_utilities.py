@@ -519,11 +519,15 @@ def extract_assay_germline(args):
         geno_assays,
         other_assays
     ) = get_assay_info(rec_descriptor, assay_type="genetic_variant")
-    selected_assay_name = geno_assays[0]["name"]
-    selected_assay_id = geno_assays[0]["uuid"]
+    geno_assay_names = [ga["name"] for ga in geno_assays]
+    geno_assay_ids = [ga["uuid"] for ga in geno_assays]
+    other_assay_names = [oa["name"] for oa in other_assays]
+    other_assay_ids = [oa["uuid"] for oa in other_assays]
+    selected_assay_name = geno_assay_names[0]
+    selected_assay_id = geno_assay_ids[0]
     if args.assay_name:
-        if args.assay_name not in list(geno_assays.keys()):
-            if args.assay_name in list(other_assays.keys()):
+        if args.assay_name not in list(geno_assay_names):
+            if args.assay_name in list(other_assay_names):
                 err_exit(
                     "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the --list-assays flag."
                 )
@@ -535,7 +539,9 @@ def extract_assay_germline(args):
                 )
         else:
             selected_assay_name = args.assay_name
-            selected_assay_id = geno_assays[args.assay_name]
+            for ga in geno_assays:
+                if ga["name"] == args.assay_name:
+                    selected_assay_id = ga["uuid"]
         
     selected_ref_genome = "GRCh38.92"
     for a in geno_assays:
@@ -594,11 +600,19 @@ def extract_assay_germline(args):
         if resp.get("baseSql"):
             payload["base_sql"] = resp.get("baseSql")
         payload["filters"] = resp["filters"]
+    payload["is_cohort"] = True
 
     #### Run api call to get sql or extract data ####
     if any(x in args_list for x in retrieve_args_list):
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
+            if "--retrieve-genotype" in args_list:
+                geno_table = re.search(
+                    r"\bgenotype_alt_read_optimized\w+", sql_results).group()
+                substr = "`" + geno_table + "`.`type`"
+                sql_results = sql_results.replace(substr, "REPLACE(`" + geno_table +
+                            "`.type`, 'hom', 'hom-alt')")
+
             if print_to_stdout:
                 print(sql_results)
             else:
@@ -606,6 +620,10 @@ def extract_assay_germline(args):
                     print(sql_results, file=sql_file)
         else:
             resp_raw = raw_api_call(resp, payload)
+            if "--retrieve-genotype" in args_list:
+                for r in resp_raw["results"]:
+                    if r["genotype_type"] == "hom":
+                        r["genotype_type"] = "hom-alt"
 
             csv_from_json(
                 out_file_name=out_file,
