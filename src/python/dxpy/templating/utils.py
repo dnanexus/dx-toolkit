@@ -59,8 +59,8 @@ class Completer():
 
     def complete(self, text, state):
         if state == 0:
-            self.matches = filter(lambda choice: choice.startswith(text),
-                                  self.choices)
+            self.matches = list(filter(lambda choice: choice.startswith(text),
+                                  self.choices))
 
         if self.matches is not None and state < len(self.matches):
             return self.matches[state]
