@@ -22,7 +22,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 # TODO: refactor all dx run helper functions here
 
-import os, sys, json, collections, pipes, platform
+import os, sys, json, collections, pipes
 from ..bindings.dxworkflow import DXWorkflow
 
 import dxpy

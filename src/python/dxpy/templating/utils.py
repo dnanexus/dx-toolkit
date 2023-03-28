@@ -20,7 +20,7 @@ Miscellaneous utility classes and functions for the dx-app-wizard command-line t
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, shutil, subprocess, re, json, platform
+import os, sys, shutil, subprocess, re, json
 import stat
 
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
