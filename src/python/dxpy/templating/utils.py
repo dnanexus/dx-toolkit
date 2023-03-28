@@ -26,15 +26,11 @@ import stat
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
 from ..cli import prompt_for_yn
 from ..compat import input, open
-# Import pyreadline3 on Windows with Python >= 3.5
-if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
-    import pyreadline3 as readline
-else:
-    try:
-        # Import gnureadline if installed for macOS
-        import gnureadline as readline
-    except ImportError as e:
-        import readline
+try:
+    # Import gnureadline if installed for macOS
+    import gnureadline as readline
+except ImportError as e:
+    import readline
 
 from . import python
 from . import bash
@@ -50,7 +46,7 @@ completer_state = {
 
 try:
     import rlcompleter
-    readline.parse_and_bind("tab: complete")
+    readline.parse_and_bind("bind ^I rl_complete" if 'libedit' in readline.__doc__ else "tab: complete")
     readline.set_completer_delims("")
     completer_state['available'] = True
 except ImportError:

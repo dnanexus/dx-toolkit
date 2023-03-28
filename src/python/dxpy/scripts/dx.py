@@ -97,15 +97,11 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        # Import pyreadline3 on Windows with Python >= 3.5
-        if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
-            import pyreadline3 as readline
-        else:
-            try:
-                # Import gnureadline if installed for macOS
-                import gnureadline as readline
-            except ImportError as e:
-                import readline
+        try:
+            # Import gnureadline if installed for macOS
+            import gnureadline as readline
+        except ImportError as e:
+            import readline
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
