@@ -245,6 +245,9 @@ def FinalPayload(
     for f in fields:
         field_names.append(list(f.keys())[0])
 
+    # TODO remove before merge
+    print(json.dumps(final_payload))
+
     return final_payload, field_names
 
 
