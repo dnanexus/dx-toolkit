@@ -677,7 +677,7 @@ class ExecutableInputs(object):
     def init_completer(self):
         try:
             import rlcompleter
-            readline.parse_and_bind("bind ^I rl_complete" if 'libedit' in readline.__doc__ else "tab: complete")
+            readline.parse_and_bind("bind ^I rl_complete" if "libedit" in (readline.__doc__ or "") else "tab: complete")
 
             readline.set_completer_delims("")
 
