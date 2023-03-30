@@ -274,8 +274,10 @@ def FinalPayload(
 
 
 def ValidateJSON(filter, type):
-    # Check user-provdied JSON filter for validity
-    # Errors out if JSON is invalid, continues otherwise
+    """
+    Check user-provdied JSON filter for validity
+    Errors out if JSON is invalid, continues otherwise
+    """
 
     schema_file = "retrieve_{}_schema.json".format(type)
 
