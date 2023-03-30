@@ -277,7 +277,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         hello_repo_url = "https://github.com/nextflow-io/hello"
 
         # Override metadata values
-        extra_args = '{"name": "name-9Oxvx2tCZe", "title": "Title VsnhPeFBqt", "summary": "Summary 3E7fFfEXdB"}'
+        extra_args = '{"name": "name-l1DeZYnTyQ", "title": "Title KkWUaqpHh1", "summary": "Summary Yqf37VpDTY"}'
         applet_json = run("dx build --nextflow --repository '{}' --extra-args '{}' --brief".format(hello_repo_url, extra_args)).strip()
 
         applet_id = json.loads(applet_json).get("id")
