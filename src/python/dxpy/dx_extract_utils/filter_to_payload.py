@@ -2,7 +2,6 @@ import json
 
 from ..exceptions import err_exit, ResourceNotFound
 from .input_validation import validateFilter
-import argparse
 import os
 import dxpy
 import subprocess
