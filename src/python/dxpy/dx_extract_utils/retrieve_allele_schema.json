@@ -4,7 +4,7 @@
     "description": "A description of the allele JSON file",
     "type": "object",
     "additionalProperties": false,
-    "anyOf": [
+    "oneOf": [
         {
             "required": [
                 "location"
