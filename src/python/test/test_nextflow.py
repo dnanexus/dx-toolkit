@@ -274,16 +274,21 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_build_nextflow_from_repository_with_extra_args(self):
-        pipeline_name = "hello"
         hello_repo_url = "https://github.com/nextflow-io/hello"
-        extra_args = '{"name": "new name", "title": "new title"}'
+
+        # Override metadata values
+        extra_args = '{"name": "name-9Oxvx2tCZe", "title": "Title VsnhPeFBqt", "summary": "Summary 3E7fFfEXdB"}'
         applet_json = run("dx build --nextflow --repository '{}' --extra-args '{}' --brief".format(hello_repo_url, extra_args)).strip()
+
         applet_id = json.loads(applet_json).get("id")
         applet = dxpy.DXApplet(applet_id)
         desc = applet.describe()
-        self.assertEqual(desc["name"], "new name")
-        self.assertEqual(desc["title"], "new title")
-        self.assertEqual(desc["summary"], pipeline_name)
+        self.assertEqual(desc["name"], json.loads(extra_args)["name"])
+        self.assertEqual(desc["title"], json.loads(extra_args)["title"])
+        self.assertEqual(desc["summary"], json.loads(extra_args)["summary"])
+
+        details = applet.get_details()
+        self.assertEqual(details["repository"], hello_repo_url)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
