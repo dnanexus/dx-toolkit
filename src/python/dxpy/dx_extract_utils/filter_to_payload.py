@@ -1,7 +1,7 @@
 import json
 
-from jsonschema import validate
 from ..exceptions import err_exit, ResourceNotFound
+from .input_validation import validateFilter
 import argparse
 import os
 import dxpy
@@ -261,10 +261,10 @@ def ValidateJSON(filter, type):
     # The jsonschema validation function will error out if the schema is invalid.  The error message will contain
     # an explanation of which part of the schema failed
     try:
-        # pass
-        validate(filter, json_schema)
+        validateFilter(filter, type)
+        # validate(filter, json_schema)
     except Exception as inst:
-        err_exit(inst.message)
+        err_exit(inst)
 
 
 if __name__ == "__main__":
