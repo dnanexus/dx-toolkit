@@ -6,6 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Tab completion in interactive executions now works with `libedit` bundled in MacOS and does not require externally installed GNU `readline`
+
+### Fixed
+
+* Tab completion in interactive execution of `dx-app-wizard`
+* `dx-app-wizard` script on Windows
+* Tab completion in interactive executions on Windows
+
 ## [344.0] - beta
 
 ### Changed
