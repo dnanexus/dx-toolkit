@@ -218,7 +218,7 @@ def FinalPayload(
 ):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),
-    order_by, and raw filters objects.  This payload is sent in its entirety to the vizserver via an
+    and raw filters objects.  This payload is sent in its entirety to the vizserver via an
     HTTPS POST request
     """
     # Generate the assay filter component of the payload
@@ -237,26 +237,22 @@ def FinalPayload(
 
     # Section for defining returned columns for each of the three filter types
     if filter_type == "allele":
-        order_by = [{"allele_id": "asc"}]
         with open(
             os.path.join(extract_utils_basepath, "return_columns_allele.json"), "r"
         ) as infile:
             fields = json.load(infile)
     elif filter_type == "annotation":
-        order_by = [{"allele_id": "asc"}]
         with open(
             os.path.join(extract_utils_basepath, "return_columns_annotation.json"), "r"
         ) as infile:
             fields = json.load(infile)
     elif filter_type == "genotype":
-        order_by = [{"sample_id": "asc"}]
         with open(
             os.path.join(extract_utils_basepath, "return_columns_genotype.json"), "r"
         ) as infile:
             fields = json.load(infile)
 
     final_payload["fields"] = fields
-    final_payload["order_by"] = order_by
     final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter
     final_payload["is_cohort"] = True
