@@ -10,6 +10,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Bump allowed cryptography dxpy dependency version to 40.0.x
 * Tab completion in interactive executions now works with `libedit` bundled in MacOS and does not require externally installed GNU `readline`
+* Released Nextaur 1.6.5. It added a caching mechanism to `DxPath` file and folder resolution, which reduces number of DX API calls made during pipeline execution. It also fixes an occasional hanging of the headjob.
 
 ### Fixed
 
