@@ -94,11 +94,7 @@ def BasicFilter(
     if table == "genotype" and friendly_name == "genotype_type":
         values = [x if x != "hom-alt" else "hom" for x in values]
     # Case 2: Some fields need to be changed to upper case
-    if friendly_name in [
-        "allele_id",
-        "gene_id",
-        "feature_id",
-    ]:
+    if friendly_name in ["allele_id", "gene_id", "feature_id", "putative_impact"]:
         values = [x.upper() for x in values]
 
     # Check if we need to add geno bins as well
