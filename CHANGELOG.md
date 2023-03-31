@@ -8,6 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
+* Bump allowed cryptography dxpy dependency version to 40.0.x
 * Tab completion in interactive executions now works with `libedit` bundled in MacOS and does not require externally installed GNU `readline`
 
 ### Fixed
