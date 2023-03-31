@@ -6,20 +6,41 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [344.0] - beta
+
+### Changed
+
+* Released Nextaur 1.6.4. It includes a fix to folder download, minor fixes and default headjob instance update (mem2_ssd1_v2_x4 for AWS, mem2_ssd1_x4 for Azure)
+
+### Fixed
+
+* Nextflow profiles runtime overriding fix
+
 ### Added
 
+* Support for file (un)archival in DXJava
+* `archivalStatus` field to DXFile describe in DXJava
+* `archivalStatus` filtering support to DXSearch in DXJava
 * `dx run` support for `--preserve-job-outputs` and `--preserve-job-outputs-folder` inputs
 * `dx describe` for jobs and analyses outputs `Preserve Job Outputs Folder` field
+* Record the dxpy version used for Nextflow build in applet's metadata and job log
 
-## [343.0] - beta
+### Changed
+
+* Nextflow pipeline head job defaults to instance types mem2_ssd1_v2_x4 (AWS), azure:mem2_ssd1_x4 (Azure). No change to Nextflow task job instance types.
+
+## [343.0] - 2023.3.24 - stable
 
 ### Changed
 
 * Released Nextaur 1.6.3. It includes updates to wait times for file upload and closing, and a fix to default Nextflow config path
 * Upgraded Nextflow to 22.10.7
-* Removed Nextflow assets from aws:eu-west-2
 
-## [342.1] - 2023.3.8 - stable
+### Changed
+
+* Nextflow assets from aws:eu-west-2
+
+## [342.1] - 2023.3.8
 
 ### Added
 

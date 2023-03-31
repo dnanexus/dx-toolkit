@@ -76,6 +76,7 @@ def BasicFilter(
     filter_key = column_conversion[table][friendly_name]
     condition = column_conditions[table][friendly_name]
 
+    # Input validation.  Check that the user hasn't provided an invalid min/max in any fields
     if condition == "between":
         min_val = float(values["min"])
         max_val = float(values["max"])
@@ -87,6 +88,14 @@ def BasicFilter(
         values = [min_val, max_val]
     if condition == "less-than" or condition == "greater-than":
         values = int(values)
+
+    # Check for special cases where the user-input values need to be changed before creating payload
+    # Case 1: genotype filter, genotype_type field, hom changes to hom-alt
+    if table == "genotype" and friendly_name == "genotype_type":
+        values = [x if x != "hom-alt" else "hom" for x in values]
+    # Case 2: Some fields need to be changed to upper case
+    if friendly_name in ["allele_id", "gene_id", "feature_id", "putative_impact"]:
+        values = [x.upper() for x in values]
 
     # Check if we need to add geno bins as well
     # This is only necessary for gene_id and a_id.  For rsid the vizserver calculates it itself
@@ -160,12 +169,12 @@ def GenerateAssayFilter(
     filters_dict = {}
     table = filter_type
 
-    location_aid_filter = None
     for key in full_input_dict.keys():
         # Location needs to be handled slightly differently
         if key == "location":
             location_list = full_input_dict["location"]
             location_aid_filter = LocationFilter(location_list)
+            filters_dict.update(location_aid_filter)
 
         else:
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
@@ -178,19 +187,12 @@ def GenerateAssayFilter(
                         genome_reference,
                     )
                 )
-    final_filter_dict = {"assay_filters": {"name": name, "id": id, "compound": []}}
+    final_filter_dict = {"assay_filters": {"name": name, "id": id}}
 
     # Additional structure of the payload
-    final_filter_dict["assay_filters"]["compound"].append({"filters": filters_dict})
+    final_filter_dict["assay_filters"].update({"filters": filters_dict})
     # The general filters are related by "and"
-    final_filter_dict["assay_filters"]["compound"][0]["logic"] = "and"
-    # Add the location filter as a second part of the compound if it exists
-    if location_aid_filter:
-        final_filter_dict["assay_filters"]["compound"].append(
-            {"filters": location_aid_filter}
-        )
-        # The location filter is related to the general filters by "and"
-        final_filter_dict["assay_filters"]["logic"] = "and"
+    final_filter_dict["assay_filters"]["logic"] = "and"
 
     return final_filter_dict
 
@@ -244,9 +246,6 @@ def FinalPayload(
     field_names = []
     for f in fields:
         field_names.append(list(f.keys())[0])
-
-    # TODO remove before merge
-    print(json.dumps(final_payload))
 
     return final_payload, field_names
 

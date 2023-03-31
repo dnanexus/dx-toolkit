@@ -7,11 +7,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--sql", action="store_true")
 args = parser.parse_args()
 
-filter = "/dx-toolkit/src/python/test/CLIGAM_tests/test_input/single_filters/allele/allele_location.json"
-# output = "allele_rsid_output.json"
+filter = "/dx-toolkit/src/python/test/CLIGAM_tests/test_input/unit_tests/annotation_full.json"
+output = "annotation_full.json"
 dataset = "project-FkyXg38071F1vGy2GyXyYYQB:record-FyFPyz0071F54Zjb32vG82Gj"
+filter_type = "annotation"
 
-command = "dx extract_assay germline {} --retrieve-allele {} ".format(dataset, filter)
+command = "dx extract_assay germline {} --retrieve-{} {} -o {}".format(
+    dataset, filter_type, filter, output
+)
 
 if args.sql:
     command += " --sql"
