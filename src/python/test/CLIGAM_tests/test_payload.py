@@ -19,4 +19,5 @@ command = "dx extract_assay germline {} --retrieve-{} {} -o {}".format(
 if args.sql:
     command += " --sql"
 
+
 process = subprocess.run(command, shell=True)
