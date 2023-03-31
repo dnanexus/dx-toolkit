@@ -96,10 +96,8 @@ def BasicFilter(
     # Case 2: Some fields need to be changed to upper case
     if friendly_name in [
         "allele_id",
-        "gene_name",
         "gene_id",
         "feature_id",
-        "putative_impact",
     ]:
         values = [x.upper() for x in values]
 
