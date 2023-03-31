@@ -11,7 +11,7 @@ extract_utils_basepath = os.path.join(
 )
 
 # A dictionary relating the user-facing names of columns to their actual column
-# names in the CLIGAM tables
+# names in the tables
 with open(
     os.path.join(extract_utils_basepath, "column_conversion.json"), "r"
 ) as infile:
@@ -102,7 +102,6 @@ def BasicFilter(
         values = int(values)
 
     # Check if we need to add geno bins as well
-    # This is only necessary for gene_id and a_id.  For rsid the vizserver calculates it itself
     if friendly_name == "gene_id" or friendly_name == "gene_name":
         genome_reference = "GRCh38.92"
         listed_filter = {
@@ -124,10 +123,7 @@ def BasicFilter(
 def LocationFilter(location_list):
     """
     A location filter is actually an allele$a_id filter with no filter values
-    The geno_bins perform the actual location filtering.
-    On the raw_filters route, the items within the geno_bins list are related by "or".
-    Furthermore, all geno_bins fields in the same payload will be coerced to "or", even if
-    the payload explcitly defines the relationship to "and"
+    The geno_bins perform the actual location filtering.  Related to other geno_bins filters by "or"
     """
 
     location_aid_filter = {
@@ -175,7 +171,7 @@ def GenerateAssayFilter(
     Basic and Location filters, and creating the structure that relates them logically
 
     There are three possible types of input JSON: a genotype filter, an allele filter,
-    nd an annotation filter
+    and an annotation filter
     """
 
     filters_dict = {}
@@ -183,7 +179,6 @@ def GenerateAssayFilter(
 
     location_aid_filter = None
     for key in full_input_dict.keys():
-        # Location needs to be handled slightly differently
         if key == "location":
             location_list = full_input_dict["location"]
             location_aid_filter = LocationFilter(location_list)
@@ -237,8 +232,6 @@ def FinalPayload(
     final_payload = {}
     # Set the project context
     final_payload["project_context"] = project_context
-    # This might be set automatically depending on whether the raw or raw-query
-    # API is selected, if not we need to set it here
 
     # Section for defining returned columns for each of the three filter types
     if filter_type == "allele":
