@@ -92,7 +92,7 @@ def BasicFilter(
     # Check for special cases where the user-input values need to be changed before creating payload
     # Case 1: genotype filter, genotype_type field, hom changes to hom-alt
     if table == "genotype" and friendly_name == "genotype_type":
-        values = [x if x != "hom" else "hom-alt" for x in values]
+        values = [x if x != "hom-alt" else "hom" for x in values]
     # Case 2: Some fields need to be changed to upper case
     if friendly_name in [
         "allele_id",
