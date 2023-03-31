@@ -186,11 +186,11 @@ def GenerateAssayFilter(
     filters_dict = {}
     table = filter_type
 
-    location_aid_filter = None
     for key in full_input_dict.keys():
         if key == "location":
             location_list = full_input_dict["location"]
             location_aid_filter = LocationFilter(location_list)
+            filters_dict.update(location_aid_filter)
 
         else:
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
@@ -203,19 +203,12 @@ def GenerateAssayFilter(
                         genome_reference,
                     )
                 )
-    final_filter_dict = {"assay_filters": {"name": name, "id": id, "compound": []}}
+    final_filter_dict = {"assay_filters": {"name": name, "id": id}}
 
     # Additional structure of the payload
-    final_filter_dict["assay_filters"]["compound"].append({"filters": filters_dict})
+    final_filter_dict["assay_filters"].update({"filters": filters_dict})
     # The general filters are related by "and"
-    final_filter_dict["assay_filters"]["compound"][0]["logic"] = "and"
-    # Add the location filter as a second part of the compound if it exists
-    if location_aid_filter:
-        final_filter_dict["assay_filters"]["compound"].append(
-            {"filters": location_aid_filter}
-        )
-        # The location filter is related to the general filters by "and"
-        final_filter_dict["assay_filters"]["logic"] = "and"
+    final_filter_dict["assay_filters"]["logic"] = "and"
 
     return final_filter_dict
 
@@ -272,6 +265,7 @@ def FinalPayload(
     for f in fields:
         field_names.append(list(f.keys())[0])
 
+    print(json.dumps(final_payload))
     return final_payload, field_names
 
 
