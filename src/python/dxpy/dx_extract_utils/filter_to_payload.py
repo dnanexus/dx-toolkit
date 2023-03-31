@@ -264,7 +264,6 @@ def FinalPayload(
 
     final_payload["fields"] = fields
     final_payload["order_by"] = order_by
-    # Turns off a vizserver feature that would pad the ends of geno_bins ranges
     final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter
     final_payload["is_cohort"] = True
