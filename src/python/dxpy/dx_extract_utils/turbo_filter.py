@@ -254,8 +254,6 @@ def FinalPayload(
     for f in fields:
         field_names.append(list(f.keys())[0])
 
-    # TODO remove this
-    print(final_payload)
     return final_payload, field_names
 
 
