@@ -694,7 +694,6 @@ def extract_assay_germline(args):
         if resp.get("baseSql"):
             payload["base_sql"] = resp.get("baseSql")
         payload["filters"] = resp["filters"]
-    payload["is_cohort"] = True
 
     #### Run api call to get sql or extract data ####
     if any(x in args_list for x in retrieve_args_list):
