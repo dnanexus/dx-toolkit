@@ -1,0 +1,26 @@
+{
+    "allele_id": [
+        "18_47408_G_A"
+    ],
+    "gene_name": [
+        "TUBB8P12"
+    ],
+    "gene_id": [
+        "ENSG00000173213"
+    ],
+    "feature_id": [
+        "ENST00000308911.8"
+    ],
+    "consequences": [
+        "synonymous_variant"
+    ],
+    "putative_impact": [
+        "LOW"
+    ],
+    "hgvs_c": [
+        "c.1317C>T"
+    ],
+    "hgvs_p": [
+        "p.Ala439Ala"
+    ]
+}

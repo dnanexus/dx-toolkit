@@ -1,0 +1,71 @@
+{
+    "project_context": "project-FkyXg38071F1vGy2GyXyYYQB",
+    "fields": [
+        {
+            "phenotype$sample_id": "phenotype$sample_id"
+        },
+        {
+            "phenotype$p31": "phenotype$p31"
+        },
+        {
+            "phenotype$p21022": "phenotype$p21022"
+        },
+        {
+            "phenotype$p22200": "phenotype$p22200"
+        },
+        {
+            "phenotype$p52": "phenotype$p52"
+        },
+        {
+            "phenotype$p54_i0": "phenotype$p54_i0"
+        },
+        {
+            "phenotype$p53_i0": "phenotype$p53_i0"
+        },
+        {
+            "phenotype$p21000_i0": "phenotype$p21000_i0"
+        },
+        {
+            "phenotype$p189": "phenotype$p189"
+        }
+    ],
+    "stat": "raw",
+    "order_by": [
+        {
+            "phenotype$sample_id": "asc"
+        }
+    ],
+    "filters": {
+        "pheno_filters": {
+            "compound": [
+                {
+                    "name": "phenotype",
+                    "logic": "and",
+                    "filters": {
+                        "phenotype$p22011_a1": [
+                            {
+                                "condition": "between",
+                                "values": [
+                                    1,
+                                    2
+                                ]
+                            }
+                        ]
+                    },
+                    "entity": {
+                        "logic": "and",
+                        "name": "phenotype",
+                        "operator": "exists",
+                        "children": []
+                    }
+                }
+            ],
+            "logic": "and"
+        },
+        "assay_filters": {
+            "compound": [],
+            "logic": "and"
+        },
+        "logic": "and"
+    }
+}

@@ -1,0 +1,31 @@
+{
+    "rsid": [
+        "rs1387234741",
+        "rs1487242024"
+    ],
+    "type": [
+        "SNP",
+        "Del",
+        "Ins"
+    ],
+    "dataset_alt_af": {
+        "min": 0.001,
+        "max": 0.5
+    },
+    "gnomad_alt_af": {
+        "min": 0.001,
+        "max": 0.5
+    },
+    "location": [
+        {
+            "chromosome": "21",
+            "starting_position": "8987000",
+            "ending_position": "8987100"
+        },
+        {
+            "chromosome": "21",
+            "starting_position": "8986900",
+            "ending_position": "8987000"
+        }
+    ]
+}
