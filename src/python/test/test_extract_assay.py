@@ -28,8 +28,8 @@ import subprocess
 from dxpy_testutil import cd, chdir
 
 test_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GQGF8x80qYFQxv7gz49ZP7Y7"
-test_filter_directory = "/dx-toolkit/src/python/test/CLIGAM_tests/test_input/"
-output_folder = "/dx-toolkit/src/python/test/CLIGAM_tests/test_output/"
+test_filter_directory = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
+output_folder = "/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
 
 
 class TestDXExtractAssay(unittest.TestCase):
@@ -106,24 +106,20 @@ class TestDXExtractAssay(unittest.TestCase):
             process = subprocess.check_call(command, shell=True)
 
     # A test that ensures that the location filter functions with other allele filters
-    # Currently fails because of "geno bins must be in first part of compound" bug
     def test_allele_location_type(self):
-        if False:
-            print("Testing allele filter with location and allele type fields")
-            multi_filter_directory = os.path.join(
-                test_filter_directory, "multi_filters"
-            )
-            filter_file = os.path.join(
-                multi_filter_directory, "allele_location_type.json"
-            )
-            output_filename = filter_file[:-5] + "_output.tsv"
-            command = "dx extract_assay germline {} --retrieve-{} {} --output {} --sql".format(
+        print("Testing allele filter with location and allele type fields")
+        multi_filter_directory = os.path.join(test_filter_directory, "multi_filters")
+        filter_file = os.path.join(multi_filter_directory, "allele_location_type.json")
+        output_filename = os.path.join(output_folder, "allele_location_type_output.tsv")
+        command = (
+            "dx extract_assay germline {} --retrieve-{} {} --output {} --sql".format(
                 test_record,
                 "allele",
                 filter_file,
-                os.path.join(output_folder, output_filename),
+                output_filename,
             )
-            process = subprocess.check_call(command, shell=True)
+        )
+        process = subprocess.check_call(command, shell=True)
 
     # A test to check if the vizserver forces an or relationship between gene name and gene id
     def test_annotation_name_id(self):
@@ -139,22 +135,26 @@ class TestDXExtractAssay(unittest.TestCase):
                 output_filename,
             )
         )
-        process = subprocess.check_call(command, shell=True)
+
+        subprocess.check_call(command, shell=True)
 
     # A test of the --list-assays functionality
+    # Does not write any output to file, function only outputs to stdout
     def test_list_assays(self):
         print("testing --list-assays")
         command = "dx extract_assay germline {} --list-assays".format(test_record)
-        process = subprocess.check_call(command, shell=True)
+        subprocess.check_call(command, shell=True)
 
-    # Doesn't work, unspecified error
+    # A test of the --assay-name functionality, returns the same output as allele_rsid.json
     def test_assay_name(self):
         print("testing --assay-name")
         single_filter_directory = os.path.join(test_filter_directory, "single_filters")
+        output_filename = os.path.join(output_folder, "assay_name_output.tsv")
 
-        command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele {}".format(
+        command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele {} --output {}".format(
             test_record,
             os.path.join(single_filter_directory, "allele/allele_rsid.json"),
+            output_filename,
         )
         subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
 
