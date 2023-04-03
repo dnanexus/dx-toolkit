@@ -1,2 +1,2 @@
-	sample_id	a_id	locus_id	chr	pos	ref	alt	type
-4	sample_1_0	18_47360_C_CT	18_47360_C_T	18	47360	C	CT	het-alt
+sample_id	allele_id	locus_id	chr	pos	ref	alt	genotype_type
+sample_1_0	18_47360_C_CT	18_47360_C_T	18	47360	C	CT	het-alt
