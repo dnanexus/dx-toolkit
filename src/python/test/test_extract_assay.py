@@ -26,6 +26,14 @@ import dxpy
 import os
 import subprocess
 from dxpy_testutil import cd, chdir
+from dxpy.dx_extract_utils.turbo_filter import (
+    retrieve_geno_bins,
+    BasicFilter,
+    LocationFilter,
+    GenerateAssayFilter,
+    FinalPayload,
+    ValidateJSON,
+)
 
 test_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GQGF8x80qYFQxv7gz49ZP7Y7"
 test_filter_directory = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
@@ -40,6 +48,143 @@ class TestDXExtractAssay(unittest.TestCase):
             dxpy.find_projects(describe=False, level="VIEW", name=proj_name)
         )[0]["id"]
         cd(proj_id + ":/")
+
+    ############
+    # Unit Tests
+    ############
+
+    # Test retrieve_geno_bins
+    def test_retrieve_geno_bins(self):
+        # list_of_genes, project, genome_reference
+        list_of_genes = ["ENSG00000173213"]
+        project = "project-G9j1pX00vGPzF2XQ7843k2Jq"
+        genome_reference = "GRCh38.92"
+        expected_output = [{"chr": "18", "start": "47390", "end": "49557"}]
+        self.assertEqual(
+            retrieve_geno_bins(list_of_genes, project, genome_reference),
+            expected_output,
+        )
+
+    def test_basic_filter_allele(self):
+        table = "allele"
+        friendly_name = "rsid"
+        values = ["rs1342568097"]
+        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
+        genome_reference = "Homo_sapiens.GRCh38.92"
+
+        expected_output = {
+            "allele$dbsnp151_rsid": [{"condition": "any", "values": ["rs1342568097"]}]
+        }
+
+        self.assertEqual(
+            BasicFilter(
+                table, friendly_name, values, project_context, genome_reference
+            ),
+            expected_output,
+        )
+
+    def test_basic_filter_annotation(self):
+        table = "annotation"
+        friendly_name = "gene_id"
+        values = ["ENSG00000173213"]
+        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
+        genome_reference = "Homo_sapiens.GRCh38.92"
+
+        expected_output = {
+            "annotation$gene_id": [
+                {
+                    "condition": "in",
+                    "values": ["ENSG00000173213"],
+                    "geno_bins": [{"chr": "18", "start": "47390", "end": "49557"}],
+                }
+            ]
+        }
+
+        self.assertEqual(
+            BasicFilter(
+                table, friendly_name, values, project_context, genome_reference
+            ),
+            expected_output,
+        )
+
+    def test_basic_filter_genotype(self):
+        table = "genotype"
+        friendly_name = "allele_id"
+        values = ["18_47361_T_G"]
+        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
+        genome_reference = "Homo_sapiens.GRCh38.92"
+
+        expected_output = {
+            "allele$a_id": [{"condition": "in", "values": ["18_47361_T_G"]}]
+        }
+
+        self.assertEqual(
+            BasicFilter(
+                table, friendly_name, values, project_context, genome_reference
+            ),
+            expected_output,
+        )
+
+    def test_location_filter(self):
+        location_list = [
+            {
+                "chromosome": "18",
+                "starting_position": "47361",
+                "ending_position": "47364",
+            }
+        ]
+
+        expected_output = {
+            "allele$a_id": [
+                {
+                    "condition": "in",
+                    "values": [],
+                    "geno_bins": [{"chr": "18", "start": 47361, "end": 47364}],
+                }
+            ]
+        }
+
+        self.assertEqual(LocationFilter(location_list), expected_output)
+
+    # TODO location filter with two location
+
+    def test_generate_assay_filter(self):
+        # A small payload, uses allele_rsid.json
+        full_input_dict = {"rsid": ["rs1342568097"]}
+        name = "test01_assay"
+        id = "c6e9c0ea-5752-4299-8de2-8620afba7b82"
+        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
+        genome_reference = "Homo_sapiens.GRCh38.92"
+        filter_type = "allele"
+
+        expected_output = {
+            "assay_filters": {
+                "name": "test01_assay",
+                "id": "c6e9c0ea-5752-4299-8de2-8620afba7b82",
+                "filters": {
+                    "allele$dbsnp151_rsid": [
+                        {"condition": "any", "values": ["rs1342568097"]}
+                    ]
+                },
+                "logic": "and",
+            }
+        }
+
+        self.assertEqual(
+            GenerateAssayFilter(
+                full_input_dict,
+                name,
+                id,
+                project_context,
+                genome_reference,
+                filter_type,
+            ),
+            expected_output,
+        )
+
+    ###########
+    # E2E Tests
+    ###########
 
     # Single filter tests
     # These won't work right now becuase location is broken
@@ -111,13 +256,11 @@ class TestDXExtractAssay(unittest.TestCase):
         multi_filter_directory = os.path.join(test_filter_directory, "multi_filters")
         filter_file = os.path.join(multi_filter_directory, "allele_location_type.json")
         output_filename = os.path.join(output_folder, "allele_location_type_output.tsv")
-        command = (
-            "dx extract_assay germline {} --retrieve-{} {} --output {} --sql".format(
-                test_record,
-                "allele",
-                filter_file,
-                output_filename,
-            )
+        command = "dx extract_assay germline {} --retrieve-{} {} --output {}".format(
+            test_record,
+            "allele",
+            filter_file,
+            output_filename,
         )
         process = subprocess.check_call(command, shell=True)
 
@@ -127,13 +270,11 @@ class TestDXExtractAssay(unittest.TestCase):
         multi_filter_directory = os.path.join(test_filter_directory, "multi_filters")
         filter_file = os.path.join(multi_filter_directory, "annotation_name_id.json")
         output_filename = os.path.join(output_folder, "annotation_name_id_output.tsv")
-        command = (
-            "dx extract_assay germline {} --retrieve-{} {} --output {} --sql".format(
-                test_record,
-                "annotation",
-                filter_file,
-                output_filename,
-            )
+        command = "dx extract_assay germline {} --retrieve-{} {} --output {}".format(
+            test_record,
+            "annotation",
+            filter_file,
+            output_filename,
         )
 
         subprocess.check_call(command, shell=True)
