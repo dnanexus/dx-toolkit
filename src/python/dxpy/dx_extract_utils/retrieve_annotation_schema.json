@@ -43,6 +43,12 @@
             },
             "maxItems": 100
         },
+        "feature_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
         "consequences": {
             "type": "array",
             "items": {
