@@ -69,7 +69,9 @@ for test_file_name in test_output_file_names:
                 "display.max_rows", None, "display.max_columns", None
             ):
                 pass
+                # print("{} test output".format(test_file_name))
                 # print(test_output)
+                # print("{} expected output".format(test_file_name))
                 # print(expected_output)
 
         # Checking each column individually
