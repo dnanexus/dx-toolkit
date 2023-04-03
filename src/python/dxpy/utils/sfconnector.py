@@ -16,7 +16,7 @@ class DXSFConnector(ABC):
         'warehouse': "dummy_warehouse",
         'role': "default",
         'host': "{}".format(dxpy.APISERVER_HOST),
-        'port': "{}/DB/SF-ROUTE".format(dxpy.APISERVER_PORT),
+        'port': "{}/SF-ROUTE".format(dxpy.APISERVER_PORT),
         'protocol': dxpy.APISERVER_PROTOCOL
     }
 
@@ -44,52 +44,6 @@ class DXSFConnector(ABC):
         """
         if self._ctx:
             self._ctx.close()
-
-    @staticmethod
-    def createDatabase(database_name, project_id):
-        """
-        Utilty method to create Snowflake Database 
-        Args:
-            database_name (str): String representing a database name.
-            project_id (str): String representing a project ID.
-        
-        Returns: 
-            database_id
-        """
-        resp = None
-        try:
-            data = json.dumps({'databaseName': database_name, 'project': project_id, 'databaseType' : 'dnaxsf'})
-            resp = dxpy.DXHTTPRequest('/database/newDnaxsf', data=data, jsonify_data=False)
-        except Exception as e:
-            print('Unable to create database of type dnaxsf')
-            raise e
-        return resp['id']
-        
-        	
-    @staticmethod
-    def dropDatabase(database_name, project_id):
-        """
-        Args:
-            database_name (str): String representing a database name
-            project_id (str): String representing a project ID.
-        """
-        try:
-            data = json.dumps({'databaseName': database_name, 'databaseType' : 'dnaxsf', 'scope': {'project': project_id}})
-            resp = dxpy.DXHTTPRequest('/system/findDatabases', data=data, jsonify_data=False)
-            results = resp['results']
-            if results and len(results) == 1:
-                db_id = results[0]['id']
-                remove_data = json.dumps({'objects': [db_id]})
-                dxpy.DXHTTPRequest('/{}/removeObjects'.format(project_id), data=remove_data, jsonify_data=False)
-            else:
-                if len(results) > 1:
-                    print('Error : More than one databases found')
-                else:
-                    print('Error : No database found')
-
-        except Exception as e:
-            print('Unable to drop database of type dnaxsf')
-            raise e
         
 
 class SFConnectionError(DXError):
