@@ -182,6 +182,84 @@ class TestDXExtractAssay(unittest.TestCase):
             expected_output,
         )
 
+    def test_final_payload(self):
+        full_input_dict = {"rsid": ["rs1342568097"]}
+        name = "test01_assay"
+        id = "c6e9c0ea-5752-4299-8de2-8620afba7b82"
+        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
+        genome_reference = "Homo_sapiens.GRCh38.92"
+        filter_type = "allele"
+
+        expected_output_payload = {
+            "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+            "fields": [
+                {"allele_id": "allele$a_id"},
+                {"chromosome": "allele$chr"},
+                {"starting_position": "allele$pos"},
+                {"ref": "allele$ref"},
+                {"alt": "allele$alt"},
+                {"rsid": "allele$dbsnp151_rsid"},
+                {"allele_type": "allele$allele_type"},
+                {"dataset_alt_freq": "allele$alt_freq"},
+                {"gnomad_alt_freq": "allele$gnomad201_alt_freq"},
+                {"worst_effect": "allele$worst_effect"},
+            ],
+            "order_by": [{"allele_id": "asc"}],
+            "adjust_geno_bins": False,
+            "raw_filters": {
+                "assay_filters": {
+                    "name": "test01_assay",
+                    "id": "c6e9c0ea-5752-4299-8de2-8620afba7b82",
+                    "filters": {
+                        "allele$dbsnp151_rsid": [
+                            {"condition": "any", "values": ["rs1342568097"]}
+                        ]
+                    },
+                    "logic": "and",
+                }
+            },
+        }
+
+        expected_output_fields = [
+            "allele_id",
+            "chromosome",
+            "starting_position",
+            "ref",
+            "alt",
+            "rsid",
+            "allele_type",
+            "dataset_alt_freq",
+            "gnomad_alt_freq",
+            "worst_effect",
+        ]
+
+        test_payload, test_fields = FinalPayload(
+            full_input_dict,
+            name,
+            id,
+            project_context,
+            genome_reference,
+            filter_type,
+        )
+
+        self.assertEqual(
+            test_payload,
+            expected_output_payload,
+        )
+        self.assertEqual(test_fields, expected_output_fields)
+
+    def test_validate_json(self):
+        filter = {
+            "rsid": ["rs1342568097"],
+            "type": ["SNP", "Del", "Ins"],
+            "dataset_alt_af": {"min": 1e-05, "max": 0.5},
+            "gnomad_alt_af": {"min": 1e-05, "max": 0.5},
+        }
+        type = "allele"
+
+        # This just needs to complete without error
+        ValidateJSON(filter, type)
+
     ###########
     # E2E Tests
     ###########
