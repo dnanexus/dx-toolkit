@@ -1,3 +1,14 @@
+dx-toolkit (0.345.0) trusty; urgency=medium
+
+  * Fixed: Tab completion in interactive execution of dx-app-wizard
+  * Fixed: dx-app-wizard script on Windows
+  * Fixed: Tab completion in interactive executions on Windows
+  * Changed: Released Nextaur 1.6.5. It added a caching mechanism to DxPath file and folder resolution, which reduces number of DX API calls made during pipeline execution. It also fixes an occasional hanging of the headjob.
+  * Changed: Tab completion in interactive executions now works with libedit bundled in MacOS and does not require externally installed GNU readline
+  * Changed: Bump allowed cryptography dxpy dependency version to 40.0.x
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 03 Apr 2023 04:17:30 +0000
+
 dx-toolkit (0.344.0) trusty; urgency=medium
 
   * Added: Support for file (un)archival in DXJava
