@@ -1,2 +1,2 @@
-allele_id	chromsome	starting_position	ref	alt	dbsnp151_rsid	allele_type	dataset_alt_freq	gnomad_alt_freq	worst_effect
+allele_id	chromosome	starting_position	ref	alt	rsid	allele_type	dataset_alt_freq	gnomad_alt_freq	worst_effect
 18_47408_G_A	18	47408	G	A	rs749233405	SNP	0.1	0.000948757	['TUBB8P12:synonymous_variant']

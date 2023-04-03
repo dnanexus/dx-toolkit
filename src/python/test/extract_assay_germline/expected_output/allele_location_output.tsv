@@ -1,4 +1,4 @@
-allele_id	chromsome	starting_position	ref	alt	dbsnp151_rsid	allele_type	dataset_alt_freq	gnomad_alt_freq	worst_effect
+allele_id	chromosome	starting_position	ref	alt	rsid	allele_type	dataset_alt_freq	gnomad_alt_freq	worst_effect
 18_47362_TCCC_T	18	47362	TCCC	T	rs753126950	Del	0.0	4.33261e-05	
 18_47362_T_TC	18	47362	TCCC	TCCCC	rs753126950	Ins	0.2		
 18_47362_TCCC_T	18	47362	TCCC	T	rs753126950	Del	0.0	4.33261e-05	

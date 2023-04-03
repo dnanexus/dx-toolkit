@@ -1,2 +1,2 @@
-allele_id	chromsome	starting_position	ref	alt	dbsnp151_rsid	allele_type	dataset_alt_freq	gnomad_alt_freq	worst_effect
+allele_id	chromosome	starting_position	ref	alt	rsid	allele_type	dataset_alt_freq	gnomad_alt_freq	worst_effect
 18_47375_T_C	18	47375	T	C	rs755339193	SNP	0.0	2.92659e-05	
