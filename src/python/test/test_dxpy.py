@@ -29,7 +29,7 @@ import re
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
-import OpenSSL
+#import OpenSSL # Only used by test_ssl_options, which is currently disabled
 
 import dxpy
 import dxpy_testutil as testutil
