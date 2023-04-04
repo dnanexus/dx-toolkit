@@ -787,11 +787,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         waiting_msg = 'Waiting %d seconds before retry %d of %d...' % (
                             delay, try_index + 1, max_retries)
 
-                    full_msg = "[%s] %s %s: %s. %s %s" % (time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
+                    log_msg = "[%s] %s %s: %s. %s %s" % (time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
                     if isinstance(e, exceptions.HTTPErrorWithContent):
-                        full_msg += "\n%s" % e.content
+                        log_msg += "\n%s" % e.content
 
-                    logger.warning(full_msg)
+                    logger.warning(log_msg)
                     time.sleep(delay)
                     try_index_including_503 += 1
                     if response is None or response.status != 503:
@@ -801,10 +801,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # All retries have been exhausted OR the error is deemed not
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
-                full_msg = "[%s] %s %s: %s." % (time.ctime(), method, _url, exception_msg)
+                log_msg = "[%s] %s %s: %s." % (time.ctime(), method, _url, exception_msg)
                 if isinstance(e, exceptions.HTTPErrorWithContent):
-                        full_msg += "\n%s" % e.content
-                logger.error(full_msg)
+                        log_msg += "\n%s" % e.content
+                logger.error(log_msg)
 
             if isinstance(e, urllib3.exceptions.ProtocolError) and \
                 'Connection reset by peer' in exception_msg:
