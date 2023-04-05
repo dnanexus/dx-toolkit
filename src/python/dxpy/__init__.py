@@ -653,7 +653,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                and '_ARGCOMPLETE' not in os.environ):
                 logger.info(response.headers['x-upgrade-info'])
                 try:
-                    with file(_UPGRADE_NOTIFY, 'a'):
+                    with open(_UPGRADE_NOTIFY, 'a'):
                         os.utime(_UPGRADE_NOTIFY, None)
                 except:
                     pass
