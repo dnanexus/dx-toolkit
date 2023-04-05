@@ -4646,7 +4646,7 @@ register_parser(parser_download, categories='data')
 parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing',
                                                  description='Creates a pre-authenticated link that can be used to download a file without logging in.',
                                                  prog='dx make_download_url')
-path_action = parser_make_download_url.add_argument('path', help='Data object ID or name to access')
+path_action = parser_make_download_url.add_argument('path', help='Project-qualified data object ID or name, e.g. project-xxxx:file-yyyy, or project-xxxx:/path/to/file.txt')
 path_action.completer = DXPathCompleter(classes=['file'])
 parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
 parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as (default is the filename)')
