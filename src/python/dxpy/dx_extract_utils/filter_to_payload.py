@@ -126,6 +126,7 @@ def BasicFilter(
         }
     else:
         listed_filter = {filter_key: [{"condition": condition, "values": values}]}
+
     return listed_filter
 
 
@@ -164,6 +165,7 @@ def LocationFilter(location_list):
                 "end": end,
             }
         )
+
     return location_aid_filter
 
 
@@ -255,7 +257,7 @@ def FinalPayload(
     final_payload["fields"] = fields
     final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter
-    final_payload["is_cohort"] = True
+    final_payload["is_cohort"] = False
 
     field_names = []
     for f in fields:

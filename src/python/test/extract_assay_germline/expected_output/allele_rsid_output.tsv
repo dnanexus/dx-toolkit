@@ -1,0 +1,2 @@
+allele_id	chromosome	starting_position	ref	alt	rsid	allele_type	dataset_alt_freq	gnomad_alt_freq	worst_effect
+18_47359_G_T	18	47359	G	T	rs1342568097	SNP	0.2	2.66771e-05	

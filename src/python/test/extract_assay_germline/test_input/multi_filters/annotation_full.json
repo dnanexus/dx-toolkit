@@ -12,15 +12,15 @@
         "ENST00000308911.8"
     ],
     "consequences": [
-        "5 prime UTR variant"
+        "synonymous_variant"
     ],
     "putative_impact": [
-        "MODIFIER"
+        "LOW"
     ],
     "hgvs_c": [
-        "c.-49A>G"
+        "c.1317C>T"
     ],
     "hgvs_p": [
-        "p.Gly2Asp"
+        "p.Ala439Ala"
     ]
 }

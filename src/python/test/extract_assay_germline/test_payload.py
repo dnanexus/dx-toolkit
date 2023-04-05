@@ -1,5 +1,5 @@
 # To be run within a docker container that the dxpy package has been build locally in
-# exucute with: python /dx-toolkit/src/python/test/CLIGAM_tests/test_payload.py
+# exucute with: python /dx-toolkit/src/python/test/extract_assay_germline/test_payload.py
 import subprocess
 import argparse
 
