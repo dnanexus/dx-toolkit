@@ -35,7 +35,7 @@ from ..bindings.dxdataobject_functions import is_dxlink
 from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
 from ..utils.file_handle import as_handle
-from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState, ResourceNotFound
+from ..exceptions import err_exit, PermissionDenied, InvalidInput, InvalidState, ResourceNotFound, default_expected_exceptions
 
 from ..dx_extract_utils.turbo_filter import ValidateJSON, FinalPayload
 
@@ -452,7 +452,7 @@ def extract_assay_germline(args):
                         json_file.close()
                     except Exception as json_error:
                         err_exit("JSON for variant filters is malformatted.",
-                                 expected_exceptions=jsonschema.exceptions.ValidationError)
+                                 expected_exceptions=default_expected_exceptions)
             else:
                 err_exit("JSON file {filter_json} provided does not exist".format(
                     filter_json=filter_value))
@@ -469,7 +469,7 @@ def extract_assay_germline(args):
                     filter = json.loads(filter_value)
                 except Exception as json_error:
                     err_exit("JSON for variant filters is malformatted.",
-                             expected_exceptions=json.decoder.JSONDecodeError)
+                             expected_exceptions=default_expected_exceptions)
         
         ValidateJSON(filter, filter_type)
 

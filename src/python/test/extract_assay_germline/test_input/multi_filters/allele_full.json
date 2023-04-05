@@ -1,0 +1,18 @@
+{
+    "rsid": [
+        "rs1342568097"
+    ],
+    "type": [
+        "SNP",
+        "Del",
+        "Ins"
+    ],
+    "dataset_alt_af": {
+        "min": 0.00001,
+        "max": 0.5
+    },
+    "gnomad_alt_af": {
+        "min": 0.00001,
+        "max": 0.5
+    }
+}

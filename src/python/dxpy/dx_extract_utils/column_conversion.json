@@ -1,15 +1,9 @@
 {
     "allele": {
-        "allele_id": "allele$a_id",
-        "id": "allele$a_id",
         "rsid": "allele$dbsnp151_rsid",
         "type": "allele$allele_type",
-        "ref": "allele$ref",
         "dataset_alt_af": "allele$alt_freq",
-        "gnomad_alt_af": "allele$gnomad201_alt_freq",
-        "chromosome": "allele$chr",
-        "starting_position": "allele$pos",
-        "ending_position": "allele$pos"
+        "gnomad_alt_af": "allele$gnomad201_alt_freq"
     },
     "genotype": {
         "genotype_type": "genotype$type",
@@ -20,7 +14,6 @@
         "allele_id": "allele$a_id",
         "gene_name": "annotation$gene_name",
         "gene_id": "annotation$gene_id",
-        "transcript_id": "annotation$feature_id",
         "feature_id": "annotation$feature_id",
         "consequences": "annotation$effect",
         "putative_impact": "annotation$putative_impact",

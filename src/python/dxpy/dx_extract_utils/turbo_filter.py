@@ -114,6 +114,7 @@ def BasicFilter(
         }
     else:
         listed_filter = {filter_key: [{"condition": condition, "values": values}]}
+
     return listed_filter
 
 
@@ -150,6 +151,7 @@ def LocationFilter(location_list):
                 "end": end,
             }
         )
+
     return location_aid_filter
 
 
@@ -161,6 +163,7 @@ def GenerateAssayFilter(
     genome_reference,
     filter_type,
 ):
+
     # Generate the entire assay filters object by reading the filter JSON, making the relevant
     # Basic and Location filters, and creating the structure that relates them logically
 
@@ -247,7 +250,6 @@ def FinalPayload(
     for f in fields:
         field_names.append(list(f.keys())[0])
 
-    print(json.dumps(final_payload))
     return final_payload, field_names
 
 
@@ -264,7 +266,6 @@ def ValidateJSON(filter, type):
     # The jsonschema validation function will error out if the schema is invalid.  The error message will contain
     # an explanation of which part of the schema failed
     try:
-        # pass
         validate(filter, json_schema)
     except Exception as inst:
         err_exit(inst.message)
