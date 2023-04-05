@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools, platform
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
 import shlex # respects quoted substrings when splitting
 
 import requests
@@ -97,15 +97,11 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        # Import pyreadline3 on Windows with Python >= 3.5
-        if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
-            import pyreadline3 as readline
-        else:
-            try:
-                # Import gnureadline if installed for macOS
-                import gnureadline as readline
-            except ImportError as e:
-                import readline
+        try:
+            # Import gnureadline if installed for macOS
+            import gnureadline as readline
+        except ImportError as e:
+            import readline
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
@@ -3039,6 +3035,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         if 'All' in args.debug_on:
             args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
 
+    preserve_job_outputs = None
+    if args.preserve_job_outputs:
+        preserve_job_outputs = True
+    elif args.preserve_job_outputs_folder is not None:
+        preserve_job_outputs = {"folder": args.preserve_job_outputs_folder}
+
     run_kwargs = {
         "project": dest_proj,
         "folder": dest_path,
@@ -3063,6 +3065,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "rank": args.rank,
         "max_tree_spot_wait_time": normalize_timedelta(args.max_tree_spot_wait_time)//1000 if args.max_tree_spot_wait_time else None,
         "max_job_spot_wait_time": normalize_timedelta(args.max_job_spot_wait_time)//1000 if args.max_job_spot_wait_time else None,
+        "preserve_job_outputs": preserve_job_outputs,
         "extra_args": args.extra_args
     }
 
@@ -5270,6 +5273,20 @@ parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job befor
 parser_run.add_argument('-r', '--rank', type=int, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24), default=None)
 parser_run.add_argument('--max-tree-spot-wait-time', help=fill('The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_run.add_argument('--max-job-spot-wait-time', help=fill('The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+
+preserve_outputs = parser_run.add_mutually_exclusive_group()
+preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
+                              help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
+                                        "root execution into the \"intermediateJobOutputs\" subfolder under the output "
+                                        "folder for the root execution.",
+                                        width_adjustment=-24))
+preserve_outputs.add_argument('--preserve-job-outputs-folder', metavar="JOB_OUTPUTS_FOLDER",
+                              help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
+                                        "root execution to a folder in the project. JOB_OUTPUTS_FOLDER starting with '/' "
+                                        "refers to an absolute path within the project, otherwise, it refers to a subfolder "
+                                        "under root execution's output folder.",
+                                        width_adjustment=-24))
+
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
                         stage_instance_types=None, stage_folders=None, head_job_on_demand=None)
 register_parser(parser_run, categories='exec')
