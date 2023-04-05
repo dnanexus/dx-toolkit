@@ -237,8 +237,10 @@ network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
                       HTTPError,
                       socket.error)
 
-json_exceptions = (json.decoder.JSONDecodeError,
-                   jsonschema.exceptions.ValidationError)
+try:
+    json_exceptions = (json.decoder.JSONDecodeError,)
+except:
+    json_exceptions = (ValueError,)
 
 default_expected_exceptions = network_exceptions + json_exceptions + (DXAPIError,
                                                     DXCLIError,
