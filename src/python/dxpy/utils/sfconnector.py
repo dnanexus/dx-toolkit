@@ -68,7 +68,7 @@ class DXSFConnector(ABC):
             resp = dxpy.DXHTTPRequest('/database/newDnaxsf', data=data, jsonify_data=False)
         except Exception as e:
             print('Unable to create Snowflake backed database')
-            raise e
+            sys.exit(1)
         return resp['id']
         
         	
@@ -96,7 +96,7 @@ class DXSFConnector(ABC):
 
         except Exception as e:
             print('Unable to drop Snowflake backed database')
-            raise e
+            sys.exit(1)
         
 
 class SFConnectionError(DXError):
