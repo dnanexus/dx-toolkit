@@ -29,7 +29,6 @@ import re
 
 import requests
 from requests.packages.urllib3.exceptions import SSLError
-import OpenSSL
 
 import dxpy
 import dxpy_testutil as testutil
@@ -2524,6 +2523,8 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
         self.assertTrue("CONTENT-type" in res.headers)
 
     @unittest.skip("skipping per DEVEX-2161")
+    # NOTE: Re-enabling this test may require adding a recent version of
+    # pyopenssl to requirements_test.txt - see DEVEX-2263 for details.
     def test_ssl_options(self):
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=False)
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where())
