@@ -265,6 +265,38 @@ def find_data_objects(classname=None, state=None, visibility=None,
 
     return _find(dxpy.api.system_find_data_objects, query, limit, return_handler, first_page_size, **kwargs)
 
+def find_databases(database_name, database_type='dnax', project=None, describe=False, limit=10, **kwargs ):
+    """
+    Find DXDatabase objects based on inputs
+    :param database_name: Name of database object
+    :type state: string
+    :param project: ID of the project in which the each result must appear
+    :type project: string
+    :param describe: Controls whether to also return the output of
+        calling describe() on each object. Supply False to omit describe
+        output, True to obtain the default describe output, or a dict to
+        be supplied as the describe call input (which may, among other
+        things, be used to customize the set of fields that is returned)
+    :type describe: bool or dict
+    :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
+    :type limit: int
+
+    Returns a generator that yields all data objects matching the query, up to *limit* objects.
+    """
+    query = {}
+    query['databaseName'] = database_name
+    query['databaseType'] = database_type
+    if describe is not None and describe is not False:
+        query["describe"] = describe
+    if project:
+        query['scope'] = {
+            'project' : project
+        }
+    if limit:
+        query["limit"] = limit
+    return _find(dxpy.api.system_find_databases, query, limit, False, 10, **kwargs)
+
+
 def find_executions(classname=None, launched_by=None, executable=None, project=None,
                     state=None, origin_job=None, parent_job=None, no_parent_job=False,
                     parent_analysis=None, no_parent_analysis=False, root_execution=None,
