@@ -1,0 +1,14 @@
+name: dxpy-deptests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dxpy-deptests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run tests
+        run: |
+          docker --version
+          docker-compose --version
+          pip3 install docker
