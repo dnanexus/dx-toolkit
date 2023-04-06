@@ -1,5 +1,8 @@
 import json
 
+# Generic error messages
+malformed_filter = "found following invalid filters: {}"
+
 
 def isListOfStrings(object):
     if not isinstance(object, list):
@@ -15,11 +18,18 @@ def validateFilter(filter, filter_type, sql=False):
     if filter_type == "allele":
         # Check for required fields
         if not sql:
+            if ("location" in keys) and ("rsid" in keys):
+                print(
+                    "location and rsid fields cannot both be specified in the same filter"
+                )
+                exit(1)
             if not (("location" in keys) or ("rsid" in keys)):
+                print("Either location or rsid must be specified in an allele filter")
                 exit(1)
         # Check rsid field
         if "rsid" in keys:
             if not isListOfStrings(filter["rsid"]):
+                print(malformed_filter.format("rsid"))
                 exit(1)
         # Check type field
         if "type" in keys:

@@ -25,8 +25,9 @@ import tempfile
 import dxpy
 import os
 import subprocess
+import json
 from dxpy_testutil import cd, chdir
-from dxpy.dx_extract_utils.turbo_filter import (
+from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
     BasicFilter,
     LocationFilter,
@@ -259,6 +260,19 @@ class TestDXExtractAssay(unittest.TestCase):
 
         # This just needs to complete without error
         ValidateJSON(filter, type)
+
+    def test_malformed_json(self):
+        malformed_json_dir = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/malformed_json"
+        malformed_json_filenames = os.listdir(malformed_json_dir)
+        for name in malformed_json_filenames:
+            file_path = os.path.join(malformed_json_dir, name)
+            with open(file_path, "r") as infile:
+                filter = json.load(infile)
+                try:
+                    print(filter)
+                    ValidateJSON(filter, "allele")
+                except:
+                    print("task failed succesfully")
 
     ###########
     # E2E Tests
