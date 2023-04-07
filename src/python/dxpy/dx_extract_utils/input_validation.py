@@ -141,12 +141,15 @@ def validateFilter(filter, filter_type, sql=False):
         # Check genotype field
         if "genotype_type" in keys:
             if not isListOfStrings(filter["genotype_type"]):
+                print("genotype type is not a list of strings")
                 print(malformed_filter.format("genotype_type"))
                 exit(1)
             # Check against allowed values
-            if filter["genotype"] not in ["hom", "het-ref", "het-alt", "alt"]:
-                print(malformed_filter.format("genotype_type"))
-                exit(1)
+            for item in filter["genotype_type"]:
+                if item not in ["hom", "het-ref", "het-alt", "alt"]:
+                    print("value {} is not a valid genotype_type".format(item))
+                    print(malformed_filter.format("genotype_type"))
+                    exit(1)
 
 
 if __name__ == "__main__":
