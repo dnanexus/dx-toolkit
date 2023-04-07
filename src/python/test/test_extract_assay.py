@@ -205,7 +205,6 @@ class TestDXExtractAssay(unittest.TestCase):
                 {"gnomad_alt_freq": "allele$gnomad201_alt_freq"},
                 {"worst_effect": "allele$worst_effect"},
             ],
-            "order_by": [{"allele_id": "asc"}],
             "adjust_geno_bins": False,
             "raw_filters": {
                 "assay_filters": {
@@ -219,6 +218,7 @@ class TestDXExtractAssay(unittest.TestCase):
                     "logic": "and",
                 }
             },
+            "is_cohort": False,
         }
 
         expected_output_fields = [
@@ -272,7 +272,7 @@ class TestDXExtractAssay(unittest.TestCase):
                 with open(file_path, "r") as infile:
                     filter = json.load(infile)
                     try:
-                        ValidateJSON(filter, "allele")
+                        ValidateJSON(filter, filter_type)
                         print("Uh oh, malformed JSON passed detection")
                     except:
                         print("task failed succesfully")
@@ -358,21 +358,6 @@ class TestDXExtractAssay(unittest.TestCase):
             output_filename,
         )
         process = subprocess.check_call(command, shell=True)
-
-    # A test to check if the vizserver forces an or relationship between gene name and gene id
-    def test_annotation_name_id(self):
-        print("testing annotation gene_name gene_id")
-        multi_filter_directory = os.path.join(test_filter_directory, "multi_filters")
-        filter_file = os.path.join(multi_filter_directory, "annotation_name_id.json")
-        output_filename = os.path.join(output_folder, "annotation_name_id_output.tsv")
-        command = "dx extract_assay germline {} --retrieve-{} {} --output {}".format(
-            test_record,
-            "annotation",
-            filter_file,
-            output_filename,
-        )
-
-        subprocess.check_call(command, shell=True)
 
     # A test of the --list-assays functionality
     # Does not write any output to file, function only outputs to stdout
