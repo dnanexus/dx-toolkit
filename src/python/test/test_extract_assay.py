@@ -263,16 +263,19 @@ class TestDXExtractAssay(unittest.TestCase):
 
     def test_malformed_json(self):
         malformed_json_dir = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/malformed_json"
-        malformed_json_filenames = os.listdir(malformed_json_dir)
-        for name in malformed_json_filenames:
-            file_path = os.path.join(malformed_json_dir, name)
-            with open(file_path, "r") as infile:
-                filter = json.load(infile)
-                try:
-                    print(filter)
-                    ValidateJSON(filter, "allele")
-                except:
-                    print("task failed succesfully")
+        for filter_type in ["allele", "annotation", "genotype"]:
+            malformed_json_filenames = os.listdir(
+                os.path.join(malformed_json_dir, filter_type)
+            )
+            for name in malformed_json_filenames:
+                file_path = os.path.join(malformed_json_dir, filter_type, name)
+                with open(file_path, "r") as infile:
+                    filter = json.load(infile)
+                    try:
+                        ValidateJSON(filter, "allele")
+                        print("Uh oh, malformed JSON passed detection")
+                    except:
+                        print("task failed succesfully")
 
     ###########
     # E2E Tests
