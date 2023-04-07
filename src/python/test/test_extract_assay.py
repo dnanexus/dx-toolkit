@@ -26,7 +26,7 @@ import dxpy
 import os
 import subprocess
 from dxpy_testutil import cd, chdir
-from dxpy.dx_extract_utils.turbo_filter import (
+from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
     BasicFilter,
     LocationFilter,
