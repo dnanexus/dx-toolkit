@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### 
+
+* Released Nextaur 1.6.6. It includes minor fixes to errorStrategy and update to some default AWS instance-types.
+
 ## [345.0] - beta
 
 ### Changed
