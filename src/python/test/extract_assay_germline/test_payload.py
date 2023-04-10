@@ -7,15 +7,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--sql", action="store_true")
 args = parser.parse_args()
 
-filter = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/test02_dataset/annotation_aid_gid.json"
-#test01_rsid_filter = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/single_filters/allele/allele_rsid.json"
-output = "test02_anno_aid_gid_output.tsv"
-#dataset = "project-FkyXg38071F1vGy2GyXyYYQB:record-FyFPyz0071F54Zjb32vG82Gj"
+filter = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/single_filters/allele/allele_rsid.json"
+output = "allele_rsid_output.tsv"
+dataset = "project-FkyXg38071F1vGy2GyXyYYQB:record-FyFPyz0071F54Zjb32vG82Gj"
 test02_dataset = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GQQKBJ80yP3gBXqXpkY4z4ZK"
-filter_type = "annotation"
+filter_type = "allele"
 
-command = "dx extract_assay germline {} --retrieve-{} {} -o {}".format(test02_dataset,filter_type, filter,output)
-#print(command)
+command = "dx extract_assay germline {} --retrieve-{} {} -o {}".format(
+    dataset, filter_type, filter, output
+)
+# print(command)
 
 if args.sql:
     command += " --sql"
