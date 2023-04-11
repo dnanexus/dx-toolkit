@@ -48,7 +48,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
+                           instance_type_arg, process_instance_type_arg, process_instance_type_by_executable_arg, process_instance_count_arg, get_update_project_args,
                            property_args, tag_args, contains_phi, process_phi_param, process_external_upload_restricted_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
@@ -3057,6 +3057,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "priority": args.priority,
         "instance_type": args.instance_type,
         "stage_instance_types": args.stage_instance_types,
+        "instance_type_by_executable": args.instance_type_by_executable,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
         "cluster_spec": srd_cluster_spec.as_dict(),
@@ -3522,6 +3523,8 @@ def run(args):
             dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
+
+    process_instance_type_by_executable_arg(args)
 
     # Validate and process instance_count argument
     if args.instance_count:
