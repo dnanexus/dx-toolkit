@@ -17,7 +17,8 @@ system requirements.
 class SystemRequirementsDict(object):
     """
     A class representing system requirements that can be passed as
-    "systemRequirements" to the class-xxxx/run API call (after converting
+    "systemRequirements" or an entry of the "systemRequirementsByExecutable"
+    to the class-xxxx/run or job/new API call (after converting
     it to a dictionary with as_dict()).
     """
 
@@ -40,7 +41,8 @@ class SystemRequirementsDict(object):
     def from_instance_count(cls, instance_count_arg, entrypoint="*"):
         """
         Returns a SystemRequirementsDict that can be passed as a
-        "systemRequirements" input to job/new or run/ API calls.
+        "systemRequirements" input or an entry of the "systemRequirementsByExecutable" mapping
+        to job/new or run/ API calls.
         The instance_count_arg should be either a:
         * string or int eg. "6" or 8
         * dictionary, eg. {"main": 4, "other_function": 2}
@@ -60,7 +62,8 @@ class SystemRequirementsDict(object):
     def from_instance_type(cls, instance_type_arg, entrypoint="*"):
         """
         Returns SystemRequirementsDict that can be passed as a
-        "systemRequirements" input to job/new or run/ API calls.
+        "systemRequirements" input or an entry of the "systemRequirementsByExecutable" mapping
+        to job/new or run/ API calls.
         The instance_type_arg should be either a:
         * string, eg. mem1_ssd1_x2
         * dictionary, eg. {"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"}
@@ -97,7 +100,8 @@ class SystemRequirementsDict(object):
     def override_cluster_spec(self, srd):
         """
         Returns SystemRequirementsDict can be passed in a "systemRequirements"
-        input to app-xxx/run, e.g. {'fn': {'clusterSpec': {initialInstanceCount: 3, version: "2.4.0", ..}}}
+        input or as an entry of the "systemRequirementsByExecutable" mapping
+        to app-xxx/run, e.g. {'fn': {'clusterSpec': {initialInstanceCount: 3, version: "2.4.0", ..}}}
         Since full clusterSpec must be passed to the API server, we need to retrieve the cluster
         spec defined in app doc's systemRequirements and overwrite the field initialInstanceCount
         with the value the user passed to dx run for each entrypoint.
