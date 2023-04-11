@@ -18,6 +18,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `ImportError` in test_dxpy.py
 * Replaced obsolete built-in `file()` method with `open()`
 
+#### Added
+
+* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
+
 ## [345.0] - beta
 
 ### Changed
