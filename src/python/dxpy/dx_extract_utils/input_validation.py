@@ -85,44 +85,53 @@ def validateFilter(filter, filter_type, sql=False):
                         print(malformed_filter.format("location"))
                         exit(1)
     if filter_type == "annotation":
-        keys = filter.keys()
         # Check for required fields if sql flag is not given
         if not sql:
             if not (
-                ("allele_id" in filter.keys())
-                or ("gene_name" in filter.keys())
-                or ("gene_id" in filter.keys())
+                ("allele_id" in keys) or ("gene_name" in keys) or ("gene_id" in keys)
             ):
                 print(
                     "allele_id, gene_name, or gene_id is required in annotation_filters"
                 )
                 exit(1)
         # Ensure only one of the required fields is given
-        if "allele_id" in filter.keys():
-            if ("gene_name" in filter.keys()) or ("gene_id" in filter.keys()):
+        if "allele_id" in keys:
+            if ("gene_name" in keys) or ("gene_id" in keys):
                 print(
                     "Only one of allele_id, gene_name, and gene_id can be provided in an annotation filter"
                 )
                 exit(1)
-        elif "gene_id" in filter.keys():
-            if ("gene_name" in filter.keys()) or ("allele_id" in filter.keys()):
+        elif "gene_id" in keys:
+            if ("gene_name" in keys) or ("allele_id" in keys):
                 print(
                     "Only one of allele_id, gene_name, and gene_id can be provided in an annotation filter"
                 )
                 exit(1)
-        elif "gene_name" in filter.keys():
-            if ("gene_id" in filter.keys()) or ("allele_id" in filter.keys()):
+        elif "gene_name" in keys:
+            if ("gene_id" in keys) or ("allele_id" in keys):
                 print(
                     "Only one of allele_id, gene_name, and gene_id can be provided in an annotation filter"
                 )
                 exit(1)
+        # Consequences and putative impact cannot be provided without at least one of gene_id, gene_name, feature_id
+        if ("consequences" in keys) or ("putative_impact" in keys):
+            if (
+                ("gene_id" not in keys)
+                and ("gene_name" not in keys)
+                and ("feature_id" not in keys)
+            ):
+                print(
+                    "consequences and putative impact fields may not be specified without "
+                    + "at least one of gene_id, gene_name, or feature_id"
+                )
+                exit(1)
+
         # All annotation fields are lists of strings
         for key in keys:
             if not isListOfStrings(filter[key]):
                 print(malformed_filter.format(key))
                 exit(1)
     if filter_type == "genotype":
-        keys = filter.keys()
         # Check for required fields if sql flag is not given
         if not sql:
             if not "allele_id" in keys:
