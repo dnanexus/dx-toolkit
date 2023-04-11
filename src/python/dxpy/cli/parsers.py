@@ -253,7 +253,12 @@ class PrintInstanceTypeHelp(argparse.Action):
 instance_type_arg = argparse.ArgumentParser(add_help=False)
 instance_type_arg.add_argument('--instance-type',
                                metavar='INSTANCE_TYPE_OR_MAPPING',
-                               help=fill('Specify instance type(s) for jobs this executable will run; see --instance-type-help for more details', width_adjustment=-24),
+                               help=fill('''When running an app or applet, the mapping lists executable's entry points or "*" as keys, and instance types to use for these entry points as values.  
+When running a workflow, the specified instance types can be prefixed by a stage name or stage index followed by "=" to apply to a specific stage, or apply to all workflow stages without such prefix. 
+The instance type corresponding to the "*" key is applied to all entry points not explicitly mentioned in the --instance-type mapping. Specifying a single instance type is equivalent to using it for all entry points, so "--instance-type mem1_ssd1_v2_x2" is same as "--instance-type '{"*":"mem1_ssd1_v2_x2"}'. 
+Note that "dx run" calls within the execution subtree may override the values specified at the root of the execution tree.
+See dx run --instance-type-help for details.
+''', width_adjustment=-24, replace_whitespace=False),
                                action='append').completer = InstanceTypesCompleter()
 
 instance_type_arg.add_argument('--instance-type-by-executable',
@@ -264,7 +269,7 @@ The order of priority for this specification is:
   * --instance-type, systemRequirements and stageSystemRequirements specified at runtime
   * stage's systemRequirements, systemRequirements supplied to /app/new and /applet/new at workflow/app/applet build time
   * systemRequirementsByExecutable specified in downstream executions (if any)
-See --instance-type-help for details.
+See dx run --instance-type-help for details.
 ''', width_adjustment=-24, replace_whitespace=False))
 
 instance_type_arg.add_argument('--instance-type-help',
