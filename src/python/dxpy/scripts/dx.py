@@ -1199,7 +1199,17 @@ def describe(args):
         if is_job_id(args.path):
             if args.verbose:
                 json_input['defaultFields'] = True
-                json_input['fields'] = {'internetUsageIPs': True}
+                json_input['fields'] = {'internetUsageIPs': True,
+                                        'runSystemRequirements': True, 
+                                        'runSystemRequirementsByExecutable': True, 
+                                        'mergedSystemRequirementsByExecutable': True}
+
+        if is_analysis_id(args.path):
+            if args.verbose:
+                json_input['fields'] = {'runSystemRequirements': True, 
+                                        'runSystemRequirementsByExecutable': True, 
+                                        'mergedSystemRequirementsByExecutable': True, 
+                                        'runStageSystemRequirements': True}
 
         # Otherwise, attempt to look for it as a data object or
         # execution
