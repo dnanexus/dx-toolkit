@@ -255,6 +255,18 @@ instance_type_arg.add_argument('--instance-type',
                                metavar='INSTANCE_TYPE_OR_MAPPING',
                                help=fill('Specify instance type(s) for jobs this executable will run; see --instance-type-help for more details', width_adjustment=-24),
                                action='append').completer = InstanceTypesCompleter()
+
+instance_type_arg.add_argument('--instance-type-by-executable',
+                               metavar='DOUBLE_MAPPING',
+                               help=fill(
+                                   '''Specifies instance types by app or applet id, then by entry point within the executable.
+The order of priority for this specification is:
+  * --instance-type, systemRequirements and stageSystemRequirements specified at runtime
+  * stage's systemRequirements, systemRequirements supplied to /app/new and /applet/new at workflow/app/applet build time
+  * systemRequirementsByExecutable specified in downstream executions (if any)
+See --instance-type-help for details.
+''', width_adjustment=-24, replace_whitespace=False))
+
 instance_type_arg.add_argument('--instance-type-help',
                                nargs=0,
                                help=fill('Print help for specifying instance types'),
