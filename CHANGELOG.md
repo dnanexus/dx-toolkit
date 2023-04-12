@@ -6,6 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### 
+
+#### Changed
+
+* Help message of the `dx make_download_url` command
+
+#### Fixed
+
+* Released Nextaur 1.6.6. It includes fixes to errorStrategy handling and an update to the way AWS instance types are selected based on resource requirements in Nextflow pipelines (V2 instances are now preferred)
+* `ImportError` in test_dxpy.py
+* Replaced obsolete built-in `file()` method with `open()`
+
 ## [345.0] - beta
 
 ### Changed

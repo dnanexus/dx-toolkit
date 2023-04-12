@@ -157,6 +157,18 @@ class ContentLengthError(HTTPError):
     match the "Content-Length" header
     '''
 
+class HTTPErrorWithContent(HTTPError):
+    '''
+    Specific variant of HTTPError with response content.
+
+    This class was created to avoid appending content directly to error message
+    which makes difficult to format log strings.
+    '''
+
+    def __init__(self, value, content):
+        super(HTTPError, self).__init__(value)
+        self.content = content
+
 class BadJSONInReply(ValueError):
     '''
     Raised when the server returned invalid JSON in the response body. Possible reasons

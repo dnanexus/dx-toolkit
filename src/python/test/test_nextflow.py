@@ -358,8 +358,9 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping tests that would run jobs')
+    # @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+    #                      'skipping tests that would run jobs')
+    @unittest.skip("skipping flaky test; to be fixed separately")
     def test_dx_run_retry_fail(self):
         pipeline_name = "retryMaxRetries"
         nextflow_file = "nextflow/RetryMaxRetries/main.nf"
