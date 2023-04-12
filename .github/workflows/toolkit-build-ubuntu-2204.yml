@@ -1,4 +1,4 @@
-name: toolkit-build-ubuntu-22.04
+name: toolkit-build-ubuntu-2204
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  toolkit-build-ubuntu-22.04:
+  toolkit-build-ubuntu-2204:
     runs-on: ubuntu-22.04
     steps:
       - name: dx-toolkit python make target
