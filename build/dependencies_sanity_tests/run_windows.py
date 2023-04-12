@@ -34,6 +34,7 @@ class DXPYTestsRunner:
     logs_dir: str = Path("logs")
     workers: int = 1
     print_failed_logs: bool = False
+    skip_interactive_tests: bool = False
     _test_results: Dict[str, int] = field(default_factory=dict, init=False)
 
     def __post_init__(self):
@@ -126,6 +127,7 @@ Exit 0
             env["DXPY_TEST_TOKEN"] = self.token
             env["DXPY_TEST_PYTHON_BIN"] = str(env_dir / "Scripts" / "python")
             env["DXPY_TEST_PYTHON_VERSION"] = python_version
+            env["DXPY_TEST_SKIP_INTERACTIVE"] = str(self.skip_interactive_tests)
             if python_version == "2":
                 env["PYTHONIOENCODING"] = "UTF-8"
             with open(tests_log, 'w') as fh:
@@ -147,11 +149,14 @@ if __name__ == "__main__":
 
     init_base_argparser(parser)
 
+    parser.add_argument("--skip-interactive-tests", action="store_true", help="Skip interactive tests")
+
     args = parser.parse_args()
 
     init_logging(args.verbose)
 
     ret = DXPYTestsRunner(
-        **parse_common_args(args)
+        **parse_common_args(args),
+        skip_interactive_tests=args.skip_interactive_tests,
     ).run()
     sys.exit(ret)

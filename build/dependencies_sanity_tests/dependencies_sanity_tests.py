@@ -20,6 +20,7 @@ IS_WINDOWS = platform.system() == "Windows"
 
 skip_on_windows = pytest.mark.skipif(IS_WINDOWS, reason="This test cannot run on Windows")
 run_only_on_windows = pytest.mark.skipif(not IS_WINDOWS, reason="This test can run only on Windows")
+skip_interactive_on_request = pytest.mark.skipif(bool(os.environ.get("DXPY_TEST_SKIP_INTERACTIVE", "False")), reason="Requested skipping of interactive tests")
 
 
 def _randstr(length=10):
@@ -412,6 +413,7 @@ def test_argcomplete(two_files):
 
 
 @run_only_on_windows
+@skip_interactive_on_request
 @pytest.mark.parametrize("applet", ["inputs"], indirect=["applet"])
 def test_dx_run_interactive_windows(tmp_path_str, applet, two_files):
     """
@@ -428,6 +430,7 @@ def test_dx_run_interactive_windows(tmp_path_str, applet, two_files):
 
 
 @run_only_on_windows
+@skip_interactive_on_request
 def test_dx_app_wizard_interactive_windows(tmp_path_str):
     """
     Tested libraries: pyreadline, pyreadline3
