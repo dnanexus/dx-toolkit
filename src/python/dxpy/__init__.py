@@ -352,7 +352,7 @@ def _extract_msg_from_last_exception():
         # '}')
         return last_error.error_message()
     else:
-        return traceback.format_exc().splitlines()[-1].strip()
+        return traceback.format_exception_only(last_exc_type, last_error)[-1].strip()
 
 
 def _calculate_retry_delay(response, num_attempts):
@@ -676,18 +676,17 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     try:
                         error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
                     except (KeyError, AttributeError, TypeError):
-                        raise exceptions.HTTPError(response.status, content)
+                        raise exceptions.HTTPErrorWithContent("Appropriate error class not found. [HTTPCode=%s]" % response.status, content)
                     raise error_class(content, response.status, time_started, req_id)
                 else:
                     try:
                         content = response.data.decode('utf-8')
                     except AttributeError:
                         raise exceptions.UrllibInternalError("Content is none", response.status)
-                    raise exceptions.HTTPError("{} {} [Time={} RequestID={}]\n{}".format(response.status,
+                    raise exceptions.HTTPErrorWithContent("{} {} [Time={} RequestID={}]".format(response.status,
                                                                                          response.reason,
                                                                                          time_started,
-                                                                                         req_id,
-                                                                                         content))
+                                                                                         req_id), content.strip())
 
             if want_full_response:
                 return response
@@ -761,7 +760,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     if (response is not None
                        and response.status == 400 and is_retryable and method == 'PUT'
                        and isinstance(e, requests.exceptions.HTTPError)):
-                        if '<Code>RequestTimeout</Code>' in exception_msg:
+                        request_timeout_str = '<Code>RequestTimeout</Code>'
+                        if (request_timeout_str in exception_msg
+                            or (isinstance(e, exceptions.HTTPErrorWithContent) and request_timeout_str in e.content)):
                             logger.info("Retrying 400 HTTP error, due to slow data transfer. " +
                                         "Request Time=%f Request ID=%s", time_started, req_id)
                         else:
@@ -786,8 +787,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         waiting_msg = 'Waiting %d seconds before retry %d of %d...' % (
                             delay, try_index + 1, max_retries)
 
-                    logger.warning("[%s] %s %s: %s. %s %s",
-                                   time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
+                    log_msg = "[%s] %s %s: %s. %s %s" % (time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
+                    if isinstance(e, exceptions.HTTPErrorWithContent):
+                        log_msg += "\n%s" % e.content
+
+                    logger.warning(log_msg)
                     time.sleep(delay)
                     try_index_including_503 += 1
                     if response is None or response.status != 503:
@@ -797,7 +801,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # All retries have been exhausted OR the error is deemed not
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
-                logger.error("[%s] %s %s: %s.", time.ctime(), method, _url, exception_msg)
+                log_msg = "[%s] %s %s: %s." % (time.ctime(), method, _url, exception_msg)
+                if isinstance(e, exceptions.HTTPErrorWithContent):
+                        log_msg += "\n%s" % e.content
+                logger.error(log_msg)
 
             if isinstance(e, urllib3.exceptions.ProtocolError) and \
                 'Connection reset by peer' in exception_msg:
