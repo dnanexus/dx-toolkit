@@ -1,0 +1,157 @@
+import argparse
+import json
+import logging
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Dict, List
+
+from utils import init_base_argparser, init_logging, parse_common_args, Matcher
+
+ROOT_DIR = Path(__file__).parent.absolute()
+
+_PYTHON_VERSIONS = ["2.7", "3.7", "3.8", "3.9", "3.10", "3.11"]
+PYENVS = [f"official-{p}" for p in _PYTHON_VERSIONS]
+
+EXIT_SUCCESS = 0
+EXIT_TEST_EXECUTION_FAILED = 1
+
+
+@dataclass
+class DXPYTestsRunner:
+    dx_toolkit: Path
+    token: str
+    env: str = "stg"
+    pyenv_filters: List[Matcher] = None
+    pytest_args: str = None
+    report: str = None
+    logs_dir: str = Path("logs")
+    workers: int = 1
+    print_failed_logs: bool = False
+    _test_results: Dict[str, int] = field(default_factory=dict, init=False)
+
+    def __post_init__(self):
+        if self.workers > 1:
+            raise ValueError("Windows currently does not support multiple workers")
+
+    def run(self):
+        has_filters = self.pyenv_filters is not None and len(self.pyenv_filters) > 0
+        pyenvs = [p for p in PYENVS if any(map(lambda x: x.match(p), self.pyenv_filters))] if has_filters else PYENVS
+        pyenvs.sort()
+
+        logging.info("Python environments: " + ", ".join(pyenvs))
+
+        with ThreadPoolExecutor(max_workers=self.workers) as executor:
+            for pyenv in pyenvs:
+                executor.submit(self._run_pyenv, pyenv)
+            executor.shutdown(wait=True)
+
+        logging.info("Test execution summary (%d/%d succeeded):", len([k for k, v in self._test_results.items() if v == EXIT_SUCCESS]), len(self._test_results))
+        for pyenv in pyenvs:
+            if pyenv in self._test_results:
+                code = self._test_results[pyenv]
+                logging.info(f"  {'[ SUCCESS ]' if code == EXIT_SUCCESS else '[  FAIL   ]'}        {pyenv} (exit code: {code})")
+
+        if self.report:
+            with open(self.report, 'w') as fh:
+                json.dump(self._test_results, fh)
+
+        return 0 if all(map(lambda x: x == EXIT_SUCCESS, self._test_results.values())) else 1
+
+    def _store_test_results(self, pyenv, code):
+        self._test_results[pyenv] = code
+        with open(self.logs_dir / f"{pyenv}.status", 'w') as fh:
+            fh.write(f"{code}\n")
+
+    def _run_pyenv(self, pyenv: str):
+        try:
+            self._do_run_pyenv(pyenv)
+        except:
+            logging.exception(f"[{pyenv}] Failed running tests")
+            self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
+
+    def _do_run_pyenv(self, pyenv: str):
+        with tempfile.TemporaryDirectory() as wd:
+            logging.info(f"[{pyenv}] Running tests (temporary dir: '{wd}')")
+            wd = Path(wd)
+            python_bin = Path("C:\\") / f"Python{pyenv.split('-')[-1].replace('.', '')}" / "python.exe"
+            python_version = subprocess.run([python_bin, "--version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True).stdout.split(" ")[1][0]
+            logging.debug(f"[{pyenv}] Running on Python {python_version}")
+            dx_python_root = wd / "python"
+            shutil.copytree(self.dx_toolkit / "src" / "python", dx_python_root)
+            env_dir = wd / "testenv"
+            try:
+                if python_version == "2":
+                    subprocess.run([python_bin, "-m", "pip", "install", "virtualenv"], check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                    subprocess.run([python_bin, "-m", "virtualenv", env_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                else:
+                    subprocess.run([python_bin, "-m", "venv", env_dir], check=True)
+            except subprocess.CalledProcessError as e:
+                logging.error(f"[{pyenv}] Unable to create virtual environment for test execution\n{e.output}")
+                self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
+                return
+
+            pytest_args =' '.join(self.pytest_args) if self.pytest_args else ""
+            script = wd / "run_tests.ps1"
+            with open(script, 'w') as fh:
+                fh.write(f"""
+$Env:PSModulePath = $Env:PSModulePath + ";$env:UserProfile\\Documents\\PowerShell\\Modules"
+{env_dir}\\Scripts\\activate.ps1
+
+python -m pip install {dx_python_root}
+
+If($LastExitCode -ne 0)
+{{
+    Exit 1
+}}
+
+python3.11 -m pytest -v {pytest_args} {(ROOT_DIR / 'dx_tests.py').absolute()}
+
+If($LastExitCode -ne 0)
+{{
+    Exit 1
+}}
+
+Exit 0
+""")
+
+            tests_log: Path = self.logs_dir / f"{pyenv}_test.log"
+            env = os.environ.copy()
+            env["DXPY_TEST_TOKEN"] = self.token
+            env["DXPY_TEST_PYTHON_BIN"] = str(env_dir / "Scripts" / "python")
+            env["DXPY_TEST_PYTHON_VERSION"] = python_version
+            if python_version == "2":
+                env["PYTHONIOENCODING"] = "UTF-8"
+            with open(tests_log, 'w') as fh:
+                res = subprocess.run(["powershell", "-ExecutionPolicy", "Unrestricted", script], env=env, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+            if res.returncode != 0:
+                logging.error(f"[{pyenv}] Tests exited with non-zero code. See log for console output: {tests_log.absolute()}")
+                if self.print_failed_logs:
+                    with open(tests_log) as fh:
+                        logging.error(f"[{pyenv}] Text execution log:\n{fh.read()}")
+                self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
+                return
+
+            logging.info(f"[{pyenv}] Tests execution successful")
+            self._store_test_results(pyenv, EXIT_SUCCESS)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    init_base_argparser(parser)
+
+    args = parser.parse_args()
+
+    init_logging(args.verbose)
+
+    ret = DXPYTestsRunner(
+        **parse_common_args(args)
+    ).run()
+    sys.exit(ret)

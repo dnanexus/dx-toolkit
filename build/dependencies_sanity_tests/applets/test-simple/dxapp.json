@@ -1,0 +1,30 @@
+{
+  "name": "test-simple",
+  "title": "test-simple",
+  "summary": "test-simple",
+  "dxapi": "1.0.0",
+  "version": "0.0.1",
+  "inputSpec": [],
+  "outputSpec": [],
+  "runSpec": {
+    "timeoutPolicy": {
+      "*": {
+        "minutes": 10
+      }
+    },
+    "interpreter": "bash",
+    "file": "src/test-simple.sh",
+    "distribution": "Ubuntu",
+    "release": "20.04",
+    "version": "0"
+  },
+  "regionalOptions": {
+    "aws:us-east-1": {
+      "systemRequirements": {
+        "*": {
+          "instanceType": "mem1_ssd1_x4"
+        }
+      }
+    }
+  }
+}
