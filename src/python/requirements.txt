@@ -3,7 +3,7 @@ argcomplete>=1.9.4,<2.0.0; python_version < "3.10"
 websocket-client==0.54.0
 python-dateutil>=2.5
 psutil>=5.9.3
-requests>=2.8.0,<=2.27.1
+requests>=2.8.0,<2.29
 cryptography==3.3.2; python_version < "3"
 cryptography==3.2.1; python_version > "3" and python_version < "3.6"
 cryptography>=3.4.2,<41; python_version > "3.5"
