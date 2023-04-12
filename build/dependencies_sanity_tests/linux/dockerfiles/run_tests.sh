@@ -13,7 +13,10 @@ if [[ -z "$DXPY_TEST_PYTHON_BIN" ]]; then
     exit 1
 fi
 
-python${DXPY_TEST_PYTHON_VERSION} -m pip install /dx-toolkit/src/python
+TMPDIR=$(mktemp -d -t dx-toolkit-XXXXXX)
+cp -a /dx-toolkit $TMPDIR
+
+python${DXPY_TEST_PYTHON_VERSION} -m pip install $TMPDIR/dx-toolkit/src/python
 
 if [[ "$DXPY_TEST_USING_PYENV" == "true" ]]; then
     pyenv rehash
