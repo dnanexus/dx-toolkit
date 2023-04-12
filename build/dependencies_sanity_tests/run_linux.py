@@ -111,8 +111,6 @@ class DXPYTestsRunner:
         with tempfile.TemporaryDirectory() as wd:
             logging.info(f"[{pyenv}] Running tests (temporary dir: '{wd}')")
             wd = Path(wd)
-            dx_python_root = wd / "python"
-            shutil.copytree(self.dx_toolkit / "src" / "python", dx_python_root)
             tests_log: Path = self.logs_dir / f"{pyenv}_test.log"
             command = " ".join(self.pytest_args) if self.pytest_args is not None and len(self.pytest_args) > 0 else None
             container = client.containers.run(
@@ -120,7 +118,7 @@ class DXPYTestsRunner:
                 command=command,
                 volumes={
                     ROOT_DIR: {'bind': '/tests', 'mode': 'ro'},
-                    str(dx_python_root): {'bind': '/dx-toolkit/src/python', 'mode': 'rw'}
+                    str(self.dx_toolkit): {'bind': '/dx-toolkit/', 'mode': 'ro'}
                 },
                 environment={
                     "DXPY_TEST_TOKEN": self.token,
