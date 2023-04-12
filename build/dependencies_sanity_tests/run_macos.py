@@ -74,6 +74,7 @@ class DXPYTestsRunner:
     report: str = None
     logs_dir: str = Path("logs")
     workers: int = 1
+    print_failed_logs: bool = False
     skip_official_pythons: bool = False
     _macos_version: float = float('.'.join(platform.mac_ver()[0].split('.')[:2]))
     _brew_in_opt: bool = Path("/opt/homebrew").is_dir()
