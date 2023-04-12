@@ -74,6 +74,7 @@ class DXPYTestsRunner:
     report: str = None
     logs_dir: str = Path("logs")
     workers: int = 1
+    skip_official_pythons: bool = False
     _macos_version: float = float('.'.join(platform.mac_ver()[0].split('.')[:2]))
     _brew_in_opt: bool = Path("/opt/homebrew").is_dir()
     _test_results: Dict[str, bool] = field(default_factory=dict, init=False)
@@ -87,6 +88,9 @@ class DXPYTestsRunner:
         has_filters = self.pyenv_filters is not None and len(self.pyenv_filters) > 0
         pyenvs = [p for p in PYENVS if any(map(lambda x: x.match(p), self.pyenv_filters))] if has_filters else PYENVS
         pyenvs.sort()
+
+        if self.skip_official_pythons:
+            pyenvs = [p for p in pyenvs if not p.startswith("official-")]
 
         logging.info("Python environments: " + ", ".join(pyenvs))
 
@@ -179,11 +183,14 @@ if __name__ == "__main__":
 
     init_base_argparser(parser)
 
+    parser.add_argument("--skip-official-pythons", action="store_true", help="Skip official Python distributions as they need to be manually installed using GUI")
+
     args = parser.parse_args()
 
     init_logging(args.verbose)
 
     ret = DXPYTestsRunner(
-        **parse_common_args(args)
+        **parse_common_args(args),
+        skip_official_pythons=args.skip_official_pythons,
     ).run()
     sys.exit(ret)
