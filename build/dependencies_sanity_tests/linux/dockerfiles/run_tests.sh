@@ -20,4 +20,4 @@ if [[ "$DXPY_TEST_USING_PYENV" == "true" ]]; then
 fi
 
 source /pytest-env/bin/activate
-pytest --verbose /tests/dx_tests.py $@
+pytest --verbose /tests/dependencies_sanity_tests.py $@

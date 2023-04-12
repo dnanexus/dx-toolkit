@@ -111,7 +111,7 @@ If($LastExitCode -ne 0)
     Exit 1
 }}
 
-python3.11 -m pytest -v {pytest_args} {(ROOT_DIR / 'dx_tests.py').absolute()}
+python3.11 -m pytest -v {pytest_args} {(ROOT_DIR / 'dependencies_sanity_tests.py').absolute()}
 
 If($LastExitCode -ne 0)
 {{

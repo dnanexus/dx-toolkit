@@ -62,4 +62,4 @@ else
     fi
 fi
 
-$MAIN_PYTHON_BIN -m pytest --verbose ${SCRIPT_DIR}/../dx_tests.py $@
+$MAIN_PYTHON_BIN -m pytest --verbose ${SCRIPT_DIR}/../dependencies_sanity_tests.py $@
