@@ -255,14 +255,14 @@ boost_build:
 
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
-CURL_MAJOR=7
-CURL_MINOR=88
+CURL_MAJOR=8
+CURL_MINOR=0
 CURL_MICRO=1
 CURL_PV=$(CURL_MAJOR).$(CURL_MINOR).$(CURL_MICRO)
 CURL_PV_UNDERSCORES=$(CURL_MAJOR)_$(CURL_MINOR)_$(CURL_MICRO)
 CURL_MIRROR=https://github.com/bagder/curl/releases/download
 CURL_URL=$(CURL_MIRROR)/curl-$(CURL_PV_UNDERSCORES)/curl-$(CURL_PV).tar.gz
-CURL_SHA=6ae5229c36badb822641bb14958e7d227c57611d
+CURL_SHA=4bd44cec15725d6e983ea1824b8f6c8a7d80ef4c
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
