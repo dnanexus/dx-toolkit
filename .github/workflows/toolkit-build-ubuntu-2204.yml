@@ -29,9 +29,9 @@ jobs:
           #set-safe-directory: true # Doesn't seem to work in a container
 
       # Workaround for https://github.com/actions/runner/issues/2033
-      - name: Mark git checkout dir safe
-        run: |
-          git config --global --add safe.directory /__w/dx-toolkit/dx-toolkit
+      #- name: Mark git checkout dir safe
+      #  run: |
+      #    git config --global --add safe.directory /__w/dx-toolkit/dx-toolkit
 
       #- name: DEBUG
       #  run: |
