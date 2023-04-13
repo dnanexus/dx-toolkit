@@ -1,0 +1,47 @@
+name: toolkit-build-ubuntu-2204
+
+on:
+  workflow_dispatch:
+
+jobs:
+  toolkit-build-ubuntu-2204:
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # git must be in the PATH before checkout, so that the checkout
+      # action creates a local git repo with a .git/ dir. Without .git/
+      # our legacy build targets (like dx-verify-file) run into problems
+      # creating version strings. See:
+      # https://github.com/actions/checkout/issues/335
+      - name: Install git before checkout
+        run: |
+          apt-get update && apt-get install -y git
+          # Workaround for safe dir issue when using 'container:' - see:
+          # https://github.com/actions/runner/issues/2033
+          git config --global --add safe.directory ${GITHUB_WORKSPACE}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Required for src/python/setup.py to function
+
+      - name: Install build dependencies
+        run: |
+          apt-get install -y \
+            python-is-python3 python3-venv python3-dev \
+            libssl-dev libffi-dev flex bison build-essential cmake \
+            libboost-all-dev curl libcurl4-openssl-dev
+
+      - name: Default make target
+        run: |
+          source environment
+          make 
+
+      - name: Build verification test
+        run: |
+          source environment
+          dx --version
+          dx-verify-file --version
