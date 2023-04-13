@@ -37,6 +37,7 @@ jobs:
             libssl-dev libffi-dev flex bison build-essential cmake \
             libboost-all-dev curl libcurl4-openssl-dev \
             libbz2-dev
+            # libidn12 libidn-dev
 
       - name: Upload agent make target
         run: |
