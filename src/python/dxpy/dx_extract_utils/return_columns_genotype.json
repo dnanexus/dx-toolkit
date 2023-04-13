@@ -9,10 +9,10 @@
         "locus_id": "genotype$locus_id"
     },
     {
-        "chr": "genotype$chr"
+        "chromosome": "genotype$chr"
     },
     {
-        "pos": "genotype$pos"
+        "starting_position": "genotype$pos"
     },
     {
         "ref": "allele$ref"
