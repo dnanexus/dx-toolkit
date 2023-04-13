@@ -19,9 +19,11 @@ jobs:
       - name: DEBUG
         run: |
           pwd
-          #source environment
-          #echo $DNANEXUS_HOME
           apt-get update && apt-get install -y build-essential
+          source environment
+          echo $DNANEXUS_HOME
+          echo "Git contents"
+          ls -la $DNANEXUS_HOME/.git
           make toolkit_version
           #ls -1R /__w/dx-toolkit/dx-toolkit
           ls -la /__w/dx-toolkit/dx-toolkit/build/info
