@@ -14,24 +14,24 @@ jobs:
       run:
         shell: bash
     steps:
-      # Work around an issue where the checkout action falls back to
-      # the github API instead of the git CLI, which results in a
-      # missing .git directory - see:
-      # https://github.com/actions/checkout/issues/335
-      #- name: Update git
-      #  run: |
-      #    apt-get update && apt-get install -y git
-
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Required to complete toolkit make targets
           #set-safe-directory: true # Doesn't seem to work in a container
 
+      # Work around an issue where the checkout action falls back to
+      # the github API instead of the git CLI, which results in a
+      # missing .git directory - see:
+      # https://github.com/actions/checkout/issues/335
+      - name: Update git
+        run: |
+          apt-get update && apt-get install -y git
+
       # Workaround for https://github.com/actions/runner/issues/2033
-      #- name: Mark git checkout dir safe
-      #  run: |
-      #    git config --global --add safe.directory /__w/dx-toolkit/dx-toolkit
+      - name: Mark git checkout dir safe
+        run: |
+          git config --global --add safe.directory /__w/dx-toolkit/dx-toolkit
 
       #- name: DEBUG
       #  run: |
