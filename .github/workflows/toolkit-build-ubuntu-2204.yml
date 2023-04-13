@@ -43,7 +43,10 @@ jobs:
           make toolkit_version
           #ls -1R /__w/dx-toolkit/dx-toolkit
           ls -la /__w/dx-toolkit/dx-toolkit/build/info
+          echo "contents of /__w/dx-toolkit/dx-toolkit/src/../build/info/version"
           cat /__w/dx-toolkit/dx-toolkit/src/../build/info/version
+          echo "contents of /__w/dx-toolkit/dx-toolkit/src/python/dxpy/toolkit_version.py"
+          cat /__w/dx-toolkit/dx-toolkit/src/python/dxpy/toolkit_version.py
 
       - name: Install build dependencies
         run: |
