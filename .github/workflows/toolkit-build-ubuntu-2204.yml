@@ -31,4 +31,9 @@ jobs:
         run: |
           source environment
           dx --version
-          #dx-verify-file --version
+
+      - name: Default make target
+        run: |
+          make 
+          source environment
+          dx-verify-file --version
