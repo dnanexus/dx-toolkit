@@ -23,11 +23,11 @@ jobs:
             libssl-dev libffi-dev flex bison build-essential cmake \
             libboost-all-dev curl libcurl4-openssl-dev
 
-      - name: DEBUG
-        run: |
-          make toolkit_version 
-          ls -1R /__w/dx-toolkit/dx-toolkit
-          cat /__w/dx-toolkit/dx-toolkit/src/../build/info/version
+      #- name: DEBUG
+      #  run: |
+      #    make toolkit_version 
+      #    ls -1R /__w/dx-toolkit/dx-toolkit
+      #    cat /__w/dx-toolkit/dx-toolkit/src/../build/info/version
 
       - name: Python make target
         run: |
@@ -37,7 +37,6 @@ jobs:
         run: |
           source environment
           dx --version
-
 
       - name: Default make target
         run: |
