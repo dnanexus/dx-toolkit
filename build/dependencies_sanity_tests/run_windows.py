@@ -112,6 +112,7 @@ class DXPYTestsRunner:
                 self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
                 return
 
+            pytest_python = self.pytest_python or sys.executable
             pytest_args =' '.join(self.pytest_args) if self.pytest_args else ""
             script = wd / "run_tests.ps1"
             with open(script, 'w') as fh:
@@ -123,9 +124,9 @@ $Env:PSModulePath = $Env:PSModulePath + ";$env:UserProfile\\Documents\\PowerShel
 echo "Base Python version:"
 python --version
 
-echo "Pytest Python path: {self.pytest_python}"
+echo "Pytest Python path: {pytest_python}"
 echo "Pytest Python version:"
-{self.pytest_python} --version
+{pytest_python} --version
 
 python -m pip install {dx_python_root}
 
@@ -134,7 +135,7 @@ If($LastExitCode -ne 0)
     Exit 1
 }}
 
-{self.pytest_python} -m pytest -v {pytest_args} {(ROOT_DIR / 'dependencies_sanity_tests.py').absolute()}
+{pytest_python} -m pytest -v {pytest_args} {(ROOT_DIR / 'dependencies_sanity_tests.py').absolute()}
 
 If($LastExitCode -ne 0)
 {{
@@ -176,7 +177,7 @@ if __name__ == "__main__":
 
     init_base_argparser(parser)
 
-    parser.add_argument("--pytest-python", default="python3.11", help="Binary used for executing Pytest (default %(default)s)")
+    parser.add_argument("--pytest-python", help="Binary used for executing Pytest. By default it uses the same Python as for executing this script.")
     parser.add_argument("--skip-interactive-tests", action="store_true", help="Skip interactive tests")
     parser.add_argument("--gha-force-python", help="GitHub Actions: Run only artificial pyenv with specified Python binary")
 
