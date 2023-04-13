@@ -49,7 +49,7 @@ class PyEnv:
 
     @property
     def is_official(self):
-        return self.name == "official"
+        return self._env == "official"
 
     @property
     def is_brew(self):
