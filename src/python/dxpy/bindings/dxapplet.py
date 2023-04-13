@@ -63,12 +63,9 @@ class DXExecutable:
             cluster_spec_srd = SystemRequirementsDict(kwargs.get('cluster_spec'))
             run_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd).as_dict()
 
-        if kwargs.get('instance_type_by_executable') is not None or kwargs.get('cluster_spec') is not None:
+        if kwargs.get('instance_type_by_executable') is not None:
             instance_type_by_executable_srd = {exec: SystemRequirementsDict.from_instance_type(exec_req).as_dict()
                                                for exec, exec_req in kwargs.get('instance_type_by_executable', {}).items()}
-            # TODO: handling and merging cluster_spec
-            # cluster_spec_by_executable_srd = SystemRequirementsDict(kwargs.get('cluster_spec'))
-            # run_input["systemRequirementsByExecutable"] = (instance_type_by_executable_srd + cluster_spec_by_executable_srd).as_dict()
             run_input["systemRequirementsByExecutable"] = instance_type_by_executable_srd
 
         if kwargs.get('depends_on') is not None:
