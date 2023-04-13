@@ -3,8 +3,6 @@ name: toolkit-build-ubuntu-2204
 on:
   workflow_dispatch:
 
-  pull_request:
-
 jobs:
   toolkit-build-ubuntu-2204:
     runs-on: ubuntu-latest
@@ -23,8 +21,6 @@ jobs:
           apt-get update && apt-get install -y git
           # Workaround for safe dir issue when using 'container:' - see:
           # https://github.com/actions/runner/issues/2033
-          #git config --global --add safe.directory /__w/dx-toolkit/dx-toolkit
-          echo ${GITHUB_WORKSPACE}
           git config --global --add safe.directory ${GITHUB_WORKSPACE}
 
       - name: Checkout
