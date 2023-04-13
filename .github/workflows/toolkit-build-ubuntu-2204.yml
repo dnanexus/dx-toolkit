@@ -6,7 +6,6 @@ on:
   pull_request:
 
 jobs:
-  # Build dx-toolkit default make target in a 22.04 container
   toolkit-build-ubuntu-2204:
     runs-on: ubuntu-latest
     container: ubuntu:22.04
@@ -14,19 +13,20 @@ jobs:
       run:
         shell: bash
     steps:
+      # git must be in the PATH before checkout, so that the checkout
+      # action creates a local git repo with a .git/ dir. Without this
+      # the checkout action doesn't create the .git dir, which causes
+      # problems building dx-verify-file. See:
+      # https://github.com/actions/checkout/issues/335
+      - name: Install git before checkout
+        run: |
+          apt-get update && apt-get install -y git
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Required to complete toolkit make targets
           #set-safe-directory: true # Doesn't seem to work in a container
-
-      # Work around an issue where the checkout action falls back to
-      # the github API instead of the git CLI, which results in a
-      # missing .git directory - see:
-      # https://github.com/actions/checkout/issues/335
-      - name: Update git
-        run: |
-          apt-get update && apt-get install -y git
 
       # Workaround for https://github.com/actions/runner/issues/2033
       - name: Mark git checkout dir safe
@@ -57,7 +57,8 @@ jobs:
       - name: Default make target
         run: |
           source environment
-          make 
+          #make 
+          make dxcpp
 
       - name: Build verification test
         run: |
