@@ -37,6 +37,7 @@ class DXPYTestsRunner:
     report: Optional[str] = None
     logs_dir: str = Path("logs")
     workers: int = 1
+    print_logs: bool = False
     print_failed_logs: bool = False
     keep_images: bool = False
     pull: bool = True
@@ -137,11 +138,16 @@ class DXPYTestsRunner:
             if status != 0:
                 logging.error(f"[{pyenv}] Container exitted with non-zero return code. See log for console output: {tests_log.absolute()}")
                 if self.print_failed_logs:
-                    with open(tests_log) as fh:
-                        logging.error(f"[{pyenv}] Text execution log:\n{fh.read()}")
+                    self._print_log(pyenv, tests_log)
                 raise Exception("Docker container exited with non-zero code")
 
             logging.info(f"[{pyenv}] Tests execution successful")
+            if self.print_logs:
+                self._print_log(pyenv, tests_log)
+
+    def _print_log(self, pyenv, log):
+        with open(log) as fh:
+            logging.info(f"[{pyenv}] Tests execution log:\n{fh.read()}")
 
 
 if __name__ == "__main__":

@@ -74,6 +74,7 @@ class DXPYTestsRunner:
     report: Optional[str] = None
     logs_dir: str = Path("logs")
     workers: int = 1
+    print_logs: bool = False
     print_failed_logs: bool = False
     _macos_version: float = float('.'.join(platform.mac_ver()[0].split('.')[:2]))
     _brew_in_opt: bool = Path("/opt/homebrew").is_dir()
@@ -166,13 +167,18 @@ class DXPYTestsRunner:
             if res.returncode != 0:
                 logging.error(f"[{pyenv}] Tests exited with non-zero code. See log for console output: {tests_log.absolute()}")
                 if self.print_failed_logs:
-                    with open(tests_log) as fh:
-                        logging.error(f"[{pyenv}] Text execution log:\n{fh.read()}")
+                    self._print_log(pyenv, tests_log)
                 self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
                 return
 
             logging.info(f"[{pyenv}] Tests execution successful")
+            if self.print_logs:
+                self._print_log(pyenv, tests_log)
             self._store_test_results(pyenv, EXIT_SUCCESS)
+
+    def _print_log(self, pyenv, log):
+        with open(log) as fh:
+            logging.info(f"[{pyenv}] Tests execution log:\n{fh.read()}")
 
 
 if __name__ == "__main__":

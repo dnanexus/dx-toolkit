@@ -74,6 +74,7 @@ def init_base_argparser(parser) -> None:
     pyenv_group = parser.add_mutually_exclusive_group()
     pyenv_group.add_argument("-f", "--pyenv-filter", dest="pyenv_filters", action="append", help="Run only in environments matching the filters. Supported are wild-card character '*' (e.g. ubuntu-*-py3-*) or regular expression (when using --regexp-filters flag). Inversion filter is supported by using '!' in the begining of the expression.")
     pyenv_group.add_argument("--run-failed", metavar="REPORT", help="Load report file and run only failed environments")
+    parser.add_argument("--print-logs", action="store_true", help="Print logs of all executions")
     parser.add_argument("--print-failed-logs", action="store_true", help="Print logs of failed executions")
     parser.add_argument("--regexp-filters", action="store_true", help="Apply filters as a fully-featured regular expressions")
     parser.add_argument("--pytest-matching", help="Run only tests matching given substring expression (the same as pytest -k EXPRESSION)")
@@ -112,6 +113,7 @@ def parse_common_args(args) -> dict:
         pyenv_filters=pyenv_filters,
         report=args.report,
         logs_dir=logs_dir,
+        print_logs=args.print_logs,
         print_failed_logs=args.print_failed_logs,
         workers=args.workers,
     )
