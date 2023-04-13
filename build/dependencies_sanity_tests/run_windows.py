@@ -120,6 +120,13 @@ $ErrorActionPreference = 'stop'
 $Env:PSModulePath = $Env:PSModulePath + ";$env:UserProfile\\Documents\\PowerShell\\Modules"
 {env_dir}\\Scripts\\activate.ps1
 
+echo "Base Python version:"
+python --version
+
+echo "Pytest Python path: {self.pytest_python}"
+echo "Pytest Python version:"
+{self.pytest_python} --version
+
 python -m pip install {dx_python_root}
 
 If($LastExitCode -ne 0)
