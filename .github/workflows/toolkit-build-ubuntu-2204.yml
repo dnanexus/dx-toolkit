@@ -57,8 +57,7 @@ jobs:
       - name: Default make target
         run: |
           source environment
-          #make 
-          make dxcpp
+          make 
 
       - name: Build verification test
         run: |
