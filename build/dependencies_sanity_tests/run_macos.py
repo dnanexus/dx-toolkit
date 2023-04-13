@@ -89,9 +89,6 @@ class DXPYTestsRunner:
     def run(self):
         pyenvs = filter_pyenvs(PYENVS, self.pyenv_filters_inclusive, self.pyenv_filters_exclusive)
 
-        if self.skip_official_pythons:
-            pyenvs = [p for p in pyenvs if not p.startswith("official-")]
-
         logging.info("Python environments: " + ", ".join(pyenvs))
 
         for pyenv in pyenvs:
