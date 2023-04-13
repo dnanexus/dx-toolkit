@@ -22,10 +22,10 @@ jobs:
 
       - name: Default make target
         run: |
+          source environment
           make
 
       - name: Build verification test
         run: |
-          source environment
           dx --version
           dx-verify-file --version
