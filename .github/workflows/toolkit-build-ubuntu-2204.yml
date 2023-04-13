@@ -14,15 +14,18 @@ jobs:
         shell: bash
     steps:
       # git must be in the PATH before checkout, so that the checkout
-      # action creates a local git repo with a .git/ dir. Without this
-      # the checkout action doesn't create the .git dir, which causes
-      # problems building dx-verify-file. See:
+      # action creates a local git repo with a .git/ dir. Without .git/
+      # our legacy build targets (like dx-verify-file) run into problems
+      # creating version strings. See:
       # https://github.com/actions/checkout/issues/335
       - name: Install git before checkout
         run: |
           apt-get update && apt-get install -y git
-          # Workaround for https://github.com/actions/runner/issues/2033
-          git config --global --add safe.directory /__w/dx-toolkit/dx-toolkit
+          # Workaround for safe dir issue when using 'container:' - see:
+          # https://github.com/actions/runner/issues/2033
+          #git config --global --add safe.directory /__w/dx-toolkit/dx-toolkit
+          echo ${GITHUB_WORKSPACE}
+          git config --global --add safe.directory ${GITHUB_WORKSPACE}
 
       - name: Checkout
         uses: actions/checkout@v3
