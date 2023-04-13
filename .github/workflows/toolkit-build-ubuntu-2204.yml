@@ -16,21 +16,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: DEBUG
+        run: |
+          pwd
+          #source environment
+          #echo $DNANEXUS_HOME
+          make toolkit_version
+          #ls -1R /__w/dx-toolkit/dx-toolkit
+          ls -la /__w/dx-toolkit/dx-toolkit/build/info
+          cat /__w/dx-toolkit/dx-toolkit/src/../build/info/version
+
       - name: Install build dependencies
         run: |
           apt-get update && apt-get install -y \
             git python-is-python3 python3-venv python3-dev \
             libssl-dev libffi-dev flex bison build-essential cmake \
             libboost-all-dev curl libcurl4-openssl-dev
-
-      - name: DEBUG
-        run: |
-          pwd
-          source environment
-          echo $DNANEXUS_HOME
-          make toolkit_version 
-          ls -1R /__w/dx-toolkit/dx-toolkit
-          cat /__w/dx-toolkit/dx-toolkit/src/../build/info/version
 
       - name: Python make target
         run: |
