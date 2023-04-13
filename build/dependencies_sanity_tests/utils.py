@@ -52,6 +52,14 @@ class RegexpMatcher(Matcher):
         return self.pattern.match(pyenv)
 
 
+@dataclass
+class InvertMatcher(Matcher):
+    matcher: Matcher
+
+    def match(self, pyenv: str) -> bool:
+        return not self.matcher.match(pyenv)
+
+
 def init_logging(verbose: bool) -> None:
     logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', level=logging.DEBUG if verbose else logging.INFO)
 
@@ -64,7 +72,7 @@ def init_base_argparser(parser) -> None:
     parser.add_argument("-w", "--workers", type=int, default=1, help="Number of workers (i.e. parallelly running tests)")
     parser.add_argument("-r", "--report", help="Save status report to file")
     pyenv_group = parser.add_mutually_exclusive_group()
-    pyenv_group.add_argument("-f", "--pyenv-filter", dest="pyenv_filters", action="append", help="Run only in environments matching the filters. Supported are wild-card character '*' (e.g. ubuntu-*-py3-*) or regular expression (when using --regexp-filters flag)")
+    pyenv_group.add_argument("-f", "--pyenv-filter", dest="pyenv_filters", action="append", help="Run only in environments matching the filters. Supported are wild-card character '*' (e.g. ubuntu-*-py3-*) or regular expression (when using --regexp-filters flag). Inversion filter is supported by using '!' in the begining of the expression.")
     pyenv_group.add_argument("--run-failed", metavar="REPORT", help="Load report file and run only failed environments")
     parser.add_argument("--print-failed-logs", action="store_true", help="Print logs of failed executions")
     parser.add_argument("--regexp-filters", action="store_true", help="Apply filters as a fully-featured regular expressions")
@@ -89,7 +97,7 @@ def parse_common_args(args) -> dict:
         with open(args.run_failed) as fh:
             pyenv_filters = [ExactMatcher(k) for k, v in json.load(fh).items() if v != 0]
     elif args.pyenv_filters:
-        pyenv_filters = [MatcherClass(f) for f in args.pyenv_filters]
+        pyenv_filters = [InvertMatcher(MatcherClass(f[1:])) if f[0] == "!" else MatcherClass(f) for f in args.pyenv_filters]
 
     logs_dir = Path(args.logs)
     if not logs_dir.is_dir():
