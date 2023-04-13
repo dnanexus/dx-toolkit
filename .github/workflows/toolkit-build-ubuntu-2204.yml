@@ -24,7 +24,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           #set-safe-directory: true # Doesn't seem to work in a container
 
       # Workaround for https://github.com/actions/runner/issues/2033
