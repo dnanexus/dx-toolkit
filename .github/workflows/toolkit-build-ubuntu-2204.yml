@@ -21,7 +21,7 @@ jobs:
           pwd
           #source environment
           #echo $DNANEXUS_HOME
-          apt-get install -y build-essential
+          apt-get update && apt-get install -y build-essential
           make toolkit_version
           #ls -1R /__w/dx-toolkit/dx-toolkit
           ls -la /__w/dx-toolkit/dx-toolkit/build/info
