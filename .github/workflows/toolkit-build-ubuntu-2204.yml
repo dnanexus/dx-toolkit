@@ -9,6 +9,9 @@ jobs:
   toolkit-build-ubuntu-2204:
     runs-on: ubuntu-latest
     container: ubuntu:22.04
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -22,10 +25,10 @@ jobs:
 
       - name: Default make target
         run: |
-          source environment
           make
 
       - name: Build verification test
         run: |
+          source environment
           dx --version
           dx-verify-file --version
