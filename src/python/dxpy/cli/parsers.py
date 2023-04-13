@@ -226,23 +226,77 @@ class PrintInstanceTypeHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         print("Help: Specifying instance types for " + parser.prog)
         print()
+        print(fill('Instance types can be requested with --instance-type-by-executable and ' +
+                   '--instance-type arguments, with --instance-type-by-executable specification ' +
+                   'taking priority over --instance-type, workflow\'s stageSystemRequirements, ' +
+                   'and specifications provided during app and applet creation.'))
+        print()
+        print(fill('--instance-type specifications do not propagate to subjobs and sub-analyses ' +
+                   'launched from a job with a /executable-xxxx/run call, but --instance-type-by-executable do ' +
+                   '(where executable refers to an app, applet or workflow).'))
+        print()
+        print(fill('When running an app or an applet, --instance-type lets you specify the ' +
+                    'instance type to be used by each entry point.'))
         print(fill('A single instance type can be requested to be used by all entry points by providing the instance type name.  Different instance types can also be requested for different entry points of an app or applet by providing a JSON string mapping from function names to instance types, e.g.'))
         print()
         print('    {"main": "mem2_hdd2_v2_x2", "other_function": "mem1_ssd1_v2_x2"}')
         if parser.prog == 'dx run':
             print()
-            print(fill('If running a workflow, different stages can have different instance type ' +
-                       'requests by prepending the request with "<stage identifier>=" (where a ' +
-                       'stage identifier is an ID, a numeric index, or a unique stage name) and ' +
+            print(fill('When running a workflow, --instance-type lets you specify instance types for ' +
+                       'each entry point of each workflow stage by prepending the request with "<stage identifier>=" ' +
+                       '(where a stage identifier is an ID, a numeric index, or a unique stage name) and ' +
                        'repeating the argument for as many stages as desired.  If no stage ' +
                        'identifier is provided, the value is applied as a default for all stages.'))
             print()
-            print(fill('The following example runs all entry points of the first stage with ' +
+            print('Examples')
+            print(fill('1. Run the main entry point of applet-xxxx on mem1_ssd1_v2_x2, and '
+                        'all other entry points on mem1_ssd1_v2_x4'))
+            print('    dx run applet-xxxx --instance-type \'{"main": "mem1_ssd1_v2_x2",\n' +
+                  '                                         "*": "mem1_ssd1_v2_x4"}\'')
+            print()
+            print(fill('2. Runs all entry points of the first stage with ' +
                        'mem2_hdd2_v2_x2, the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
                        'stages with mem2_hdd2_v2_x4'))
             print()
-            print('    Example: dx run workflow --instance-type 0=mem2_hdd2_v2_x2 \\')
-            print('               --instance-type BWA=mem1_ssd1_v2_x2 --instance-type mem2_hdd2_v2_x4')
+            print('    dx run workflow \\\n' +
+                  '     --instance-type 0=mem2_hdd2_v2_x2 \\\n' +
+                  '     --instance-type 1=\'{"main": "mem1_ssd1_v2_x4"}\' \\\n' +
+                  '     --instance-type BWA=mem1_ssd1_v2_x2 \\\n' +
+                  '     --instance-type mem2_hdd2_v2_x4')
+            print(fill('--instance-type-by-executable argument is a JSON string with a double mapping that ' +
+'specifies instance types by app or applet id, then by entry point within the executable.' +
+'This specification applies across the entire nested execution tree and is propagated ' +
+'across /executable-xxxx/run calls issued with the execution tree.'))
+            print()
+            print('More examples')
+            print(fill('3. Force every job in the execution tree to use mem2_ssd1_v2_x2'))
+            print('    dx run workflow --instance-type-by-executable \'{"*": {"*": "mem2_ssd1_v2_x2"}}\'')
+            print()
+            print(fill('4. Force every job in the execution tree executing applet-xyz1 to use mem2_ssd1_v2_x2'))
+            print()
+            print('    dx run workflow  --instance-type-by-executable \'{"applet-xyz1":{"*": "mem2_ssd1_v2_x2"}}\'')
+            print()
+            print(fill('5. Force every job executing applet-xyz1 to use mem2_ssd1_v2_x4 ' +
+                       'for the main entry point and mem2_ssd1_v2_x2 for all other entry points.' +
+                       'Also force the collect entry point of all executables other than applet-xyz1 to use mem2_ssd1_v2_x8.' + 
+   'Other entry points of executable other than applet-xyz1 may be overridden by ' +
+   'lower-priority mechanisms'))
+            print()
+            print('    dx run workflow --instance-type-by-executable \\\n' +
+                  '     \'{"applet-xyz1": {"main":    "mem2_ssd1_v2_x4", "*": "mem2_ssd1_v2_x2"},\n' +
+                  '     "*": {"collect": "mem2_ssd1_v2_x8"}}\'')
+            print()
+            print(fill('6. Force every job executing applet-xxxx to use mem2_ssd1_v2_x2 for all entry points' +
+   'in the entire execution tree.' +
+                       '   Also force stage 0 executable to run on mem2_ssd1_v2_x4, unless stage 0 invokes' + 
+   'applet-xxxx, in which case applet-xxxx\'s jobs will use mem2_ssd1_v2_x2 as specified by ' +
+   '--instance-type-by-executable.'))
+            print()
+            print('    dx run workflow \\\n' +
+                  '     --instance-type-by-executable  \'{"applet-xxxx": {"*": "mem2_ssd1_v2_x2"}}\'\n' +
+                  '     --instance-type 0=mem2_ssd1_v2_x4')
+            print()
+            print(fill('See "Requesting Instance Types" in DNAnexus documentation for more details.'))
         print()
         print('Available instance types:')
         print()
