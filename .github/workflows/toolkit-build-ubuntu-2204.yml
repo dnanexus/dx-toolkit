@@ -6,6 +6,7 @@ on:
   pull_request:
 
 jobs:
+  # Build dx-toolkit default make target in a 22.04 container
   toolkit-build-ubuntu-2204:
     runs-on: ubuntu-latest
     container: ubuntu:22.04
@@ -17,9 +18,9 @@ jobs:
       # the github API instead of the git CLI, which results in a
       # missing .git directory - see:
       # https://github.com/actions/checkout/issues/335
-      - name: Update git
-        run: |
-          apt-get update && apt-get install -y git
+      #- name: Update git
+      #  run: |
+      #    apt-get update && apt-get install -y git
 
       - name: Checkout
         uses: actions/checkout@v3
