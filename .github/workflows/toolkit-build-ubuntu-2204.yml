@@ -32,6 +32,7 @@ jobs:
       - name: Python make target
         run: |
           make python
+          cat build/info/version
 
       - name: Build verification test
         run: |
