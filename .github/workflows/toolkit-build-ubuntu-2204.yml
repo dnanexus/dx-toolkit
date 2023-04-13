@@ -26,6 +26,8 @@ jobs:
       - name: DEBUG
         run: |
           make toolkit_version 
+          cat /__w/dx-toolkit/dx-toolkit/src/../build/info/version
+          ls -1R /__w/dx-toolkit/dx-toolkit
 
       - name: Python make target
         run: |
