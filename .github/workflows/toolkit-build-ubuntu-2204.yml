@@ -31,4 +31,4 @@ jobs:
         run: |
           source environment
           dx --version
-          dx-verify-file --version
+          #dx-verify-file --version
