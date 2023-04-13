@@ -23,9 +23,9 @@ jobs:
             libssl-dev libffi-dev flex bison build-essential cmake \
             libboost-all-dev curl libcurl4-openssl-dev
 
-      - name: Default make target
+      - name: Python make target
         run: |
-          make
+          make python
 
       - name: Build verification test
         run: |
