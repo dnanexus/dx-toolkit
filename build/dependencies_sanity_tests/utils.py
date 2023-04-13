@@ -64,7 +64,7 @@ def init_base_argparser(parser) -> None:
     parser.add_argument("-w", "--workers", type=int, default=1, help="Number of workers (i.e. parallelly running tests)")
     parser.add_argument("-r", "--report", help="Save status report to file")
     pyenv_group = parser.add_mutually_exclusive_group()
-    pyenv_group.add_argument("-f", "--pyenv-filter", dest="pyenv_filters", action="append", help="Run only in environments matching the filters. Supported are wild-card character '*' (e.g. ubuntu-*-py3-*) or regular expression (when using --regexp-filters flag)")
+    pyenv_group.add_argument("-f", "--pyenv-filter", dest="pyenv_filters", action="append", help="Run only in environments matching the filters. Supported are wild-card character '*' (e.g. ubuntu-*-py3-*) or regular expression (when using --regexp-filters flag). Exclusive filters can be using when prefixed with '!'.")
     pyenv_group.add_argument("--run-failed", metavar="REPORT", help="Load report file and run only failed environments")
     parser.add_argument("--print-logs", action="store_true", help="Print logs of all executions")
     parser.add_argument("--print-failed-logs", action="store_true", help="Print logs of failed executions")
@@ -73,6 +73,18 @@ def init_base_argparser(parser) -> None:
     parser.add_argument("--pytest-exitfirst", action="store_true", help="Exit pytest instantly on first error or failed test (the same as pytest -x)")
     parser.add_argument("--pytest-tee", action="store_true", help="Also print stdout/stderr during execution (the same as pytest --capture=tee-sys)")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose logging")
+
+
+def filter_pyenvs(all_pyenvs, filters_inclusive, filters_exclusive):
+    pyenvs = all_pyenvs
+    if filters_inclusive is not None and len(filters_inclusive) > 0:
+        pyenvs = [p for p in pyenvs if any(map(lambda x: x.match(p), filters_inclusive))]
+    if filters_exclusive is not None and len(filters_exclusive) > 0:
+        pyenvs = [p for p in pyenvs if all(map(lambda x: not x.match(p), filters_exclusive))]
+
+    pyenvs.sort()
+
+    return pyenvs
 
 
 def parse_common_args(args) -> dict:
@@ -84,13 +96,14 @@ def parse_common_args(args) -> dict:
     if args.pytest_tee:
         pytest_args += ["--capture", "tee-sys"]
 
-    pyenv_filters = None
+    pyenv_filters_inclusive = None
     MatcherClass = RegexpMatcher if args.regexp_filters else WildcardMatcher
     if args.run_failed:
         with open(args.run_failed) as fh:
-            pyenv_filters = [ExactMatcher(k) for k, v in json.load(fh).items() if v != 0]
+            pyenv_filters_inclusive = [ExactMatcher(k) for k, v in json.load(fh).items() if v != 0]
     elif args.pyenv_filters:
-        pyenv_filters = [MatcherClass(f) for f in args.pyenv_filters]
+        pyenv_filters_inclusive = [MatcherClass(f) for f in args.pyenv_filters if f[0] != "!"]
+        pyenv_filters_exclusive = [MatcherClass(f[1:]) for f in args.pyenv_filters if f[0] == "!"]
 
     logs_dir = Path(args.logs)
     if not logs_dir.is_dir():
@@ -102,7 +115,8 @@ def parse_common_args(args) -> dict:
         token=args.token,
         env=args.env,
         pytest_args=pytest_args,
-        pyenv_filters=pyenv_filters,
+        pyenv_filters_inclusive=pyenv_filters_inclusive,
+        pyenv_filters_exclusive=pyenv_filters_exclusive,
         report=args.report,
         logs_dir=logs_dir,
         print_logs=args.print_logs,

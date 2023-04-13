@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from utils import init_base_argparser, init_logging, parse_common_args, Matcher
+from utils import init_base_argparser, init_logging, parse_common_args, filter_pyenvs, Matcher
 
 ROOT_DIR = Path(__file__).parent.absolute()
 
@@ -69,14 +69,14 @@ class DXPYTestsRunner:
     dx_toolkit: Path
     token: str
     env: str = "stg"
-    pyenv_filters: List[Matcher] = None
+    pyenv_filters_inclusive: Optional[List[Matcher]] = None
+    pyenv_filters_exclusive: Optional[List[Matcher]] = None
     pytest_args: Optional[str] = None
     report: Optional[str] = None
     logs_dir: str = Path("logs")
     workers: int = 1
     print_logs: bool = False
     print_failed_logs: bool = False
-    skip_official_pythons: bool = False
     _macos_version: float = float('.'.join(platform.mac_ver()[0].split('.')[:2]))
     _brew_in_opt: bool = Path("/opt/homebrew").is_dir()
     _test_results: Dict[str, bool] = field(default_factory=dict, init=False)
@@ -87,9 +87,7 @@ class DXPYTestsRunner:
         logging.debug(f"Detected MacOS version {self._macos_version}")
 
     def run(self):
-        has_filters = self.pyenv_filters is not None and len(self.pyenv_filters) > 0
-        pyenvs = [p for p in PYENVS if any(map(lambda x: x.match(p), self.pyenv_filters))] if has_filters else PYENVS
-        pyenvs.sort()
+        pyenvs = filter_pyenvs(PYENVS, self.pyenv_filters_inclusive, self.pyenv_filters_exclusive)
 
         if self.skip_official_pythons:
             pyenvs = [p for p in pyenvs if not p.startswith("official-")]
@@ -190,14 +188,11 @@ if __name__ == "__main__":
 
     init_base_argparser(parser)
 
-    parser.add_argument("--skip-official-pythons", action="store_true", help="Skip official Python distributions as they need to be manually installed using GUI")
-
     args = parser.parse_args()
 
     init_logging(args.verbose)
 
     ret = DXPYTestsRunner(
-        **parse_common_args(args),
-        skip_official_pythons=args.skip_official_pythons,
+        **parse_common_args(args)
     ).run()
     sys.exit(ret)

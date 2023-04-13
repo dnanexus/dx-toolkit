@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from utils import init_base_argparser, init_logging, parse_common_args, Matcher
+from utils import init_base_argparser, init_logging, parse_common_args, filter_pyenvs, Matcher
 
 ROOT_DIR = Path(__file__).parent.absolute()
 
@@ -28,7 +28,8 @@ class DXPYTestsRunner:
     dx_toolkit: Path
     token: str
     env: str = "stg"
-    pyenv_filters: List[Matcher] = None
+    pyenv_filters_inclusive: Optional[List[Matcher]] = None
+    pyenv_filters_exclusive: Optional[List[Matcher]] = None
     pytest_args: Optional[str] = None
     report: Optional[str] = None
     logs_dir: str = Path("logs")
@@ -45,17 +46,13 @@ class DXPYTestsRunner:
             raise ValueError("Windows currently does not support multiple workers")
 
     def run(self):
-        has_filters = self.pyenv_filters is not None and len(self.pyenv_filters) > 0
-
-        if has_filters and self.gha_force_python:
+        if (self.pyenv_filters_inclusive is not None or self.pyenv_filters_exclusive is not None) and self.gha_force_python:
             raise AssertionError("Cannot use filters with enforced Python!")
 
         if self.gha_force_python:
             pyenvs = ["gha"]
         else:
-            pyenvs = [p for p in PYENVS if any(map(lambda x: x.match(p), self.pyenv_filters))] if has_filters else PYENVS
-
-        pyenvs.sort()
+            pyenvs = filter_pyenvs(PYENVS, self.pyenv_filters_inclusive, self.pyenv_filters_exclusive)
 
         logging.info("Python environments: " + ", ".join(pyenvs))
 
