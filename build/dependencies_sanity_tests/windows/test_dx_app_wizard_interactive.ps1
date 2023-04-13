@@ -1,3 +1,5 @@
+$ErrorActionPreference = 'stop'
+
 Import-Module Await
 
 Start-AwaitSession

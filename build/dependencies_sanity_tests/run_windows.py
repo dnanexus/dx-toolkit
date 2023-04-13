@@ -116,6 +116,7 @@ class DXPYTestsRunner:
             script = wd / "run_tests.ps1"
             with open(script, 'w') as fh:
                 fh.write(f"""
+$ErrorActionPreference = 'stop'
 $Env:PSModulePath = $Env:PSModulePath + ";$env:UserProfile\\Documents\\PowerShell\\Modules"
 {env_dir}\\Scripts\\activate.ps1
 
