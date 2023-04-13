@@ -76,7 +76,6 @@ class DXPYTestsRunner:
             image = self._build_image(pyenv)
         except:
             logging.exception(f"[{pyenv}] Unable to build docker image")
-
             self._store_test_results(pyenv, EXIT_IMAGE_BUILD_FAILED)
             return
 
@@ -88,7 +87,10 @@ class DXPYTestsRunner:
             return
         finally:
             if not self.keep_images:
-                client.images.remove(image.id)
+                try:
+                    client.images.remove(image.id)
+                except:
+                    logging.exception(f"[{pyenv}] Unable to remove docker image")
 
         self._store_test_results(pyenv, EXIT_SUCCESS)
 
