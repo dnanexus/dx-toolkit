@@ -11,7 +11,7 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from utils import init_base_argparser, init_logging, parse_common_args, Matcher
 
@@ -70,8 +70,8 @@ class DXPYTestsRunner:
     token: str
     env: str = "stg"
     pyenv_filters: List[Matcher] = None
-    pytest_args: str = None
-    report: str = None
+    pytest_args: Optional[str] = None
+    report: Optional[str] = None
     logs_dir: str = Path("logs")
     workers: int = 1
     print_failed_logs: bool = False

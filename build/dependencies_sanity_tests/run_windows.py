@@ -10,7 +10,7 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from utils import init_base_argparser, init_logging, parse_common_args, Matcher
 
@@ -29,12 +29,14 @@ class DXPYTestsRunner:
     token: str
     env: str = "stg"
     pyenv_filters: List[Matcher] = None
-    pytest_args: str = None
-    report: str = None
+    pytest_args: Optional[str] = None
+    report: Optional[str] = None
     logs_dir: str = Path("logs")
     workers: int = 1
     print_failed_logs: bool = False
+    pytest_python: str = "python3.11"
     skip_interactive_tests: bool = False
+    gha_force_python: Optional[str] = None
     _test_results: Dict[str, int] = field(default_factory=dict, init=False)
 
     def __post_init__(self):
@@ -45,6 +47,9 @@ class DXPYTestsRunner:
         has_filters = self.pyenv_filters is not None and len(self.pyenv_filters) > 0
         pyenvs = [p for p in PYENVS if any(map(lambda x: x.match(p), self.pyenv_filters))] if has_filters else PYENVS
         pyenvs.sort()
+
+        if self.gha_force_python:
+            pyenvs = ["gha"]
 
         logging.info("Python environments: " + ", ".join(pyenvs))
 
@@ -81,7 +86,10 @@ class DXPYTestsRunner:
         with tempfile.TemporaryDirectory() as wd:
             logging.info(f"[{pyenv}] Running tests (temporary dir: '{wd}')")
             wd = Path(wd)
-            python_bin = Path("C:\\") / f"Python{pyenv.split('-')[-1].replace('.', '')}" / "python.exe"
+            if self.gha_force_python:
+                python_bin = self.gha_force_python
+            else:
+                python_bin = Path("C:\\") / f"Python{pyenv.split('-')[-1].replace('.', '')}" / "python.exe"
             python_version = subprocess.run([python_bin, "--version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True).stdout.split(" ")[1][0]
             logging.debug(f"[{pyenv}] Running on Python {python_version}")
             dx_python_root = wd / "python"
@@ -112,7 +120,7 @@ If($LastExitCode -ne 0)
     Exit 1
 }}
 
-python3.11 -m pytest -v {pytest_args} {(ROOT_DIR / 'dependencies_sanity_tests.py').absolute()}
+{self.pytest_python} -m pytest -v {pytest_args} {(ROOT_DIR / 'dependencies_sanity_tests.py').absolute()}
 
 If($LastExitCode -ne 0)
 {{
@@ -149,7 +157,9 @@ if __name__ == "__main__":
 
     init_base_argparser(parser)
 
+    parser.add_argument("--pytest-python", default="python3.11", help="Binary used for executing Pytest (default %(default)s)")
     parser.add_argument("--skip-interactive-tests", action="store_true", help="Skip interactive tests")
+    parser.add_argument("--gha-force-python", help="GitHub Actions: Run only artificial pyenv with specified Python binary")
 
     args = parser.parse_args()
 
@@ -157,6 +167,8 @@ if __name__ == "__main__":
 
     ret = DXPYTestsRunner(
         **parse_common_args(args),
+        pytest_python=args.pytest_python,
         skip_interactive_tests=args.skip_interactive_tests,
+        gha_force_python=args.gha_force_python,
     ).run()
     sys.exit(ret)
