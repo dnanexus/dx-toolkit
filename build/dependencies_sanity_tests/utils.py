@@ -97,6 +97,7 @@ def parse_common_args(args) -> dict:
         pytest_args += ["--capture", "tee-sys"]
 
     pyenv_filters_inclusive = None
+    pyenv_filters_exclusive = None
     MatcherClass = RegexpMatcher if args.regexp_filters else WildcardMatcher
     if args.run_failed:
         with open(args.run_failed) as fh:
