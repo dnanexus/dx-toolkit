@@ -126,7 +126,6 @@ class DXPYTestsRunner:
                     "DXPY_TEST_TOKEN": self.token,
                     "DXPY_TEST_ENV": self.env,
                 },
-                remove=True,
                 detach=True
             )
 
@@ -136,6 +135,12 @@ class DXPYTestsRunner:
                     fh.flush()
 
             status = container.wait()["StatusCode"]
+
+            try:
+                container.remove()
+            except:
+                logging.exception(f"[{pyenv}] Cannot remove container")
+
             if status != 0:
                 logging.error(f"[{pyenv}] Container exitted with non-zero return code. See log for console output: {tests_log.absolute()}")
                 if self.print_failed_logs:
