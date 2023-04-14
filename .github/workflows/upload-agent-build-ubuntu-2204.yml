@@ -46,4 +46,6 @@ jobs:
 
       - name: Build verification test
         run: |
-          ./ua/dist/ua --version
+          source environment
+          which ua
+          ua --version
