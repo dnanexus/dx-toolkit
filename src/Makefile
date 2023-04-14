@@ -285,14 +285,20 @@ curl/stage/lib/libcurl.la: shasum openssl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
 	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
 	tar -xzf curl-$(CURL_PV).tar.gz -C curl --strip-components=1
-	cd curl; ./configure --disable-ldap --disable-ldaps \
+	# Unset default DESTDIR value (set in src/mk/config.mk) since using
+	# DESTDIR along with --enable-ares breaks the way recent curl releases
+	# load the ares header/library dirs. See:
+	# https://github.com/curl/curl/issues/2982
+	cd curl; \
+	    unset DESTDIR ; \
+	    ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
 	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
 	    --without-nss --without-libssh2 --without-librtmp \
 	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
-	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
-	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
+	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=$(DNANEXUS_HOME)/src/curl/stage
+	unset DESTDIR ; $(MAKE) -C curl install
 
 CARES_MAJOR=1
 CARES_MINOR=19
@@ -309,8 +315,8 @@ c-ares/stage/lib/libcares.la: shasum
 	curl -L $(CARES_URL) > $(CARES_SOURCE_TARBALL)
 	[[ $$(shasum $(CARES_SOURCE_TARBALL) | cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf $(CARES_SOURCE_TARBALL) -C c-ares --strip-components=1
-	cd c-ares; ./configure --prefix=/
-	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
+	cd c-ares; unset DESTDIR ; ./configure --prefix=$(DNANEXUS_HOME)/src/c-ares/stage
+	unset DESTDIR ; $(MAKE) -C c-ares install
 
 FILE_PV=5.32
 FILE_SHA=6a84bddca6fa9bcf6882832ccece38cf22b9b600
