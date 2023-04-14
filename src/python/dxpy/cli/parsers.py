@@ -311,8 +311,6 @@ def _parse_dictionary_or_string_input(thing, arg_name):
 def _parse_inst_type(thing):
     return _parse_dictionary_or_string_input(thing, "--instance-type")
 
-def _parse_inst_type_by_executable(thing):
-    return _parse_dictionary_or_string_input(thing, "--instance-type-by-executable")
 
 def _parse_inst_count(thing):
     return _parse_dictionary_or_string_input(thing, "--instance-count")
@@ -339,10 +337,7 @@ def process_instance_type_arg(args, for_workflow=False):
 
 def process_instance_type_by_executable_arg(args):
     if args.instance_type_by_executable:
-        if not isinstance(args.instance_type_by_executable, basestring):
-            args.instance_type_by_executable = _parse_inst_type_by_executable(args.instance_type_by_executable[-1])
-        else:
-            args.instance_type_by_executable = _parse_inst_type_by_executable(args.instance_type_by_executable)
+        return _parse_dictionary_or_string_input(args.instance_type_by_executable, "--instance-type-by-executable")
 
 def process_instance_count_arg(args):
     if args.instance_count:
