@@ -30,6 +30,7 @@ class DXPYTestsRunner:
     env: str = "stg"
     pyenv_filters_inclusive: Optional[List[Matcher]] = None
     pyenv_filters_exclusive: Optional[List[Matcher]] = None
+    extra_requirements: Optional[List[str]] = None
     pytest_args: Optional[str] = None
     report: Optional[str] = None
     logs_dir: str = Path("logs")
@@ -124,7 +125,22 @@ python --version
 echo "Pytest Python path: {pytest_python}"
 echo "Pytest Python version:"
 {pytest_python} --version
+""")
+                if self.extra_requirements and len(self.extra_requirements) > 0:
+                    extra_requirements_file = wd / "extra_requirements.txt"
+                    with open(extra_requirements_file, 'w') as fh:
+                        fh.writelines(self.extra_requirements)
+                    fh.write(f"""
+python -m pip install -r {extra_requirements_file}
 
+If($LastExitCode -ne 0)
+{{
+    Exit 1
+}}
+
+""")
+
+                fh.write(f"""
 python -m pip install {dx_python_root}
 
 If($LastExitCode -ne 0)

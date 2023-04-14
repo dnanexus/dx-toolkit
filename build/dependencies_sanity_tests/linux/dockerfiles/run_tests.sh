@@ -18,6 +18,11 @@ fi
 TMPDIR=$(mktemp -d -t dx-toolkit-XXXXXX)
 cp -a /dx-toolkit $TMPDIR
 
+if [[ -f "/extra_requirements.txt" ]]; then
+    echo "Installing extra requirements"
+    $DXPY_TEST_PYTHON_BIN -m pip install -r /extra_requirements.txt
+fi
+
 $DXPY_TEST_PYTHON_BIN -m pip install $TMPDIR/dx-toolkit/src/python
 
 if [[ "$DXPY_TEST_USING_PYENV" == "true" ]]; then

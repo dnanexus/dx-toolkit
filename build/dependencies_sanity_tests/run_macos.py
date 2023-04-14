@@ -71,6 +71,7 @@ class DXPYTestsRunner:
     env: str = "stg"
     pyenv_filters_inclusive: Optional[List[Matcher]] = None
     pyenv_filters_exclusive: Optional[List[Matcher]] = None
+    extra_requirements: Optional[List[str]] = None
     pytest_args: Optional[str] = None
     report: Optional[str] = None
     logs_dir: str = Path("logs")
@@ -154,6 +155,12 @@ class DXPYTestsRunner:
                     env["DXPY_TEST_BASE_PYTHON_BIN"] = str(Path("/opt") / "homebrew" / "bin" / f"python{p.python_version}")
                 else:
                     env["DXPY_TEST_BASE_PYTHON_BIN"] = str(Path("/usr") / "local" / "opt" / f"python@{p.python_version}" / "bin" / f"python{p.python_version}")
+
+            if self.extra_requirements and len(self.extra_requirements) > 0:
+                extra_requirements_file = wd / "extra_requirements.txt"
+                with open(extra_requirements_file, 'w') as fh:
+                    fh.writelines(self.extra_requirements)
+                env["DXPY_TEST_EXTRA_REQUIREMENTS"] = str(extra_requirements_file)
 
             env_dir = wd / "testenv"
 

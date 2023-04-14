@@ -62,7 +62,8 @@ def init_base_argparser(parser) -> None:
     parser.add_argument("-l", "--logs", default="./logs", help="Directory where to store logs")
     parser.add_argument("-e", "--env", choices=["stg", "prod"], default="stg", help="Platform")
     parser.add_argument("-w", "--workers", type=int, default=1, help="Number of workers (i.e. parallelly running tests)")
-    parser.add_argument("-r", "--report", help="Save status report to file")
+    parser.add_argument("-r", "--extra-requirement", dest="extra_requirements", action="append", help="Explicitly install this library to the virtual environment before installing dx-toolkit. Format is the same as requirements.txt file.")
+    parser.add_argument("-o", "--report", help="Save status report to file in JSON format")
     pyenv_group = parser.add_mutually_exclusive_group()
     pyenv_group.add_argument("-f", "--pyenv-filter", dest="pyenv_filters", action="append", help="Run only in environments matching the filters. Supported are wild-card character '*' (e.g. ubuntu-*-py3-*) or regular expression (when using --regexp-filters flag). Exclusive filters can be using when prefixed with '!'.")
     pyenv_group.add_argument("--run-failed", metavar="REPORT", help="Load report file and run only failed environments")
@@ -115,9 +116,10 @@ def parse_common_args(args) -> dict:
         dx_toolkit=Path(args.dx_toolkit),
         token=args.token,
         env=args.env,
-        pytest_args=pytest_args,
         pyenv_filters_inclusive=pyenv_filters_inclusive,
         pyenv_filters_exclusive=pyenv_filters_exclusive,
+        extra_requirements=args.extra_requirements,
+        pytest_args=pytest_args,
         report=args.report,
         logs_dir=logs_dir,
         print_logs=args.print_logs,

@@ -34,6 +34,7 @@ class DXPYTestsRunner:
     env: str = "stg"
     pyenv_filters_inclusive: Optional[List[Matcher]] = None
     pyenv_filters_exclusive: Optional[List[Matcher]] = None
+    extra_requirements: Optional[List[str]] = None
     pytest_args: Optional[str] = None
     report: Optional[str] = None
     logs_dir: str = Path("logs")
@@ -114,14 +115,22 @@ class DXPYTestsRunner:
             logging.info(f"[{pyenv}] Running tests (temporary dir: '{wd}')")
             wd = Path(wd)
             tests_log: Path = self.logs_dir / f"{pyenv}_test.log"
+            volumes = {
+                ROOT_DIR: {'bind': '/tests', 'mode': 'ro'},
+                str(self.dx_toolkit): {'bind': '/dx-toolkit/', 'mode': 'ro'}
+            }
+
+            if self.extra_requirements and len(self.extra_requirements) > 0:
+                extra_requirements_file = wd / "extra_requirements.txt"
+                with open(extra_requirements_file, 'w') as fh:
+                    fh.writelines(self.extra_requirements)
+                volumes[extra_requirements_file] = {'bind': '/extra-requirements.txt', 'mode': 'ro'}
+
             command = " ".join(self.pytest_args) if self.pytest_args is not None and len(self.pytest_args) > 0 else None
             container = client.containers.run(
                 image.id,
                 command=command,
-                volumes={
-                    ROOT_DIR: {'bind': '/tests', 'mode': 'ro'},
-                    str(self.dx_toolkit): {'bind': '/dx-toolkit/', 'mode': 'ro'}
-                },
+                volumes=volumes,
                 environment={
                     "DXPY_TEST_TOKEN": self.token,
                     "DXPY_TEST_ENV": self.env,
