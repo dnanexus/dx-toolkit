@@ -44,6 +44,6 @@ jobs:
           cd src
           make ua
 
-      #- name: Build verification test
-      #  run: |
-      #    ua --version
+      - name: Build verification test
+        run: |
+          ./ua/dist/ua --version
