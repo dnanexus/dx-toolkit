@@ -160,6 +160,7 @@ class DXPYTestsRunner:
             logging.info(f"[{pyenv}] Running tests")
             env["DXPY_TEST_TOKEN"] = self.token
             env["DXPY_TEST_PYTHON_VERSION"] = p.python_version[0]
+            env["DX_USER_CONF_DIR"] = wd / ".dnanexus_config"
             tests_log: Path = self.logs_dir / f"{pyenv}_test.log"
             with open(tests_log, 'w') as fh:
                 res = subprocess.run([ROOT_DIR / "macos" / "run_tests.sh", dx_python_root, env_dir] + (self.pytest_args or []), env=env, cwd=wd, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
