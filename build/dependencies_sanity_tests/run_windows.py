@@ -155,7 +155,7 @@ Exit 0
                 res = subprocess.run(["powershell", "-ExecutionPolicy", "Unrestricted", script], env=env, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
             if res.returncode != 0:
                 logging.error(f"[{pyenv}] Tests exited with non-zero code. See log for console output: {tests_log.absolute()}")
-                if self.print_failed_logs:
+                if self.print_logs or self.print_failed_logs:
                     self._print_log(pyenv, tests_log)
                 self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
                 return

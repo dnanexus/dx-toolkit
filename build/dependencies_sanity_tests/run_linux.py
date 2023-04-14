@@ -143,7 +143,7 @@ class DXPYTestsRunner:
 
             if status != 0:
                 logging.error(f"[{pyenv}] Container exitted with non-zero return code. See log for console output: {tests_log.absolute()}")
-                if self.print_failed_logs:
+                if self.print_logs or self.print_failed_logs:
                     self._print_log(pyenv, tests_log)
                 raise Exception("Docker container exited with non-zero code")
 
