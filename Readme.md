@@ -73,6 +73,11 @@ toolkit that doesn't require them.
 
 **Note:** There is a known incompatibility (in compiling dxcpp) when using GCC 4.7 with Boost 1.49. Please either use the GCC 4.6 series, or Boost 1.50+.
 
+### Ubuntu 22.04
+
+    sudo apt install python-is-python3 python3-venv python3-dev libssl-dev libffi-dev \
+      flex bison build-essential cmake libboost-all-dev curl libcurl4-openssl-dev
+
 ### Ubuntu 20.04
 
     sudo apt install python-is-python3 python3-venv libssl-dev flex bison libffi-dev
