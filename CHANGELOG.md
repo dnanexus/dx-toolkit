@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Remove unused `rlcompleter` module which may break alternative readline implementations
+
 ## [346.0] - beta
 
 #### Changed
