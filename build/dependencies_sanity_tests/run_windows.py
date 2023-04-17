@@ -164,7 +164,7 @@ Exit 0
             env["DXPY_TEST_PYTHON_BIN"] = str(env_dir / "Scripts" / "python")
             env["DXPY_TEST_PYTHON_VERSION"] = python_version
             env["DXPY_TEST_SKIP_INTERACTIVE"] = str(self.skip_interactive_tests)
-            env["DX_USER_CONF_DIR"] = wd / ".dnanexus_config"
+            env["DX_USER_CONF_DIR"] = str((wd / ".dnanexus_config").absolute())
             if python_version == "2":
                 env["PYTHONIOENCODING"] = "UTF-8"
             with open(tests_log, 'w') as fh:

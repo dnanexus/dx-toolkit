@@ -211,7 +211,7 @@ def test_download_all_inputs(tmp_path_str, two_files):
 
         env = os.environ.copy()
         env["HOME"] = destdir
-        shutil.copytree(os.path.join(os.path.expanduser('~'), ".dnanexus_config"), ".dnanexus_config")
+        shutil.copytree(os.getenv("DX_USER_CONF_DIR"), ".dnanexus_config")
         res = subprocess.run(["dx-download-all-inputs", "--parallel"], env=env)
         assert res.returncode == 0
 
