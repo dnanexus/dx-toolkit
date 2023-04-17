@@ -24,7 +24,9 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import json
 import logging
 import ssl
+import threading
 import time
+import websocket
 
 from websocket import WebSocketApp
 
@@ -90,8 +92,22 @@ class DXJobLogStreamClient:
             job_id=job_id
         )
         self._app = None
+        self._close_timer = None
+        self._is_terminated = False
 
     def connect(self):
+        # Callbacks required for compatibility between websocket-client 0.54.0 and newer
+        # The problem lies in using inspect.ismethod() method in older version
+        # See: https://github.com/websocket-client/websocket-client/blob/102033e44bcc9badf85c78769516d3f9127ebdc7/websocket/_app.py#L342-L345
+        def on_open(app):
+            self.opened()
+        def on_close(app, close_status_code, close_msg):
+            self.closed(close_status_code, close_msg)
+        def on_error(app, exception):
+            self.errored(exception)
+        def on_message(app, message):
+            self.received_message(message)
+
         while True:
             self.error = False
             self.exception = None
@@ -101,12 +117,14 @@ class DXJobLogStreamClient:
             try:
                 self._app = WebSocketApp(
                     self.url,
-                    on_open=self.opened,
-                    on_close=self.closed,
-                    on_error=self.errored,
-                    on_message=self.received_message
+                    on_open=on_open,
+                    on_close=on_close,
+                    on_error=on_error,
+                    on_message=on_message
                 )
                 self._app.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+                if self._close_timer:
+                    self._close_timer.cancel()
             except:
                 if not self.server_restarted():
                     raise
@@ -142,6 +160,9 @@ class DXJobLogStreamClient:
         self.exception = exception
 
     def closed(self, code=None, reason=None):
+        if self._is_terminated:
+            return
+
         if code:
             self.closed_code = code
             self.closed_reason = reason
@@ -186,6 +207,9 @@ class DXJobLogStreamClient:
 
         if (self.exit_on_failed
                 and self.seen_jobs[self.job_id].get('state') in {'failed', 'terminated'}):
+            self._is_terminated = True
+            if self._close_timer:
+                self._close_timer.cancel()
             err_exit(code=3)
 
     def received_message(self, message):
@@ -209,7 +233,14 @@ class DXJobLogStreamClient:
             message_dict.get('source') == 'SYSTEM' and
             message_dict.get('msg') == 'END_LOG'
         ):
-            self._app.keep_running = False
+            if websocket.__version__ == "0.54.0":
+                self._app.keep_running = False
+            else:
+                # Make sure the websocket is closed in the nead feature in case the server won't close it on its end.
+                # This needs to be delayed to avoid problems with on_close not being called.
+                # More details: https://websocket-client.readthedocs.io/en/latest/threading.html (and many GitHub issues)
+                self._close_timer = threading.Timer(3, self._app.close)
+                self._close_timer.start()
         elif self.msg_callback:
             self.msg_callback(message_dict)
         else:
