@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changes
+
+* Removed unneeded `gnureadline` dependency
+
 ## [346.0] - beta
 
 #### Changed
