@@ -61,7 +61,7 @@ def init_logging(verbose: bool) -> None:
 def init_base_argparser(parser) -> None:
     parser.add_argument("-d", "--dx-toolkit", required=True, help="Path to dx-toolkit source dir")
     parser.add_argument("-b", "--dx-toolkit-ref", help="dx-toolkit git reference (branch, commit, etc.) to test")
-    parser.add_argument("--pull", help="Pull dx-toolkit repo before running the tests")
+    parser.add_argument("--pull", action="store_true", help="Pull dx-toolkit repo before running the tests")
     parser.add_argument("-t", "--token", required=True, help="API token")
     parser.add_argument("-l", "--logs", default="./logs", help="Directory where to store logs")
     parser.add_argument("-e", "--env", choices=["stg", "prod"], default="stg", help="Platform")
