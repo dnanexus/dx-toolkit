@@ -45,7 +45,6 @@ completer_state = {
 }
 
 try:
-    import rlcompleter
     readline.parse_and_bind("bind ^I rl_complete" if "libedit" in (readline.__doc__ or "") else "tab: complete")
     readline.set_completer_delims("")
     completer_state['available'] = True
