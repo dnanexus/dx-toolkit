@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Removed unneeded `gnureadline` dependency
+* Bumped allowed colorama version to 0.4.6
 
 ### Fixed
 
