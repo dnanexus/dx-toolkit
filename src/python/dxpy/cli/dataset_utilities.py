@@ -28,7 +28,6 @@ import csv
 import dxpy
 import codecs
 import subprocess
-import jsonschema
 from ..utils.printing import fill
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink

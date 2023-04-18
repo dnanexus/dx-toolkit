@@ -13,19 +13,18 @@ def isListOfStrings(object):
     return True
 
 
-def validateFilter(filter, filter_type, sql=False):
+def validateFilter(filter, filter_type):
     keys = filter.keys()
     if filter_type == "allele":
         # Check for required fields
-        if not sql:
-            if ("location" in keys) and ("rsid" in keys):
-                print(
-                    "location and rsid fields cannot both be specified in the same filter"
-                )
-                exit(1)
-            if not (("location" in keys) or ("rsid" in keys)):
-                print("Either location or rsid must be specified in an allele filter")
-                exit(1)
+        if ("location" in keys) and ("rsid" in keys):
+            print(
+                "location and rsid fields cannot both be specified in the same filter"
+            )
+            exit(1)
+        if not (("location" in keys) or ("rsid" in keys)):
+            print("Either location or rsid must be specified in an allele filter")
+            exit(1)
         # Check rsid field
         if "rsid" in keys:
             if not isListOfStrings(filter["rsid"]):
@@ -85,15 +84,14 @@ def validateFilter(filter, filter_type, sql=False):
                         print(malformed_filter.format("location"))
                         exit(1)
     if filter_type == "annotation":
-        # Check for required fields if sql flag is not given
-        if not sql:
-            if not (
-                ("allele_id" in keys) or ("gene_name" in keys) or ("gene_id" in keys)
-            ):
-                print(
-                    "allele_id, gene_name, or gene_id is required in annotation_filters"
-                )
-                exit(1)
+        keys = filter.keys()
+        if not (
+            ("allele_id" in filter.keys())
+            or ("gene_name" in filter.keys())
+            or ("gene_id" in filter.keys())
+        ):
+            print("allele_id, gene_name, or gene_id is required in annotation_filters")
+            exit(1)
         # Ensure only one of the required fields is given
         if "allele_id" in keys:
             if ("gene_name" in keys) or ("gene_id" in keys):
@@ -132,11 +130,10 @@ def validateFilter(filter, filter_type, sql=False):
                 print(malformed_filter.format(key))
                 exit(1)
     if filter_type == "genotype":
-        # Check for required fields if sql flag is not given
-        if not sql:
-            if not "allele_id" in keys:
-                print("allele_id is required in genotype filters")
-                exit(1)
+        keys = filter.keys()
+        if not "allele_id" in keys:
+            print("allele_id is required in genotype filters")
+            exit(1)
         # Check allele_id field
         if "allele_id" in keys:
             if not isListOfStrings(filter["allele_id"]):
