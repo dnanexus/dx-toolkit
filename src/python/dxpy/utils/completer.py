@@ -250,10 +250,9 @@ def path_completer(text, expected=None, classes=None, perm_level=None,
 
 class DXPathCompleter():
     '''
-    This class can be used as a tab-completer with the modules
-    readline and rlcompleter.  Note that to tab-complete data object
-    names with spaces, the delimiters set for the completer must not
-    include spaces.
+    This class can be used as a tab-completer with the readline module
+    Note that to tab-complete data object names with spaces, the delimiters
+    set for the completer must not include spaces.
     '''
     def __init__(self, expected=None, classes=None, typespec=None, include_current_proj=False,
                  visibility=None):
