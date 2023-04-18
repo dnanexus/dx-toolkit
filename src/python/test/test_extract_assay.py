@@ -273,7 +273,11 @@ class TestDXExtractAssay(unittest.TestCase):
                     filter = json.load(infile)
                     try:
                         ValidateJSON(filter, filter_type)
-                        print("Uh oh, malformed JSON passed detection")
+                        print(
+                            "Uh oh, malformed JSON passed detection, file is {}".format(
+                                file_path
+                            )
+                        )
                     except:
                         print("task failed succesfully")
 
