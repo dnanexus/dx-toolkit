@@ -6,7 +6,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Changes
+### Changed
 
 * Removed unneeded `gnureadline` dependency
 
