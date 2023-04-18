@@ -7,7 +7,6 @@ requests>=2.8.0,<=2.27.1
 cryptography==3.3.2; python_version < "3"
 cryptography==3.2.1; python_version > "3" and python_version < "3.6"
 cryptography>=3.4.2,<41; python_version > "3.5"
-gnureadline==8.0.0; sys_platform == "darwin" and python_version < "3.9" and platform_machine == "x86_64"
 pyreadline==2.1; sys_platform == "win32" and python_version < "3.5"
 pyreadline3==3.4.1; sys_platform == "win32" and python_version >= "3.5"
 colorama==0.4.4; sys_platform == "win32"

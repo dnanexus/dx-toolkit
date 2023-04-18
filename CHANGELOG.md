@@ -6,17 +6,21 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Removed unneeded `gnureadline` dependency
+
 ### Fixed
 
-* Remove unused `rlcompleter` module which may break alternative readline implementations
+* Removed unused `rlcompleter` import which may break alternative readline implementations
 
 ## [346.0] - beta
 
-#### Changed
+### Changed
 
 * Help message of the `dx make_download_url` command
 
-#### Fixed
+### Fixed
 
 * Released Nextaur 1.6.6. It includes fixes to errorStrategy handling and an update to the way AWS instance types are selected based on resource requirements in Nextflow pipelines (V2 instances are now preferred)
 * `ImportError` in test_dxpy.py
