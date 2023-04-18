@@ -6,19 +6,28 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### 
+### Changed
 
-#### Changed
+* Removed unneeded `gnureadline` dependency
+
+### Fixed
+
+* Removed unused `rlcompleter` import which may break alternative readline implementations
+
+## [346.0] - beta
+
+### Changed
 
 * Help message of the `dx make_download_url` command
 
-#### Fixed
+### Fixed
 
 * Released Nextaur 1.6.6. It includes fixes to errorStrategy handling and an update to the way AWS instance types are selected based on resource requirements in Nextflow pipelines (V2 instances are now preferred)
 * `ImportError` in test_dxpy.py
 * Replaced obsolete built-in `file()` method with `open()`
+* Printing HTTP error codes and messages that were hidden
 
-## [345.0] - beta
+## [345.0] - 2023.4.13 
 
 ### Changed
 
@@ -32,7 +41,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx-app-wizard` script on Windows
 * Tab completion in interactive executions on Windows
 
-## [344.0] - 2023.4.2 - stable
+## [344.0] - 2023.4.2
 
 ### Changed
 
