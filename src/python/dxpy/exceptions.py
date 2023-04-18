@@ -25,7 +25,6 @@ import json
 import traceback
 import errno
 import socket
-import jsonschema
 import requests
 from requests.exceptions import HTTPError
 
