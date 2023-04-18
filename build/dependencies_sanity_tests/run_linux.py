@@ -171,7 +171,7 @@ if __name__ == "__main__":
     init_base_argparser(parser)
 
     parser.add_argument("-k", "--keep-images", action="store_true", help="Do not delete docker images")
-    parser.add_argument("--no-pull", action="store_true", help="Do NOT pull base images from Docker hub on build")
+    parser.add_argument("--no-docker-pull", action="store_true", help="Do NOT pull base images from Docker hub on build")
 
     args = parser.parse_args()
 
@@ -180,6 +180,6 @@ if __name__ == "__main__":
     ret = DXPYTestsRunner(
         **parse_common_args(args),
         keep_images=args.keep_images,
-        pull=not args.no_pull,
+        pull=not args.no_docker_pull,
     ).run()
     sys.exit(ret)

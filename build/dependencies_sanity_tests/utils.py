@@ -1,6 +1,8 @@
 import json
 import logging
 import re
+import subprocess
+import sys
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -58,6 +60,8 @@ def init_logging(verbose: bool) -> None:
 
 def init_base_argparser(parser) -> None:
     parser.add_argument("-d", "--dx-toolkit", required=True, help="Path to dx-toolkit source dir")
+    parser.add_argument("-b", "--dx-toolkit-ref", help="dx-toolkit git reference (branch, commit, etc.) to test")
+    parser.add_argument("--pull", help="Pull dx-toolkit repo before running the tests")
     parser.add_argument("-t", "--token", required=True, help="API token")
     parser.add_argument("-l", "--logs", default="./logs", help="Directory where to store logs")
     parser.add_argument("-e", "--env", choices=["stg", "prod"], default="stg", help="Platform")
@@ -106,6 +110,22 @@ def parse_common_args(args) -> dict:
     elif args.pyenv_filters:
         pyenv_filters_inclusive = [MatcherClass(f) for f in args.pyenv_filters if f[0] != "!"]
         pyenv_filters_exclusive = [MatcherClass(f[1:]) for f in args.pyenv_filters if f[0] == "!"]
+
+    if args.pull:
+        logging.debug("Pulling dx-toolkit git repository")
+        try:
+            subprocess.run(["git", "pull"], cwd=args.dx_toolkit, check=True, capture_output=True)
+        except:
+            logging.exception("Unable to pull dx-toolkit git repo")
+            sys.exit(1)
+
+    if args.dx_toolkit_ref:
+        logging.debug(f"Checking out dx-toolkit git reference '{args.dx_toolkit_ref}'")
+        try:
+            subprocess.run(["git", "checkout", args.dx_toolkit_ref], cwd=args.dx_toolkit, check=True, capture_output=True)
+        except:
+            logging.exception("Unable to checkout dx-toolkit git reference")
+            sys.exit(1)
 
     logs_dir = Path(args.logs)
     if not logs_dir.is_dir():
