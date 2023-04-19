@@ -266,6 +266,10 @@ def test_job_watch(project, applet):
     for i in range(GHA_WATCH_RETRIES):
         res = subprocess.run(["dx", "watch", job_id], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
+        if res.returncode != 0:
+            for e in GHA_KNOWN_WATCH_ERRORS:
+                print("%s    =    %s" % (e, e in res.stderr))
+
         if res.returncode != 0 and any(map(lambda x: x in res.stderr, GHA_KNOWN_WATCH_ERRORS)):
             time.sleep(30)
             print("Retrying")
