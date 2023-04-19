@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from utils import EXIT_SUCCESS, init_base_argparser, init_logging, parse_common_args, extract_failed_tests, print_execution_summary, filter_pyenvs, Matcher
+from utils import EXIT_SUCCESS, init_base_argparser, init_logging, parse_common_args, extract_failed_tests, make_execution_summary, filter_pyenvs, Matcher
 
 ROOT_DIR = Path(__file__).parent.absolute()
 DOCKERFILES_DIR = ROOT_DIR / "linux" / "dockerfiles"
@@ -61,9 +61,8 @@ class DXPYTestsRunner:
                 executor.submit(self._run_pyenv, pyenv)
             executor.shutdown(wait=True)
 
-        print_execution_summary(self._test_results, self.report)
-
-        return 0 if all(map(lambda x: x == EXIT_SUCCESS, self._test_results.values())) else 1
+        exit_code = make_execution_summary(self._test_results, self.report)
+        return exit_code
 
     def _store_test_results(self, pyenv, code, failed_tests=None):
         self._test_results[pyenv] = {
