@@ -17,7 +17,10 @@ TEST_DIR = os.path.abspath(os.path.join(__file__, os.pardir))
 IS_LINUX = platform.system() == "Linux"
 IS_WINDOWS = platform.system() == "Windows"
 GHA_WATCH_RETRIES = 5
-GHA_KNOWN_WATCH_ERRORS = ("[Errno 110] Connection timed out", "[Errno 104] Connection reset by peer", "1006: Connection is already closed.")
+GHA_KNOWN_WATCH_ERRORS = (
+    "[Errno 110] Connection timed out", "[Errno 104] Connection reset by peer", "1006: Connection is already closed.", "[Errno 32] Broken pipe",
+    "1006: EOF occurred in violation of protocol"
+)
 
 
 skip_on_windows = pytest.mark.skipif(IS_WINDOWS, reason="This test cannot run on Windows")
