@@ -16,7 +16,7 @@ FILESIZE = 100
 TEST_DIR = os.path.abspath(os.path.join(__file__, os.pardir))
 IS_LINUX = platform.system() == "Linux"
 IS_WINDOWS = platform.system() == "Windows"
-GHA_WATCH_RETRIES = 5
+GHA_WATCH_RETRIES = 10
 GHA_KNOWN_WATCH_ERRORS = (
     "[Errno 110] Connection timed out", "[Errno 104] Connection reset by peer", "1006: Connection is already closed.", "[Errno 32] Broken pipe",
     "1006: EOF occurred in violation of protocol"
@@ -267,7 +267,8 @@ def test_job_watch(project, applet):
         res = subprocess.run(["dx", "watch", job_id], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
         if res.returncode != 0 and any(map(lambda x: x in res.stderr, GHA_KNOWN_WATCH_ERRORS)):
-            time.sleep(15)
+            time.sleep(30)
+            print("Retrying")
             continue
 
         assert res.returncode == 0
