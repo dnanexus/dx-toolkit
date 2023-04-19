@@ -16,11 +16,13 @@ FILESIZE = 100
 TEST_DIR = os.path.abspath(os.path.join(__file__, os.pardir))
 IS_LINUX = platform.system() == "Linux"
 IS_WINDOWS = platform.system() == "Windows"
+GHA_WATCH_RETRIES = 5
+GHA_KNOWN_WATCH_ERRORS = ("[Errno 110] Connection timed out", "[Errno 104] Connection reset by peer", "1006: Connection is already closed.")
 
 
 skip_on_windows = pytest.mark.skipif(IS_WINDOWS, reason="This test cannot run on Windows")
 run_only_on_windows = pytest.mark.skipif(not IS_WINDOWS, reason="This test can run only on Windows")
-skip_interactive_on_request = pytest.mark.skipif(bool(os.environ.get("DXPY_TEST_SKIP_INTERACTIVE", "False")), reason="Requested skipping of interactive tests")
+skip_interactive_on_request = pytest.mark.skipif(os.environ.get("DXPY_TEST_SKIP_INTERACTIVE", "False").lower() == "true", reason="Requested skipping of interactive tests")
 
 
 def _randstr(length=10):
@@ -257,11 +259,21 @@ def test_job_watch(project, applet):
     job_describe = json.loads(res.stdout)
     assert job_describe["id"] == job_id
     assert job_describe["project"] == project
-    res = subprocess.run(["dx", "watch", job_id], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    assert res.returncode == 0
-    assert "Started" in res.stdout
-    assert "Test to stderr" in res.stdout
-    assert "Finished" in res.stdout
+
+    for i in range(GHA_WATCH_RETRIES):
+        res = subprocess.run(["dx", "watch", job_id], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+
+        if res.returncode != 0 and any(map(lambda x: x in res.stdout, GHA_KNOWN_WATCH_ERRORS)):
+            time.sleep(15)
+            continue
+
+        assert res.returncode == 0
+        assert "Started" in res.stdout
+        assert "Test to stderr" in res.stdout
+        assert "Finished" in res.stdout
+        return
+
+    assert False, "Watch did not successfully finished even after %d retries" % GHA_WATCH_RETRIES
 
 
 def test_import(dx_python_bin):
