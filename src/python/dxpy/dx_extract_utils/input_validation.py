@@ -1,4 +1,5 @@
 import json
+import sys
 
 # Generic error messages
 malformed_filter = "found following invalid filters: {}"
@@ -8,7 +9,8 @@ def isListOfStrings(object):
     if not isinstance(object, list):
         return False
     for item in object:
-        if not isinstance(item, str):
+        # Note that in python 2.7 these strings are read in as unicode
+        if not isinstance(str(item), str):
             return False
     return True
 
@@ -40,6 +42,7 @@ def validateFilter(filter, filter_type):
                 if item not in ["SNP", "Ins", "Del", "Mixed"]:
                     print(malformed_filter.format("type"))
                     exit(1)
+
         # Check dataset_alt_af
         if "dataset_alt_af" in keys:
             min_val = filter["dataset_alt_af"]["min"]
@@ -72,15 +75,15 @@ def validateFilter(filter, filter_type):
                 indiv_loc_keys = indiv_location.keys()
                 # Ensure all keys are there
                 if not (
-                    ("chromosome" in indiv_loc_keys)
-                    and ("starting_position" in indiv_loc_keys)
-                    and ("ending_position" in indiv_loc_keys)
+                    (str("chromosome") in indiv_loc_keys)
+                    and (str("starting_position") in indiv_loc_keys)
+                    and (str("ending_position") in indiv_loc_keys)
                 ):
                     print(malformed_filter.format("location"))
                     exit(1)
                 # Check that each key is a string
                 for val in indiv_location.values():
-                    if not (isinstance(val, str)):
+                    if not (isinstance(str(val), str)):
                         print(malformed_filter.format("location"))
                         exit(1)
     if filter_type == "annotation":

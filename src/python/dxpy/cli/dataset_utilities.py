@@ -775,7 +775,7 @@ def csv_from_json(
 
     csv_writer = csv.DictWriter(
         fields_output,
-        delimiter=sep,
+        delimiter=str(sep),
         doublequote=True,
         escapechar=None,
         lineterminator="\n",
