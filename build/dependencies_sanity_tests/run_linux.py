@@ -14,17 +14,23 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from utils import init_base_argparser, init_logging, parse_common_args, filter_pyenvs, Matcher
+from utils import EXIT_SUCCESS, init_base_argparser, init_logging, parse_common_args, extract_failed_tests, print_execution_summary, filter_pyenvs, Matcher
 
 ROOT_DIR = Path(__file__).parent.absolute()
 DOCKERFILES_DIR = ROOT_DIR / "linux" / "dockerfiles"
 PYENVS = [re.sub("\\.Dockerfile$", "", f.name) for f in DOCKERFILES_DIR.iterdir() if f.name.endswith(".Dockerfile")]
 
-EXIT_SUCCESS = 0
 EXIT_IMAGE_BUILD_FAILED = 1
 EXIT_TEST_EXECUTION_FAILED = 2
 
 client = docker.from_env()
+
+
+class TestExecutionFailed(Exception):
+
+    def __init__(self, msg, failed_tests):
+        super().__init__(msg)
+        self.failed_tests = failed_tests
 
 
 @dataclass
@@ -43,7 +49,7 @@ class DXPYTestsRunner:
     print_failed_logs: bool = False
     keep_images: bool = False
     pull: bool = True
-    _test_results: Dict[str, int] = field(default_factory=dict, init=False)
+    _test_results: Dict[str, Dict] = field(default_factory=dict, init=False)
 
     def run(self):
         pyenvs = filter_pyenvs(PYENVS, self.pyenv_filters_inclusive, self.pyenv_filters_exclusive)
@@ -55,20 +61,15 @@ class DXPYTestsRunner:
                 executor.submit(self._run_pyenv, pyenv)
             executor.shutdown(wait=True)
 
-        logging.info("Test execution summary (%d/%d succeeded):", len([k for k, v in self._test_results.items() if v == EXIT_SUCCESS]), len(self._test_results))
-        for pyenv in pyenvs:
-            if pyenv in self._test_results:
-                code = self._test_results[pyenv]
-                logging.info(f"  {'[ SUCCESS ]' if code == EXIT_SUCCESS else '[  FAIL   ]'}        {pyenv} (exit code: {code})")
-
-        if self.report:
-            with open(self.report, 'w') as fh:
-                json.dump(self._test_results, fh)
+        print_execution_summary(self._test_results, self.report)
 
         return 0 if all(map(lambda x: x == EXIT_SUCCESS, self._test_results.values())) else 1
 
-    def _store_test_results(self, pyenv, code):
-        self._test_results[pyenv] = code
+    def _store_test_results(self, pyenv, code, failed_tests=None):
+        self._test_results[pyenv] = {
+            "code": code,
+            "failed_tests": failed_tests
+        }
         with open(self.logs_dir / f"{pyenv}.status", 'w') as fh:
             fh.write(f"{code}\n")
 
@@ -82,9 +83,9 @@ class DXPYTestsRunner:
 
         try:
             self._run_tests(pyenv, image)
-        except:
+        except Exception as e:
             logging.exception(f"[{pyenv}] Tests execution failed.")
-            self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
+            self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED, e.failed_tests if isinstance(e, TestExecutionFailed) else None)
             return
         finally:
             if not self.keep_images:
@@ -154,7 +155,7 @@ class DXPYTestsRunner:
                 logging.error(f"[{pyenv}] Container exitted with non-zero return code. See log for console output: {tests_log.absolute()}")
                 if self.print_logs or self.print_failed_logs:
                     self._print_log(pyenv, tests_log)
-                raise Exception("Docker container exited with non-zero code")
+                raise TestExecutionFailed("Docker container exited with non-zero code", extract_failed_tests(tests_log))
 
             logging.info(f"[{pyenv}] Tests execution successful")
             if self.print_logs:

@@ -12,14 +12,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from utils import init_base_argparser, init_logging, parse_common_args, filter_pyenvs, Matcher
+from utils import EXIT_SUCCESS, init_base_argparser, init_logging, parse_common_args, extract_failed_tests, print_execution_summary, filter_pyenvs, Matcher
 
 ROOT_DIR = Path(__file__).parent.absolute()
 
 _PYTHON_VERSIONS = ["2.7", "3.7", "3.8", "3.9", "3.10", "3.11"]
 PYENVS = [f"official-{p}" for p in _PYTHON_VERSIONS]
 
-EXIT_SUCCESS = 0
 EXIT_TEST_EXECUTION_FAILED = 1
 
 
@@ -40,7 +39,7 @@ class DXPYTestsRunner:
     pytest_python: str = "python3.11"
     skip_interactive_tests: bool = False
     gha_force_python: Optional[str] = None
-    _test_results: Dict[str, int] = field(default_factory=dict, init=False)
+    _test_results: Dict[str, Dict] = field(default_factory=dict, init=False)
 
     def __post_init__(self):
         if self.workers > 1:
@@ -62,20 +61,15 @@ class DXPYTestsRunner:
                 executor.submit(self._run_pyenv, pyenv)
             executor.shutdown(wait=True)
 
-        logging.info("Test execution summary (%d/%d succeeded):", len([k for k, v in self._test_results.items() if v == EXIT_SUCCESS]), len(self._test_results))
-        for pyenv in pyenvs:
-            if pyenv in self._test_results:
-                code = self._test_results[pyenv]
-                logging.info(f"  {'[ SUCCESS ]' if code == EXIT_SUCCESS else '[  FAIL   ]'}        {pyenv} (exit code: {code})")
-
-        if self.report:
-            with open(self.report, 'w') as fh:
-                json.dump(self._test_results, fh)
+        print_execution_summary(self._test_results, self.report)
 
         return 0 if all(map(lambda x: x == EXIT_SUCCESS, self._test_results.values())) else 1
 
-    def _store_test_results(self, pyenv, code):
-        self._test_results[pyenv] = code
+    def _store_test_results(self, pyenv, code, failed_tests=None):
+        self._test_results[pyenv] = {
+            "code": code,
+            "failed_tests": failed_tests
+        }
         with open(self.logs_dir / f"{pyenv}.status", 'w') as fh:
             fh.write(f"{code}\n")
 
@@ -173,7 +167,7 @@ Exit 0
                 logging.error(f"[{pyenv}] Tests exited with non-zero code. See log for console output: {tests_log.absolute()}")
                 if self.print_logs or self.print_failed_logs:
                     self._print_log(pyenv, tests_log)
-                self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
+                self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED, extract_failed_tests(tests_log))
                 return
 
             logging.info(f"[{pyenv}] Tests execution successful")

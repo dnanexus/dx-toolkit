@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
+EXIT_SUCCESS = 0
+
 
 class Matcher:
 
@@ -52,6 +54,38 @@ class RegexpMatcher(Matcher):
 
     def match(self, pyenv: str) -> bool:
         return self.pattern.match(pyenv)
+
+
+def extract_failed_tests(log: Path) -> List[str]:
+    failed_tests = []
+    in_block = False
+    with open(log) as fh:
+        for line in fh:
+            line = line.strip()
+            if line == "=========================== short test summary info ============================":
+                in_block = True
+            elif in_block and line.startswith("======= "):
+                in_block = False
+                break
+            elif in_block and line.startswith("FAILED "):
+                tmp = line[line.find("::") + 2:]
+                failed_tests.append(tmp[:tmp.find(" - ")])
+    return failed_tests if len(failed_tests) > 0 else None
+
+
+def print_execution_summary(test_results, report_file):
+    logging.info("Test execution summary (%d/%d succeeded):", len([k for k, v in test_results.items() if v["code"] == EXIT_SUCCESS]), len(test_results))
+    for pyenv in test_results.keys():
+        code = test_results[pyenv]["code"]
+        msg = f"  {'[ SUCCESS ]' if code == EXIT_SUCCESS else '[  FAIL   ]'}        {pyenv} (exit code: {code}"
+        if test_results[pyenv]["failed_tests"] is not None:
+            msg += ", failed tests: " + ", ".join(test_results[pyenv]["failed_tests"])
+        msg += ")"
+        logging.info(msg)
+
+    if report_file:
+        with open(report_file, 'w') as fh:
+            json.dump(test_results, fh)
 
 
 def init_logging(verbose: bool) -> None:
