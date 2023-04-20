@@ -13,7 +13,7 @@ def isListOfStrings(object):
     for item in object:
         # Note that in python 2.7 these strings are read in as unicode
         if python_version == 2:
-            if not isinstance(str(item), str):
+            if not (isinstance(item, str) or isinstance(item,unicode)):
                 return False
         else:
             if not isinstance(item, str):
@@ -90,7 +90,7 @@ def validateFilter(filter, filter_type):
                 # Check that each key is a string
                 for val in indiv_location.values():
                     if python_version == 2:
-                        if not (isinstance(str(val), str)):
+                        if not (isinstance(val, str) or isinstance(val,unicode)):
                             print(malformed_filter.format("location"))
                             exit(1)
                     else:
