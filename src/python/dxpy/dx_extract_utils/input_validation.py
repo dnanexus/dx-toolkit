@@ -3,6 +3,8 @@ import sys
 
 # Generic error messages
 malformed_filter = "found following invalid filters: {}"
+# An integer equel to 2 if script is run with python2, and 3 if run with python3
+python_version = sys.version_info.major
 
 
 def isListOfStrings(object):
@@ -10,8 +12,12 @@ def isListOfStrings(object):
         return False
     for item in object:
         # Note that in python 2.7 these strings are read in as unicode
-        if not isinstance(str(item), str):
-            return False
+        if python_version == 2:
+            if not isinstance(str(item), str):
+                return False
+        else:
+            if not isinstance(item, str):
+                return False
     return True
 
 
@@ -75,17 +81,22 @@ def validateFilter(filter, filter_type):
                 indiv_loc_keys = indiv_location.keys()
                 # Ensure all keys are there
                 if not (
-                    (str("chromosome") in indiv_loc_keys)
-                    and (str("starting_position") in indiv_loc_keys)
-                    and (str("ending_position") in indiv_loc_keys)
+                    ("chromosome" in indiv_loc_keys)
+                    and ("starting_position" in indiv_loc_keys)
+                    and ("ending_position" in indiv_loc_keys)
                 ):
                     print(malformed_filter.format("location"))
                     exit(1)
                 # Check that each key is a string
                 for val in indiv_location.values():
-                    if not (isinstance(str(val), str)):
-                        print(malformed_filter.format("location"))
-                        exit(1)
+                    if python_version == 2:
+                        if not (isinstance(str(val), str)):
+                            print(malformed_filter.format("location"))
+                            exit(1)
+                    else:
+                        if not (isinstance(val, str)):
+                            print(malformed_filter.format("location"))
+                            exit(1)
     if filter_type == "annotation":
         keys = filter.keys()
         if not (
