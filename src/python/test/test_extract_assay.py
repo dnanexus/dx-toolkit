@@ -39,6 +39,8 @@ from dxpy.dx_extract_utils.filter_to_payload import (
 test_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GQGF8x80qYFQxv7gz49ZP7Y7"
 test_filter_directory = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
 output_folder = "/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
 
 
 class TestDXExtractAssay(unittest.TestCase):
