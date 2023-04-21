@@ -36,7 +36,8 @@ from dxpy.dx_extract_utils.filter_to_payload import (
     ValidateJSON,
 )
 
-test_record = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GQGF8x80qYFQxv7gz49ZP7Y7"
+test_project = "dx-toolkit_test_data"
+test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
 test_filter_directory = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
 output_folder = "/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
 if not os.path.exists(output_folder):
