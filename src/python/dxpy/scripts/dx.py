@@ -6174,7 +6174,7 @@ parser_extract_assay_germline.add_argument(
     const='{}', 
     default='{}',
     nargs='?',
-    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of alleles to retrieve. Returns a list of allele IDs with additional information. Use --json-help for additional information on how to use this option.",
+    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
 parser_extract_assay_germline.add_argument(
     "--retrieve-annotation",
@@ -6182,7 +6182,7 @@ parser_extract_assay_germline.add_argument(
     const='{}',
     default='{}',
     nargs='?',
-    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria to retrieve corresponding alleles and their annotation. Specify additional “--json-help” to get detailed information on the json format and filters.",
+    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
 parser_extract_assay_germline.add_argument(
     "--retrieve-genotype",
@@ -6190,7 +6190,7 @@ parser_extract_assay_germline.add_argument(
     const='{}',
     default='{}',
     nargs='?',
-    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of samples to retrieve. Returns a list of sample IDs and associated allele IDs. Use --json-help for additional information on how to use this option.",
+    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
 parser_extract_assay_germline.add_argument(
     '--json-help',
@@ -6200,7 +6200,7 @@ parser_extract_assay_germline.add_argument(
 parser_extract_assay_germline.add_argument(
     "--sql",
     action="store_true",
-    help="If the flag is provided, a SQL statement will be returned instead of data.",
+    help="If the flag is provided, a SQL statement (a string) will be returned for user to further query the specified data instead of actual value of the requested fields.",
 )
 parser_extract_assay_germline.add_argument(
     "-o", "--output", 
