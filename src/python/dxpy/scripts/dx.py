@@ -2189,12 +2189,13 @@ def find_executions(args):
         tree, root_string = {}, ''
         execution_id = ExecutionId(root, root_try if root_try is not None else execution_retries[root][0])
         root_has_retries = len(execution_retries[root]) > 1
+        root_has_children = execution_id in executions_by_parent
         is_reused = execution_descriptions[execution_id].get('outputReusedFrom') is not None
 
         if root_try is None:
             if root_has_retries:
                 root_string = get_find_executions_string(execution_descriptions[execution_id],
-                                                     has_children=root in executions_by_parent,
+                                                     has_children=root_has_children,
                                                      show_outputs=args.show_outputs,
                                                      is_cached_result=is_reused,
                                                      show_try=include_restarted,
@@ -2212,7 +2213,7 @@ def find_executions(args):
             print(root)
         else:
             root_string = get_find_executions_string(execution_descriptions[execution_id],
-                                                     has_children=root in executions_by_parent,
+                                                     has_children=root_has_children,
                                                      show_outputs=args.show_outputs,
                                                      is_cached_result=is_reused,
                                                      show_try=include_restarted and root_has_retries)
