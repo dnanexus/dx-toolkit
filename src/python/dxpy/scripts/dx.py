@@ -2185,28 +2185,26 @@ def find_executions(args):
             return "ExecutionId(execution_id='%s',retry_num=%d)" % (self.id, self.try_num)
 
 
-    def build_tree(root, root_try, executions_by_parent, execution_descriptions, execution_retries, is_cached_result=False):
+    def build_tree(root, root_try, executions_by_parent, execution_descriptions, execution_retries):
         tree, root_string = {}, ''
-
-        root_has_retries = len(execution_retries[root]) > 1
-
-        if root_try is None and not root_has_retries:
-            return build_tree(root, execution_retries[root][0], executions_by_parent, execution_descriptions, execution_retries)
-
         execution_id = ExecutionId(root, root_try if root_try is not None else execution_retries[root][0])
-        is_cached_result |= execution_descriptions[execution_id].get('outputReusedFrom') is not None
+        root_has_retries = len(execution_retries[root]) > 1
+        is_reused = execution_descriptions[execution_id].get('outputReusedFrom') is not None
 
         if root_try is None:
-            root_string = get_find_executions_string(execution_descriptions[execution_id],
+            if root_has_retries:
+                root_string = get_find_executions_string(execution_descriptions[execution_id],
                                                      has_children=root in executions_by_parent,
                                                      show_outputs=args.show_outputs,
-                                                     is_cached_result=is_cached_result,
+                                                     is_cached_result=is_reused,
                                                      show_try=include_restarted,
                                                      as_try_group_root=True)
-            tree[root_string] = collections.OrderedDict()
-            for rtry in execution_retries[root]:
-                tree[root_string].update(build_tree(root, rtry, executions_by_parent, execution_descriptions, execution_retries)[0])
-            return tree, root_string
+                tree[root_string] = collections.OrderedDict()
+                for rtry in execution_retries[root]:
+                    tree[root_string].update(build_tree(root, rtry, executions_by_parent, execution_descriptions, execution_retries)[0])
+                return tree, root_string
+            else:
+                return build_tree(root, execution_retries[root][0], executions_by_parent, execution_descriptions, execution_retries)
 
         if args.json:
             json_output.append(execution_descriptions[root])
@@ -2216,7 +2214,7 @@ def find_executions(args):
             root_string = get_find_executions_string(execution_descriptions[execution_id],
                                                      has_children=root in executions_by_parent,
                                                      show_outputs=args.show_outputs,
-                                                     is_cached_result=is_cached_result,
+                                                     is_cached_result=is_reused,
                                                      show_try=include_restarted and root_has_retries)
             tree[root_string] = collections.OrderedDict()
         for child_execution in executions_by_parent.get(execution_id, {}):
@@ -2224,8 +2222,7 @@ def find_executions(args):
                                                 execution_retries[child_execution][0] if len(execution_retries[child_execution]) == 1 else None,
                                                 executions_by_parent,
                                                 execution_descriptions,
-                                                execution_retries,
-                                                is_cached_result=is_cached_result)
+                                                execution_retries)
             if tree:
                 tree[root_string].update(subtree)
 
