@@ -2161,33 +2161,78 @@ def find_executions(args):
 
     json_output = []                        # for args.json
 
-    def build_tree(root, executions_by_parent, execution_descriptions, is_cached_result=False):
+    class ExecutionId:
+
+        def __init__(self, execution_id, try_num=None):
+            self.execution_id = execution_id
+            #FIXME: Change to 0 and update mock describes
+            self.try_num = try_num or 1
+
+        def __eq__(self, other):
+            if not isinstance(other, ExecutionId):
+                return NotImplemented
+
+            return self.execution_id == other.execution_id and self.try_num == other.try_num
+
+        def __hash__(self):
+            return hash((self.execution_id, self.try_num))
+
+        def __str__(self):
+            return "%s_%d" % (self.execution_id, self.try_num)
+
+        def __repr__(self):
+            return "%s_%d" % (self.execution_id, self.try_num)
+            #return "ExecutionId(execution_id='%s',retry_num=%d)" % (self.execution_id, self.try_num)
+
+
+    def build_tree(root, root_try, executions_by_parent, execution_descriptions, executions_retries, is_cached_result=False):
         tree, root_string = {}, ''
+
+        root_has_retries = len(executions_retries[root]) > 1
+
+        if root_try is None:
+            if not root_has_retries:
+                return build_tree(root, executions_retries[root][0], executions_by_parent, execution_descriptions, executions_retries)
+            else:
+                root_string = get_find_executions_string(execution_descriptions[ExecutionId(root, executions_retries[root][0])],
+                                                     has_children=root in executions_by_parent,
+                                                     show_outputs=args.show_outputs,
+                                                     is_cached_result=is_cached_result,
+                                                     show_tries=True,
+                                                     as_tries_group_root=True)
+                tree[root_string] = collections.OrderedDict()
+                for rtry in executions_retries[root]:
+                    tree[root_string].update(build_tree(root, rtry, executions_by_parent, execution_descriptions, executions_retries)[0])
+                return tree, root_string
+
+        execution_id = ExecutionId(root, root_try)
+        is_cached_result |= execution_descriptions[execution_id].get('outputReusedFrom') is not None
+
         if args.json:
             json_output.append(execution_descriptions[root])
         elif args.brief:
             print(root)
         else:
-            root_string = get_find_executions_string(execution_descriptions[root],
+            root_string = get_find_executions_string(execution_descriptions[execution_id],
                                                      has_children=root in executions_by_parent,
                                                      show_outputs=args.show_outputs,
-                                                     is_cached_result=is_cached_result)
+                                                     is_cached_result=is_cached_result,
+                                                     show_tries=root_has_retries)
             tree[root_string] = collections.OrderedDict()
-        for child_execution in executions_by_parent.get(root, {}):
-            child_is_cached_result = is_cached_result or (execution_descriptions[child_execution].get('outputReusedFrom') is not None)
+        for child_execution in executions_by_parent.get(execution_id, {}):
             subtree, _subtree_root = build_tree(child_execution,
+                                                executions_retries[child_execution][0] if len(executions_retries[child_execution]) == 1 else None,
                                                 executions_by_parent,
                                                 execution_descriptions,
-                                                is_cached_result=child_is_cached_result)
+                                                executions_retries,
+                                                is_cached_result=is_cached_result)
             if tree:
                 tree[root_string].update(subtree)
+
         return tree, root_string
 
-    def process_tree(result, executions_by_parent, execution_descriptions):
-        is_cached_result = False
-        if 'outputReusedFrom' in result and result['outputReusedFrom'] is not None:
-            is_cached_result = True
-        tree, root = build_tree(result['id'], executions_by_parent, execution_descriptions, is_cached_result)
+    def process_tree(root_id, executions_by_parent, execution_descriptions, executions_retries):
+        tree, root = build_tree(root_id, None, executions_by_parent, execution_descriptions, executions_retries)
         if tree:
             print(format_tree(tree[root], root))
 
@@ -2197,9 +2242,9 @@ def find_executions(args):
         for execution_result in dxpy.find_executions(**query):
             if args.trees:
                 if args.classname == 'job':
-                    root = execution_result['describe']['originJob']
+                    root = ExecutionId(execution_result['describe']['originJob'])
                 else:
-                    root = execution_result['describe']['rootExecution']
+                    root = ExecutionId(execution_result['describe']['rootExecution'])
                 if root not in roots:
                     num_processed_results += 1
             else:
@@ -2216,7 +2261,7 @@ def find_executions(args):
                 if args.classname == 'analysis' and root.startswith('job-'):
                     # Analyses in trees with jobs at their root found in "dx find analyses" are displayed unrooted,
                     # and only the last analysis found is displayed.
-                    roots[root] = execution_result['describe']['id']
+                    roots[root] = ExecutionId(execution_result['describe']['id'], execution_result['describe'].get("try"))
             elif args.brief:
                 print(execution_result['id'])
             elif not args.trees:
@@ -2226,12 +2271,13 @@ def find_executions(args):
                                                                  show_outputs=args.show_outputs)))
         if args.trees:
             executions_by_parent, descriptions = collections.defaultdict(list), {}
+            executions_retries = collections.defaultdict(list)
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
             parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
             query = {'classname': args.classname,
                      'describe': describe_args,
                      'include_subjobs': False if args.no_subjobs else True,
-                     root_field: list(roots.keys())}
+                     root_field: list(map(lambda x: x.execution_id, roots.keys()))}
             if not args.all_projects:
                 # If the query doesn't specify a project, the server finds all projects to which the user has explicit
                 # permissions, but doesn't search through public projects.
@@ -2245,10 +2291,17 @@ def find_executions(args):
 
             def process_execution_result(execution_result):
                 execution_desc = execution_result['describe']
-                parent = execution_desc.get(parent_field) or execution_desc.get('parentAnalysis')
-                descriptions[execution_result['id']] = execution_desc
-                if parent:
-                    executions_by_parent[parent].append(execution_result['id'])
+                execution_id = ExecutionId(execution_result['id'], execution_desc.get('try'))
+
+                if execution_desc.get(parent_field) or execution_desc.get('parentAnalysis'):
+                    if parent_field == "parentJob":
+                        parent = ExecutionId(execution_desc.get(parent_field), execution_desc.get("parentJobTry"))
+                    else:
+                        parent = ExecutionId(execution_desc.get(parent_field) or execution_desc.get('parentAnalysis'))
+                    executions_by_parent[parent].append(execution_id.execution_id)
+
+                descriptions[execution_id] = execution_desc
+                executions_retries[execution_id.execution_id].append(execution_id.try_num)
 
                 # If an analysis with cached children, also insert those
                 if execution_desc['class'] == 'analysis':
@@ -2267,11 +2320,17 @@ def find_executions(args):
                 for execution_result in dxpy.find_executions(**query):
                     process_execution_result(execution_result)
 
+                # ensure tries are sorted from newest to oldest
+                executions_retries = {k: sorted(v, reverse=True) for k, v in executions_retries.items()}
+
                 # ensure roots are sorted by their creation time
-                sorted_roots = sorted(roots, key=lambda root: -descriptions[roots[root]]['created'])
+                sorted_roots = sorted(
+                    set(map(lambda root: root.execution_id, roots)),
+                    key=lambda root: -descriptions[roots[ExecutionId(root, executions_retries[root][-1])]]['created']
+                )
 
                 for root in sorted_roots:
-                    process_tree(descriptions[roots[root]], executions_by_parent, descriptions)
+                    process_tree(root, executions_by_parent, descriptions, executions_retries)
         if args.json:
             print(json.dumps(json_output, indent=4))
 
