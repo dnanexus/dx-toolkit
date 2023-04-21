@@ -1121,12 +1121,14 @@ def print_ls_l_desc(desc, **kwargs):
 
 
 def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True,
-                               is_cached_result=False, show_tries=False, as_tries_group_root=False):
+                               is_cached_result=False, show_try=False, as_try_group_root=False):
     '''
     :param desc: hash of execution's describe output
     :param has_children: whether the execution has children to be printed
     :param single_result: whether the execution is displayed as a single result or as part of an execution tree
     :param is_cached_result: whether the execution should be formatted as a cached result
+    :param show_try: whether to include also try no
+    :param as_try_group_root: whether the execution should be formatted as an artifical root for multiple tries
     '''
     is_not_subjob = desc['parentJob'] is None or desc['class'] == 'analysis' or single_result
     result = ("* " if is_not_subjob and get_delimiter() is None else "")
@@ -1152,11 +1154,11 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
     # Format state
     result += DELIMITER(' (') + JOB_STATES(desc['state']) + DELIMITER(') ') + desc['id']
 
-    if as_tries_group_root:
-        return result + " tries"
+    if as_try_group_root:
+        return result + ' tries'
 
-    if show_tries and desc.get("try") is not None:
-        result += " try %d" % desc.get("try")
+    if show_try and desc.get('try') is not None:
+        result += ' try %d' % desc.get('try')
 
     # Add unicode pipe to child if necessary
     result += DELIMITER('\n' + (u'│ ' if is_not_subjob and has_children else ("  " if is_not_subjob else "")))

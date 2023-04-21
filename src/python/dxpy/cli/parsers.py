@@ -100,6 +100,7 @@ find_executions_args.add_argument('--no-subjobs', help=fill('Do not show any sub
 find_executions_args.add_argument('--root-execution', '--root', help=fill('Execution ID of the top-level (user-initiated) job or analysis', width_adjustment=-24))
 find_executions_args.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
 find_executions_args.add_argument('-o', '--show-outputs', help=fill('Show job outputs in results', width_adjustment=-24), action='store_true')
+find_executions_args.add_argument('--include-restarted', help=fill('if specified, results will include restarted jobs and job trees rooted in restarted jobs', width_adjustment=-24), action='store_true')
 
 def add_find_executions_search_gp(parser):
     find_executions_search_gp = parser.add_argument_group('Search mode')
