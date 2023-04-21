@@ -2190,22 +2190,6 @@ def find_executions(args):
 
         root_has_retries = len(execution_retries[root]) > 1
 
-        # FIXME: Delete
-        # if root_try is None:
-        #     if not root_has_retries:
-        #         return build_tree(root, execution_retries[root][0], executions_by_parent, execution_descriptions, execution_retries)
-        #     else:
-        #         root_string = get_find_executions_string(execution_descriptions[ExecutionId(root, execution_retries[root][0])],
-        #                                                 has_children=root in executions_by_parent,
-        #                                                 show_outputs=args.show_outputs,
-        #                                                 is_cached_result=is_cached_result,
-        #                                                 show_try=include_restarted,
-        #                                                 as_try_group_root=True)
-        #         tree[root_string] = collections.OrderedDict()
-        #         for rtry in execution_retries[root]:
-        #             tree[root_string].update(build_tree(root, rtry, executions_by_parent, execution_descriptions, execution_retries)[0])
-        #         return tree, root_string
-
         if root_try is None and not root_has_retries:
             return build_tree(root, execution_retries[root][0], executions_by_parent, execution_descriptions, execution_retries)
 
