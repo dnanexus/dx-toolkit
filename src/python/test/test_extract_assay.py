@@ -40,8 +40,11 @@ test_project = "dx-toolkit_test_data"
 test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
 test_filter_directory = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
 output_folder = "/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
+# Controls whether output files for the end to end tests are written to file or stdout
+write_output = False
+if write_output:
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
 
 
 class TestDXExtractAssay(unittest.TestCase):
@@ -305,7 +308,9 @@ class TestDXExtractAssay(unittest.TestCase):
                         test_record,
                         filter_type,
                         os.path.join(filter_dir, filter_name),
-                        os.path.join(output_folder, output_filename),
+                        os.path.join(output_folder, output_filename)
+                        if write_output
+                        else "- > /dev/null",
                     )
                 )
                 process = subprocess.check_call(command, shell=True)
@@ -328,7 +333,7 @@ class TestDXExtractAssay(unittest.TestCase):
                     test_record,
                     filter_type,
                     filter_file,
-                    output_filename,
+                    output_filename if write_output else "- > /dev/null",
                 )
             )
             process = subprocess.check_call(command, shell=True)
@@ -348,7 +353,7 @@ class TestDXExtractAssay(unittest.TestCase):
                 test_record,
                 filter_type,
                 filter_file,
-                output_filename,
+                output_filename if write_output else "- > /dev/null",
             )
             process = subprocess.check_call(command, shell=True)
 
@@ -362,7 +367,7 @@ class TestDXExtractAssay(unittest.TestCase):
             test_record,
             "allele",
             filter_file,
-            output_filename,
+            output_filename if write_output else "- > /dev/null",
         )
         process = subprocess.check_call(command, shell=True)
 
@@ -382,7 +387,7 @@ class TestDXExtractAssay(unittest.TestCase):
         command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele {} --output {}".format(
             test_record,
             os.path.join(single_filter_directory, "allele/allele_rsid.json"),
-            output_filename,
+            output_filename if write_output else "- > /dev/null",
         )
         subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
 
