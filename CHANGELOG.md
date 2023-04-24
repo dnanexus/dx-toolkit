@@ -6,18 +6,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [346.0] - beta
+## [347.0] - beta
 
-#### Changed
+### Changed
+
+* Bumped allowed `colorama` version to 0.4.6
+
+### Removed
+
+* Unneeded python `gnureadline` dependency
+* Unused `rlcompleter` import which may break alternative readline implementations
+
+## [346.0] - 2023.4.20
+
+### Changed
 
 * Help message of the `dx make_download_url` command
 
-#### Fixed
+### Fixed
 
 * Released Nextaur 1.6.6. It includes fixes to errorStrategy handling and an update to the way AWS instance types are selected based on resource requirements in Nextflow pipelines (V2 instances are now preferred)
 * `ImportError` in test_dxpy.py
 * Replaced obsolete built-in `file()` method with `open()`
-* Printing HTTP error codes and messages that were hidden
+* Printing HTTP error codes that were hidden for API requests to cloud storage
 
 #### Added
 
