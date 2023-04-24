@@ -456,6 +456,7 @@ nf_task_exit() {
 
   # Make sure that subjob with errorStrategy == terminate end in 'failed' state
   wait_time=240
+  # TODO Can there be a case where both these records exist for job-xxxx?
   terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
   retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
@@ -473,6 +474,10 @@ nf_task_exit() {
 
     while true
     do
+        # TODO Don't have to describe x2 here?
+        # TODO Why can the contents of .properties.nextflow_errorStrategy differ
+        # from what was indicated by file?
+        # Under what condiitons can job's error strategy be updated, e.g. by head job?
         dx describe $DX_JOB_ID --json | jq .properties -r
         errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
         if [ "$errorStrategy_set" = "retry" ]; then
