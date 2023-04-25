@@ -485,9 +485,7 @@ nf_task_exit() {
         # strategy to change to terminate
 
         # TODO Do we need to store both the initial error strategy and the current one?
-        # Is it enough to have the current error strategy in job metadata?
-        # Then we could have one call to dx describe job, instead of
-        # 2 calls to dx findDataObjects + 1-2 calls to dx describe job
+        # Is it enough to store the current error strategy in job metadata?
 
         # TODO Don't need dx describe 2x here; first one isn't used
         dx describe $DX_JOB_ID --json | jq .properties -r
