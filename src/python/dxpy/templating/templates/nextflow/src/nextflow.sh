@@ -453,7 +453,7 @@ wait_for_terminate_or_retry() {
     if [ -n "${terminate_record}" ]; then
       echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
       echo "Waiting for the headjob to kill the job tree..."
-      sleep $wait_time
+      sleep $MAX_WAIT_AFTER_JOB_ERROR
       echo "This subjob was not killed in time, exiting to prevent excessive waiting."
       # Expected the job tree to be killed because of "terminate" strategy
       # Exit here in the same way DxTaskHandler.kill() would have done
@@ -473,7 +473,7 @@ wait_for_terminate_or_retry() {
             break
           fi
           wait_period=$(($wait_period+15))
-          if [ $wait_period -ge $wait_time ];then
+          if [ $wait_period -ge $MAX_WAIT_AFTER_JOB_ERROR ];then
             echo "This subjob was not killed in time, exiting to prevent excessive waiting."
             break
           else
