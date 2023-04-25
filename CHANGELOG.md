@@ -11,6 +11,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
 concluding a subjob
 
+### Fixed
+
+* If Nextflow subjob finished with error and error strategy was terminate, wait up to 240s
+then exit the subjob with error, which will cause the pipeline exec tree to fail
+(consistent with Nextflow's expected behavior if not timed out).
+
 ## [347.0] - beta
 
 ### Changed
