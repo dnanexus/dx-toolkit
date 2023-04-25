@@ -473,17 +473,6 @@ wait_for_terminate_or_retry() {
 
       while true
       do
-          # File indicates what the Nextflow error strategy was as of beginning job;
-          # it isn't updated after that
-
-          # Metadata .properties.nextflow_errorStrategy indicates Nextflow error strategy
-          # as of the end of the errored job; this can differ from file e.g. if it was
-          # final retry that failed, or if another failure in the job tree caused the
-          # strategy to change to terminate
-
-          # TODO Do we need to store both the initial error strategy and the current one?
-          # Is it enough to store the current error strategy in job metadata?
-
           errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
           if [ "$errorStrategy_set" = "retry" ]; then
             break
