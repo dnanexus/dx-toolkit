@@ -485,7 +485,6 @@ wait_for_terminate_or_retry() {
 
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
-  ret=$?
   if [ -f .command.log ]; then
     dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
   else
