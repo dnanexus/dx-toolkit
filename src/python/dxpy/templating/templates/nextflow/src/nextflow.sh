@@ -474,10 +474,20 @@ nf_task_exit() {
 
     while true
     do
-        # TODO Don't have to describe x2 here?
-        # TODO Why can the contents of .properties.nextflow_errorStrategy differ
-        # from what was indicated by file?
-        # Under what condiitons can job's error strategy be updated, e.g. by head job?
+        # File indicates what the Nextflow error strategy was as of beginning job;
+        # it isn't updated after that
+
+        # Metadata .properties.nextflow_errorStrategy indicates Nextflow error strategy
+        # as of the end of the errored job; this can differ from file e.g. if it was
+        # final retry that failed, or if another failure in the job tree caused the
+        # strategy to change to terminate
+
+        # TODO Do we need to store both the initial error strategy and the current one?
+        # Is it enough to have the current error strategy in job metadata?
+        # Then we could have one call to dx describe job, instead of
+        # 2 calls to dx findDataObjects + 1-2 calls to dx describe job
+
+        # TODO Don't need dx describe 2x here; first one isn't used
         dx describe $DX_JOB_ID --json | jq .properties -r
         errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
         if [ "$errorStrategy_set" = "retry" ]; then
