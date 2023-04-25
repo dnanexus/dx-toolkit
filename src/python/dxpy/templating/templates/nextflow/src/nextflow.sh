@@ -497,7 +497,9 @@ nf_task_exit() {
 
   if [ "$exit_code" -ne 0 ]; then wait_for_terminate_or_retry; fi
 
-  # TODO Better documentation
+  # There are cases where the Nextflow task had an error but we don't want to fail the whole
+  # DX job exec tree, e.g. because the error strategy should continue,
+  # so we let the DX job succeed but this output records Nextflow's exit code
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
