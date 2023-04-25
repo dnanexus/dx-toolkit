@@ -456,7 +456,7 @@ wait_for_terminate_or_retry() {
       sleep $MAX_WAIT_AFTER_JOB_ERROR
       echo "This subjob was not killed in time, exiting to prevent excessive waiting."
       # Expected the job tree to be killed because of "terminate" strategy
-      # If that was not done, will do it here
+      # If not done already by Nextflow, will do it here
       exit -1
     fi
 
