@@ -310,7 +310,7 @@ class TestDXExtractAssay(unittest.TestCase):
                         os.path.join(filter_dir, filter_name),
                         os.path.join(output_folder, output_filename)
                         if write_output
-                        else "- > /dev/null",
+                        else "-",
                     )
                 )
                 process = subprocess.check_call(command, shell=True)
@@ -333,7 +333,7 @@ class TestDXExtractAssay(unittest.TestCase):
                     test_record,
                     filter_type,
                     filter_file,
-                    output_filename if write_output else "- > /dev/null",
+                    output_filename if write_output else "-",
                 )
             )
             process = subprocess.check_call(command, shell=True)
@@ -349,11 +349,11 @@ class TestDXExtractAssay(unittest.TestCase):
                 output_folder, "{}_full_sql_output.tsv".format(filter_type)
             )
 
-            command = "dx extract_assay germline {} --retrieve-{} {} --output {} --sql".format(
+            command = "dx extract_assay germline {} --retrieve-{} {} --sql --output {}".format(
                 test_record,
                 filter_type,
                 filter_file,
-                output_filename if write_output else "- > /dev/null",
+                output_filename if write_output else "-",
             )
             process = subprocess.check_call(command, shell=True)
 
@@ -367,7 +367,7 @@ class TestDXExtractAssay(unittest.TestCase):
             test_record,
             "allele",
             filter_file,
-            output_filename if write_output else "- > /dev/null",
+            output_filename if write_output else "-",
         )
         process = subprocess.check_call(command, shell=True)
 
@@ -387,7 +387,7 @@ class TestDXExtractAssay(unittest.TestCase):
         command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele {} --output {}".format(
             test_record,
             os.path.join(single_filter_directory, "allele/allele_rsid.json"),
-            output_filename if write_output else "- > /dev/null",
+            output_filename if write_output else "-",
         )
         subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
 
