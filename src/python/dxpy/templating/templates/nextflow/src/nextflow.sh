@@ -490,9 +490,9 @@ nf_task_exit() {
   else
     >&2 echo "Missing Nextflow .command.log file"
   fi
-  # TODO Better documentation
-  # mark the job as successful in any case, real task
-  # error code is managed by nextflow via .exitcode file
+
+  # exit_code should already be set in nf_task_entry(); default just in case
+  # This is just for including as DX output; Nextflow internally uses .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
 
   if [ "$exit_code" -ne 0 ]; then wait_for_terminate_or_retry; fi
