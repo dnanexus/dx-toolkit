@@ -449,11 +449,6 @@ main() {
 }
 
 wait_for_terminate_or_retry() {
-    # Check for files created by DxTaskHandler recording the task's initial error strategy.
-    # Files in temporary workspace are used because
-    # 1. Product requirement not to put error strategy in metadata unless job had error
-    # 1.a. If job had error, DxTaskHandler will put job metadata, but it might not be done yet
-    # 2. Temporary workspace files can be accessed by head job and subjobs
     terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
     if [ -n "${terminate_record}" ]; then
       echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
