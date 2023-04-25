@@ -466,6 +466,8 @@ nf_task_exit() {
     sleep $wait_time
     echo "This subjob was not killed in time, exiting to prevent excessive waiting."
     # TODO Why is exit used here and break is used below?
+    # TODO This would default to the exit status of the previous command; should we
+    # exit -1, consistent with DxTaskHandler.kill(), instead?
     exit
   fi
 
@@ -496,6 +498,8 @@ nf_task_exit() {
         wait_period=$(($wait_period+10))
         if [ $wait_period -ge $wait_time ];then
            echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+           # TODO Why is break used here and exit is used above?
+           # Should we exit -1, consistent with DxTaskHandler.kill(), instead?
            break
         else
            echo "No instruction to continue was given. Waiting for 10 seconds"
