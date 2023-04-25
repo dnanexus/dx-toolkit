@@ -448,6 +448,62 @@ main() {
     exit $ret
 }
 
+wait_for_terminate_or_retry() {
+    # Check for files created by DxTaskHandler recording the task's initial error strategy.
+    # Files in temporary workspace are used because
+    # 1. Product requirement not to put error strategy in metadata unless job had error
+    # 1.a. If job had error, DxTaskHandler will put job metadata, but it might not be done yet
+    # 2. Temporary workspace files can be accessed by head job and subjobs
+    terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
+    if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
+      echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
+      echo "Waiting for the headjob to kill the job tree..."
+      sleep $wait_time
+      echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+      # Expected the job tree to be killed because of "terminate" strategy
+      # Exit here in the same way DxTaskHandler.kill() would have done
+      exit -1
+    fi
+
+    retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
+    if [ "$exit_code" -ne "0" ] && [ -n "${retry_record}" ]; then
+      wait_period=0
+      echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
+      echo "Waiting for the headjob to kill the job tree or for instruction to continue"
+
+      while true
+      do
+          # File indicates what the Nextflow error strategy was as of beginning job;
+          # it isn't updated after that
+
+          # Metadata .properties.nextflow_errorStrategy indicates Nextflow error strategy
+          # as of the end of the errored job; this can differ from file e.g. if it was
+          # final retry that failed, or if another failure in the job tree caused the
+          # strategy to change to terminate
+
+          # TODO Do we need to store both the initial error strategy and the current one?
+          # Is it enough to store the current error strategy in job metadata?
+
+          # TODO Don't need dx describe 2x here; first one isn't used
+          # dx describe $DX_JOB_ID --json | jq .properties -r
+          errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
+          if [ "$errorStrategy_set" = "retry" ]; then
+            break
+          fi
+          wait_period=$(($wait_period+15))
+          if [ $wait_period -ge $wait_time ];then
+            echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+            # TODO Why is break used here and exit is used above?
+            # Should we exit -1, consistent with DxTaskHandler.kill(), instead?
+            break
+          else
+            echo "No instruction to continue was given. Waiting for 15 seconds"
+            sleep 15
+          fi
+      done
+    fi
+}
+
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   ret=$?
@@ -456,74 +512,14 @@ nf_task_exit() {
   else
     >&2 echo "Missing Nextflow .command.log file"
   fi
+  # TODO Better documentation
   # mark the job as successful in any case, real task
   # error code is managed by nextflow via .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
 
-  if [ "$exit_code" -ne 0 ]; then
-    export wait_after_job_error
-  fi
+  if [ "$exit_code" -ne 0 ]; then wait_for_terminate_or_retry; fi
 
-  # Make sure that subjob with errorStrategy == terminate end in 'failed' state
-  wait_time=240
-  # TODO These reflect the error strategy as of beginning job, may not be current
-  # error strategy, is that intentional?
-
-  # TODO Only check these if exit_code != 0
-  # Files in tmp workspace had to be used because we don't want to set any
-  # metadata error strategy for non-failed jobs -- product req
-  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
-  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
-  if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
-    echo "Waiting for the headjob to kill the job tree..."
-    sleep $wait_time
-    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-    # TODO This would default to the exit status of the previous command; should we
-    # exit -1, consistent with DxTaskHandler.kill(), instead?
-    # Or we can remove exit, which would skip to
-    # dx-jobutil-add-output exit_code $exit_code --class=int
-    # dx job would "succeed," but error code would be encoded in exit_code output
-    exit
-  fi
-
-  if [ "$exit_code" -ne "0" ] && [ -n "${retry_record}" ]; then
-    wait_period=0
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
-    echo "Waiting for the headjob to kill the job tree or for instruction to continue"
-
-    while true
-    do
-        # File indicates what the Nextflow error strategy was as of beginning job;
-        # it isn't updated after that
-
-        # Metadata .properties.nextflow_errorStrategy indicates Nextflow error strategy
-        # as of the end of the errored job; this can differ from file e.g. if it was
-        # final retry that failed, or if another failure in the job tree caused the
-        # strategy to change to terminate
-
-        # TODO Do we need to store both the initial error strategy and the current one?
-        # Is it enough to store the current error strategy in job metadata?
-
-        # TODO Don't need dx describe 2x here; first one isn't used
-        # dx describe $DX_JOB_ID --json | jq .properties -r
-        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
-        if [ "$errorStrategy_set" = "retry" ]; then
-          break
-        fi
-        wait_period=$(($wait_period+15))
-        if [ $wait_period -ge $wait_time ];then
-           echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-           # TODO Why is break used here and exit is used above?
-           # Should we exit -1, consistent with DxTaskHandler.kill(), instead?
-           break
-        else
-           echo "No instruction to continue was given. Waiting for 15 seconds"
-           sleep 15
-        fi
-    done
-  fi
-
+  # TODO Better documentation
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
