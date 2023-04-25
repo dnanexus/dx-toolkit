@@ -484,8 +484,6 @@ wait_for_terminate_or_retry() {
           # TODO Do we need to store both the initial error strategy and the current one?
           # Is it enough to store the current error strategy in job metadata?
 
-          # TODO Don't need dx describe 2x here; first one isn't used
-          # dx describe $DX_JOB_ID --json | jq .properties -r
           errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
           if [ "$errorStrategy_set" = "retry" ]; then
             break
@@ -493,8 +491,6 @@ wait_for_terminate_or_retry() {
           wait_period=$(($wait_period+15))
           if [ $wait_period -ge $wait_time ];then
             echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-            # TODO Why is break used here and exit is used above?
-            # Should we exit -1, consistent with DxTaskHandler.kill(), instead?
             break
           else
             echo "No instruction to continue was given. Waiting for 15 seconds"
