@@ -9,6 +9,12 @@ DOCKER_CREDS_FOLDER=/docker/credentials/
 DOCKER_CREDS_FILENAME=dx_docker_creds
 CREDENTIALS=${HOME}/credentials
 
+# How long to let a subjob with error keep running for Nextflow to handle it
+# before we end the DX job, in seconds
+MAX_WAIT_AFTER_JOB_ERROR=240
+# How often to check when waiting for a subjob with error, in seconds
+WAIT_INTERVAL=15
+
 # Logs the user to the docker registry.
 # Uses docker credentials that have to be in $CREDENTIALS location.
 # Format of the file:
@@ -453,6 +459,10 @@ nf_task_exit() {
   # mark the job as successful in any case, real task
   # error code is managed by nextflow via .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
+
+  if [ "$exit_code" -ne 0 ]; then
+    export wait_after_job_error
+  fi
 
   # Make sure that subjob with errorStrategy == terminate end in 'failed' state
   wait_time=240
