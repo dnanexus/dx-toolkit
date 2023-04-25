@@ -458,6 +458,10 @@ nf_task_exit() {
   wait_time=240
   # TODO These reflect the error strategy as of beginning job, may not be current
   # error strategy, is that intentional?
+
+  # TODO Only check these if exit_code != 0
+  # Files in tmp workspace had to be used because we don't want to set any
+  # metadata error strategy for non-failed jobs -- product req
   terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
   retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
@@ -465,9 +469,11 @@ nf_task_exit() {
     echo "Waiting for the headjob to kill the job tree..."
     sleep $wait_time
     echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-    # TODO Why is exit used here and break is used below?
     # TODO This would default to the exit status of the previous command; should we
     # exit -1, consistent with DxTaskHandler.kill(), instead?
+    # Or we can remove exit, which would skip to
+    # dx-jobutil-add-output exit_code $exit_code --class=int
+    # dx job would "succeed," but error code would be encoded in exit_code output
     exit
   fi
 
@@ -490,20 +496,20 @@ nf_task_exit() {
         # Is it enough to store the current error strategy in job metadata?
 
         # TODO Don't need dx describe 2x here; first one isn't used
-        dx describe $DX_JOB_ID --json | jq .properties -r
+        # dx describe $DX_JOB_ID --json | jq .properties -r
         errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
         if [ "$errorStrategy_set" = "retry" ]; then
           break
         fi
-        wait_period=$(($wait_period+10))
+        wait_period=$(($wait_period+15))
         if [ $wait_period -ge $wait_time ];then
            echo "This subjob was not killed in time, exiting to prevent excessive waiting."
            # TODO Why is break used here and exit is used above?
            # Should we exit -1, consistent with DxTaskHandler.kill(), instead?
            break
         else
-           echo "No instruction to continue was given. Waiting for 10 seconds"
-           sleep 10
+           echo "No instruction to continue was given. Waiting for 15 seconds"
+           sleep 15
         fi
     done
   fi
