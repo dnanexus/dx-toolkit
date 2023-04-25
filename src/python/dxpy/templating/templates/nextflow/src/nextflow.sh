@@ -455,7 +455,7 @@ wait_for_terminate_or_retry() {
     # 1.a. If job had error, DxTaskHandler will put job metadata, but it might not be done yet
     # 2. Temporary workspace files can be accessed by head job and subjobs
     terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
-    if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
+    if [ -n "${terminate_record}" ]; then
       echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
       echo "Waiting for the headjob to kill the job tree..."
       sleep $wait_time
@@ -466,7 +466,7 @@ wait_for_terminate_or_retry() {
     fi
 
     retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
-    if [ "$exit_code" -ne "0" ] && [ -n "${retry_record}" ]; then
+    if [ -n "${retry_record}" ]; then
       wait_period=0
       echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
       echo "Waiting for the headjob to kill the job tree or for instruction to continue"
