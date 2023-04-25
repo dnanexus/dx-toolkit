@@ -456,7 +456,8 @@ nf_task_exit() {
 
   # Make sure that subjob with errorStrategy == terminate end in 'failed' state
   wait_time=240
-  # TODO Can there be a case where both these records exist for job-xxxx?
+  # TODO These reflect the error strategy as of beginning job, may not be current
+  # error strategy, is that intentional?
   terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
   retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
   if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
@@ -464,6 +465,7 @@ nf_task_exit() {
     echo "Waiting for the headjob to kill the job tree..."
     sleep $wait_time
     echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+    # TODO Why is exit used here and break is used below?
     exit
   fi
 
