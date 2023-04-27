@@ -455,9 +455,9 @@ wait_for_terminate_or_retry() {
     echo "Waiting for the head job to kill the job tree..."
     sleep $MAX_WAIT_AFTER_JOB_ERROR
     echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-    # Expected the job tree to be killed because of "terminate" strategy
-    # If not done already by Nextflow, will do it here
-    exit $exit_code
+    # TODO APPS-1821 Reconsider how to exit the job in this scenario
+    # TODO APPS-1822 Prerequisite for APPS-1821
+    exit
   fi
 
   retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
