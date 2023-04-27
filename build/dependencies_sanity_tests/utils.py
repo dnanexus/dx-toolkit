@@ -102,6 +102,7 @@ def init_base_argparser(parser) -> None:
     parser.add_argument("-l", "--logs", default="./logs", help="Directory where to store logs")
     parser.add_argument("-e", "--env", choices=["stg", "prod"], default="stg", help="Platform")
     parser.add_argument("-w", "--workers", type=int, default=1, help="Number of workers (i.e. parallelly running tests)")
+    parser.add_argument("-a", "--retries", type=int, default=1, help="Number of retries for failed execution to eliminate network issues")
     parser.add_argument("-r", "--extra-requirement", dest="extra_requirements", action="append", help="Explicitly install this library to the virtual environment before installing dx-toolkit. Format is the same as requirements.txt file.")
     parser.add_argument("-o", "--report", help="Save status report to file in JSON format")
     pyenv_group = parser.add_mutually_exclusive_group()
@@ -181,4 +182,5 @@ def parse_common_args(args) -> dict:
         print_logs=args.print_logs,
         print_failed_logs=args.print_failed_logs,
         workers=args.workers,
+        retries=args.retries,
     )

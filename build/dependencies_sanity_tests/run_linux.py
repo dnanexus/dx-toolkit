@@ -2,12 +2,12 @@
 
 import argparse
 import docker
-import json
 import logging
+import random
 import re
-import shutil
 import sys
 import tempfile
+import time
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -45,6 +45,7 @@ class DXPYTestsRunner:
     report: Optional[str] = None
     logs_dir: str = Path("logs")
     workers: int = 1
+    retries: int = 1
     print_logs: bool = False
     print_failed_logs: bool = False
     keep_images: bool = False
@@ -81,7 +82,15 @@ class DXPYTestsRunner:
             return
 
         try:
-            self._run_tests(pyenv, image)
+            for i in range(1, self.retries + 1):
+                try:
+                    self._run_tests(pyenv, image)
+                    break
+                except:
+                    if i == self.retries:
+                        raise
+                    logging.exception(f"[{pyenv}] Tests execution failed (try {i})")
+                    time.sleep(random.randrange(70, 90))
         except Exception as e:
             logging.exception(f"[{pyenv}] Tests execution failed.")
             self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED, e.failed_tests if isinstance(e, TestExecutionFailed) else None)

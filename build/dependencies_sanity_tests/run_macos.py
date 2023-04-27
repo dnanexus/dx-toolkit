@@ -1,12 +1,13 @@
 import argparse
-import json
 import logging
 import os
 import platform
+import random
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -75,6 +76,7 @@ class DXPYTestsRunner:
     report: Optional[str] = None
     logs_dir: str = Path("logs")
     workers: int = 1
+    retries: int = 1
     print_logs: bool = False
     print_failed_logs: bool = False
     _macos_version: float = float('.'.join(platform.mac_ver()[0].split('.')[:2]))
@@ -120,7 +122,15 @@ class DXPYTestsRunner:
 
     def _run_pyenv(self, pyenv: str):
         try:
-            self._do_run_pyenv(pyenv)
+            for i in range(1, self.retries + 1):
+                try:
+                    self._do_run_pyenv(pyenv)
+                    break
+                except:
+                    if i == self.retries:
+                        raise
+                    logging.exception(f"[{pyenv}] Tests execution failed (try {i})")
+                    time.sleep(random.randrange(70, 90))
         except:
             logging.exception(f"[{pyenv} Failed running tests")
             self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
