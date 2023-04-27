@@ -308,7 +308,7 @@ def test_normalize_time_input(dx_python_bin, two_files):
 @pytest.mark.parametrize("applet", ["inputs"], indirect=["applet"])
 def test_run_interactive(applet, two_files):
     """
-    Tested libraries: readline, gnureadline
+    Tested libraries: readline
     """
     import pexpect
     file, fileid, content = two_files[0]
@@ -342,12 +342,11 @@ def test_run_interactive(applet, two_files):
     assert content in res.stdout
 
 
-#FIXME: Run on all python versions once DEVEX-2258 is resolved
-@pytest.mark.skipif(IS_LINUX and sys.version_info < (3, 7), reason="Skip till DEVEX-2258 is fixed")
+@pytest.mark.skipif(IS_LINUX and sys.version_info < (3, 7), reason="Won't fix for old Python versions (see DEVEX-2258)")
 @skip_on_windows
 def test_dx_app_wizard_interactive(tmp_path_str):
     """
-    Tested libraries: readline, gnureadline
+    Tested libraries: readline
     """
     import pexpect
 

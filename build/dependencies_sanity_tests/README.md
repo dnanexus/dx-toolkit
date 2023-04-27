@@ -51,11 +51,9 @@ Traceback (most recent call last):
 ModuleNotFoundError: No module named 'OpenSSL'
 ```
 
-### gnureadline, pyreadline and pyreadline3
+### pyreadline and pyreadline3
 
-Used for TAB completion in interactive commands `dx run` and `dx-app-wizard`.
-
-`gnureadline` for MacOS, `pyreadline` and `pyreadline3` for windows.
+Used for TAB completion in interactive commands `dx run` and `dx-app-wizard` on Windows.
 
 ### psutil
 
