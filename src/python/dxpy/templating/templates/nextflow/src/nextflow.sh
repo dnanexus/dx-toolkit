@@ -455,8 +455,6 @@ wait_for_terminate_or_retry() {
     echo "Waiting for the head job to kill the job tree..."
     sleep $MAX_WAIT_AFTER_JOB_ERROR
     echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-    # TODO APPS-1821 Reconsider how to exit the job in this scenario
-    # TODO APPS-1822 Prerequisite for APPS-1821
     exit
   fi
 
