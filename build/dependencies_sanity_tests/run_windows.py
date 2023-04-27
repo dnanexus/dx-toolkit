@@ -35,6 +35,7 @@ class DXPYTestsRunner:
     report: Optional[str] = None
     logs_dir: str = Path("logs")
     workers: int = 1
+    retries: int = 1
     print_logs: bool = False
     print_failed_logs: bool = False
     pytest_python: str = "python3.11"
