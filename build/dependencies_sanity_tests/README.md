@@ -3,6 +3,7 @@
 ## Usage
 
 ### Linux
+
 1. Install Python and Docker: `sudo apt install --yes python3 docker.io`
 2. Install Docker Python: `python3 -m pip install docker`
 3. Run tests: `./run_linux.py -t <token> -d <dx-toolkit path> ...`
@@ -87,6 +88,7 @@ Used for streaming execution logs in `dx watch`.
 * `ubuntu-18.04-py3-sysdeps` - problem with psutil installation
 
 ### Windows
+
 * `official-3.6` - cannot install `psutil` as there are missing C++ build tools which cannot be installed by Chocolatey easily
 
 ### MacOS
