@@ -26,6 +26,7 @@ import dxpy
 import os
 import subprocess
 import json
+import sys
 from dxpy_testutil import cd, chdir
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
@@ -36,10 +37,21 @@ from dxpy.dx_extract_utils.filter_to_payload import (
     ValidateJSON,
 )
 
+python_version = sys.version_info.major
 test_project = "dx-toolkit_test_data"
 test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
-test_filter_directory = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
-output_folder = "/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
+if python_version == 3:
+    test_filter_directory = (
+        "/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
+    )
+    output_folder = "/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
+else:
+    test_filter_directory = (
+        "/hostdir/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
+    )
+    output_folder = (
+        "/hostdir/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
+    )
 # Controls whether output files for the end to end tests are written to file or stdout
 write_output = False
 if write_output:
