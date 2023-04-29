@@ -40,7 +40,7 @@ from ..exceptions import (
     InvalidInput,
     InvalidState,
     ResourceNotFound,
-    default_expected_exceptions
+    default_expected_exceptions,
 )
 
 from ..dx_extract_utils.filter_to_payload import ValidateJSON, FinalPayload
@@ -487,19 +487,20 @@ def extract_assay_germline(args):
         else:
             if args.json_help:
                 print(
-                    "# Filters and respective definitions\n#\n#  allele_id: ID of an allele for which annotations should be returned. If multiple values are provided, annotations for any alleles that match one of the values specified will be listed. For example, [\"1_1000_A_T\", \"1_1010_C_T\"], will search for annotations of alleles which match either \"1_1000_A_T\" or \"\"1_1010_C_T\". String match is case insensitive.\n#  gene_name: Gene name of the annotation. A list of gene names whose annotations will be returned. If multiple values are provided, the conditional search will be, \"OR.\" For example, [\"BRCA2\", \"ASPM\"], will search for annotations which match either \"BRCA2\" or \"ASPM\". String match is case insensitive.\n#  gene_id: Ensembl gene ID (ENSG) of the annotation. If multiple values are provided, the conditional search will be, \"OR.\" For example, [\"ENSG00000302118\", \"ENSG00004000504\"], will search for annotations which match either \"ENSG00000302118\" or \"ENSG00004000504\". String match is case insensitive.\n#  feature_id: Ensembl feature id (ENST) where the range overlaps with the variant. Currently, only  coding transcript IDs are searched. If multiple values are provided, the conditional search will be, \"OR.\" For example, [\"ENST00000302118.5\", \"ENST00004000504.1\"], will search for annotations which match either \"ENST00000302118.5\" or \"ENST00004000504.1\". String match is case insensitive.\n#  consequences: Consequence as recorded in the annotation. If multiple values are provided, the conditional search will be, \"OR.\" For example, [\"5_prime_UTR_variant\", \"3_prime_UTR_variant\"], will search for annotations which match either \"5 prime UTR variant\" or \"3 prime UTR variant\". String match is case sensitive. For all supported consequences terms, please refer to snpeff: http://pcingola.github.io/SnpEff/se_inputoutput/#effect-prediction-details (Effect Seq. Ontology column). This filter cannot be specified by itself, and must be included with at least one of the following filters: \"gene_id\", \"gene_name\",or \"feature_id\".\n#  putative_impact: Putative impact as recorded in the annotation. Possible values are [ \"HIGH\", \"MODERATE\", \"LOW\", \"MODIFIER\"]. If multiple values are provided, the conditional search will be, \"OR.\" For example, [\"MODIFIER\", \"HIGH\"], will search for annotations which match either \"MODIFIER\" or \"HIGH\". String match is case insensitive. For all supported terms, please refer to snpeff: http://pcingola.github.io/SnpEff/se_inputoutput/#impact-prediction. This filter cannot be specified by itself, and must be included with at least one of the following filters: \"gene_id\", \"gene_name\", or \"transcript_id\".\n#  hgvs_c: HGVS (DNA) code of the annotation. If multiple values are provided, the conditional search will be, \"OR.\" For example, [\"c.-49A>G\", \"c.-20T>G\"], will search for annotations which match either \"c.-49A>G\" or \"c.-20T>G\". String match is case sensitive.\n#  hgvs_p: HGVS (Protein) code of the annotation. If multiple values are provided, the conditional search will be, \"OR.\" For example, [\"p.Gly2Asp\", \"p.Aps2Gly\"], will search for annotations which match either \"p.Gly2Asp\" or \"p.Aps2Gly\". String match is case sensitive.\n# JSON filter template for --retrieve-annotation\n{\n  \"allele_id\":[\"1_1000_A_T\",\"2_1000_G_C\"],\n  \"gene_name\": [\"BRCA2\"],\n  \"gene_id\": [\"ENST00000302118\"],\n  \"feature_id\": [\"ENST00000302118.5\"],\n  \"consequences\": [\"5 prime UTR variant\"],\n  \"putative_impact\": [\"MODIFIER\"],\n  \"hgvs_c\": [\"c.-49A>G\"],\n  \"hgvs_p\": [\"p.Gly2Asp\"]\n}"
+                    '# Filters and respective definitions\n#\n#  allele_id: ID of an allele for which annotations should be returned. If multiple values are provided, annotations for any alleles that match one of the values specified will be listed. For example, ["1_1000_A_T", "1_1010_C_T"], will search for annotations of alleles which match either "1_1000_A_T" or ""1_1010_C_T". String match is case insensitive.\n#  gene_name: Gene name of the annotation. A list of gene names whose annotations will be returned. If multiple values are provided, the conditional search will be, "OR." For example, ["BRCA2", "ASPM"], will search for annotations which match either "BRCA2" or "ASPM". String match is case insensitive.\n#  gene_id: Ensembl gene ID (ENSG) of the annotation. If multiple values are provided, the conditional search will be, "OR." For example, ["ENSG00000302118", "ENSG00004000504"], will search for annotations which match either "ENSG00000302118" or "ENSG00004000504". String match is case insensitive.\n#  feature_id: Ensembl feature id (ENST) where the range overlaps with the variant. Currently, only  coding transcript IDs are searched. If multiple values are provided, the conditional search will be, "OR." For example, ["ENST00000302118.5", "ENST00004000504.1"], will search for annotations which match either "ENST00000302118.5" or "ENST00004000504.1". String match is case insensitive.\n#  consequences: Consequence as recorded in the annotation. If multiple values are provided, the conditional search will be, "OR." For example, ["5_prime_UTR_variant", "3_prime_UTR_variant"], will search for annotations which match either "5 prime UTR variant" or "3 prime UTR variant". String match is case sensitive. For all supported consequences terms, please refer to snpeff: http://pcingola.github.io/SnpEff/se_inputoutput/#effect-prediction-details (Effect Seq. Ontology column). This filter cannot be specified by itself, and must be included with at least one of the following filters: "gene_id", "gene_name",or "feature_id".\n#  putative_impact: Putative impact as recorded in the annotation. Possible values are [ "HIGH", "MODERATE", "LOW", "MODIFIER"]. If multiple values are provided, the conditional search will be, "OR." For example, ["MODIFIER", "HIGH"], will search for annotations which match either "MODIFIER" or "HIGH". String match is case insensitive. For all supported terms, please refer to snpeff: http://pcingola.github.io/SnpEff/se_inputoutput/#impact-prediction. This filter cannot be specified by itself, and must be included with at least one of the following filters: "gene_id", "gene_name", or "transcript_id".\n#  hgvs_c: HGVS (DNA) code of the annotation. If multiple values are provided, the conditional search will be, "OR." For example, ["c.-49A>G", "c.-20T>G"], will search for annotations which match either "c.-49A>G" or "c.-20T>G". String match is case sensitive.\n#  hgvs_p: HGVS (Protein) code of the annotation. If multiple values are provided, the conditional search will be, "OR." For example, ["p.Gly2Asp", "p.Aps2Gly"], will search for annotations which match either "p.Gly2Asp" or "p.Aps2Gly". String match is case sensitive.\n# JSON filter template for --retrieve-annotation\n{\n  "allele_id":["1_1000_A_T","2_1000_G_C"],\n  "gene_name": ["BRCA2"],\n  "gene_id": ["ENST00000302118"],\n  "feature_id": ["ENST00000302118.5"],\n  "consequences": ["5 prime UTR variant"],\n  "putative_impact": ["MODIFIER"],\n  "hgvs_c": ["c.-49A>G"],\n  "hgvs_p": ["p.Gly2Asp"]\n}'
                 )
                 sys.exit(0)
     elif "--retrieve-genotype" in args_list:
         if args.json_help:
             print(
-                "# Filters and respective definitions\n#  allele_id: ID(s) of one or more alleles for which sample genotypes will be returned. If multiple values are provided, any samples having at least one allele that match any of the values specified will be listed. For example, [\"1_1000_A_T\", \"1_1010_C_T\"], will search for samples with at least one allele matching either \"1_1000_A_T\" or \"1_1010_C_T\". String match is case insensitive.\n#  sample_id: Optional, one or more sample IDs for which sample genotypes will be returned. If the provided object is a cohort, this further intersects the sample ids. If a user has a list of samples more than 1,000, it is recommended to use a cohort id containing all the samples.\n#  genotype_type: Optional, one or more genotype types for which sample genotype types will be returned. One of: hom-alt (homozygous for the non-ref allele), het-ref (heterozygous with a ref allele and alt allele), het-alt (heterozygous with two distinct alt alleles), half (only one alt allele is known, second allele is unknown).\n# JSON filter template for --retrieve-genotype\n{\n  \"sample_id\": [\"s1\", \"s2\"],\n  \"allele_id\": [\"1_1000_A_T\",\"2_1000_G_C\"],\n  \"genotype_type\": [\"het-ref\", \"hom-alt\"]\n}")
+                '# Filters and respective definitions\n#  allele_id: ID(s) of one or more alleles for which sample genotypes will be returned. If multiple values are provided, any samples having at least one allele that match any of the values specified will be listed. For example, ["1_1000_A_T", "1_1010_C_T"], will search for samples with at least one allele matching either "1_1000_A_T" or "1_1010_C_T". String match is case insensitive.\n#  sample_id: Optional, one or more sample IDs for which sample genotypes will be returned. If the provided object is a cohort, this further intersects the sample ids. If a user has a list of samples more than 1,000, it is recommended to use a cohort id containing all the samples.\n#  genotype_type: Optional, one or more genotype types for which sample genotype types will be returned. One of: hom-alt (homozygous for the non-ref allele), het-ref (heterozygous with a ref allele and alt allele), het-alt (heterozygous with two distinct alt alleles), half (only one alt allele is known, second allele is unknown).\n# JSON filter template for --retrieve-genotype\n{\n  "sample_id": ["s1", "s2"],\n  "allele_id": ["1_1000_A_T","2_1000_G_C"],\n  "genotype_type": ["het-ref", "hom-alt"]\n}'
+            )
             sys.exit(0)
 
     #### Validate json filters ####
     def json_validation_function(filter_type, args_list, args):
         filter_arg = "args.retrieve_" + filter_type
-        filter_value = eval(filter_arg)
+        filter_value = str(eval(filter_arg))
         filter = {}
         if filter_value.endswith(".json"):
             if os.path.isfile(filter_value):
@@ -515,8 +516,10 @@ def extract_assay_germline(args):
                         filter = json.load(json_file)
                         json_file.close()
                     except Exception as json_error:
-                        err_exit("JSON for variant filters is malformatted.",
-                                 expected_exceptions=default_expected_exceptions)
+                        err_exit(
+                            "JSON for variant filters is malformatted.",
+                            expected_exceptions=default_expected_exceptions,
+                        )
             else:
                 err_exit(
                     "JSON file {filter_json} provided does not exist".format(
@@ -541,9 +544,11 @@ def extract_assay_germline(args):
                 try:
                     filter = json.loads(filter_value)
                 except Exception as json_error:
-                    err_exit("JSON for variant filters is malformatted.",
-                             expected_exceptions=default_expected_exceptions)
-        
+                    err_exit(
+                        "JSON for variant filters is malformatted.",
+                        expected_exceptions=default_expected_exceptions,
+                    )
+
         ValidateJSON(filter, filter_type)
 
         return filter
