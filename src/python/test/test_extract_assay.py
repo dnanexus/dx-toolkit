@@ -26,7 +26,7 @@ import dxpy
 import os
 import subprocess
 import json
-import sys
+
 from dxpy_testutil import cd, chdir
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
@@ -37,21 +37,14 @@ from dxpy.dx_extract_utils.filter_to_payload import (
     ValidateJSON,
 )
 
-python_version = sys.version_info.major
 test_project = "dx-toolkit_test_data"
 test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
-if python_version == 3:
-    test_filter_directory = (
-        "/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
-    )
-    output_folder = "/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
-else:
-    test_filter_directory = (
-        "/hostdir/dx-toolkit/src/python/test/extract_assay_germline/test_input/"
-    )
-    output_folder = (
-        "/hostdir/dx-toolkit/src/python/test/extract_assay_germline/test_output/"
-    )
+test_filter_directory = "./src/python/test/extract_assay_germline/test_input/"
+output_folder = "./src/python/test/extract_assay_germline/test_output/"
+malformed_json_dir = (
+    "./src/python/test/extract_assay_germline/test_input/malformed_json"
+)
+
 # Controls whether output files for the end to end tests are written to file or stdout
 write_output = False
 if write_output:
@@ -280,7 +273,6 @@ class TestDXExtractAssay(unittest.TestCase):
         ValidateJSON(filter, type)
 
     def test_malformed_json(self):
-        malformed_json_dir = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/malformed_json"
         for filter_type in ["allele", "annotation", "genotype"]:
             malformed_json_filenames = os.listdir(
                 os.path.join(malformed_json_dir, filter_type)
@@ -322,7 +314,7 @@ class TestDXExtractAssay(unittest.TestCase):
                         os.path.join(filter_dir, filter_name),
                         os.path.join(output_folder, output_filename)
                         if write_output
-                        else "-",
+                        else "- > /dev/null",
                     )
                 )
                 process = subprocess.check_call(command, shell=True)
@@ -345,7 +337,7 @@ class TestDXExtractAssay(unittest.TestCase):
                     test_record,
                     filter_type,
                     filter_file,
-                    output_filename if write_output else "-",
+                    output_filename if write_output else "- > /dev/null",
                 )
             )
             process = subprocess.check_call(command, shell=True)
@@ -365,7 +357,7 @@ class TestDXExtractAssay(unittest.TestCase):
                 test_record,
                 filter_type,
                 filter_file,
-                output_filename if write_output else "-",
+                output_filename if write_output else "- > /dev/null",
             )
             process = subprocess.check_call(command, shell=True)
 
@@ -379,7 +371,7 @@ class TestDXExtractAssay(unittest.TestCase):
             test_record,
             "allele",
             filter_file,
-            output_filename if write_output else "-",
+            output_filename if write_output else "- > /dev/null",
         )
         process = subprocess.check_call(command, shell=True)
 
@@ -399,7 +391,7 @@ class TestDXExtractAssay(unittest.TestCase):
         command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele {} --output {}".format(
             test_record,
             os.path.join(single_filter_directory, "allele/allele_rsid.json"),
-            output_filename if write_output else "-",
+            output_filename if write_output else "- > /dev/null",
         )
         subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
 
