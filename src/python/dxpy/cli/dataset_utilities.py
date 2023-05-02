@@ -500,7 +500,7 @@ def extract_assay_germline(args):
     #### Validate json filters ####
     def json_validation_function(filter_type, args_list, args):
         filter_arg = "args.retrieve_" + filter_type
-        filter_value = eval(filter_arg)
+        filter_value = str(eval(filter_arg))
         filter = {}
         if filter_value.endswith(".json"):
             if os.path.isfile(filter_value):
@@ -786,7 +786,7 @@ def csv_from_json(
 
     csv_writer = csv.DictWriter(
         fields_output,
-        delimiter=sep,
+        delimiter=str(sep),
         doublequote=True,
         escapechar=None,
         lineterminator="\n",
