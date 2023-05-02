@@ -26,6 +26,7 @@ import dxpy
 import os
 import subprocess
 import json
+import sys
 
 from dxpy_testutil import cd, chdir
 from dxpy.dx_extract_utils.filter_to_payload import (
@@ -36,6 +37,11 @@ from dxpy.dx_extract_utils.filter_to_payload import (
     FinalPayload,
     ValidateJSON,
 )
+
+python_version = sys.version_info.major
+# TODO remove
+working_dir = os.getcwd()
+print("executing directory: {}".format(working_dir))
 
 test_project = "dx-toolkit_test_data"
 test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
