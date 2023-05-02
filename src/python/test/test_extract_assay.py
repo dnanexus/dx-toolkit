@@ -43,12 +43,15 @@ python_version = sys.version_info.major
 working_dir = os.getcwd()
 print("executing directory: {}".format(working_dir))
 
+dirname = os.path.dirname(__file__)
+
 test_project = "dx-toolkit_test_data"
 test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
-test_filter_directory = "./src/python/test/extract_assay_germline/test_input/"
-output_folder = "./src/python/test/extract_assay_germline/test_output/"
-malformed_json_dir = (
-    "./src/python/test/extract_assay_germline/test_input/malformed_json"
+
+test_filter_directory = os.path.join(dirname, "extract_assay_germline/test_input/")
+output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
+malformed_json_dir = os.path.join(
+    dirname, "extract_assay_germline/test_input/malformed_json"
 )
 
 # Controls whether output files for the end to end tests are written to file or stdout
