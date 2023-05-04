@@ -2902,7 +2902,7 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
     if args.input_json is None and args.filename is None:
         # --input-json and --input-json-file completely override input
         # from the cloned job
-        exec_inputs.update(args.input_from_clone, strip_prefix=False)
+        exec_inputs.update(args.cloned_job_desc.get("runInput", {}), strip_prefix=False)
 
     # Update with inputs passed to the this function
     if preset_inputs is not None:
@@ -3012,24 +3012,33 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_type, str):
-        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
-                                  **(args.instance_type or {}))
-
-    if args.sys_reqs_from_clone and not isinstance(args.instance_count, str):
-        # extract instance counts from cloned sys reqs and override them with args provided with "dx run"
-        args.instance_count = dict({fn: reqs['clusterSpec']['initialInstanceCount']
-                                        for fn, reqs in list(args.sys_reqs_from_clone.items()) if 'clusterSpec' in reqs},
-                                   **(args.instance_count or {}))
-
-    executable_describe = None
-    srd_cluster_spec = SystemRequirementsDict(None)
-    if args.instance_count is not None:
-        executable_describe = executable.describe()
-        srd_default = SystemRequirementsDict.from_sys_requirements(
-            executable_describe['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
-        srd_requested = SystemRequirementsDict.from_instance_count(args.instance_count)
-        srd_cluster_spec = srd_default.override_cluster_spec(srd_requested)
+    # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
+    requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
+    
+    # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
+    requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)
+    # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
+    # and overwrite the field initialInstanceCount with the runtime mapping 
+    default_cluster_spec = SystemRequirementsDict.from_sys_requirements(
+        executable.describe()['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
+    requested_cluster_spec = default_cluster_spec.override_cluster_spec(requested_instance_count)
+    
+    # combine the requested instance type and full cluster spec
+    # into the runtime systemRequirements 
+    requested_system_requirements = (requested_instance_type + requested_cluster_spec).as_dict()
+    
+    # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
+    # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
+    # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
+    requested_system_requirements_by_executable = SystemRequirementsDict(args.instance_type_by_executable).as_dict()
+    
+    if args.cloned_job_desc:
+        # override systemRequirements and systemRequirementsByExecutable mapping with cloned job description
+        # Note: when cloning from a job, we have 1)runtime 2)cloned 3) default runSpec specifications, and we need to merge the first two to make the new request
+        # however when cloning from an analysis, the temporary workflow already has the cloned spec as its default, so no need to merge 1) and 2) here
+        from ..utils import merge
+        requested_system_requirements = merge(args.cloned_job_desc.get("systemRequirements", {}), requested_system_requirements)
+        requested_system_requirements_by_executable = merge(args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}), requested_system_requirements)
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -3055,11 +3064,11 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": args.priority,
-        "instance_type": args.instance_type,
+        "system_requirements": args.system_requirements,
+        "system_requirements_by_executable": args.system_requirements_by_executable,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
-        "cluster_spec": srd_cluster_spec.as_dict(),
         "detach": args.detach,
         "cost_limit": args.cost_limit,
         "rank": args.rank,
@@ -3358,8 +3367,6 @@ def run(args):
         err_exit(parser_map['run'].format_help() +
                  fill("Error: Either the executable must be specified, or --clone must be used to indicate a job or analysis to clone"), 2)
 
-    args.input_from_clone, args.sys_reqs_from_clone = {}, {}
-
     dest_proj, dest_path = None, None
 
     if args.project is not None:
@@ -3393,7 +3400,7 @@ def run(args):
 
     clone_desc = None
     if args.clone is not None:
-        # Resolve job ID or name
+        # Resolve job ID or name; both job-id and analysis-id can be described using job_describe()
         if is_job_id(args.clone) or is_analysis_id(args.clone):
             clone_desc = dxpy.api.job_describe(args.clone)
         else:
@@ -3454,10 +3461,9 @@ def run(args):
                 setattr(args, metadata, clone_desc.get(metadata))
 
         if clone_desc['class'] == 'job':
+            args.cloned_job_desc = clone_desc
             if args.executable == "":
                 args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
-            args.input_from_clone = clone_desc["runInput"]
-            args.sys_reqs_from_clone = clone_desc["systemRequirements"]
             if args.details is None:
                 args.details = {
                     "clonedFrom": {
