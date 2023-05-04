@@ -3543,7 +3543,7 @@ def terminate(args):
 def watch(args):
     level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
-    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
+    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS")})
 
     msg_callback, log_client = None, None
     if args.get_stdout:
@@ -3580,6 +3580,13 @@ def watch(args):
 
     if args.levels:
         input_params['levels'] = args.levels
+
+    if args.metrics == "none":
+        input_params['excludeMetrics'] = True
+    elif args.metrics == "csv":
+        input_params['metricsFormat'] = "csv"
+    else:
+        input_params['metricsFormat'] = "text"
 
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
@@ -5303,7 +5310,7 @@ parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent 
                           type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
 parser_watch.add_argument('-l', '--levels', action='append', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
-                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT", "METRICS"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', action='store_true')
@@ -5316,6 +5323,8 @@ parser_watch.add_argument('-q', '--quiet', help='Do not print extra info message
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
+parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
+                          choices=["interspersed", "none", "top", "csv"], default="interspersed")
 parser_watch.set_defaults(func=watch)
 register_parser(parser_watch, categories='exec')
 
