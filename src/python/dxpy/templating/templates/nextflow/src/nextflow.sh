@@ -9,6 +9,12 @@ DOCKER_CREDS_FOLDER=/docker/credentials/
 DOCKER_CREDS_FILENAME=dx_docker_creds
 CREDENTIALS=${HOME}/credentials
 
+# How long to let a subjob with error keep running for Nextflow to handle it
+# before we end the DX job, in seconds
+MAX_WAIT_AFTER_JOB_ERROR=240
+# How often to check when waiting for a subjob with error, in seconds
+WAIT_INTERVAL=15
+
 # Logs the user to the docker registry.
 # Uses docker credentials that have to be in $CREDENTIALS location.
 # Format of the file:
@@ -442,53 +448,56 @@ main() {
     exit $ret
 }
 
+wait_for_terminate_or_retry() {
+  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
+  if [ -n "${terminate_record}" ]; then
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
+    echo "Waiting for the head job to kill the job tree..."
+    sleep $MAX_WAIT_AFTER_JOB_ERROR
+    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+    exit
+  fi
+
+  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
+  if [ -n "${retry_record}" ]; then
+    wait_period=0
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
+    echo "Waiting for the head job to kill the job tree or for instruction to continue..."
+    while true
+    do
+        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
+        if [ "$errorStrategy_set" = "retry" ]; then
+          break
+        fi
+        wait_period=$(($wait_period+$WAIT_INTERVAL))
+        if [ $wait_period -ge $MAX_WAIT_AFTER_JOB_ERROR ];then
+          echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+          break
+        else
+          echo "No instruction to continue was given. Waiting for ${WAIT_INTERVAL} seconds"
+          sleep $WAIT_INTERVAL
+        fi
+    done
+  fi
+}
+
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
-  ret=$?
   if [ -f .command.log ]; then
     dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
   else
     >&2 echo "Missing Nextflow .command.log file"
   fi
-  # mark the job as successful in any case, real task
-  # error code is managed by nextflow via .exitcode file
+
+  # exit_code should already be set in nf_task_entry(); default just in case
+  # This is just for including as DX output; Nextflow internally uses .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
 
-  # Make sure that subjob with errorStrategy == terminate end in 'failed' state
-  wait_time=240
-  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
-  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
-  if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
-    echo "Waiting for the headjob to kill the job tree..."
-    sleep $wait_time
-    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-    exit
-  fi
+  if [ "$exit_code" -ne 0 ]; then wait_for_terminate_or_retry; fi
 
-  if [ "$exit_code" -ne "0" ] && [ -n "${retry_record}" ]; then
-    wait_period=0
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
-    echo "Waiting for the headjob to kill the job tree or for instruction to continue"
-
-    while true
-    do
-        dx describe $DX_JOB_ID --json | jq .properties -r
-        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
-        if [ "$errorStrategy_set" = "retry" ]; then
-          break
-        fi
-        wait_period=$(($wait_period+10))
-        if [ $wait_period -ge $wait_time ];then
-           echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-           break
-        else
-           echo "No instruction to continue was given. Waiting for 10 seconds"
-           sleep 10
-        fi
-    done
-  fi
-
+  # There are cases where the Nextflow task had an error but we don't want to fail the whole
+  # DX job exec tree, e.g. because the error strategy should continue,
+  # so we let the DX job succeed but this output records Nextflow's exit code
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
