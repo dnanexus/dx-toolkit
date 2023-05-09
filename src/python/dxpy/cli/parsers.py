@@ -311,7 +311,6 @@ def _parse_dictionary_or_string_input(thing, arg_name):
 def _parse_inst_type(thing):
     return _parse_dictionary_or_string_input(thing, "--instance-type")
 
-
 def _parse_inst_count(thing):
     return _parse_dictionary_or_string_input(thing, "--instance-count")
 
@@ -337,7 +336,14 @@ def process_instance_type_arg(args, for_workflow=False):
 
 def process_instance_type_by_executable_arg(args):
     if args.instance_type_by_executable:
-        return _parse_dictionary_or_string_input(args.instance_type_by_executable, "--instance-type-by-executable")
+        if args.instance_type_by_executable.strip().startswith('{'):
+            # expects a map, e.g of entry point to instance type or instance count
+            try:
+                args.instance_type_by_executable = json.loads(args.instance_type_by_executable)
+            except ValueError:
+                raise DXParserError('Error while parsing JSON value for --instance-type-by-executable')
+        else:
+            raise DXParserError('Value given for --instance-type-by-executable could not be parsed as JSON')
 
 def process_instance_count_arg(args):
     if args.instance_count:
