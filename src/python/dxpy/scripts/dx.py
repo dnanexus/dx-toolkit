@@ -3585,6 +3585,7 @@ def watch(args):
         args.levels = ['METRICS']
         args.format = "{msg}"
         args.job_info = False
+        args.quiet = True
     elif args.format is None:
         if args.job_ids:
             args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
