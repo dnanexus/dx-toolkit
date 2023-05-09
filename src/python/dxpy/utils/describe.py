@@ -768,7 +768,7 @@ def printable_ssh_host_key(ssh_host_key):
         return stdout.replace(" no comment", "").strip()
 
 
-def print_execution_desc(desc):
+def print_execution_desc(desc, verbose=verbose):
     recognized_fields = ['id', 'class', 'project', 'workspace', 'region',
                          'app', 'applet', 'executable', 'workflow',
                          'state',
@@ -933,14 +933,15 @@ def print_execution_desc(desc):
     if 'internetUsageIPs' in desc:
         print_json_field("Internet Usage IPs", desc['internetUsageIPs'])
 
-    if desc.get('runSystemRequirements') is not None:
-        print_json_field("Run Sys Reqs", desc['runSystemRequirements'])
-    if desc.get('runSystemRequirementsByExecutable') is not None:
-        print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirements'])
-    if desc.get('mergedSystemRequirementsByExecutable') is not None:
-        print_json_field("Merged Sys Reqs By Exec", desc['runSystemRequirements'])
-    if desc.get('runStageSystemRequirements') is not None:
-        print_json_field("Run Stage Sys Reqs", desc['runSystemRequirements'])
+    if verbose:
+        if desc.get('runSystemRequirements') is not None:
+            print_json_field("Run Sys Reqs", desc['runSystemRequirements'])
+        if desc.get('runSystemRequirementsByExecutable') is not None:
+            print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirements'])
+        if desc.get('mergedSystemRequirementsByExecutable') is not None:
+            print_json_field("Merged Sys Reqs By Exec", desc['runSystemRequirements'])
+        if desc.get('runStageSystemRequirements') is not None:
+            print_json_field("Run Stage Sys Reqs", desc['runSystemRequirements'])
 
     for field in desc:
         if field not in recognized_fields:
@@ -1037,7 +1038,7 @@ def print_desc(desc, verbose=False):
     elif desc['class'] == 'globalworkflow':
         print_globalworkflow_desc(desc, verbose=verbose)
     elif desc['class'] in ['job', 'analysis']:
-        print_execution_desc(desc)
+        print_execution_desc(desc, verbose=verbose)
     elif desc['class'] == 'user':
         print_user_desc(desc)
     elif desc['class'] in ['org', 'team']:
