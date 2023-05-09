@@ -3546,13 +3546,7 @@ def watch(args):
     level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS")})
 
     def check_args_compatibility(incompatible_list):
-        for arg in incompatible_list:
-            if isinstance(arg, tuple):
-                adest = arg[0]
-                aarg = arg[1]
-            else:
-                adest = arg
-                aarg = arg
+        for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
             if getattr(args, adest) != parser_watch.get_default(adest):
                 return "--" + (aarg.replace("_", "-"))
 
@@ -3628,7 +3622,7 @@ def watch(args):
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
       if not args.quiet:
-        print("Output reused from %s" %(args.jobid))
+        print("Output reused from %s" % args.jobid)
 
     log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
                                       msg_output_format=args.format, print_job_info=args.job_info)
