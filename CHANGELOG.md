@@ -11,6 +11,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
 concluding a subjob
 
+#### Added
+
+* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
+
 ## [347.0] - beta
 
 ### Changed
@@ -34,10 +38,6 @@ concluding a subjob
 * `ImportError` in test_dxpy.py
 * Replaced obsolete built-in `file()` method with `open()`
 * Printing HTTP error codes that were hidden for API requests to cloud storage
-
-#### Added
-
-* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
 
 ## [345.0] - beta
 
