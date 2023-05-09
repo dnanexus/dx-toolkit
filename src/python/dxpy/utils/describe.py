@@ -768,7 +768,7 @@ def printable_ssh_host_key(ssh_host_key):
         return stdout.replace(" no comment", "").strip()
 
 
-def print_execution_desc(desc, verbose=verbose):
+def print_execution_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'workspace', 'region',
                          'app', 'applet', 'executable', 'workflow',
                          'state',
