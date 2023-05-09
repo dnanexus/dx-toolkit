@@ -3545,6 +3545,35 @@ def watch(args):
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
     level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS")})
 
+    def check_args_compatibility(incompatible_list):
+        for arg in incompatible_list:
+            if isinstance(arg, tuple):
+                adest = arg[0]
+                aarg = arg[1]
+            else:
+                adest = arg
+                aarg = arg
+            if getattr(args, adest) != parser_watch.get_default(adest):
+                return "--" + (aarg.replace("_", "-"))
+
+    incompatible_args = None
+    if args.levels and "METRICS" in args.levels and args.metrics == "none":
+        incompatible_args = ("--leveles METRICS", "--metrics none")
+    elif args.metrics == "top":
+        if args.levels and "METRICS" not in args.levels:
+            err_exit(exception=DXCLIError("'--metrics' is specified, but METRICS level is not included"))
+
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", ("tail", "no-wait"), "tree", "num_recent_messages"])
+        if iarg:
+            incompatible_args = ("--metrics top", iarg)
+    elif args.metrics == "csv":
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", ("tail", "no-wait"), "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
+        if iarg:
+            incompatible_args = ("--metrics csv", iarg)
+
+    if incompatible_args:
+        err_exit(exception=DXCLIError("Can not specify both '%s' and '%s'" % incompatible_args))
+
     msg_callback, log_client = None, None
     if args.get_stdout:
         args.levels = ['STDOUT']
@@ -3556,6 +3585,10 @@ def watch(args):
         args.job_info = False
     elif args.get_streams:
         args.levels = ['STDOUT', 'STDERR']
+        args.format = "{msg}"
+        args.job_info = False
+    elif args.metrics == "csv":
+        args.levels = ['METRICS']
         args.format = "{msg}"
         args.job_info = False
     elif args.format is None:
