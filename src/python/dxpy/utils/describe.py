@@ -933,15 +933,14 @@ def print_execution_desc(desc, verbose=False):
     if 'internetUsageIPs' in desc:
         print_json_field("Internet Usage IPs", desc['internetUsageIPs'])
 
-    if verbose:
-        if desc.get('runSystemRequirements') is not None:
-            print_json_field("Run Sys Reqs", desc['runSystemRequirements'])
-        if desc.get('runSystemRequirementsByExecutable') is not None:
-            print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirements'])
-        if desc.get('mergedSystemRequirementsByExecutable') is not None:
-            print_json_field("Merged Sys Reqs By Exec", desc['runSystemRequirements'])
-        if desc.get('runStageSystemRequirements') is not None:
-            print_json_field("Run Stage Sys Reqs", desc['runSystemRequirements'])
+    if desc.get('runSystemRequirements') is not None:
+        print_json_field("Run Sys Reqs", desc['runSystemRequirements'])
+    if desc.get('runSystemRequirementsByExecutable') is not None:
+        print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirements'])
+    if desc.get('mergedSystemRequirementsByExecutable') is not None:
+        print_json_field("Merged Sys Reqs By Exec", desc['runSystemRequirements'])
+    if desc.get('runStageSystemRequirements') is not None:
+        print_json_field("Run Stage Sys Reqs", desc['runSystemRequirements'])
 
     for field in desc:
         if field not in recognized_fields:
