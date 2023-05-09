@@ -12,11 +12,6 @@ expected_output_dir = (
 test_output_file_names = os.listdir(test_output_dir)
 expected_output_file_names = os.listdir(expected_output_dir)
 
-# Hardcoding in just the first allele test for now
-# test_output_file_names = ["allele_rsid_output.tsv"]
-# expected_output_file_names = ["allele_rsid_output.tsv"]
-# filter_type = "allele"
-
 # Counters of passed and failed tests
 num_passed = 0
 num_failed = 0

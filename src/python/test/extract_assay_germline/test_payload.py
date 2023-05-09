@@ -5,16 +5,15 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--sql", action="store_true")
+parser.add_argument("filter",type=str,help="path to filter JSON")
+parser.add_argument("output",type=str,help="path to output tsv file")
+parser.add_argument("dataset",type=str,help="dataset represented as <project-id>:<record-id>")
+parser.add_argument("filter_type",type=str,choices=["allele","annotation","genotype"],help="type of filter being applied")
+                    
 args = parser.parse_args()
 
-filter = "/dx-toolkit/src/python/test/extract_assay_germline/test_input/single_filters/allele/allele_rsid.json"
-output = "allele_rsid_output.tsv"
-dataset = "project-FkyXg38071F1vGy2GyXyYYQB:record-FyFPyz0071F54Zjb32vG82Gj"
-test02_dataset = "project-G9j1pX00vGPzF2XQ7843k2Jq:record-GQQKBJ80yP3gBXqXpkY4z4ZK"
-filter_type = "allele"
-
 command = "dx extract_assay germline {} --retrieve-{} {} -o {}".format(
-    dataset, filter_type, filter, output
+    args.dataset, args.filter_type, args.filter, args.output
 )
 # print(command)
 
