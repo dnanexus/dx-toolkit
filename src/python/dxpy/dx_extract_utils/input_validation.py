@@ -14,7 +14,7 @@ def is_list_of_strings(object):
     for item in object:
         # Note that in python 2.7 these strings are read in as unicode
         if python_version == 2:
-            if not (isinstance(item, str) or isinstance(item,unicode)):
+            if not (isinstance(item, str) or isinstance(item, unicode)):
                 return False
         else:
             if not isinstance(item, str):
@@ -89,15 +89,10 @@ def validate_filter(filter, filter_type):
                     print(malformed_filter.format("location"))
                     err_exit()
                 # Check that each key is a string
-                for val in indiv_location.values():
-                    if python_version == 2:
-                        if not (isinstance(val, str) or isinstance(val,unicode)):
-                            print(malformed_filter.format("location"))
-                            err_exit()
-                    else:
-                        if not (isinstance(val, str)):
-                            print(malformed_filter.format("location"))
-                            err_exit()
+                if not is_list_of_strings(list(indiv_location.values())):
+                    print(malformed_filter.format("location"))
+                    err_exit()
+
     if filter_type == "annotation":
         keys = filter.keys()
         if not (
@@ -171,4 +166,3 @@ def validate_filter(filter, filter_type):
                     print("value {} is not a valid genotype_type".format(item))
                     print(malformed_filter.format("genotype_type"))
                     err_exit()
-
