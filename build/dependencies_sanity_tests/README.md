@@ -33,24 +33,7 @@ Colorized terminal output on Windows. Called directly in `dx` and `dx-app-wizard
 
 ### cryptography
 
-Seems to be unused and present for historical reasons. In dxpy, the library is NOT used anywhere. 
-
-The only place I could found is `urllib3` contrib module `PyOpenSSL` (https://urllib3.readthedocs.io/en/stable/reference/contrib/pyopenssl.html) and it is required for certificate validation (using packace `urllib3[secure]`) in Python 2: https://urllib3.readthedocs.io/en/stable/user-guide.html#certificate-verification-in-python-2 and https://urllib3.readthedocs.io/en/stable/user-guide.html#certificate-verification.
-
-In requests package, there is fallback for `ssl` without SNI support which will try to use PyOpenSSL workaround - https://github.com/psf/requests/blob/7f694b79e114c06fac5ec06019cada5a61e5570f/requests/__init__.py#L117-L136. However, this will not work for dxpy as we are not installing PyOpenSSL anyway.
-
-The same applies to Python 2.x in Ubuntu 16.04, Ubuntu 18.04 and RHEL/CentOS 7.
-
-```
-$ pip3 install dxpy
-$ python3
->>> from urllib3.contrib import pyopenssl
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  File "/test2/lib/python3.10/site-packages/urllib3/contrib/pyopenssl.py", line 50, in <module>
-    import OpenSSL.crypto
-ModuleNotFoundError: No module named 'OpenSSL'
-```
+Seems to be unused in the code and present because of historical issues with SSL implementation in Python.
 
 ### pyreadline and pyreadline3
 
