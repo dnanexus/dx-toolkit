@@ -43,7 +43,7 @@ from ..exceptions import (
     default_expected_exceptions,
 )
 
-from ..dx_extract_utils.filter_to_payload import ValidateJSON, FinalPayload
+from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -549,7 +549,7 @@ def extract_assay_germline(args):
                         expected_exceptions=default_expected_exceptions,
                     )
 
-        ValidateJSON(filter, filter_type)
+        validate_JSON(filter, filter_type)
 
         return filter
 
@@ -663,7 +663,7 @@ def extract_assay_germline(args):
 
     payload = {}
     if "--retrieve-allele" in args_list:
-        payload, fields_list = FinalPayload(
+        payload, fields_list = final_payload(
             full_input_dict=filter_dict,
             name=selected_assay_name,
             id=selected_assay_id,
@@ -672,7 +672,7 @@ def extract_assay_germline(args):
             filter_type="allele",
         )
     elif "--retrieve-annotation" in args_list:
-        payload, fields_list = FinalPayload(
+        payload, fields_list = final_payload(
             full_input_dict=filter_dict,
             name=selected_assay_name,
             id=selected_assay_id,
@@ -681,7 +681,7 @@ def extract_assay_germline(args):
             filter_type="annotation",
         )
     elif "--retrieve-genotype" in args_list:
-        payload, fields_list = FinalPayload(
+        payload, fields_list = final_payload(
             full_input_dict=filter_dict,
             name=selected_assay_name,
             id=selected_assay_id,

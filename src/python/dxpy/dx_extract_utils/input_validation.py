@@ -8,7 +8,7 @@ malformed_filter = "found following invalid filters: {}"
 python_version = sys.version_info.major
 
 
-def isListOfStrings(object):
+def is_list_of_strings(object):
     if not isinstance(object, list):
         return False
     for item in object:
@@ -22,7 +22,7 @@ def isListOfStrings(object):
     return True
 
 
-def validateFilter(filter, filter_type):
+def validate_filter(filter, filter_type):
     keys = filter.keys()
     if filter_type == "allele":
         # Check for required fields
@@ -36,12 +36,12 @@ def validateFilter(filter, filter_type):
             err_exit(1)
         # Check rsid field
         if "rsid" in keys:
-            if not isListOfStrings(filter["rsid"]):
+            if not is_list_of_strings(filter["rsid"]):
                 print(malformed_filter.format("rsid"))
                 err_exit(1)
         # Check type field
         if "type" in keys:
-            if not isListOfStrings(filter["type"]):
+            if not is_list_of_strings(filter["type"]):
                 print(malformed_filter.format("type"))
                 err_exit(1)
             # Check against allowed values
@@ -141,7 +141,7 @@ def validateFilter(filter, filter_type):
 
         # All annotation fields are lists of strings
         for key in keys:
-            if not isListOfStrings(filter[key]):
+            if not is_list_of_strings(filter[key]):
                 print(malformed_filter.format(key))
                 err_exit(1)
     if filter_type == "genotype":
@@ -151,17 +151,17 @@ def validateFilter(filter, filter_type):
             err_exit(1)
         # Check allele_id field
         if "allele_id" in keys:
-            if not isListOfStrings(filter["allele_id"]):
+            if not is_list_of_strings(filter["allele_id"]):
                 print(malformed_filter.format("allele_id"))
                 err_exit(1)
         # Check sample_id field
         if "sample_id" in keys:
-            if not isListOfStrings(filter["sample_id"]):
+            if not is_list_of_strings(filter["sample_id"]):
                 print(malformed_filter.format("sample_id"))
                 err_exit(1)
         # Check genotype field
         if "genotype_type" in keys:
-            if not isListOfStrings(filter["genotype_type"]):
+            if not is_list_of_strings(filter["genotype_type"]):
                 print("genotype type is not a list of strings")
                 print(malformed_filter.format("genotype_type"))
                 err_exit(1)
