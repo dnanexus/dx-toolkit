@@ -39,9 +39,6 @@ from dxpy.dx_extract_utils.filter_to_payload import (
 )
 
 python_version = sys.version_info.major
-# TODO remove
-working_dir = os.getcwd()
-print("executing directory: {}".format(working_dir))
 
 dirname = os.path.dirname(__file__)
 
