@@ -8,7 +8,7 @@ malformed_filter = "found following invalid filters: {}"
 python_version = sys.version_info.major
 
 
-def isListOfStrings(object):
+def is_list_of_strings(object):
     if not isinstance(object, list):
         return False
     for item in object:
@@ -22,7 +22,7 @@ def isListOfStrings(object):
     return True
 
 
-def validateFilter(filter, filter_type):
+def validate_filter(filter, filter_type):
     keys = filter.keys()
     if filter_type == "allele":
         # Check for required fields
@@ -30,25 +30,25 @@ def validateFilter(filter, filter_type):
             print(
                 "location and rsid fields cannot both be specified in the same filter"
             )
-            err_exit(1)
+            err_exit()
         if not (("location" in keys) or ("rsid" in keys)):
             print("Either location or rsid must be specified in an allele filter")
-            err_exit(1)
+            err_exit()
         # Check rsid field
         if "rsid" in keys:
-            if not isListOfStrings(filter["rsid"]):
+            if not is_list_of_strings(filter["rsid"]):
                 print(malformed_filter.format("rsid"))
-                err_exit(1)
+                err_exit()
         # Check type field
         if "type" in keys:
-            if not isListOfStrings(filter["type"]):
+            if not is_list_of_strings(filter["type"]):
                 print(malformed_filter.format("type"))
-                err_exit(1)
+                err_exit()
             # Check against allowed values
             for item in filter["type"]:
                 if item not in ["SNP", "Ins", "Del", "Mixed"]:
                     print(malformed_filter.format("type"))
-                    err_exit(1)
+                    err_exit()
 
         # Check dataset_alt_af
         if "dataset_alt_af" in keys:
@@ -56,26 +56,26 @@ def validateFilter(filter, filter_type):
             max_val = filter["dataset_alt_af"]["max"]
             if min_val < 0:
                 print(malformed_filter.format("dataset_alt_af"))
-                err_exit(1)
+                err_exit()
             if max_val > 1:
                 print(malformed_filter.format("dataset_alt_af"))
-                err_exit(1)
+                err_exit()
             if min_val > max_val:
                 print(malformed_filter.format("dataset_alt_af"))
-                err_exit(1)
+                err_exit()
         # Check gnomad_alt_af
         if "gnomad_alt_af" in keys:
             min_val = filter["gnomad_alt_af"]["min"]
             max_val = filter["gnomad_alt_af"]["max"]
             if min_val < 0:
                 print(malformed_filter.format("gnomad_alt_af"))
-                err_exit(1)
+                err_exit()
             if max_val > 1:
                 print(malformed_filter.format("gnomad_alt_af"))
-                err_exit(1)
+                err_exit()
             if min_val > max_val:
                 print(malformed_filter.format("gnomad_alt_af"))
-                err_exit(1)
+                err_exit()
         # Check location field
         if "location" in keys:
             for indiv_location in filter["location"]:
@@ -87,17 +87,17 @@ def validateFilter(filter, filter_type):
                     and ("ending_position" in indiv_loc_keys)
                 ):
                     print(malformed_filter.format("location"))
-                    err_exit(1)
+                    err_exit()
                 # Check that each key is a string
                 for val in indiv_location.values():
                     if python_version == 2:
                         if not (isinstance(val, str) or isinstance(val,unicode)):
                             print(malformed_filter.format("location"))
-                            err_exit(1)
+                            err_exit()
                     else:
                         if not (isinstance(val, str)):
                             print(malformed_filter.format("location"))
-                            err_exit(1)
+                            err_exit()
     if filter_type == "annotation":
         keys = filter.keys()
         if not (
@@ -106,26 +106,26 @@ def validateFilter(filter, filter_type):
             or ("gene_id" in filter.keys())
         ):
             print("allele_id, gene_name, or gene_id is required in annotation_filters")
-            err_exit(1)
+            err_exit()
         # Ensure only one of the required fields is given
         if "allele_id" in keys:
             if ("gene_name" in keys) or ("gene_id" in keys):
                 print(
                     "Only one of allele_id, gene_name, and gene_id can be provided in an annotation filter"
                 )
-                err_exit(1)
+                err_exit()
         elif "gene_id" in keys:
             if ("gene_name" in keys) or ("allele_id" in keys):
                 print(
                     "Only one of allele_id, gene_name, and gene_id can be provided in an annotation filter"
                 )
-                err_exit(1)
+                err_exit()
         elif "gene_name" in keys:
             if ("gene_id" in keys) or ("allele_id" in keys):
                 print(
                     "Only one of allele_id, gene_name, and gene_id can be provided in an annotation filter"
                 )
-                err_exit(1)
+                err_exit()
         # Consequences and putative impact cannot be provided without at least one of gene_id, gene_name, feature_id
         if ("consequences" in keys) or ("putative_impact" in keys):
             if (
@@ -137,40 +137,40 @@ def validateFilter(filter, filter_type):
                     "consequences and putative impact fields may not be specified without "
                     + "at least one of gene_id, gene_name, or feature_id"
                 )
-                err_exit(1)
+                err_exit()
 
         # All annotation fields are lists of strings
         for key in keys:
-            if not isListOfStrings(filter[key]):
+            if not is_list_of_strings(filter[key]):
                 print(malformed_filter.format(key))
-                err_exit(1)
+                err_exit()
     if filter_type == "genotype":
         keys = filter.keys()
         if not "allele_id" in keys:
             print("allele_id is required in genotype filters")
-            err_exit(1)
+            err_exit()
         # Check allele_id field
         if "allele_id" in keys:
-            if not isListOfStrings(filter["allele_id"]):
+            if not is_list_of_strings(filter["allele_id"]):
                 print(malformed_filter.format("allele_id"))
-                err_exit(1)
+                err_exit()
         # Check sample_id field
         if "sample_id" in keys:
-            if not isListOfStrings(filter["sample_id"]):
+            if not is_list_of_strings(filter["sample_id"]):
                 print(malformed_filter.format("sample_id"))
-                err_exit(1)
+                err_exit()
         # Check genotype field
         if "genotype_type" in keys:
-            if not isListOfStrings(filter["genotype_type"]):
+            if not is_list_of_strings(filter["genotype_type"]):
                 print("genotype type is not a list of strings")
                 print(malformed_filter.format("genotype_type"))
-                err_exit(1)
+                err_exit()
             # Check against allowed values
             for item in filter["genotype_type"]:
                 if item not in ["hom", "het-ref", "het-alt", "alt"]:
                     print("value {} is not a valid genotype_type".format(item))
                     print(malformed_filter.format("genotype_type"))
-                    err_exit(1)
+                    err_exit()
 
 
 if __name__ == "__main__":

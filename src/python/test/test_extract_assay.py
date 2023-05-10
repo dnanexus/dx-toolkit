@@ -31,17 +31,14 @@ import sys
 from dxpy_testutil import cd, chdir
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
-    BasicFilter,
-    LocationFilter,
-    GenerateAssayFilter,
-    FinalPayload,
-    ValidateJSON,
+    basic_filter,
+    location_filter,
+    generate_assay_filter,
+    final_payload,
+    validate_JSON,
 )
 
 python_version = sys.version_info.major
-# TODO remove
-working_dir = os.getcwd()
-print("executing directory: {}".format(working_dir))
 
 dirname = os.path.dirname(__file__)
 
@@ -98,7 +95,7 @@ class TestDXExtractAssay(unittest.TestCase):
         }
 
         self.assertEqual(
-            BasicFilter(
+            basic_filter(
                 table, friendly_name, values, project_context, genome_reference
             ),
             expected_output,
@@ -122,7 +119,7 @@ class TestDXExtractAssay(unittest.TestCase):
         }
 
         self.assertEqual(
-            BasicFilter(
+            basic_filter(
                 table, friendly_name, values, project_context, genome_reference
             ),
             expected_output,
@@ -140,7 +137,7 @@ class TestDXExtractAssay(unittest.TestCase):
         }
 
         self.assertEqual(
-            BasicFilter(
+            basic_filter(
                 table, friendly_name, values, project_context, genome_reference
             ),
             expected_output,
@@ -165,7 +162,7 @@ class TestDXExtractAssay(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(LocationFilter(location_list), expected_output)
+        self.assertEqual(location_filter(location_list), expected_output)
 
     # TODO location filter with two location
 
@@ -192,7 +189,7 @@ class TestDXExtractAssay(unittest.TestCase):
         }
 
         self.assertEqual(
-            GenerateAssayFilter(
+            generate_assay_filter(
                 full_input_dict,
                 name,
                 id,
@@ -254,7 +251,7 @@ class TestDXExtractAssay(unittest.TestCase):
             "worst_effect",
         ]
 
-        test_payload, test_fields = FinalPayload(
+        test_payload, test_fields = final_payload(
             full_input_dict,
             name,
             id,
@@ -279,7 +276,7 @@ class TestDXExtractAssay(unittest.TestCase):
         type = "allele"
 
         # This just needs to complete without error
-        ValidateJSON(filter, type)
+        validate_JSON(filter, type)
 
     def test_malformed_json(self):
         for filter_type in ["allele", "annotation", "genotype"]:
@@ -291,7 +288,7 @@ class TestDXExtractAssay(unittest.TestCase):
                 with open(file_path, "r") as infile:
                     filter = json.load(infile)
                     try:
-                        ValidateJSON(filter, filter_type)
+                        validate_JSON(filter, filter_type)
                         print(
                             "Uh oh, malformed JSON passed detection, file is {}".format(
                                 file_path

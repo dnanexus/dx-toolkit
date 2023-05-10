@@ -1,7 +1,7 @@
 import json
 
 from ..exceptions import err_exit, ResourceNotFound
-from .input_validation import validateFilter
+from .input_validation import validate_filter
 import os
 import dxpy
 import subprocess
@@ -69,7 +69,7 @@ def retrieve_geno_bins(list_of_genes, project, genome_reference):
     return geno_positions
 
 
-def BasicFilter(
+def basic_filter(
     table, friendly_name, values=[], project_context=None, genome_reference=None
 ):
     """ "
@@ -130,7 +130,7 @@ def BasicFilter(
     return listed_filter
 
 
-def LocationFilter(location_list):
+def location_filter(location_list):
     """
     A location filter is actually an allele$a_id filter with no filter values
     The geno_bins perform the actual location filtering.  Related to other geno_bins filters by "or"
@@ -169,7 +169,7 @@ def LocationFilter(location_list):
     return location_aid_filter
 
 
-def GenerateAssayFilter(
+def generate_assay_filter(
     full_input_dict,
     name,
     id,
@@ -191,13 +191,13 @@ def GenerateAssayFilter(
     for key in full_input_dict.keys():
         if key == "location":
             location_list = full_input_dict["location"]
-            location_aid_filter = LocationFilter(location_list)
+            location_aid_filter = location_filter(location_list)
             filters_dict.update(location_aid_filter)
 
         else:
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
                 filters_dict.update(
-                    BasicFilter(
+                    basic_filter(
                         table,
                         key,
                         full_input_dict[key],
@@ -215,7 +215,7 @@ def GenerateAssayFilter(
     return final_filter_dict
 
 
-def FinalPayload(
+def final_payload(
     full_input_dict, name, id, project_context, genome_reference, filter_type
 ):
     """
@@ -224,7 +224,7 @@ def FinalPayload(
     HTTPS POST request
     """
     # Generate the assay filter component of the payload
-    assay_filter = GenerateAssayFilter(
+    assay_filter = generate_assay_filter(
         full_input_dict,
         name,
         id,
@@ -266,7 +266,7 @@ def FinalPayload(
     return final_payload, field_names
 
 
-def ValidateJSON(filter, type):
+def validate_JSON(filter, type):
     """
     Check user-provdied JSON filter for validity
     Errors out if JSON is invalid, continues otherwise
@@ -283,7 +283,7 @@ def ValidateJSON(filter, type):
     # an explanation of which part of the schema failed
     try:
         # A function for doing basic input validation that does not rely on jsonschema
-        validateFilter(filter, type)
+        validate_filter(filter, type)
         # validate(filter, json_schema)
     except Exception as inst:
         err_exit(inst)
