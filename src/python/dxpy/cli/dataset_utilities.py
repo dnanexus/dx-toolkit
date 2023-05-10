@@ -140,7 +140,7 @@ def raw_api_call(resp, payload):
                 print(resp_raw["error"])
             sys.exit(1)
     except Exception as details:
-        err_exit((str(details)))
+        err_exit(str(details))
     return resp_raw
 
 
@@ -500,7 +500,7 @@ def extract_assay_germline(args):
     #### Validate json filters ####
     def json_validation_function(filter_type, args_list, args):
         filter_arg = "args.retrieve_" + filter_type
-        filter_value = str(vars(args)['retrieve_' + filter_type])
+        filter_value = str(vars(args)["retrieve_" + filter_type])
         filter = {}
         if filter_value.endswith(".json"):
             if os.path.isfile(filter_value):
