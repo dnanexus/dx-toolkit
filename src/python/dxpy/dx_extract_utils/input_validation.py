@@ -172,9 +172,3 @@ def validate_filter(filter, filter_type):
                     print(malformed_filter.format("genotype_type"))
                     err_exit()
 
-
-if __name__ == "__main__":
-    filter_path = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/test/CLIGAM_tests/test_input/unit_tests/allele_01.json"
-
-    with open(filter_path, "r") as infile:
-        filter = json.load(infile)
