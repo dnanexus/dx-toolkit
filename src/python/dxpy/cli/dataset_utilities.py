@@ -116,7 +116,7 @@ def raw_query_api_call(resp, payload):
         )
 
     except Exception as details:
-        err_exit((str(details)))
+        err_exit(str(details))
     sql_results = resp_raw_query["sql"] + ";"
     return sql_results
 
