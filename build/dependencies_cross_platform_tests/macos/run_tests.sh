@@ -71,4 +71,4 @@ else
     fi
 fi
 
-$MAIN_PYTHON_BIN -m pytest --verbose ${SCRIPT_DIR}/../dependencies_sanity_tests.py $@
+$MAIN_PYTHON_BIN -m pytest --verbose ${SCRIPT_DIR}/../dependencies_cross_platform_tests.py $@

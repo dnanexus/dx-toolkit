@@ -151,7 +151,7 @@ If($LastExitCode -ne 0)
     Exit 1
 }}
 
-{pytest_python} -m pytest -v {pytest_args} {(ROOT_DIR / 'dependencies_sanity_tests.py').absolute()}
+{pytest_python} -m pytest -v {pytest_args} {(ROOT_DIR / 'dependencies_cross_platform_tests.py').absolute()}
 
 If($LastExitCode -ne 0)
 {{

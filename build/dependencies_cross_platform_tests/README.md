@@ -1,4 +1,4 @@
-# dxpy dependencies sanity tests
+# dxpy dependencies cross-platform tests
 
 ## Usage
 
@@ -14,14 +14,12 @@
 2. Prepare environment (Pythons, etc.): `powershell.exe -ExecutionPolicy Unrestricted windows\prepare.ps1`
 3. Run tests: `python3.11 run_windows.py -t <token> -d <dx-toolkit path> ...`
 
-
 ### MacOS
 
 1. Install dependencies: `bash macos/prepare.sh`
 2. Run tests: `./run_macos.sh -t <token> -d <dx-toolkit path> ...`
 
 ## Where are libraries used
-
 
 ### argcomplete
 
