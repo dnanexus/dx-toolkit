@@ -2342,6 +2342,34 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         self.assertIn("Workflow Outputs", by_id)
         self.assertIn("Billed to", by_id)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run jobs')
+    def test_describe_analysis_verbose(self):
+        analysis_input = {"foo": 100}
+        dxworkflow = self.create_workflow(self.project)
+        dxanalysis = dxworkflow.run(workflow_input=analysis_input)
+
+        analysis_desc_verbose = run("dx describe {} --verbose".format(dxanalysis.get_id()))
+        analysis_desc_json = run("dx describe {} --json".format(dxanalysis.get_id()))
+        analysis_desc_verbose_json = run("dx describe {} --verbose --json".format(dxanalysis.get_id()))
+        self.assertTrue(all(key in analysis_desc_verbose for key in ["Run Sys Reqs", "Run Sys Reqs by Exec", "Merged Sys Reqs By Exec", "Run Stage Sys Reqs"]))
+        self.assertFalse(any(key in analysis_desc_json for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        self.assertTrue(all(key in analysis_desc_verbose_json for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run jobs')
+    def test_describe_job_verbose(self):
+        job_input = {"number": 100}
+        dxapplet = dxpy.DXApplet(self.test_applet_id)
+        dxjob = dxapplet.run(applet_input=job_input)
+
+        job_desc_verbose = run("dx describe {} --verbose".format(dxjob.get_id()))
+        job_desc_json = run("dx describe {} --json".format(dxjob.get_id()))
+        job_desc_verbose_json = run("dx describe {} --verbose --json".format(dxjob.get_id()))
+        self.assertTrue(all(key in job_desc_verbose for key in ["Run Sys Reqs", "Run Sys Reqs by Exec", "Merged Sys Reqs By Exec"]))
+        self.assertFalse(any(key in job_desc_json for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        self.assertTrue(all(key in job_desc_verbose_json for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable']))
+
 class TestDXClientRun(DXTestCase):
     def setUp(self):
         self.other_proj_id = run("dx new project other --brief").strip()
