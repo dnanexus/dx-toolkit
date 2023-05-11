@@ -439,9 +439,12 @@ def extract_assay_germline(args):
         "--retrieve-annotation",
         "--retrieve-genotype",
     ]
+    filter_given = False
+    if any(x in args_list for x in retrieve_args_list):
+        filter_given = True
     #### Check if valid options are passed with the --json-help flag ####
     if args.json_help:
-        if not (any(x in args_list for x in retrieve_args_list)):
+        if not filter_given:
             err_exit(
                 'Please specify one of the following: --retrieve-allele, --retrieve-genotype or --retrieve-annotation" for details on the corresponding JSON template and filter definition.'
             )
@@ -562,14 +565,14 @@ def extract_assay_germline(args):
 
     #### Validate that a retrieve option is passed with --assay-name ####
     if args.assay_name:
-        if not (any(x in args_list for x in retrieve_args_list)):
+        if not filter_given:
             err_exit(
                 "--assay-name must be used with one of --retrieve-allele,--retrieve-annotation, --retrieve-genotype."
             )
 
     #### Validate that a retrieve option is passed with --sql ####
     if args.sql:
-        if not (any(x in args_list for x in retrieve_args_list)):
+        if not filter_given:
             err_exit(
                 "When --sql provided, must also provide at least one of the three options: --retrieve-allele <JSON>; --retrieve-genotype <JSON>; --retrieve-annotation <JSON>."
             )
