@@ -16,6 +16,7 @@ concluding a subjob
 ### Changed
 
 * Bumped allowed `colorama` version to 0.4.6
+* Allow `requests` version up to 2.28.x
 
 ### Removed
 
