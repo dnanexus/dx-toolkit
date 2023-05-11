@@ -72,7 +72,7 @@ def retrieve_geno_bins(list_of_genes, project, genome_reference):
 def basic_filter(
     table, friendly_name, values=[], project_context=None, genome_reference=None
 ):
-    """ "
+    """
     A low-level filter consisting of a dictionary with one key defining the table and column
     and whose value is dictionary defining the user-provided value to be compared to, and the logical operator
     used to do the comparison
