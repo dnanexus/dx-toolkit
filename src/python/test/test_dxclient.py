@@ -9777,7 +9777,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False, "inheritParentRestartOnPolicy": False.
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
 
         output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}
@@ -9817,9 +9817,6 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             self.assertTrue(applet_metadata.find('"class": "file"', output_spec_index) < applet_metadata.find('"patterns": ["*.bam"]', output_spec_index))
 
             output_json = json.loads(applet_metadata)
-            print(output_app_spec)
-            print()
-            print(output_json)
             self.assertEqual(output_app_spec, output_json)
             self.assertNotIn("bundledDepends", output_json["runSpec"])
             self.assertNotIn("systemRequirementsByRegion", output_json["runSpec"])
