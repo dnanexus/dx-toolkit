@@ -6,12 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [347.0] - beta
+
+### Added
+
+* dxpy dependencies test suite
+
 ### Changed
 
 * Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
 concluding a subjob
 
-## [347.0] - beta
+## [347.0] - 2023.5.11
 
 ### Changed
 
