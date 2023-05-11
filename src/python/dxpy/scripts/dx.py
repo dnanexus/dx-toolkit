@@ -41,7 +41,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import (extract_dataset, extract_assay_germline)
+from ..cli.dataset_utilities import extract_dataset, extract_assay_germline
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
