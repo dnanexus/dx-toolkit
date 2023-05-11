@@ -735,7 +735,7 @@ def extract_assay_germline(args):
 
 def retrieve_entities(model):
     """
-    Retrievs the entities in form of <entity_name>\t<entity_title> and identifies main entity
+    Retrieves the entities in form of <entity_name>\t<entity_title> and identifies main entity
     """
     entity_names_and_titles = []
     for entity in sorted(model["entities"].keys()):
