@@ -9817,6 +9817,9 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             self.assertTrue(applet_metadata.find('"class": "file"', output_spec_index) < applet_metadata.find('"patterns": ["*.bam"]', output_spec_index))
 
             output_json = json.loads(applet_metadata)
+            print(output_app_spec)
+            print()
+            print(output_json)
             self.assertEqual(output_app_spec, output_json)
             self.assertNotIn("bundledDepends", output_json["runSpec"])
             self.assertNotIn("systemRequirementsByRegion", output_json["runSpec"])
