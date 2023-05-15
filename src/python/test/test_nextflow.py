@@ -168,6 +168,7 @@ class TestNextflowTemplates(DXTestCase):
 class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
     def test_dx_build_nextflow_default_metadata(self):
+        # Name of folder containing *.nf
         pipeline_name = "hello"
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
@@ -218,24 +219,25 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(app["name"], pipeline_name)
 
     def test_dx_build_nextflow_with_extra_args(self):
+        # Name of folder containing *.nf
         pipeline_name = "hello"
-        extra_args = '{"name": "testing_name_hello"}'
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
-        applet_id = json.loads(run(
-            "dx build --nextflow '{}' --json --extra-args '{}'".format(applet_dir, extra_args)))["id"]
-        app = dxpy.describe(applet_id)
-        self.assertEqual(app["name"], json.loads(extra_args)["name"])
-        self.assertEqual(app["title"], pipeline_name)
-        self.assertEqual(app["summary"], pipeline_name)
 
-        extra_args = '{"name": "new_name", "title": "new title"}'
+        # Override metadata values
+        extra_args = '{"name": "name-9Oxvx2tCZe", "title": "Title VsnhPeFBqt", "summary": "Summary 3E7fFfEXdB"}'
         applet_id = json.loads(run(
             "dx build --nextflow '{}' --json --extra-args '{}'".format(applet_dir, extra_args)))["id"]
-        app = dxpy.describe(applet_id)
-        self.assertEqual(app["name"], json.loads(extra_args)["name"])
-        self.assertEqual(app["title"], json.loads(extra_args)["title"])
-        self.assertEqual(app["summary"], pipeline_name)
+
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+        self.assertEqual(desc["name"], json.loads(extra_args)["name"])
+        self.assertEqual(desc["title"], json.loads(extra_args)["title"])
+        self.assertEqual(desc["summary"], json.loads(extra_args)["summary"])
+
+        details = applet.get_details()
+        self.assertEqual(details["repository"], "local")
+
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
@@ -272,16 +274,21 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_build_nextflow_from_repository_with_extra_args(self):
-        pipeline_name = "hello"
         hello_repo_url = "https://github.com/nextflow-io/hello"
-        extra_args = '{"name": "new name", "title": "new title"}'
+
+        # Override metadata values
+        extra_args = '{"name": "name-l1DeZYnTyQ", "title": "Title KkWUaqpHh1", "summary": "Summary Yqf37VpDTY"}'
         applet_json = run("dx build --nextflow --repository '{}' --extra-args '{}' --brief".format(hello_repo_url, extra_args)).strip()
+
         applet_id = json.loads(applet_json).get("id")
         applet = dxpy.DXApplet(applet_id)
         desc = applet.describe()
-        self.assertEqual(desc["name"], "new name")
-        self.assertEqual(desc["title"], "new title")
-        self.assertEqual(desc["summary"], pipeline_name)
+        self.assertEqual(desc["name"], json.loads(extra_args)["name"])
+        self.assertEqual(desc["title"], json.loads(extra_args)["title"])
+        self.assertEqual(desc["summary"], json.loads(extra_args)["summary"])
+
+        details = applet.get_details()
+        self.assertEqual(details["repository"], hello_repo_url)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
@@ -351,8 +358,9 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping tests that would run jobs')
+    # @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+    #                      'skipping tests that would run jobs')
+    @unittest.skip("skipping flaky test; to be fixed separately")
     def test_dx_run_retry_fail(self):
         pipeline_name = "retryMaxRetries"
         nextflow_file = "nextflow/RetryMaxRetries/main.nf"

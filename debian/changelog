@@ -1,3 +1,39 @@
+dx-toolkit (0.348.0) trusty; urgency=medium
+
+  * Added: dxpy dependencies test suite
+  * Changed: Optimizations in Nextflow Pipeline Applet script to make fewer API calls when concluding a subjob
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 11 May 2023 14:35:53 +0000
+
+dx-toolkit (0.347.0) trusty; urgency=medium
+
+  * Changed: Removed unneeded gnureadline dependency
+  * Changed: Bumped allowed colorama version to 0.4.6
+  * Fixed: Removed unused rlcompleter import which may break alternative readline implementations
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 20 Apr 2023 16:28:33 +0000
+
+dx-toolkit (0.346.0) trusty; urgency=medium
+
+  * Fixed: Released Nextaur 1.6.6. It includes fixes to errorStrategy handling and an update to the way AWS instance types are selected based on resource requirements in Nextflow pipelines (V2 instances are now preferred)
+  * Fixed: ImportError in test_dxpy.py
+  * Fixed: Replaced obsolete built-in file() method with open()
+  * Fixed: Printing HTTP error codes and messages that were hidden
+  * Changed: Help message of the dx make_download_url command
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 13 Apr 2023 14:00:12 +0000
+
+dx-toolkit (0.345.0) trusty; urgency=medium
+
+  * Fixed: Tab completion in interactive execution of dx-app-wizard
+  * Fixed: dx-app-wizard script on Windows
+  * Fixed: Tab completion in interactive executions on Windows
+  * Changed: Released Nextaur 1.6.5. It added a caching mechanism to DxPath file and folder resolution, which reduces number of DX API calls made during pipeline execution. It also fixes an occasional hanging of the headjob.
+  * Changed: Tab completion in interactive executions now works with libedit bundled in MacOS and does not require externally installed GNU readline
+  * Changed: Bump allowed cryptography dxpy dependency version to 40.0.x
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 03 Apr 2023 04:17:30 +0000
+
 dx-toolkit (0.344.0) trusty; urgency=medium
 
   * Added: Support for file (un)archival in DXJava
