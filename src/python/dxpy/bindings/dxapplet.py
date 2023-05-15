@@ -186,7 +186,7 @@ class DXExecutable:
         raise NotImplementedError('_get_cleanup_keys is not implemented')
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
-            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
+            instance_type=None, stage_instance_types=None, instance_type_by_executable=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None,
             ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
             max_job_spot_wait_time=None, preserve_job_outputs=None, extra_args=None, **kwargs):
@@ -257,6 +257,7 @@ class DXExecutable:
                                         details=details,
                                         instance_type=instance_type,
                                         stage_instance_types=stage_instance_types,
+                                        instance_type_by_executable=instance_type_by_executable,
                                         stage_folders=stage_folders,
                                         rerun_stages=rerun_stages,
                                         cluster_spec=cluster_spec,
