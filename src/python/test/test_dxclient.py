@@ -9828,7 +9828,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False, "inheritParentRestartOnPolicy": False,
                                       "distribution": "Ubuntu", "release": "14.04", "version": "0"}
 
         output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}
