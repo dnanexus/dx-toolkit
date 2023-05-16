@@ -3248,6 +3248,55 @@ dx-jobutil-add-output record_array $second_record --array
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
+    def test_dx_run_sys_reqs(self):
+        app_spec = {"project": self.project,
+                    "dxapi": "1.0.0",
+                    "runSpec": {"interpreter": "bash",
+                                "distribution": "Ubuntu",
+                                "release": "20.04",
+                                "version": "0",
+                                "code": "echo 'hello'",
+                                "systemRequirements": {
+                                    "main": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": {"type": "spark",
+                                                        "initialInstanceCount": 1,
+                                                        "version": "2.4.4",
+                                                        "bootstrapScript": "x.sh"}
+                                    },
+                                    "other": {
+                                        "instanceType": "mem2_hdd2_x4",
+                                        "clusterSpec": {"type": "spark",
+                                                        "initialInstanceCount": 5,
+                                                        "version": "2.4.4",
+                                                        "bootstrapScript": "x.sh"}
+                                    },
+                                }
+                                }
+                    }
+        applet_id = dxpy.api.applet_new(app_spec)['id']
+        requested_inst_type_by_exec = {
+            applet_id: {
+                "*": {
+                    "instanceType": "mem2_ssd1_v2_x2",
+                    "clusterSpec": {"initialInstanceCount": 3}}}}
+
+        (stdout, stderr) = run('_DX_DEBUG=2 dx run ' + applet_id + ' ' +
+                               '--instance-type mem2_hdd2_x2 ' +
+                               '--instance-count 15 ' +
+                               '--instance-type-by-executable ' +
+                               '\'' +
+                               json.dumps(requested_inst_type_by_exec) + '\'',
+                               also_return_stderr=True)
+        expected_sys_reqs_by_exec = '"systemRequirementsByExecutable": ' + \
+            json.dumps(requested_inst_type_by_exec)
+        self.assertIn(expected_sys_reqs_by_exec, stderr)
+
+        # parsing error
+        with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
+            run("dx run " + applet_id +
+                " --instance-type-by-executable not-a-JSON-string")
+
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -3293,6 +3342,7 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + applet_id +
                           ' -inumber=32 --name jobname --folder /output ' +
                           '--instance-type mem2_hdd2_x2 ' +
+                          '--instance-type-by-executable \'{"' + applet_id + '": "*": "mem1_ssd1_v2_x2"}\''   
                           '--tag Ψ --tag $hello.world ' +
                           '--property Σ_1^n=n --property $hello.=world ' +
                           '--priority normal ' +
@@ -3304,6 +3354,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(orig_job_desc['folder'], '/output')
         self.assertEqual(orig_job_desc['input'], {'number': 32})
         self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
+        self.assertEqual(orig_job_desc['systemRequirementsByExecutable'], {'*': {'instanceType': 'mem1_ssd1_v2_x2'}})
 
         # clone the job
 
