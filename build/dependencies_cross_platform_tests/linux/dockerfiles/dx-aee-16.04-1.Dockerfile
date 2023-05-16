@@ -1,0 +1,20 @@
+FROM --platform=amd64 ubuntu:16.04
+
+SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DXPY_TEST_PYTHON_VERSION=3
+
+RUN \
+    apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv libffi-dev && \
+    python3 -m pip install --quiet --upgrade requests==2.22.0 pip==20.3.4 setuptools==50.3.2 'certifi<2022.5.18' wheel==0.37.1 && \
+    python3 -m venv /pytest-env
+
+RUN \
+    source /pytest-env/bin/activate && \
+    python3 -m pip install --quiet pip==20.3.4 setuptools==50.3.2 wheel==0.37.1 && \
+    python3 -m pip install --quiet pytest==6.1.2 pexpect
+
+COPY run_tests.sh /
+
+ENTRYPOINT [ "/run_tests.sh" ]

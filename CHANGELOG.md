@@ -10,16 +10,23 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Added new return fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
 
+## [348.0] - beta
+
+### Added
+
+* dxpy dependencies test suite
+
 ### Changed
 
 * Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
 concluding a subjob
 
-## [347.0] - beta
+## [347.0] - 2023.5.11
 
 ### Changed
 
 * Bumped allowed `colorama` version to 0.4.6
+* Allow `requests` version up to 2.28.x
 
 ### Removed
 
