@@ -11,15 +11,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * dxpy dependencies test suite
+* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
 
 ### Changed
 
 * Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
 concluding a subjob
 
-#### Added
-
-* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
 
 ## [347.0] - 2023.5.11
 
