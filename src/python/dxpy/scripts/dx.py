@@ -3067,7 +3067,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "system_requirements": args.system_requirements,
         "system_requirements_by_executable": args.system_requirements_by_executable,
         "stage_instance_types": args.stage_instance_types,
-        "instance_type_by_executable": args.instance_type_by_executable,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
         "detach": args.detach,
