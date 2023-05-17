@@ -447,9 +447,9 @@ def print_project_desc(desc, verbose=False):
     if 'containsPHI' in desc:
         print_json_field('Contains PHI', desc['containsPHI'])
     if 'databaseUIViewOnly' in desc and desc['databaseUIViewOnly']:
-        print_json_field('External Upload Restricted', desc['databaseUIViewOnly'])
+        print_json_field('Database UI View Only', desc['databaseUIViewOnly'])
     if 'externalUploadRestricted' in desc and desc['externalUploadRestricted']:
-        print_json_field('E', desc['externalUploadRestricted'])
+        print_json_field('External Upload Restricted', desc['externalUploadRestricted'])
 
     # Usage
     print_field("Created", render_timestamp(desc['created']))
