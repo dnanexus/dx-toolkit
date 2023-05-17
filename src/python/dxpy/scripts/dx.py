@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools, platform
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
 import shlex # respects quoted substrings when splitting
 
 import requests
@@ -41,7 +41,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import (extract_dataset, extract_assay_germline)
+from ..cli.dataset_utilities import extract_dataset, extract_assay_germline
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -97,15 +97,11 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        # Import pyreadline3 on Windows with Python >= 3.5
-        if platform.system() == 'Windows' and  sys.version_info >= (3, 5):
-            import pyreadline3 as readline
-        else:
-            try:
-                # Import gnureadline if installed for macOS
-                import gnureadline as readline
-            except ImportError as e:
-                import readline
+        try:
+            # Import gnureadline if installed for macOS
+            import gnureadline as readline
+        except ImportError as e:
+            import readline
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
@@ -4650,7 +4646,7 @@ register_parser(parser_download, categories='data')
 parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing',
                                                  description='Creates a pre-authenticated link that can be used to download a file without logging in.',
                                                  prog='dx make_download_url')
-path_action = parser_make_download_url.add_argument('path', help='Data object ID or name to access')
+path_action = parser_make_download_url.add_argument('path', help='Project-qualified data object ID or name, e.g. project-xxxx:file-yyyy, or project-xxxx:/path/to/file.txt')
 path_action.completer = DXPathCompleter(classes=['file'])
 parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
 parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as (default is the filename)')
@@ -6158,6 +6154,8 @@ parser_extract_assay_germline.add_argument(
     type=str,
     help='The name or project-id:record-id of a v3.0 Dataset or Cohort object ID, where "record-id" indicates the record-id in current selected project.',
 )
+
+
 parser_extract_assay_germline.add_argument(
     "--list-assays",
     action="store_true",
@@ -6168,7 +6166,9 @@ parser_extract_assay_germline.add_argument(
     default=None,
     help="Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
 )
-parser_extract_assay_germline.add_argument(
+
+parser_e_a_g_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group()
+parser_e_a_g_mutex_group.add_argument(
     "--retrieve-allele",
     type=str,
     const='{}', 
@@ -6176,7 +6176,7 @@ parser_extract_assay_germline.add_argument(
     nargs='?',
     help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
-parser_extract_assay_germline.add_argument(
+parser_e_a_g_mutex_group.add_argument(
     "--retrieve-annotation",
     type=str,
     const='{}',
@@ -6184,7 +6184,7 @@ parser_extract_assay_germline.add_argument(
     nargs='?',
     help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
-parser_extract_assay_germline.add_argument(
+parser_e_a_g_mutex_group.add_argument(
     "--retrieve-genotype",
     type=str,
     const='{}',

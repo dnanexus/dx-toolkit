@@ -164,8 +164,6 @@ class TestDXExtractAssay(unittest.TestCase):
 
         self.assertEqual(location_filter(location_list), expected_output)
 
-    # TODO location filter with two location
-
     def test_generate_assay_filter(self):
         # A small payload, uses allele_rsid.json
         full_input_dict = {"rsid": ["rs1342568097"]}
@@ -296,6 +294,33 @@ class TestDXExtractAssay(unittest.TestCase):
                         )
                     except:
                         print("task failed succesfully")
+
+    ###########
+    # Malformed command lines
+    ###########
+
+    def test_filter_mutex(self):
+        print("testing filter mutex")
+        """Ensure that the failure mode of multiple filter types being provided is caught"""
+        # Grab two random filter JSONs of different types
+        allele_json = "{\"rsid\": [\"rs1342568097\"]}"
+        annotation_json = "{\"allele_id\": [\"18_47408_G_A\"]}"
+
+        command = (
+            "dx extract_assay germline {} --retrieve-allele {} --retrieve-annotation {} - 2>&1 /dev/null".format(
+                test_record,
+                allele_json,
+                annotation_json
+            )
+        )
+        try:
+            process = subprocess.check_output(command, shell=True)
+            print("Uh oh, malformed command line passed detection")
+        except:
+            print("filter mutex failed succesfully")
+
+
+
 
     ###########
     # E2E Tests

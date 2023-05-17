@@ -6,11 +6,62 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [344.0] - beta
+## [348.0] - beta
+
+### Added
+
+* dxpy dependencies test suite
+
+### Changed
+
+* Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
+concluding a subjob
+
+## [347.0] - 2023.5.11
+
+### Changed
+
+* Bumped allowed `colorama` version to 0.4.6
+* Allow `requests` version up to 2.28.x
+
+### Removed
+
+* Unneeded python `gnureadline` dependency
+* Unused `rlcompleter` import which may break alternative readline implementations
+
+## [346.0] - 2023.4.20
+
+### Changed
+
+* Help message of the `dx make_download_url` command
+
+### Fixed
+
+* Released Nextaur 1.6.6. It includes fixes to errorStrategy handling and an update to the way AWS instance types are selected based on resource requirements in Nextflow pipelines (V2 instances are now preferred)
+* `ImportError` in test_dxpy.py
+* Replaced obsolete built-in `file()` method with `open()`
+* Printing HTTP error codes that were hidden for API requests to cloud storage
+
+## [345.0] - 2023.4.13 
+
+### Changed
+
+* Bump allowed cryptography dxpy dependency version to 40.0.x
+* Tab completion in interactive executions now works with `libedit` bundled in MacOS and does not require externally installed GNU `readline`
+* Released Nextaur 1.6.5. It added a caching mechanism to `DxPath` file and folder resolution, which reduces number of DX API calls made during pipeline execution. It also fixes an occasional hanging of the headjob.
+
+### Fixed
+
+* Tab completion in interactive execution of `dx-app-wizard`
+* `dx-app-wizard` script on Windows
+* Tab completion in interactive executions on Windows
+
+## [344.0] - 2023.4.2
 
 ### Changed
 
 * Released Nextaur 1.6.4. It includes a fix to folder download, minor fixes and default headjob instance update (mem2_ssd1_v2_x4 for AWS, mem2_ssd1_x4 for Azure)
+* Nextflow pipeline head job defaults to instance types mem2_ssd1_v2_x4 (AWS), azure:mem2_ssd1_x4 (Azure). No change to Nextflow task job instance types.
 
 ### Fixed
 
@@ -25,19 +76,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx describe` for jobs and analyses outputs `Preserve Job Outputs Folder` field
 * Record the dxpy version used for Nextflow build in applet's metadata and job log
 
-### Changed
-
-* Nextflow pipeline head job defaults to instance types mem2_ssd1_v2_x4 (AWS), azure:mem2_ssd1_x4 (Azure). No change to Nextflow task job instance types.
-
-## [343.0] - 2023.3.24 - stable
+## [343.0] - 2023.3.24 
 
 ### Changed
 
 * Released Nextaur 1.6.3. It includes updates to wait times for file upload and closing, and a fix to default Nextflow config path
 * Upgraded Nextflow to 22.10.7
-
-### Changed
-
 * Nextflow assets from aws:eu-west-2
 
 ## [342.1] - 2023.3.8
@@ -60,7 +104,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx ssh` to connect to job's public hostname if job is httpsApp enabled
 * '--list-fields', '--list-entities', '--entities' arguments for `dx extract_dataset`
-* 
+
 ### Changed
 
 * Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
