@@ -6154,6 +6154,8 @@ parser_extract_assay_germline.add_argument(
     type=str,
     help='The name or project-id:record-id of a v3.0 Dataset or Cohort object ID, where "record-id" indicates the record-id in current selected project.',
 )
+
+
 parser_extract_assay_germline.add_argument(
     "--list-assays",
     action="store_true",
@@ -6164,7 +6166,9 @@ parser_extract_assay_germline.add_argument(
     default=None,
     help="Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
 )
-parser_extract_assay_germline.add_argument(
+
+parser_e_a_g_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group()
+parser_e_a_g_mutex_group.add_argument(
     "--retrieve-allele",
     type=str,
     const='{}', 
@@ -6172,7 +6176,7 @@ parser_extract_assay_germline.add_argument(
     nargs='?',
     help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
-parser_extract_assay_germline.add_argument(
+parser_e_a_g_mutex_group.add_argument(
     "--retrieve-annotation",
     type=str,
     const='{}',
@@ -6180,7 +6184,7 @@ parser_extract_assay_germline.add_argument(
     nargs='?',
     help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
-parser_extract_assay_germline.add_argument(
+parser_e_a_g_mutex_group.add_argument(
     "--retrieve-genotype",
     type=str,
     const='{}',
