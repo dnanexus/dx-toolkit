@@ -249,20 +249,22 @@ class PrintInstanceTypeHelp(argparse.Action):
                        'identifier is provided, the value is applied as a default for all stages.'))
             print()
             print('Examples')
+            print()
             print(fill('1. Run the main entry point of applet-xxxx on mem1_ssd1_v2_x2, and '
                         'all other entry points on mem1_ssd1_v2_x4'))
             print('    dx run applet-xxxx --instance-type \'{"main": "mem1_ssd1_v2_x2",\n' +
-                  '                                         "*": "mem1_ssd1_v2_x4"}\'')
+                  '                                         "*":    "mem1_ssd1_v2_x4"}\'')
             print()
             print(fill('2. Runs all entry points of the first stage with ' +
                        'mem2_hdd2_v2_x2, the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
                        'stages with mem2_hdd2_v2_x4'))
             print()
-            print('    dx run workflow \\\n' +
+            print('    dx run workflow-xxxx \\\n' +
                   '     --instance-type 0=mem2_hdd2_v2_x2 \\\n' +
                   '     --instance-type 1=\'{"main": "mem1_ssd1_v2_x4"}\' \\\n' +
                   '     --instance-type BWA=mem1_ssd1_v2_x2 \\\n' +
                   '     --instance-type mem2_hdd2_v2_x4')
+            print()
             print(fill('--instance-type-by-executable argument is a JSON string with a double mapping that ' +
                        'specifies instance types by app or applet id, then by entry point within the executable.' +
                        'This specification applies across the entire nested execution tree and is propagated ' +
@@ -270,14 +272,15 @@ class PrintInstanceTypeHelp(argparse.Action):
             print()
             print('More examples')
             print(fill('3. Force every job in the execution tree to use mem2_ssd1_v2_x2'))
+            print()
             print(
-                '    dx run workflow --instance-type-by-executable \'{"*": {"*": "mem2_ssd1_v2_x2"}}\'')
+                '    dx run workflow-xxxx --instance-type-by-executable \'{"*": {"*": "mem2_ssd1_v2_x2"}}\'')
             print()
             print(fill(
                 '4. Force every job in the execution tree executing applet-xyz1 to use mem2_ssd1_v2_x2'))
             print()
             print(
-                '    dx run workflow  --instance-type-by-executable \'{"applet-xyz1":{"*": "mem2_ssd1_v2_x2"}}\'')
+                '    dx run workflow-xxxx --instance-type-by-executable \'{"applet-xyz1":{"*": "mem2_ssd1_v2_x2"}}\'')
             print()
             print(fill('5. Force every job executing applet-xyz1 to use mem2_ssd1_v2_x4 ' +
                        'for the main entry point and mem2_ssd1_v2_x2 for all other entry points.' +
@@ -285,9 +288,9 @@ class PrintInstanceTypeHelp(argparse.Action):
                        'Other entry points of executable other than applet-xyz1 may be overridden by ' +
                        'lower-priority mechanisms'))
             print()
-            print('    dx run workflow --instance-type-by-executable \\\n' +
-                  '     \'{"applet-xyz1": {"main":    "mem2_ssd1_v2_x4", "*": "mem2_ssd1_v2_x2"},\n' +
-                  '     "*": {"collect": "mem2_ssd1_v2_x8"}}\'')
+            print('    dx run workflow-xxxx --instance-type-by-executable \\\n' +
+                  '           \'{"applet-xyz1":  {"main":    "mem2_ssd1_v2_x4", "*": "mem2_ssd1_v2_x2"},\n' +
+                  '             "*":            {"collect": "mem2_ssd1_v2_x8"}}\'')
             print()
             print(fill('6. Force every job executing applet-xxxx to use mem2_ssd1_v2_x2 for all entry points' +
                        'in the entire execution tree.' +
@@ -295,8 +298,8 @@ class PrintInstanceTypeHelp(argparse.Action):
                        'applet-xxxx, in which case applet-xxxx\'s jobs will use mem2_ssd1_v2_x2 as specified by ' +
                        '--instance-type-by-executable.'))
             print()
-            print('    dx run workflow \\\n' +
-                  '     --instance-type-by-executable  \'{"applet-xxxx": {"*": "mem2_ssd1_v2_x2"}}\'\n' +
+            print('    dx run workflow-xxxx \\\n' +
+                  '     --instance-type-by-executable  \'{"applet-xxxx": {"*": "mem2_ssd1_v2_x2"}}\' \\\n' +
                   '     --instance-type 0=mem2_ssd1_v2_x4')
             print()
             print(fill(
