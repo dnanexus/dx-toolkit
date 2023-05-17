@@ -284,6 +284,7 @@ class DXProject(DXContainer):
     def new(self, name, summary=None, description=None, region=None, protected=None,
             restricted=None, download_restricted=None, contains_phi=None,
             tags=None, properties=None, bill_to=None, database_ui_view_only=None,
+            external_upload_restricted=None,
             **kwargs):
         """
         :param name: The name of the project
@@ -310,6 +311,8 @@ class DXProject(DXContainer):
         :type bill_to: string
         :param database_ui_view_only: If provided, whether the viewers on the project can access the database data directly
         :type database_ui_view_only: boolean
+        :param external_upload_restricted: If provided, whether project members can upload data to project from external sources, e.g. outside of job
+        :type external_upload_restricted: boolean
 
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
@@ -338,6 +341,8 @@ class DXProject(DXContainer):
             input_hash["billTo"] = bill_to
         if database_ui_view_only is not None:
             input_hash["databaseUIViewOnly"] = database_ui_view_only
+        if external_upload_restricted is not None:
+            input_hash["externalUploadRestricted"] = external_upload_restricted
         if tags is not None:
             input_hash["tags"] = tags
         if properties is not None:
@@ -350,7 +355,7 @@ class DXProject(DXContainer):
     def update(self, name=None, summary=None, description=None, protected=None,
                restricted=None, download_restricted=None, version=None,
                allowed_executables=None, unset_allowed_executables=None,
-               database_ui_view_only=None, **kwargs):
+               database_ui_view_only=None, external_upload_restricted=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -368,6 +373,8 @@ class DXProject(DXContainer):
         :type allowed_executables: list
         :param database_ui_view_only: If provided, whether the viewers on the project can access the database data directly
         :type database_ui_view_only: boolean
+        :param external_upload_restricted: If provided, whether project members can upload data to project from external sources, e.g. outside of job
+        :type external_upload_restricted: boolean
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
 
@@ -399,6 +406,8 @@ class DXProject(DXContainer):
             update_hash["allowedExecutables"] = None
         if database_ui_view_only is not None:
             update_hash["databaseUIViewOnly"] = database_ui_view_only
+        if external_upload_restricted is not None:
+            update_hash["externalUploadRestricted"] = external_upload_restricted
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):
