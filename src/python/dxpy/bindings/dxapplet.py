@@ -113,6 +113,9 @@ class DXExecutable:
 
         if kwargs.get('max_job_spot_wait_time') is not None:
             run_input["maxJobSpotWaitTime"] = kwargs['max_job_spot_wait_time']
+        
+        if kwargs.get('detailed_job_metrics') is not None:
+            run_input["detailedJobMetrics"] = kwargs['detailed_job_metrics']
 
         preserve_job_outputs = kwargs.get('preserve_job_outputs')
         if preserve_job_outputs is not None and preserve_job_outputs != False:
