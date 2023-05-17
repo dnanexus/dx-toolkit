@@ -440,18 +440,13 @@ def extract_assay_germline(args):
         "--retrieve-genotype",
     ]
     filter_given = False
-    if any(x in args_list for x in retrieve_args_list):
+    if args.retrieve_allele or args.retrieve_annotation or args.retrieve_genotype:
         filter_given = True
     #### Check if valid options are passed with the --json-help flag ####
     if args.json_help:
         if not filter_given:
             err_exit(
                 'Please specify one of the following: --retrieve-allele, --retrieve-genotype or --retrieve-annotation" for details on the corresponding JSON template and filter definition.'
-            )
-        elif sum(x in args_list for x in retrieve_args_list) > 1:
-            print(list(x in args_list for x in retrieve_args_list))
-            err_exit(
-                "Please specify only one of the the following: --retrieve-allele, --retrieve-genotype or --retrieve-annotation for details on the corresponding JSON template and filter definition."
             )
         elif args.list_assays or args.assay_name or args.sql or args.output:
             err_exit(
@@ -465,7 +460,7 @@ def extract_assay_germline(args):
             err_exit(
                 'When --list-assays is specified, output is to STDOUT. "--output" may not be supplied.'
             )
-        elif any(x in args_list for x in (retrieve_args_list + ["--assay-name"])):
+        elif filter_given:
             err_exit("--list-assays cannot be presented with other options.")
 
     #### Check if the retrieve options are passed correctly, print help if needed ####
