@@ -6172,7 +6172,7 @@ parser_e_a_g_mutex_group.add_argument(
     "--retrieve-allele",
     type=str,
     const='{}', 
-    default='{}',
+    default=None,
     nargs='?',
     help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
@@ -6180,7 +6180,7 @@ parser_e_a_g_mutex_group.add_argument(
     "--retrieve-annotation",
     type=str,
     const='{}',
-    default='{}',
+    default=None,
     nargs='?',
     help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )
@@ -6188,7 +6188,7 @@ parser_e_a_g_mutex_group.add_argument(
     "--retrieve-genotype",
     type=str,
     const='{}',
-    default='{}',
+    default=None,
     nargs='?',
     help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
 )

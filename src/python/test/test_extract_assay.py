@@ -295,9 +295,20 @@ class TestDXExtractAssay(unittest.TestCase):
                     except:
                         print("task failed succesfully")
 
+    ##########
+    # Normal Command Lines
+    ##########
+
+    def test_help_json(self):
+        """Print the help text for the retrieve allele filter"""
+        # TODO this should eventually be compared to a static output
+        command = "dx extract_assay germline {{}} --retrieve-allele --json-help"
+        process = subprocess.check_call(command, shell=True)
+
     ###########
     # Malformed command lines
     ###########
+    
 
     def test_filter_mutex(self):
         print("testing filter mutex")
@@ -319,7 +330,7 @@ class TestDXExtractAssay(unittest.TestCase):
         except:
             print("filter mutex failed succesfully")
 
-
+    
 
 
     ###########
