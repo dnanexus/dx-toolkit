@@ -69,7 +69,7 @@ def resolve_validate_path(path):
 
     if entity_result["describe"]["class"] != "record":
         err_exit(
-            "%r : Invalid path. The path must point to a record type of cohort or dataset"
+            "%s : Invalid path. The path must point to a record type of cohort or dataset"
             % entity_result["describe"]["class"]
         )
 
@@ -82,7 +82,7 @@ def resolve_validate_path(path):
         err_exit("Insufficient permissions", expected_exceptions=(PermissionDenied,))
     except (InvalidInput, InvalidState):
         err_exit(
-            "%r : Invalid cohort or dataset" % entity_result["id"],
+            "%s : Invalid cohort or dataset" % entity_result["id"],
             expected_exceptions=(
                 InvalidInput,
                 InvalidState,
@@ -93,7 +93,7 @@ def resolve_validate_path(path):
 
     if resp["datasetVersion"] != "3.0":
         err_exit(
-            "%r : Invalid version of cohort or dataset. Version must be 3.0"
+            "%s : Invalid version of cohort or dataset. Version must be 3.0"
             % resp["datasetVersion"]
         )
 
@@ -101,7 +101,7 @@ def resolve_validate_path(path):
         dataset_project = resp["datasetRecordProject"]
     else:
         err_exit(
-            "%r : Invalid path. The path must point to a record type of cohort or dataset"
+            "%s : Invalid path. The path must point to a record type of cohort or dataset"
             % resp["recordTypes"]
         )
 
@@ -361,7 +361,7 @@ def extract_dataset(args):
                 error_list.append(entry)
 
         if error_list:
-            err_exit("The following fields cannot be found: %r" % error_list)
+            err_exit("The following fields cannot be found: %s" % error_list)
 
         payload = {
             "project_context": project,
@@ -749,7 +749,7 @@ def list_fields(model, main_entity, args):
             else:
                 error_list.append(entity)
         if error_list:
-            err_exit("The following entity/entities cannot be found: %r" % error_list)
+            err_exit("The following entity/entities cannot be found: %s" % error_list)
     fields = []
     for entity in entities_to_list_fields:
         for field in sorted(entity["fields"].keys()):
@@ -822,7 +822,7 @@ class DXDataset(DXRecord):
         if is_dxlink(self.details["descriptor"]):
             self.descriptor_dxfile = DXFile(self.details["descriptor"], mode="rb")
         else:
-            err_exit("%r : Invalid cohort or dataset" % self.details["descriptor"])
+            err_exit("%s : Invalid cohort or dataset" % self.details["descriptor"])
         self.descriptor = None
         self.name = self.details.get("name")
         self.description = self.details.get("description")
