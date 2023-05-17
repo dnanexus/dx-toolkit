@@ -502,15 +502,14 @@ def extract_assay_germline(args):
                         )
                     )
                 else:
-                    json_file = open(filter_value)
-                    try:
-                        filter = json.load(json_file)
-                        json_file.close()
-                    except Exception as json_error:
-                        err_exit(
-                            "JSON for variant filters is malformatted.",
-                            expected_exceptions=default_expected_exceptions,
-                        )
+                    with open(filter_value, "r") as json_file:
+                        try:
+                            filter = json.load(json_file)
+                        except Exception as json_error:
+                            err_exit(
+                                "JSON for variant filters is malformatted.",
+                                expected_exceptions=default_expected_exceptions,
+                            )
             else:
                 err_exit(
                     "JSON file {filter_json} provided does not exist".format(
