@@ -58,10 +58,11 @@ class DXExecutable:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
 
-        if kwargs.get('instance_type') is not None or kwargs.get('cluster_spec') is not None:
-            instance_type_srd = SystemRequirementsDict.from_instance_type(kwargs.get('instance_type'))
-            cluster_spec_srd = SystemRequirementsDict(kwargs.get('cluster_spec'))
-            run_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd).as_dict()
+        if kwargs.get('system_requirements') is not None:
+            run_input["systemRequirements"] = kwargs.get('system_requirements')
+
+        if kwargs.get('system_requirements_by_executable') is not None:
+            run_input["systemRequirementsByExecutable"] = kwargs.get('system_requirements_by_executable')
 
         if kwargs.get('instance_type_by_executable') is not None:
             instance_type_by_executable_srd = {exec: SystemRequirementsDict.from_instance_type(exec_req).as_dict()

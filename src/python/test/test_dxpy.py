@@ -137,6 +137,7 @@ class TestDXProject(unittest.TestCase):
             self.assertEqual(desc["downloadRestricted"], False)
             self.assertEqual(desc["containsPHI"], False)
             self.assertEqual(desc["databaseUIViewOnly"], False)
+            self.assertEqual(desc["externalUploadRestricted"], False)
             self.assertEqual(desc["tags"], [])
             prop = dxpy.api.project_describe(dxproject.get_id(),
                                              {'fields': {'properties': True}})
@@ -189,6 +190,7 @@ class TestDXProject(unittest.TestCase):
                          protected=True,
                          restricted=True,
                          download_restricted=True,
+                         external_upload_restricted=False,
                          allowed_executables=["applet-abcdefghijklmnopqrstuzwx"],
                          description="new description")
         desc = dxproject.describe()
@@ -198,6 +200,7 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["protected"], True)
         self.assertEqual(desc["restricted"], True)
         self.assertEqual(desc["downloadRestricted"], True)
+        self.assertEqual(desc["externalUploadRestricted"], False)
         self.assertEqual(desc["description"], "new description")
         self.assertEqual(desc["allowedExecutables"][0], "applet-abcdefghijklmnopqrstuzwx")
         self.assertTrue("created" in desc)
