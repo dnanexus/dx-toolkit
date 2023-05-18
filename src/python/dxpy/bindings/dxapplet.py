@@ -201,8 +201,12 @@ class DXExecutable:
         :type properties: dict with string values
         :param details: Details to set for the job
         :type details: dict or list
-        :param instance_type: Instance type on which the jobs will be run, or a dict mapping function names to instance type requests
-        :type instance_type: string or dict
+        :param system_requirements: System requirement single mapping
+        :type system_requirements: dict
+        :param stage_instance_types: Stage instance type single mapping
+        :type stage_instance_types: dict
+        :param system_requirements_by_executable: System requirement by executable double mapping
+        :type system_requirements_by_executable: dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
         :param allow_ssh: List of hostname or IP masks to allow SSH connections from
