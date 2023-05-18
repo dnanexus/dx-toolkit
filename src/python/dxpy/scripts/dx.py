@@ -3012,16 +3012,19 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
+    requested_instance_type, requested_cluster_spec = SystemRequirementsDict({}), SystemRequirementsDict({})
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
-    requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
+    if args.instance_type:
+        requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
     
     # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
-    requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)
-    # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
-    # and overwrite the field initialInstanceCount with the runtime mapping 
-    default_cluster_spec = SystemRequirementsDict.from_sys_requirements(
-        executable.describe()['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
-    requested_cluster_spec = default_cluster_spec.override_cluster_spec(requested_instance_count)
+    if args.instance_count:
+        requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)
+        # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
+        # and overwrite the field initialInstanceCount with the runtime mapping 
+        default_cluster_spec = SystemRequirementsDict.from_sys_requirements(
+            executable.describe()['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
+        requested_cluster_spec = default_cluster_spec.override_cluster_spec(requested_instance_count)
     
     # combine the requested instance type and full cluster spec
     # into the runtime systemRequirements 
@@ -3038,7 +3041,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         # however when cloning from an analysis, the temporary workflow already has the cloned spec as its default, so no need to merge 1) and 2) here
         from ..utils import merge
         requested_system_requirements = merge(args.cloned_job_desc.get("systemRequirements", {}), requested_system_requirements)
-        requested_system_requirements_by_executable = merge(args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}), requested_system_requirements)
+        requested_system_requirements_by_executable = merge(args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}), requested_system_requirements_by_executable)
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -3064,8 +3067,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": args.priority,
-        "system_requirements": args.system_requirements,
-        "system_requirements_by_executable": args.system_requirements_by_executable,
+        "system_requirements": requested_system_requirements or None,
+        "system_requirements_by_executable": requested_system_requirements_by_executable or None,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
@@ -3093,7 +3096,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
 
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
-        executable_desc = executable_describe or executable.describe()
+        executable_desc = executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
         def check_for_special_access(access_spec):
             if not access_spec:
