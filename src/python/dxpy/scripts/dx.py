@@ -3033,7 +3033,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
     # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
     # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
-    requested_system_requirements_by_executable = SystemRequirementsDict(args.instance_type_by_executable).as_dict()
+    requested_system_requirements_by_executable = SystemRequirementsDict(args.instance_type_by_executable).as_dict() or {}
     
     if args.cloned_job_desc:
         # override systemRequirements and systemRequirementsByExecutable mapping with cloned job description
@@ -3402,6 +3402,7 @@ def run(args):
             args.stage_folders = stage_folders
 
     clone_desc = None
+    args.cloned_job_desc = {}
     if args.clone is not None:
         # Resolve job ID or name; both job-id and analysis-id can be described using job_describe()
         if is_job_id(args.clone) or is_analysis_id(args.clone):
@@ -3532,7 +3533,7 @@ def run(args):
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
 
-    process_instance_type_by_executable_arg(args)
+    try_call(process_instance_type_by_executable_arg, args)
 
     # Validate and process instance_count argument
     if args.instance_count:
