@@ -5316,6 +5316,55 @@ parser_watch.add_argument('-q', '--quiet', help='Do not print extra info message
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
+
+class MetricsHelpAction(argparse.Action):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(
+"""Help: Displaying detailed job metrics
+Detailed job metrics describe job's consumption of CPU, memory, disk, network, etc at 60 second intervals.
+If collection of job metrics was enabled for a job (e.g with dx run --detailed-job-metrics), the metrics can be displayed by "dx watch" for 15 days from the time the job started running.
+
+The "interspersed" default mode shows METRICS job log messages interspersed with other jog log messages.
+
+The "none" mode will omits all METRICS messages from "dx watch" output.
+
+The "top" mode shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics.
+
+The "csv" mode outputs the following columns with headers in csv format to stdout:
+- timestamp: An integer number representing the number of milliseconds since the Unix epoch.
+- cpuCount: A number of CPUs available on the instance that ran the job.
+- cpuUsageUser: The percentage of cpu time spent in user mode on the instance during the metric collection period. This quantity reflects CPU usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+- cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period. This quantity reflects CPU usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+- cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period. This quantity reflects CPU usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+- cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period. This quantity reflects CPU usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data. Note 1: cpuUsageUser+cpuUsageSystem+cpuUsageIowait+cpuUsageIdle+cpuUsageSteal = 100. cpuUsageSteal is unreported, but can be derived from the other 4 quantities given that they add up to 100; Note 2: cpuUsage numbers are rounded to 2 decimal places.
+- idleCpus: The number of cpus that spent > 97% of the measurement interval in idle state. This metric helps distinguish between 4 cpus each being 25% idle (idleCpus of 0) and 3 cpu being 0% idle while the remaining CPU is 98% idle (idleCpus of 1).
+- memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory). This quantity reflects memory usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+- memoryTotalBytes: Total memory available on the instance that ran the job.
+- diskUsedBytes: Bytes of storage allocated to the AEE that are used by the filesystem.
+- diskTotalBytes: Total bytes of disk space available to the job within the AEE.
+- networkOutBytes: Total network bytes transferred out from AEE since the job started. Includes "dx upload" bytes. 
+- networkInBytes: Total network bytes transferred into AEE since the job started. Includes "dx download" bytes.
+- diskReadBytes: Total bytes read from the AEE-accessible disks since the job started.
+- diskWriteBytes: Total bytes written to the AEE-accessible disks since the job started.
+- diskReadOpsCount: Total disk read operation count against AEE-accessible disk since the job started.
+- diskWriteOpsCount: Total disk write operation count against AEE-accessible disk since the job started.
+
+The format of METRICS job log lines is defined as follows using the example below:
+
+2023-03-15 12:23:44 some-job-name METRICS ** CPU usr/sys/idl/wai: 24/11/1/64% (4 cores, 2 idle) * Memory: 1566/31649MB * Storage: 19/142GB * Net: 10↓/0↑MBps * Disk: r/w 20/174 MBps iops r/w 8/1300
+
+"2023-03-15 12:23:44" is the metrics collection time.
+"METRICS" is a type of job log line containing detailed job metrics.
+"CPU usr/sys/idl/wai: 24/11/1/64%" maps to cpuUsageUser, cpuUsageSystem, cpuUsageIdle, cpuUsageIowait values.
+"(4 cores, 2 idle)" maps to cpuCount and idleCpus.
+"Memory: 1566/31649MB" maps to memoryUsedBytes and memoryTotalBytes.
+"Storage: 19/142GB" maps to diskUsedBytes and diskTotalBytes.
+"Net: 10↓/0↑MBps" is derived from networkOutBytes and networkInBytes cumulative totals by subtracting previous measurement from the measurement at the metric collection time, and dividing the difference by the time span between the two measurements.
+"Disk: r/w 20/174 MBps iops r/w 8/1300" is derived similar to "Net:" from diskReadBytes, diskWriteBytes, diskReadOpsCount, and diskWriteOpsCount.""")
+        parser.exit(0)
+
+parser_watch.add_argument('--metrics-help', action=MetricsHelpAction, nargs=0, help='Print help for displaying detailed job metrics')
 parser_watch.set_defaults(func=watch)
 register_parser(parser_watch, categories='exec')
 
