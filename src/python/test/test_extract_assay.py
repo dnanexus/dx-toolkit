@@ -295,9 +295,44 @@ class TestDXExtractAssay(unittest.TestCase):
                     except:
                         print("task failed succesfully")
 
+    ##########
+    # Normal Command Lines
+    ##########
+
+    def test_json_help(self):
+        """Print the help text for the retrieve allele filter"""
+        # TODO this should eventually be compared to a static output
+        command = "dx extract_assay germline fakepath --retrieve-allele --json-help > /dev/null"
+        process = subprocess.check_call(command, shell=True)
+
+    def test_generic_help(self):
+        """Test the generic help message"""
+    command = "dx extract_assay germline -h > /dev/null"
+    process = subprocess.check_call(command, shell=True)
+
+    # Does not write any output to file, function only outputs to stdout
+    def test_list_assays(self):
+        print("testing --list-assays")
+        command = "dx extract_assay germline {} --list-assays".format(test_record)
+        subprocess.check_call(command, shell=True)
+
+    # A test of the --assay-name functionality, returns the same output as allele_rsid.json
+    def test_assay_name(self):
+        print("testing --assay-name")
+        single_filter_directory = os.path.join(test_filter_directory, "single_filters")
+        output_filename = os.path.join(output_folder, "assay_name_output.tsv")
+
+        command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele {} --output {}".format(
+            test_record,
+            os.path.join(single_filter_directory, "allele/allele_rsid.json"),
+            output_filename if write_output else "- > /dev/null",
+        )
+        subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
+
     ###########
     # Malformed command lines
     ###########
+    
 
     def test_filter_mutex(self):
         print("testing filter mutex")
@@ -319,7 +354,7 @@ class TestDXExtractAssay(unittest.TestCase):
         except:
             print("filter mutex failed succesfully")
 
-
+    
 
 
     ###########
@@ -406,25 +441,7 @@ class TestDXExtractAssay(unittest.TestCase):
         )
         process = subprocess.check_call(command, shell=True)
 
-    # A test of the --list-assays functionality
-    # Does not write any output to file, function only outputs to stdout
-    def test_list_assays(self):
-        print("testing --list-assays")
-        command = "dx extract_assay germline {} --list-assays".format(test_record)
-        subprocess.check_call(command, shell=True)
 
-    # A test of the --assay-name functionality, returns the same output as allele_rsid.json
-    def test_assay_name(self):
-        print("testing --assay-name")
-        single_filter_directory = os.path.join(test_filter_directory, "single_filters")
-        output_filename = os.path.join(output_folder, "assay_name_output.tsv")
-
-        command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele {} --output {}".format(
-            test_record,
-            os.path.join(single_filter_directory, "allele/allele_rsid.json"),
-            output_filename if write_output else "- > /dev/null",
-        )
-        subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
 
 
 if __name__ == "__main__":
