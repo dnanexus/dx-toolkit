@@ -235,14 +235,14 @@ def new_org(args):
 
 
 def _get_org_update_args(args):
-    org_update_inputs = {}
+    org_update_inputs = {}        
 
     if args.name is not None:
         org_update_inputs["name"] = args.name
     if args.saml_idp is not None:
         org_update_inputs["samlIdP"] = args.saml_idp
 
-    if any(policy not in (None, False) for policy in (args.member_list_visibility, args.project_transfer_ability, args.enable_job_reuse, args.disable_job_reuse)):
+    if any(policy not in (None, False) for policy in (args.member_list_visibility, args.project_transfer_ability, args.enable_job_reuse, args.disable_job_reuse)) or args.detailed_job_metrics_cellect_default is not None:
         org_update_inputs["policies"] = {}
     if args.member_list_visibility is not None:
         org_update_inputs["policies"]["memberListVisibility"] = args.member_list_visibility
@@ -252,6 +252,9 @@ def _get_org_update_args(args):
         org_update_inputs["policies"]["jobReuse"] = True
     elif args.disable_job_reuse == True:
         org_update_inputs["policies"]["jobReuse"] = False
+    if args.detailed_job_metrics_collect_default is not None:
+        org_update_inputs["policies"]["detailedJobMetricsCollectDefault"] = True if args.detailed_job_metrics_collect_default == 'true' else False
+    
     
 
     return org_update_inputs
