@@ -340,7 +340,13 @@ def csv_from_json(out_file_name="", print_to_stdout=False, sep=',', raw_results=
 
     if not print_to_stdout:
         fields_output.close()
-    
+
+def extract_assay_somatic(args):
+    """
+    Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.
+    """
+    pass
+
 class DXDataset(DXRecord):
     """
         A class to handle record objects of type Dataset. 
