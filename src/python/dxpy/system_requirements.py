@@ -166,6 +166,16 @@ class SystemRequirementsDict(object):
 
         return SystemRequirementsDict(merged_cluster_spec)
 
+    def override_spec(self, requested_spec):
+        if "*" in requested_spec.as_dict():
+            return requested_spec
+        
+        entrypoints = self.entrypoints.keys() | requested_spec.entrypoints.keys()
+        merged_spec = dict.fromkeys(entrypoints)
+        for e in entrypoints:
+            merged_spec[e] = requested_spec.entrypoints.get(e) or requested_spec.entrypoints.get("*") or self.entrypoints.get(e) or self.entrypoints.get("*")
+        return SystemRequirementsDict(merged_spec)
+
     def _add_dict_values(self, d1, d2):
         """
         Merges the values of two dictionaries, which are expected to be dictionaries, e.g

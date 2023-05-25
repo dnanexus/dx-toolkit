@@ -3013,35 +3013,46 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
     requested_instance_type, requested_cluster_spec = SystemRequirementsDict({}), SystemRequirementsDict({})
+
+    from ..utils import merge
+    if args.cloned_job_desc:
+        # override systemRequirements and systemRequirementsByExecutable mapping with cloned job description
+        # Note: when cloning from a job, we have 1)runtime 2)cloned 3) default runSpec specifications, and we need to merge the first two to make the new request
+        # however when cloning from an analysis, the temporary workflow already has the cloned spec as its default, so no need to merge 1) and 2) here
+        cloned_job_desc_copy = copy.deepcopy(args.cloned_job_desc)
+        cloned_instance_type = SystemRequirementsDict.from_sys_requirements(args.cloned_job_desc.get("systemRequirements", {}), _type='instanceType')
+        cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(args.cloned_job_desc.get("systemRequirements", {}), _type='clusterSpec')
+        cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {})
+    else:
+        cloned_instance_type, cloned_cluster_spec = SystemRequirementsDict({}), SystemRequirementsDict({})
+        cloned_system_requirements_by_executable = {}
+
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
     if args.instance_type:
-        requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
-    
+        instance_type_to_override = cloned_instance_type
+        requested_instance_type = instance_type_to_override.override_spec(SystemRequirementsDict.from_instance_type(args.instance_type))
+    else:
+        requested_instance_type = cloned_instance_type
+
     # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
     if args.instance_count:
         requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)
         # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
-        # and overwrite the field initialInstanceCount with the runtime mapping 
-        default_cluster_spec = SystemRequirementsDict.from_sys_requirements(
-            executable.describe()['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
-        requested_cluster_spec = default_cluster_spec.override_cluster_spec(requested_instance_count)
-    
+        # and overwrite the field initialInstanceCount with the runtime mapping
+        cluster_spec_to_override = cloned_cluster_spec \
+            or SystemRequirementsDict.from_sys_requirements(executable.describe()['runSpec'].get('systemRequirements', {}),_type='clusterSpec')
+        requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count)
+    else:
+        requested_cluster_spec = cloned_cluster_spec
+
     # combine the requested instance type and full cluster spec
-    # into the runtime systemRequirements 
+    # into the runtime systemRequirements
     requested_system_requirements = (requested_instance_type + requested_cluster_spec).as_dict()
     
     # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
     # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
     # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
     requested_system_requirements_by_executable = SystemRequirementsDict(args.instance_type_by_executable).as_dict() or {}
-    
-    if args.cloned_job_desc:
-        # override systemRequirements and systemRequirementsByExecutable mapping with cloned job description
-        # Note: when cloning from a job, we have 1)runtime 2)cloned 3) default runSpec specifications, and we need to merge the first two to make the new request
-        # however when cloning from an analysis, the temporary workflow already has the cloned spec as its default, so no need to merge 1) and 2) here
-        from ..utils import merge
-        requested_system_requirements = merge(args.cloned_job_desc.get("systemRequirements", {}), requested_system_requirements)
-        requested_system_requirements_by_executable = merge(args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}), requested_system_requirements_by_executable)
 
     if args.debug_on:
         if 'All' in args.debug_on:
