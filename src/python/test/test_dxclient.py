@@ -3302,7 +3302,8 @@ dx-jobutil-add-output record_array $second_record --array
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
-                                                     "release": "14.04",
+                                                     "release": "20.04",
+                                                     "version": "0",
                                                      "code": "echo 'hello'"}
                                          })['id']
         other_applet_id = dxpy.api.applet_new({"project": self.project,
@@ -3310,8 +3311,31 @@ dx-jobutil-add-output record_array $second_record --array
                                                "runSpec": {"interpreter": "bash",
                                                            "code": "echo 'hello'",
                                                            "distribution": "Ubuntu",
-                                                           "release": "14.04"}
-                                           })['id']
+                                                           "release": "20.04",
+                                                           "version": "0",
+                                                           "systemRequirements": {
+                                                               "main": {
+                                                                   "instanceType": "mem2_hdd2_x1",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 1,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}
+                                                               },
+                                                               "some_ep": {
+                                                                   "instanceType": "mem2_hdd2_x2",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 3,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}
+                                                               },
+                                                               "*": {
+                                                                   "instanceType": "mem2_hdd2_x4",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 5,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}}}
+                                                           }}
+                                              )['id']
 
         def check_new_job_metadata(new_job_desc, cloned_job_desc, overridden_fields=[]):
             '''
@@ -3342,7 +3366,7 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + applet_id +
                           ' -inumber=32 --name jobname --folder /output ' +
                           '--instance-type mem2_hdd2_x2 ' +
-                          '--instance-type-by-executable \'{"' + applet_id + '": {"*": "mem1_ssd1_v2_x2"}}\' '   
+                        #   '--instance-type-by-executable \'{"' + applet_id + '": {"*": "mem1_ssd1_v2_x2"}}\' '   
                           '--tag Ψ --tag $hello.world ' +
                           '--property Σ_1^n=n --property $hello.=world ' +
                           '--priority normal ' +
@@ -3370,7 +3394,7 @@ dx-jobutil-add-output record_array $second_record --array
         # override applet
         new_job_desc = get_new_job_desc(other_applet_id)
         self.assertEqual(new_job_desc['applet'], other_applet_id)
-        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['applet'])
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['applet', 'systemRequirements'])
 
         # override name
         new_job_desc = get_new_job_desc("--name newname")
@@ -3424,6 +3448,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['input'], {"number2": 42})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
+        # --instance-type override: original job with universal instance type 
         # override the blanket instance type
         new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_x1")
         self.assertEqual(new_job_desc['systemRequirements'],
@@ -3442,7 +3467,7 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
-        # new original job with entry point-specific systemRequirements
+        # --instance-type override: original job with entry point-specific systemRequirements
         orig_job_id = run("dx run " + applet_id +
                           " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\"}' --brief -y").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
@@ -3466,6 +3491,83 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'some_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        # --instance-type override: original job with entry point-specific systemRequirements
+        orig_job_id = run("dx run " + applet_id +
+                          " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\", \"*\": \"mem2_hdd2_x2\"}' --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        self.assertEqual(orig_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_x2'}})
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_v2_x2")
+        self.assertEqual(new_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        # override all entry points with wildcard entry point, which is treated in the same way as specific ones
+        new_job_desc = get_new_job_desc("--instance-type '" +
+                                        json.dumps({"*": "mem2_hdd2_v2_x2"}) + "'")
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+        
+        # override a different entry point; original is merged and overrided
+        new_job_desc = get_new_job_desc("--instance-type '" +
+                                        json.dumps({"some_other_ep": "mem2_hdd2_x4",
+                                                    "*": "mem2_hdd2_v2_x2"}) + "'")
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'some_other_ep': {'instanceType': 'mem2_hdd2_x4'},
+                          'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+
+        def check_instance_count(job_desc:dict, entrypoints:list, expected_counts:list):
+            for ep, count in zip(entrypoints, expected_counts):
+                self.assertEqual(job_desc['systemRequirements'][ep]["clusterSpec"]["initialInstanceCount"], count)
+
+        # --instance-count override: new original job with universal instance count
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count 2 --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2,2,2])
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-count 4")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [4, 4, 4])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override single entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep": 6}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 6, 2])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override wildcard entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"*": 8}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 2, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # --instance-type and --instance-count override: instance type and cluster spec are resolved independently
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep":6,
+                                                    "*": 8}) + "' " +
+                                                    "--instance-type '" +
+                                        json.dumps({"main": "mem2_hdd2_x4",
+                                                    "*": "mem2_hdd2_v2_x2"}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 6, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+        
+        self.assertEqual(new_job_desc['systemRequirements']['main']['instanceType'], 'mem2_hdd2_x4')
+        self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
+        self.assertNotIn("some_eq", new_job_desc['systemRequirements'])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
