@@ -3566,8 +3566,8 @@ dx-jobutil-add-output record_array $second_record --array
                                overridden_fields=['systemRequirements'])
         
         self.assertEqual(new_job_desc['systemRequirements']['main']['instanceType'], 'mem2_hdd2_x4')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['instanceType'], 'mem2_hdd2_x2')
         self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
-        self.assertNotIn("some_eq", new_job_desc['systemRequirements'])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
