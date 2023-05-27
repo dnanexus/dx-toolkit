@@ -3,7 +3,8 @@ import sys
 from ..exceptions import err_exit
 
 # Generic error messages
-malformed_filter = "found following invalid filters: {}"
+malformed_filter = "Found following invalid filters: {}"
+maxitem_message = "Too many items given in field {}, maximum is {}"
 # An integer equel to 2 if script is run with python2, and 3 if run with python3
 python_version = sys.version_info.major
 
@@ -39,6 +40,9 @@ def validate_filter(filter, filter_type):
             if not is_list_of_strings(filter["rsid"]):
                 print(malformed_filter.format("rsid"))
                 err_exit()
+            # Check for max item number
+            if len(filter["rsid"]) > 100:
+                print(maxitem_message.format("rsid",100))
         # Check type field
         if "type" in keys:
             if not is_list_of_strings(filter["type"]):
@@ -49,6 +53,9 @@ def validate_filter(filter, filter_type):
                 if item not in ["SNP", "Ins", "Del", "Mixed"]:
                     print(malformed_filter.format("type"))
                     err_exit()
+            # Check for max item number
+            if len(filter["type"]) > 100:
+                print(maxitem_message.format("type",100))
 
         # Check dataset_alt_af
         if "dataset_alt_af" in keys:
@@ -78,6 +85,9 @@ def validate_filter(filter, filter_type):
                 err_exit()
         # Check location field
         if "location" in keys:
+            # Ensure there are not more than 100 locations
+            if len(filter["location"]) > 100:
+                print(maxitem_message.format("location",100))
             for indiv_location in filter["location"]:
                 indiv_loc_keys = indiv_location.keys()
                 # Ensure all keys are there
@@ -139,6 +149,29 @@ def validate_filter(filter, filter_type):
             if not is_list_of_strings(filter[key]):
                 print(malformed_filter.format(key))
                 err_exit()
+        
+        # Now ensure no fields have more than the maximum allowable number of items
+        if "allele_id" in keys:
+            if len(filter["allele_id"]) > 1000:
+                print(maxitem_message.format("allele_id",1000))
+                err_exit()
+        if "gene_name" in keys:
+            if len(filter["gene_name"]) > 100:
+                print(maxitem_message.format("gene_name",100))
+                err_exit()
+        if "gene_id" in keys:
+            if len(filter["gene_id"]) > 100:
+                print(maxitem_message.format("gene_id",100))
+                err_exit()
+        if "hgvs_c" in keys:
+            if len(filter["hgvs_c"]) > 100:
+                print(maxitem_message.format("hgvs_c",100))
+                err_exit()
+        if "hgvs_p" in keys:
+            if len(filter["hgvs_p"]) > 100:
+                print(maxitem_message.format("hgvs_p",100))
+                err_exit()
+
     if filter_type == "genotype":
         keys = filter.keys()
         if not "allele_id" in keys:
@@ -149,10 +182,18 @@ def validate_filter(filter, filter_type):
             if not is_list_of_strings(filter["allele_id"]):
                 print(malformed_filter.format("allele_id"))
                 err_exit()
+            # Check for too many values given
+            if len(filter["allele_id"]) > 1000:
+                print(maxitem_message.format("allele_id",1000))
+                err_exit()
         # Check sample_id field
         if "sample_id" in keys:
             if not is_list_of_strings(filter["sample_id"]):
                 print(malformed_filter.format("sample_id"))
+                err_exit()
+            # Check for too many values given
+            if len(filter["sample_id"]) > 1000:
+                print(maxitem_message.format("sample_id",1000))
                 err_exit()
         # Check genotype field
         if "genotype_type" in keys:
@@ -166,3 +207,7 @@ def validate_filter(filter, filter_type):
                     print("value {} is not a valid genotype_type".format(item))
                     print(malformed_filter.format("genotype_type"))
                     err_exit()
+            # Check for too many values given
+            if len(filter["genotype_type"]) > 4:
+                print(maxitem_message.format("genotype_type",4))
+                err_exit()
