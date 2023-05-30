@@ -3012,7 +3012,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    requested_instance_type, requested_cluster_spec = SystemRequirementsDict({}), SystemRequirementsDict({})
+    requested_instance_type, requested_cluster_spec = {}, {}
 
     from ..utils import merge
     if args.cloned_job_desc:
@@ -3029,10 +3029,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
 
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
     if args.instance_type:
-        instance_type_to_override = cloned_instance_type
-        requested_instance_type = instance_type_to_override.override_spec(SystemRequirementsDict.from_instance_type(args.instance_type))
+        if isinstance(args.instance_type, basestring):
+            requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type).as_dict()
+        else:
+            requested_instance_type = merge(cloned_instance_type.as_dict(), SystemRequirementsDict.from_instance_type(args.instance_type).as_dict())
     else:
-        requested_instance_type = cloned_instance_type
+        requested_instance_type = cloned_instance_type.as_dict()
 
     # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
     if args.instance_count:
@@ -3041,13 +3043,13 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         # and overwrite the field initialInstanceCount with the runtime mapping
         cluster_spec_to_override = cloned_cluster_spec \
             or SystemRequirementsDict.from_sys_requirements(executable.describe()['runSpec'].get('systemRequirements', {}),_type='clusterSpec')
-        requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count)
+        requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count).as_dict()
     else:
-        requested_cluster_spec = cloned_cluster_spec
+        requested_cluster_spec = cloned_cluster_spec.as_dict()
 
     # combine the requested instance type and full cluster spec
     # into the runtime systemRequirements
-    requested_system_requirements = (requested_instance_type + requested_cluster_spec).as_dict()
+    requested_system_requirements = merge(requested_instance_type, requested_cluster_spec)
     
     # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
     # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
