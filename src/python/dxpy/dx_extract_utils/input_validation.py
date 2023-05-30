@@ -152,8 +152,8 @@ def validate_filter(filter, filter_type):
         
         # Now ensure no fields have more than the maximum allowable number of items
         if "allele_id" in keys:
-            if len(filter["allele_id"]) > 1000:
-                print(maxitem_message.format("allele_id",1000))
+            if len(filter["allele_id"]) > 100:
+                print(maxitem_message.format("allele_id",100))
                 err_exit()
         if "gene_name" in keys:
             if len(filter["gene_name"]) > 100:
@@ -183,8 +183,8 @@ def validate_filter(filter, filter_type):
                 print(malformed_filter.format("allele_id"))
                 err_exit()
             # Check for too many values given
-            if len(filter["allele_id"]) > 1000:
-                print(maxitem_message.format("allele_id",1000))
+            if len(filter["allele_id"]) > 100:
+                print(maxitem_message.format("allele_id",100))
                 err_exit()
         # Check sample_id field
         if "sample_id" in keys:
