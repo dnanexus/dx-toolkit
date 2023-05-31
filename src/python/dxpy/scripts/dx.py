@@ -3552,7 +3552,7 @@ def watch(args):
 
     incompatible_args = None
     if args.levels and "METRICS" in args.levels and args.metrics == "none":
-        incompatible_args = ("--leveles METRICS", "--metrics none")
+        incompatible_args = ("--levels METRICS", "--metrics none")
     elif args.metrics == "top":
         if args.levels and "METRICS" not in args.levels:
             err_exit(exception=DXCLIError("'--metrics' is specified, but METRICS level is not included"))
