@@ -6,16 +6,30 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [348.0] - beta
+
+### Added
+
+* dxpy dependencies test suite
+
 ### Changed
 
-* Removed unneeded `gnureadline` dependency
-* Bumped allowed colorama version to 0.4.6
+* Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
+concluding a subjob
 
-### Fixed
+## [347.0] - 2023.5.11
 
-* Removed unused `rlcompleter` import which may break alternative readline implementations
+### Changed
 
-## [346.0] - beta
+* Bumped allowed `colorama` version to 0.4.6
+* Allow `requests` version up to 2.28.x
+
+### Removed
+
+* Unneeded python `gnureadline` dependency
+* Unused `rlcompleter` import which may break alternative readline implementations
+
+## [346.0] - 2023.4.20
 
 ### Changed
 
@@ -26,7 +40,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Released Nextaur 1.6.6. It includes fixes to errorStrategy handling and an update to the way AWS instance types are selected based on resource requirements in Nextflow pipelines (V2 instances are now preferred)
 * `ImportError` in test_dxpy.py
 * Replaced obsolete built-in `file()` method with `open()`
-* Printing HTTP error codes and messages that were hidden
+* Printing HTTP error codes that were hidden for API requests to cloud storage
 
 ## [345.0] - 2023.4.13 
 
