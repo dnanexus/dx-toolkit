@@ -486,9 +486,9 @@ def extract_assay_germline(args):
             if os.path.isfile(filter_value):
                 if os.stat(filter_value).st_size == 0:
                     err_exit(
-                        'JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
-                            filter_type
-                        )
+                        'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
+                        filter_type=filter_type
+                    )
                     )
                 else:
                     with open(filter_value, "r") as json_file:
@@ -506,13 +506,9 @@ def extract_assay_germline(args):
                     )
                 )
         else:
-            if filter_value == None:
+            if filter_value == "{}":
                 err_exit(
-                    "No filter given for --retrieve-{}".format(filter_type)
-                )
-            elif filter_value == "{}":
-                err_exit(
-                    'JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
+                    'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
                         filter_type=filter_type
                     )
                 )
