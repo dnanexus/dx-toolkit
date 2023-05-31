@@ -772,20 +772,22 @@ def printable_ssh_host_key(ssh_host_key):
 
 
 def print_execution_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'region',
+    recognized_fields = ['id', 'try', 'class', 'project', 'workspace', 'region',
                          'app', 'applet', 'executable', 'workflow',
                          'state',
-                         'rootExecution', 'parentAnalysis', 'parentJob', 'originJob', 'analysis', 'stage',
+                         'rootExecution', 'parentAnalysis', 'parentJob', 'parentJobTry', 'originJob', 'analysis', 'stage',
                          'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
                          'dependsOn', 'resources', 'projectCache', 'details', 'tags', 'properties',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
-                         'startedRunning', 'stoppedRunning', 'stateTransitions',
+                         'tryCreated', 'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
                          'priority', 'sshHostKey', 'internetUsageIPs', 'spotWaitTime', 'maxTreeSpotWaitTime',
                          'maxJobSpotWaitTime', 'spotCostSavings', 'preserveJobOutputs']
 
     print_field("ID", desc["id"])
+    if desc.get('try') is not None:
+        print_field("Try", str(desc['try']))
     print_field("Class", desc["class"])
     if "name" in desc and desc['name'] is not None:
         print_field("Job name", desc['name'])
@@ -825,6 +827,8 @@ def print_execution_desc(desc):
         print_field("Parent job", "-")
     else:
         print_field("Parent job", desc["parentJob"])
+    if desc.get("parentJobTry") is not None:
+        print_field("Parent job try", str(desc["parentJobTry"]))
     if "parentAnalysis" in desc:
         if desc["parentAnalysis"] is not None:
             print_field("Parent analysis", desc["parentAnalysis"])
@@ -855,6 +859,8 @@ def print_execution_desc(desc):
     print_field('Preserve Job Outputs Folder', desc['preserveJobOutputs']['folder'] if desc.get('preserveJobOutputs') and 'folder' in desc['preserveJobOutputs'] else '-')
     print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", render_timestamp(desc['created']))
+    if desc.get('tryCreated') is not None:
+        print_field("Try created", render_timestamp(desc['tryCreated']))
     if 'startedRunning' in desc:
         if 'stoppedRunning' in desc:
             print_field("Started running", render_timestamp(desc['startedRunning']))
@@ -881,7 +887,10 @@ def print_execution_desc(desc):
     if "failureMessage" in desc:
         print_field("Failure message", desc["failureMessage"])
     if "failureFrom" in desc and desc['failureFrom'] is not None and desc['failureFrom']['id'] != desc['id']:
-        print_field("Failure is from", desc['failureFrom']['id'])
+        failure_from = desc['failureFrom']['id']
+        if desc['failureFrom'].get('try') is not None:
+            failure_from += " try %d" % desc['failureFrom']['try']
+        print_field("Failure is from", failure_from)
     if 'systemRequirements' in desc:
         print_json_field("Sys Requirements", desc['systemRequirements'])
     if "tags" in desc:

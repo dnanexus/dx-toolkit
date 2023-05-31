@@ -1201,6 +1201,10 @@ def describe(args):
                 json_input['defaultFields'] = True
                 json_input['fields'] = {'internetUsageIPs': True}
 
+        if is_job_id(args.path) or is_analysis_id(args.path):
+            if args.job_try:
+                json_input['try'] = args.job_try
+
         # Otherwise, attempt to look for it as a data object or
         # execution
         try:
@@ -4656,6 +4660,9 @@ parser_describe.add_argument('--verbose', help='Include additional metadata', ac
 parser_describe.add_argument('--name', help='Only print the matching names, one per line', action='store_true')
 parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24),
                              action='store_true')
+parser_describe.add_argument('--try', metavar="T", dest="job_try", type=int,
+                             help=fill('When describing a job that was restarted, describe job try T. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
+
 describe_path_action = parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 describe_path_action.completer = DXPathCompleter()
 parser_describe.set_defaults(func=describe)
