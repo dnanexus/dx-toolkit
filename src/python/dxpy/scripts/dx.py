@@ -43,7 +43,7 @@ from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
 from ..cli.dataset_utilities import extract_dataset
 from ..cli.download import (download_one_file, download_one_database_file, download)
-from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
+from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
@@ -1201,9 +1201,10 @@ def describe(args):
                 json_input['defaultFields'] = True
                 json_input['fields'] = {'internetUsageIPs': True}
 
-        if is_job_id(args.path) or is_analysis_id(args.path):
-            if args.job_try:
-                json_input['try'] = args.job_try
+        if args.job_try is not None:
+            if not is_job_id(args.path):
+                err_exit('Parameter --try T can be used only when describing jobs')
+            json_input['try'] = args.job_try
 
         # Otherwise, attempt to look for it as a data object or
         # execution
@@ -1592,11 +1593,17 @@ def add_tags(args):
                                                     args.all)
 
     if entity_results is not None:
+        payload = {"tags": args.tags}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            payload['project'] = project
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/addTags',
-                                   {"project": project,
-                                    "tags": args.tags})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/addTags', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1605,6 +1612,9 @@ def add_tags(args):
     elif not project.startswith('project-'):
         err_exit('Cannot add tags to a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
+
         try:
             dxpy.DXHTTPRequest('/' + project + '/addTags',
                                {"tags": args.tags})
@@ -1619,11 +1629,16 @@ def remove_tags(args):
                                                     args.all)
 
     if entity_results is not None:
+        payload = {"tags": args.tags}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags',
-                                   {"project": project,
-                                    "tags": args.tags})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1632,6 +1647,9 @@ def remove_tags(args):
     elif not project.startswith('project-'):
         err_exit('Cannot remove tags from a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
+
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeTags',
                                {"tags": args.tags})
@@ -1673,11 +1691,17 @@ def set_properties(args):
 
     try_call(process_properties_args, args)
     if entity_results is not None:
+        payload = {"properties": args.properties}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            payload['project'] = project
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
-                                   {"project": project,
-                                    "properties": args.properties})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1686,6 +1710,8 @@ def set_properties(args):
     elif not project.startswith('project-'):
         err_exit('Cannot set properties on a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
         try:
             dxpy.api.project_set_properties(project, {"properties": args.properties})
         except:
@@ -1701,11 +1727,17 @@ def unset_properties(args):
     for prop in args.properties:
         properties[prop] = None
     if entity_results is not None:
+        payload = {"properties": properties}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            payload['project'] = project
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
-                                   {"project": project,
-                                    "properties": properties})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1714,6 +1746,8 @@ def unset_properties(args):
     elif not project.startswith('project-'):
         err_exit('Cannot unset properties on a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
         try:
             dxpy.api.project_set_properties(project, {"properties": properties})
         except:
@@ -5616,7 +5650,7 @@ register_parser(parser_remove_types, categories='metadata')
 #####################################
 parser_tag = subparsers.add_parser('tag', help='Tag a project, data object, or execution', prog='dx tag',
                                    description='Tag a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
-                                   parents=[env_args, all_arg])
+                                   parents=[env_args, all_arg, try_arg])
 parser_tag.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_tag.add_argument('tags', nargs='+', metavar='tag', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
@@ -5627,7 +5661,7 @@ register_parser(parser_tag, categories='metadata')
 #####################################
 parser_untag = subparsers.add_parser('untag', help='Untag a project, data object, or execution', prog='dx untag',
                                      description='Untag a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
-                                     parents=[env_args, all_arg])
+                                     parents=[env_args, all_arg, try_arg])
 parser_untag.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_untag.add_argument('tags', nargs='+', metavar='tag', help='Tags to remove')
 parser_untag.set_defaults(func=remove_tags)
@@ -5652,7 +5686,7 @@ register_parser(parser_rename, categories='metadata')
 #####################################
 parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of a project, data object, or execution',
                                               description='Set properties of a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx set_properties',
-                                              parents=[env_args, all_arg])
+                                              parents=[env_args, all_arg, try_arg])
 parser_set_properties.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_set_properties.add_argument('properties', nargs='+', metavar='propertyname=value',
                                    help='Key-value pairs of property names and their new values')
@@ -5665,7 +5699,7 @@ register_parser(parser_set_properties, categories='metadata')
 parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of a project, data object, or execution',
                                                 description='Unset properties of a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
                                                 prog='dx unset_properties',
-                                                parents=[env_args, all_arg])
+                                                parents=[env_args, all_arg, try_arg])
 path_action = parser_unset_properties.add_argument('path', help='ID or path to project, data object, or execution to modify')
 path_action.completer = DXPathCompleter()
 parser_unset_properties.add_argument('properties', nargs='+', metavar='propertyname', help='Property names to unset')

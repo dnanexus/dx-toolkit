@@ -56,6 +56,10 @@ delim_arg.add_argument('--delimiter', '--delim',
 json_arg = argparse.ArgumentParser(add_help=False)
 json_arg.add_argument('--json', help='Display return value in JSON', action='store_true')
 
+try_arg = argparse.ArgumentParser(add_help=False)
+try_arg.add_argument('--try', metavar="T", dest="job_try", type=int,
+                     help=fill('When modifying a job that was restarted, apply the change to try T of the restarted job. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
+
 stdout_args = argparse.ArgumentParser(add_help=False)
 stdout_args_gp = stdout_args.add_mutually_exclusive_group()
 stdout_args_gp.add_argument('--brief', help=fill('Display a brief version of the return value; for most commands, prints a DNAnexus ID per line', width_adjustment=-24), action='store_true')
