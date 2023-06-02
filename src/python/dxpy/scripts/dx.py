@@ -3654,6 +3654,9 @@ def watch(args):
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
     level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
 
+    # FIXME [jstourac] how is try propagated from websocket?
+
+    is_try_provided = args.job_try is not None
     msg_callback, log_client = None, None
     if args.get_stdout:
         args.levels = ['STDOUT']
@@ -3669,7 +3672,7 @@ def watch(args):
         args.job_info = False
     elif args.format is None:
         if args.job_ids:
-            args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
+            args.format = BLUE("{job_name} ({job}" + (" try {try}" if is_try_provided else "") + ")") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
             args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
@@ -3687,6 +3690,9 @@ def watch(args):
                     "recurseJobs": args.tree,
                     "tail": args.tail}
 
+    if is_try_provided:
+        input_params['try'] = args.job_try
+
     if args.levels:
         input_params['levels'] = args.levels
 
@@ -3700,13 +3706,16 @@ def watch(args):
         print("Output reused from %s" %(args.jobid))
 
     log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
-                                      msg_output_format=args.format, print_job_info=args.job_info)
+                                      msg_output_format=args.format, print_job_info=args.job_info,
+                                      print_job_try=is_try_provided)
 
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
         if not args.quiet:
-            print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+            print("Watching job %s%s. Press Ctrl+C to stop watching." % (
+                args.jobid + (" try %d" % args.job_try if is_try_provided else ""),
+                (" and sub-jobs" if args.tree else "")), file=sys.stderr)
         log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
@@ -5407,13 +5416,16 @@ register_parser(parser_run, categories='exec')
 # watch
 #####################################
 parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its subjobs', prog='dx watch',
-                                     description='Monitors logging output from a running job',
+                                     description='Monitors logging output from a running or finished job',
                                      parents=[env_args, no_color_arg])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
 # .completer = TODO
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get',
                           type=int, default=1024*256)
-parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
+parser_watch_trygroup = parser_watch.add_mutually_exclusive_group()
+parser_watch_trygroup.add_argument('--tree', help='Include the entire job tree', action='store_true')
+parser_watch_trygroup.add_argument('--try', metavar="T", dest="job_try", type=int,
+                                   help=fill('Allows to watch older tries of a restarted job. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
 parser_watch.add_argument('-l', '--levels', action='append', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
                                                                       "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
@@ -5425,7 +5437,7 @@ parser_watch.add_argument('--job-ids', help='Print job ID in each message', acti
 parser_watch.add_argument('--no-job-info', help='Omit job info and status updates', action='store_false',
                           dest='job_info')
 parser_watch.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
-parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
+parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, try, level, msg, date')
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
 parser_watch.set_defaults(func=watch)

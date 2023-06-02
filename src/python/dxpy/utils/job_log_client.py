@@ -43,7 +43,7 @@ class DXJobLogStreamingException(Exception):
 class DXJobLogStreamClient:
     def __init__(
         self, job_id, input_params=None, msg_output_format="{job} {level} {msg}",
-        msg_callback=None, print_job_info=True, exit_on_failed=True
+        msg_callback=None, print_job_info=True, exit_on_failed=True, print_job_try=False
     ):
         """Initialize job log client.
 
@@ -69,6 +69,8 @@ class DXJobLogStreamClient:
         :param exit_on_failed: if True, will raise SystemExit with code of 3 if encountering a
         failed job (this is the default behavior)
         :type exit_on_failed: bool
+        :param print_job_try: if True, information about job try will be also printed
+        :type print_job_try: bool
         """
         # TODO: add unit tests; note it is a public class
 
@@ -83,6 +85,7 @@ class DXJobLogStreamClient:
         self.closed_code = None
         self.closed_reason = None
         self.exit_on_failed = exit_on_failed
+        self.print_job_try = print_job_try
         self.url = "{protocol}://{host}:{port}/{job_id}/getLog/websocket".format(
             protocol='wss' if dxpy.APISERVER_PROTOCOL == 'https' else 'ws',
             host=dxpy.APISERVER_HOST,
@@ -178,7 +181,8 @@ class DXJobLogStreamClient:
                     get_find_executions_string(
                         self.seen_jobs[job_id],
                         has_children=False,
-                        show_outputs=True
+                        show_outputs=True,
+                        show_try=self.print_job_try
                     )
                 )
         else:
@@ -201,7 +205,8 @@ class DXJobLogStreamClient:
                 get_find_executions_string(
                     self.seen_jobs[message_dict['job']],
                     has_children=False,
-                    show_outputs=False
+                    show_outputs=False,
+                    show_try=self.print_job_try
                 )
             )
 
