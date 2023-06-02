@@ -48,7 +48,7 @@ test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
 test_filter_directory = os.path.join(dirname, "extract_assay_germline/test_input/")
 output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
 malformed_json_dir = os.path.join(
-    dirname, "extract_assay_germline/test_input/malformed_json"
+    dirname, "ea_malformed_json"
 )
 
 # Controls whether output files for the end to end tests are written to file or stdout
@@ -319,12 +319,12 @@ class TestDXExtractAssay(unittest.TestCase):
     # A test of the --assay-name functionality, returns the same output as allele_rsid.json
     def test_assay_name(self):
         print("testing --assay-name")
-        single_filter_directory = os.path.join(test_filter_directory, "single_filters")
         output_filename = os.path.join(output_folder, "assay_name_output.tsv")
+        allele_rsid_filter = {"rsid": ["rs1342568097"]}
 
-        command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele {} --output {}".format(
+        command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele '{}' --output {}".format(
             test_record,
-            os.path.join(single_filter_directory, "allele/allele_rsid.json"),
+            json.dumps(allele_rsid_filter),
             output_filename if write_output else "- > /dev/null",
         )
         subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
