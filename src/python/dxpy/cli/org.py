@@ -235,7 +235,7 @@ def new_org(args):
 
 
 def _get_org_update_args(args):
-    org_update_inputs = {}        
+    org_update_inputs = {}
 
     if args.name is not None:
         org_update_inputs["name"] = args.name
