@@ -21,14 +21,13 @@
 # Run manually with python3 src/python/test/test_extract_assay.py
 
 import unittest
-import tempfile
 import dxpy
 import os
 import subprocess
 import json
 import sys
 
-from dxpy_testutil import cd, chdir
+from dxpy_testutil import cd
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
     basic_filter,
@@ -45,7 +44,6 @@ dirname = os.path.dirname(__file__)
 test_project = "dx-toolkit_test_data"
 test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
 
-test_filter_directory = os.path.join(dirname, "extract_assay_germline/test_input/")
 output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
 malformed_json_dir = os.path.join(
     dirname, "ea_malformed_json"
