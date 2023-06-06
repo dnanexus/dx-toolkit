@@ -187,7 +187,7 @@ class DXExecutable:
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None,
             ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
-            max_job_spot_wait_time=None, preserve_job_outputs=None, extra_args=None, **kwargs):
+            max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -233,6 +233,8 @@ class DXExecutable:
         :type max_job_spot_wait_time: int
         :param preserve_job_outputs: Copy cloneable outputs of every non-reused job entering "done" state in this root execution to a folder in the project. If value is True it will place job outputs into the "intermediateJobOutputs" subfolder under the output folder for the root execution. If the value is dict, it may contains "folder" key with desired folder path. If the folder path starts with '/' it refers to an absolute path within the project, otherwise, it refers to a subfolder under root execution's output folder.
         :type preserve_job_outputs: boolean or dict
+        :param detailed_job_metrics: Enable detailed job metrics for this root execution
+        :type preserve_job_outputs: boolean
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
@@ -272,6 +274,7 @@ class DXExecutable:
                                         max_tree_spot_wait_time=max_tree_spot_wait_time,
                                         max_job_spot_wait_time=max_job_spot_wait_time,
                                         preserve_job_outputs=preserve_job_outputs,
+                                        detailed_job_metrics=detailed_job_metrics,
                                         extra_args=extra_args)
         return self._run_impl(run_input, **kwargs)
 
