@@ -5325,6 +5325,8 @@ class MetricsHelpAction(argparse.Action):
 Detailed job metrics describe job's consumption of CPU, memory, disk, network, etc at 60 second intervals.
 If collection of job metrics was enabled for a job (e.g with dx run --detailed-job-metrics), the metrics can be displayed by "dx watch" for 15 days from the time the job started running.
 
+Note that all reported data-related values are in base 2 units - i.e. 1 MB = 1024 * 1024 bytes.
+
 The "interspersed" default mode shows METRICS job log messages interspersed with other jog log messages.
 
 The "none" mode will omits all METRICS messages from "dx watch" output.
@@ -5334,21 +5336,25 @@ The "top" mode shows the latest METRICS message at the top of the screen and upd
 The "csv" mode outputs the following columns with headers in csv format to stdout:
 - timestamp: An integer number representing the number of milliseconds since the Unix epoch.
 - cpuCount: A number of CPUs available on the instance that ran the job.
-- cpuUsageUser: The percentage of cpu time spent in user mode on the instance during the metric collection period. This quantity reflects CPU usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
-- cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period. This quantity reflects CPU usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
-- cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period. This quantity reflects CPU usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
-- cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period. This quantity reflects CPU usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data. Note 1: cpuUsageUser+cpuUsageSystem+cpuUsageIowait+cpuUsageIdle+cpuUsageSteal = 100. cpuUsageSteal is unreported, but can be derived from the other 4 quantities given that they add up to 100; Note 2: cpuUsage numbers are rounded to 2 decimal places.
+- cpuUsageUser: The percentage of cpu time spent in user mode on the instance during the metric collection period.
+- cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period.
+- cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
 - idleCpus: The number of cpus that spent > 97% of the measurement interval in idle state. This metric helps distinguish between 4 cpus each being 25% idle (idleCpus of 0) and 3 cpu being 0% idle while the remaining CPU is 98% idle (idleCpus of 1).
-- memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory). This quantity reflects memory usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+- memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory).
 - memoryTotalBytes: Total memory available on the instance that ran the job.
 - diskUsedBytes: Bytes of storage allocated to the AEE that are used by the filesystem.
 - diskTotalBytes: Total bytes of disk space available to the job within the AEE.
-- networkOutBytes: Total network bytes transferred out from AEE since the job started. Includes "dx upload" bytes. 
+- networkOutBytes: Total network bytes transferred out from AEE since the job started. Includes "dx upload" bytes.
 - networkInBytes: Total network bytes transferred into AEE since the job started. Includes "dx download" bytes.
 - diskReadBytes: Total bytes read from the AEE-accessible disks since the job started.
 - diskWriteBytes: Total bytes written to the AEE-accessible disks since the job started.
 - diskReadOpsCount: Total disk read operation count against AEE-accessible disk since the job started.
 - diskWriteOpsCount: Total disk write operation count against AEE-accessible disk since the job started.
+
+Note 1: cpuUsageUser, cpuUsageSystem, cpuUsageIowait, cpuUsageIdle and memoryUsedBytes metrics reflect usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+Note 2: cpuUsageUser + cpuUsageSystem + cpuUsageIowait + cpuUsageIdle + cpuUsageSteal = 100. cpuUsageSteal is unreported, but can be derived from the other 4 quantities given that they add up to 100.
+Note 3: cpuUsage numbers are rounded to 2 decimal places.
 
 The format of METRICS job log lines is defined as follows using the example below:
 
