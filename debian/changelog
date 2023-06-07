@@ -1,3 +1,10 @@
+dx-toolkit (0.348.0) trusty; urgency=medium
+
+  * Added: dxpy dependencies test suite
+  * Changed: Optimizations in Nextflow Pipeline Applet script to make fewer API calls when concluding a subjob
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 11 May 2023 14:35:53 +0000
+
 dx-toolkit (0.347.0) trusty; urgency=medium
 
   * Changed: Removed unneeded gnureadline dependency
