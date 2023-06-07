@@ -565,10 +565,14 @@ def extract_assay_somatic(args):
                 print("{: <17} {: <22} {: <25}".format(*row))
             sys.exit(0)
 
+
+
     ######## Data Processing ########
     #project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
     #dataset_id = resp["dataset"]
     #rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    #selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name(args,"somatic",rec_descriptor)
+
 
 
 def extract_assay_germline(args):
