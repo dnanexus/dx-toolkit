@@ -6157,17 +6157,18 @@ parser_extract_assay_germline.add_argument(
 
 
 parser_extract_assay_germline.add_argument(
-    "--list-assays",
-    action="store_true",
-    help="List genetic variant assays available for query in the specified Dataset or Cohort object.",
-)
-parser_extract_assay_germline.add_argument(
     "--assay-name",
     default=None,
     help="Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
 )
 
-parser_e_a_g_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group()
+parser_e_a_g_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=True)
+parser_e_a_g_mutex_group.add_argument(
+    "--list-assays",
+    action="store_true",
+    help="List genetic variant assays available for query in the specified Dataset or Cohort object.",
+)
+
 parser_e_a_g_mutex_group.add_argument(
     "--retrieve-allele",
     type=str,

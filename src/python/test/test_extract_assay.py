@@ -48,6 +48,9 @@ output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
 malformed_json_dir = os.path.join(
     dirname, "ea_malformed_json"
 )
+proj_id = list(
+            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
+        )[0]["id"]
 
 # Controls whether output files for the end to end tests are written to file or stdout
 write_output = False
@@ -59,10 +62,6 @@ if write_output:
 class TestDXExtractAssay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        proj_name = "dx-toolkit_test_data"
-        proj_id = list(
-            dxpy.find_projects(describe=False, level="VIEW", name=proj_name)
-        )[0]["id"]
         cd(proj_id + ":/")
 
     ############
@@ -73,11 +72,10 @@ class TestDXExtractAssay(unittest.TestCase):
     def test_retrieve_geno_bins(self):
         # list_of_genes, project, genome_reference
         list_of_genes = ["ENSG00000173213"]
-        project = "project-G9j1pX00vGPzF2XQ7843k2Jq"
         genome_reference = "GRCh38.92"
         expected_output = [{"chr": "18", "start": "47390", "end": "49557"}]
         self.assertEqual(
-            retrieve_geno_bins(list_of_genes, project, genome_reference),
+            retrieve_geno_bins(list_of_genes, proj_id, genome_reference),
             expected_output,
         )
 
@@ -85,7 +83,6 @@ class TestDXExtractAssay(unittest.TestCase):
         table = "allele"
         friendly_name = "rsid"
         values = ["rs1342568097"]
-        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
         genome_reference = "Homo_sapiens.GRCh38.92"
 
         expected_output = {
@@ -94,7 +91,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
         self.assertEqual(
             basic_filter(
-                table, friendly_name, values, project_context, genome_reference
+                table, friendly_name, values, proj_id, genome_reference
             ),
             expected_output,
         )
@@ -103,7 +100,6 @@ class TestDXExtractAssay(unittest.TestCase):
         table = "annotation"
         friendly_name = "gene_id"
         values = ["ENSG00000173213"]
-        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
         genome_reference = "Homo_sapiens.GRCh38.92"
 
         expected_output = {
@@ -118,7 +114,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
         self.assertEqual(
             basic_filter(
-                table, friendly_name, values, project_context, genome_reference
+                table, friendly_name, values, proj_id, genome_reference
             ),
             expected_output,
         )
@@ -127,7 +123,6 @@ class TestDXExtractAssay(unittest.TestCase):
         table = "genotype"
         friendly_name = "allele_id"
         values = ["18_47361_T_G"]
-        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
         genome_reference = "Homo_sapiens.GRCh38.92"
 
         expected_output = {
@@ -136,7 +131,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
         self.assertEqual(
             basic_filter(
-                table, friendly_name, values, project_context, genome_reference
+                table, friendly_name, values, proj_id, genome_reference
             ),
             expected_output,
         )
@@ -167,7 +162,6 @@ class TestDXExtractAssay(unittest.TestCase):
         full_input_dict = {"rsid": ["rs1342568097"]}
         name = "test01_assay"
         id = "c6e9c0ea-5752-4299-8de2-8620afba7b82"
-        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
         genome_reference = "Homo_sapiens.GRCh38.92"
         filter_type = "allele"
 
@@ -189,7 +183,7 @@ class TestDXExtractAssay(unittest.TestCase):
                 full_input_dict,
                 name,
                 id,
-                project_context,
+                proj_id,
                 genome_reference,
                 filter_type,
             ),
@@ -200,12 +194,11 @@ class TestDXExtractAssay(unittest.TestCase):
         full_input_dict = {"rsid": ["rs1342568097"]}
         name = "test01_assay"
         id = "c6e9c0ea-5752-4299-8de2-8620afba7b82"
-        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
         genome_reference = "Homo_sapiens.GRCh38.92"
         filter_type = "allele"
 
         expected_output_payload = {
-            "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+            "project_context": proj_id,
             "fields": [
                 {"allele_id": "allele$a_id"},
                 {"chromosome": "allele$chr"},
@@ -252,7 +245,7 @@ class TestDXExtractAssay(unittest.TestCase):
             full_input_dict,
             name,
             id,
-            project_context,
+            proj_id,
             genome_reference,
             filter_type,
         )
