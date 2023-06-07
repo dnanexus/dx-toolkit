@@ -3561,7 +3561,7 @@ def watch(args):
         if iarg:
             incompatible_args = ("--metrics top", iarg)
     elif args.metrics == "csv":
-        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", ("tail", "no-wait"), "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
         if iarg:
             incompatible_args = ("--metrics csv", iarg)
 
