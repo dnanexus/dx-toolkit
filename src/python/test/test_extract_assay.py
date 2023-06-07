@@ -231,7 +231,8 @@ class TestDXExtractAssay(unittest.TestCase):
                     "logic": "and",
                 }
             },
-            "is_cohort": False,
+            "is_cohort": True,
+            "distinct": True,
         }
 
         expected_output_fields = [
