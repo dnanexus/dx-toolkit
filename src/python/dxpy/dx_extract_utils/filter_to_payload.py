@@ -257,7 +257,8 @@ def final_payload(
     final_payload["fields"] = fields
     final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter
-    final_payload["is_cohort"] = False
+    final_payload["is_cohort"] = True
+    final_payload["distinct"] = True
 
     field_names = []
     for f in fields:
