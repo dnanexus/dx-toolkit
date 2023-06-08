@@ -1,0 +1,23 @@
+{
+    "allele": {
+        "rsid": "any",
+        "type": "in",
+        "dataset_alt_af": "between",
+        "gnomad_alt_af": "between"
+    },
+    "genotype": {
+        "genotype_type": "in",
+        "allele_id": "in",
+        "sample_id": "in"
+    },
+    "annotation": {
+        "allele_id": "in",
+        "gene_name": "in",
+        "gene_id": "in",
+        "feature_id": "in",
+        "consequences": "any",
+        "putative_impact": "in",
+        "hgvs_c": "in",
+        "hgvs_p": "in"
+    }
+}
