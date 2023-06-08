@@ -568,10 +568,10 @@ def extract_assay_somatic(args):
 
 
     ######## Data Processing ########
-    #project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
-    #dataset_id = resp["dataset"]
-    #rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
-    #selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name(args,"somatic",rec_descriptor)
+    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    dataset_id = resp["dataset"]
+    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name(args,"somatic",rec_descriptor)
 
 
 
@@ -634,8 +634,8 @@ def extract_assay_germline(args):
                 if os.stat(filter_value).st_size == 0:
                     err_exit(
                         'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
-                        filter_type=filter_type
-                    )
+                            filter_type=filter_type
+                        )
                     )
                 else:
                     with open(filter_value, "r") as json_file:
@@ -695,6 +695,13 @@ def extract_assay_germline(args):
 
     ######## Data Processing ########
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+
+    if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
+        err_exit(
+            "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
+        )
+    dataset_id = resp["dataset"]
+    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
@@ -802,7 +809,7 @@ def extract_assay_germline(args):
                 sep="\t",
                 raw_results=resp_raw["results"],
                 column_names=fields_list,
-                quote_char="|",
+                quote_char=str("|"),
             )
 
 
