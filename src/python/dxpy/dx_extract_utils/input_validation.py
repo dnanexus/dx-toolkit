@@ -203,7 +203,7 @@ def validate_filter(filter, filter_type):
                 err_exit()
             # Check against allowed values
             for item in filter["genotype_type"]:
-                if item not in ["hom", "het-ref", "het-alt", "alt"]:
+                if item not in ["hom-alt", "het-ref", "het-alt", "half"]:
                     print("value {} is not a valid genotype_type".format(item))
                     print(malformed_filter.format("genotype_type"))
                     err_exit()
