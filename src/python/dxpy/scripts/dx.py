@@ -6182,7 +6182,7 @@ parser_extract_assay_somatic.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. By default returns the following set of fields; “assay_sample_id”, “allele_id”, “chrom”, “pos”, “ref”, and “allele”. Additional fields may be returned using --additional-fields. Specify “--json-help” following this option to get detailed information on the json format and filters.",
+    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. By default returns the following set of fields; “assay_sample_id”, “allele_id”, “chrom”, “pos”, “ref”, and “allele”. Additional fields may be returned using --additional-fields. Specify “--json-help” following this option to get detailed information on the json format and filters. When filtering, must supply one, and only one of “location”, “annotation.gene_name”, “annotation.gene_id”, “annotation.feature_id”, “allele.allele_id”.",
 )
 
 parser_extract_assay_somatic.add_argument(
