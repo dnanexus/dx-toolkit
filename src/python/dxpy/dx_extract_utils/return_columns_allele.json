@@ -1,0 +1,32 @@
+[
+    {
+        "allele_id": "allele$a_id"
+    },
+    {
+        "chromosome": "allele$chr"
+    },
+    {
+        "starting_position": "allele$pos"
+    },
+    {
+        "ref": "allele$ref"
+    },
+    {
+        "alt": "allele$alt"
+    },
+    {
+        "rsid": "allele$dbsnp151_rsid"
+    },
+    {
+        "allele_type": "allele$allele_type"
+    },
+    {
+        "dataset_alt_freq": "allele$alt_freq"
+    },
+    {
+        "gnomad_alt_freq": "allele$gnomad201_alt_freq"
+    },
+    {
+        "worst_effect": "allele$worst_effect"
+    }
+]
