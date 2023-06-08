@@ -861,9 +861,9 @@ def extract_assay_somatic(args):
             sys.exit(0)
 
     ######## Data Processing ########
-    #project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
-    #dataset_id = resp["dataset"]
-    #rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    dataset_id = resp["dataset"]
+    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
 class DXDataset(DXRecord):
     """
