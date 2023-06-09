@@ -256,7 +256,8 @@ class PrintInstanceTypeHelp(argparse.Action):
                   '                                         "*":    "mem1_ssd1_v2_x4"}\'')
             print()
             print(fill('2. Runs all entry points of the first stage with ' +
-                       'mem2_hdd2_v2_x2, the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
+                       'mem2_hdd2_v2_x2, the main entry point of the second stage with mem1_ssd1_v2_x4, ' +
+                       'the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
                        'stages with mem2_hdd2_v2_x4'))
             print()
             print('    dx run workflow-xxxx \\\n' +
