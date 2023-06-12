@@ -439,28 +439,28 @@ def get_assay_name(args,friendly_assay_type,rec_descriptor):
 
     #### Get names of genetic assays ####
     if args.list_assays:
-        (geno_assays, other_assays) = get_assay_info(
+        (target_assays, other_assays) = get_assay_info(
             rec_descriptor, assay_type=assay_type
         )
-        if not geno_assays:
-            err_exit("There's no genetic assay in the dataset provided.")
+        if not target_assays:
+            err_exit("There's no {} assay in the dataset provided.").format(assay_type)
         else:
-            for a in geno_assays:
+            for a in target_assays:
                 print(a["name"])
             sys.exit(0)
 
     #### Decide which assay is to be queried and which ref genome is to be used ####
-    (geno_assays, other_assays) = get_assay_info(
+    (target_assays, other_assays) = get_assay_info(
         rec_descriptor, assay_type=assay_type
     )
-    geno_assay_names = [ga["name"] for ga in geno_assays]
-    geno_assay_ids = [ga["uuid"] for ga in geno_assays]
+    target_assay_names = [ga["name"] for ga in target_assays]
+    target_assay_ids = [ga["uuid"] for ga in target_assays]
     other_assay_names = [oa["name"] for oa in other_assays]
     #other_assay_ids = [oa["uuid"] for oa in other_assays]
-    selected_assay_name = geno_assay_names[0]
-    selected_assay_id = geno_assay_ids[0]
+    selected_assay_name = target_assay_names[0]
+    selected_assay_id = target_assay_ids[0]
     if args.assay_name:
-        if args.assay_name not in list(geno_assay_names):
+        if args.assay_name not in list(target_assay_names):
             if args.assay_name in list(other_assay_names):
                 err_exit(
                     "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the --list-assays flag."
@@ -473,12 +473,12 @@ def get_assay_name(args,friendly_assay_type,rec_descriptor):
                 )
         else:
             selected_assay_name = args.assay_name
-            for ga in geno_assays:
+            for ga in target_assays:
                 if ga["name"] == args.assay_name:
                     selected_assay_id = ga["uuid"]
 
     selected_ref_genome = "GRCh38.92"
-    for a in geno_assays:
+    for a in target_assays:
         if a["name"] == selected_assay_name and a["reference_genome"]:
             selected_ref_genome = a["reference_genome"]["name"]
     
