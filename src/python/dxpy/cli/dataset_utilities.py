@@ -794,13 +794,10 @@ def extract_assay_somatic(args):
         else:
             print("Perform retrieve-meta-info function") # Replace this line with a call to the new function
 
-    if args.list_assays:
-        if any([args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]):
-            err_exit(
-                '--list-assays cannot be presented with other options.'
-            )
-        else:
-            print("Perform list assay function.") # Replace this print with the actual call to list_assays function.
+    if args.list_assays and any([args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]):
+        err_exit(
+            '--list-assays cannot be presented with other options.'
+        )
 
     if args.json_help:
         if any([args.assay_name, invalid_combo_args]):
@@ -864,6 +861,18 @@ def extract_assay_somatic(args):
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+
+    if args.list_assays:
+        somatic_assays, _ = get_assay_info(
+            rec_descriptor, assay_type="somatic_variant"
+        )
+        if not somatic_assays:
+            err_exit("There’s no somatic assay in the dataset provided.")
+        else:
+            for a in somatic_assays:
+                print(a["name"])
+            sys.exit(0)
+
 
 class DXDataset(DXRecord):
     """
