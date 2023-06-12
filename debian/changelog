@@ -1,3 +1,10 @@
+dx-toolkit (0.349.0) trusty; urgency=medium
+
+  * Added: external_upload_restricted to DXProject
+  * Added: `dx extract_assay` for genomic assay model data
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 09 Jun 2023 03:39:28 +0000
+
 dx-toolkit (0.348.0) trusty; urgency=medium
 
   * Added: dxpy dependencies test suite
