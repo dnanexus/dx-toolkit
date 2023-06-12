@@ -12,13 +12,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx extract_assay`
 * external_upload_restricted param for DXProject
+* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
 
 ## [348.0] - 2023.6.9
 
 ### Added
 
 * dxpy dependencies test suite
-* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
 
 ### Changed
 
