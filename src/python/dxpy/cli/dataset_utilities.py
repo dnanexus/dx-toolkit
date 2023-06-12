@@ -873,6 +873,15 @@ def extract_assay_somatic(args):
                 print(a["name"])
             sys.exit(0)
 
+    #
+    # Placeholder for output section
+    #
+
+    payload = {}
+
+    #
+    # Placeholder for calling clisam payload creator
+    #
 
 class DXDataset(DXRecord):
     """
