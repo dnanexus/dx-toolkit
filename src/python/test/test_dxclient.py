@@ -3523,7 +3523,6 @@ dx-jobutil-add-output record_array $second_record --array
                           '*': {'instanceType': 'mem2_hdd2_v2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
-
         def check_instance_count(job_desc:dict, entrypoints:list, expected_counts:list):
             for ep, count in zip(entrypoints, expected_counts):
                 self.assertEqual(job_desc['systemRequirements'][ep]["clusterSpec"]["initialInstanceCount"], count)
