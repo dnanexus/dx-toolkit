@@ -19,11 +19,13 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools, signal
 import shlex # respects quoted substrings when splitting
 
 import requests
 import csv
+
+from threading import Thread
 
 logging.basicConfig(level=logging.INFO)
 
@@ -3540,10 +3542,103 @@ def terminate(args):
         except:
             err_exit()
 
+def _watch_metrics_top(args, input_params, enrich_msg):
+    from dxpy.utils.job_log_client import DXJobLogStreamClient
+    try:
+        import curses
+    except:
+        err_exit("--metrics top is not supported on your platform due to missing curses library")
+
+    class CursesDXJobLogStreamClient(DXJobLogStreamClient):
+
+        def closed(self, *args, **kwargs):
+            super(CursesDXJobLogStreamClient, self).closed(args, kwargs)
+            # Overcome inability to stop Python process from a thread by sending SIGINT
+            os.kill(os.getpid(), signal.SIGINT)
+
+    log = []
+    metrics = ['Waiting for job logs...']
+
+    def main(stdscr):
+        log_client = None
+
+        curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(4, curses.COLOR_GREEN, curses.COLOR_BLACK)
+
+        def refresh():
+            stdscr.erase()
+            y, x = stdscr.getmaxyx()
+            row = 0
+            nlines = min(y, len(log)) - 3
+            stdscr.addnstr(row, 0, metrics[-1], x)
+            row += 2
+
+            if args.format:
+                for i in range(len(log) - nlines, len(log)):
+                    stdscr.addnstr(row, offset, args.format(**message), x)
+                    row += 1
+            else:
+                for i in range(len(log) - nlines, len(log)):
+                    message = log[i]
+                    offset = 0
+                    if args.timestamps:
+                        stdscr.addnstr(row, offset, message['timestamp'], x - offset)
+                        offset += len(message['timestamp']) + 1
+                    if offset < x:
+                        stdscr.addnstr(row, offset, message['job_name'], x - offset, curses.color_pair(1))
+                        offset += len(message['job_name']) + 1
+                    if offset < x and args.job_ids:
+                        job_id = '(%s)' % message['job']
+                        stdscr.addnstr(row, offset, job_id, x - offset, curses.color_pair(1))
+                        offset += len(job_id) + 1
+                    if offset < x:
+                        lvl = message.get('level', '')
+                        stdscr.addnstr(row, offset, lvl, x - offset, curses.color_pair(message['level_color_curses']))
+                        offset += len(lvl) + 1
+                    if offset < x:
+                        stdscr.addnstr(row, offset, message['msg'], x - offset)
+                    row += 1
+
+            stdscr.refresh()
+
+        def msg_callback(message):
+            if len(log) == 0 and len(metrics) == 0:
+                metrics[0] = ''
+            enrich_msg(log_client, message)
+            if message['level'] == 'METRICS':
+                metrics.append('[%s] %s' % (message['timestamp'], message['msg']))
+            else:
+                log.append(message)
+            refresh()
+
+        log_client = CursesDXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+                                                msg_output_format=None, print_job_info=False)
+
+        t = Thread(target=log_client.connect)
+        t.daemon = True
+        t.start()
+
+        try:
+            while True:
+                ch = stdscr.getch()
+                if ch == curses.KEY_RESIZE:
+                    refresh()
+        # Capture SIGINT and exit normally
+        except KeyboardInterrupt:
+            sys.exit(0)
+
+    curses.wrapper(main)
+
 def watch(args):
-    level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
-    level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
-    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS")})
+    level_color_mapping = (
+        (("EMERG", "ALERT", "CRITICAL", "ERROR"), RED(), 2),
+        (("WARNING", "STDERR"), YELLOW(), 3),
+        (("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS"), GREEN(), 4),
+    )
+    level_colors = {lvl: item[1] for item in level_color_mapping for lvl in item[0]}
+    level_colors_curses = {lvl: item[2] for item in level_color_mapping for lvl in item[0]}
 
     def check_args_compatibility(incompatible_list):
         for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
@@ -3568,6 +3663,12 @@ def watch(args):
     if incompatible_args:
         err_exit(exception=DXCLIError("Can not specify both '%s' and '%s'" % incompatible_args))
 
+    def enrich_msg(log_client, message):
+        message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
+        message['level_color'] = level_colors.get(message.get('level', ''), '')
+        message['level_color_curses'] = level_colors_curses.get(message.get('level', ''), 0)
+        message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
+
     msg_callback, log_client = None, None
     if args.get_stdout:
         args.levels = ['STDOUT']
@@ -3588,17 +3689,15 @@ def watch(args):
         args.quiet = True
     elif args.format is None:
         if args.job_ids:
-            args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
-            args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            args.format = "{timestamp} " + args.format
+            format = "{timestamp} " + format
 
         def msg_callback(message):
-            message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
-            message['level_color'] = level_colors.get(message.get('level', ''), '')
-            message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
-            print(args.format.format(**message))
+            enrich_msg(log_client, message)
+            print(format.format(**message))
 
     from dxpy.utils.job_log_client import DXJobLogStreamClient
 
@@ -3609,6 +3708,19 @@ def watch(args):
     if args.levels:
         input_params['levels'] = args.levels
 
+    if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
+        err_exit(args.jobid + " does not look like a DNAnexus job ID")
+
+    job_describe = dxpy.describe(args.jobid)
+
+    if job_describe['state'] in ['terminated', 'failed', 'done']:
+        args.metrics = "none"
+
+    if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
+      args.jobid = job_describe['outputReusedFrom']
+      if not args.quiet:
+        print("Output reused from %s" % args.jobid)
+
     if args.metrics == "none":
         input_params['excludeMetrics'] = True
     elif args.metrics == "csv":
@@ -3616,24 +3728,19 @@ def watch(args):
     else:
         input_params['metricsFormat'] = "text"
 
-    if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
-        err_exit(args.jobid + " does not look like a DNAnexus job ID")
-
-    job_describe = dxpy.describe(args.jobid)
-    if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
-      args.jobid = job_describe['outputReusedFrom']
-      if not args.quiet:
-        print("Output reused from %s" % args.jobid)
-
-    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
-                                      msg_output_format=args.format, print_job_info=args.job_info)
-
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
-        if not args.quiet:
-            print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
-        log_client.connect()
+        if args.metrics == "top":
+            _watch_metrics_top(args, input_params, enrich_msg)
+        else:
+            log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+                                              msg_output_format=args.format, print_job_info=args.job_info)
+
+            if not args.quiet:
+                print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+
+            log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
 
