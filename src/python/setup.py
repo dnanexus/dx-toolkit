@@ -83,6 +83,9 @@ for directory, subdirectories, files in os.walk("dxpy/templating/templates"):
 nextflow_files = os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'nextflow'))
 nextflow_records = list(filter(lambda file: file[-5:] == ".json", nextflow_files))
 
+dx_extract_files = os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'dx_extract_utils'))
+dx_extract_records = list(filter(lambda file: file[-5:] == ".json", dx_extract_files))
+
 
 setup(
     name='dxpy',
@@ -96,7 +99,7 @@ setup(
     zip_safe=False,
     license='Apache Software License',
     packages = find_packages(exclude=['test']),
-    package_data={'dxpy.templating': template_files, 'dxpy.nextflow': nextflow_records},
+    package_data={'dxpy.templating': template_files, 'dxpy.nextflow': nextflow_records, 'dxpy.dx_extract_utils': dx_extract_records},
     scripts = glob.glob(os.path.join(os.path.dirname(__file__), 'scripts', 'dx*')),
     entry_points = {
         "console_scripts": scripts,

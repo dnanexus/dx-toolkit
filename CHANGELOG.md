@@ -6,7 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [348.0] - beta
+## [349.0] - beta
+
+### Added
+
+* `dx extract_assay`
+* external_upload_restricted param for DXProject
+
+## [348.0] - 2023.6.9
 
 ### Added
 
