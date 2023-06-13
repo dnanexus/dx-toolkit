@@ -3531,7 +3531,7 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + other_applet_id +
                           " --instance-count 2 --brief -y").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
-        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2,2,2])
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 2, 2])
 
         # override all entry points
         new_job_desc = get_new_job_desc("--instance-count 4")
@@ -3553,6 +3553,13 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
+        # fpgaDriver override: new original job with extra_args
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count 2 --brief -y " + 
+                          "--extra-args '" + 
+                          json.dumps({"systemRequirements":{"some_ep":{"fpgaDriver": "edico-1.4.5"}}}) + "'").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 2, 2])
         # --instance-type and --instance-count override: instance type and cluster spec are resolved independently
         new_job_desc = get_new_job_desc("--instance-count '" +
                                         json.dumps({"some_ep":6,
@@ -3567,6 +3574,8 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['systemRequirements']['main']['instanceType'], 'mem2_hdd2_x4')
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['instanceType'], 'mem2_hdd2_x2')
         self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
+        
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.5')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
