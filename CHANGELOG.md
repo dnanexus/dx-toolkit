@@ -6,13 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
+
 ## [349.0] - beta
 
 ### Added
 
 * `dx extract_assay`
 * external_upload_restricted param for DXProject
-* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
 
 ## [348.0] - 2023.6.9
 
