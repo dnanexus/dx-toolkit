@@ -1,0 +1,79 @@
+{
+    "title": "Retrieve Annotation Schema",
+    "$id": "/retrieve_annotation_schema",
+    "description": "A description of the retrieve annotation JSON file",
+    "type": "object",
+    "additionalProperties": false,
+    "oneOf": [
+        {
+            "required": [
+                "allele_id"
+            ]
+        },
+        {
+            "required": [
+                "gene_name"
+            ]
+        },
+        {
+            "required": [
+                "gene_id"
+            ]
+        }
+    ],
+    "properties": {
+        "allele_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 1000
+        },
+        "gene_name": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 100
+        },
+        "gene_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 100
+        },
+        "feature_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "consequences": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "putative_impact": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "hgvs_c": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 100
+        },
+        "hgvs_p": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 100
+        }
+    }
+}
