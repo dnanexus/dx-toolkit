@@ -428,6 +428,40 @@ def get_assay_info(rec_descriptor, assay_type):
     return (selected_type_assays, other_assays)
 
 
+def retrieve_meta_info(resp, project_id, assay_id, assay_name, print_to_stdout, out_file_name):
+    table, column = "vcf_meta_information_unique", "info_format_fields"  # TODO: get names
+    payload = {
+        "project_context": project_id,
+        "fields": [
+            {column: "$".join((table, column))},
+        ],
+        "is_cohort": False,
+        "raw_filters": {
+            "assay_filters": {
+                "name": assay_name,
+                "id": assay_id,
+                "filters": {
+                    "$".join((table, column)): [
+                        {"condition": "exists"},
+                    ],
+                },
+            },
+         },
+    }
+    resp_raw = raw_api_call(resp, payload)
+
+    if print_to_stdout:
+        fields_output = sys.stdout
+    else:
+        fields_output = open(out_file_name, "w")
+
+    for entry in resp_raw["results"]:
+        fields_output.write(entry[column] + '\n')
+
+    if not print_to_stdout:
+        fields_output.close()
+
+
 def extract_assay_germline(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.
@@ -786,13 +820,10 @@ def extract_assay_somatic(args):
     ######## Input combination validation and print help########
     invalid_combo_args = any([args.include_normal_sample, args.additional_fields, args.additional_fields_help, args.output, args.sql])
 
-    if args.retrieve_meta_info:
-        if any([args.list_assays, args.retrieve_variant, args.json_help, invalid_combo_args]):
-            err_exit(
-                'The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name.'
-            )
-        else:
-            print("Perform retrieve-meta-info function") # Replace this line with a call to the new function
+    if args.retrieve_meta_info and any([args.list_assays, args.retrieve_variant, args.json_help, invalid_combo_args]):
+        err_exit(
+            'The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name.'
+        )
 
     if args.list_assays:
         if any([args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]):
@@ -864,6 +895,75 @@ def extract_assay_somatic(args):
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+
+    #### Decide which assay is to be queried and which ref genome is to be used ####
+    (somatic_assays, other_assays) = get_assay_info(
+        rec_descriptor, assay_type="somatic_variant"
+    )
+    somatic_assay_names = [ga["name"] for ga in somatic_assays]
+    somatic_assay_ids = [ga["uuid"] for ga in somatic_assays]
+    other_assay_names = [oa["name"] for oa in other_assays]
+    other_assay_ids = [oa["uuid"] for oa in other_assays]
+    selected_assay_name = somatic_assay_names[0]
+    selected_assay_id = somatic_assay_ids[0]
+    if args.assay_name:
+        if args.assay_name not in list(somatic_assay_names):
+            if args.assay_name in list(other_assay_names):
+                err_exit(
+                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay somatic`, please use the --list-assays flag."
+                )
+            else:
+                err_exit(
+                    "Assay {assay_name} does not exist in the {path}.".format(
+                        assay_name=args.assay_name, path=args.path
+                    )
+                )
+        else:
+            selected_assay_name = args.assay_name
+            for ga in somatic_assays:
+                if ga["name"] == args.assay_name:
+                    selected_assay_id = ga["uuid"]
+
+    #### Decide output method based on --output and --sql ####
+    if args.sql:
+        file_name_suffix = ".data.sql"
+    else:
+        file_name_suffix = ".tsv"
+    file_already_exist = []
+    files_to_check = []
+    out_file = ""
+
+    print_to_stdout = False
+    if args.output is None:
+        out_directory = os.getcwd()
+        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
+        files_to_check.append(out_file)
+    elif args.output == "-":
+        print_to_stdout = True
+    elif os.path.exists(args.output):
+        if os.path.isdir(args.output):
+            err_exit("--output should be a file, not a directory.")
+        else:
+            file_already_exist.append(args.output)
+    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
+        args.output
+    ):
+        out_file = args.output
+    else:
+        err_exit(
+            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
+        )
+
+    for file in files_to_check:
+        if os.path.exists(file):
+            file_already_exist.append(file)
+
+    if file_already_exist:
+        err_exit("Cannot specify the output to be an existing file.")
+
+    if args.retrieve_meta_info:
+        retrieve_meta_info(resp, project, selected_assay_id, selected_assay_name, print_to_stdout, out_file)
+
 
 class DXDataset(DXRecord):
     """
