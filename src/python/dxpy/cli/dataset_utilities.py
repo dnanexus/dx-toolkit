@@ -428,7 +428,7 @@ def get_assay_info(rec_descriptor, assay_type):
     return (selected_type_assays, other_assays)
 
 
-def get_assay_name(args,friendly_assay_type,rec_descriptor):
+def get_assay_name_info(list_assays,assay_name,path,friendly_assay_type,rec_descriptor):
     """
     Generalized function for determining assay name and reference genome
     """
@@ -438,7 +438,7 @@ def get_assay_name(args,friendly_assay_type,rec_descriptor):
         assay_type = "somatic_variant"
 
     #### Get names of genetic assays ####
-    if args.list_assays:
+    if list_assays:
         (target_assays, other_assays) = get_assay_info(
             rec_descriptor, assay_type=assay_type
         )
@@ -459,22 +459,22 @@ def get_assay_name(args,friendly_assay_type,rec_descriptor):
     #other_assay_ids = [oa["uuid"] for oa in other_assays]
     selected_assay_name = target_assay_names[0]
     selected_assay_id = target_assay_ids[0]
-    if args.assay_name:
-        if args.assay_name not in list(target_assay_names):
-            if args.assay_name in list(other_assay_names):
+    if assay_name:
+        if assay_name not in list(target_assay_names):
+            if assay_name in list(other_assay_names):
                 err_exit(
                     "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the --list-assays flag."
                 )
             else:
                 err_exit(
                     "Assay {assay_name} does not exist in the {path}.".format(
-                        assay_name=args.assay_name, path=args.path
+                        assay_name=assay_name, path=path
                     )
                 )
         else:
-            selected_assay_name = args.assay_name
+            selected_assay_name = assay_name
             for ga in target_assays:
-                if ga["name"] == args.assay_name:
+                if ga["name"] == assay_name:
                     selected_assay_id = ga["uuid"]
 
     selected_ref_genome = "GRCh38.92"
@@ -612,10 +612,8 @@ def extract_assay_germline(args):
         )
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
-    dataset_id = resp["dataset"]
-    rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
-
-    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name(args,"germline",rec_descriptor)
+    
+    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"germline",rec_descriptor)
 
     #### Decide output method based on --output and --sql ####
     if args.sql:
@@ -890,7 +888,7 @@ def extract_assay_somatic(args):
                 print(a["name"])
             sys.exit(0)
 
-    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name(args,"somatic",rec_descriptor)
+    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"somatic",rec_descriptor)
 
 
 class DXDataset(DXRecord):
