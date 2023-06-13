@@ -1,0 +1,90 @@
+{
+    "title": "Retrieve Allele Schema",
+    "$id": "/retrieve_allele_schema",
+    "description": "A description of the allele JSON file",
+    "type": "object",
+    "additionalProperties": false,
+    "oneOf": [
+        {
+            "required": [
+                "location"
+            ]
+        },
+        {
+            "required": [
+                "rsid"
+            ]
+        }
+    ],
+    "properties": {
+        "rsid": {
+            "type": "array",
+            "description": "list of rsIDs of alleles",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 100
+        },
+        "type": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "SNP",
+                    "Ins",
+                    "Del",
+                    "Mixed"
+                ]
+            },
+            "maxItems": 4
+        },
+        "dataset_alt_af": {
+            "type": "object",
+            "properties": {
+                "min": {
+                    "type": "number",
+                    "min": 0,
+                    "max": 1
+                },
+                "max": {
+                    "type": "number",
+                    "min": 0,
+                    "max": 1
+                }
+            }
+        },
+        "gnomad_alt_af": {
+            "type": "object",
+            "properties": {
+                "min": {
+                    "type": "number",
+                    "min": 0,
+                    "max": 1
+                },
+                "max": {
+                    "type": "number",
+                    "min": 0,
+                    "max": 1
+                }
+            }
+        },
+        "location": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "chromosome": {
+                        "type": "string"
+                    },
+                    "starting_position": {
+                        "type": "string"
+                    },
+                    "ending_position": {
+                        "type": "string"
+                    }
+                },
+                "maxItems": 100
+            }
+        }
+    }
+}
