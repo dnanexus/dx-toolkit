@@ -85,8 +85,9 @@ class SystemRequirementsDict(object):
         It can extract only entrypoints with specific fields ('clusterSpec',
         'instanceType', etc), depending on the value of _type.
         """
-        if _type not in ('all', 'clusterSpec', 'instanceType'):
-            raise DXError("Expected '_type' to be either 'all', 'clusterSpec', or 'instanceType'")
+        allowed_types = ['all', 'clusterSpec', 'instanceType', 'fpgaDriver']
+        if _type not in (allowed_types):
+            raise DXError("Expected '_type' to be one of the following: {}".format(allowed_types))
 
         if _type == 'all':
             return cls(system_requirements)

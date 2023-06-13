@@ -3022,20 +3022,20 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         cloned_system_requirements = copy.deepcopy(args.cloned_job_desc).get("systemRequirements", {})
         cloned_instance_type = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceType')
         cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='clusterSpec')
+        cloned_fpga_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='fpgaDriver')
         cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {})
     else:
         cloned_system_requirements = {}
-        cloned_instance_type, cloned_cluster_spec = SystemRequirementsDict({}), SystemRequirementsDict({})
+        cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver = SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({})
         cloned_system_requirements_by_executable = {}
 
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
     if args.instance_type:
-        if isinstance(args.instance_type, basestring):
-            requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type).as_dict()
-        else:
-            requested_instance_type = merge(cloned_instance_type.as_dict(), SystemRequirementsDict.from_instance_type(args.instance_type).as_dict())
+        requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
+        if not isinstance(args.instance_type, basestring):
+            requested_instance_type = SystemRequirementsDict(merge(cloned_instance_type.as_dict(), requested_instance_type.as_dict()))
     else:
-        requested_instance_type = cloned_instance_type.as_dict()
+        requested_instance_type = cloned_instance_type
 
     # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
     if args.instance_count:
@@ -3049,14 +3049,16 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
                 requested_instance_count = SystemRequirementsDict(merge(cloned_cluster_spec.as_dict(), requested_instance_count.as_dict()))
             cluster_spec_to_override = cloned_cluster_spec
         
-        requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count).as_dict()
+        requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count)
     else:
-        requested_cluster_spec = cloned_cluster_spec.as_dict()
+        requested_cluster_spec = cloned_cluster_spec
 
     # combine the requested instance type and full cluster spec
     # into the runtime systemRequirements
-    requested_system_requirements = merge(cloned_system_requirements, merge(requested_instance_type, requested_cluster_spec))
-    
+    requested_fpga_driver = cloned_fpga_driver
+
+    requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
+
     # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
     # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
     # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
