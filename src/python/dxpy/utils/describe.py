@@ -939,11 +939,11 @@ def print_execution_desc(desc, verbose=False):
     if desc.get('runSystemRequirements') is not None:
         print_json_field("Run Sys Reqs", desc['runSystemRequirements'])
     if desc.get('runSystemRequirementsByExecutable') is not None:
-        print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirements'])
+        print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirementsByExecutable'])
     if desc.get('mergedSystemRequirementsByExecutable') is not None:
-        print_json_field("Merged Sys Reqs By Exec", desc['runSystemRequirements'])
+        print_json_field("Merged Sys Reqs By Exec", desc['mergedSystemRequirementsByExecutable'])
     if desc.get('runStageSystemRequirements') is not None:
-        print_json_field("Run Stage Sys Reqs", desc['runSystemRequirements'])
+        print_json_field("Run Stage Sys Reqs", desc['runStageSystemRequirements'])
 
     for field in desc:
         if field not in recognized_fields:
