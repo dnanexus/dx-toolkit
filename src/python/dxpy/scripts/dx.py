@@ -3604,13 +3604,15 @@ def _watch_metrics_top(args, input_params, enrich_msg):
             stdscr.refresh()
 
         def msg_callback(message):
-            if len(log) == 0 and len(metrics) == 0:
+            if len(log) == 0:
                 metrics[0] = ''
+
             enrich_msg(log_client, message)
             if message['level'] == 'METRICS':
-                metrics.append('[%s] %s' % (message['timestamp'], message['msg']))
+                metrics[0] = '[%s] %s' % (message['timestamp'], message['msg'])
             else:
                 log.append(message)
+
             refresh()
 
         log_client = CursesDXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
@@ -3620,6 +3622,7 @@ def _watch_metrics_top(args, input_params, enrich_msg):
         t.daemon = True
         t.start()
 
+        refresh()
         try:
             while True:
                 ch = stdscr.getch()
@@ -3705,21 +3708,24 @@ def watch(args):
                     "recurseJobs": args.tree,
                     "tail": args.tail}
 
-    if args.levels:
-        input_params['levels'] = args.levels
-
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
 
     job_describe = dxpy.describe(args.jobid)
 
-    if job_describe['state'] in ['terminated', 'failed', 'done']:
+    # For finished jobs and --metrics top, behave like --metrics none
+    if args.metrics == "top" and job_describe['state'] in ('terminated', 'failed', 'done'):
         args.metrics = "none"
+        if args.levels and "METRICS" in args.levels:
+            args.levels.remove("METRICS")
 
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
       if not args.quiet:
         print("Output reused from %s" % args.jobid)
+
+    if args.levels:
+        input_params['levels'] = args.levels
 
     if args.metrics == "none":
         input_params['excludeMetrics'] = True
