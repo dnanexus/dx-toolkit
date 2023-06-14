@@ -428,8 +428,8 @@ def get_assay_info(rec_descriptor, assay_type):
     return (selected_type_assays, other_assays)
 
 
-def retrieve_meta_info(resp, project_id, assay_id, assay_name, print_to_stdout, out_file_name):
-    table, column = "vcf_meta_information_unique", "info_format_fields"  # TODO: get names
+def retrieve_meta_info(url, project_id, dataset_id, assay_id, assay_name, print_to_stdout, out_file_name):
+    table, column = "vcf_meta_information_unique", "info_format_fields"
     payload = {
         "project_context": project_id,
         "fields": [
@@ -448,7 +448,16 @@ def retrieve_meta_info(resp, project_id, assay_id, assay_name, print_to_stdout, 
             },
          },
     }
-    resp_raw = raw_api_call(resp, payload)
+    resource = url + "/data/3.0/" + dataset_id + "/raw"
+    try:
+        resp_raw = dxpy.DXHTTPRequest(
+            resource=resource, data=payload, prepend_srv=False
+        )
+        if "error" in resp_raw.keys():
+            print(resp_raw["error"])
+            sys.exit(1)
+    except Exception as details:
+        err_exit(str(details))
 
     if print_to_stdout:
         fields_output = sys.stdout
@@ -908,6 +917,8 @@ def extract_assay_somatic(args):
     (somatic_assays, other_assays) = get_assay_info(
         rec_descriptor, assay_type="somatic_variant"
     )
+    if not somatic_assays:
+        err_exit("There’s no somatic assay in the dataset provided.")
     somatic_assay_names = [ga["name"] for ga in somatic_assays]
     somatic_assay_ids = [ga["uuid"] for ga in somatic_assays]
     other_assay_names = [oa["name"] for oa in other_assays]
@@ -970,7 +981,15 @@ def extract_assay_somatic(args):
         err_exit("Cannot specify the output to be an existing file.")
 
     if args.retrieve_meta_info:
-        retrieve_meta_info(resp, project, selected_assay_id, selected_assay_name, print_to_stdout, out_file)
+        retrieve_meta_info(
+            resp["url"],
+            project,
+            resp["dataset"],
+            selected_assay_id,
+            selected_assay_name,
+            print_to_stdout,
+            out_file,
+        )
 
 
 class DXDataset(DXRecord):
