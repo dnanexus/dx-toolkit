@@ -3594,6 +3594,8 @@ def _watch_metrics_top(args, input_params, enrich_msg):
                     if ch == curses.KEY_RESIZE: self.refresh()
                     elif ch == curses.KEY_RIGHT: self.refresh(scr_x_offset_diff=1)
                     elif ch == curses.KEY_LEFT: self.refresh(scr_x_offset_diff=-1)
+                    elif ch == curses.KEY_SRIGHT: self.refresh(scr_x_offset_diff=20)
+                    elif ch == curses.KEY_SLEFT: self.refresh(scr_x_offset_diff=-20)
                     elif ch == curses.KEY_HOME: self.refresh(scr_x_offset_diff=-self.scr_x_offset)
                     elif ch == curses.KEY_END: self.refresh(scr_x_offset_diff=self.scr_x_max_offset)
                     elif ch == curses.KEY_UP: self.refresh(scr_y_offset_diff=1)
