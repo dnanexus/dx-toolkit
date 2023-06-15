@@ -3585,7 +3585,7 @@ def watch(args):
         else:
             args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            args.format = "{timestamp} " + format
+            args.format = "{timestamp} " + args.format
 
         def msg_callback(message):
             message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
