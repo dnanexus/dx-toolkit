@@ -3543,13 +3543,9 @@ def terminate(args):
             err_exit()
 
 def watch(args):
-    level_color_mapping = (
-        (("EMERG", "ALERT", "CRITICAL", "ERROR"), RED(), 2),
-        (("WARNING", "STDERR"), YELLOW(), 3),
-        (("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS"), GREEN(), 4),
-    )
-    level_colors = {lvl: item[1] for item in level_color_mapping for lvl in item[0]}
-    level_colors_curses = {lvl: item[2] for item in level_color_mapping for lvl in item[0]}
+    level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
+    level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
+    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
 
     def check_args_compatibility(incompatible_list):
         for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
@@ -3566,12 +3562,6 @@ def watch(args):
 
     if incompatible_args:
         err_exit(exception=DXCLIError("Can not specify both '%s' and '%s'" % incompatible_args))
-
-    def enrich_msg(log_client, message):
-        message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
-        message['level_color'] = level_colors.get(message.get('level', ''), '')
-        message['level_color_curses'] = level_colors_curses.get(message.get('level', ''), 0)
-        message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
 
     msg_callback, log_client = None, None
     if args.get_stdout:
@@ -3593,21 +3583,26 @@ def watch(args):
         args.quiet = True
     elif args.format is None:
         if args.job_ids:
-            format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
+            args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
-            format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
+            args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            format = "{timestamp} " + format
+            args.format = "{timestamp} " + format
 
         def msg_callback(message):
-            enrich_msg(log_client, message)
-            print(format.format(**message))
+            message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
+            message['level_color'] = level_colors.get(message.get('level', ''), '')
+            message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
+            print(args.format.format(**message))
 
     from dxpy.utils.job_log_client import DXJobLogStreamClient
 
     input_params = {"numRecentMessages": args.num_recent_messages,
                     "recurseJobs": args.tree,
                     "tail": args.tail}
+
+    if args.levels:
+        input_params['levels'] = args.levels
 
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
@@ -3619,8 +3614,8 @@ def watch(args):
       if not args.quiet:
         print("Output reused from %s" % args.jobid)
 
-    if args.levels:
-        input_params['levels'] = args.levels
+    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+                                      msg_output_format=args.format, print_job_info=args.job_info)
 
     if args.metrics == "none":
         input_params['excludeMetrics'] = True
@@ -3632,9 +3627,6 @@ def watch(args):
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
-        log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
-                                            msg_output_format=args.format, print_job_info=args.job_info)
-
         if not args.quiet:
             print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
 
