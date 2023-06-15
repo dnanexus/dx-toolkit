@@ -3545,6 +3545,22 @@ def watch(args):
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
     level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
 
+    def check_args_compatibility(incompatible_list):
+        for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
+            if getattr(args, adest) != parser_watch.get_default(adest):
+                return "--" + (aarg.replace("_", "-"))
+
+    incompatible_args = None
+    if args.levels and "METRICS" in args.levels and args.metrics == "none":
+        incompatible_args = ("--levels METRICS", "--metrics none")
+    elif args.metrics == "csv":
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
+        if iarg:
+            incompatible_args = ("--metrics csv", iarg)
+
+    if incompatible_args:
+        err_exit(exception=DXCLIError("Can not specify both '%s' and '%s'" % incompatible_args))
+
     msg_callback, log_client = None, None
     if args.get_stdout:
         args.levels = ['STDOUT']
@@ -3558,6 +3574,11 @@ def watch(args):
         args.levels = ['STDOUT', 'STDERR']
         args.format = "{msg}"
         args.job_info = False
+    elif args.metrics == "csv":
+        args.levels = ['METRICS']
+        args.format = "{msg}"
+        args.job_info = False
+        args.quiet = True
     elif args.format is None:
         if args.job_ids:
             args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
@@ -3585,19 +3606,28 @@ def watch(args):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
 
     job_describe = dxpy.describe(args.jobid)
+
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
       if not args.quiet:
-        print("Output reused from %s" %(args.jobid))
+        print("Output reused from %s" % args.jobid)
 
     log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
                                       msg_output_format=args.format, print_job_info=args.job_info)
+
+    if args.metrics == "none":
+        input_params['excludeMetrics'] = True
+    elif args.metrics == "csv":
+        input_params['metricsFormat'] = "csv"
+    else:
+        input_params['metricsFormat'] = "text"
 
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
         if not args.quiet:
             print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+
         log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
@@ -5303,7 +5333,7 @@ parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent 
                           type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
 parser_watch.add_argument('-l', '--levels', action='append', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
-                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT", "METRICS"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', action='store_true')
@@ -5316,6 +5346,8 @@ parser_watch.add_argument('-q', '--quiet', help='Do not print extra info message
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
+parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
+                          choices=["interspersed", "none", "csv"], default="interspersed")
 
 class MetricsHelpAction(argparse.Action):
 
