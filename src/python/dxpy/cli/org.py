@@ -146,12 +146,12 @@ def _get_org_set_member_access_args(args, current_level):
     admin_to_member = args.level == "MEMBER" and current_level == "ADMIN"
 
     if args.allow_billable_activities is not None:
-        org_set_member_access_input[user_id]["allowBillableActivities"] = (True if args.allow_billable_activities == "true" else False)
+        org_set_member_access_input[user_id]["allowBillableActivities"] = args.allow_billable_activities == "true"
     elif admin_to_member:
         org_set_member_access_input[user_id]["allowBillableActivities"] = False
 
     if args.app_access is not None:
-        org_set_member_access_input[user_id]["appAccess"] = (True if args.app_access == "true" else False)
+        org_set_member_access_input[user_id]["appAccess"] = args.app_access == "true"
     elif admin_to_member:
         org_set_member_access_input[user_id]["appAccess"] = True
 
@@ -253,7 +253,7 @@ def _get_org_update_args(args):
     elif args.disable_job_reuse == True:
         org_update_inputs["policies"]["jobReuse"] = False
     if args.detailed_job_metrics_collect_default is not None:
-        org_update_inputs["policies"]["detailedJobMetricsCollectDefault"] = True if args.detailed_job_metrics_collect_default == 'true' else False
+        org_update_inputs["policies"]["detailedJobMetricsCollectDefault"] = args.detailed_job_metrics_collect_default == 'true'
     
     
 
