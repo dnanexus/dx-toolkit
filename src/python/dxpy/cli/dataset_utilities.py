@@ -927,6 +927,8 @@ def extract_assay_somatic(args):
     #### Decide output method based on --output and --sql ####
     if args.sql:
         file_name_suffix = ".data.sql"
+    elif args.retrieve_meta_info:
+        file_name_suffix = ".vcf_meta_info.txt"
     else:
         file_name_suffix = ".tsv"
     file_already_exist = []
@@ -935,12 +937,9 @@ def extract_assay_somatic(args):
 
     print_to_stdout = False
     if args.output is None:
-        if args.retrieve_meta_info:
-            print_to_stdout = True
-        else:
-            out_directory = os.getcwd()
-            out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
-            files_to_check.append(out_file)
+        out_directory = os.getcwd()
+        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
+        files_to_check.append(out_file)
     elif args.output == "-":
         print_to_stdout = True
     elif os.path.exists(args.output):
