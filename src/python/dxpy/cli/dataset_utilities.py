@@ -464,6 +464,66 @@ def retrieve_meta_info(url, project_id, dataset_id, assay_id, assay_name, print_
         fields_output.close()
 
 
+def get_assay_name_info(list_assays,assay_name,path,friendly_assay_type,rec_descriptor):
+    """
+    Generalized function for determining assay name and reference genome
+    """
+    if friendly_assay_type == "germline":
+        assay_type = "genetic_variant"
+    elif friendly_assay_type == "somatic":
+        assay_type = "somatic_variant"
+
+    #### Get names of genetic assays ####
+    if list_assays:
+        (target_assays, other_assays) = get_assay_info(
+            rec_descriptor, assay_type=assay_type
+        )
+        if not target_assays:
+            err_exit("There's no {} assay in the dataset provided.").format(assay_type)
+        else:
+            for a in target_assays:
+                print(a["name"])
+            sys.exit(0)
+
+    #### Decide which assay is to be queried and which ref genome is to be used ####
+    (target_assays, other_assays) = get_assay_info(
+        rec_descriptor, assay_type=assay_type
+    )
+    target_assay_names = [ga["name"] for ga in target_assays]
+    target_assay_ids = [ga["uuid"] for ga in target_assays]
+    other_assay_names = [oa["name"] for oa in other_assays]
+    #other_assay_ids = [oa["uuid"] for oa in other_assays]
+    if target_assay_names and target_assay_ids:
+           selected_assay_name = target_assay_names[0]
+           selected_assay_id = target_assay_ids[0]
+    else:
+           err_exit("There's no {} assay in the dataset provided.").format(friendly_assay_type)
+    if assay_name:
+        if assay_name not in list(target_assay_names):
+            if assay_name in list(other_assay_names):
+                err_exit(
+                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay {}`, please use the --list-assays flag.".format(friendly_assay_type)
+                )
+            else:
+                err_exit(
+                    "Assay {assay_name} does not exist in the {path}.".format(
+                        assay_name=assay_name, path=path
+                    )
+                )
+        else:
+            selected_assay_name = assay_name
+            for ga in target_assays:
+                if ga["name"] == assay_name:
+                    selected_assay_id = ga["uuid"]
+
+    selected_ref_genome = "GRCh38.92"
+    for a in target_assays:
+        if a["name"] == selected_assay_name and a["reference_genome"]:
+            selected_ref_genome = a["reference_genome"]["name"]
+    
+    return(selected_assay_name, selected_assay_id, selected_ref_genome)
+
+
 def extract_assay_germline(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.
@@ -584,57 +644,15 @@ def extract_assay_germline(args):
 
     ######## Data Processing ########
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+
     if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
-            err_exit(
-                "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
-            )
+        err_exit(
+            "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
+        )
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
-
-    #### Get names of genetic assays ####
-    if args.list_assays:
-        (geno_assays, other_assays) = get_assay_info(
-            rec_descriptor, assay_type="genetic_variant"
-        )
-        if not geno_assays:
-            err_exit("There's no genetic assay in the dataset provided.")
-        else:
-            for a in geno_assays:
-                print(a["name"])
-            sys.exit(0)
-
-    #### Decide which assay is to be queried and which ref genome is to be used ####
-    (geno_assays, other_assays) = get_assay_info(
-        rec_descriptor, assay_type="genetic_variant"
-    )
-    geno_assay_names = [ga["name"] for ga in geno_assays]
-    geno_assay_ids = [ga["uuid"] for ga in geno_assays]
-    other_assay_names = [oa["name"] for oa in other_assays]
-    other_assay_ids = [oa["uuid"] for oa in other_assays]
-    selected_assay_name = geno_assay_names[0]
-    selected_assay_id = geno_assay_ids[0]
-    if args.assay_name:
-        if args.assay_name not in list(geno_assay_names):
-            if args.assay_name in list(other_assay_names):
-                err_exit(
-                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the --list-assays flag."
-                )
-            else:
-                err_exit(
-                    "Assay {assay_name} does not exist in the {path}.".format(
-                        assay_name=args.assay_name, path=args.path
-                    )
-                )
-        else:
-            selected_assay_name = args.assay_name
-            for ga in geno_assays:
-                if ga["name"] == args.assay_name:
-                    selected_assay_id = ga["uuid"]
-
-    selected_ref_genome = "GRCh38.92"
-    for a in geno_assays:
-        if a["name"] == selected_assay_name and a["reference_genome"]:
-            selected_ref_genome = a["reference_genome"]["name"]
+    
+    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"germline",rec_descriptor)
 
     #### Decide output method based on --output and --sql ####
     if args.sql:
@@ -904,46 +922,7 @@ def extract_assay_somatic(args):
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    if args.list_assays:
-        somatic_assays, _ = get_assay_info(
-            rec_descriptor, assay_type="somatic_variant"
-        )
-        if not somatic_assays:
-            err_exit("There’s no somatic assay in the dataset provided.")
-        else:
-            for a in somatic_assays:
-                print(a["name"])
-            sys.exit(0)
-
-    #### Decide which assay is to be queried and which ref genome is to be used ####
-    (somatic_assays, other_assays) = get_assay_info(
-        rec_descriptor, assay_type="somatic_variant"
-    )
-    if not somatic_assays:
-        err_exit("There’s no somatic assay in the dataset provided.")
-    somatic_assay_names = [ga["name"] for ga in somatic_assays]
-    somatic_assay_ids = [ga["uuid"] for ga in somatic_assays]
-    other_assay_names = [oa["name"] for oa in other_assays]
-    other_assay_ids = [oa["uuid"] for oa in other_assays]
-    selected_assay_name = somatic_assay_names[0]
-    selected_assay_id = somatic_assay_ids[0]
-    if args.assay_name:
-        if args.assay_name not in list(somatic_assay_names):
-            if args.assay_name in list(other_assay_names):
-                err_exit(
-                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay somatic`, please use the --list-assays flag."
-                )
-            else:
-                err_exit(
-                    "Assay {assay_name} does not exist in the {path}.".format(
-                        assay_name=args.assay_name, path=args.path
-                    )
-                )
-        else:
-            selected_assay_name = args.assay_name
-            for ga in somatic_assays:
-                if ga["name"] == args.assay_name:
-                    selected_assay_id = ga["uuid"]
+    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"somatic",rec_descriptor)
 
     #### Decide output method based on --output and --sql ####
     if args.sql:

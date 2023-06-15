@@ -6288,7 +6288,6 @@ parser_extract_assay_somatic.add_argument(
     action="store_true",
     help="If the flag is provided, a SQL statement (a string) will be returned for user to further query the specified data instead of actual value of the requested fields.",
 )
-
 parser_extract_assay_somatic.add_argument(
     "-o", "--output", 
     type=str,
