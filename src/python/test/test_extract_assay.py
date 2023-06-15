@@ -48,9 +48,6 @@ output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
 malformed_json_dir = os.path.join(
     dirname, "ea_malformed_json"
 )
-proj_id = list(
-            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
-        )[0]["id"]
 
 # Controls whether output files for the end to end tests are written to file or stdout
 write_output = False
@@ -62,7 +59,10 @@ if write_output:
 class TestDXExtractAssay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cd(proj_id + ":/")
+        cls.proj_id = list(
+            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
+        )[0]["id"]
+        cd(cls.proj_id + ":/")
 
     ############
     # Unit Tests
@@ -75,7 +75,7 @@ class TestDXExtractAssay(unittest.TestCase):
         genome_reference = "GRCh38.92"
         expected_output = [{"chr": "18", "start": "47390", "end": "49557"}]
         self.assertEqual(
-            retrieve_geno_bins(list_of_genes, proj_id, genome_reference),
+            retrieve_geno_bins(list_of_genes, self.proj_id, genome_reference),
             expected_output,
         )
 
@@ -91,7 +91,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
         self.assertEqual(
             basic_filter(
-                table, friendly_name, values, proj_id, genome_reference
+                table, friendly_name, values, self.proj_id, genome_reference
             ),
             expected_output,
         )
@@ -114,7 +114,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
         self.assertEqual(
             basic_filter(
-                table, friendly_name, values, proj_id, genome_reference
+                table, friendly_name, values, self.proj_id, genome_reference
             ),
             expected_output,
         )
@@ -131,7 +131,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
         self.assertEqual(
             basic_filter(
-                table, friendly_name, values, proj_id, genome_reference
+                table, friendly_name, values, self.proj_id, genome_reference
             ),
             expected_output,
         )
@@ -183,7 +183,7 @@ class TestDXExtractAssay(unittest.TestCase):
                 full_input_dict,
                 name,
                 id,
-                proj_id,
+                self.proj_id,
                 genome_reference,
                 filter_type,
             ),
@@ -198,7 +198,7 @@ class TestDXExtractAssay(unittest.TestCase):
         filter_type = "allele"
 
         expected_output_payload = {
-            "project_context": proj_id,
+            "project_context": self.proj_id,
             "fields": [
                 {"allele_id": "allele$a_id"},
                 {"chromosome": "allele$chr"},
@@ -245,7 +245,7 @@ class TestDXExtractAssay(unittest.TestCase):
             full_input_dict,
             name,
             id,
-            proj_id,
+            self.proj_id,
             genome_reference,
             filter_type,
         )
