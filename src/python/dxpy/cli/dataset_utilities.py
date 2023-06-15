@@ -121,7 +121,7 @@ def raw_query_api_call(resp, payload):
     return sql_results
 
 
-def raw_api_call(resp, payload):
+def raw_api_call(resp, payload, sql_message=True):
     resource_val = resp["url"] + "/data/3.0/" + resp["dataset"] + "/raw"
     try:
         resp_raw = dxpy.DXHTTPRequest(
@@ -131,7 +131,7 @@ def raw_api_call(resp, payload):
             if resp_raw["error"]["type"] == "InvalidInput":
                 print("Insufficient permissions due to the project policy.")
                 print(resp_raw["error"]["message"])
-            elif resp_raw["error"]["type"] == "QueryTimeOut":
+            elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
                 print(resp_raw["error"]["message"])
                 print(
                     "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster."
@@ -426,6 +426,33 @@ def get_assay_info(rec_descriptor, assay_type):
             else:
                 other_assays.append(a)
     return (selected_type_assays, other_assays)
+
+
+def retrieve_meta_info(resp, project_id, assay_id, assay_name, print_to_stdout, out_file_name):
+    table, column = "vcf_meta_information_unique", "info_format_fields"
+    payload = {
+        "project_context": project_id,
+        "fields": [
+            {column: "$".join((table, column))},
+        ],
+        "is_cohort": False,
+        "variant_browser": {
+            "name": assay_name,
+            "id": assay_id,
+        },
+    }
+    resp_raw = raw_api_call(resp, payload, sql_message=False)
+
+    if print_to_stdout:
+        fields_output = sys.stdout
+    else:
+        fields_output = open(out_file_name, "w")
+
+    for entry in resp_raw["results"]:
+        fields_output.write(entry[column] + '\n')
+
+    if not print_to_stdout:
+        fields_output.close()
 
 
 def get_assay_name_info(list_assays,assay_name,path,friendly_assay_type,rec_descriptor):
@@ -801,16 +828,22 @@ def extract_assay_somatic(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.
     """
+    invalid_retrieve_meta_info_args = any([
+        args.include_normal_sample,
+        args.additional_fields,
+        args.additional_fields_help,
+        args.sql,
+        args.list_assays,
+        args.retrieve_variant,
+        args.json_help,
+    ])
+    if args.retrieve_meta_info and invalid_retrieve_meta_info_args:
+        err_exit(
+            'The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name, --output.'
+        )
+
     ######## Input combination validation and print help########
     invalid_combo_args = any([args.include_normal_sample, args.additional_fields, args.additional_fields_help, args.output, args.sql])
-
-    if args.retrieve_meta_info:
-        if any([args.list_assays, args.retrieve_variant, args.json_help, invalid_combo_args]):
-            err_exit(
-                'The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name.'
-            )
-        else:
-            print("Perform retrieve-meta-info function") # Replace this line with a call to the new function
 
     if args.list_assays and any([args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]):
         err_exit(
@@ -881,6 +914,48 @@ def extract_assay_somatic(args):
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
     selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"somatic",rec_descriptor)
+
+    #### Decide output method based on --output and --sql ####
+    if args.sql:
+        file_name_suffix = ".data.sql"
+    elif args.retrieve_meta_info:
+        file_name_suffix = ".vcf_meta_info.txt"
+    else:
+        file_name_suffix = ".tsv"
+    file_already_exist = []
+    files_to_check = []
+    out_file = ""
+
+    print_to_stdout = False
+    if args.output is None:
+        out_directory = os.getcwd()
+        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
+        files_to_check.append(out_file)
+    elif args.output == "-":
+        print_to_stdout = True
+    elif os.path.exists(args.output):
+        if os.path.isdir(args.output):
+            err_exit("--output should be a file, not a directory.")
+        else:
+            file_already_exist.append(args.output)
+    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
+        args.output
+    ):
+        out_file = args.output
+    else:
+        err_exit(
+            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
+        )
+
+    for file in files_to_check:
+        if os.path.exists(file):
+            file_already_exist.append(file)
+
+    if file_already_exist:
+        err_exit("Cannot specify the output to be an existing file.")
+
+    if args.retrieve_meta_info:
+        retrieve_meta_info(resp, project, selected_assay_id, selected_assay_name, print_to_stdout, out_file)
 
 
 class DXDataset(DXRecord):
