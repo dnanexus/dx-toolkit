@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* `dx watch` support for detailed job resource metrics
+* `dx watch` support for detailed job metrics (cpu, memory, network, disk io, etc every 60s) 
 
 ## [349.0] - beta
 
