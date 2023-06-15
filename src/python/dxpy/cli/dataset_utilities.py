@@ -121,7 +121,7 @@ def raw_query_api_call(resp, payload):
     return sql_results
 
 
-def raw_api_call(resp, payload):
+def raw_api_call(resp, payload, sql_message=True):
     resource_val = resp["url"] + "/data/3.0/" + resp["dataset"] + "/raw"
     try:
         resp_raw = dxpy.DXHTTPRequest(
@@ -131,7 +131,7 @@ def raw_api_call(resp, payload):
             if resp_raw["error"]["type"] == "InvalidInput":
                 print("Insufficient permissions due to the project policy.")
                 print(resp_raw["error"]["message"])
-            elif resp_raw["error"]["type"] == "QueryTimeOut":
+            elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
                 print(resp_raw["error"]["message"])
                 print(
                     "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster."
@@ -428,7 +428,7 @@ def get_assay_info(rec_descriptor, assay_type):
     return (selected_type_assays, other_assays)
 
 
-def retrieve_meta_info(url, project_id, dataset_id, assay_id, assay_name, print_to_stdout, out_file_name):
+def retrieve_meta_info(resp, project_id, assay_id, assay_name, print_to_stdout, out_file_name):
     table, column = "vcf_meta_information_unique", "info_format_fields"
     payload = {
         "project_context": project_id,
@@ -441,16 +441,7 @@ def retrieve_meta_info(url, project_id, dataset_id, assay_id, assay_name, print_
             "id": assay_id,
         },
     }
-    resource = url + "/data/3.0/" + dataset_id + "/raw"
-    try:
-        resp_raw = dxpy.DXHTTPRequest(
-            resource=resource, data=payload, prepend_srv=False
-        )
-        if "error" in resp_raw.keys():
-            print(resp_raw["error"])
-            sys.exit(1)
-    except Exception as details:
-        err_exit(str(details))
+    resp_raw = raw_api_call(resp, payload, sql_message=False)
 
     if print_to_stdout:
         fields_output = sys.stdout
@@ -964,15 +955,7 @@ def extract_assay_somatic(args):
         err_exit("Cannot specify the output to be an existing file.")
 
     if args.retrieve_meta_info:
-        retrieve_meta_info(
-            resp["url"],
-            project,
-            resp["dataset"],
-            selected_assay_id,
-            selected_assay_name,
-            print_to_stdout,
-            out_file,
-        )
+        retrieve_meta_info(resp, project, selected_assay_id, selected_assay_name, print_to_stdout, out_file)
 
 
 class DXDataset(DXRecord):
