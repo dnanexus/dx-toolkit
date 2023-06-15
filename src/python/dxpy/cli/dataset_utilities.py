@@ -436,17 +436,10 @@ def retrieve_meta_info(url, project_id, dataset_id, assay_id, assay_name, print_
             {column: "$".join((table, column))},
         ],
         "is_cohort": False,
-        "raw_filters": {
-            "assay_filters": {
-                "name": assay_name,
-                "id": assay_id,
-                "filters": {
-                    "$".join((table, column)): [
-                        {"condition": "exists"},
-                    ],
-                },
-            },
-         },
+        "variant_browser": {
+            "name": assay_name,
+            "id": assay_id,
+        },
     }
     resource = url + "/data/3.0/" + dataset_id + "/raw"
     try:
