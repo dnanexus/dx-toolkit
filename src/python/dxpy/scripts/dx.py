@@ -3542,140 +3542,6 @@ def terminate(args):
         except:
             err_exit()
 
-def _watch_metrics_top(args, input_params, enrich_msg):
-    from dxpy.utils.job_log_client import DXJobLogStreamClient
-    try:
-        import curses
-    except:
-        err_exit("--metrics top is not supported on your platform due to missing curses library")
-
-    class CursesDXJobLogStreamClient(DXJobLogStreamClient):
-
-        def closed(self, *args, **kwargs):
-            super(CursesDXJobLogStreamClient, self).closed(args, kwargs)
-            # Overcome inability to stop Python process from a thread by sending SIGINT
-            os.kill(os.getpid(), signal.SIGINT)
-
-    class ScreenManager:
-
-        def __init__(self, args):
-            self.stdscr = None
-            self.args = args
-            self.log_client = CursesDXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=self.msg_callback,
-                                                         msg_output_format=None, print_job_info=False)
-            self.log = []
-            self.metrics = ['Waiting for job logs...']
-            self.scr_dim_y = 0
-            self.scr_y_offset = 0
-            self.scr_y_max_offset = 0
-            self.scr_dim_x = 0
-            self.scr_x_offset = 0
-            self.scr_x_max_offset = 0
-            self.curr_row = 0
-            self.curr_row_total_chars = 0
-            self.curr_col = 0
-
-        def main(self, stdscr):
-            self.stdscr = stdscr
-
-            curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
-            curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
-            curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-            curses.init_pair(4, curses.COLOR_GREEN, curses.COLOR_BLACK)
-
-            t = Thread(target=self.log_client.connect)
-            t.daemon = True
-            t.start()
-
-            self.refresh()
-            try:
-                while True:
-                    ch = stdscr.getch()
-                    if ch == curses.KEY_RESIZE: self.refresh()
-                    elif ch == curses.KEY_RIGHT: self.refresh(scr_x_offset_diff=1)
-                    elif ch == curses.KEY_LEFT: self.refresh(scr_x_offset_diff=-1)
-                    elif ch == curses.KEY_SRIGHT: self.refresh(scr_x_offset_diff=20)
-                    elif ch == curses.KEY_SLEFT: self.refresh(scr_x_offset_diff=-20)
-                    elif ch == curses.KEY_HOME: self.refresh(scr_x_offset_diff=-self.scr_x_offset)
-                    elif ch == curses.KEY_END: self.refresh(scr_x_offset_diff=self.scr_x_max_offset)
-                    elif ch == curses.KEY_UP: self.refresh(scr_y_offset_diff=1)
-                    elif ch == curses.KEY_DOWN: self.refresh(scr_y_offset_diff=-1)
-                    elif ch == curses.KEY_PPAGE: self.refresh(scr_y_offset_diff=10)
-                    elif ch == curses.KEY_NPAGE: self.refresh(scr_y_offset_diff=-10)
-                    elif ch == ord('q') or ch == ord('Q'): sys.exit(0)
-            # Capture SIGINT and exit normally
-            except KeyboardInterrupt:
-                sys.exit(0)
-
-        def msg_callback(self, message):
-            if len(self.log) == 0:
-                self.metrics[0] = ''
-
-            enrich_msg(self.log_client, message)
-            if message['level'] == 'METRICS':
-                self.metrics[0] = '[%s] %s' % (message['timestamp'], message['msg'])
-            else:
-                self.log.append(message)
-                if self.scr_y_offset > 0:
-                    self.scr_y_offset += 1
-
-            self.refresh()
-
-        def refresh(self, scr_y_offset_diff=None, scr_x_offset_diff=None):
-            self.stdscr.erase()
-            self.scr_dim_y, self.scr_dim_x = self.stdscr.getmaxyx()
-
-            self.scr_y_max_offset = max(len(self.log) - self.scr_dim_y + 3, 0)
-            self.update_screen_offsets(scr_y_offset_diff, scr_x_offset_diff)
-
-            self.curr_row = 0
-            nlines = min(self.scr_dim_y - 3, len(self.log))
-            self.stdscr.addnstr(self.curr_row, 0, self.metrics[-1], self.scr_dim_x)
-            self.curr_row += 2
-
-            for i in range(nlines):
-                message = self.log[len(self.log) - nlines + i - self.scr_y_offset]
-                self.curr_col = 0
-                self.curr_row_total_chars = 0
-
-                if args.format:
-                    self.print_field(args.format.format(**message), 0)
-                else:
-                    if self.args.timestamps:
-                        self.print_field(message['timestamp'], 0)
-                    self.print_field(message['job_name'], 1)
-                    if self.args.job_ids:
-                        self.print_field('(%s)' % message['job'], 1)
-                    self.print_field(message.get('level', ''), message['level_color_curses'])
-                    self.print_field(message['msg'], 0)
-
-                self.scr_x_max_offset = max(self.scr_x_max_offset, self.curr_row_total_chars - 1)
-                self.curr_row += 1
-
-            self.stdscr.refresh()
-
-        def print_field(self, text, color):
-            if self.curr_col < self.scr_dim_x:
-                if self.curr_row_total_chars >= self.scr_x_offset:
-                    self.stdscr.addnstr(self.curr_row, self.curr_col, text, self.scr_dim_x - self.curr_col, curses.color_pair(color))
-                    self.curr_col += len(text) + 1
-                elif self.curr_row_total_chars + len(text) + 1 > self.scr_x_offset:
-                    self.stdscr.addnstr(self.curr_row, self.curr_col, text[self.scr_x_offset - self.curr_row_total_chars:], self.scr_dim_x - self.curr_col, curses.color_pair(color))
-                    self.curr_col += len(text[self.scr_x_offset - self.curr_row_total_chars:]) + 1
-
-            self.curr_row_total_chars += len(text) + 1
-
-        def update_screen_offsets(self, diff_y, diff_x):
-            if not diff_y:
-                diff_y = 0
-            if not diff_x:
-                diff_x = 0
-            self.scr_y_offset = min(self.scr_y_offset + diff_y, self.scr_y_max_offset) if diff_y > 0 else max(self.scr_y_offset + diff_y, 0)
-            self.scr_x_offset = min(self.scr_x_offset + diff_x, self.scr_x_max_offset) if diff_x > 0 else max(self.scr_x_offset + diff_x, 0)
-
-    manager = ScreenManager(args)
-    curses.wrapper(manager.main)
-
 def watch(args):
     level_color_mapping = (
         (("EMERG", "ALERT", "CRITICAL", "ERROR"), RED(), 2),
@@ -3693,13 +3559,6 @@ def watch(args):
     incompatible_args = None
     if args.levels and "METRICS" in args.levels and args.metrics == "none":
         incompatible_args = ("--levels METRICS", "--metrics none")
-    elif args.metrics == "top":
-        if args.levels and "METRICS" not in args.levels:
-            err_exit(exception=DXCLIError("'--metrics' is specified, but METRICS level is not included"))
-
-        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", ("tail", "no-wait"), "tree", "num_recent_messages"])
-        if iarg:
-            incompatible_args = ("--metrics top", iarg)
     elif args.metrics == "csv":
         iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
         if iarg:
@@ -3755,12 +3614,6 @@ def watch(args):
 
     job_describe = dxpy.describe(args.jobid)
 
-    # For finished jobs and --metrics top, behave like --metrics none
-    if args.metrics == "top" and job_describe['state'] in ('terminated', 'failed', 'done'):
-        args.metrics = "none"
-        if args.levels and "METRICS" in args.levels:
-            args.levels.remove("METRICS")
-
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
       if not args.quiet:
@@ -3779,16 +3632,13 @@ def watch(args):
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
-        if args.metrics == "top":
-            _watch_metrics_top(args, input_params, enrich_msg)
-        else:
-            log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
-                                              msg_output_format=args.format, print_job_info=args.job_info)
+        log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+                                            msg_output_format=args.format, print_job_info=args.job_info)
 
-            if not args.quiet:
-                print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+        if not args.quiet:
+            print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
 
-            log_client.connect()
+        log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
 
@@ -5507,7 +5357,7 @@ parser_watch.add_argument('-f', '--format', help='Message format. Available fiel
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
 parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
-                          choices=["interspersed", "none", "top", "csv"], default="interspersed")
+                          choices=["interspersed", "none", "csv"], default="interspersed")
 parser_watch.set_defaults(func=watch)
 register_parser(parser_watch, categories='exec')
 
