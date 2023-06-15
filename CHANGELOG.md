@@ -6,11 +6,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [350.0] - beta
+
 ### Added
 
-* `dx watch` support for detailed job metrics (cpu, memory, network, disk io, etc every 60s) 
+* `dx watch` support for detailed job metrics (cpu, memory, network, disk io, etc every 60s)
+* `--detailed-job-metrics` for `dx run`
+* `--detailed-job-metrics-collect-default` for `dx update org`
 
-## [349.0] - beta
+## [349.1] - 2023.6.15
 
 ### Added
 
