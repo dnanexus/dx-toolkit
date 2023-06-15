@@ -819,13 +819,22 @@ def extract_assay_somatic(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.
     """
+    invalid_retrieve_meta_info_args = any([
+        args.include_normal_sample,
+        args.additional_fields,
+        args.additional_fields_help,
+        args.sql,
+        args.list_assays,
+        args.retrieve_variant,
+        args.json_help,
+    ])
+    if args.retrieve_meta_info and invalid_retrieve_meta_info_args:
+        err_exit(
+            'The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name, --output.'
+        )
+
     ######## Input combination validation and print help########
     invalid_combo_args = any([args.include_normal_sample, args.additional_fields, args.additional_fields_help, args.output, args.sql])
-
-    if args.retrieve_meta_info and any([args.list_assays, args.retrieve_variant, args.json_help, invalid_combo_args]):
-        err_exit(
-            'The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name.'
-        )
 
     if args.list_assays and any([args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]):
         err_exit(
@@ -947,9 +956,12 @@ def extract_assay_somatic(args):
 
     print_to_stdout = False
     if args.output is None:
-        out_directory = os.getcwd()
-        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
-        files_to_check.append(out_file)
+        if args.retrieve_meta_info:
+            print_to_stdout = True
+        else:
+            out_directory = os.getcwd()
+            out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
+            files_to_check.append(out_file)
     elif args.output == "-":
         print_to_stdout = True
     elif os.path.exists(args.output):
