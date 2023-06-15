@@ -5363,6 +5363,8 @@ The "interspersed" default mode shows METRICS job log messages interspersed with
 
 The "none" mode omits all METRICS messages from "dx watch" output.
 
+The "top" mode shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics.
+
 The "csv" mode outputs the following columns with headers in csv format to stdout:
 - timestamp: An integer number representing the number of milliseconds since the Unix epoch.
 - cpuCount: A number of CPUs available on the instance that ran the job.
