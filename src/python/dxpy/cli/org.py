@@ -146,12 +146,12 @@ def _get_org_set_member_access_args(args, current_level):
     admin_to_member = args.level == "MEMBER" and current_level == "ADMIN"
 
     if args.allow_billable_activities is not None:
-        org_set_member_access_input[user_id]["allowBillableActivities"] = (True if args.allow_billable_activities == "true" else False)
+        org_set_member_access_input[user_id]["allowBillableActivities"] = args.allow_billable_activities == "true"
     elif admin_to_member:
         org_set_member_access_input[user_id]["allowBillableActivities"] = False
 
     if args.app_access is not None:
-        org_set_member_access_input[user_id]["appAccess"] = (True if args.app_access == "true" else False)
+        org_set_member_access_input[user_id]["appAccess"] = args.app_access == "true"
     elif admin_to_member:
         org_set_member_access_input[user_id]["appAccess"] = True
 
@@ -242,7 +242,7 @@ def _get_org_update_args(args):
     if args.saml_idp is not None:
         org_update_inputs["samlIdP"] = args.saml_idp
 
-    if any(policy not in (None, False) for policy in (args.member_list_visibility, args.project_transfer_ability, args.enable_job_reuse, args.disable_job_reuse)):
+    if any(policy not in (None, False) for policy in (args.member_list_visibility, args.project_transfer_ability, args.enable_job_reuse, args.disable_job_reuse)) or args.detailed_job_metrics_collect_default is not None:
         org_update_inputs["policies"] = {}
     if args.member_list_visibility is not None:
         org_update_inputs["policies"]["memberListVisibility"] = args.member_list_visibility
@@ -252,6 +252,9 @@ def _get_org_update_args(args):
         org_update_inputs["policies"]["jobReuse"] = True
     elif args.disable_job_reuse == True:
         org_update_inputs["policies"]["jobReuse"] = False
+    if args.detailed_job_metrics_collect_default is not None:
+        org_update_inputs["policies"]["detailedJobMetricsCollectDefault"] = args.detailed_job_metrics_collect_default == 'true'
+    
     
 
     return org_update_inputs
