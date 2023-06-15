@@ -457,13 +457,16 @@ def get_assay_name_info(list_assays,assay_name,path,friendly_assay_type,rec_desc
     target_assay_ids = [ga["uuid"] for ga in target_assays]
     other_assay_names = [oa["name"] for oa in other_assays]
     #other_assay_ids = [oa["uuid"] for oa in other_assays]
-    selected_assay_name = target_assay_names[0]
-    selected_assay_id = target_assay_ids[0]
+    if target_assay_names and target_assay_ids:
+           selected_assay_name = target_assay_names[0]
+           selected_assay_id = target_assay_ids[0]
+    else:
+           err_exit("There's no {} assay in the dataset provided.").format(friendly_assay_type)
     if assay_name:
         if assay_name not in list(target_assay_names):
             if assay_name in list(other_assay_names):
                 err_exit(
-                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the --list-assays flag."
+                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay {}`, please use the --list-assays flag.".format(friendly_assay_type)
                 )
             else:
                 err_exit(
@@ -876,17 +879,6 @@ def extract_assay_somatic(args):
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
-
-    if args.list_assays:
-        somatic_assays, _ = get_assay_info(
-            rec_descriptor, assay_type="somatic_variant"
-        )
-        if not somatic_assays:
-            err_exit("There’s no somatic assay in the dataset provided.")
-        else:
-            for a in somatic_assays:
-                print(a["name"])
-            sys.exit(0)
 
     selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"somatic",rec_descriptor)
 
