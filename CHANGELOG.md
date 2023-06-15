@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx watch` support for detailed job resource metrics
+
 ## [349.0] - beta
 
 ### Added
