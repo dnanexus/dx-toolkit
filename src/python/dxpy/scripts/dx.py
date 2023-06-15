@@ -5329,7 +5329,7 @@ Note that all reported data-related values are in base 2 units - i.e. 1 MB = 102
 
 The "interspersed" default mode shows METRICS job log messages interspersed with other jog log messages.
 
-The "none" mode will omits all METRICS messages from "dx watch" output.
+The "none" mode omits all METRICS messages from "dx watch" output.
 
 The "csv" mode outputs the following columns with headers in csv format to stdout:
 - timestamp: An integer number representing the number of milliseconds since the Unix epoch.
