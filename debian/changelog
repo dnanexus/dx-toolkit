@@ -1,3 +1,9 @@
+dx-toolkit (0.349.1) trusty; urgency=medium
+
+  * Fixed: Bug in .replace function for hom and hom-alt
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 15 Jun 2023 21:48:55 +0000
+
 dx-toolkit (0.349.0) trusty; urgency=medium
 
   * Added: external_upload_restricted to DXProject
