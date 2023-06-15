@@ -5348,6 +5348,58 @@ parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest
                           help='Exit after the first new message is received, instead of waiting for all logs')
 parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
                           choices=["interspersed", "none", "csv"], default="interspersed")
+
+class MetricsHelpAction(argparse.Action):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(
+"""Help: Displaying detailed job metrics
+Detailed job metrics describe job's consumption of CPU, memory, disk, network, etc at 60 second intervals.
+If collection of job metrics was enabled for a job (e.g with dx run --detailed-job-metrics), the metrics can be displayed by "dx watch" for 15 days from the time the job started running.
+
+Note that all reported data-related values are in base 2 units - i.e. 1 MB = 1024 * 1024 bytes.
+
+The "interspersed" default mode shows METRICS job log messages interspersed with other jog log messages.
+
+The "none" mode omits all METRICS messages from "dx watch" output.
+
+The "csv" mode outputs the following columns with headers in csv format to stdout:
+- timestamp: An integer number representing the number of milliseconds since the Unix epoch.
+- cpuCount: A number of CPUs available on the instance that ran the job.
+- cpuUsageUser: The percentage of cpu time spent in user mode on the instance during the metric collection period.
+- cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period.
+- cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory).
+- memoryTotalBytes: Total memory available on the instance that ran the job.
+- diskUsedBytes: Bytes of storage allocated to the AEE that are used by the filesystem.
+- diskTotalBytes: Total bytes of disk space available to the job within the AEE.
+- networkOutBytes: Total network bytes transferred out from AEE since the job started. Includes "dx upload" bytes.
+- networkInBytes: Total network bytes transferred into AEE since the job started. Includes "dx download" bytes.
+- diskReadBytes: Total bytes read from the AEE-accessible disks since the job started.
+- diskWriteBytes: Total bytes written to the AEE-accessible disks since the job started.
+- diskReadOpsCount: Total disk read operation count against AEE-accessible disk since the job started.
+- diskWriteOpsCount: Total disk write operation count against AEE-accessible disk since the job started.
+
+Note 1: cpuUsageUser, cpuUsageSystem, cpuUsageIowait, cpuUsageIdle and memoryUsedBytes metrics reflect usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+Note 2: cpuUsageUser + cpuUsageSystem + cpuUsageIowait + cpuUsageIdle + cpuUsageSteal = 100. cpuUsageSteal is unreported, but can be derived from the other 4 quantities given that they add up to 100.
+Note 3: cpuUsage numbers are rounded to 2 decimal places.
+
+The format of METRICS job log lines is defined as follows using the example below:
+
+2023-03-15 12:23:44 some-job-name METRICS ** CPU usr/sys/idl/wai: 24/11/1/64% (4 cores) * Memory: 1566/31649MB * Storage: 19/142GB * Net: 10↓/0↑MBps * Disk: r/w 20/174 MBps iops r/w 8/1300
+
+"2023-03-15 12:23:44" is the metrics collection time.
+"METRICS" is a type of job log line containing detailed job metrics.
+"CPU usr/sys/idl/wai: 24/11/1/64%" maps to cpuUsageUser, cpuUsageSystem, cpuUsageIdle, cpuUsageIowait values.
+"(4 cores)" maps to cpuCount.
+"Memory: 1566/31649MB" maps to memoryUsedBytes and memoryTotalBytes.
+"Storage: 19/142GB" maps to diskUsedBytes and diskTotalBytes.
+"Net: 10↓/0↑MBps" is derived from networkOutBytes and networkInBytes cumulative totals by subtracting previous measurement from the measurement at the metric collection time, and dividing the difference by the time span between the two measurements.
+"Disk: r/w 20/174 MBps iops r/w 8/1300" is derived similar to "Net:" from diskReadBytes, diskWriteBytes, diskReadOpsCount, and diskWriteOpsCount.""")
+        parser.exit(0)
+
+parser_watch.add_argument('--metrics-help', action=MetricsHelpAction, nargs=0, help='Print help for displaying detailed job metrics')
 parser_watch.set_defaults(func=watch)
 register_parser(parser_watch, categories='exec')
 
