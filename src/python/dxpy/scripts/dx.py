@@ -5338,7 +5338,6 @@ The "csv" mode outputs the following columns with headers in csv format to stdou
 - cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period.
 - cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
 - cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
-- idleCpus: The number of cpus that spent > 97% of the measurement interval in idle state. This metric helps distinguish between 4 cpus each being 25% idle (idleCpus of 0) and 3 cpu being 0% idle while the remaining CPU is 98% idle (idleCpus of 1).
 - memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory).
 - memoryTotalBytes: Total memory available on the instance that ran the job.
 - diskUsedBytes: Bytes of storage allocated to the AEE that are used by the filesystem.
@@ -5356,12 +5355,12 @@ Note 3: cpuUsage numbers are rounded to 2 decimal places.
 
 The format of METRICS job log lines is defined as follows using the example below:
 
-2023-03-15 12:23:44 some-job-name METRICS ** CPU usr/sys/idl/wai: 24/11/1/64% (4 cores, 2 idle) * Memory: 1566/31649MB * Storage: 19/142GB * Net: 10↓/0↑MBps * Disk: r/w 20/174 MBps iops r/w 8/1300
+2023-03-15 12:23:44 some-job-name METRICS ** CPU usr/sys/idl/wai: 24/11/1/64% (4 cores) * Memory: 1566/31649MB * Storage: 19/142GB * Net: 10↓/0↑MBps * Disk: r/w 20/174 MBps iops r/w 8/1300
 
 "2023-03-15 12:23:44" is the metrics collection time.
 "METRICS" is a type of job log line containing detailed job metrics.
 "CPU usr/sys/idl/wai: 24/11/1/64%" maps to cpuUsageUser, cpuUsageSystem, cpuUsageIdle, cpuUsageIowait values.
-"(4 cores, 2 idle)" maps to cpuCount and idleCpus.
+"(4 cores)" maps to cpuCount.
 "Memory: 1566/31649MB" maps to memoryUsedBytes and memoryTotalBytes.
 "Storage: 19/142GB" maps to diskUsedBytes and diskTotalBytes.
 "Net: 10↓/0↑MBps" is derived from networkOutBytes and networkInBytes cumulative totals by subtracting previous measurement from the measurement at the metric collection time, and dividing the difference by the time span between the two measurements.
