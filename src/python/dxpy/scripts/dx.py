@@ -3544,7 +3544,7 @@ def terminate(args):
 def watch(args):
     level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
-    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
+    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS")})
 
     def check_args_compatibility(incompatible_list):
         for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
