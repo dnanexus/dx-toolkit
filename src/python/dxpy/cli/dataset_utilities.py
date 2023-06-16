@@ -954,6 +954,8 @@ def extract_assay_somatic(args):
 
         
 
+    if args.retrieve_variant:
+        filter_dict = json_validation_function("variant", args)
 
 class DXDataset(DXRecord):
     """
