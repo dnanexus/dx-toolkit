@@ -3065,6 +3065,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "detach": args.detach,
         "cost_limit": args.cost_limit,
         "rank": args.rank,
+        "detailed_job_metrics": args.detailed_job_metrics,
         "max_tree_spot_wait_time": normalize_timedelta(args.max_tree_spot_wait_time)//1000 if args.max_tree_spot_wait_time else None,
         "max_job_spot_wait_time": normalize_timedelta(args.max_job_spot_wait_time)//1000 if args.max_job_spot_wait_time else None,
         "preserve_job_outputs": preserve_job_outputs,
@@ -5232,6 +5233,7 @@ parser_update_org.add_argument('--name', help='New name of the org')
 parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
 parser_update_org.add_argument('--saml-idp', help='New SAML identity provider')
+parser_update_org.add_argument('--detailed-job-metrics-collect-default', choices=['true', 'false'], help='If set to true, jobs launched in the projects billed to this org will collect detailed job metrics by default')
 update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
 update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
 update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
@@ -5460,9 +5462,10 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
 parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination. In case of workflows it is cost of the "
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
-parser_run.add_argument('-r', '--rank', type=int, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24), default=None)
+parser_run.add_argument('-r', '--rank', type=int, default=None, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24))
 parser_run.add_argument('--max-tree-spot-wait-time', help=fill('The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_run.add_argument('--max-job-spot-wait-time', help=fill('The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_run.add_argument('--detailed-job-metrics', action='store_true', default=None, help=fill('Collect CPU, memory, network and disk metrics every 60 seconds', width_adjustment=-24))
 
 preserve_outputs = parser_run.add_mutually_exclusive_group()
 preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
