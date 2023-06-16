@@ -44,6 +44,7 @@ from ..exceptions import (
 )
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
+from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -427,7 +428,57 @@ def get_assay_info(rec_descriptor, assay_type):
                 other_assays.append(a)
     return (selected_type_assays, other_assays)
 
+#### Validate json filters ####
+def json_validation_function(filter_type, args):
+    filter_arg = "args.retrieve_" + filter_type
+    filter_value = str(vars(args)["retrieve_" + filter_type])
+    filter = {}
+    if filter_value.endswith(".json"):
+        if os.path.isfile(filter_value):
+            if os.stat(filter_value).st_size == 0:
+                err_exit(
+                    'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
+                        filter_type=filter_type
+                    )
+                )
+            else:
+                with open(filter_value, "r") as json_file:
+                    try:
+                        filter = json.load(json_file)
+                    except Exception as json_error:
+                        err_exit(
+                            "JSON for variant filters is malformatted.",
+                            expected_exceptions=default_expected_exceptions,
+                        )
+        else:
+            err_exit(
+                "JSON file {filter_json} provided does not exist".format(
+                    filter_json=filter_value
+                )
+            )
+    else:
+        if filter_value == "{}":
+            err_exit(
+                'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
+                    filter_type=filter_type
+                )
+            )
+        else:
+            try:
+                filter = json.loads(filter_value)
+            except Exception as json_error:
+                err_exit(
+                    "JSON for variant filters is malformatted.",
+                    expected_exceptions=default_expected_exceptions,
+                )
+    
+    if filter_type in ["allele", "annotation", "genotype"]:
+        validate_JSON(filter, filter_type)
+    elif filter_type in ["variant"]:
+        validate_somatic_filter(filter, filter_type)
 
+    return filter
+    
 def retrieve_meta_info(resp, project_id, assay_id, assay_name, print_to_stdout, out_file_name):
     table, column = "vcf_meta_information_unique", "info_format_fields"
     payload = {
@@ -563,54 +614,6 @@ def extract_assay_germline(args):
                 '# Filters and respective definitions\n#  allele_id: ID(s) of one or more alleles for which sample genotypes will be returned. If multiple values are provided, any samples having at least one allele that match any of the values specified will be listed. For example, ["1_1000_A_T", "1_1010_C_T"], will search for samples with at least one allele matching either "1_1000_A_T" or "1_1010_C_T". String match is case insensitive.\n#  sample_id: Optional, one or more sample IDs for which sample genotypes will be returned. If the provided object is a cohort, this further intersects the sample ids. If a user has a list of samples more than 1,000, it is recommended to use a cohort id containing all the samples.\n#  genotype_type: Optional, one or more genotype types for which sample genotype types will be returned. One of: hom-alt (homozygous for the non-ref allele), het-ref (heterozygous with a ref allele and alt allele), het-alt (heterozygous with two distinct alt alleles), half (only one alt allele is known, second allele is unknown).\n# JSON filter template for --retrieve-genotype\n{\n  "sample_id": ["s1", "s2"],\n  "allele_id": ["1_1000_A_T","2_1000_G_C"],\n  "genotype_type": ["het-ref", "hom-alt"]\n}'
             )
             sys.exit(0)
-
-    #### Validate json filters ####
-    def json_validation_function(filter_type, args):
-        filter_arg = "args.retrieve_" + filter_type
-        filter_value = str(vars(args)["retrieve_" + filter_type])
-        filter = {}
-        if filter_value.endswith(".json"):
-            if os.path.isfile(filter_value):
-                if os.stat(filter_value).st_size == 0:
-                    err_exit(
-                        'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
-                            filter_type=filter_type
-                        )
-                    )
-                else:
-                    with open(filter_value, "r") as json_file:
-                        try:
-                            filter = json.load(json_file)
-                        except Exception as json_error:
-                            err_exit(
-                                "JSON for variant filters is malformatted.",
-                                expected_exceptions=default_expected_exceptions,
-                            )
-            else:
-                err_exit(
-                    "JSON file {filter_json} provided does not exist".format(
-                        filter_json=filter_value
-                    )
-                )
-        else:
-            if filter_value == "{}":
-                err_exit(
-                    'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
-                        filter_type=filter_type
-                    )
-                )
-            else:
-                try:
-                    filter = json.loads(filter_value)
-                except Exception as json_error:
-                    err_exit(
-                        "JSON for variant filters is malformatted.",
-                        expected_exceptions=default_expected_exceptions,
-                    )
-
-        validate_JSON(filter, filter_type)
-
-        return filter
 
     if args.retrieve_allele:
         filter_dict = json_validation_function("allele", args)
@@ -957,6 +960,8 @@ def extract_assay_somatic(args):
     if args.retrieve_meta_info:
         retrieve_meta_info(resp, project, selected_assay_id, selected_assay_name, print_to_stdout, out_file)
 
+    if args.retrieve_variant:
+        filter_dict = json_validation_function("variant", args)
 
 class DXDataset(DXRecord):
     """
