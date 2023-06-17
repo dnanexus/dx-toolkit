@@ -173,10 +173,9 @@ Install the following packages from source or via [Homebrew](http://mxcl.github.
     * On Homebrew, install and select an up-to-date version of GCC with:
 
         ```
-        brew tap homebrew/versions
-        brew install gcc47
-        export CC=gcc-4.7
-        export CXX=g++-4.7
+        brew install gcc
+        export CC=gcc
+        export CXX=g++
         ```
 * bison >= 2.7, autoconf, automake
   * On Homebrew: `brew install bison autoconf automake`
