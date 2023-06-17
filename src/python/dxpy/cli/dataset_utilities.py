@@ -925,8 +925,30 @@ def extract_assay_somatic(args):
 
     if args.retrieve_variant:
         filter_dict = json_validation_function("variant", args)
-        payload = {}
-        fields_list = []
+        
+        # Replace the hardcoded payload and fields_list with a call to json to payload function
+        payload = {"project_context": project, 
+                   "fields": [
+                        {"CHROM": "variant_read_optimized$CHROM"},
+                        {"allele_id": "variant_read_optimized$allele_id"}
+                    ], 
+                    "adjust_geno_bins": False, 
+                    "raw_filters": {
+                        "assay_filters": {
+                            "name": "sciprod1363_3more",
+                            "id": "2e1e4b19-f5d6-48b6-974e-f8ed11e44e7e",
+                            "filters": {
+                                "variant_read_optimized$allele_id": [
+                                    {"condition": "in", "values": ["chrUn_JTFH01001875v1_decoy_34_GG_AA"]}
+                                ]
+                            },
+                        "logic": "and",
+                        }
+                    },
+                    "is_cohort": False,
+                    "distinct": True,
+                    }
+        fields_list = ["CHROM", "allele_id"]
 
         if "CohortBrowser" in resp["recordTypes"]:
             if resp.get("baseSql"):
@@ -951,11 +973,6 @@ def extract_assay_somatic(args):
                 column_names=fields_list,
                 quote_char=str("|"),
             )
-
-        
-
-    if args.retrieve_variant:
-        filter_dict = json_validation_function("variant", args)
 
 class DXDataset(DXRecord):
     """
