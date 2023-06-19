@@ -3063,6 +3063,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "detach": args.detach,
         "cost_limit": args.cost_limit,
         "rank": args.rank,
+        "detailed_job_metrics": args.detailed_job_metrics,
         "max_tree_spot_wait_time": normalize_timedelta(args.max_tree_spot_wait_time)//1000 if args.max_tree_spot_wait_time else None,
         "max_job_spot_wait_time": normalize_timedelta(args.max_job_spot_wait_time)//1000 if args.max_job_spot_wait_time else None,
         "preserve_job_outputs": preserve_job_outputs,
@@ -3545,6 +3546,22 @@ def watch(args):
     level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
     level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
 
+    def check_args_compatibility(incompatible_list):
+        for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
+            if getattr(args, adest) != parser_watch.get_default(adest):
+                return "--" + (aarg.replace("_", "-"))
+
+    incompatible_args = None
+    if args.levels and "METRICS" in args.levels and args.metrics == "none":
+        incompatible_args = ("--levels METRICS", "--metrics none")
+    elif args.metrics == "csv":
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
+        if iarg:
+            incompatible_args = ("--metrics csv", iarg)
+
+    if incompatible_args:
+        err_exit(exception=DXCLIError("Can not specify both '%s' and '%s'" % incompatible_args))
+
     msg_callback, log_client = None, None
     if args.get_stdout:
         args.levels = ['STDOUT']
@@ -3558,6 +3575,11 @@ def watch(args):
         args.levels = ['STDOUT', 'STDERR']
         args.format = "{msg}"
         args.job_info = False
+    elif args.metrics == "csv":
+        args.levels = ['METRICS']
+        args.format = "{msg}"
+        args.job_info = False
+        args.quiet = True
     elif args.format is None:
         if args.job_ids:
             args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
@@ -3585,19 +3607,28 @@ def watch(args):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
 
     job_describe = dxpy.describe(args.jobid)
+
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
       if not args.quiet:
-        print("Output reused from %s" %(args.jobid))
+        print("Output reused from %s" % args.jobid)
 
     log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
                                       msg_output_format=args.format, print_job_info=args.job_info)
+
+    if args.metrics == "none":
+        input_params['excludeMetrics'] = True
+    elif args.metrics == "csv":
+        input_params['metricsFormat'] = "csv"
+    else:
+        input_params['metricsFormat'] = "text"
 
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
         if not args.quiet:
             print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+
         log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
@@ -5042,6 +5073,7 @@ parser_update_org.add_argument('--name', help='New name of the org')
 parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
 parser_update_org.add_argument('--saml-idp', help='New SAML identity provider')
+parser_update_org.add_argument('--detailed-job-metrics-collect-default', choices=['true', 'false'], help='If set to true, jobs launched in the projects billed to this org will collect detailed job metrics by default')
 update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
 update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
 update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
@@ -5270,9 +5302,10 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
 parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination. In case of workflows it is cost of the "
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
-parser_run.add_argument('-r', '--rank', type=int, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24), default=None)
+parser_run.add_argument('-r', '--rank', type=int, default=None, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24))
 parser_run.add_argument('--max-tree-spot-wait-time', help=fill('The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_run.add_argument('--max-job-spot-wait-time', help=fill('The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_run.add_argument('--detailed-job-metrics', action='store_true', default=None, help=fill('Collect CPU, memory, network and disk metrics every 60 seconds', width_adjustment=-24))
 
 preserve_outputs = parser_run.add_mutually_exclusive_group()
 preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
@@ -5303,7 +5336,7 @@ parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent 
                           type=int, default=1024*256)
 parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
 parser_watch.add_argument('-l', '--levels', action='append', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
-                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT", "METRICS"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', action='store_true')
@@ -5316,6 +5349,60 @@ parser_watch.add_argument('-q', '--quiet', help='Do not print extra info message
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
+parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
+                          choices=["interspersed", "none", "csv"], default="interspersed")
+
+class MetricsHelpAction(argparse.Action):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(
+"""Help: Displaying detailed job metrics
+Detailed job metrics describe job's consumption of CPU, memory, disk, network, etc at 60 second intervals.
+If collection of job metrics was enabled for a job (e.g with dx run --detailed-job-metrics), the metrics can be displayed by "dx watch" for 15 days from the time the job started running.
+
+Note that all reported data-related values are in base 2 units - i.e. 1 MB = 1024 * 1024 bytes.
+
+The "interspersed" default mode shows METRICS job log messages interspersed with other jog log messages.
+
+The "none" mode omits all METRICS messages from "dx watch" output.
+
+The "csv" mode outputs the following columns with headers in csv format to stdout:
+- timestamp: An integer number representing the number of milliseconds since the Unix epoch.
+- cpuCount: A number of CPUs available on the instance that ran the job.
+- cpuUsageUser: The percentage of cpu time spent in user mode on the instance during the metric collection period.
+- cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period.
+- cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory).
+- memoryTotalBytes: Total memory available on the instance that ran the job.
+- diskUsedBytes: Bytes of storage allocated to the AEE that are used by the filesystem.
+- diskTotalBytes: Total bytes of disk space available to the job within the AEE.
+- networkOutBytes: Total network bytes transferred out from AEE since the job started. Includes "dx upload" bytes.
+- networkInBytes: Total network bytes transferred into AEE since the job started. Includes "dx download" bytes.
+- diskReadBytes: Total bytes read from the AEE-accessible disks since the job started.
+- diskWriteBytes: Total bytes written to the AEE-accessible disks since the job started.
+- diskReadOpsCount: Total disk read operation count against AEE-accessible disk since the job started.
+- diskWriteOpsCount: Total disk write operation count against AEE-accessible disk since the job started.
+
+Note 1: cpuUsageUser, cpuUsageSystem, cpuUsageIowait, cpuUsageIdle and memoryUsedBytes metrics reflect usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+Note 2: cpuUsageUser + cpuUsageSystem + cpuUsageIowait + cpuUsageIdle + cpuUsageSteal = 100. cpuUsageSteal is unreported, but can be derived from the other 4 quantities given that they add up to 100.
+Note 3: cpuUsage numbers are rounded to 2 decimal places.
+
+The format of METRICS job log lines is defined as follows using the example below:
+
+2023-03-15 12:23:44 some-job-name METRICS ** CPU usr/sys/idl/wai: 24/11/1/64% (4 cores) * Memory: 1566/31649MB * Storage: 19/142GB * Net: 10↓/0↑MBps * Disk: r/w 20/174 MBps iops r/w 8/1300
+
+"2023-03-15 12:23:44" is the metrics collection time.
+"METRICS" is a type of job log line containing detailed job metrics.
+"CPU usr/sys/idl/wai: 24/11/1/64%" maps to cpuUsageUser, cpuUsageSystem, cpuUsageIdle, cpuUsageIowait values.
+"(4 cores)" maps to cpuCount.
+"Memory: 1566/31649MB" maps to memoryUsedBytes and memoryTotalBytes.
+"Storage: 19/142GB" maps to diskUsedBytes and diskTotalBytes.
+"Net: 10↓/0↑MBps" is derived from networkOutBytes and networkInBytes cumulative totals by subtracting previous measurement from the measurement at the metric collection time, and dividing the difference by the time span between the two measurements.
+"Disk: r/w 20/174 MBps iops r/w 8/1300" is derived similar to "Net:" from diskReadBytes, diskWriteBytes, diskReadOpsCount, and diskWriteOpsCount.""")
+        parser.exit(0)
+
+parser_watch.add_argument('--metrics-help', action=MetricsHelpAction, nargs=0, help='Print help for displaying detailed job metrics')
 parser_watch.set_defaults(func=watch)
 register_parser(parser_watch, categories='exec')
 
@@ -6288,7 +6375,6 @@ parser_extract_assay_somatic.add_argument(
     action="store_true",
     help="If the flag is provided, a SQL statement (a string) will be returned for user to further query the specified data instead of actual value of the requested fields.",
 )
-
 parser_extract_assay_somatic.add_argument(
     "-o", "--output", 
     type=str,

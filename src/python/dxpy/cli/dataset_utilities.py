@@ -44,6 +44,7 @@ from ..exceptions import (
 )
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
+from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -121,7 +122,7 @@ def raw_query_api_call(resp, payload):
     return sql_results
 
 
-def raw_api_call(resp, payload):
+def raw_api_call(resp, payload, sql_message=True):
     resource_val = resp["url"] + "/data/3.0/" + resp["dataset"] + "/raw"
     try:
         resp_raw = dxpy.DXHTTPRequest(
@@ -131,7 +132,7 @@ def raw_api_call(resp, payload):
             if resp_raw["error"]["type"] == "InvalidInput":
                 print("Insufficient permissions due to the project policy.")
                 print(resp_raw["error"]["message"])
-            elif resp_raw["error"]["type"] == "QueryTimeOut":
+            elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
                 print(resp_raw["error"]["message"])
                 print(
                     "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster."
@@ -428,6 +429,153 @@ def get_assay_info(rec_descriptor, assay_type):
     return (selected_type_assays, other_assays)
 
 
+#### Validate json filters ####
+def json_validation_function(filter_type, args):
+    filter_arg = "args.retrieve_" + filter_type
+    filter_value = str(vars(args)["retrieve_" + filter_type])
+    filter = {}
+    if filter_value.endswith(".json"):
+        if os.path.isfile(filter_value):
+            if os.stat(filter_value).st_size == 0:
+                err_exit(
+                    'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
+                        filter_type=filter_type
+                    )
+                )
+            else:
+                with open(filter_value, "r") as json_file:
+                    try:
+                        filter = json.load(json_file)
+                    except Exception as json_error:
+                        err_exit(
+                            "JSON for variant filters is malformatted.",
+                            expected_exceptions=default_expected_exceptions,
+                        )
+        else:
+            err_exit(
+                "JSON file {filter_json} provided does not exist".format(
+                    filter_json=filter_value
+                )
+            )
+    else:
+        if filter_value == "{}":
+            err_exit(
+                'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
+                    filter_type=filter_type
+                )
+            )
+        else:
+            try:
+                filter = json.loads(filter_value)
+            except Exception as json_error:
+                err_exit(
+                    "JSON for variant filters is malformatted.",
+                    expected_exceptions=default_expected_exceptions,
+                )
+
+    if filter_type in ["allele", "annotation", "genotype"]:
+        validate_JSON(filter, filter_type)
+    elif filter_type in ["variant"]:
+        validate_somatic_filter(filter, filter_type)
+
+    return filter
+
+
+def retrieve_meta_info(
+    resp, project_id, assay_id, assay_name, print_to_stdout, out_file_name
+):
+    table, column = "vcf_meta_information_unique", "info_format_fields"
+    payload = {
+        "project_context": project_id,
+        "fields": [
+            {column: "$".join((table, column))},
+        ],
+        "is_cohort": False,
+        "variant_browser": {
+            "name": assay_name,
+            "id": assay_id,
+        },
+    }
+    resp_raw = raw_api_call(resp, payload, sql_message=False)
+
+    if print_to_stdout:
+        fields_output = sys.stdout
+    else:
+        fields_output = open(out_file_name, "w")
+
+    for entry in resp_raw["results"]:
+        fields_output.write(entry[column] + "\n")
+
+    if not print_to_stdout:
+        fields_output.close()
+
+
+def get_assay_name_info(
+    list_assays, assay_name, path, friendly_assay_type, rec_descriptor
+):
+    """
+    Generalized function for determining assay name and reference genome
+    """
+    if friendly_assay_type == "germline":
+        assay_type = "genetic_variant"
+    elif friendly_assay_type == "somatic":
+        assay_type = "somatic_variant"
+
+    #### Get names of genetic assays ####
+    if list_assays:
+        (target_assays, other_assays) = get_assay_info(
+            rec_descriptor, assay_type=assay_type
+        )
+        if not target_assays:
+            err_exit("There's no {} assay in the dataset provided.").format(assay_type)
+        else:
+            for a in target_assays:
+                print(a["name"])
+            sys.exit(0)
+
+    #### Decide which assay is to be queried and which ref genome is to be used ####
+    (target_assays, other_assays) = get_assay_info(
+        rec_descriptor, assay_type=assay_type
+    )
+    target_assay_names = [ga["name"] for ga in target_assays]
+    target_assay_ids = [ga["uuid"] for ga in target_assays]
+    other_assay_names = [oa["name"] for oa in other_assays]
+    # other_assay_ids = [oa["uuid"] for oa in other_assays]
+    if target_assay_names and target_assay_ids:
+        selected_assay_name = target_assay_names[0]
+        selected_assay_id = target_assay_ids[0]
+    else:
+        err_exit("There's no {} assay in the dataset provided.").format(
+            friendly_assay_type
+        )
+    if assay_name:
+        if assay_name not in list(target_assay_names):
+            if assay_name in list(other_assay_names):
+                err_exit(
+                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay {}`, please use the --list-assays flag.".format(
+                        friendly_assay_type
+                    )
+                )
+            else:
+                err_exit(
+                    "Assay {assay_name} does not exist in the {path}.".format(
+                        assay_name=assay_name, path=path
+                    )
+                )
+        else:
+            selected_assay_name = assay_name
+            for ga in target_assays:
+                if ga["name"] == assay_name:
+                    selected_assay_id = ga["uuid"]
+
+    selected_ref_genome = "GRCh38.92"
+    for a in target_assays:
+        if a["name"] == selected_assay_name and a["reference_genome"]:
+            selected_ref_genome = a["reference_genome"]["name"]
+
+    return (selected_assay_name, selected_assay_id, selected_ref_genome)
+
+
 def extract_assay_germline(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.
@@ -477,54 +625,6 @@ def extract_assay_germline(args):
             )
             sys.exit(0)
 
-    #### Validate json filters ####
-    def json_validation_function(filter_type, args):
-        filter_arg = "args.retrieve_" + filter_type
-        filter_value = str(vars(args)["retrieve_" + filter_type])
-        filter = {}
-        if filter_value.endswith(".json"):
-            if os.path.isfile(filter_value):
-                if os.stat(filter_value).st_size == 0:
-                    err_exit(
-                        'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
-                            filter_type=filter_type
-                        )
-                    )
-                else:
-                    with open(filter_value, "r") as json_file:
-                        try:
-                            filter = json.load(json_file)
-                        except Exception as json_error:
-                            err_exit(
-                                "JSON for variant filters is malformatted.",
-                                expected_exceptions=default_expected_exceptions,
-                            )
-            else:
-                err_exit(
-                    "JSON file {filter_json} provided does not exist".format(
-                        filter_json=filter_value
-                    )
-                )
-        else:
-            if filter_value == "{}":
-                err_exit(
-                    'No filter given for --retrieve-{filter_type} or JSON for "--retrieve-{filter_type}" does not contain valid filter information.'.format(
-                        filter_type=filter_type
-                    )
-                )
-            else:
-                try:
-                    filter = json.loads(filter_value)
-                except Exception as json_error:
-                    err_exit(
-                        "JSON for variant filters is malformatted.",
-                        expected_exceptions=default_expected_exceptions,
-                    )
-
-        validate_JSON(filter, filter_type)
-
-        return filter
-
     if args.retrieve_allele:
         filter_dict = json_validation_function("allele", args)
     elif args.retrieve_annotation:
@@ -548,57 +648,19 @@ def extract_assay_germline(args):
 
     ######## Data Processing ########
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
-    if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
-            err_exit(
-                "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
-            )
+
+    if "CohortBrowser" in resp["recordTypes"] and any(
+        [args.list_assays, args.assay_name]
+    ):
+        err_exit(
+            "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
+        )
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    #### Get names of genetic assays ####
-    if args.list_assays:
-        (geno_assays, other_assays) = get_assay_info(
-            rec_descriptor, assay_type="genetic_variant"
-        )
-        if not geno_assays:
-            err_exit("There's no genetic assay in the dataset provided.")
-        else:
-            for a in geno_assays:
-                print(a["name"])
-            sys.exit(0)
-
-    #### Decide which assay is to be queried and which ref genome is to be used ####
-    (geno_assays, other_assays) = get_assay_info(
-        rec_descriptor, assay_type="genetic_variant"
+    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(
+        args.list_assays, args.assay_name, args.path, "germline", rec_descriptor
     )
-    geno_assay_names = [ga["name"] for ga in geno_assays]
-    geno_assay_ids = [ga["uuid"] for ga in geno_assays]
-    other_assay_names = [oa["name"] for oa in other_assays]
-    other_assay_ids = [oa["uuid"] for oa in other_assays]
-    selected_assay_name = geno_assay_names[0]
-    selected_assay_id = geno_assay_ids[0]
-    if args.assay_name:
-        if args.assay_name not in list(geno_assay_names):
-            if args.assay_name in list(other_assay_names):
-                err_exit(
-                    "This is not a valid assay. For valid assays accepted by the function, `extract_assay germline`, please use the --list-assays flag."
-                )
-            else:
-                err_exit(
-                    "Assay {assay_name} does not exist in the {path}.".format(
-                        assay_name=args.assay_name, path=args.path
-                    )
-                )
-        else:
-            selected_assay_name = args.assay_name
-            for ga in geno_assays:
-                if ga["name"] == args.assay_name:
-                    selected_assay_id = ga["uuid"]
-
-    selected_ref_genome = "GRCh38.92"
-    for a in geno_assays:
-        if a["name"] == selected_assay_name and a["reference_genome"]:
-            selected_ref_genome = a["reference_genome"]["name"]
 
     #### Decide output method based on --output and --sql ####
     if args.sql:
@@ -681,7 +743,7 @@ def extract_assay_germline(args):
                 ).group()
                 substr = "`" + geno_table + "`.`type`"
                 sql_results = sql_results.replace(
-                    substr, "REPLACE(`" + geno_table + "`.type`, 'hom', 'hom-alt')"
+                    substr, "REPLACE(`" + geno_table + "`.`type`, 'hom', 'hom-alt')", 1
                 )
 
             if print_to_stdout:
@@ -779,35 +841,50 @@ def csv_from_json(
     if not print_to_stdout:
         fields_output.close()
 
+
 def extract_assay_somatic(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.
     """
-    ######## Input combination validation and print help########
-    invalid_combo_args = any([args.include_normal_sample, args.additional_fields, args.additional_fields_help, args.output, args.sql])
-
-    if args.retrieve_meta_info:
-        if any([args.list_assays, args.retrieve_variant, args.json_help, invalid_combo_args]):
-            err_exit(
-                'The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name.'
-            )
-        else:
-            print("Perform retrieve-meta-info function") # Replace this line with a call to the new function
-
-    if args.list_assays and any([args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]):
+    invalid_retrieve_meta_info_args = any(
+        [
+            args.include_normal_sample,
+            args.additional_fields,
+            args.additional_fields_help,
+            args.sql,
+            args.list_assays,
+            args.retrieve_variant,
+            args.json_help,
+        ]
+    )
+    if args.retrieve_meta_info and invalid_retrieve_meta_info_args:
         err_exit(
-            '--list-assays cannot be presented with other options.'
+            "The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name, --output."
         )
+
+    ######## Input combination validation and print help########
+    invalid_combo_args = any(
+        [
+            args.include_normal_sample,
+            args.additional_fields,
+            args.additional_fields_help,
+            args.output,
+            args.sql,
+        ]
+    )
+
+    if args.list_assays and any(
+        [args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]
+    ):
+        err_exit("--list-assays cannot be presented with other options.")
 
     if args.json_help:
         if any([args.assay_name, invalid_combo_args]):
             err_exit(
-                '--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --additional-fields-help, --output.'
+                "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --additional-fields-help, --output."
             )
         elif args.retrieve_variant is None:
-            err_exit(
-                '--json-help cannot be passed without --retrieve-variant.'
-            )
+            err_exit("--json-help cannot be passed without --retrieve-variant.")
         else:
             print(
                 '# Filters and respective definitions\n#\n#  location: Genomic range in the reference genome where the alleles overlap with. If multiple values are provided in the list, the conditional search will be, "OR." String match is case sensitive.\n#  gene_name: Gene name for the variant. A list of gene names whose coordinates defines the genome range where the alleles overlap with. If multiple values are provided, the conditional search will be, "OR." For example, ["BRCA2", "ASPM"], will search for variants which match either "BRCA2" or "ASPM". String match is case sensitive.\n#  gene_id: Gene ID of the variant. If multiple values are provided, the conditional search will be, "OR." For example, ["ENSG00000302118", "ENSG00004000504"], will search for variants which match either "ENSG00000302118" or "ENSG00004000504". String match is case insensitive.\n#  feature_id: Feature id where the range overlaps with the variant. The most common one is transcript_id. If multiple values are provided, the conditional search will be, "OR." For example, ["ENST00000302118.5", "ENST00004000504.1"], will search for variants which match either "ENST00000302118.5" or "ENST00004000504.1". String match is case insensitive.\n#  hgvs_c: HGVS (DNA) code of the variant. If multiple values are provided, the conditional search will be, "OR." For example, ["c.-49A>G", "c.-20T>G"], will search for alleles which match either "c.-49A>G" or "c.-20T>G". String match is case sensitive.\n#  hgvs_p: HGVS (Protein) code of the variant. If multiple values are provided, the conditional search will be, "OR." For example, ["p.Gly2Asp", "p.Aps2Gly"], will search for variants which match either "p.Gly2Asp" or "p.Aps2Gly". String match is case sensitive.\n#  allele_id: ID of an allele. If multiple values are provided, any alleles that match one of the values specified will be listed. For example, ["1_1000_A_T", "1_1010_C_T"], will search for alleles which match either "1_1000_A_T" or "1_1010_C_T". String match is case sensitive/exact match.\n#  type: Type of allele. Accepted values are “SNP”, “INS”, “DEL”, “DUP”, “INV”, “CNV”, “CNV:TR”, “BND”, “DUP:TANDEM”, “DEL:ME”, “INS:ME”, “MISSING”, “MISSING:DEL”, “UNSPECIFIED”, or “OTHER”. If multiple values are provided, the conditional search will be, “OR.” For example, [“SNP”, “INS”], will search for variants which match either “SNP” or ““INS”. String match is case insensitive.\n#  assay_sample_id: ID of samples where to look for alleles. If a user has a list of samples more than 1,000, it is recommended to either retrieve multiple times, or use a cohort id containing all the samples.\n# JSON filter template for --retrieve-variant\n{\n  "location": [\n    {\n      "chromosome": "1",\n      "starting_position": "10000",\n      "ending_position": "20000"\n    },\n    {\n      "chromosome": "X",\n      "starting_position": "500",\n      "ending_position": "1700"\n    }\n  ],\n  "annotation": {\n    "gene_name": ["BRCA2"],\n    "gene_id": ["ENST00000302118],\n    "feature_id": ["ENST00000302118.5"],\n    "hgvs_c": ["c.-49A>G"],\n    "hgvs_p": ["p.Gly2Asp"]\n  },\n  "allele" : {\n    "allele_id":["1_1000_A_T","2_1000_G_C"],\n    "type" : ["SNP", "INS"]\n  },\n  "assay_sample_id" : ["SampleA", "SampleB", "SampleC"]\n}'
@@ -815,44 +892,130 @@ def extract_assay_somatic(args):
             sys.exit(0)
 
     if args.additional_fields_help:
-        if any([args.assay_name, args.retrieve_variant, args.include_normal_sample, args.output, args.sql]):
+        if any(
+            [
+                args.assay_name,
+                args.retrieve_variant,
+                args.include_normal_sample,
+                args.output,
+                args.sql,
+            ]
+        ):
             err_exit(
-                '--additional-fields-help cannot be passed with any of --assay-name, --retrieve-variant, --sql, --output.'
+                "--additional-fields-help cannot be passed with any of --assay-name, --retrieve-variant, --sql, --output."
             )
         elif args.additional_fields is None:
             err_exit(
-                '--additional-fields-help cannot be passed without --additional-fields.'
+                "--additional-fields-help cannot be passed without --additional-fields."
             )
         else:
-            print('The following fields will always be returned by default:\n')
-            fixed_fields = [['NAME', 'TITLE', 'DESCRIPTION'], 
-                            ['assay_sample_id', 'Assay Sample ID', 'A unique identifier for the tumor or normal sample. Populated from the sample columns of the VCF header.'], 
-                            ['allele_id', 'Allele ID', 'An unique identification of the allele'], 
-                            ['chrom', 'Chromosome', 'Chromosome of variant, verbatim from original VCF'], 
-                            ['pos', 'Position', 'Starting position of variant, verbatim from original VCF'], 
-                            ['ref', 'Reference Allele', 'Reference allele of locus, verbatim from original VCF'], 
-                            ['allele', 'Allele', 'Sequence of the allele']]
+            print("The following fields will always be returned by default:\n")
+            fixed_fields = [
+                ["NAME", "TITLE", "DESCRIPTION"],
+                [
+                    "assay_sample_id",
+                    "Assay Sample ID",
+                    "A unique identifier for the tumor or normal sample. Populated from the sample columns of the VCF header.",
+                ],
+                ["allele_id", "Allele ID", "An unique identification of the allele"],
+                [
+                    "chrom",
+                    "Chromosome",
+                    "Chromosome of variant, verbatim from original VCF",
+                ],
+                [
+                    "pos",
+                    "Position",
+                    "Starting position of variant, verbatim from original VCF",
+                ],
+                [
+                    "ref",
+                    "Reference Allele",
+                    "Reference allele of locus, verbatim from original VCF",
+                ],
+                ["allele", "Allele", "Sequence of the allele"],
+            ]
             for row in fixed_fields:
                 print("{: <17} {: <22} {: <25}".format(*row))
-            print('\nThe following fields may be added to the output by using option --additional-fields. If multiple fields are specified, use a comma to separate each entry. For example, "sample_id,tumor_normal"\n')
-            additional_fields = [['NAME', 'TITLE', 'DESCRIPTION'], 
-                                 ['sample_id', 'Sample ID', 'Unique ID of the pair of tumor-normal samples'], 
-                                 ['tumor_normal', 'Tumor-Normal', 'One a ["tumor", "normal"] to describe source sample type'], 
-                                 ['id', 'ID', 'Comma separated list of associated IDs for the variant from the original VCF'], 
-                                 ['qual', 'QUAL', 'Quality of locus, verbatim from original VCF'], 
-                                 ['filter', 'FILTER', 'Comma separated list of filters for locus from the original VCF'], 
-                                 ['reference_source', 'Reference source', 'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample'], 
-                                 ['variant_type', 'Variant Type', 'The type of allele, with respect to reference'], 
-                                 ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise'], 
-                                 ['file_id', 'Source File ID', 'DNAnexus platform file-id of original source file'], 
-                                 ['INFO_<ID>', 'INFO:<ID>', '<A dynamic set of fields>'], 
-                                 ['FORMAT_<ID>', 'FORMAT:<ID>', '<A dynamic set of fields>'], 
-                                 ['gene_name', 'Gene Name', 'A list of gene name associated with the variant'], 
-                                 ['gene_id', 'Gene ID', 'A list of gene IDs, associated with the variant'], 
-                                 ['feature_id', 'Feature ID', 'A list of feature IDs, associated with the variant'], 
-                                 ['hgvs_c', 'HGVSc', 'A list of sequence variants in HGVS nomenclature, for DNA'], 
-                                 ['hgvs_p', 'HGVSp', 'A list of sequence variants in HGVS nomenclature, for protein'], 
-                                 ['clin_sig', 'Clinical Significance', 'A list of allele specific clinical significance terms']]
+            print(
+                '\nThe following fields may be added to the output by using option --additional-fields. If multiple fields are specified, use a comma to separate each entry. For example, "sample_id,tumor_normal"\n'
+            )
+            additional_fields = [
+                ["NAME", "TITLE", "DESCRIPTION"],
+                [
+                    "sample_id",
+                    "Sample ID",
+                    "Unique ID of the pair of tumor-normal samples",
+                ],
+                [
+                    "tumor_normal",
+                    "Tumor-Normal",
+                    'One a ["tumor", "normal"] to describe source sample type',
+                ],
+                [
+                    "id",
+                    "ID",
+                    "Comma separated list of associated IDs for the variant from the original VCF",
+                ],
+                ["qual", "QUAL", "Quality of locus, verbatim from original VCF"],
+                [
+                    "filter",
+                    "FILTER",
+                    "Comma separated list of filters for locus from the original VCF",
+                ],
+                [
+                    "reference_source",
+                    "Reference source",
+                    'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample',
+                ],
+                [
+                    "variant_type",
+                    "Variant Type",
+                    "The type of allele, with respect to reference",
+                ],
+                [
+                    "symbolic_type",
+                    "Symbolic Type",
+                    'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise',
+                ],
+                [
+                    "file_id",
+                    "Source File ID",
+                    "DNAnexus platform file-id of original source file",
+                ],
+                ["INFO_<ID>", "INFO:<ID>", "<A dynamic set of fields>"],
+                ["FORMAT_<ID>", "FORMAT:<ID>", "<A dynamic set of fields>"],
+                [
+                    "gene_name",
+                    "Gene Name",
+                    "A list of gene name associated with the variant",
+                ],
+                [
+                    "gene_id",
+                    "Gene ID",
+                    "A list of gene IDs, associated with the variant",
+                ],
+                [
+                    "feature_id",
+                    "Feature ID",
+                    "A list of feature IDs, associated with the variant",
+                ],
+                [
+                    "hgvs_c",
+                    "HGVSc",
+                    "A list of sequence variants in HGVS nomenclature, for DNA",
+                ],
+                [
+                    "hgvs_p",
+                    "HGVSp",
+                    "A list of sequence variants in HGVS nomenclature, for protein",
+                ],
+                [
+                    "clin_sig",
+                    "Clinical Significance",
+                    "A list of allele specific clinical significance terms",
+                ],
+            ]
             for row in additional_fields:
                 print("{: <17} {: <22} {: <25}".format(*row))
             sys.exit(0)
@@ -862,26 +1025,62 @@ def extract_assay_somatic(args):
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    if args.list_assays:
-        somatic_assays, _ = get_assay_info(
-            rec_descriptor, assay_type="somatic_variant"
-        )
-        if not somatic_assays:
-            err_exit("There’s no somatic assay in the dataset provided.")
+    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(
+        args.list_assays, args.assay_name, args.path, "somatic", rec_descriptor
+    )
+
+    #### Decide output method based on --output and --sql ####
+    if args.sql:
+        file_name_suffix = ".data.sql"
+    elif args.retrieve_meta_info:
+        file_name_suffix = ".vcf_meta_info.txt"
+    else:
+        file_name_suffix = ".tsv"
+    file_already_exist = []
+    files_to_check = []
+    out_file = ""
+
+    print_to_stdout = False
+    if args.output is None:
+        out_directory = os.getcwd()
+        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
+        files_to_check.append(out_file)
+    elif args.output == "-":
+        print_to_stdout = True
+    elif os.path.exists(args.output):
+        if os.path.isdir(args.output):
+            err_exit("--output should be a file, not a directory.")
         else:
-            for a in somatic_assays:
-                print(a["name"])
-            sys.exit(0)
+            file_already_exist.append(args.output)
+    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
+        args.output
+    ):
+        out_file = args.output
+    else:
+        err_exit(
+            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
+        )
 
-    #
-    # Placeholder for output section
-    #
+    for file in files_to_check:
+        if os.path.exists(file):
+            file_already_exist.append(file)
 
-    payload = {}
+    if file_already_exist:
+        err_exit("Cannot specify the output to be an existing file.")
 
-    #
-    # Placeholder for calling clisam payload creator
-    #
+    if args.retrieve_meta_info:
+        retrieve_meta_info(
+            resp,
+            project,
+            selected_assay_id,
+            selected_assay_name,
+            print_to_stdout,
+            out_file,
+        )
+
+    if args.retrieve_variant:
+        filter_dict = json_validation_function("variant", args)
+
 
 class DXDataset(DXRecord):
     """
