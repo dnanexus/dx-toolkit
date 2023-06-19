@@ -140,11 +140,15 @@ def generate_assay_filter(full_input_dict, name, id, project_context, genome_ref
                     genome_reference,
                 )
                 basic_filters["filters"].update(indiv_basic_filter)
-    assay_filter["assay_filters"]["compound"].append(basic_filters)
+    if len(basic_filters["filters"]) > 0:
+        assay_filter["assay_filters"]["compound"].append(basic_filters)
+    else:
+        # In the case where only a location filter is given, we need to remove the outer compound
+        pass
     return assay_filter
 
 
-def final_payload(full_input_dict, name, id, project_context, genome_reference):
+def somatic_final_payload(full_input_dict, name, id, project_context, genome_reference):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),
     and raw filters objects.  This payload is sent in its entirety to the vizserver via an
@@ -181,20 +185,24 @@ def final_payload(full_input_dict, name, id, project_context, genome_reference):
 if __name__ == "__main__":
     # Test path section
     # TODO remove later
-    test_json_path = (
-        "/Users/jmulka@dnanexus.com/Development/dx-toolkit/clisam_filter.json"
-    )
+
     name = "assay_title_annot_complete"
     id = "f6a09c05-a1ea-4eb8-a8c1-6663992007a6"
     genome_reference = "Homo_sapiens.GRCh38.92"
-    proj_id = "project-GX0Jpp00ZJ46qYPq5G240k1k"
+    proj_id = "project-GP7B0X80VBvx6pGKJ3fq1Q7G"
+
+    test_dir = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/clisam_test_filters"
+    input_dir = os.path.join(test_dir, "input")
+    output_dir = os.path.join(test_dir, "output")
+
+    test_json_path = os.path.join(input_dir, "single_location.json")
 
     with open(test_json_path, "r") as infile:
         test_dict = json.load(infile)
 
-    payload, field_names = final_payload(test_dict, name, id, proj_id, genome_reference)
+    payload, field_names = somatic_final_payload(
+        test_dict, name, id, proj_id, genome_reference
+    )
 
-    with open(
-        "/Users/jmulka@dnanexus.com/Development/dx-toolkit/json_test.json", "w"
-    ) as outfile:
+    with open(os.path.join(output_dir, "single_loc_payload.json"), "w") as outfile:
         json.dump(payload, outfile)
