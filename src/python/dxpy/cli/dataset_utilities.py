@@ -505,6 +505,46 @@ def retrieve_meta_info(resp, project_id, assay_id, assay_name, print_to_stdout, 
     if not print_to_stdout:
         fields_output.close()
 
+def assign_output_method(args, record_name, friendly_assay_type):
+    #### Decide output method based on --output and --sql ####
+    if args.sql:
+        file_name_suffix = ".data.sql"
+    elif friendly_assay_type == 'somatic' and args.retrieve_meta_info:
+        file_name_suffix = ".vcf_meta_info.txt"
+    else:
+        file_name_suffix = ".tsv"
+    file_already_exist = []
+    files_to_check = []
+    out_file = ""
+
+    print_to_stdout = False
+    if args.output is None:
+        out_directory = os.getcwd()
+        out_file = os.path.join(out_directory, record_name + file_name_suffix)
+        files_to_check.append(out_file)
+    elif args.output == "-":
+        print_to_stdout = True
+    elif os.path.exists(args.output):
+        if os.path.isdir(args.output):
+            err_exit("--output should be a file, not a directory.")
+        else:
+            file_already_exist.append(args.output)
+    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
+        args.output
+    ):
+        out_file = args.output
+    else:
+        err_exit(
+            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
+        )
+
+    for file in files_to_check:
+        if os.path.exists(file):
+            file_already_exist.append(file)
+
+    if file_already_exist:
+        err_exit("Cannot specify the output to be an existing file.")
+    return out_file, print_to_stdout
 
 def get_assay_name_info(list_assays,assay_name,path,friendly_assay_type,rec_descriptor):
     """
@@ -559,9 +599,11 @@ def get_assay_name_info(list_assays,assay_name,path,friendly_assay_type,rec_desc
                     selected_assay_id = ga["uuid"]
 
     selected_ref_genome = "GRCh38.92"
-    for a in target_assays:
-        if a["name"] == selected_assay_name and a["reference_genome"]:
-            selected_ref_genome = a["reference_genome"]["name"]
+    
+    if friendly_assay_type == "germline":
+        for a in target_assays:
+            if a["name"] == selected_assay_name and a["reference_genome"]:
+                selected_ref_genome = a["reference_genome"]["name"]
     
     return(selected_assay_name, selected_assay_id, selected_ref_genome)
 
@@ -648,42 +690,7 @@ def extract_assay_germline(args):
     
     selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"germline",rec_descriptor)
 
-    #### Decide output method based on --output and --sql ####
-    if args.sql:
-        file_name_suffix = ".data.sql"
-    else:
-        file_name_suffix = ".tsv"
-    file_already_exist = []
-    files_to_check = []
-    out_file = ""
-
-    print_to_stdout = False
-    if args.output is None:
-        out_directory = os.getcwd()
-        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
-        files_to_check.append(out_file)
-    elif args.output == "-":
-        print_to_stdout = True
-    elif os.path.exists(args.output):
-        if os.path.isdir(args.output):
-            err_exit("--output should be a file, not a directory.")
-        else:
-            file_already_exist.append(args.output)
-    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
-        args.output
-    ):
-        out_file = args.output
-    else:
-        err_exit(
-            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
-        )
-
-    for file in files_to_check:
-        if os.path.exists(file):
-            file_already_exist.append(file)
-
-    if file_already_exist:
-        err_exit("Cannot specify the output to be an existing file.")
+    out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "germline")
 
     payload = {}
     if args.retrieve_allele:
@@ -831,30 +838,22 @@ def extract_assay_somatic(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.
     """
-    invalid_retrieve_meta_info_args = any([
-        args.include_normal_sample,
-        args.additional_fields,
-        args.additional_fields_help,
-        args.sql,
-        args.list_assays,
-        args.retrieve_variant,
-        args.json_help,
-    ])
-    if args.retrieve_meta_info and invalid_retrieve_meta_info_args:
+    
+    ######## Input combination validation and print help########
+    invalid_combo_args = any([args.include_normal_sample, args.additional_fields, args.json_help, args.sql])
+
+    if args.retrieve_meta_info and invalid_combo_args:
         err_exit(
             'The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name, --output.'
         )
 
-    ######## Input combination validation and print help########
-    invalid_combo_args = any([args.include_normal_sample, args.additional_fields, args.additional_fields_help, args.output, args.sql])
-
-    if args.list_assays and any([args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]):
+    if args.list_assays and any([args.assay_name, args.output, invalid_combo_args]):
         err_exit(
             '--list-assays cannot be presented with other options.'
         )
 
     if args.json_help:
-        if any([args.assay_name, invalid_combo_args]):
+        if any([args.assay_name, args.output, invalid_combo_args]):
             err_exit(
                 '--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --additional-fields-help, --output.'
             )
@@ -869,13 +868,9 @@ def extract_assay_somatic(args):
             sys.exit(0)
 
     if args.additional_fields_help:
-        if any([args.assay_name, args.retrieve_variant, args.include_normal_sample, args.output, args.sql]):
+        if any([args.assay_name, args.output, invalid_combo_args]):
             err_exit(
-                '--additional-fields-help cannot be passed with any of --assay-name, --retrieve-variant, --sql, --output.'
-            )
-        elif args.additional_fields is None:
-            err_exit(
-                '--additional-fields-help cannot be passed without --additional-fields.'
+                '--additional-fields-help cannot be presented with other options.'
             )
         else:
             print('The following fields will always be returned by default:\n')
@@ -913,55 +908,71 @@ def extract_assay_somatic(args):
 
     ######## Data Processing ########
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
+        err_exit(
+            "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
+        )
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
     selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"somatic",rec_descriptor)
 
-    #### Decide output method based on --output and --sql ####
-    if args.sql:
-        file_name_suffix = ".data.sql"
-    elif args.retrieve_meta_info:
-        file_name_suffix = ".vcf_meta_info.txt"
-    else:
-        file_name_suffix = ".tsv"
-    file_already_exist = []
-    files_to_check = []
-    out_file = ""
-
-    print_to_stdout = False
-    if args.output is None:
-        out_directory = os.getcwd()
-        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
-        files_to_check.append(out_file)
-    elif args.output == "-":
-        print_to_stdout = True
-    elif os.path.exists(args.output):
-        if os.path.isdir(args.output):
-            err_exit("--output should be a file, not a directory.")
-        else:
-            file_already_exist.append(args.output)
-    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
-        args.output
-    ):
-        out_file = args.output
-    else:
-        err_exit(
-            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
-        )
-
-    for file in files_to_check:
-        if os.path.exists(file):
-            file_already_exist.append(file)
-
-    if file_already_exist:
-        err_exit("Cannot specify the output to be an existing file.")
+    out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "somatic")
 
     if args.retrieve_meta_info:
         retrieve_meta_info(resp, project, selected_assay_id, selected_assay_name, print_to_stdout, out_file)
+        sys.exit(0)
 
     if args.retrieve_variant:
         filter_dict = json_validation_function("variant", args)
+        
+        # Replace the hardcoded payload and fields_list with a call to json to payload function
+        payload = {"project_context": project, 
+                   "fields": [
+                        {"CHROM": "variant_read_optimized$CHROM"},
+                        {"allele_id": "variant_read_optimized$allele_id"}
+                    ], 
+                    "adjust_geno_bins": False, 
+                    "raw_filters": {
+                        "assay_filters": {
+                            "name": "sciprod1363_3more",
+                            "id": "2e1e4b19-f5d6-48b6-974e-f8ed11e44e7e",
+                            "filters": {
+                                "variant_read_optimized$allele_id": [
+                                    {"condition": "in", "values": ["chrUn_JTFH01001875v1_decoy_34_GG_AA"]}
+                                ]
+                            },
+                        "logic": "and",
+                        }
+                    },
+                    "is_cohort": False,
+                    "distinct": True,
+                    }
+        fields_list = ["CHROM", "allele_id"]
+
+        if "CohortBrowser" in resp["recordTypes"]:
+            if resp.get("baseSql"):
+                payload["base_sql"] = resp.get("baseSql")
+            payload["filters"] = resp["filters"]
+
+        if args.sql:
+            sql_results = raw_query_api_call(resp, payload)
+            if print_to_stdout:
+                print(sql_results)
+            else:
+                with open(out_file, "w") as sql_file:
+                    print(sql_results, file=sql_file)
+        else:
+            resp_raw = raw_api_call(resp, payload)
+
+            csv_from_json(
+                out_file_name=out_file,
+                print_to_stdout=print_to_stdout,
+                sep="\t",
+                raw_results=resp_raw["results"],
+                column_names=fields_list,
+                quote_char=str("|"),
+            )
 
 class DXDataset(DXRecord):
     """

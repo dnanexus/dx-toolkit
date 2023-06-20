@@ -6318,31 +6318,32 @@ parser_extract_assay_somatic.add_argument(
     help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the record-id in current selected project) or name.',
 )
 
-parser_extract_assay_somatic.add_argument(
+parser_e_a_s_mutex_group = parser_extract_assay_somatic.add_mutually_exclusive_group(required=True)
+parser_e_a_s_mutex_group.add_argument(
     "--list-assays",
     action="store_true",
     help="List somatic variant assays available for query in the specified Dataset or Cohort object.",
 )
 
-parser_extract_assay_somatic.add_argument(
-    "--assay-name",
-    default=None,
-    help="Specify a specific somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
-)
-
-parser_extract_assay_somatic.add_argument(
+parser_e_a_s_mutex_group.add_argument(
     "--retrieve-meta-info",
     action="store_true",
     help="List meta information, as it exists in the original VCF headers for both INFO and FORMAT fields.",
 )
 
-parser_extract_assay_somatic.add_argument(
+parser_e_a_s_mutex_group.add_argument(
     "--retrieve-variant",
     type=str,
     const='{}',
     default=None,
     nargs='?',
     help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. By default returns the following set of fields; “assay_sample_id”, “allele_id”, “chrom”, “pos”, “ref”, and “allele”. Additional fields may be returned using --additional-fields. Specify “--json-help” following this option to get detailed information on the json format and filters. When filtering, must supply one, and only one of “location”, “annotation.gene_name”, “annotation.gene_id”, “annotation.feature_id”, “allele.allele_id”.",
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--additional-fields-help",
+    action="store_true",
+    help="List all fields available for output.",
 )
 
 parser_extract_assay_somatic.add_argument(
@@ -6359,9 +6360,9 @@ parser_extract_assay_somatic.add_argument(
 )
 
 parser_extract_assay_somatic.add_argument(
-    "--additional-fields-help",
-    action="store_true",
-    help="List all fields available for output.",
+    "--assay-name",
+    default=None,
+    help="Specify a specific somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
 )
 
 parser_extract_assay_somatic.add_argument(
