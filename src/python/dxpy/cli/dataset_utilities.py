@@ -906,6 +906,13 @@ def extract_assay_somatic(args):
                 print("{: <17} {: <22} {: <25}".format(*row))
             sys.exit(0)
 
+    # Validate additional fields
+    if args.additional_fields:
+        accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG']
+        for field in args.additional_fields:
+            if field not in accepted_additional_fields:
+                err_exit("Invalid fields passed with --additional-fields. Please run --additional-fields-help to get a list of valid fields")
+            
     ######## Data Processing ########
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
     if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
