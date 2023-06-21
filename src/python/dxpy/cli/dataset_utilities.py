@@ -877,33 +877,36 @@ def extract_assay_somatic(args):
             fixed_fields = [['NAME', 'TITLE', 'DESCRIPTION'], 
                             ['assay_sample_id', 'Assay Sample ID', 'A unique identifier for the tumor or normal sample. Populated from the sample columns of the VCF header.'], 
                             ['allele_id', 'Allele ID', 'An unique identification of the allele'], 
-                            ['chrom', 'Chromosome', 'Chromosome of variant, verbatim from original VCF'], 
-                            ['pos', 'Position', 'Starting position of variant, verbatim from original VCF'], 
-                            ['ref', 'Reference Allele', 'Reference allele of locus, verbatim from original VCF'], 
+                            ['CHROM', 'Chromosome', 'Chromosome of variant, verbatim from original VCF'], 
+                            ['POS', 'Position', 'Starting position of variant, verbatim from original VCF'], 
+                            ['REF', 'Reference Allele', 'Reference allele of locus, verbatim from original VCF'], 
                             ['allele', 'Allele', 'Sequence of the allele']]
             for row in fixed_fields:
-                print("{: <17} {: <22} {: <25}".format(*row))
+                print("{: <22} {: <22} {: <25}".format(*row))
             print('\nThe following fields may be added to the output by using option --additional-fields. If multiple fields are specified, use a comma to separate each entry. For example, "sample_id,tumor_normal"\n')
             additional_fields = [['NAME', 'TITLE', 'DESCRIPTION'], 
                                  ['sample_id', 'Sample ID', 'Unique ID of the pair of tumor-normal samples'], 
-                                 ['tumor_normal', 'Tumor-Normal', 'One a ["tumor", "normal"] to describe source sample type'], 
-                                 ['id', 'ID', 'Comma separated list of associated IDs for the variant from the original VCF'], 
-                                 ['qual', 'QUAL', 'Quality of locus, verbatim from original VCF'], 
-                                 ['filter', 'FILTER', 'Comma separated list of filters for locus from the original VCF'], 
-                                 ['reference_source', 'Reference source', 'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample'], 
+                                 ['tumor_normal', 'Tumor-Normal', 'One of ["tumor", "normal"] to describe source sample type'], 
+                                 ['ID', 'ID', 'Comma separated list of associated IDs for the variant from the original VCF'], 
+                                 ['QUAL', 'QUAL', 'Quality of locus, verbatim from original VCF'], 
+                                 ['FILTER', 'FILTER', 'Comma separated list of filters for locus from the original VCF'], 
+                                 ['reference_source', 'Reference Source', 'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample'], 
                                  ['variant_type', 'Variant Type', 'The type of allele, with respect to reference'], 
                                  ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise'], 
                                  ['file_id', 'Source File ID', 'DNAnexus platform file-id of original source file'], 
-                                 ['INFO_<ID>', 'INFO:<ID>', '<A dynamic set of fields>'], 
-                                 ['FORMAT_<ID>', 'FORMAT:<ID>', '<A dynamic set of fields>'], 
-                                 ['gene_name', 'Gene Name', 'A list of gene name associated with the variant'], 
-                                 ['gene_id', 'Gene ID', 'A list of gene IDs, associated with the variant'], 
-                                 ['feature_id', 'Feature ID', 'A list of feature IDs, associated with the variant'], 
-                                 ['hgvs_c', 'HGVSc', 'A list of sequence variants in HGVS nomenclature, for DNA'], 
-                                 ['hgvs_p', 'HGVSp', 'A list of sequence variants in HGVS nomenclature, for protein'], 
-                                 ['clin_sig', 'Clinical Significance', 'A list of allele specific clinical significance terms']]
+                                 ['INFO', 'INFO', 'INFO section, verbatim from original VCF'], 
+                                 ['FORMAT', 'FORMAT', 'FORMAT section, verbatim from original VCF'], 
+                                 ['SYMBOL', 'Symbol', 'A list of gene name associated with the variant'], 
+                                 ['GENOTYPE', 'GENOTYPE', 'GENOTYPE section, as described by FORMAT section, verbatim from original VCF'],
+                                 ['normal_assay_sample_id', 'Normal Assay Sample ID', 'Assay Sample ID of respective “normal” sample, if exists'],
+                                 ['normal_allele_ids', 'Normal Allele IDs', 'Allele ID(s) of respective “normal” sample, if exists'],
+                                 ['Gene', 'Gene ID', 'A list of gene IDs, associated with the variant'], 
+                                 ['Feature', 'Feature ID', 'A list of feature IDs, associated with the variant'], 
+                                 ['HGVSc', 'HGVSc', 'A list of sequence variants in HGVS nomenclature, for DNA'], 
+                                 ['HGVSp', 'HGVSp', 'A list of sequence variants in HGVS nomenclature, for protein'], 
+                                 ['CLIN_SIG', 'Clinical Significance', 'A list of allele specific clinical significance terms']]
             for row in additional_fields:
-                print("{: <17} {: <22} {: <25}".format(*row))
+                print("{: <22} {: <22} {: <25}".format(*row))
             sys.exit(0)
 
     # Validate additional fields
@@ -911,7 +914,7 @@ def extract_assay_somatic(args):
         accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG']
         for field in args.additional_fields:
             if field not in accepted_additional_fields:
-                err_exit("Invalid fields passed with --additional-fields. Please run --additional-fields-help to get a list of valid fields")
+                err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
             
     ######## Data Processing ########
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
