@@ -34,7 +34,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
 concluding a subjob
 
-
 ## [347.0] - 2023.5.11
 
 ### Changed
@@ -60,7 +59,7 @@ concluding a subjob
 * Replaced obsolete built-in `file()` method with `open()`
 * Printing HTTP error codes that were hidden for API requests to cloud storage
 
-## [345.0] - beta
+## [345.0] - 2023.4.13 
 
 ### Changed
 
