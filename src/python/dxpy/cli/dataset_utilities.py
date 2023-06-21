@@ -45,6 +45,7 @@ from ..exceptions import (
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
+from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -570,7 +571,7 @@ def get_assay_name_info(
 
     selected_ref_genome = "GRCh38.92"
     for a in target_assays:
-        if a["name"] == selected_assay_name and a["reference_genome"]:
+        if a["name"] == selected_assay_name and "reference_genome" in a.keys():
             selected_ref_genome = a["reference_genome"]["name"]
 
     return (selected_assay_name, selected_assay_id, selected_ref_genome)
@@ -1080,6 +1081,40 @@ def extract_assay_somatic(args):
 
     if args.retrieve_variant:
         filter_dict = json_validation_function("variant", args)
+
+    payload, fields_list = somatic_final_payload(
+        full_input_dict=filter_dict,
+        name=selected_assay_name,
+        id=selected_assay_id,
+        project_context=project,
+        genome_reference=selected_ref_genome,
+    )
+
+    if "CohortBrowser" in resp["recordTypes"]:
+        if resp.get("baseSql"):
+            payload["base_sql"] = resp.get("baseSql")
+        payload["filters"] = resp["filters"]
+
+    #### Run api call to get sql or extract data ####
+
+    if args.sql:
+        sql_results = raw_query_api_call(resp, payload)
+        if print_to_stdout:
+            print(sql_results)
+        else:
+            with open(out_file, "w") as sql_file:
+                print(sql_results, file=sql_file)
+    else:
+        resp_raw = raw_api_call(resp, payload)
+
+        csv_from_json(
+            out_file_name=out_file,
+            print_to_stdout=print_to_stdout,
+            sep="\t",
+            raw_results=resp_raw["results"],
+            column_names=fields_list,
+            quote_char=str("|"),
+        )
 
 
 class DXDataset(DXRecord):
