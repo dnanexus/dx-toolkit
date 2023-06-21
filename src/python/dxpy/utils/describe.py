@@ -888,8 +888,6 @@ def print_execution_desc(desc, verbose=False):
         print_field("Failure message", desc["failureMessage"])
     if "failureFrom" in desc and desc['failureFrom'] is not None and desc['failureFrom']['id'] != desc['id']:
         print_field("Failure is from", desc['failureFrom']['id'])
-    if 'systemRequirements' in desc:
-        print_json_field("Sys Requirements", desc['systemRequirements'])
     if "tags" in desc:
         print_list_field("Tags", desc["tags"])
     if "properties" in desc:
@@ -941,13 +939,15 @@ def print_execution_desc(desc, verbose=False):
     if 'internetUsageIPs' in desc:
         print_json_field("Internet Usage IPs", desc['internetUsageIPs'])
 
-    if desc.get('runSystemRequirements') is not None:
+    if 'systemRequirements' in desc:
+        print_json_field("Sys Requirements", desc['systemRequirements'])
+    if 'runSystemRequirements'  in desc:
         print_json_field("Run Sys Reqs", desc['runSystemRequirements'])
-    if desc.get('runSystemRequirementsByExecutable') is not None:
+    if 'runSystemRequirementsByExecutable' in desc:
         print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirementsByExecutable'])
-    if desc.get('mergedSystemRequirementsByExecutable') is not None:
+    if 'mergedSystemRequirementsByExecutable' in desc:
         print_json_field("Merged Sys Reqs By Exec", desc['mergedSystemRequirementsByExecutable'])
-    if desc.get('runStageSystemRequirements') is not None:
+    if 'runStageSystemRequirements' in desc:
         print_json_field("Run Stage Sys Reqs", desc['runStageSystemRequirements'])
 
     for field in desc:
