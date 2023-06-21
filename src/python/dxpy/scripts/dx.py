@@ -3053,10 +3053,11 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     else:
         requested_cluster_spec = cloned_cluster_spec
 
-    # combine the requested instance type and full cluster spec
-    # into the runtime systemRequirements
+    # fpga driver now does not have corresponding dx run option, so it can only be requested using the cloned value
     requested_fpga_driver = cloned_fpga_driver
 
+    # combine the requested instance type, full cluster spec, fpga spec
+    # into the runtime systemRequirements
     requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
 
     # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
