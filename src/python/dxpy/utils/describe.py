@@ -1033,6 +1033,11 @@ def print_desc(desc, verbose=False):
     Depending on the class of the entity, this method will print a
     formatted and human-readable string containing the data in *desc*.
     '''
+    if isinstance(desc, dict) and not desc.get('class'):
+        from ..utils.resolver import is_hashid
+        if is_hashid(desc.get('id')):
+            desc['class'] = desc['id'].split("-")[0]
+
     if desc['class'] in ['project', 'workspace', 'container']:
         print_project_desc(desc, verbose=verbose)
     elif desc['class'] == 'app':
