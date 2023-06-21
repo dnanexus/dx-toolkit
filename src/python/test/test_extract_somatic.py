@@ -23,7 +23,6 @@
 # Unit testing for the dx extract_assay somatic command
 # Similar to the dx extract_assay germline tests
 
-
 import dxpy
 import unittest
 
@@ -37,9 +36,12 @@ proj_id = list(
             dxpy.find_projects(describe=False, level="VIEW", name=test_project)
         )[0]["id"]
 
-class TestDXExtractAssay(unittest.TestCase):
+class TestDXExtractAssaySomatic(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.proj_id = list(
+            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
+        )[0]["id"]
         cd(proj_id + ":/")
 
     ############
