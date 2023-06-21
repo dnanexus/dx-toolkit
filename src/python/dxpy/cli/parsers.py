@@ -364,15 +364,15 @@ def get_update_project_args(args):
     if args.description is not None:
         input_params["description"] = args.description
     if args.protected is not None:
-        input_params["protected"] = True if args.protected == 'true' else False
+        input_params["protected"] = args.protected == 'true'
     if args.restricted is not None:
-        input_params["restricted"] = True if args.restricted == 'true' else False
+        input_params["restricted"] = args.restricted == 'true'
     if args.download_restricted is not None:
-        input_params["downloadRestricted"] = True if args.download_restricted == 'true' else False
+        input_params["downloadRestricted"] = args.download_restricted == 'true'
     if args.containsPHI is not None:
-        input_params["containsPHI"] = True if args.containsPHI == 'true' else False
+        input_params["containsPHI"] = args.containsPHI == 'true'
     if args.database_ui_view_only is not None:
-        input_params["databaseUIViewOnly"] = True if args.database_ui_view_only == 'true' else False
+        input_params["databaseUIViewOnly"] = args.database_ui_view_only == 'true'
     if args.bill_to is not None:
         input_params["billTo"] = args.bill_to
     if args.allowed_executables is not None:
@@ -380,7 +380,7 @@ def get_update_project_args(args):
     if args.unset_allowed_executables:
         input_params['allowedExecutables'] = None
     if args.external_upload_restricted is not None:
-        input_params['externalUploadRestricted'] = True if args.external_upload_restricted == 'true' else False
+        input_params['externalUploadRestricted'] = args.external_upload_restricted == 'true'
     return input_params
 
 def process_phi_param(args):
