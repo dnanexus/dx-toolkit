@@ -6337,7 +6337,7 @@ parser_e_a_s_mutex_group.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. By default returns the following set of fields; “assay_sample_id”, “allele_id”, “chrom”, “pos”, “ref”, and “allele”. Additional fields may be returned using --additional-fields. Specify “--json-help” following this option to get detailed information on the json format and filters. When filtering, must supply one, and only one of “location”, “annotation.gene_name”, “annotation.gene_id”, “annotation.feature_id”, “allele.allele_id”.",
+    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. Retrieves rows from the variant table, optionally extended with sample and annotation information (the extension is inline without affecting row count). By default returns the following set of fields; “assay_sample_id”, “allele_id”, “CHROM”, “POS”, “REF”, and “allele”. Additional fields may be returned using --additional-fields. Specify “--json-help” following this option to get detailed information on the json format and filters. When filtering, must supply one, and only one of “location”, “annotation.symbol”, “annotation.gene”, “annotation.feature”, “allele.allele_id”.",
 )
 
 parser_e_a_s_mutex_group.add_argument(
@@ -6356,7 +6356,7 @@ parser_extract_assay_somatic.add_argument(
     "--additional-fields",
     nargs='*',
     default=None,
-    help="A list of strings to specify what fields in the assay to return, in addition to the default fields always returned, “assay_sample_id,” “allele_id,”  “chrom,”  “pos,”  “ref,”  “allele.” Supplied fields must be separated by commas. For a full list of what fields are available, use --additional-fields –help to learn more. Use “--additional-fields-help” to get the full list of output fields available.",
+    help="A list of strings to specify what fields in the assay to return, in addition to the default fields always returned, “assay_sample_id”, “allele_id”,  “CHROM”,  “POS”,  “REF”,  “allele”. Supplied fields must be separated by commas. Use “--additional-fields-help” to get the full list of output fields available.",
 )
 
 parser_extract_assay_somatic.add_argument(

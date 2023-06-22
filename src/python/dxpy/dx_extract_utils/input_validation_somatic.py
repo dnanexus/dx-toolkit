@@ -84,8 +84,8 @@ def validate_somatic_filter(filter, filter_type):
                 for item in allele_filter['variant_type']:
                     if item not in ['SNP', 'INS', 'DEL', 'DUP', 'INV', 'CNV', 'CNV:TR', 'BND', 'DUP:TANDEM', 'DEL:ME', 'INS:ME', 'MISSING', 'MISSING:DEL', 'UNSPECIFIED', 'REF', 'OTHER']:
                         err_exit(malformed_filter.format('allele["variant_type"]'))
-                if len(allele_filter['variant_type']) > 100:
-                    err_exit(maxitem_message.format('allele["variant_type"]',100))
+                if len(allele_filter['variant_type']) > 10:
+                    err_exit(maxitem_message.format('allele["variant_type"]',10))
 
         if 'sample' in keys:
             sample_filter = filter['sample']
@@ -94,14 +94,14 @@ def validate_somatic_filter(filter, filter_type):
             if 'sample_id' in sub_keys:
                 if not is_list_of_strings(sample_filter['sample_id']):
                     err_exit(malformed_filter.format('sample["sample_id"]'))
-                if len(sample_filter['sample_id']) > 100:
-                    err_exit(maxitem_message.format('sample["sample_id"]',100))
+                if len(sample_filter['sample_id']) > 500:
+                    err_exit(maxitem_message.format('sample["sample_id"]',500))
             
             if 'assay_sample_id' in sub_keys:
                 if not is_list_of_strings(sample_filter['assay_sample_id']):
                     err_exit(malformed_filter.format('sample["assay_sample_id"]'))
-                if len(sample_filter['assay_sample_id']) > 100:
-                    err_exit(maxitem_message.format('sample["assay_sample_id"]',100))
+                if len(sample_filter['assay_sample_id']) > 1000:
+                    err_exit(maxitem_message.format('sample["assay_sample_id"]',1000))
                    
         if 'location' in keys:
             # Ensure there are not more than 100 locations
