@@ -510,6 +510,46 @@ def retrieve_meta_info(
     if not print_to_stdout:
         fields_output.close()
 
+def assign_output_method(args, record_name, friendly_assay_type):
+    #### Decide output method based on --output and --sql ####
+    if args.sql:
+        file_name_suffix = ".data.sql"
+    elif friendly_assay_type == 'somatic' and args.retrieve_meta_info:
+        file_name_suffix = ".vcf_meta_info.txt"
+    else:
+        file_name_suffix = ".tsv"
+    file_already_exist = []
+    files_to_check = []
+    out_file = ""
+
+    print_to_stdout = False
+    if args.output is None:
+        out_directory = os.getcwd()
+        out_file = os.path.join(out_directory, record_name + file_name_suffix)
+        files_to_check.append(out_file)
+    elif args.output == "-":
+        print_to_stdout = True
+    elif os.path.exists(args.output):
+        if os.path.isdir(args.output):
+            err_exit("--output should be a file, not a directory.")
+        else:
+            file_already_exist.append(args.output)
+    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
+        args.output
+    ):
+        out_file = args.output
+    else:
+        err_exit(
+            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
+        )
+
+    for file in files_to_check:
+        if os.path.exists(file):
+            file_already_exist.append(file)
+
+    if file_already_exist:
+        err_exit("Cannot specify the output to be an existing file.")
+    return out_file, print_to_stdout
 
 def get_assay_name_info(
     list_assays, assay_name, path, friendly_assay_type, rec_descriptor
@@ -570,11 +610,13 @@ def get_assay_name_info(
                     selected_assay_id = ga["uuid"]
 
     selected_ref_genome = "GRCh38.92"
-    for a in target_assays:
-        if a["name"] == selected_assay_name and "reference_genome" in a.keys():
-            selected_ref_genome = a["reference_genome"]["name"]
-
-    return (selected_assay_name, selected_assay_id, selected_ref_genome)
+    
+    if friendly_assay_type == "germline":
+        for a in target_assays:
+            if a["name"] == selected_assay_name and a["reference_genome"]:
+                selected_ref_genome = a["reference_genome"]["name"]
+    
+    return(selected_assay_name, selected_assay_id, selected_ref_genome)
 
 
 def extract_assay_germline(args):
@@ -663,42 +705,7 @@ def extract_assay_germline(args):
         args.list_assays, args.assay_name, args.path, "germline", rec_descriptor
     )
 
-    #### Decide output method based on --output and --sql ####
-    if args.sql:
-        file_name_suffix = ".data.sql"
-    else:
-        file_name_suffix = ".tsv"
-    file_already_exist = []
-    files_to_check = []
-    out_file = ""
-
-    print_to_stdout = False
-    if args.output is None:
-        out_directory = os.getcwd()
-        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
-        files_to_check.append(out_file)
-    elif args.output == "-":
-        print_to_stdout = True
-    elif os.path.exists(args.output):
-        if os.path.isdir(args.output):
-            err_exit("--output should be a file, not a directory.")
-        else:
-            file_already_exist.append(args.output)
-    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
-        args.output
-    ):
-        out_file = args.output
-    else:
-        err_exit(
-            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
-        )
-
-    for file in files_to_check:
-        if os.path.exists(file):
-            file_already_exist.append(file)
-
-    if file_already_exist:
-        err_exit("Cannot specify the output to be an existing file.")
+    out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "germline")
 
     payload = {}
     if args.retrieve_allele:
@@ -847,40 +854,22 @@ def extract_assay_somatic(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.
     """
-    invalid_retrieve_meta_info_args = any(
-        [
-            args.include_normal_sample,
-            args.additional_fields,
-            args.additional_fields_help,
-            args.sql,
-            args.list_assays,
-            args.retrieve_variant,
-            args.json_help,
-        ]
-    )
-    if args.retrieve_meta_info and invalid_retrieve_meta_info_args:
+    
+    ######## Input combination validation and print help########
+    invalid_combo_args = any([args.include_normal_sample, args.additional_fields, args.json_help, args.sql])
+
+    if args.retrieve_meta_info and invalid_combo_args:
         err_exit(
             "The flag, --retrieve-meta-info cannot be used with arguments other than --assay-name, --output."
         )
 
-    ######## Input combination validation and print help########
-    invalid_combo_args = any(
-        [
-            args.include_normal_sample,
-            args.additional_fields,
-            args.additional_fields_help,
-            args.output,
-            args.sql,
-        ]
-    )
-
-    if args.list_assays and any(
-        [args.assay_name, args.retrieve_variant, args.json_help, invalid_combo_args]
-    ):
-        err_exit("--list-assays cannot be presented with other options.")
+    if args.list_assays and any([args.assay_name, args.output, invalid_combo_args]):
+        err_exit(
+            '--list-assays cannot be presented with other options.'
+        )
 
     if args.json_help:
-        if any([args.assay_name, invalid_combo_args]):
+        if any([args.assay_name, args.output, args.include_normal_sample, args.additional_fields, args.sql]):
             err_exit(
                 "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --additional-fields-help, --output."
             )
@@ -888,141 +877,65 @@ def extract_assay_somatic(args):
             err_exit("--json-help cannot be passed without --retrieve-variant.")
         else:
             print(
-                '# Filters and respective definitions\n#\n#  location: Genomic range in the reference genome where the alleles overlap with. If multiple values are provided in the list, the conditional search will be, "OR." String match is case sensitive.\n#  gene_name: Gene name for the variant. A list of gene names whose coordinates defines the genome range where the alleles overlap with. If multiple values are provided, the conditional search will be, "OR." For example, ["BRCA2", "ASPM"], will search for variants which match either "BRCA2" or "ASPM". String match is case sensitive.\n#  gene_id: Gene ID of the variant. If multiple values are provided, the conditional search will be, "OR." For example, ["ENSG00000302118", "ENSG00004000504"], will search for variants which match either "ENSG00000302118" or "ENSG00004000504". String match is case insensitive.\n#  feature_id: Feature id where the range overlaps with the variant. The most common one is transcript_id. If multiple values are provided, the conditional search will be, "OR." For example, ["ENST00000302118.5", "ENST00004000504.1"], will search for variants which match either "ENST00000302118.5" or "ENST00004000504.1". String match is case insensitive.\n#  hgvs_c: HGVS (DNA) code of the variant. If multiple values are provided, the conditional search will be, "OR." For example, ["c.-49A>G", "c.-20T>G"], will search for alleles which match either "c.-49A>G" or "c.-20T>G". String match is case sensitive.\n#  hgvs_p: HGVS (Protein) code of the variant. If multiple values are provided, the conditional search will be, "OR." For example, ["p.Gly2Asp", "p.Aps2Gly"], will search for variants which match either "p.Gly2Asp" or "p.Aps2Gly". String match is case sensitive.\n#  allele_id: ID of an allele. If multiple values are provided, any alleles that match one of the values specified will be listed. For example, ["1_1000_A_T", "1_1010_C_T"], will search for alleles which match either "1_1000_A_T" or "1_1010_C_T". String match is case sensitive/exact match.\n#  type: Type of allele. Accepted values are “SNP”, “INS”, “DEL”, “DUP”, “INV”, “CNV”, “CNV:TR”, “BND”, “DUP:TANDEM”, “DEL:ME”, “INS:ME”, “MISSING”, “MISSING:DEL”, “UNSPECIFIED”, or “OTHER”. If multiple values are provided, the conditional search will be, “OR.” For example, [“SNP”, “INS”], will search for variants which match either “SNP” or ““INS”. String match is case insensitive.\n#  assay_sample_id: ID of samples where to look for alleles. If a user has a list of samples more than 1,000, it is recommended to either retrieve multiple times, or use a cohort id containing all the samples.\n# JSON filter template for --retrieve-variant\n{\n  "location": [\n    {\n      "chromosome": "1",\n      "starting_position": "10000",\n      "ending_position": "20000"\n    },\n    {\n      "chromosome": "X",\n      "starting_position": "500",\n      "ending_position": "1700"\n    }\n  ],\n  "annotation": {\n    "gene_name": ["BRCA2"],\n    "gene_id": ["ENST00000302118],\n    "feature_id": ["ENST00000302118.5"],\n    "hgvs_c": ["c.-49A>G"],\n    "hgvs_p": ["p.Gly2Asp"]\n  },\n  "allele" : {\n    "allele_id":["1_1000_A_T","2_1000_G_C"],\n    "type" : ["SNP", "INS"]\n  },\n  "assay_sample_id" : ["SampleA", "SampleB", "SampleC"]\n}'
+                '#  Filters and respective definitions\n#\n#  location: “location” filters variants based on having an allele_id which has a corresponding annotation row which matches the supplied “chromosome” with CHROM and where the start position (POS) of the allele_id is between and including the supplied “starting_position” and “ending_position”. If multiple values are provided in the list, the conditional search will be, “OR”. String match is case sensitive.\n#  symbol: “symbol” filters variants based on having an allele_id which has a corresponding annotation row which has a matching symbol (gene) name. If multiple values are provided, the conditional search will be, “OR”. For example, [“BRCA2”, “ASPM”], will search for variants which match either “BRCA2” or “ASPM”. String match is case sensitive.\n#  gene: “gene” filters variants based on having an allele_id which has a corresponding annotation row which has a matching gene ID of the variant. If multiple values are provided, the conditional search will be, “OR”. For example, [“ENSG00000302118”, “ENSG00004000504”], will search for variants which match either “ENSG00000302118” or “ENSG00004000504”. String match is case insensitive.\n#  feature: “feature” filters variants based on having an allele_id which has a corresponding annotation row which has a matching feature ID. The most common Feature ID is a transcript_id. If multiple values are provided, the conditional search will be, “OR”. For example, [“ENST00000302118”, “ENST00004000504”], will search for variants which match either “ENST00000302118” or “ENST00004000504”. String match is case insensitive.\n#  hgvsc: “hgvsc” filters variants based on having an allele_id which has a corresponding annotation row which has a matching HGVSc. If multiple values are provided, the conditional search will be, “OR”. For example, [“c.-49A>G”, “c.-20T>G”], will search for alleles which match either “c.-49A>G” or “c.-20T>G”. String match is case sensitive.\n#  hgvsp: “hgvsp” filters variants based on having an allele_id which has a corresponding annotation row which has a matching HGVSp. If multiple values are provided, the conditional search will be, “OR”. For example, [“p.Gly2Asp”, “p.Aps2Gly”], will search for variants which match either “p.Gly2Asp” or “p.Aps2Gly”. String match is case sensitive.\n#  allele_id: “allele_id” filters variants based on allele_id match. If multiple values are provided, anymatch will be returned. For example, [“1_1000_A_T”, “1_1010_C_T”], will search for allele_ids which match either “1_1000_A_T” or ““1_1010_C_T”. String match is case sensitive/exact match.\n#  variant_type: Type of allele. Accepted values are “SNP”, “INS”, “DEL”, “DUP”, “INV”, “CNV”, “CNV:TR”, “BND”, “DUP:TANDEM”, “DEL:ME”, “INS:ME”, “MISSING”, “MISSING:DEL”, “UNSPECIFIED”, “REF” or “OTHER”. If multiple values are provided, the conditional search will be, “OR”. For example, [“SNP”, “INS”], will search for variants which match either “SNP” or ““INS”. String match is case insensitive.\n#  sample_id: “sample_id” filters either a pair of tumor-normal samples based on having sample_id which has a corresponding sample row which has a matching sample_id. If a user has more than 500 IDs, it is recommended to either retrieve multiple times, or use a cohort id containing all desired individuals, providing the full set of sample_ids.\n#  assay_sample_id: “assay_sample_id” filters either a tumor or normal sample based on having an assay_sample_id which has a corresponding sample row which has a matching assay_sample_id. If a user has a list of more than 1,000 IDs, it is recommended to either retrieve multiple times, or use a cohort id containing all desired individuals, providing the full set of assay_sample_ids.\n# JSON filter template for --retrieve-variant\n{\n  "location": [\n    {\n      "chromosome": "1",\n      "starting_position": "10000",\n      "ending_position": "20000"\n    },\n    {\n      "chromosome": "X",\n      "starting_position": "500",\n      "ending_position": "1700"\n    }\n  ],\n  "annotation": {\n    "symbol": ["BRCA2"],\n    "gene": ["ENST00000302118],\n    "feature": ["ENST00000302118.5"],\n    "hgvsc": ["c.-49A>G"],\n    "hgvsp": ["p.Gly2Asp"]\n  },\n  "allele" : {\n    "allele_id":["1_1000_A_T","2_1000_G_C"],\n    "variant_type" : ["SNP", "INS"]\n  },\n  "sample": {\n    "sample_id": ["Sample1", "Sample2"],\n    "assay_sample_id" : ["Sample1_tumt", "Sample1_nor"]\n  }\n}'
             )
             sys.exit(0)
 
     if args.additional_fields_help:
-        if any(
-            [
-                args.assay_name,
-                args.retrieve_variant,
-                args.include_normal_sample,
-                args.output,
-                args.sql,
-            ]
-        ):
+        if any([args.assay_name, args.output, invalid_combo_args]):
             err_exit(
-                "--additional-fields-help cannot be passed with any of --assay-name, --retrieve-variant, --sql, --output."
-            )
-        elif args.additional_fields is None:
-            err_exit(
-                "--additional-fields-help cannot be passed without --additional-fields."
+                '--additional-fields-help cannot be presented with other options.'
             )
         else:
-            print("The following fields will always be returned by default:\n")
-            fixed_fields = [
-                ["NAME", "TITLE", "DESCRIPTION"],
-                [
-                    "assay_sample_id",
-                    "Assay Sample ID",
-                    "A unique identifier for the tumor or normal sample. Populated from the sample columns of the VCF header.",
-                ],
-                ["allele_id", "Allele ID", "An unique identification of the allele"],
-                [
-                    "chrom",
-                    "Chromosome",
-                    "Chromosome of variant, verbatim from original VCF",
-                ],
-                [
-                    "pos",
-                    "Position",
-                    "Starting position of variant, verbatim from original VCF",
-                ],
-                [
-                    "ref",
-                    "Reference Allele",
-                    "Reference allele of locus, verbatim from original VCF",
-                ],
-                ["allele", "Allele", "Sequence of the allele"],
-            ]
+            print('The following fields will always be returned by default:\n')
+            fixed_fields = [['NAME', 'TITLE', 'DESCRIPTION'], 
+                            ['assay_sample_id', 'Assay Sample ID', 'A unique identifier for the tumor or normal sample. Populated from the sample columns of the VCF header.'], 
+                            ['allele_id', 'Allele ID', 'An unique identification of the allele'], 
+                            ['CHROM', 'Chromosome', 'Chromosome of variant, verbatim from original VCF'], 
+                            ['POS', 'Position', 'Starting position of variant, verbatim from original VCF'], 
+                            ['REF', 'Reference Allele', 'Reference allele of locus, verbatim from original VCF'], 
+                            ['allele', 'Allele', 'Sequence of the allele']]
             for row in fixed_fields:
-                print("{: <17} {: <22} {: <25}".format(*row))
-            print(
-                '\nThe following fields may be added to the output by using option --additional-fields. If multiple fields are specified, use a comma to separate each entry. For example, "sample_id,tumor_normal"\n'
-            )
-            additional_fields = [
-                ["NAME", "TITLE", "DESCRIPTION"],
-                [
-                    "sample_id",
-                    "Sample ID",
-                    "Unique ID of the pair of tumor-normal samples",
-                ],
-                [
-                    "tumor_normal",
-                    "Tumor-Normal",
-                    'One a ["tumor", "normal"] to describe source sample type',
-                ],
-                [
-                    "id",
-                    "ID",
-                    "Comma separated list of associated IDs for the variant from the original VCF",
-                ],
-                ["qual", "QUAL", "Quality of locus, verbatim from original VCF"],
-                [
-                    "filter",
-                    "FILTER",
-                    "Comma separated list of filters for locus from the original VCF",
-                ],
-                [
-                    "reference_source",
-                    "Reference source",
-                    'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample',
-                ],
-                [
-                    "variant_type",
-                    "Variant Type",
-                    "The type of allele, with respect to reference",
-                ],
-                [
-                    "symbolic_type",
-                    "Symbolic Type",
-                    'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise',
-                ],
-                [
-                    "file_id",
-                    "Source File ID",
-                    "DNAnexus platform file-id of original source file",
-                ],
-                ["INFO_<ID>", "INFO:<ID>", "<A dynamic set of fields>"],
-                ["FORMAT_<ID>", "FORMAT:<ID>", "<A dynamic set of fields>"],
-                [
-                    "gene_name",
-                    "Gene Name",
-                    "A list of gene name associated with the variant",
-                ],
-                [
-                    "gene_id",
-                    "Gene ID",
-                    "A list of gene IDs, associated with the variant",
-                ],
-                [
-                    "feature_id",
-                    "Feature ID",
-                    "A list of feature IDs, associated with the variant",
-                ],
-                [
-                    "hgvs_c",
-                    "HGVSc",
-                    "A list of sequence variants in HGVS nomenclature, for DNA",
-                ],
-                [
-                    "hgvs_p",
-                    "HGVSp",
-                    "A list of sequence variants in HGVS nomenclature, for protein",
-                ],
-                [
-                    "clin_sig",
-                    "Clinical Significance",
-                    "A list of allele specific clinical significance terms",
-                ],
-            ]
+                print("{: <22} {: <22} {: <25}".format(*row))
+            print('\nThe following fields may be added to the output by using option --additional-fields. If multiple fields are specified, use a comma to separate each entry. For example, "sample_id,tumor_normal"\n')
+            additional_fields = [['NAME', 'TITLE', 'DESCRIPTION'], 
+                                 ['sample_id', 'Sample ID', 'Unique ID of the pair of tumor-normal samples'], 
+                                 ['tumor_normal', 'Tumor-Normal', 'One of ["tumor", "normal"] to describe source sample type'], 
+                                 ['ID', 'ID', 'Comma separated list of associated IDs for the variant from the original VCF'], 
+                                 ['QUAL', 'QUAL', 'Quality of locus, verbatim from original VCF'], 
+                                 ['FILTER', 'FILTER', 'Comma separated list of filters for locus from the original VCF'], 
+                                 ['reference_source', 'Reference Source', 'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample'], 
+                                 ['variant_type', 'Variant Type', 'The type of allele, with respect to reference'], 
+                                 ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise'], 
+                                 ['file_id', 'Source File ID', 'DNAnexus platform file-id of original source file'], 
+                                 ['INFO', 'INFO', 'INFO section, verbatim from original VCF'], 
+                                 ['FORMAT', 'FORMAT', 'FORMAT section, verbatim from original VCF'], 
+                                 ['SYMBOL', 'Symbol', 'A list of gene name associated with the variant'], 
+                                 ['GENOTYPE', 'GENOTYPE', 'GENOTYPE section, as described by FORMAT section, verbatim from original VCF'],
+                                 ['normal_assay_sample_id', 'Normal Assay Sample ID', 'Assay Sample ID of respective “normal” sample, if exists'],
+                                 ['normal_allele_ids', 'Normal Allele IDs', 'Allele ID(s) of respective “normal” sample, if exists'],
+                                 ['Gene', 'Gene ID', 'A list of gene IDs, associated with the variant'], 
+                                 ['Feature', 'Feature ID', 'A list of feature IDs, associated with the variant'], 
+                                 ['HGVSc', 'HGVSc', 'A list of sequence variants in HGVS nomenclature, for DNA'], 
+                                 ['HGVSp', 'HGVSp', 'A list of sequence variants in HGVS nomenclature, for protein'], 
+                                 ['CLIN_SIG', 'Clinical Significance', 'A list of allele specific clinical significance terms']]
             for row in additional_fields:
-                print("{: <17} {: <22} {: <25}".format(*row))
+                print("{: <22} {: <22} {: <25}".format(*row))
             sys.exit(0)
 
+    # Validate additional fields
+    if args.additional_fields:
+        accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG']
+        for field in args.additional_fields:
+            if field not in accepted_additional_fields:
+                err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
+            
     ######## Data Processing ########
     project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
+        err_exit(
+            "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
+        )
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
@@ -1030,57 +943,62 @@ def extract_assay_somatic(args):
         args.list_assays, args.assay_name, args.path, "somatic", rec_descriptor
     )
 
-    #### Decide output method based on --output and --sql ####
-    if args.sql:
-        file_name_suffix = ".data.sql"
-    elif args.retrieve_meta_info:
-        file_name_suffix = ".vcf_meta_info.txt"
-    else:
-        file_name_suffix = ".tsv"
-    file_already_exist = []
-    files_to_check = []
-    out_file = ""
-
-    print_to_stdout = False
-    if args.output is None:
-        out_directory = os.getcwd()
-        out_file = os.path.join(out_directory, resp["recordName"] + file_name_suffix)
-        files_to_check.append(out_file)
-    elif args.output == "-":
-        print_to_stdout = True
-    elif os.path.exists(args.output):
-        if os.path.isdir(args.output):
-            err_exit("--output should be a file, not a directory.")
-        else:
-            file_already_exist.append(args.output)
-    elif os.path.exists(os.path.dirname(args.output)) or not os.path.dirname(
-        args.output
-    ):
-        out_file = args.output
-    else:
-        err_exit(
-            "Error: {path} could not be found".format(path=os.path.dirname(args.output))
-        )
-
-    for file in files_to_check:
-        if os.path.exists(file):
-            file_already_exist.append(file)
-
-    if file_already_exist:
-        err_exit("Cannot specify the output to be an existing file.")
+    out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "somatic")
 
     if args.retrieve_meta_info:
-        retrieve_meta_info(
-            resp,
-            project,
-            selected_assay_id,
-            selected_assay_name,
-            print_to_stdout,
-            out_file,
-        )
+        retrieve_meta_info(resp, project, selected_assay_id, selected_assay_name, print_to_stdout, out_file)
+        sys.exit(0)
 
     if args.retrieve_variant:
         filter_dict = json_validation_function("variant", args)
+        
+        # Replace the hardcoded payload and fields_list with a call to json to payload function
+        payload = {"project_context": project, 
+                   "fields": [
+                        {"CHROM": "variant_read_optimized$CHROM"},
+                        {"allele_id": "variant_read_optimized$allele_id"}
+                    ], 
+                    "adjust_geno_bins": False, 
+                    "raw_filters": {
+                        "assay_filters": {
+                            "name": "sciprod1363_3more",
+                            "id": "2e1e4b19-f5d6-48b6-974e-f8ed11e44e7e",
+                            "filters": {
+                                "variant_read_optimized$allele_id": [
+                                    {"condition": "in", "values": ["chrUn_JTFH01001875v1_decoy_34_GG_AA"]}
+                                ]
+                            },
+                        "logic": "and",
+                        }
+                    },
+                    "is_cohort": False,
+                    "distinct": True,
+                    }
+        fields_list = ["CHROM", "allele_id"]
+
+        if "CohortBrowser" in resp["recordTypes"]:
+            if resp.get("baseSql"):
+                payload["base_sql"] = resp.get("baseSql")
+            payload["filters"] = resp["filters"]
+
+        if args.sql:
+            sql_results = raw_query_api_call(resp, payload)
+            if print_to_stdout:
+                print(sql_results)
+            else:
+                with open(out_file, "w") as sql_file:
+                    print(sql_results, file=sql_file)
+        else:
+            resp_raw = raw_api_call(resp, payload)
+
+            csv_from_json(
+                out_file_name=out_file,
+                print_to_stdout=print_to_stdout,
+                sep="\t",
+                raw_results=resp_raw["results"],
+                column_names=fields_list,
+                quote_char=str("|"),
+            )
 
     if args.additional_fields:
         payload, fields_list = somatic_final_payload(
