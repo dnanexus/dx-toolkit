@@ -1082,13 +1082,23 @@ def extract_assay_somatic(args):
     if args.retrieve_variant:
         filter_dict = json_validation_function("variant", args)
 
-    payload, fields_list = somatic_final_payload(
-        full_input_dict=filter_dict,
-        name=selected_assay_name,
-        id=selected_assay_id,
-        project_context=project,
-        genome_reference=selected_ref_genome,
-    )
+    if args.additional_fields:
+        payload, fields_list = somatic_final_payload(
+            full_input_dict=filter_dict,
+            name=selected_assay_name,
+            id=selected_assay_id,
+            project_context=project,
+            genome_reference=selected_ref_genome,
+            additional_fields=args.additional_fields,
+        )
+    else:
+        payload, fields_list = somatic_final_payload(
+            full_input_dict=filter_dict,
+            name=selected_assay_name,
+            id=selected_assay_id,
+            project_context=project,
+            genome_reference=selected_ref_genome,
+        )
 
     if "CohortBrowser" in resp["recordTypes"]:
         if resp.get("baseSql"):

@@ -118,7 +118,13 @@ def location_filter(raw_location_list):
     return location_compound
 
 
-def generate_pheno_filter(full_input_dict, name, id, project_context, genome_reference):
+def generate_pheno_filter(
+    full_input_dict,
+    name,
+    id,
+    project_context,
+    genome_reference,
+):
     """
     Generate asasy filter consisting of a compound that links the Location filters if present
     to the regular filters
@@ -161,7 +167,9 @@ def generate_pheno_filter(full_input_dict, name, id, project_context, genome_ref
     return pheno_filter
 
 
-def somatic_final_payload(full_input_dict, name, id, project_context, genome_reference):
+def somatic_final_payload(
+    full_input_dict, name, id, project_context, genome_reference, additional_fields=None
+):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),
     and raw filters objects.  This payload is sent in its entirety to the vizserver via an
@@ -193,7 +201,15 @@ def somatic_final_payload(full_input_dict, name, id, project_context, genome_ref
         {"REF": "variant_read_optimized$REF"},
         {"allele": "variant_read_optimized$allele"},
     ]
+
+    if additional_fields:
+        for add_field in additional_fields.split(","):
+            fields.append(
+                {"{}".format(add_field): "variant_read_optimized${}".format(add_field)}
+            )
+
     final_payload["fields"] = fields
+
     final_payload["raw_filters"] = pheno_filter
     final_payload["is_cohort"] = True
     final_payload["distinct"] = True
@@ -214,7 +230,7 @@ if __name__ == "__main__":
     genome_reference = "Homo_sapiens.GRCh38.92"
     proj_id = "project-GP7B0X80VBvx6pGKJ3fq1Q7G"
 
-    test_dir = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/clisam_test_filters"
+    test_dir = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/test/clisam_test_filters"
     input_dir = os.path.join(test_dir, "input")
     output_dir = os.path.join(test_dir, "output")
     test_filter = "single_location.json"

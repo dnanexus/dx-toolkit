@@ -26,18 +26,30 @@
 
 import dxpy
 import unittest
+import os
+import subprocess
 
 from dxpy_testutil import cd
-from dxpy.cli.dataset_utilities import get_assay_name_info, resolve_validate_path, DXDataset
+from dxpy.cli.dataset_utilities import (
+    get_assay_name_info,
+    resolve_validate_path,
+    DXDataset,
+)
+
 
 test_project = "PMUX-1324-SCIPROD-CLISAM"
-test_record = "{}:test_datasets/assay_title_annot_complete"
+test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
 
-proj_id = list(
-            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
-        )[0]["id"]
+proj_id = list(dxpy.find_projects(describe=False, level="VIEW", name=test_project))[0][
+    "id"
+]
 
-class TestDXExtractAssay(unittest.TestCase):
+dirname = os.path.dirname(__file__)
+test_filter_directory = os.path.join(dirname, "clisam_test_filters/input/")
+output_directory = os.path.join(dirname, "clisam_test_filters/output/e2e_output")
+
+
+class TestDXExtractSomatic(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cd(proj_id + ":/")
@@ -56,6 +68,42 @@ class TestDXExtractAssay(unittest.TestCase):
         dataset_id = resp["dataset"]
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-        selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"somatic",rec_descriptor)
+        # (
+        #    selected_assay_name,
+        #    selected_assay_id,
+        #    selected_ref_genome,
+        # ) = get_assay_name_info(
+        #    args.list_assays, args.assay_name, args.path, "somatic", rec_descriptor
+        # )
 
         # TODO generate expected results for this
+
+    def test_single_location(self):
+        print("testing single location")
+        input_filter_path = os.path.join(test_filter_directory, "single_location.json")
+        output_path = os.path.join(output_directory, "single_location_output.tsv")
+
+        command = (
+            "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
+                test_record, input_filter_path, output_path
+            )
+        )
+
+        process = subprocess.check_output(command, shell=True)
+
+    def test_additional_fields(self):
+        input_filter_path = os.path.join(test_filter_directory, "single_location.json")
+        output_path = os.path.join(output_directory, "additional_fields_output.tsv")
+
+        command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --additional-fields "{}"'.format(
+            test_record,
+            input_filter_path,
+            output_path,
+            "sample_id,tumor_normal,symbolic_type",
+        )
+
+        process = subprocess.check_output(command, shell=True)
+
+
+if __name__ == "__main__":
+    unittest.main()
