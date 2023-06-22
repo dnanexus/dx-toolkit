@@ -2,24 +2,11 @@ import json
 import pprint
 import os
 
-# from ...exceptions import err_exit, ResourceNotFound
+from ..exceptions import err_exit, ResourceNotFound
 import dxpy
 
+# A dictionary relating the user-facing names of columns to their actual column
 
-# extract_utils_basepath = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/dxpy/dx_extract_utils/somatic"
-
-if False:
-    # path to resources
-    extract_utils_basepath = os.path.join(
-        os.path.dirname(dxpy.__file__), "dx_extract_utils"
-    )
-
-    # A dictionary relating the user-facing names of columns to their actual column
-    # names in the tables
-    # with open(
-    #    os.path.join(extract_utils_basepath, "somatic_column_conversion.json"), "r"
-    # ) as infile:
-    #    column_conversion = json.load(infile)
 column_conversion = {
     "allele_id": "variant_read_optimized$allele_id",
     "variant_type": "variant_read_optimized$variant_type",
@@ -30,6 +17,7 @@ column_conversion = {
     "hgvs-p": "variant_read_optimized$HGVSp",
     "assay_sample_id": "variant_read_optimized$assay_sample_id",
     "sample_id": "variant_read_optimized$sample_id",
+    "tumor_normal": "pheno_assay_link$tumor_normal",
 }
 
 
@@ -53,8 +41,11 @@ def basic_filter(
     # The table is always "variant_read_optimized" in somatic assays
     table = "variant_read_optimized"
     filter_key = column_conversion[friendly_name]
-    # All current filterable fields use the "in" condition
-    condition = "in"
+    # All current filterable fields use the "in" condition, except for tumor_normal
+    if friendly_name == "tumor_normal":
+        condition = "is"
+    else:
+        condition = "in"
     listed_filter = {filter_key: [{"condition": condition, "values": values}]}
     return listed_filter
 
@@ -98,12 +89,11 @@ def location_filter(raw_location_list):
         start = int(location["starting_position"])
         end = int(location["ending_position"])
         if end - start > 250000000:
-            exit(1)
-            # err_exit(
-            #    "Error in location {}\nLocation filters may not specify regions larger than 250 megabases".format(
-            #        location
-            #    )
-            # )
+            err_exit(
+                "Error in location {}\nLocation filters may not specify regions larger than 250 megabases".format(
+                    location
+                )
+            )
         # First make the chr filter
         indiv_loc_filter["filters"]["variant_read_optimized$CHROM"] = [
             {"condition": "is", "values": location["chromosome"]}
@@ -119,11 +109,7 @@ def location_filter(raw_location_list):
 
 
 def generate_pheno_filter(
-    full_input_dict,
-    name,
-    id,
-    project_context,
-    genome_reference,
+    full_input_dict, name, id, project_context, genome_reference, include_normal=False
 ):
     """
     Generate asasy filter consisting of a compound that links the Location filters if present
@@ -159,16 +145,30 @@ def generate_pheno_filter(
                     genome_reference,
                 )
                 basic_filters["filters"].update(indiv_basic_filter)
+    # If include_normal is False, then add a filter to select data where tumor_normal = tumor
+    tumor_normal_filter = basic_filter(
+        "pheno_assay_link",
+        "tumor_normal",
+        "tumor",
+        project_context,
+        genome_reference,
+    )
+    basic_filters["filters"].update(tumor_normal_filter)
+
     if len(basic_filters["filters"]) > 0:
         pheno_filter["pheno_filters"]["compound"].append(basic_filters)
-    # else:
-    # In the case where only a location filter is given, we need to remove the outer compound
-    #    pass
+
     return pheno_filter
 
 
 def somatic_final_payload(
-    full_input_dict, name, id, project_context, genome_reference, additional_fields=None
+    full_input_dict,
+    name,
+    id,
+    project_context,
+    genome_reference,
+    additional_fields=None,
+    include_normal=False,
 ):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),
@@ -177,22 +177,13 @@ def somatic_final_payload(
     """
     # Generate the assay filter component of the payload
     pheno_filter = generate_pheno_filter(
-        full_input_dict,
-        name,
-        id,
-        project_context,
-        genome_reference,
+        full_input_dict, name, id, project_context, genome_reference, include_normal
     )
 
     final_payload = {}
     # Set the project context
     final_payload["project_context"] = project_context
-    if False:
-        pass
-        # with open(
-        #    os.path.join(extract_utils_basepath, "return_columns_somatic.json")
-        # ) as infile:
-        #    fields = json.load(infile)
+
     fields = [
         {"assay_sample_id": "variant_read_optimized$assay_sample_id"},
         {"allele_id": "variant_read_optimized$allele_id"},
@@ -202,6 +193,7 @@ def somatic_final_payload(
         {"allele": "variant_read_optimized$allele"},
     ]
 
+    # If the user has specified additional return columns, add them to the payload here
     if additional_fields:
         for add_field in additional_fields.split(","):
             fields.append(
@@ -209,7 +201,6 @@ def somatic_final_payload(
             )
 
     final_payload["fields"] = fields
-
     final_payload["raw_filters"] = pheno_filter
     final_payload["is_cohort"] = True
     final_payload["distinct"] = True

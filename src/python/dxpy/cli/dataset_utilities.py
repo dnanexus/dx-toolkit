@@ -1090,6 +1090,7 @@ def extract_assay_somatic(args):
             project_context=project,
             genome_reference=selected_ref_genome,
             additional_fields=args.additional_fields,
+            include_normal=args.include_normal_sample,
         )
     else:
         payload, fields_list = somatic_final_payload(
@@ -1098,7 +1099,14 @@ def extract_assay_somatic(args):
             id=selected_assay_id,
             project_context=project,
             genome_reference=selected_ref_genome,
+            include_normal=args.include_normal_sample,
         )
+
+    # TODO remove, this is for debugging purposes
+    payload_filename = "payload_" + os.path.basename(out_file)
+    payload_filename = payload_filename[:-4] + ".json"
+    with open(payload_filename, "w") as outfile:
+        json.dump(payload, outfile)
 
     if "CohortBrowser" in resp["recordTypes"]:
         if resp.get("baseSql"):

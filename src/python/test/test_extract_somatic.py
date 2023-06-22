@@ -104,6 +104,19 @@ class TestDXExtractSomatic(unittest.TestCase):
 
         process = subprocess.check_output(command, shell=True)
 
+    def test_tumor_normal(self):
+        input_filter_path = os.path.join(test_filter_directory, "single_location.json")
+        output_path = os.path.join(output_directory, "tumor_normal_output.tsv")
+
+        command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --include-normal-sample --additional-fields "{}"'.format(
+            test_record,
+            input_filter_path,
+            output_path,
+            "sample_id,tumor_normal",
+        )
+
+        process = subprocess.check_output(command, shell=True)
+
 
 if __name__ == "__main__":
     unittest.main()
