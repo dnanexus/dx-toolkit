@@ -17,7 +17,7 @@ column_conversion = {
     "hgvs-p": "variant_read_optimized$HGVSp",
     "assay_sample_id": "variant_read_optimized$assay_sample_id",
     "sample_id": "variant_read_optimized$sample_id",
-    "tumor_normal": "pheno_assay_link$tumor_normal",
+    "tumor_normal": "variant_read_optimized$tumor_normal",
 }
 
 
@@ -147,7 +147,7 @@ def generate_pheno_filter(
                 basic_filters["filters"].update(indiv_basic_filter)
     # If include_normal is False, then add a filter to select data where tumor_normal = tumor
     tumor_normal_filter = basic_filter(
-        "pheno_assay_link",
+        "variant_read_optimized",
         "tumor_normal",
         "tumor",
         project_context,

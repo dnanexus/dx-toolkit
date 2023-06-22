@@ -38,7 +38,9 @@ from dxpy.cli.dataset_utilities import (
 
 
 test_project = "PMUX-1324-SCIPROD-CLISAM"
-test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
+# test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
+# test_project = "project-GX0Jpp00ZJ46qYPq5G240k1k"
+test_record = "{}:/test_datasets/SCIPROD-1347/sciprod_1347".format(test_project)
 
 proj_id = list(dxpy.find_projects(describe=False, level="VIEW", name=test_project))[0][
     "id"
@@ -113,6 +115,20 @@ class TestDXExtractSomatic(unittest.TestCase):
             input_filter_path,
             output_path,
             "sample_id,tumor_normal",
+        )
+
+        process = subprocess.check_output(command, shell=True)
+
+    def test_multi_location(self):
+        input_filter_path = os.path.join(
+            test_filter_directory, "e2e/multi_location.json"
+        )
+        output_path = os.path.join(output_directory, "multi_location_output.tsv")
+
+        command = (
+            "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
+                test_record, input_filter_path, output_path
+            )
         )
 
         process = subprocess.check_output(command, shell=True)
