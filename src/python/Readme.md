@@ -9,7 +9,7 @@ Building
 From the dx-toolkit root directory:
 
 ```
-make python
+python3 -m pip install -3 src/python
 ```
 
 Debugging

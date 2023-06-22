@@ -69,17 +69,17 @@ class DXLogHandler(SysLogHandler):
         # See logging.handlers.SysLogHandler for an explanation of this.
         return self.priority_names[self.priority_map.get(record.levelname, "warning")]
 
-    def truncate_message(self, message):
-        if USING_PYTHON2:
-            if len(message) > 8015:
-                message = message[:8000] + "... [truncated]"
-        else:
-            # Trim bytes
-            encoded = message.encode('utf-8')
-            if len(encoded) > 8015:
-                # Ignore UnicodeDecodeError chars that could have been messed up by truncating
-                message = encoded[:8015].decode('utf-8', 'ignore') + "... [truncated]"
-        return message
+def truncate_message(self, message):
+    if USING_PYTHON2:
+        if len(message) > 8015:
+            message = message[:8000] + "... [truncated]"
+    else:
+        # f
+        encoded = message.encode('utf-8')
+        if len(encoded) > 8015:
+            # Ignore UnicodeDecodeError chars that could have been messed up by truncating
+            message = encoded[:8000].decode('utf-8', 'ignore') + "... [truncated]"
+    return message
 
     def is_resource_log(self, message):
         if USING_PYTHON2:
