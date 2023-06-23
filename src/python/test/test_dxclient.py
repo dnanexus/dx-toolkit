@@ -3492,7 +3492,7 @@ dx-jobutil-add-output record_array $second_record --array
                          {'some_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
-        # --instance-type override: original job with entry point-specific systemRequirements
+        # --instance-type override: original job with entrypoint specific systemRequirements
         orig_job_id = run("dx run " + applet_id +
                           " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\", \"*\": \"mem2_hdd2_x2\"}' --brief -y").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
@@ -3553,7 +3553,7 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
-        # --instance-count override: new original job with entry point-specific instance count
+        # --instance-count override: new original job with entrypoint specific instance count
         orig_job_id = run("dx run " + other_applet_id +
                           " --instance-count '{\"some_ep\": \"2\"}' --brief -y").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
@@ -3581,11 +3581,12 @@ dx-jobutil-add-output record_array $second_record --array
 
         # fpgaDriver override: new original job with extra_args
         orig_job_id = run("dx run " + other_applet_id +
-                          " --instance-count 2 --brief -y " + 
-                          "--extra-args '" + 
-                          json.dumps({"systemRequirements":{"some_ep":{"fpgaDriver": "edico-1.4.5"}}}) + "'").strip()
+                          " --instance-count 2 --brief -y " +
+                          "--extra-args '" +
+                          json.dumps({"systemRequirements": {"some_ep": {"clusterSpec": {"initialInstanceCount": 12, "bootstrapScript": "z.sh"}, 
+                                                                         "fpgaDriver": "edico-1.4.5"}}}) + "'").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
-        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 2, 2])
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 12, 2])
         # --instance-type and --instance-count override: instance type and cluster spec are resolved independently
         new_job_desc = get_new_job_desc("--instance-count '" +
                                         json.dumps({"some_ep":6,
@@ -3602,6 +3603,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
         
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.5')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['clusterSpec']['bootstrapScript'], 'z.sh')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
