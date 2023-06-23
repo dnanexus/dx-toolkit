@@ -3050,7 +3050,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         if not isinstance(args.instance_count, basestring):
             if cloned_cluster_spec.as_dict():
                 requested_instance_count = SystemRequirementsDict(merge(cloned_cluster_spec.as_dict(), requested_instance_count.as_dict()))
-            cluster_spec_to_override = cloned_cluster_spec
+                cluster_spec_to_override = SystemRequirementsDict(merge(cluster_spec_to_override.as_dict(), cloned_cluster_spec.as_dict()))
         
         requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count)
     else:
