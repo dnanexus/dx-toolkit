@@ -1,3 +1,24 @@
+dx-toolkit (0.351.0) trusty; urgency=medium
+
+  * No significant changes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 23 Jun 2023 17:14:34 +0000
+
+dx-toolkit (0.350.0) trusty; urgency=medium
+
+  * Added: `dx watch` support for detailed job metrics (cpu, memory, network, disk io, etc every 60s)
+  * Added: '--detailed-job-metrics-collect-default' for `dx update org`
+  * Added: '--detailed-job-metrics' for `dx run`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 15 Jun 2023 21:47:25 +0000
+
+dx-toolkit (0.349.0) trusty; urgency=medium
+
+  * Added: external_upload_restricted to DXProject
+  * Added: `dx extract_assay` for genomic assay model data
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 09 Jun 2023 03:39:28 +0000
+
 dx-toolkit (0.348.0) trusty; urgency=medium
 
   * Added: dxpy dependencies test suite

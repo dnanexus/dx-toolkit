@@ -681,7 +681,7 @@ def extract_assay_germline(args):
                 ).group()
                 substr = "`" + geno_table + "`.`type`"
                 sql_results = sql_results.replace(
-                    substr, "REPLACE(`" + geno_table + "`.type`, 'hom', 'hom-alt')"
+                    substr, "REPLACE(`" + geno_table + "`.`type`, 'hom', 'hom-alt')", 1
                 )
 
             if print_to_stdout:

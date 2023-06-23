@@ -6,7 +6,26 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [348.0] - beta
+## [351.0] - beta
+
+* No significant changes
+
+## [350.1] - 2023.6.23
+
+### Added
+
+* `dx watch` support for detailed job metrics (cpu, memory, network, disk io, etc every 60s)
+* `--detailed-job-metrics` for `dx run`
+* `--detailed-job-metrics-collect-default` for `dx update org`
+
+## [349.1] - 2023.6.15
+
+### Added
+
+* `dx extract_assay`
+* external_upload_restricted param for DXProject
+
+## [348.0] - 2023.6.9
 
 ### Added
 
