@@ -293,9 +293,9 @@ class PrintInstanceTypeHelp(argparse.Action):
                   '           \'{"applet-xyz1":  {"main":    "mem2_ssd1_v2_x4", "*": "mem2_ssd1_v2_x2"},\n' +
                   '             "*":            {"collect": "mem2_ssd1_v2_x8"}}\'')
             print()
-            print(fill('6. Force every job executing applet-xxxx to use mem2_ssd1_v2_x2 for all entry points' +
+            print(fill('6. Force every job executing applet-xxxx to use mem2_ssd1_v2_x2 for all entry points ' +
                        'in the entire execution tree. ' +
-                       'Also force stage 0 executable to run on mem2_ssd1_v2_x4, unless stage 0 invokes' +
+                       'Also force stage 0 executable to run on mem2_ssd1_v2_x4, unless stage 0 invokes ' +
                        'applet-xxxx, in which case applet-xxxx\'s jobs will use mem2_ssd1_v2_x2 as specified by ' +
                        '--instance-type-by-executable.'))
             print()
