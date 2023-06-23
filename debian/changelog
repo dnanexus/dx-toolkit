@@ -1,3 +1,9 @@
+dx-toolkit (0.350.1) trusty; urgency=medium
+
+  * Fixed: Color of METRICS
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 23 Jun 2023 17:14:51 +0000
+
 dx-toolkit (0.350.0) trusty; urgency=medium
 
   * Added: `dx watch` support for detailed job metrics (cpu, memory, network, disk io, etc every 60s)
