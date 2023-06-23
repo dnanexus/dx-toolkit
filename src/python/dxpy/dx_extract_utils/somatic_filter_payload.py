@@ -202,7 +202,6 @@ def somatic_final_payload(
 
     final_payload["fields"] = fields
     final_payload["raw_filters"] = pheno_filter
-    final_payload["is_cohort"] = True
     final_payload["distinct"] = True
 
     field_names = []
