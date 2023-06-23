@@ -3013,6 +3013,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
     requested_instance_type, requested_cluster_spec = {}, {}
+    executable_desc = None
 
     from ..utils import merge
     if args.cloned_job_desc:
@@ -3030,6 +3031,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         cloned_system_requirements_by_executable = {}
 
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
+    # here the args.instance_type no longer contains specifications for stage sys reqs
     if args.instance_type:
         requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
         if not isinstance(args.instance_type, basestring):
@@ -3041,11 +3043,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     if args.instance_count:
         # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
         # and overwrite the field initialInstanceCount with the runtime mapping
-        requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)
-        cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable.describe()['runSpec'].get('systemRequirements', {}),_type='clusterSpec')
+        requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)        
+        executable_desc = executable.describe()
+        cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable_desc.get('runSpec',{}).get('systemRequirements', {}),_type='clusterSpec')
 
-        if cloned_cluster_spec.as_dict():
-            if not isinstance(args.instance_count, basestring):
+        if not isinstance(args.instance_count, basestring):
+            if cloned_cluster_spec.as_dict():
                 requested_instance_count = SystemRequirementsDict(merge(cloned_cluster_spec.as_dict(), requested_instance_count.as_dict()))
             cluster_spec_to_override = cloned_cluster_spec
         
@@ -3119,7 +3122,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
 
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
-        executable_desc = executable.describe()
+        executable_desc = executable_desc or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
         def check_for_special_access(access_spec):
             if not access_spec:
