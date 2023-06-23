@@ -3553,6 +3553,32 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
+        # --instance-count override: new original job with entry point-specific instance count
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count '{\"some_ep\": \"2\"}' --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [1, 2, 5])
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-count 4")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [4, 4, 4])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override single entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep": 6}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [1, 6, 5])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override wildcard entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"*": 8}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [1, 2, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
         # fpgaDriver override: new original job with extra_args
         orig_job_id = run("dx run " + other_applet_id +
                           " --instance-count 2 --brief -y " + 
