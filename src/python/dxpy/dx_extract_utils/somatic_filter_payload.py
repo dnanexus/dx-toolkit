@@ -20,6 +20,19 @@ column_conversion = {
     "tumor_normal": "variant_read_optimized$tumor_normal",
 }
 
+column_conditions = {
+    "allele_id": "in",
+    "variant_type": "in",
+    "symbol": "any",
+    "gene": "any",
+    "feature": "any",
+    "hgvs-c": "in",
+    "hgvs-p": "in",
+    "assay_sample_id": "in",
+    "sample_id": "in",
+    "tumor_normal": "is"
+}
+
 
 def basic_filter(
     table, friendly_name, values=[], project_context=None, genome_reference=None
@@ -40,12 +53,11 @@ def basic_filter(
     """
     # The table is always "variant_read_optimized" in somatic assays
     table = "variant_read_optimized"
+    # Get the name of this field in the variant table
     filter_key = column_conversion[friendly_name]
-    # All current filterable fields use the "in" condition, except for tumor_normal
-    if friendly_name == "tumor_normal":
-        condition = "is"
-    else:
-        condition = "in"
+    # Get the condition ofr this field
+    condition = column_conditions[friendly_name]
+    
     listed_filter = {filter_key: [{"condition": condition, "values": values}]}
     return listed_filter
 
