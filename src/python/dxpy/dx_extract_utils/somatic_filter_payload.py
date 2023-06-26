@@ -209,7 +209,7 @@ def somatic_final_payload(
 
     # If the user has specified additional return columns, add them to the payload here
     if additional_fields:
-        for add_field in additional_fields.split(","):
+        for add_field in additional_fields:
             fields.append(
                 {"{}".format(add_field): "variant_read_optimized${}".format(add_field)}
             )
