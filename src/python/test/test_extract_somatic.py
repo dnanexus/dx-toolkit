@@ -41,6 +41,7 @@ dirname = os.path.dirname(__file__)
 general_input_dir = os.path.join(dirname, "clisam_test_filters/input/")
 general_output_dir = os.path.join(dirname, "clisam_test_filters/output/")
 
+
 #
 # Select test suite
 #
@@ -49,7 +50,7 @@ dataset = "single_assay"
 if dataset == "single_assay":
     # Single assay
     test_project = "PMUX-1324-SCIPROD-CLISAM"
-    test_record = "{}:/test_keegan_202306231200".format(test_project)
+    test_record = "{}:/test_single_assay_202306231200".format(test_project)
 elif dataset == "multi_assay_sciprod_1347_v2":
     #multi assay dataset
     test_project = "PMUX-1324-SCIPROD-CLISAM"
@@ -59,6 +60,11 @@ elif dataset == "small_original":
     test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
 
 e2e_filter_directory = os.path.join(general_input_dir, dataset,"e2e")
+e2e_output_directory = os.path.join(general_input_dir, dataset,"e2e_output")
+
+# Ensure output directories exist
+if not os.path.exists(e2e_output_directory):
+    os.makedirs(e2e_output_directory)
 
 
 proj_id = list(dxpy.find_projects(describe=False, level="VIEW", name=test_project))[0][
