@@ -83,15 +83,6 @@ class TestDXExtractSomatic(unittest.TestCase):
         dataset_id = resp["dataset"]
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-        # (
-        #    selected_assay_name,
-        #    selected_assay_id,
-        #    selected_ref_genome,
-        # ) = get_assay_name_info(
-        #    args.list_assays, args.assay_name, args.path, "somatic", rec_descriptor
-        # )
-
-        # TODO generate expected results for this
 
     def test_single_location(self):
         print("testing single location")
