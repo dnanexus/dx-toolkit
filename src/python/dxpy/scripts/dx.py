@@ -9925,7 +9925,7 @@ parser_extract_assay_somatic.add_argument(
 
 parser_extract_assay_somatic.add_argument(
     "--additional-fields",
-    type=str,
+    nargs="+",
     default=None,
     help="A list of strings to specify what fields in the assay to return, in addition to the default fields always returned, “assay_sample_id”, “allele_id”,  “CHROM”,  “POS”,  “REF”,  “allele”. Supplied fields must be separated by commas. Use “--additional-fields-help” to get the full list of output fields available.",
 )
