@@ -480,16 +480,15 @@ def json_validation_function(filter_type, args):
         validate_somatic_filter(filter, filter_type)
 
     return filter
+   
 
-
-def retrieve_meta_info(
-    resp, project_id, assay_id, assay_name, print_to_stdout, out_file_name
-):
-    table, column = "vcf_meta_information_unique", "info_format_fields"
+def retrieve_meta_info(resp, project_id, assay_id, assay_name, print_to_stdout, out_file_name):
+    table = "vcf_meta_information_unique"
+    columns = ["Field", "ID", "Type", "Number", "Description"]
     payload = {
         "project_context": project_id,
         "fields": [
-            {column: "$".join((table, column))},
+            {column: "$".join((table, column))} for column in columns
         ],
         "is_cohort": False,
         "variant_browser": {
@@ -499,16 +498,14 @@ def retrieve_meta_info(
     }
     resp_raw = raw_api_call(resp, payload, sql_message=False)
 
-    if print_to_stdout:
-        fields_output = sys.stdout
-    else:
-        fields_output = open(out_file_name, "w")
+    csv_from_json(
+        out_file_name=out_file_name,
+        print_to_stdout=print_to_stdout,
+        sep="\t",
+        raw_results=resp_raw["results"],
+        column_names=columns,
+    )
 
-    for entry in resp_raw["results"]:
-        fields_output.write(entry[column] + "\n")
-
-    if not print_to_stdout:
-        fields_output.close()
 
 def assign_output_method(args, record_name, friendly_assay_type):
     #### Decide output method based on --output and --sql ####
