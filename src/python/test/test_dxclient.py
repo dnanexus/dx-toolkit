@@ -3826,7 +3826,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                         "distribution": "Ubuntu",
                         "release": "14.04",
                         "code": "dx-jobutil-add-output number 32"}
-        })
+        })["id"]
 
         # make a workflow with the stage twice
         run("dx new workflow myworkflow")
@@ -3844,9 +3844,9 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
                                            " --instance-type mem2_hdd2_x2 --brief -y").strip()
         change_inst_type_by_exec_analysis_id = run("dx run --clone " + analysis_id +
-                                           " --instance-type-by-executable " + 
-                                           json.dumps({applet_id :{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) + 
-                                           " --brief -y").strip()
+                                           " --instance-type-by-executable \'" + 
+                                           json.dumps({applet_id:{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) +
+                                           "\' --brief -y").strip()
 
         time.sleep(25) # May need to wait for any new jobs to be created in the system
 
