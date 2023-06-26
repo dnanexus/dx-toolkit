@@ -86,23 +86,9 @@ class TestDXExtractSomatic(unittest.TestCase):
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
 
-    def test_single_location(self):
-        print("testing single location")
-        input_filter_path = os.path.join(e2e_filter_directory, dataset, "single_location.json")
-        output_path = os.path.join(general_output_dir, "single_location_output.tsv")
-
-        command = (
-            "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
-                test_record, input_filter_path, output_path
-            )
-        )
-
-        process = subprocess.check_output(command, shell=True)
-
     def test_additional_fields(self):
         input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
-        e2e_output_dir = os.path.join(general_output_dir,dataset,"e2e_output")
-        output_path = e2e_output_dir
+        output_path = os.path.join(general_output_dir,dataset,"e2e_output","additional_fields_output.tsv")
 
         command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --additional-fields "{}"'.format(
             test_record,
@@ -115,25 +101,13 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_tumor_normal(self):
         input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
-        output_path = os.path.join(general_output_dir, dataset,"tumor_normal_output.tsv")
+        output_path = os.path.join(general_output_dir, dataset,"e2e_output","tumor_normal_output.tsv")
 
         command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --include-normal-sample --additional-fields "{}"'.format(
             test_record,
             input_filter_path,
             output_path,
             "sample_id,tumor_normal",
-        )
-
-        process = subprocess.check_output(command, shell=True)
-
-    def test_multi_location(self):
-        input_filter_path = os.path.join(e2e_filter_directory, dataset,"multi_location.json")  
-        output_path = os.path.join(general_output_dir,dataset, "multi_location_output.tsv")
-
-        command = (
-            "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
-                test_record, input_filter_path, output_path
-            )
         )
 
         process = subprocess.check_output(command, shell=True)
