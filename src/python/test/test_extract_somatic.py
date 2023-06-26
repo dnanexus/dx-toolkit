@@ -26,18 +26,47 @@
 
 import dxpy
 import unittest
+import os
+import subprocess
 
 from dxpy_testutil import cd
-from dxpy.cli.dataset_utilities import get_assay_name_info, resolve_validate_path, DXDataset
+from dxpy.cli.dataset_utilities import (
+    get_assay_name_info,
+    resolve_validate_path,
+    DXDataset,
+)
 
-test_project = "PMUX-1324-SCIPROD-CLISAM"
-test_record = "{}:test_datasets/assay_title_annot_complete"
+dirname = os.path.dirname(__file__)
 
-proj_id = list(
-            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
-        )[0]["id"]
+general_input_dir = os.path.join(dirname, "clisam_test_filters/input/")
+general_output_dir = os.path.join(dirname, "clisam_test_filters/output/")
 
-class TestDXExtractAssay(unittest.TestCase):
+#
+# Select test suite
+#
+dataset = "single_assay"
+
+if dataset == "single_assay":
+    # Single assay
+    test_project = "PMUX-1324-SCIPROD-CLISAM"
+    test_record = "{}:/test_keegan_202306231200".format(test_project)
+elif dataset == "multi_assay_sciprod_1347_v2":
+    #multi assay dataset
+    test_project = "PMUX-1324-SCIPROD-CLISAM"
+    test_record = "{}:/test_datasets/SCIPROD-1347/sciprod_1347_v2".format(test_project)
+elif dataset == "small_original":
+    test_project = "PMUX-1324-SCIPROD-CLISAM"
+    test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
+
+e2e_filter_directory = os.path.join(general_input_dir, dataset,"e2e")
+
+
+proj_id = list(dxpy.find_projects(describe=False, level="VIEW", name=test_project))[0][
+    "id"
+]
+
+
+class TestDXExtractSomatic(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cd(proj_id + ":/")
@@ -56,6 +85,58 @@ class TestDXExtractAssay(unittest.TestCase):
         dataset_id = resp["dataset"]
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-        selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(args.list_assays,args.assay_name,args.path,"somatic",rec_descriptor)
 
-        # TODO generate expected results for this
+    def test_additional_fields(self):
+        print("testing --additional-fields")
+        input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
+        output_path = os.path.join(general_output_dir,dataset,"e2e_output","additional_fields_output.tsv")
+
+        command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --additional-fields "{}"'.format(
+            test_record,
+            input_filter_path,
+            output_path,
+            "sample_id,tumor_normal,symbolic_type",
+        )
+
+        process = subprocess.check_output(command, shell=True)
+
+    def test_tumor_normal(self):
+        print("testing --include-normal-sample")
+        input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
+        output_path = os.path.join(general_output_dir, dataset,"e2e_output","tumor_normal_output.tsv")
+
+        command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --include-normal-sample --additional-fields "{}"'.format(
+            test_record,
+            input_filter_path,
+            output_path,
+            "sample_id,tumor_normal",
+        )
+
+        process = subprocess.check_output(command, shell=True)
+
+    #####
+    # E2E tests
+    #####
+
+    def test_e2e_filters(self):
+        print("Testing e2e filters")
+        e2e_filter_directory = os.path.join(general_input_dir, dataset,"e2e")
+        filter_files = os.listdir(e2e_filter_directory)
+        e2e_output_dir = os.path.join(general_output_dir,dataset,"e2e_output")
+
+        for filter_name in filter_files:
+            print("testing {}".format(filter_name))
+            output_filename = filter_name[:-5] + "_output.tsv"
+            command = (
+                "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
+                    test_record,
+                    os.path.join(e2e_filter_directory, filter_name),
+                    os.path.join(e2e_output_dir, output_filename),
+                )
+            )
+            process = subprocess.check_call(command, shell=True)
+            # print(command)
+
+
+if __name__ == "__main__":
+    unittest.main()
