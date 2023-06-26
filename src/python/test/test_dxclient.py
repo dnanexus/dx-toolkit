@@ -3816,7 +3816,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
-        dxpy.api.applet_new({
+        applet_id = dxpy.api.applet_new({
             "project": self.project,
             "name": "myapplet",
             "dxapi": "1.0.0",
@@ -3843,6 +3843,10 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                           " -i0.number=52 --brief -y").strip()
         change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
                                            " --instance-type mem2_hdd2_x2 --brief -y").strip()
+        change_inst_type_by_exec_analysis_id = run("dx run --clone " + analysis_id +
+                                           " --instance-type-by-executable " + 
+                                           json.dumps({applet_id :{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) + 
+                                           " --brief -y").strip()
 
         time.sleep(25) # May need to wait for any new jobs to be created in the system
 
@@ -3862,10 +3866,21 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x2')
 
+        # change inst type by executable: only affects stage with different inst type
+        change_inst_type_by_exec_analysis_desc = dxpy.describe(change_inst_type_by_exec_analysis_id)
+
+        self.assertEqual(change_inst_type_by_exec_analysis_desc['stages'][0]['execution']['instanceType'],'mem2_ssd1_v2_x2')
+        self.assertEqual(change_inst_type_by_exec_analysis_desc['stages'][1]['execution']['instanceType'],'mem2_ssd1_v2_x2')
+
         # Cannot provide workflow executable (ID or name) with --clone analysis
         error_mesg = 'cannot be provided when re-running an analysis'
         with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
             run("dx run myworkflow --clone " + analysis_id)
+
+        # Cannot provide --instance-count when running workflow
+        error_mesg = '--instance-count is not supported for workflows'
+        with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
+            run("dx run --instance-count 5 --clone " + analysis_id)
 
         # Run in a different project and add some metadata
         try:
@@ -3948,6 +3963,12 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 ' +
                          '--instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
+        # request for an executable
+        exec_req_id = run("dx run myworkflow" + 
+                         " --instance-type-by-executable \'" + 
+                         json.dumps({applet_id:{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) +
+                         "\' --brief -y").strip()
+        
         time.sleep(10) # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
@@ -3965,6 +3986,11 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                          'mem2_hdd2_x2')
         self.assertEqual(stg_req_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x1')
+        exec_req_desc = dxpy.describe(exec_req_id)
+        self.assertEqual(exec_req_desc['stages'][0]['execution']['instanceType'],
+                         'mem2_ssd1_v2_x2')
+        self.assertEqual(exec_req_desc['stages'][1]['execution']['instanceType'],
+                         'mem2_ssd1_v2_x2')
 
         # request for a stage specifically (by index); if same inst
         # type as before, should reuse results
