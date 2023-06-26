@@ -87,6 +87,7 @@ class TestDXExtractSomatic(unittest.TestCase):
 
 
     def test_additional_fields(self):
+        print("testing --additional-fields")
         input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
         output_path = os.path.join(general_output_dir,dataset,"e2e_output","additional_fields_output.tsv")
 
@@ -100,6 +101,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         process = subprocess.check_output(command, shell=True)
 
     def test_tumor_normal(self):
+        print("testing --include-normal-sample")
         input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
         output_path = os.path.join(general_output_dir, dataset,"e2e_output","tumor_normal_output.tsv")
 

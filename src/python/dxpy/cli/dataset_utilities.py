@@ -926,7 +926,7 @@ def extract_assay_somatic(args):
     # Validate additional fields
     if args.additional_fields:
         accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG']
-        for field in args.additional_fields:
+        for field in args.additional_fields.split(","):
             if field not in accepted_additional_fields:
                 err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
             
