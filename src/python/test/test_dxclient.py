@@ -3366,7 +3366,7 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + applet_id +
                           ' -inumber=32 --name jobname --folder /output ' +
                           '--instance-type mem2_hdd2_x2 ' +
-                        #   '--instance-type-by-executable \'{"' + applet_id + '": {"*": "mem1_ssd1_v2_x2"}}\' '   
+                          '--instance-type-by-executable \'{"' + applet_id + '": {"*": "mem1_ssd1_v2_x2"}}\' '   
                           '--tag Ψ --tag $hello.world ' +
                           '--property Σ_1^n=n --property $hello.=world ' +
                           '--priority normal ' +
@@ -3378,7 +3378,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(orig_job_desc['folder'], '/output')
         self.assertEqual(orig_job_desc['input'], {'number': 32})
         self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
-        # self.assertEqual(orig_job_desc['systemRequirementsByExecutable'], {'*': {'instanceType': 'mem1_ssd1_v2_x2'}})
+        self.assertEqual(orig_job_desc['systemRequirementsByExecutable'], {'*': {'instanceType': 'mem1_ssd1_v2_x2'}})
 
         # clone the job
 
