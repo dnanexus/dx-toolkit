@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools, signal
+import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools, signal, textwrap
 import shlex # respects quoted substrings when splitting
 
 import requests
@@ -3564,6 +3564,7 @@ def _watch_metrics_top(args, input_params, enrich_msg):
             self.args = args
             self.log_client = CursesDXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=self.msg_callback,
                                                          msg_output_format=None, print_job_info=False)
+            self.curr_screen = 'logs'
             self.log = []
             self.metrics = ['Waiting for job logs...']
             self.scr_dim_y = 0
@@ -3579,10 +3580,11 @@ def _watch_metrics_top(args, input_params, enrich_msg):
         def main(self, stdscr):
             self.stdscr = stdscr
 
-            curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
-            curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
-            curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-            curses.init_pair(4, curses.COLOR_GREEN, curses.COLOR_BLACK)
+            curses.use_default_colors()
+            curses.init_pair(1, curses.COLOR_BLUE, -1)
+            curses.init_pair(2, curses.COLOR_RED, -1)
+            curses.init_pair(3, curses.COLOR_YELLOW, -1)
+            curses.init_pair(4, curses.COLOR_GREEN, -1)
 
             t = Thread(target=self.log_client.connect)
             t.daemon = True
@@ -3593,17 +3595,21 @@ def _watch_metrics_top(args, input_params, enrich_msg):
                 while True:
                     ch = stdscr.getch()
                     if ch == curses.KEY_RESIZE: self.refresh()
-                    elif ch == curses.KEY_RIGHT: self.refresh(scr_x_offset_diff=1)
-                    elif ch == curses.KEY_LEFT: self.refresh(scr_x_offset_diff=-1)
-                    elif ch == curses.KEY_SRIGHT: self.refresh(scr_x_offset_diff=20)
-                    elif ch == curses.KEY_SLEFT: self.refresh(scr_x_offset_diff=-20)
-                    elif ch == curses.KEY_HOME: self.refresh(scr_x_offset_diff=-self.scr_x_offset)
-                    elif ch == curses.KEY_END: self.refresh(scr_x_offset_diff=self.scr_x_max_offset)
-                    elif ch == curses.KEY_UP: self.refresh(scr_y_offset_diff=1)
-                    elif ch == curses.KEY_DOWN: self.refresh(scr_y_offset_diff=-1)
-                    elif ch == curses.KEY_PPAGE: self.refresh(scr_y_offset_diff=10)
-                    elif ch == curses.KEY_NPAGE: self.refresh(scr_y_offset_diff=-10)
-                    elif ch == ord('q') or ch == ord('Q'): sys.exit(0)
+                    elif self.curr_screen == 'logs':
+                        if ch == curses.KEY_RIGHT: self.refresh(scr_x_offset_diff=1)
+                        elif ch == curses.KEY_LEFT: self.refresh(scr_x_offset_diff=-1)
+                        elif ch == curses.KEY_SRIGHT: self.refresh(scr_x_offset_diff=20)
+                        elif ch == curses.KEY_SLEFT: self.refresh(scr_x_offset_diff=-20)
+                        elif ch == curses.KEY_HOME: self.refresh(scr_x_offset_diff=-self.scr_x_offset)
+                        elif ch == curses.KEY_END: self.refresh(scr_x_offset_diff=self.scr_x_max_offset)
+                        elif ch == curses.KEY_UP: self.refresh(scr_y_offset_diff=1)
+                        elif ch == curses.KEY_DOWN: self.refresh(scr_y_offset_diff=-1)
+                        elif ch == curses.KEY_PPAGE: self.refresh(scr_y_offset_diff=10)
+                        elif ch == curses.KEY_NPAGE: self.refresh(scr_y_offset_diff=-10)
+                        elif ch == ord('?') or ch == ord('?'): self.refresh(target_screen='help')
+                        elif ch == ord('q') or ch == ord('Q'): sys.exit(0)
+                    elif self.curr_screen == 'help':
+                        if ch >= 0: self.refresh(target_screen='logs')
             # Capture SIGINT and exit normally
             except KeyboardInterrupt:
                 sys.exit(0)
@@ -3622,7 +3628,7 @@ def _watch_metrics_top(args, input_params, enrich_msg):
 
             self.refresh()
 
-        def refresh(self, scr_y_offset_diff=None, scr_x_offset_diff=None):
+        def refresh(self, target_screen=None, scr_y_offset_diff=None, scr_x_offset_diff=None):
             self.stdscr.erase()
             self.scr_dim_y, self.scr_dim_x = self.stdscr.getmaxyx()
 
@@ -3630,6 +3636,18 @@ def _watch_metrics_top(args, input_params, enrich_msg):
             self.update_screen_offsets(scr_y_offset_diff, scr_x_offset_diff)
 
             self.curr_row = 0
+
+            if target_screen is not None:
+                self.curr_screen = target_screen
+
+            if self.curr_screen == 'help':
+                self.draw_help()
+            else:
+                self.draw_logs()
+
+            self.stdscr.refresh()
+
+        def draw_logs(self):
             nlines = min(self.scr_dim_y - 3, len(self.log))
             self.stdscr.addnstr(self.curr_row, 0, self.metrics[-1], self.scr_dim_x)
             self.curr_row += 2
@@ -3653,7 +3671,31 @@ def _watch_metrics_top(args, input_params, enrich_msg):
                 self.scr_x_max_offset = max(self.scr_x_max_offset, self.curr_row_total_chars - 1)
                 self.curr_row += 1
 
-            self.stdscr.refresh()
+        def draw_help(self):
+            text = '''Metrics top mode help
+_
+This mode shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics.
+_
+Controls:
+  Up/Down               scroll up/down by one line
+  PgUp/PgDn             scroll up/down by 10 lines
+  Left/Right            scroll left/right by one character
+  Shift + Left/Right    scroll left/right by 20 characters
+  Home/End              scroll to the beginning/end of the line
+  ?                     display this help
+  q                     quit
+_
+Press any key to return.
+'''
+            lines = []
+            for line in text.splitlines():
+                if line == '_':
+                    lines.append('')
+                    continue
+                lines += textwrap.wrap(line, self.scr_dim_x - 1)
+
+            for row in range(min(len(lines), self.scr_dim_y)):
+                self.stdscr.addnstr(row, 0, lines[row], self.scr_dim_x)
 
         def print_field(self, text, color):
             if self.curr_col < self.scr_dim_x:
@@ -5526,7 +5568,7 @@ The "interspersed" default mode shows METRICS job log messages interspersed with
 
 The "none" mode omits all METRICS messages from "dx watch" output.
 
-The "top" mode shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics.
+The "top" mode interactively shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics. Built-in help describing key bindings is available by pressing "?".
 
 The "csv" mode outputs the following columns with headers in csv format to stdout:
 - timestamp: An integer number representing the number of milliseconds since the Unix epoch.
