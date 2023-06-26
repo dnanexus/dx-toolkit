@@ -127,7 +127,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         process = subprocess.check_output(command, shell=True)
 
     def test_multi_location(self):
-        input_filter_path = os.path.join(e2e_filter_directory, "multi_location.json")  
+        input_filter_path = os.path.join(e2e_filter_directory, dataset,"multi_location.json")  
         output_path = os.path.join(general_output_dir,dataset, "multi_location_output.tsv")
 
         command = (
