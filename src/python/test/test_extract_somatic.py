@@ -88,7 +88,7 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_single_location(self):
         print("testing single location")
-        input_filter_path = os.path.join(general_input_dir, dataset, "single_location.json")
+        input_filter_path = os.path.join(e2e_filter_directory, dataset, "single_location.json")
         output_path = os.path.join(general_output_dir, "single_location_output.tsv")
 
         command = (
