@@ -58,6 +58,8 @@ elif dataset == "small_original":
     test_project = "PMUX-1324-SCIPROD-CLISAM"
     test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
 
+e2e_filter_directory = os.path.join(general_input_dir, dataset,"e2e")
+
 
 proj_id = list(dxpy.find_projects(describe=False, level="VIEW", name=test_project))[0][
     "id"
@@ -86,7 +88,7 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_single_location(self):
         print("testing single location")
-        input_filter_path = os.path.join(general_input_dir, "single_location.json")
+        input_filter_path = os.path.join(general_input_dir, dataset, "single_location.json")
         output_path = os.path.join(general_output_dir, "single_location_output.tsv")
 
         command = (
@@ -98,8 +100,9 @@ class TestDXExtractSomatic(unittest.TestCase):
         process = subprocess.check_output(command, shell=True)
 
     def test_additional_fields(self):
-        input_filter_path = os.path.join(testgen_filter_directory, "single_location.json")
-        output_path = os.path.join(general_output_dir, "additional_fields_output.tsv")
+        input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
+        e2e_output_dir = os.path.join(general_output_dir,dataset,"e2e_output")
+        output_path = e2e_output_dir
 
         command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --additional-fields "{}"'.format(
             test_record,
@@ -111,8 +114,8 @@ class TestDXExtractSomatic(unittest.TestCase):
         process = subprocess.check_output(command, shell=True)
 
     def test_tumor_normal(self):
-        input_filter_path = os.path.join(general_input_dir, "single_location.json")
-        output_path = os.path.join(general_output_dir, "tumor_normal_output.tsv")
+        input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
+        output_path = os.path.join(general_output_dir, dataset,"tumor_normal_output.tsv")
 
         command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --include-normal-sample --additional-fields "{}"'.format(
             test_record,
@@ -124,10 +127,8 @@ class TestDXExtractSomatic(unittest.TestCase):
         process = subprocess.check_output(command, shell=True)
 
     def test_multi_location(self):
-        input_filter_path = os.path.join(
-            general_input_dir, "e2e/multi_location.json"
-        )
-        output_path = os.path.join(general_output_dir, "multi_location_output.tsv")
+        input_filter_path = os.path.join(e2e_filter_directory, "multi_location.json")  
+        output_path = os.path.join(general_output_dir,dataset, "multi_location_output.tsv")
 
         command = (
             "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
