@@ -223,30 +223,3 @@ def somatic_final_payload(
     return final_payload, field_names
 
 
-if __name__ == "__main__":
-    # Test path section
-    # TODO remove later
-
-    name = "assay_title_annot_complete"
-    id = "f6a09c05-a1ea-4eb8-a8c1-6663992007a6"
-    genome_reference = "Homo_sapiens.GRCh38.92"
-    proj_id = "project-GP7B0X80VBvx6pGKJ3fq1Q7G"
-
-    test_dir = "/Users/jmulka@dnanexus.com/Development/dx-toolkit/src/python/test/clisam_test_filters"
-    input_dir = os.path.join(test_dir, "input")
-    output_dir = os.path.join(test_dir, "output")
-    test_filter = "single_location.json"
-
-    test_json_path = os.path.join(input_dir, test_filter)
-
-    with open(test_json_path, "r") as infile:
-        test_dict = json.load(infile)
-
-    payload, field_names = somatic_final_payload(
-        test_dict, name, id, proj_id, genome_reference
-    )
-
-    with open(
-        os.path.join(output_dir, test_filter[:-5] + "_payload.json"), "w"
-    ) as outfile:
-        json.dump(payload, outfile)
