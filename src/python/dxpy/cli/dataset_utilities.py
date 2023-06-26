@@ -578,10 +578,12 @@ def get_assay_name_info(
     (target_assays, other_assays) = get_assay_info(
         rec_descriptor, assay_type=assay_type
     )
+
     target_assay_names = [ga["name"] for ga in target_assays]
     target_assay_ids = [ga["uuid"] for ga in target_assays]
     other_assay_names = [oa["name"] for oa in other_assays]
     # other_assay_ids = [oa["uuid"] for oa in other_assays]
+
     if target_assay_names and target_assay_ids:
         selected_assay_name = target_assay_names[0]
         selected_assay_id = target_assay_ids[0]
@@ -615,7 +617,7 @@ def get_assay_name_info(
         for a in target_assays:
             if a["name"] == selected_assay_name and a["reference_genome"]:
                 selected_ref_genome = a["reference_genome"]["name"]
-    
+
     return(selected_assay_name, selected_assay_id, selected_ref_genome)
 
 
@@ -707,6 +709,7 @@ def extract_assay_germline(args):
 
     out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "germline")
 
+    print("begin payload generation")
     payload = {}
     if args.retrieve_allele:
         payload, fields_list = final_payload(
@@ -951,35 +954,39 @@ def extract_assay_somatic(args):
 
     if args.retrieve_variant:
         filter_dict = json_validation_function("variant", args)
-        
-        # Replace the hardcoded payload and fields_list with a call to json to payload function
-        payload = {"project_context": project, 
-                   "fields": [
-                        {"CHROM": "variant_read_optimized$CHROM"},
-                        {"allele_id": "variant_read_optimized$allele_id"}
-                    ], 
-                    "adjust_geno_bins": False, 
-                    "raw_filters": {
-                        "assay_filters": {
-                            "name": "sciprod1363_3more",
-                            "id": "2e1e4b19-f5d6-48b6-974e-f8ed11e44e7e",
-                            "filters": {
-                                "variant_read_optimized$allele_id": [
-                                    {"condition": "in", "values": ["chrUn_JTFH01001875v1_decoy_34_GG_AA"]}
-                                ]
-                            },
-                        "logic": "and",
-                        }
-                    },
-                    "is_cohort": False,
-                    "distinct": True,
-                    }
-        fields_list = ["CHROM", "allele_id"]
+       
+        if args.additional_fields:
+            payload, fields_list = somatic_final_payload(
+                full_input_dict=filter_dict,
+                name=selected_assay_name,
+                id=selected_assay_id,
+                project_context=project,
+                genome_reference=selected_ref_genome,
+                additional_fields=args.additional_fields,
+                include_normal=args.include_normal_sample,
+            )
+        else:
+            payload, fields_list = somatic_final_payload(
+                full_input_dict=filter_dict,
+                name=selected_assay_name,
+                id=selected_assay_id,
+                project_context=project,
+                genome_reference=selected_ref_genome,
+                include_normal=args.include_normal_sample,
+            )
+
+        # TODO remove, this is for debugging purposes
+        payload_filename = "payload_" + os.path.basename(out_file)
+        payload_filename = payload_filename[:-4] + ".json"
+        with open(payload_filename, "w") as outfile:
+            json.dump(payload, outfile)
 
         if "CohortBrowser" in resp["recordTypes"]:
             if resp.get("baseSql"):
                 payload["base_sql"] = resp.get("baseSql")
             payload["filters"] = resp["filters"]
+
+        #### Run api call to get sql or extract data ####
 
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
@@ -999,58 +1006,6 @@ def extract_assay_somatic(args):
                 column_names=fields_list,
                 quote_char=str("|"),
             )
-
-    if args.additional_fields:
-        payload, fields_list = somatic_final_payload(
-            full_input_dict=filter_dict,
-            name=selected_assay_name,
-            id=selected_assay_id,
-            project_context=project,
-            genome_reference=selected_ref_genome,
-            additional_fields=args.additional_fields,
-            include_normal=args.include_normal_sample,
-        )
-    else:
-        payload, fields_list = somatic_final_payload(
-            full_input_dict=filter_dict,
-            name=selected_assay_name,
-            id=selected_assay_id,
-            project_context=project,
-            genome_reference=selected_ref_genome,
-            include_normal=args.include_normal_sample,
-        )
-
-    # TODO remove, this is for debugging purposes
-    payload_filename = "payload_" + os.path.basename(out_file)
-    payload_filename = payload_filename[:-4] + ".json"
-    with open(payload_filename, "w") as outfile:
-        json.dump(payload, outfile)
-
-    if "CohortBrowser" in resp["recordTypes"]:
-        if resp.get("baseSql"):
-            payload["base_sql"] = resp.get("baseSql")
-        payload["filters"] = resp["filters"]
-
-    #### Run api call to get sql or extract data ####
-
-    if args.sql:
-        sql_results = raw_query_api_call(resp, payload)
-        if print_to_stdout:
-            print(sql_results)
-        else:
-            with open(out_file, "w") as sql_file:
-                print(sql_results, file=sql_file)
-    else:
-        resp_raw = raw_api_call(resp, payload)
-
-        csv_from_json(
-            out_file_name=out_file,
-            print_to_stdout=print_to_stdout,
-            sep="\t",
-            raw_results=resp_raw["results"],
-            column_names=fields_list,
-            quote_char=str("|"),
-        )
 
 
 class DXDataset(DXRecord):

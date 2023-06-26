@@ -1,0 +1,15 @@
+{
+    "location": [
+        {
+            "chromosome": "chr1",
+            "starting_position": "10",
+            "ending_position": "90000000"
+        }
+    ],
+    "allele": {
+        "variant_type": [
+            "SNP",
+            "INS"
+        ]
+    }
+}

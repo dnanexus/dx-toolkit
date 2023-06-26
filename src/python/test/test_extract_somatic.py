@@ -36,19 +36,32 @@ from dxpy.cli.dataset_utilities import (
     DXDataset,
 )
 
+dirname = os.path.dirname(__file__)
 
-test_project = "PMUX-1324-SCIPROD-CLISAM"
-# test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
-# test_project = "project-GX0Jpp00ZJ46qYPq5G240k1k"
-test_record = "{}:/test_datasets/SCIPROD-1347/sciprod_1347".format(test_project)
+general_input_dir = os.path.join(dirname, "clisam_test_filters/input/")
+general_output_dir = os.path.join(dirname, "clisam_test_filters/output/")
+
+#
+# Select test suite
+#
+dataset = "single_assay"
+
+if dataset == "single_assay":
+    # Single assay
+    test_project = "PMUX-1324-SCIPROD-CLISAM"
+    test_record = "{}:/test_keegan_202306231200".format(test_project)
+elif dataset == "multi_assay_sciprod_1347_v2":
+    #multi assay dataset
+    test_project = "PMUX-1324-SCIPROD-CLISAM"
+    test_record = "{}:/test_datasets/SCIPROD-1347/sciprod_1347_v2".format(test_project)
+elif dataset == "small_original":
+    test_project = "PMUX-1324-SCIPROD-CLISAM"
+    test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
+
 
 proj_id = list(dxpy.find_projects(describe=False, level="VIEW", name=test_project))[0][
     "id"
 ]
-
-dirname = os.path.dirname(__file__)
-test_filter_directory = os.path.join(dirname, "clisam_test_filters/input/")
-output_directory = os.path.join(dirname, "clisam_test_filters/output/e2e_output")
 
 
 class TestDXExtractSomatic(unittest.TestCase):
@@ -82,8 +95,8 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_single_location(self):
         print("testing single location")
-        input_filter_path = os.path.join(test_filter_directory, "single_location.json")
-        output_path = os.path.join(output_directory, "single_location_output.tsv")
+        input_filter_path = os.path.join(general_input_dir, "single_location.json")
+        output_path = os.path.join(general_output_dir, "single_location_output.tsv")
 
         command = (
             "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
@@ -94,8 +107,8 @@ class TestDXExtractSomatic(unittest.TestCase):
         process = subprocess.check_output(command, shell=True)
 
     def test_additional_fields(self):
-        input_filter_path = os.path.join(test_filter_directory, "single_location.json")
-        output_path = os.path.join(output_directory, "additional_fields_output.tsv")
+        input_filter_path = os.path.join(testgen_filter_directory, "single_location.json")
+        output_path = os.path.join(general_output_dir, "additional_fields_output.tsv")
 
         command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --additional-fields "{}"'.format(
             test_record,
@@ -107,8 +120,8 @@ class TestDXExtractSomatic(unittest.TestCase):
         process = subprocess.check_output(command, shell=True)
 
     def test_tumor_normal(self):
-        input_filter_path = os.path.join(test_filter_directory, "single_location.json")
-        output_path = os.path.join(output_directory, "tumor_normal_output.tsv")
+        input_filter_path = os.path.join(general_input_dir, "single_location.json")
+        output_path = os.path.join(general_output_dir, "tumor_normal_output.tsv")
 
         command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --include-normal-sample --additional-fields "{}"'.format(
             test_record,
@@ -121,9 +134,9 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_multi_location(self):
         input_filter_path = os.path.join(
-            test_filter_directory, "e2e/multi_location.json"
+            general_input_dir, "e2e/multi_location.json"
         )
-        output_path = os.path.join(output_directory, "multi_location_output.tsv")
+        output_path = os.path.join(general_output_dir, "multi_location_output.tsv")
 
         command = (
             "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
@@ -132,6 +145,29 @@ class TestDXExtractSomatic(unittest.TestCase):
         )
 
         process = subprocess.check_output(command, shell=True)
+
+    #####
+    # E2E tests
+    #####
+
+    def test_e2e_filters(self):
+        print("Testing e2e filters")
+        e2e_filter_directory = os.path.join(general_input_dir, dataset,"e2e")
+        filter_files = os.listdir(e2e_filter_directory)
+        e2e_output_dir = os.path.join(general_output_dir,dataset,"e2e_output")
+
+        for filter_name in filter_files:
+            print("testing {}".format(filter_name))
+            output_filename = filter_name[:-5] + "_output.tsv"
+            command = (
+                "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
+                    test_record,
+                    os.path.join(e2e_filter_directory, filter_name),
+                    os.path.join(e2e_output_dir, output_filename),
+                )
+            )
+            process = subprocess.check_call(command, shell=True)
+            # print(command)
 
 
 if __name__ == "__main__":
