@@ -30,7 +30,7 @@ column_conditions = {
     "hgvsp": "any",
     "assay_sample_id": "in",
     "sample_id": "in",
-    "tumor_normal": "is"
+    "tumor_normal": "is",
 }
 
 
@@ -56,10 +56,12 @@ def basic_filter(
     # Get the name of this field in the variant table
     # If the column isn't in the regular fields list, use the friendly name itself as the column name
     # This could be the case when "--additional-fields" flag is used
-    filter_key = column_conversion.get(friendly_name,"variant_read_optimized${}".format(friendly_name))
+    filter_key = column_conversion.get(
+        friendly_name, "variant_read_optimized${}".format(friendly_name)
+    )
     # Get the condition ofr this field
-    condition = column_conditions.get(friendly_name,"in")
-    
+    condition = column_conditions.get(friendly_name, "in")
+
     listed_filter = {filter_key: [{"condition": condition, "values": values}]}
     return listed_filter
 
@@ -123,7 +125,12 @@ def location_filter(raw_location_list):
 
 
 def generate_pheno_filter(
-    full_input_dict, name, id, project_context, genome_reference, include_normal=False
+    full_input_dict,
+    name,
+    id,
+    project_context,
+    genome_reference=None,
+    include_normal=False,
 ):
     """
     Generate asasy filter consisting of a compound that links the Location filters if present
@@ -180,7 +187,7 @@ def somatic_final_payload(
     name,
     id,
     project_context,
-    genome_reference,
+    genome_reference=None,
     additional_fields=None,
     include_normal=False,
 ):
@@ -223,5 +230,3 @@ def somatic_final_payload(
         field_names.append(list(f.keys())[0])
 
     return final_payload, field_names
-
-
