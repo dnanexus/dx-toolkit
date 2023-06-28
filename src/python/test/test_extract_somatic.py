@@ -217,7 +217,14 @@ class TestDXExtractSomatic(unittest.TestCase):
             },
             "distinct": True,
         }
-        expected_output_fields = ["assay_sample_id","allele_id","CHROM","POS","REF","allele"]
+        expected_output_fields = [
+            "assay_sample_id",
+            "allele_id",
+            "CHROM",
+            "POS",
+            "REF",
+            "allele",
+        ]
 
     def test_additional_fields(self):
         print("testing --additional-fields")
@@ -250,6 +257,35 @@ class TestDXExtractSomatic(unittest.TestCase):
         )
 
         process = subprocess.check_output(command, shell=True)
+
+    ####
+    # Input validation test
+    ####
+
+    def test_malformed_json(self):
+        # For somatic assays, json validation is not in a single function
+        malformed_json_dir = os.path.join(general_input_dir, "malformed_json")
+        malformed_json_filenames = os.listdir(malformed_json_dir)
+        for name in malformed_json_filenames:
+            filter_path = os.path.join(malformed_json_dir, name)
+            command = "dx extract_assay somatic {} --retrieve-variant {}".format(
+                test_record,
+                os.path.join(malformed_json_dir, filter_path),
+            )
+            try:
+                process = subprocess.check_output(
+                    command,
+                    shell=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                print(
+                    "Uh oh, malformed JSON passed detection, file is {}".format(
+                        name
+                    )
+                )
+            except:
+                print("malformed json {} detected succesfully".format(name))
 
     #####
     # E2E tests
