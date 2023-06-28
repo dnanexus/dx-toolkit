@@ -1,7 +1,7 @@
 DNAnexus Platform SDK
 =====================
 
-**To install the current version of `dx` and the Python SDK for your platform run `python3 -m pip install dxpy`**
+**To install the `dx` CLI and the Python SDK for your platform run `python3 -m pip install dxpy`**
 
 * **Found a bug? See [Reporting Bugs](#reporting-bugs) below.**
 
@@ -14,7 +14,7 @@ documentation.
 Installing the toolkit from source
 ----------------------------------
 
-The recommended way to install the python SDK and `dx` CLI of dx-toolkit locally is with `python3 -m pip install -e dx-tookit/src/python`. 
+The recommended way to install the Python SDK and `dx` CLI of `dx-toolkit` locally is with `python3 -m pip install -e dx-tookit/src/python`. 
 Any changes made within this checkout will be reflected in the pip installed version. 
 
 ### Building inside docker 
