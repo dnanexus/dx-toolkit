@@ -88,14 +88,36 @@ class TestDXExtractSomatic(unittest.TestCase):
     ############
 
     def test_get_assay_name_info(self):
-        list_assays = True
-        assay_name = "annot_complete"
-        path = test_record
+        # Set to true for the list assay utilities response instead of the normal functionality
+        list_assays = False
+        # When assay name is none, function looks for and selects first assay of type somatic that it finds
+        # assay_name = "test_keegan_202306231200"
+        assay_name = None
         friendly_assay_type = "somatic"
-
-        project, entity_result, resp, dataset_project = resolve_validate_path(path)
+        project, entity_result, resp, dataset_project = resolve_validate_path(test_record)
         dataset_id = resp["dataset"]
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+        # Expected Results
+        expected_assay_name = "test_keegan_202306231200" 
+        expected_assay_id = "0c69a39f-a34f-4030-a866-5056c8112da4"
+        expected_ref_genome = "GRCh38.92"
+
+        (
+            selected_assay_name,
+            selected_assay_id,
+            selected_ref_genome,
+        ) = get_assay_name_info(
+            list_assays=False,
+            assay_name=assay_name,
+            path=test_record,
+            friendly_assay_type=friendly_assay_type,
+            rec_descriptor=rec_descriptor,
+        )
+
+        self.assertEqual(expected_assay_name,selected_assay_name)
+        self.assertEqual(expected_assay_id,selected_assay_id)
+        self.assertEqual(expected_ref_genome,selected_ref_genome)
+
 
     def test_basic_filter(self):
         print("testing basic filter")
@@ -258,6 +280,19 @@ class TestDXExtractSomatic(unittest.TestCase):
 
         process = subprocess.check_output(command, shell=True)
 
+    def test_retrieve_meta_info(self):
+        print("testing --retrieve-meta-info")
+        expected_result = b"53cfc71e624a3397f9f0ae887f2e72cb  -\n"
+
+        with subprocess.Popen(
+            ["dx", "extract_assay", "somatic", test_record, "--retrieve_meta_info"],
+            stderr=subprocess.PIPE,
+        ) as p1:
+            p2 = subprocess.Popen(["md5sum"], stdin=p1.stderr, stdout=subprocess.PIPE)
+            out, err = p2.communicate()
+
+        self.assertEqual(expected_result, out)
+
     ####
     # Input validation test
     ####
@@ -279,11 +314,7 @@ class TestDXExtractSomatic(unittest.TestCase):
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
-                print(
-                    "Uh oh, malformed JSON passed detection, file is {}".format(
-                        name
-                    )
-                )
+                print("Uh oh, malformed JSON passed detection, file is {}".format(name))
             except:
                 print("malformed json {} detected succesfully".format(name))
 
