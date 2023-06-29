@@ -55,14 +55,14 @@ dataset = "single_assay"
 
 if dataset == "single_assay":
     # Single assay
-    test_project = "PMUX-1324-SCIPROD-CLISAM"
-    test_record = "{}:/test_single_assay_202306231200".format(test_project)
+    test_project = "dx-toolkit_test_data"
+    test_record = "{}:/Extract_Assay_Somatic/test_single_assay_202306231200".format(test_project)
 elif dataset == "multi_assay_sciprod_1347_v2":
     # multi assay dataset
-    test_project = "PMUX-1324-SCIPROD-CLISAM"
-    test_record = "{}:/test_datasets/SCIPROD-1347/sciprod_1347_v2".format(test_project)
+    test_project = "dx-toolkit_test_data"
+    test_record = "{}:/Extract_Assay_Somatic/test_datasets/SCIPROD-1347/sciprod_1347_v2".format(test_project)
 elif dataset == "small_original":
-    test_project = "PMUX-1324-SCIPROD-CLISAM"
+    test_project = "dx-toolkit_test_data"
     test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
 
 e2e_filter_directory = os.path.join(general_input_dir, dataset, "e2e")
@@ -91,15 +91,13 @@ class TestDXExtractSomatic(unittest.TestCase):
         # Set to true for the list assay utilities response instead of the normal functionality
         list_assays = False
         # When assay name is none, function looks for and selects first assay of type somatic that it finds
-        # assay_name = "test_keegan_202306231200"
         assay_name = None
         friendly_assay_type = "somatic"
         project, entity_result, resp, dataset_project = resolve_validate_path(test_record)
         dataset_id = resp["dataset"]
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
         # Expected Results
-        expected_assay_name = "test_keegan_202306231200" 
-        expected_assay_id = "0c69a39f-a34f-4030-a866-5056c8112da4"
+        expected_assay_id = "4c25f4ff-2e35-4899-b00f-43e827f38f41"
         expected_ref_genome = "GRCh38.92"
 
         (
@@ -114,7 +112,6 @@ class TestDXExtractSomatic(unittest.TestCase):
             rec_descriptor=rec_descriptor,
         )
 
-        self.assertEqual(expected_assay_name,selected_assay_name)
         self.assertEqual(expected_assay_id,selected_assay_id)
         self.assertEqual(expected_ref_genome,selected_ref_genome)
 

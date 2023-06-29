@@ -51,7 +51,6 @@ def basic_filter(
         }
     ]}
     """
-    # The table is always "variant_read_optimized" in somatic assays
     table = "variant_read_optimized"
     # Get the name of this field in the variant table
     # If the column isn't in the regular fields list, use the friendly name itself as the column name
