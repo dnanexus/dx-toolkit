@@ -9806,7 +9806,6 @@ parser_extract_assay_germline = subparsers_extract_assay.add_parser(
     "germline",
     help="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
     description="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
-    formatter_class=argparse.RawTextHelpFormatter,
 )
 
 parser_extract_assay_germline.add_argument(
@@ -9878,7 +9877,6 @@ parser_extract_assay_somatic = subparsers_extract_assay.add_parser(
     "somatic",
     help="Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.",
     description="Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.",
-    formatter_class=argparse.RawTextHelpFormatter,
 )
 
 parser_extract_assay_somatic.add_argument(
