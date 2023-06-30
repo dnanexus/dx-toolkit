@@ -76,10 +76,11 @@ class DXLogHandler(SysLogHandler):
             return message
 
         msg_bytes = msg_bytes[:8000]
-        while len(json.dumps(_bytes2str(msg_bytes))) > 8000:
+        while len(json.dumps(_bytes2utf8(msg_bytes))) > 8000:
             msg_bytes = msg_bytes[:-1]
 
-        message = msg_bytes if USING_PYTHON2 else _bytes2str(msg_bytes)
+        message = _bytes2utf8(msg_bytes)
+        message = message.encode('utf-8') if USING_PYTHON2 else message
         return message + "... [truncated]"
 
     def is_resource_log(self, message):
@@ -121,7 +122,7 @@ class DXLogHandler(SysLogHandler):
         except:
             self.handleError(record)
 
-def _bytes2str(bytes):
+def _bytes2utf8(bytes):
     """
     Convert bytes to a UTF-8 string and ignore UnicodeDecodeError for chars that could have been messed up by truncating.
     """
