@@ -75,7 +75,7 @@ elif dataset == "small_original":
     test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
 
 e2e_filter_directory = os.path.join(general_input_dir, dataset, "e2e")
-e2e_output_directory = os.path.join(general_input_dir, dataset, "e2e_output")
+e2e_output_directory = os.path.join(general_output_dir, dataset, "e2e_output")
 
 # Ensure output directories exist
 if not os.path.exists(e2e_output_directory):
