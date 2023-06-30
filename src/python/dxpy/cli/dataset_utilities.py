@@ -824,6 +824,7 @@ def csv_from_json(
     raw_results=[],
     column_names=[],
     quote_char=str('"'),
+    quoting=csv.QUOTE_MINIMAL,
 ):
     if print_to_stdout:
         fields_output = sys.stdout
@@ -837,7 +838,7 @@ def csv_from_json(
         escapechar=None,
         lineterminator="\n",
         quotechar=quote_char,
-        quoting=csv.QUOTE_MINIMAL,
+        quoting=quoting,
         skipinitialspace=False,
         strict=False,
         fieldnames=column_names,
@@ -1002,7 +1003,8 @@ def extract_assay_somatic(args):
                 sep="\t",
                 raw_results=resp_raw["results"],
                 column_names=fields_list,
-                quote_char=str("|"),
+                quote_char=str(""),
+                quoting=csv.QUOTE_NONE,
             )
 
 
