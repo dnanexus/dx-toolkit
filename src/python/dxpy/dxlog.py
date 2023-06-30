@@ -70,16 +70,17 @@ class DXLogHandler(SysLogHandler):
         return self.priority_names[self.priority_map.get(record.levelname, "warning")]
 
     def truncate_message(self, message):
-        if USING_PYTHON2:
-            if len(message) > 8015:
-                message = message[:8000] + "... [truncated]"
-        else:
-            # Trim bytes
-            encoded = message.encode('utf-8')
-            if len(encoded) > 8015:
-                # Ignore UnicodeDecodeError chars that could have been messed up by truncating
-                message = encoded[:8015].decode('utf-8', 'ignore') + "... [truncated]"
-        return message
+        msg_bytes = message if USING_PYTHON2 else message.encode('utf-8')
+
+        if len(json.dumps(message)) <= 8015:
+            return message
+
+        msg_bytes = msg_bytes[:8000]
+        while len(json.dumps(_bytes2str(msg_bytes))) > 8000:
+            msg_bytes = msg_bytes[:-1]
+
+        message = msg_bytes if USING_PYTHON2 else _bytes2str(msg_bytes)
+        return message + "... [truncated]"
 
     def is_resource_log(self, message):
         if USING_PYTHON2:
@@ -119,3 +120,9 @@ class DXLogHandler(SysLogHandler):
             raise
         except:
             self.handleError(record)
+
+def _bytes2str(bytes):
+    """
+    Convert bytes to a UTF-8 string and ignore UnicodeDecodeError for chars that could have been messed up by truncating.
+    """
+    return bytes.decode('utf-8', 'ignore')
