@@ -51,7 +51,6 @@ def basic_filter(
         }
     ]}
     """
-    # The table is always "variant_read_optimized" in somatic assays
     table = "variant_read_optimized"
     # Get the name of this field in the variant table
     # If the column isn't in the regular fields list, use the friendly name itself as the column name
@@ -59,6 +58,9 @@ def basic_filter(
     filter_key = column_conversion.get(
         friendly_name, "variant_read_optimized${}".format(friendly_name)
     )
+    # Handle special cases where values need to be capitalized
+    if friendly_name == "variant_type" or friendly_name == "gene" or friendly_name == "feature":
+        values = [x.toUpper() for x in values]
     # Get the condition ofr this field
     condition = column_conditions.get(friendly_name, "in")
 
