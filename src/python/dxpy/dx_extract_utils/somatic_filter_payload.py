@@ -60,7 +60,7 @@ def basic_filter(
     )
     # Handle special cases where values need to be capitalized
     if friendly_name == "variant_type" or friendly_name == "gene" or friendly_name == "feature":
-        values = [x.toUpper() for x in values]
+        values = [str(x).upper() for x in values]
     # Get the condition ofr this field
     condition = column_conditions.get(friendly_name, "in")
 

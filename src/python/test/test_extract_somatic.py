@@ -27,6 +27,7 @@
 import dxpy
 import unittest
 import os
+import sys
 import subprocess
 
 from dxpy_testutil import cd
@@ -44,6 +45,8 @@ from dxpy.dx_extract_utils.somatic_filter_payload import (
 
 dirname = os.path.dirname(__file__)
 
+python_version = sys.version_info.major
+
 general_input_dir = os.path.join(dirname, "clisam_test_filters/input/")
 general_output_dir = os.path.join(dirname, "clisam_test_filters/output/")
 
@@ -56,11 +59,17 @@ dataset = "single_assay"
 if dataset == "single_assay":
     # Single assay
     test_project = "dx-toolkit_test_data"
-    test_record = "{}:/Extract_Assay_Somatic/test_single_assay_202306231200".format(test_project)
+    test_record = "{}:/Extract_Assay_Somatic/test_single_assay_202306231200_new".format(
+        test_project
+    )
 elif dataset == "multi_assay_sciprod_1347_v2":
     # multi assay dataset
     test_project = "dx-toolkit_test_data"
-    test_record = "{}:/Extract_Assay_Somatic/test_datasets/SCIPROD-1347/sciprod_1347_v2".format(test_project)
+    test_record = (
+        "{}:/Extract_Assay_Somatic/test_datasets/SCIPROD-1347/sciprod_1347_v2".format(
+            test_project
+        )
+    )
 elif dataset == "small_original":
     test_project = "dx-toolkit_test_data"
     test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
@@ -93,11 +102,14 @@ class TestDXExtractSomatic(unittest.TestCase):
         # When assay name is none, function looks for and selects first assay of type somatic that it finds
         assay_name = None
         friendly_assay_type = "somatic"
-        project, entity_result, resp, dataset_project = resolve_validate_path(test_record)
+        project, entity_result, resp, dataset_project = resolve_validate_path(
+            test_record
+        )
         dataset_id = resp["dataset"]
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
         # Expected Results
-        expected_assay_id = "4c25f4ff-2e35-4899-b00f-43e827f38f41"
+        expected_assay_name = "test_single_assay_202306231200"
+        expected_assay_id = "5c359e55-0639-46bc-bbf3-5eb22d5a5780"
         expected_ref_genome = "GRCh38.92"
 
         (
@@ -112,9 +124,9 @@ class TestDXExtractSomatic(unittest.TestCase):
             rec_descriptor=rec_descriptor,
         )
 
-        self.assertEqual(expected_assay_id,selected_assay_id)
-        self.assertEqual(expected_ref_genome,selected_ref_genome)
-
+        self.assertEqual(expected_assay_name, selected_assay_name)
+        self.assertEqual(expected_assay_id, selected_assay_id)
+        self.assertEqual(expected_ref_genome, selected_ref_genome)
 
     def test_basic_filter(self):
         print("testing basic filter")
@@ -279,16 +291,24 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_retrieve_meta_info(self):
         print("testing --retrieve-meta-info")
-        expected_result = b"53cfc71e624a3397f9f0ae887f2e72cb  -\n"
+        expected_result = b"e79cdc96ab517d8d3eebafa8ffe4469b  -\n"
 
-        with subprocess.Popen(
-            ["dx", "extract_assay", "somatic", test_record, "--retrieve_meta_info"],
-            stderr=subprocess.PIPE,
-        ) as p1:
-            p2 = subprocess.Popen(["md5sum"], stdin=p1.stderr, stdout=subprocess.PIPE)
-            out, err = p2.communicate()
+        if python_version == 2:
+            # subprocess pipe doesn't work with python 2, just check to make sure the command runs in that case
+            command = "dx extract_assay somatic {} --retrieve-meta-info --output - > /dev/null".format(test_record)
+            #print(command)
+            process = subprocess.check_output(command,shell=True)
+        else:
+            with subprocess.Popen(
+                ["dx", "extract_assay", "somatic", test_record, "--retrieve-meta-info", "--output", "-"],
+                stdout=subprocess.PIPE,
+            ) as p1:
+                p2 = subprocess.Popen(
+                    ["md5sum"], stdin=p1.stdout, stdout=subprocess.PIPE
+                )
+                out, err = p2.communicate()
 
-        self.assertEqual(expected_result, out)
+            self.assertEqual(expected_result, out)
 
     ####
     # Input validation test
