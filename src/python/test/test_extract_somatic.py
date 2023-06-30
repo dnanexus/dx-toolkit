@@ -90,7 +90,10 @@ proj_id = list(dxpy.find_projects(describe=False, level="VIEW", name=test_projec
 class TestDXExtractSomatic(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cd(proj_id + ":/")
+        cls.proj_id = list(
+            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
+        )[0]["id"]
+        cd(cls.proj_id + ":/")
 
     ############
     # Unit Tests
