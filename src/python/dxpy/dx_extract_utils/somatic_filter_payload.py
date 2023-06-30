@@ -216,6 +216,13 @@ def somatic_final_payload(
         {"allele": "variant_read_optimized$allele"},
     ]
 
+    order_by = [
+        {"CHROM":"asc"},
+        {"POS":"asc"},
+        {"allele_id":"asc"},
+        {"assay_sample_id":"asc"}
+    ]
+
     # If the user has specified additional return columns, add them to the payload here
     if additional_fields:
         for add_field in additional_fields:
@@ -224,6 +231,7 @@ def somatic_final_payload(
             )
 
     final_payload["fields"] = fields
+    final_payload["order_by"] = order_by
     final_payload["raw_filters"] = pheno_filter
     final_payload["distinct"] = True
 
