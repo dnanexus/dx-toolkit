@@ -24,11 +24,16 @@ def validate_somatic_filter(filter, filter_type):
     keys = filter.keys()
     if filter_type == 'variant':
         required_filter_count = 0
+        expected_keys = {'annotation', 'allele', 'sample', 'location'}
+        if not set(keys).issubset(expected_keys):
+            err_exit(malformed_filter.format(str(set(keys).difference(list(expected_keys)))))
 
         if 'annotation' in keys:
             annotation_filter = filter['annotation']
             sub_keys = annotation_filter.keys()
-            
+            expected_sub_keys = {'symbol', 'gene', 'feature', 'hgvsc', 'hgvsp'}
+            if not set(sub_keys).issubset(expected_sub_keys):
+                err_exit(malformed_filter.format(str(set(sub_keys).difference(list(expected_sub_keys)))))
 
             if 'symbol' in sub_keys:
                 if not is_list_of_strings(annotation_filter['symbol']):
@@ -69,6 +74,9 @@ def validate_somatic_filter(filter, filter_type):
         if 'allele' in keys:
             allele_filter = filter['allele']
             sub_keys = allele_filter.keys()
+            expected_sub_keys = {'allele_id', 'variant_type'}
+            if not set(sub_keys).issubset(expected_sub_keys):
+                err_exit(malformed_filter.format(str(set(sub_keys).difference(list(expected_sub_keys)))))
 
             if 'allele_id' in sub_keys:
                 if not is_list_of_strings(allele_filter['allele_id']):
@@ -90,6 +98,9 @@ def validate_somatic_filter(filter, filter_type):
         if 'sample' in keys:
             sample_filter = filter['sample']
             sub_keys = sample_filter.keys()
+            expected_sub_keys = {'sample_id', 'assay_sample_id'}
+            if not set(sub_keys).issubset(expected_sub_keys):
+                err_exit(malformed_filter.format(str(set(sub_keys).difference(list(expected_sub_keys)))))
 
             if 'sample_id' in sub_keys:
                 if not is_list_of_strings(sample_filter['sample_id']):
