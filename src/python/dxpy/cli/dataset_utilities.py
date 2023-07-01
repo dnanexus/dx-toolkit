@@ -733,7 +733,6 @@ def extract_assay_germline(args):
 
     out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "germline")
 
-    print("begin payload generation")
     payload = {}
     if args.retrieve_allele:
         payload, fields_list = final_payload(
