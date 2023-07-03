@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `--metrics top` for `dx watch`
+
 ## [351.0] - beta
 
 * No significant changes
