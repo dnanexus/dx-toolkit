@@ -7147,6 +7147,17 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         with self.assertRaisesRegexp(subprocess.CalledProcessError, "ResourceNotFound"):
             run("dx build --create-globalworkflow --json " + workflow_dir, env=env)
 
+    # this is NOT a global workflow
+    def test_build_workflow_with_tree_tat_threshold(self):
+        wf_name = "workflow_build_tree_tat_threshold"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=wf_name)
+        dxworkflow_json.update({"treeTurnaroundTimeThreshold": 2})
+        workflow_dir = self.write_workflow_directory(wf_name,
+                                                     json.dumps(dxworkflow_json))
+        new_workflow_with_tat = run_and_parse_json("dx build --json " + workflow_dir)
+        workflow_describe = dxpy.get_handler(new_workflow_with_tat["id"]).describe()
+        self.assertEqual(workflow_describe['treeTurnaroundTimeThreshold'], 2)
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
     def test_build_workflow_with_bill_to(self):
@@ -7168,7 +7179,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
                                                      json.dumps(dxworkflow_json))
         new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
         self.assertEqual(new_gwf["billTo"], org_id)
-    
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
     def test_build_workflow_without_bill_to_rights(self):
@@ -8419,20 +8430,6 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         with self.assertRaisesRegex(DXCalledProcessError, "PermissionDenied"):
             run("dx build --app --bill-to {} --json {}".format(org_id, app_dir))
-
-    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
-                         'skipping test that would create apps')
-    def test_build_app_with_tree_tat_threshold(self):
-        app_name = "app_build_tree_tat_threshold"
-        app_spec = dict(self.base_app_spec,
-                        name=app_name,
-                        regionalOptions={"aws:us-east-1": {}, "azure:westus": {}})
-        app_spec.update({"treeTurnaroundTimeThreshold": 2})
-        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
-        new_app_with_tat = run_and_parse_json("dx build --app --json " + app_dir)
-        app_describe = dxpy.get_handler(new_app_with_tat["id"]).describe()
-        self.assertEqual(app_describe['treeTurnaroundTimeThreshold'], 2)
-
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
