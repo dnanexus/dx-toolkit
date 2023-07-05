@@ -7628,6 +7628,18 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(job_desc['priority'], 'normal')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_applet_tree_tat_threshold_and_run(self):
+        applet_spec = dict(self.base_app_spec, name="minimal_applet_with_tat_threshold")
+        applet_spec.update({"treeTurnaroundTimeThreshold": 2})
+        applet_dir = self.write_app_directory("minimal_applet_with_tat_threshold", json.dumps(applet_spec), "code.py")
+        new_applet_with_tat = run_and_parse_json("dx build --json " + applet_dir)
+        applet_describe = dxpy.get_handler(new_applet_with_tat["id"]).describe()
+        self.assertEqual(applet_describe['treeTurnaroundTimeThreshold'], 2)
+        job_describe = run_and_parse_json("dx run {} --json --yes --brief".format(applet_describe["id"]))
+        self.assertEqual(job_describe['selectedTreeTurnaroundTimeThreshold'], 2)
+        self.assertEqual(job_describe['selectedTreeTurnaroundTimeThresholdFrom'], "executable")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_remote_build_applet_and_run_immediately(self):
         app_spec = dict(self.base_app_spec, name="minimal_remote_build_applet_to_run")
         app_dir = self.write_app_directory("minimal_remote_build_åpplet_to_run", json.dumps(app_spec),
@@ -8407,6 +8419,20 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
         with self.assertRaisesRegex(DXCalledProcessError, "PermissionDenied"):
             run("dx build --app --bill-to {} --json {}".format(org_id, app_dir))
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
+                         'skipping test that would create apps')
+    def test_build_app_with_tree_tat_threshold(self):
+        app_name = "app_build_tree_tat_threshold"
+        app_spec = dict(self.base_app_spec,
+                        name=app_name,
+                        regionalOptions={"aws:us-east-1": {}, "azure:westus": {}})
+        app_spec.update({"treeTurnaroundTimeThreshold": 2})
+        app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
+        new_app_with_tat = run_and_parse_json("dx build --app --json " + app_dir)
+        app_describe = dxpy.get_handler(new_app_with_tat["id"]).describe()
+        self.assertEqual(app_describe['treeTurnaroundTimeThreshold'], 2)
+
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create apps')
