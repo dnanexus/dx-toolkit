@@ -5398,6 +5398,7 @@ The "csv" mode outputs the following columns with headers in csv format to stdou
 Note 1: cpuUsageUser, cpuUsageSystem, cpuUsageIowait, cpuUsageIdle and memoryUsedBytes metrics reflect usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
 Note 2: cpuUsageUser + cpuUsageSystem + cpuUsageIowait + cpuUsageIdle + cpuUsageSteal = 100. cpuUsageSteal is unreported, but can be derived from the other 4 quantities given that they add up to 100.
 Note 3: cpuUsage numbers are rounded to 2 decimal places.
+Note 4: networkOutBytes may be larger than job's egressReport which does not include "dx upload" bytes.
 
 The format of METRICS job log lines is defined as follows using the example below:
 
