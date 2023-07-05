@@ -268,10 +268,10 @@ class TestDXExtractAssay(unittest.TestCase):
     def test_malformed_json(self):
         for filter_type in ["allele", "annotation", "genotype"]:
             malformed_json_filenames = os.listdir(
-                os.path.join(malformed_json_dir, filter_type)
+                os.path.join(self.malformed_json_dir, filter_type)
             )
             for name in malformed_json_filenames:
-                file_path = os.path.join(malformed_json_dir, filter_type, name)
+                file_path = os.path.join(self.malformed_json_dir, filter_type, name)
                 with open(file_path, "r") as infile:
                     filter = json.load(infile)
                     try:
