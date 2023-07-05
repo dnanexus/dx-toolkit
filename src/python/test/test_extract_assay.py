@@ -41,26 +41,23 @@ python_version = sys.version_info.major
 
 dirname = os.path.dirname(__file__)
 
-test_project = "dx-toolkit_test_data"
-test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
-
-output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
-malformed_json_dir = os.path.join(
-    dirname, "ea_malformed_json"
-)
-
-# Controls whether output files for the end to end tests are written to file or stdout
-write_output = False
-if write_output:
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-
 class TestDXExtractAssay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        test_project_name = "dx-toolkit_test_data"
+        cls.test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project_name)
+        cls.output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
+        cls.malformed_json_dir = os.path.join(
+            dirname, "ea_malformed_json"
+        )
+        # Controls whether output files for the end to end tests are written to file or stdout
+        cls.write_output = False
+        if cls.write_output:
+            if not os.path.exists(cls.output_folder):
+                os.makedirs(cls.output_folder)
+
         cls.proj_id = list(
-            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
+            dxpy.find_projects(describe=False, level="VIEW", name=test_project_name)
         )[0]["id"]
         cd(cls.proj_id + ":/")
 
@@ -305,19 +302,19 @@ class TestDXExtractAssay(unittest.TestCase):
     # Does not write any output to file, function only outputs to stdout
     def test_list_assays(self):
         print("testing --list-assays")
-        command = "dx extract_assay germline {} --list-assays".format(test_record)
+        command = "dx extract_assay germline {} --list-assays".format(self.test_record)
         subprocess.check_call(command, shell=True)
 
     # A test of the --assay-name functionality, returns the same output as allele_rsid.json
     def test_assay_name(self):
         print("testing --assay-name")
-        output_filename = os.path.join(output_folder, "assay_name_output.tsv")
+        output_filename = os.path.join(self.output_folder, "assay_name_output.tsv")
         allele_rsid_filter = {"rsid": ["rs1342568097"]}
 
         command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele '{}' --output {}".format(
-            test_record,
+            self.test_record,
             json.dumps(allele_rsid_filter),
-            output_filename if write_output else "- > /dev/null",
+            output_filename if self.write_output else "- > /dev/null",
         )
         subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
 
@@ -335,7 +332,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
         command = (
             "dx extract_assay germline {} --retrieve-allele {} --retrieve-annotation {} - 2>&1 /dev/null".format(
-                test_record,
+                self.test_record,
                 allele_json,
                 annotation_json
             )
