@@ -289,12 +289,12 @@ class TestDXExtractSomatic(unittest.TestCase):
 
         if python_version == 2:
             # subprocess pipe doesn't work with python 2, just check to make sure the command runs in that case
-            command = "dx extract_assay somatic {} --retrieve-meta-info --output - > /dev/null".format(test_record)
+            command = "dx extract_assay somatic {} --retrieve-meta-info --output - > /dev/null".format(self.test_record)
             #print(command)
             process = subprocess.check_output(command,shell=True)
         else:
             with subprocess.Popen(
-                ["dx", "extract_assay", "somatic", test_record, "--retrieve-meta-info", "--output", "-"],
+                ["dx", "extract_assay", "somatic", self.test_record, "--retrieve-meta-info", "--output", "-"],
                 stdout=subprocess.PIPE,
             ) as p1:
                 p2 = subprocess.Popen(
@@ -344,7 +344,7 @@ class TestDXExtractSomatic(unittest.TestCase):
                 "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
                     self.test_record,
                     os.path.join(self.e2e_filter_directory, filter_name),
-                    os.path.join(self.e2e_output_dir, output_filename),
+                    os.path.join(self.e2e_output_directory, output_filename),
                 )
             )
             process = subprocess.check_call(command, shell=True)
