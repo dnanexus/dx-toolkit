@@ -1045,7 +1045,7 @@ def extract_assay_somatic(args):
                 sep="\t",
                 raw_results=resp_raw["results"],
                 column_names=fields_list,
-                quote_char=str(""),
+                quote_char=str("\t"),
                 quoting=csv.QUOTE_NONE,
             )
 
