@@ -9795,7 +9795,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "tags": ["bar"],
             "properties": {"sample_id": "123456"},
             "details": {"key1": "value1"},
-            "ignoreReuse": False
+            "ignoreReuse": False,
+            "treeTurnaroundTimeThreshold": 2
             }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
@@ -9848,6 +9849,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             self.assertNotIn("description", output_json)
             self.assertNotIn("developerNotes", output_json)
+            self.assertEqual(output_json["treeTurnaroundTimeThreshold"], 2)
             with open(os.path.join("get_applet", "Readme.md")) as fh:
                 self.assertEqual("Description\n", fh.read())
             with open(os.path.join("get_applet", "Readme.developer.md")) as fh:
