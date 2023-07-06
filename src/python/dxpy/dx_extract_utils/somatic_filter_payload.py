@@ -126,7 +126,7 @@ def location_filter(raw_location_list):
     return location_compound
 
 
-def generate_pheno_filter(
+def generate_assay_filter(
     full_input_dict,
     name,
     id,
@@ -138,7 +138,7 @@ def generate_pheno_filter(
     Generate asasy filter consisting of a compound that links the Location filters if present
     to the regular filters
     {
-        "pheno_filters": {
+        "assay_filters": {
             "id": "<id>",
             "name":"<name>",
             "compound":[
@@ -149,15 +149,15 @@ def generate_pheno_filter(
         }
     }
     """
-    pheno_filter = {
-        "pheno_filters": {"name": name, "id": id, "logic": "and", "compound": []}
+    assay_filter = {
+        "assay_filters": {"name": name, "id": id, "logic": "and", "compound": []}
     }
     basic_filters = {"filters": {}, "logic": "and"}
 
     for filter_group in full_input_dict.keys():
         if filter_group == "location":
             location_compound = location_filter(full_input_dict["location"])
-            pheno_filter["pheno_filters"]["compound"].append(location_compound)
+            assay_filter["assay_filters"]["compound"].append(location_compound)
         else:
             for individual_filter_name in full_input_dict[filter_group].keys():
                 indiv_basic_filter = basic_filter(
@@ -180,9 +180,9 @@ def generate_pheno_filter(
         basic_filters["filters"].update(tumor_normal_filter)
 
     if len(basic_filters["filters"]) > 0:
-        pheno_filter["pheno_filters"]["compound"].append(basic_filters)
+        assay_filter["assay_filters"]["compound"].append(basic_filters)
 
-    return pheno_filter
+    return assay_filter
 
 
 def somatic_final_payload(
@@ -200,7 +200,7 @@ def somatic_final_payload(
     HTTPS POST request
     """
     # Generate the assay filter component of the payload
-    pheno_filter = generate_pheno_filter(
+    assay_filter = generate_assay_filter(
         full_input_dict, name, id, project_context, genome_reference, include_normal
     )
 
@@ -233,7 +233,7 @@ def somatic_final_payload(
 
     final_payload["fields"] = fields
     final_payload["order_by"] = order_by
-    final_payload["raw_filters"] = pheno_filter
+    final_payload["raw_filters"] = assay_filter
     final_payload["distinct"] = True
 
     field_names = []
