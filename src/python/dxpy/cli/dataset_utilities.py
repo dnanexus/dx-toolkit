@@ -1016,12 +1016,6 @@ def extract_assay_somatic(args):
                 include_normal=args.include_normal_sample,
             )
 
-        # TODO remove, this is for debugging purposes
-        payload_filename = "payload_" + os.path.basename(out_file)
-        payload_filename = payload_filename[:-4] + ".json"
-        with open(payload_filename, "w") as outfile:
-            json.dump(payload, outfile)
-
         if "CohortBrowser" in resp["recordTypes"]:
             if resp.get("baseSql"):
                 payload["base_sql"] = resp.get("baseSql")
