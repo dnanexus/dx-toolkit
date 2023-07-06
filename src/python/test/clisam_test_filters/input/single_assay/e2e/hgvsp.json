@@ -1,0 +1,12 @@
+{
+    "allele": {
+        "allele_id": [
+            "chr21_40821995_T_A"
+        ]
+    },
+    "annotation": {
+        "hgvsp": [
+            "ENST00000400454.6:c.43+24624A>T"
+        ]
+    }
+}

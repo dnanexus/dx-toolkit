@@ -20,7 +20,6 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
-import shlex # respects quoted substrings when splitting
 
 import requests
 import csv
@@ -41,7 +40,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import extract_dataset, extract_assay_germline
+from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -6230,11 +6229,14 @@ subparsers_extract_assay = parser_extract_assay.add_subparsers(
 parser_extract_assay.metavar = "class"
 register_parser(parser_extract_assay)
 
+#####################################
+# germline
+#####################################
 parser_extract_assay_germline = subparsers_extract_assay.add_parser(
     "germline",
     help="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
     description="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
-    formatter_class=argparse.RawTextHelpFormatter
+    
 )
 
 parser_extract_assay_germline.add_argument(
@@ -6285,7 +6287,7 @@ parser_extract_assay_germline.add_argument(
     '--json-help',
     help=argparse.SUPPRESS,
     action="store_true",
-    )
+)
 parser_extract_assay_germline.add_argument(
     "--sql",
     action="store_true",
@@ -6299,6 +6301,91 @@ parser_extract_assay_germline.add_argument(
 )
 parser_extract_assay_germline.set_defaults(func=extract_assay_germline)
 register_parser(parser_extract_assay_germline)
+
+#####################################
+# somatic
+#####################################
+parser_extract_assay_somatic = subparsers_extract_assay.add_parser(
+    "somatic",
+    help="Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.",
+    
+)
+
+parser_extract_assay_somatic.add_argument(
+    "path",
+    type=str,
+    help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the record-id in current selected project) or name.',
+)
+
+parser_e_a_s_mutex_group = parser_extract_assay_somatic.add_mutually_exclusive_group(required=True)
+parser_e_a_s_mutex_group.add_argument(
+    "--list-assays",
+    action="store_true",
+    help="List somatic variant assays available for query in the specified Dataset or Cohort object.",
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--retrieve-meta-info",
+    action="store_true",
+    help="List meta information, as it exists in the original VCF headers for both INFO and FORMAT fields.",
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--retrieve-variant",
+    type=str,
+    const='{}',
+    default=None,
+    nargs='?',
+    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. Retrieves rows from the variant table, optionally extended with sample and annotation information (the extension is inline without affecting row count). By default returns the following set of fields; “assay_sample_id”, “allele_id”, “CHROM”, “POS”, “REF”, and “allele”. Additional fields may be returned using --additional-fields. Specify “--json-help” following this option to get detailed information on the json format and filters. When filtering, must supply one, and only one of “location”, “annotation.symbol”, “annotation.gene”, “annotation.feature”, “allele.allele_id”.",
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--additional-fields-help",
+    action="store_true",
+    help="List all fields available for output.",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--include-normal-sample",
+    action="store_true",
+    help="Include variants associated with normal samples in the assay. If no flag is supplied, variants from normal samples will not be supplied.",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--additional-fields",
+    nargs='+',
+    default=None,
+    help="A list of strings to specify what fields in the assay to return, in addition to the default fields always returned, “assay_sample_id”, “allele_id”,  “CHROM”,  “POS”,  “REF”,  “allele”. Supplied fields must be separated by commas. Use “--additional-fields-help” to get the full list of output fields available.",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--assay-name",
+    default=None,
+    help="Specify a specific somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
+)
+
+parser_extract_assay_somatic.add_argument(
+    '--json-help',
+    help=argparse.SUPPRESS,
+    action="store_true",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--sql",
+    action="store_true",
+    help="If the flag is provided, a SQL statement (a string) will be returned for user to further query the specified data instead of actual value of the requested fields.",
+)
+parser_extract_assay_somatic.add_argument(
+    "-o", "--output", 
+    type=str,
+    default=None,
+    help="Path to store the output file."
+)
+
+parser_extract_assay_somatic.set_defaults(func=extract_assay_somatic)
+register_parser(parser_extract_assay_somatic)
+
 
 #####################################
 # help
