@@ -47,53 +47,44 @@ dirname = os.path.dirname(__file__)
 
 python_version = sys.version_info.major
 
-general_input_dir = os.path.join(dirname, "clisam_test_filters/input/")
-general_output_dir = os.path.join(dirname, "clisam_test_filters/output/")
-
-
-#
-# Select test suite
-#
-dataset = "single_assay"
-
-if dataset == "single_assay":
-    # Single assay
-    test_project = "dx-toolkit_test_data"
-    test_record = "{}:/Extract_Assay_Somatic/test_single_assay_202306231200_new".format(
-        test_project
-    )
-elif dataset == "multi_assay_sciprod_1347_v2":
-    # multi assay dataset
-    test_project = "dx-toolkit_test_data"
-    test_record = (
-        "{}:/Extract_Assay_Somatic/test_datasets/SCIPROD-1347/sciprod_1347_v2".format(
-            test_project
-        )
-    )
-elif dataset == "small_original":
-    test_project = "dx-toolkit_test_data"
-    test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project)
-
-e2e_filter_directory = os.path.join(general_input_dir, dataset, "e2e")
-e2e_output_directory = os.path.join(general_output_dir, dataset, "e2e_output")
-
-# Ensure output directories exist
-if not os.path.exists(e2e_output_directory):
-    os.makedirs(e2e_output_directory)
-
-
-proj_id = list(dxpy.find_projects(describe=False, level="VIEW", name=test_project))[0][
-    "id"
-]
-
-
 class TestDXExtractSomatic(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        test_project_name = "dx-toolkit_test_data"
         cls.proj_id = list(
-            dxpy.find_projects(describe=False, level="VIEW", name=test_project)
+            dxpy.find_projects(describe=False, level="VIEW", name=test_project_name)
         )[0]["id"]
         cd(cls.proj_id + ":/")
+        cls.general_input_dir = os.path.join(dirname, "clisam_test_filters/input/")
+        cls.general_output_dir = os.path.join(dirname, "clisam_test_filters/output/")
+
+        #
+        # Select test suite
+        #
+        cls.dataset = "single_assay"
+
+        if cls.dataset == "single_assay":
+            # Single assay
+            cls.test_record = "{}:/Extract_Assay_Somatic/test_single_assay_202306231200_new".format(
+                test_project_name
+            )
+        elif cls.dataset == "multi_assay_sciprod_1347_v2":
+            # multi assay dataset
+            cls.test_record = (
+                "{}:/Extract_Assay_Somatic/test_datasets/SCIPROD-1347/sciprod_1347_v2".format(
+                    test_project_name
+                )
+            )
+        elif cls.dataset == "small_original":
+            cls.test_record = "{}:test_datasets/assay_title_annot_complete".format(test_project_name)
+        
+        cls.e2e_filter_directory = os.path.join(cls.general_input_dir, cls.dataset, "e2e")
+        cls.e2e_output_directory = os.path.join(cls.general_output_dir, cls.dataset, "e2e_output")
+
+        # Ensure output directories exist
+        if not os.path.exists(cls.e2e_output_directory):
+            os.makedirs(cls.e2e_output_directory)
+
 
     ############
     # Unit Tests
@@ -106,7 +97,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         assay_name = None
         friendly_assay_type = "somatic"
         project, entity_result, resp, dataset_project = resolve_validate_path(
-            test_record
+            self.test_record
         )
         dataset_id = resp["dataset"]
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
@@ -122,7 +113,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         ) = get_assay_name_info(
             list_assays=False,
             assay_name=assay_name,
-            path=test_record,
+            path=self.test_record,
             friendly_assay_type=friendly_assay_type,
             rec_descriptor=rec_descriptor,
         )
@@ -262,13 +253,13 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_additional_fields(self):
         print("testing --additional-fields")
-        input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
+        input_filter_path = os.path.join(self.e2e_filter_directory, "single_location.json")
         output_path = os.path.join(
-            general_output_dir, dataset, "e2e_output", "additional_fields_output.tsv"
+            self.general_output_dir, self.dataset, "e2e_output", "additional_fields_output.tsv"
         )
 
         command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --additional-fields "{}"'.format(
-            test_record,
+            self.test_record,
             input_filter_path,
             output_path,
             "sample_id,tumor_normal,symbolic_type",
@@ -278,13 +269,13 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_tumor_normal(self):
         print("testing --include-normal-sample")
-        input_filter_path = os.path.join(e2e_filter_directory, "single_location.json")
+        input_filter_path = os.path.join(self.e2e_filter_directory, "single_location.json")
         output_path = os.path.join(
-            general_output_dir, dataset, "e2e_output", "tumor_normal_output.tsv"
+            self.general_output_dir, self.dataset, "e2e_output", "tumor_normal_output.tsv"
         )
 
         command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --include-normal-sample --additional-fields "{}"'.format(
-            test_record,
+            self.test_record,
             input_filter_path,
             output_path,
             "sample_id,tumor_normal",
@@ -298,12 +289,12 @@ class TestDXExtractSomatic(unittest.TestCase):
 
         if python_version == 2:
             # subprocess pipe doesn't work with python 2, just check to make sure the command runs in that case
-            command = "dx extract_assay somatic {} --retrieve-meta-info --output - > /dev/null".format(test_record)
+            command = "dx extract_assay somatic {} --retrieve-meta-info --output - > /dev/null".format(self.test_record)
             #print(command)
             process = subprocess.check_output(command,shell=True)
         else:
             with subprocess.Popen(
-                ["dx", "extract_assay", "somatic", test_record, "--retrieve-meta-info", "--output", "-"],
+                ["dx", "extract_assay", "somatic", self.test_record, "--retrieve-meta-info", "--output", "-"],
                 stdout=subprocess.PIPE,
             ) as p1:
                 p2 = subprocess.Popen(
@@ -319,12 +310,12 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_malformed_json(self):
         # For somatic assays, json validation is not in a single function
-        malformed_json_dir = os.path.join(general_input_dir, "malformed_json")
+        malformed_json_dir = os.path.join(self.general_input_dir, "malformed_json")
         malformed_json_filenames = os.listdir(malformed_json_dir)
         for name in malformed_json_filenames:
             filter_path = os.path.join(malformed_json_dir, name)
             command = "dx extract_assay somatic {} --retrieve-variant {}".format(
-                test_record,
+                self.test_record,
                 os.path.join(malformed_json_dir, filter_path),
             )
             try:
@@ -344,18 +335,16 @@ class TestDXExtractSomatic(unittest.TestCase):
 
     def test_e2e_filters(self):
         print("Testing e2e filters")
-        e2e_filter_directory = os.path.join(general_input_dir, dataset, "e2e")
-        filter_files = os.listdir(e2e_filter_directory)
-        e2e_output_dir = os.path.join(general_output_dir, dataset, "e2e_output")
+        filter_files = os.listdir(self.e2e_filter_directory)
 
         for filter_name in filter_files:
             print("testing {}".format(filter_name))
             output_filename = filter_name[:-5] + "_output.tsv"
             command = (
                 "dx extract_assay somatic {} --retrieve-variant {} --output {}".format(
-                    test_record,
-                    os.path.join(e2e_filter_directory, filter_name),
-                    os.path.join(e2e_output_dir, output_filename),
+                    self.test_record,
+                    os.path.join(self.e2e_filter_directory, filter_name),
+                    os.path.join(self.e2e_output_directory, output_filename),
                 )
             )
             process = subprocess.check_call(command, shell=True)
