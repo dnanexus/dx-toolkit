@@ -60,7 +60,7 @@ class TestDXTabCompletion(unittest.TestCase):
             if 'completed' not in resp:
                 raise DXError('Error removing folder')
             completed = resp['completed']
-        for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS':
+        for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS', 'DX_PROJECT_CONTEXT_ID':
             if var in os.environ:
                 del os.environ[var]
 
