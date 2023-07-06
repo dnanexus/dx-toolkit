@@ -69,7 +69,6 @@ class TestDXProject(unittest.TestCase):
 
     def tearDown(self):
         tearDownTempProjects(self)
-        dxpy.set_workspace_id(None)
 
     def test_init_and_set_id(self):
         for good_value in ["project-aB3456789012345678901234", None]:

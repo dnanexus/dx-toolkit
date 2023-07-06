@@ -43,6 +43,7 @@ class TestDXTabCompletion(unittest.TestCase):
         dxpy.api.project_destroy(cls.project_id)
         for entity_id in cls.ids_to_destroy:
             dxpy.DXHTTPRequest("/" + entity_id + "/destroy", {})
+        dxpy.set_workspace_id(None)
 
     def setUp(self):
         os.environ['IFS'] = IFS
