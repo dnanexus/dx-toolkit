@@ -199,6 +199,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
         expected_output_payload = {
             "project_context": proj_id,
+            "order_by":[{"allele_id":"asc"}],
             "fields": [
                 {"allele_id": "allele$a_id"},
                 {"chromosome": "allele$chr"},
