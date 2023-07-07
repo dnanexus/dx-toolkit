@@ -39,7 +39,7 @@ from dxpy.cli.dataset_utilities import (
 from dxpy.dx_extract_utils.somatic_filter_payload import (
     basic_filter,
     location_filter,
-    generate_pheno_filter,
+    generate_assay_filter,
     somatic_final_payload,
 )
 
@@ -170,14 +170,14 @@ class TestDXExtractSomatic(unittest.TestCase):
 
         self.assertEqual(location_filter(raw_location_list), expected_output)
 
-    def test_generate_pheno_filter(self):
-        print("testing generate pheno filter")
+    def test_generate_assay_filter(self):
+        print("testing generate assay filter")
         full_input_dict = {"allele": {"allele_id": ["chr21_40590995_C_C"]}}
         name = "test_single_assay_202306231200"
         id = "0c69a39f-a34f-4030-a866-5056c8112da4"
         project_context = "project-GX0Jpp00ZJ46qYPq5G240k1k"
         expected_output = {
-            "pheno_filters": {
+            "assay_filters": {
                 "name": "test_single_assay_202306231200",
                 "id": "0c69a39f-a34f-4030-a866-5056c8112da4",
                 "logic": "and",
@@ -197,7 +197,7 @@ class TestDXExtractSomatic(unittest.TestCase):
             }
         }
         self.assertEqual(
-            generate_pheno_filter(full_input_dict, name, id, project_context),
+            generate_assay_filter(full_input_dict, name, id, project_context),
             expected_output,
         )
 
@@ -217,8 +217,14 @@ class TestDXExtractSomatic(unittest.TestCase):
                 {"REF": "variant_read_optimized$REF"},
                 {"allele": "variant_read_optimized$allele"},
             ],
+            "order_by": [
+                {"CHROM":"asc"}, 
+                {"POS":"asc"}, 
+                {"allele_id":"asc"}, 
+                {"assay_sample_id":"asc"}
+            ],
             "raw_filters": {
-                "pheno_filters": {
+                "assay_filters": {
                     "name": "test_single_assay_202306231200",
                     "id": "0c69a39f-a34f-4030-a866-5056c8112da4",
                     "logic": "and",
@@ -250,6 +256,9 @@ class TestDXExtractSomatic(unittest.TestCase):
             "REF",
             "allele",
         ]
+        test_payload, test_fields = somatic_final_payload(full_input_dict, name, id, project_context, genome_reference=None, additional_fields=None, include_normal=False)
+        self.assertEqual(test_payload, expected_output)
+        self.assertEqual(test_fields, expected_output_fields)
 
     def test_additional_fields(self):
         print("testing --additional-fields")
