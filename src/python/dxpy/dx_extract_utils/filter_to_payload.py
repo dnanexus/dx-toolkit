@@ -254,11 +254,6 @@ def final_payload(
         ) as infile:
             fields = json.load(infile)
 
-    # Order the results
-
-    order_by = [{"allele_id": "asc"}]
-
-    final_payload["order_by"] = order_by
     final_payload["fields"] = fields
     final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter
