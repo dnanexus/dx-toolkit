@@ -256,7 +256,7 @@ def final_payload(
 
     # Order the results
 
-    order_by = [{"allele_id": "asc"}, {"assay_sample_id": "asc"}]
+    order_by = [{"allele_id": "asc"}]
 
     final_payload["order_by"] = order_by
     final_payload["fields"] = fields
