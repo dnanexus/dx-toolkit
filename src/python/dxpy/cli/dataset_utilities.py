@@ -138,6 +138,8 @@ def raw_api_call(resp, payload, sql_message=True):
                 print(
                     "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster."
                 )
+            elif resp_raw["error"]["type"] == "QueryBuilderError" and resp_raw["error"]["details"] == "rsid exists in request filters without rsid entries in rsid_lookup_table.":
+                print("At least one rsID provided in the filter is not present in the provided dataset or cohort")
             else:
                 print(resp_raw["error"])
             sys.exit(1)
