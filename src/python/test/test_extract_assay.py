@@ -280,7 +280,7 @@ class TestDXExtractAssay(unittest.TestCase):
                         print("task failed succesfully")
 
     def test_bad_rsid(self):
-        filter = {"rsid": ["badrsid"]}
+        filter = {"rsid": ["rs1342568097","rs1342568098"]}
         test_project = "dx-toolkit_test_data"
         test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
 
@@ -289,7 +289,12 @@ class TestDXExtractAssay(unittest.TestCase):
             "allele",
             json.dumps(filter),
         )
-        process = subprocess.check_output(command, shell=True)
+        try:
+            process = subprocess.check_output(command, shell=True)
+            print("error, bad filter passed detection")
+            exit(1)
+        except:
+            print("bad rsid detected succesfully")
 
     ##########
     # Normal Command Lines
