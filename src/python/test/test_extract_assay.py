@@ -41,15 +41,16 @@ python_version = sys.version_info.major
 
 dirname = os.path.dirname(__file__)
 
+
 class TestDXExtractAssay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         test_project_name = "dx-toolkit_test_data"
-        cls.test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project_name)
-        cls.output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
-        cls.malformed_json_dir = os.path.join(
-            dirname, "ea_malformed_json"
+        cls.test_record = "{}:Extract_Assay_Germline/test01_dataset".format(
+            test_project_name
         )
+        cls.output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
+        cls.malformed_json_dir = os.path.join(dirname, "ea_malformed_json")
         # Controls whether output files for the end to end tests are written to file or stdout
         cls.write_output = False
         if cls.write_output:
@@ -87,9 +88,7 @@ class TestDXExtractAssay(unittest.TestCase):
         }
 
         self.assertEqual(
-            basic_filter(
-                table, friendly_name, values, self.proj_id, genome_reference
-            ),
+            basic_filter(table, friendly_name, values, self.proj_id, genome_reference),
             expected_output,
         )
 
@@ -110,9 +109,7 @@ class TestDXExtractAssay(unittest.TestCase):
         }
 
         self.assertEqual(
-            basic_filter(
-                table, friendly_name, values, self.proj_id, genome_reference
-            ),
+            basic_filter(table, friendly_name, values, self.proj_id, genome_reference),
             expected_output,
         )
 
@@ -127,9 +124,7 @@ class TestDXExtractAssay(unittest.TestCase):
         }
 
         self.assertEqual(
-            basic_filter(
-                table, friendly_name, values, self.proj_id, genome_reference
-            ),
+            basic_filter(table, friendly_name, values, self.proj_id, genome_reference),
             expected_output,
         )
 
@@ -284,6 +279,18 @@ class TestDXExtractAssay(unittest.TestCase):
                     except:
                         print("task failed succesfully")
 
+    def test_bad_rsid(self):
+        filter = {"rsid": ["badrsid"]}
+        test_project = "dx-toolkit_test_data"
+        test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
+
+        command = "dx extract_assay germline {} --retrieve-{} '{}'".format(
+            test_record,
+            "allele",
+            json.dumps(filter),
+        )
+        process = subprocess.check_output(command, shell=True)
+
     ##########
     # Normal Command Lines
     ##########
@@ -296,6 +303,7 @@ class TestDXExtractAssay(unittest.TestCase):
 
     def test_generic_help(self):
         """Test the generic help message"""
+
     command = "dx extract_assay germline -h > /dev/null"
     process = subprocess.check_call(command, shell=True)
 
@@ -321,27 +329,23 @@ class TestDXExtractAssay(unittest.TestCase):
     ###########
     # Malformed command lines
     ###########
-    
 
     def test_filter_mutex(self):
         print("testing filter mutex")
         """Ensure that the failure mode of multiple filter types being provided is caught"""
         # Grab two random filter JSONs of different types
-        allele_json = "{\"rsid\": [\"rs1342568097\"]}"
-        annotation_json = "{\"allele_id\": [\"18_47408_G_A\"]}"
+        allele_json = '{"rsid": ["rs1342568097"]}'
+        annotation_json = '{"allele_id": ["18_47408_G_A"]}'
 
-        command = (
-            "dx extract_assay germline {} --retrieve-allele {} --retrieve-annotation {} - 2>&1 /dev/null".format(
-                self.test_record,
-                allele_json,
-                annotation_json
-            )
+        command = "dx extract_assay germline {} --retrieve-allele {} --retrieve-annotation {} - 2>&1 /dev/null".format(
+            self.test_record, allele_json, annotation_json
         )
         try:
             process = subprocess.check_output(command, shell=True)
             print("Uh oh, malformed command line passed detection")
         except:
             print("filter mutex failed succesfully")
+
 
 if __name__ == "__main__":
     unittest.main()
