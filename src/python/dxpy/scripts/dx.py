@@ -3705,9 +3705,8 @@ def watch(args):
       if not args.quiet:
         print("Output reused from %s" %(args.jobid))
 
-    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
-                                      msg_output_format=args.format, print_job_info=args.job_info,
-                                      print_job_try=is_try_provided)
+    log_client = DXJobLogStreamClient(args.jobid, job_try=args.job_try, input_params=input_params, msg_callback=msg_callback,
+                                      msg_output_format=args.format, print_job_info=args.job_info)
 
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
