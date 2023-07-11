@@ -3366,19 +3366,21 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + applet_id +
                           ' -inumber=32 --name jobname --folder /output ' +
                           '--instance-type mem2_hdd2_x2 ' +
-                          '--instance-type-by-executable \'{"' + applet_id + '": {"*": "mem1_ssd1_v2_x2"}}\' '   
+                          '--instance-type-by-executable \'{"' + applet_id + '": {"*": {"instanceType": "mem1_ssd1_v2_x2"}}}\' '   
                           '--tag Ψ --tag $hello.world ' +
                           '--property Σ_1^n=n --property $hello.=world ' +
                           '--priority normal ' +
                           '--brief -y').strip()
-        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        orig_job_desc = dxpy.api.job_describe(orig_job_id, {"defaultFields": True, "fields":{"runSystemRequirements":True, "runSystemRequirementsByExecutable":True, "mergedSystemRequirementsByExecutable":True}} )
         # control
         self.assertEqual(orig_job_desc['name'], 'jobname')
         self.assertEqual(orig_job_desc['project'], self.project)
         self.assertEqual(orig_job_desc['folder'], '/output')
         self.assertEqual(orig_job_desc['input'], {'number': 32})
-        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
-        self.assertEqual(orig_job_desc['systemRequirementsByExecutable'], {'*': {'instanceType': 'mem1_ssd1_v2_x2'}})
+        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem1_ssd1_v2_x2'}})
+        self.assertEqual(orig_job_desc['runSystemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
+        self.assertEqual(orig_job_desc['runSystemRequirementsByExecutable'], {applet_id: {'*': {'instanceType': 'mem1_ssd1_v2_x2'}}})
+        self.assertEqual(orig_job_desc['mergedSystemRequirementsByExecutable'], {applet_id: {'*': {'instanceType': 'mem1_ssd1_v2_x2'}}})
 
         # clone the job
 
@@ -3461,7 +3463,7 @@ dx-jobutil-add-output record_array $second_record --array
                                         json.dumps({"some_ep": "mem2_hdd2_x1",
                                                     "some_other_ep": "mem2_hdd2_x4"}) + "'")
         self.assertEqual(new_job_desc['systemRequirements'],
-                         {'*': {'instanceType': 'mem2_hdd2_x2'},
+                         {'*': {'instanceType': 'mem1_ssd1_v2_x2'},
                           'some_ep': {'instanceType': 'mem2_hdd2_x1'},
                           'some_other_ep': {'instanceType': 'mem2_hdd2_x4'}})
         check_new_job_metadata(new_job_desc, orig_job_desc,
