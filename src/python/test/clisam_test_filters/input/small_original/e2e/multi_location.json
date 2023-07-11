@@ -1,0 +1,14 @@
+{
+    "location": [
+        {
+            "chromosome": "chr1",
+            "starting_position": "10",
+            "ending_position": "90000000"
+        },
+        {
+            "chromosome": "chr2",
+            "starting_position": "160000000",
+            "ending_position": "180000000"
+        }
+    ]
+}

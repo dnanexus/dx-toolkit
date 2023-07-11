@@ -1,3 +1,10 @@
+dx-toolkit (0.352.0) trusty; urgency=medium
+
+  * Added: `dx extract_assay somatic`
+  * Fixed: Log truncation for strings > 8000 bytes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 07 Jul 2023 17:49:36 +0000
+
 dx-toolkit (0.351.0) trusty; urgency=medium
 
   * No significant changes

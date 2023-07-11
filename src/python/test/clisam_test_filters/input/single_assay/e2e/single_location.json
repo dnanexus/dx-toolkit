@@ -1,0 +1,9 @@
+{
+    "location": [
+        {
+            "chromosome": "chr21",
+            "starting_position": "100",
+            "ending_position": "50000000"
+        }
+    ]
+}

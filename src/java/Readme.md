@@ -12,13 +12,13 @@ Development
 
 ### Build dependencies
 
-* Maven (`apt-get install maven2`)
+* Maven (`apt-get install maven`)
 
 ### Building
 
 From dx-toolkit, run:
 
-    make && make java
+    make java
 
 To create a project for Eclipse development:
 

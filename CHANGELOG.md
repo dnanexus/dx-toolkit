@@ -10,7 +10,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
 
-## [351.0] - beta
+## [352.0] - beta
+
+### Added
+
+* `dx extract_assay somatic`
+
+### Fixed
+
+* Log line truncation for strings > 8000 bytes
+
+## [351.0] -  2023.7.7
 
 * No significant changes
 
