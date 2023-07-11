@@ -3563,7 +3563,7 @@ def _watch_metrics_top(args, input_params, enrich_msg):
             self.stdscr = None
             self.args = args
             self.log_client = CursesDXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=self.msg_callback,
-                                                         msg_output_format=None, print_job_info=False)
+                                                         msg_output_format=None, print_job_info=False, exit_on_failed=False)
             self.curr_screen = 'logs'
             self.log = []
             self.metrics = ['Waiting for job logs...']
