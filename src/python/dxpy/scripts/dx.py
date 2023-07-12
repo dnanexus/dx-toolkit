@@ -47,7 +47,7 @@ from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_a
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
+                           instance_type_arg, process_instance_type_arg, process_instance_type_by_executable_arg, process_instance_count_arg, get_update_project_args,
                            property_args, tag_args, contains_phi, process_phi_param, process_external_upload_restricted_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
@@ -2912,7 +2912,7 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
     if args.input_json is None and args.filename is None:
         # --input-json and --input-json-file completely override input
         # from the cloned job
-        exec_inputs.update(args.input_from_clone, strip_prefix=False)
+        exec_inputs.update(args.cloned_job_desc.get("runInput", {}), strip_prefix=False)
 
     # Update with inputs passed to the this function
     if preset_inputs is not None:
@@ -3022,24 +3022,61 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_type, str):
-        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
-                                  **(args.instance_type or {}))
+    requested_instance_type, requested_cluster_spec = {}, {}
+    executable_desc = None
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_count, str):
-        # extract instance counts from cloned sys reqs and override them with args provided with "dx run"
-        args.instance_count = dict({fn: reqs['clusterSpec']['initialInstanceCount']
-                                        for fn, reqs in list(args.sys_reqs_from_clone.items()) if 'clusterSpec' in reqs},
-                                   **(args.instance_count or {}))
+    from ..utils import merge
+    if args.cloned_job_desc:
+        # override systemRequirements and systemRequirementsByExecutable mapping with cloned job description
+        # Note: when cloning from a job, we have 1)runtime 2)cloned 3) default runSpec specifications, and we need to merge the first two to make the new request
+        # however when cloning from an analysis, the temporary workflow already has the cloned spec as its default, so no need to merge 1) and 2) here
+        cloned_system_requirements = copy.deepcopy(args.cloned_job_desc).get("systemRequirements", {})
+        cloned_instance_type = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceType')
+        cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='clusterSpec')
+        cloned_fpga_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='fpgaDriver')
+        cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {})
+    else:
+        cloned_system_requirements = {}
+        cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver = SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({})
+        cloned_system_requirements_by_executable = {}
 
-    executable_describe = None
-    srd_cluster_spec = SystemRequirementsDict(None)
-    if args.instance_count is not None:
-        executable_describe = executable.describe()
-        srd_default = SystemRequirementsDict.from_sys_requirements(
-            executable_describe['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
-        srd_requested = SystemRequirementsDict.from_instance_count(args.instance_count)
-        srd_cluster_spec = srd_default.override_cluster_spec(srd_requested)
+    # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
+    # here the args.instance_type no longer contains specifications for stage sys reqs
+    if args.instance_type:
+        requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
+        if not isinstance(args.instance_type, basestring):
+            requested_instance_type = SystemRequirementsDict(merge(cloned_instance_type.as_dict(), requested_instance_type.as_dict()))
+    else:
+        requested_instance_type = cloned_instance_type
+
+    # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
+    if args.instance_count:
+        # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
+        # and overwrite the field initialInstanceCount with the runtime mapping
+        requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)        
+        executable_desc = executable.describe()
+        cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable_desc.get('runSpec',{}).get('systemRequirements', {}),_type='clusterSpec')
+
+        if not isinstance(args.instance_count, basestring):
+            if cloned_cluster_spec.as_dict():
+                requested_instance_count = SystemRequirementsDict(merge(cloned_cluster_spec.as_dict(), requested_instance_count.as_dict()))
+                cluster_spec_to_override = SystemRequirementsDict(merge(cluster_spec_to_override.as_dict(), cloned_cluster_spec.as_dict()))
+        
+        requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count)
+    else:
+        requested_cluster_spec = cloned_cluster_spec
+
+    # fpga driver now does not have corresponding dx run option, so it can only be requested using the cloned value
+    requested_fpga_driver = cloned_fpga_driver
+
+    # combine the requested instance type, full cluster spec, fpga spec
+    # into the runtime systemRequirements
+    requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
+
+    # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
+    # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
+    # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
+    requested_system_requirements_by_executable = SystemRequirementsDict(args.instance_type_by_executable).as_dict() or cloned_system_requirements_by_executable
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -3065,11 +3102,11 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": args.priority,
-        "instance_type": args.instance_type,
+        "system_requirements": requested_system_requirements or None,
+        "system_requirements_by_executable": requested_system_requirements_by_executable or None,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
-        "cluster_spec": srd_cluster_spec.as_dict(),
         "detach": args.detach,
         "cost_limit": args.cost_limit,
         "rank": args.rank,
@@ -3095,7 +3132,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
 
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
-        executable_desc = executable_describe or executable.describe()
+        executable_desc = executable_desc or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
         def check_for_special_access(access_spec):
             if not access_spec:
@@ -3369,8 +3406,6 @@ def run(args):
         err_exit(parser_map['run'].format_help() +
                  fill("Error: Either the executable must be specified, or --clone must be used to indicate a job or analysis to clone"), 2)
 
-    args.input_from_clone, args.sys_reqs_from_clone = {}, {}
-
     dest_proj, dest_path = None, None
 
     if args.project is not None:
@@ -3403,8 +3438,9 @@ def run(args):
             args.stage_folders = stage_folders
 
     clone_desc = None
+    args.cloned_job_desc = {}
     if args.clone is not None:
-        # Resolve job ID or name
+        # Resolve job ID or name; both job-id and analysis-id can be described using job_describe()
         if is_job_id(args.clone) or is_analysis_id(args.clone):
             clone_desc = dxpy.api.job_describe(args.clone)
         else:
@@ -3465,10 +3501,9 @@ def run(args):
                 setattr(args, metadata, clone_desc.get(metadata))
 
         if clone_desc['class'] == 'job':
+            args.cloned_job_desc = clone_desc
             if args.executable == "":
                 args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
-            args.input_from_clone = clone_desc["runInput"]
-            args.sys_reqs_from_clone = clone_desc["systemRequirements"]
             if args.details is None:
                 args.details = {
                     "clonedFrom": {
@@ -3533,6 +3568,8 @@ def run(args):
             dest_path = dxpy.config.get('DX_CLI_WD', '/')
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
+
+    try_call(process_instance_type_by_executable_arg, args)
 
     # Validate and process instance_count argument
     if args.instance_count:
