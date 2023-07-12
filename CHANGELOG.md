@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+* Added new return fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
+
 ## [352.0] - beta
 
 ### Added
