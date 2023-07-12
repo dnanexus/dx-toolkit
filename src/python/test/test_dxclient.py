@@ -3277,7 +3277,7 @@ dx-jobutil-add-output record_array $second_record --array
         applet_id = dxpy.api.applet_new(app_spec)['id']
         requested_inst_type_by_exec = {
             applet_id: {
-                "*": {
+                "main": {
                     "instanceType": "mem2_ssd1_v2_x2",
                     "clusterSpec": {"initialInstanceCount": 3}}}}
 
