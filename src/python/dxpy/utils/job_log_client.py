@@ -23,9 +23,14 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import json
 import logging
+import os
+import signal
 import ssl
+import sys
+import textwrap
 import time
 
+from threading import Thread
 from websocket import WebSocketApp
 
 import dxpy
@@ -214,3 +219,180 @@ class DXJobLogStreamClient:
             self.msg_callback(message_dict)
         else:
             print(self.msg_output_format.format(**message_dict))
+
+
+class CursesDXJobLogStreamClient(DXJobLogStreamClient):
+
+    def closed(self, *args, **kwargs):
+        super(CursesDXJobLogStreamClient, self).closed(args, kwargs)
+        # Overcome inability to stop Python process from a thread by sending SIGINT
+        os.kill(os.getpid(), signal.SIGINT)
+
+
+def metrics_top(args, input_params, enrich_msg):
+    try:
+        import curses
+    except:
+        err_exit("--metrics top is not supported on your platform due to missing curses library")
+
+    class ScreenManager:
+
+        def __init__(self, args):
+            self.stdscr = None
+            self.args = args
+            self.log_client = CursesDXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=self.msg_callback,
+                                                         msg_output_format=None, print_job_info=False, exit_on_failed=False)
+            self.curr_screen = 'logs'
+            self.log = []
+            self.metrics = ['Waiting for job logs...']
+            self.scr_dim_y = 0
+            self.scr_y_offset = 0
+            self.scr_y_max_offset = 0
+            self.scr_dim_x = 0
+            self.scr_x_offset = 0
+            self.scr_x_max_offset = 0
+            self.curr_row = 0
+            self.curr_row_total_chars = 0
+            self.curr_col = 0
+
+        def main(self, stdscr):
+            self.stdscr = stdscr
+
+            curses.use_default_colors()
+            curses.init_pair(1, curses.COLOR_BLUE, -1)
+            curses.init_pair(2, curses.COLOR_RED, -1)
+            curses.init_pair(3, curses.COLOR_YELLOW, -1)
+            curses.init_pair(4, curses.COLOR_GREEN, -1)
+
+            t = Thread(target=self.log_client.connect)
+            t.daemon = True
+            t.start()
+
+            self.refresh()
+            try:
+                while True:
+                    ch = stdscr.getch()
+                    if ch == curses.KEY_RESIZE: self.refresh()
+                    elif self.curr_screen == 'logs':
+                        if ch == curses.KEY_RIGHT: self.refresh(scr_x_offset_diff=1)
+                        elif ch == curses.KEY_LEFT: self.refresh(scr_x_offset_diff=-1)
+                        elif ch == curses.KEY_SRIGHT: self.refresh(scr_x_offset_diff=20)
+                        elif ch == curses.KEY_SLEFT: self.refresh(scr_x_offset_diff=-20)
+                        elif ch == curses.KEY_HOME: self.refresh(scr_x_offset_diff=-self.scr_x_offset)
+                        elif ch == curses.KEY_END: self.refresh(scr_x_offset_diff=self.scr_x_max_offset)
+                        elif ch == curses.KEY_UP: self.refresh(scr_y_offset_diff=1)
+                        elif ch == curses.KEY_DOWN: self.refresh(scr_y_offset_diff=-1)
+                        elif ch == curses.KEY_PPAGE: self.refresh(scr_y_offset_diff=10)
+                        elif ch == curses.KEY_NPAGE: self.refresh(scr_y_offset_diff=-10)
+                        elif ch == ord('?') or ch == ord('?'): self.refresh(target_screen='help')
+                        elif ch == ord('q') or ch == ord('Q'): sys.exit(0)
+                    elif self.curr_screen == 'help':
+                        if ch >= 0: self.refresh(target_screen='logs')
+            # Capture SIGINT and exit normally
+            except KeyboardInterrupt:
+                sys.exit(0)
+
+        def msg_callback(self, message):
+            if len(self.log) == 0:
+                self.metrics[0] = ''
+
+            enrich_msg(self.log_client, message)
+            if message['level'] == 'METRICS':
+                self.metrics[0] = '[%s] %s' % (message['timestamp'], message['msg'])
+            else:
+                self.log.append(message)
+                if self.scr_y_offset > 0:
+                    self.scr_y_offset += 1
+
+            self.refresh()
+
+        def refresh(self, target_screen=None, scr_y_offset_diff=None, scr_x_offset_diff=None):
+            self.stdscr.erase()
+            self.scr_dim_y, self.scr_dim_x = self.stdscr.getmaxyx()
+
+            self.scr_y_max_offset = max(len(self.log) - self.scr_dim_y + 3, 0)
+            self.update_screen_offsets(scr_y_offset_diff, scr_x_offset_diff)
+
+            self.curr_row = 0
+
+            if target_screen is not None:
+                self.curr_screen = target_screen
+
+            if self.curr_screen == 'help':
+                self.draw_help()
+            else:
+                self.draw_logs()
+
+            self.stdscr.refresh()
+
+        def draw_logs(self):
+            nlines = min(self.scr_dim_y - 3, len(self.log))
+            self.stdscr.addnstr(self.curr_row, 0, self.metrics[-1], self.scr_dim_x)
+            self.curr_row += 2
+
+            for i in range(nlines):
+                message = self.log[len(self.log) - nlines + i - self.scr_y_offset]
+                self.curr_col = 0
+                self.curr_row_total_chars = 0
+
+                if args.format:
+                    self.print_field(args.format.format(**message), 0)
+                else:
+                    if self.args.timestamps:
+                        self.print_field(message['timestamp'], 0)
+                    self.print_field(message['job_name'], 1)
+                    if self.args.job_ids:
+                        self.print_field('(%s)' % message['job'], 1)
+                    self.print_field(message.get('level', ''), message['level_color_curses'])
+                    self.print_field(message['msg'], 0)
+
+                self.scr_x_max_offset = max(self.scr_x_max_offset, self.curr_row_total_chars - 1)
+                self.curr_row += 1
+
+        def draw_help(self):
+            text = '''Metrics top mode help
+_
+This mode shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics.
+_
+Controls:
+  Up/Down               scroll up/down by one line
+  PgUp/PgDn             scroll up/down by 10 lines
+  Left/Right            scroll left/right by one character
+  Shift + Left/Right    scroll left/right by 20 characters
+  Home/End              scroll to the beginning/end of the line
+  ?                     display this help
+  q                     quit
+_
+Press any key to return.
+'''
+            lines = []
+            for line in text.splitlines():
+                if line == '_':
+                    lines.append('')
+                    continue
+                lines += textwrap.wrap(line, self.scr_dim_x - 1)
+
+            for row in range(min(len(lines), self.scr_dim_y)):
+                self.stdscr.addnstr(row, 0, lines[row], self.scr_dim_x)
+
+        def print_field(self, text, color):
+            if self.curr_col < self.scr_dim_x:
+                if self.curr_row_total_chars >= self.scr_x_offset:
+                    self.stdscr.addnstr(self.curr_row, self.curr_col, text, self.scr_dim_x - self.curr_col, curses.color_pair(color))
+                    self.curr_col += len(text) + 1
+                elif self.curr_row_total_chars + len(text) + 1 > self.scr_x_offset:
+                    self.stdscr.addnstr(self.curr_row, self.curr_col, text[self.scr_x_offset - self.curr_row_total_chars:], self.scr_dim_x - self.curr_col, curses.color_pair(color))
+                    self.curr_col += len(text[self.scr_x_offset - self.curr_row_total_chars:]) + 1
+
+            self.curr_row_total_chars += len(text) + 1
+
+        def update_screen_offsets(self, diff_y, diff_x):
+            if not diff_y:
+                diff_y = 0
+            if not diff_x:
+                diff_x = 0
+            self.scr_y_offset = min(self.scr_y_offset + diff_y, self.scr_y_max_offset) if diff_y > 0 else max(self.scr_y_offset + diff_y, 0)
+            self.scr_x_offset = min(self.scr_x_offset + diff_x, self.scr_x_max_offset) if diff_x > 0 else max(self.scr_x_offset + diff_x, 0)
+
+    manager = ScreenManager(args)
+    curses.wrapper(manager.main)
