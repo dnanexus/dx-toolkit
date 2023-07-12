@@ -136,4 +136,4 @@ def validate_somatic_filter(filter, filter_type):
                 required_filter_count += 1
 
     if required_filter_count != 1:
-        err_exit('Exactly one of “symbol”, “gene”, “feature”, “allele_id” or “location” must be provided in the json')
+        err_exit('Exactly one of "symbol", "gene", feature", "allele_id" or "location" must be provided in the json')
