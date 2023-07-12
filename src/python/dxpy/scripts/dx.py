@@ -3589,9 +3589,13 @@ def terminate(args):
             err_exit()
 
 def watch(args):
-    level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
-    level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
-    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS")})
+    level_color_mapping = (
+        (("EMERG", "ALERT", "CRITICAL", "ERROR"), RED(), 2),
+        (("WARNING", "STDERR"), YELLOW(), 3),
+        (("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS"), GREEN(), 4),
+    )
+    level_colors = {lvl: item[1] for item in level_color_mapping for lvl in item[0]}
+    level_colors_curses = {lvl: item[2] for item in level_color_mapping for lvl in item[0]}
 
     def check_args_compatibility(incompatible_list):
         for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
@@ -3601,6 +3605,13 @@ def watch(args):
     incompatible_args = None
     if args.levels and "METRICS" in args.levels and args.metrics == "none":
         incompatible_args = ("--levels METRICS", "--metrics none")
+    elif args.metrics == "top":
+        if args.levels and "METRICS" not in args.levels:
+            err_exit(exception=DXCLIError("'--metrics' is specified, but METRICS level is not included"))
+
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", ("tail", "no-wait"), "tree", "num_recent_messages"])
+        if iarg:
+            incompatible_args = ("--metrics top", iarg)
     elif args.metrics == "csv":
         iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
         if iarg:
@@ -3608,6 +3619,12 @@ def watch(args):
 
     if incompatible_args:
         err_exit(exception=DXCLIError("Can not specify both '%s' and '%s'" % incompatible_args))
+
+    def enrich_msg(log_client, message):
+        message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
+        message['level_color'] = level_colors.get(message.get('level', ''), '')
+        message['level_color_curses'] = level_colors_curses.get(message.get('level', ''), 0)
+        message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
 
     msg_callback, log_client = None, None
     if args.get_stdout:
@@ -3629,39 +3646,40 @@ def watch(args):
         args.quiet = True
     elif args.format is None:
         if args.job_ids:
-            args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
-            args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            args.format = "{timestamp} " + args.format
+            format = "{timestamp} " + format
 
         def msg_callback(message):
-            message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
-            message['level_color'] = level_colors.get(message.get('level', ''), '')
-            message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
-            print(args.format.format(**message))
+            enrich_msg(log_client, message)
+            print(format.format(**message))
 
-    from dxpy.utils.job_log_client import DXJobLogStreamClient
+    from dxpy.utils.job_log_client import DXJobLogStreamClient, metrics_top
 
     input_params = {"numRecentMessages": args.num_recent_messages,
                     "recurseJobs": args.tree,
                     "tail": args.tail}
-
-    if args.levels:
-        input_params['levels'] = args.levels
 
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
 
     job_describe = dxpy.describe(args.jobid)
 
+    # For finished jobs and --metrics top, behave like --metrics none
+    if args.metrics == "top" and job_describe['state'] in ('terminated', 'failed', 'done'):
+        args.metrics = "none"
+        if args.levels and "METRICS" in args.levels:
+            args.levels.remove("METRICS")
+
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
       if not args.quiet:
         print("Output reused from %s" % args.jobid)
 
-    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
-                                      msg_output_format=args.format, print_job_info=args.job_info)
+    if args.levels:
+        input_params['levels'] = args.levels
 
     if args.metrics == "none":
         input_params['excludeMetrics'] = True
@@ -3673,10 +3691,16 @@ def watch(args):
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
-        if not args.quiet:
-            print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+        if args.metrics == "top":
+            metrics_top(args, input_params, enrich_msg)
+        else:
+            log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+                                              msg_output_format=args.format, print_job_info=args.job_info)
 
-        log_client.connect()
+            if not args.quiet:
+                print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+
+            log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
 
@@ -5397,7 +5421,7 @@ parser_watch.add_argument('-f', '--format', help='Message format. Available fiel
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
 parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
-                          choices=["interspersed", "none", "csv"], default="interspersed")
+                          choices=["interspersed", "none", "top", "csv"], default="interspersed")
 
 class MetricsHelpAction(argparse.Action):
 
@@ -5412,6 +5436,8 @@ Note that all reported data-related values are in base 2 units - i.e. 1 MB = 102
 The "interspersed" default mode shows METRICS job log messages interspersed with other jog log messages.
 
 The "none" mode omits all METRICS messages from "dx watch" output.
+
+The "top" mode interactively shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics. Built-in help describing key bindings is available by pressing "?".
 
 The "csv" mode outputs the following columns with headers in csv format to stdout:
 - timestamp: An integer number representing the number of milliseconds since the Unix epoch.
@@ -6297,7 +6323,7 @@ parser_extract_assay_germline.add_argument(
 parser_extract_assay_germline.add_argument(
     "--assay-name",
     default=None,
-    help="Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
+    help='Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays"',
 )
 
 parser_e_a_g_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=True)
@@ -6385,7 +6411,7 @@ parser_e_a_s_mutex_group.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help="A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. Retrieves rows from the variant table, optionally extended with sample and annotation information (the extension is inline without affecting row count). By default returns the following set of fields; “assay_sample_id”, “allele_id”, “CHROM”, “POS”, “REF”, and “allele”. Additional fields may be returned using --additional-fields. Specify “--json-help” following this option to get detailed information on the json format and filters. When filtering, must supply one, and only one of “location”, “annotation.symbol”, “annotation.gene”, “annotation.feature”, “allele.allele_id”.",
+    help='A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. Retrieves rows from the variant table, optionally extended with sample and annotation information (the extension is inline without affecting row count). By default returns the following set of fields; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", and "allele". Additional fields may be returned using --additional-fields. Specify "--json-help" following this option to get detailed information on the json format and filters. When filtering, must supply one, and only one of "location", "annotation.symbol", "annotation.gene", "annotation.feature", "allele.allele_id".',
 )
 
 parser_e_a_s_mutex_group.add_argument(
@@ -6404,13 +6430,13 @@ parser_extract_assay_somatic.add_argument(
     "--additional-fields",
     nargs='+',
     default=None,
-    help="A list of strings to specify what fields in the assay to return, in addition to the default fields always returned, “assay_sample_id”, “allele_id”,  “CHROM”,  “POS”,  “REF”,  “allele”. Supplied fields must be separated by commas. Use “--additional-fields-help” to get the full list of output fields available.",
+    help='A list of strings to specify what fields in the assay to return, in addition to the default fields always returned, "assay_sample_id", "allele_id",  "CHROM",  "POS",  "REF",  "allele". Supplied fields must be separated by commas. Use "--additional-fields-help" to get the full list of output fields available.',
 )
 
 parser_extract_assay_somatic.add_argument(
     "--assay-name",
     default=None,
-    help="Specify a specific somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays”",
+    help='Specify a specific somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays"',
 )
 
 parser_extract_assay_somatic.add_argument(
