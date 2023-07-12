@@ -1419,6 +1419,10 @@ def new_project(args):
         inputs["containsPHI"] = True
     if args.database_ui_view_only:
         inputs["databaseUIViewOnly"] = True
+    if args.monthly_compute_limit is not None:
+        inputs["monthlyComputeLimit"] = args.monthly_compute_limit
+    if args.monthly_egress_bytes_limit is not None:
+        inputs["monthlyEgressBytesLimit"] = args.monthly_egress_bytes_limit
 
     try:
         resp = dxpy.api.project_new(inputs)
@@ -5543,6 +5547,8 @@ parser_new_project.add_argument('--phi', help='Add PHI protection to project', d
                                 action='store_true')
 parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the project cannot access database data directly', default=False,
                                 action='store_true')
+parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly compute limit for the project')
+parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly limit of egress bytes for the project')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
