@@ -6,13 +6,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [353.0] - beta
+
 ### Added
 
-* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
-* Added new return fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
+* '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
+* Fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
 * `--metrics top` for `dx watch`
 
-## [352.0] - beta
+## [352.1] - 2023.7.12
 
 ### Added
 
