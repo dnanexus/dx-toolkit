@@ -2281,10 +2281,12 @@ def find_executions(args):
     try:
         num_processed_results = 0
         roots = collections.OrderedDict()
-        executions = list(dxpy.find_executions(**query))
-        execution_retries_count = collections.Counter(map(lambda x: x['id'], executions))
+        execution_retries = {}
 
-        for execution_result in executions:
+        for execution_result in dxpy.find_executions(**query):
+            execution_id = execution_result['id']
+            execution_try = execution_result['describe'].get('try')
+
             if args.trees:
                 if args.classname == 'job':
                     root = execution_result['describe']['originJob']
@@ -2295,9 +2297,14 @@ def find_executions(args):
             else:
                 num_processed_results += 1
 
-            if (num_processed_results > args.num_results):
+            if execution_id not in execution_retries:
+                execution_retries[execution_id] = execution_result['describe'].get('try')
+
+            if num_processed_results > args.num_results:
                 more_results = True
                 break
+
+            show_try = include_restarted and execution_retries[execution_id] is not None and execution_retries[execution_id] > 0
 
             if args.json:
                 json_output.append(execution_result['describe'])
@@ -2308,13 +2315,13 @@ def find_executions(args):
                     # and only the last analysis found is displayed.
                     roots[root] = execution_result['describe']['id']
             elif args.brief:
-                print_brief(execution_result['id'], execution_result['describe'].get('try'), execution_retries_count[execution_result['id']] > 1)
+                print_brief(execution_id, execution_try, show_try)
             elif not args.trees:
                 print(format_tree({}, get_find_executions_string(execution_result['describe'],
                                                                  has_children=False,
                                                                  single_result=True,
                                                                  show_outputs=args.show_outputs,
-                                                                 show_try=include_restarted)))
+                                                                 show_try=show_try)))
         if args.trees:
             executions_by_parent, descriptions = collections.defaultdict(list), {}
             execution_retries = collections.defaultdict(list)
