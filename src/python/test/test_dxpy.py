@@ -1506,13 +1506,13 @@ def main(number):
         self.assertEqual(dxjob.describe()['instanceType'], self.default_inst_type)
 
         # request for all stages and all entry points
-        analysis_describe = testutil.analysis_describe_with_retry(dxworkflow.run({}, instance_type="mem2_hdd2_x1"))
+        analysis_describe = testutil.analysis_describe_with_retry(dxworkflow.run({}, system_requirements={"*": {"instanceType": "mem2_hdd2_x1"}}))
         dxjob = dxpy.DXJob(analysis_describe['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x1')
 
         # request for all stages, overriding some entry points
         analysis_describe = testutil.analysis_describe_with_retry(
-            dxworkflow.run({}, instance_type={"*": "mem2_hdd2_x1", "foo": "mem2_hdd2_x2"}))
+            dxworkflow.run({}, system_requirements={"*": {"instanceType":"mem2_hdd2_x1"}, "foo": {"instanceType":"mem2_hdd2_x2"}}))
         dxjob = dxpy.DXJob(analysis_describe['stages'][0]['execution']['id'])
         self.assertEqual(dxjob.describe()['instanceType'], 'mem2_hdd2_x1')
 
