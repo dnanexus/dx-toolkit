@@ -1,3 +1,11 @@
+dx-toolkit (0.353.0) trusty; urgency=medium
+
+  * Added: New argument '--instance-type-by-executable' arg for dx run and dx-jobutil-job-new
+  * Added: New return fields from dx describe {job/analysis}-xxxx with --verbose argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
+  * Added: `dx watch --metrics top`
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 13 Jul 2023 02:39:19 +0000
+
 dx-toolkit (0.352.0) trusty; urgency=medium
 
   * Added: `dx extract_assay somatic`
