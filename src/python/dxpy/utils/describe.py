@@ -771,7 +771,7 @@ def printable_ssh_host_key(ssh_host_key):
         return stdout.replace(" no comment", "").strip()
 
 
-def print_execution_desc(desc):
+def print_execution_desc(desc, verbose=False):
     recognized_fields = ['id', 'try', 'class', 'project', 'workspace', 'region',
                          'app', 'applet', 'executable', 'workflow',
                          'state',
@@ -783,12 +783,18 @@ def print_execution_desc(desc):
                          'tryCreated', 'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
                          'priority', 'sshHostKey', 'internetUsageIPs', 'spotWaitTime', 'maxTreeSpotWaitTime',
-                         'maxJobSpotWaitTime', 'spotCostSavings', 'preserveJobOutputs']
+                         'maxJobSpotWaitTime', 'spotCostSavings', 'preserveJobOutputs',
+                         'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']
 
     print_field("ID", desc["id"])
     if desc.get('try') is not None:
         print_field("Try", str(desc['try']))
     print_field("Class", desc["class"])
+
+    if desc['class'] == 'analysis' and verbose:
+        default_analysis_desc = dxpy.DXAnalysis(desc['id']).describe()
+        desc.update(default_analysis_desc)
+
     if "name" in desc and desc['name'] is not None:
         print_field("Job name", desc['name'])
     if "executableName" in desc and desc['executableName'] is not None:
@@ -891,8 +897,6 @@ def print_execution_desc(desc):
         if desc['failureFrom'].get('try') is not None:
             failure_from += " try %d" % desc['failureFrom']['try']
         print_field("Failure is from", failure_from)
-    if 'systemRequirements' in desc:
-        print_json_field("Sys Requirements", desc['systemRequirements'])
     if "tags" in desc:
         print_list_field("Tags", desc["tags"])
     if "properties" in desc:
@@ -944,6 +948,16 @@ def print_execution_desc(desc):
     if 'internetUsageIPs' in desc:
         print_json_field("Internet Usage IPs", desc['internetUsageIPs'])
 
+    if 'systemRequirements' in desc:
+        print_json_field("Sys Requirements", desc['systemRequirements'])
+    if 'runSystemRequirements'  in desc:
+        print_json_field("Run Sys Reqs", desc['runSystemRequirements'])
+    if 'runSystemRequirementsByExecutable' in desc:
+        print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirementsByExecutable'])
+    if 'mergedSystemRequirementsByExecutable' in desc:
+        print_json_field("Merged Sys Reqs By Exec", desc['mergedSystemRequirementsByExecutable'])
+    if 'runStageSystemRequirements' in desc:
+        print_json_field("Run Stage Sys Reqs", desc['runStageSystemRequirements'])
 
     for field in desc:
         if field not in recognized_fields:
@@ -1033,6 +1047,11 @@ def print_desc(desc, verbose=False):
     Depending on the class of the entity, this method will print a
     formatted and human-readable string containing the data in *desc*.
     '''
+    if isinstance(desc, dict) and not desc.get('class'):
+        from ..utils.resolver import is_hashid
+        if is_hashid(desc.get('id')):
+            desc['class'] = desc['id'].split("-")[0]
+
     if desc['class'] in ['project', 'workspace', 'container']:
         print_project_desc(desc, verbose=verbose)
     elif desc['class'] == 'app':
@@ -1040,7 +1059,7 @@ def print_desc(desc, verbose=False):
     elif desc['class'] == 'globalworkflow':
         print_globalworkflow_desc(desc, verbose=verbose)
     elif desc['class'] in ['job', 'analysis']:
-        print_execution_desc(desc)
+        print_execution_desc(desc, verbose=verbose)
     elif desc['class'] == 'user':
         print_user_desc(desc)
     elif desc['class'] in ['org', 'team']:

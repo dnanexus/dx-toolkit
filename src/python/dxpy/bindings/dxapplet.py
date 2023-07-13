@@ -58,10 +58,11 @@ class DXExecutable:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
 
-        if kwargs.get('instance_type') is not None or kwargs.get('cluster_spec') is not None:
-            instance_type_srd = SystemRequirementsDict.from_instance_type(kwargs.get('instance_type'))
-            cluster_spec_srd = SystemRequirementsDict(kwargs.get('cluster_spec'))
-            run_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd).as_dict()
+        if kwargs.get('system_requirements') is not None:
+            run_input["systemRequirements"] = kwargs.get('system_requirements')
+
+        if kwargs.get('system_requirements_by_executable') is not None:
+            run_input["systemRequirementsByExecutable"] = kwargs.get('system_requirements_by_executable')
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []
@@ -113,6 +114,9 @@ class DXExecutable:
 
         if kwargs.get('max_job_spot_wait_time') is not None:
             run_input["maxJobSpotWaitTime"] = kwargs['max_job_spot_wait_time']
+        
+        if kwargs.get('detailed_job_metrics') is not None:
+            run_input["detailedJobMetrics"] = kwargs['detailed_job_metrics']
 
         preserve_job_outputs = kwargs.get('preserve_job_outputs')
         if preserve_job_outputs is not None and preserve_job_outputs != False:
@@ -181,10 +185,10 @@ class DXExecutable:
         raise NotImplementedError('_get_cleanup_keys is not implemented')
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
-            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
+            system_requirements=None, stage_instance_types=None, system_requirements_by_executable=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None,
             ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
-            max_job_spot_wait_time=None, preserve_job_outputs=None, extra_args=None, **kwargs):
+            max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -200,8 +204,12 @@ class DXExecutable:
         :type properties: dict with string values
         :param details: Details to set for the job
         :type details: dict or list
-        :param instance_type: Instance type on which the jobs will be run, or a dict mapping function names to instance type requests
-        :type instance_type: string or dict
+        :param system_requirements: System requirement single mapping
+        :type system_requirements: dict
+        :param stage_instance_types: Stage instance type single mapping
+        :type stage_instance_types: dict
+        :param system_requirements_by_executable: System requirement by executable double mapping
+        :type system_requirements_by_executable: dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
         :param allow_ssh: List of hostname or IP masks to allow SSH connections from
@@ -230,6 +238,8 @@ class DXExecutable:
         :type max_job_spot_wait_time: int
         :param preserve_job_outputs: Copy cloneable outputs of every non-reused job entering "done" state in this root execution to a folder in the project. If value is True it will place job outputs into the "intermediateJobOutputs" subfolder under the output folder for the root execution. If the value is dict, it may contains "folder" key with desired folder path. If the folder path starts with '/' it refers to an absolute path within the project, otherwise, it refers to a subfolder under root execution's output folder.
         :type preserve_job_outputs: boolean or dict
+        :param detailed_job_metrics: Enable detailed job metrics for this root execution
+        :type preserve_job_outputs: boolean
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
@@ -250,8 +260,9 @@ class DXExecutable:
                                         tags=tags,
                                         properties=properties,
                                         details=details,
-                                        instance_type=instance_type,
+                                        system_requirements=system_requirements,
                                         stage_instance_types=stage_instance_types,
+                                        system_requirements_by_executable=system_requirements_by_executable,
                                         stage_folders=stage_folders,
                                         rerun_stages=rerun_stages,
                                         cluster_spec=cluster_spec,
@@ -269,6 +280,7 @@ class DXExecutable:
                                         max_tree_spot_wait_time=max_tree_spot_wait_time,
                                         max_job_spot_wait_time=max_job_spot_wait_time,
                                         preserve_job_outputs=preserve_job_outputs,
+                                        detailed_job_metrics=detailed_job_metrics,
                                         extra_args=extra_args)
         return self._run_impl(run_input, **kwargs)
 

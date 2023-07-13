@@ -1,0 +1,26 @@
+[
+    {
+        "allele_id": "annotation$a_id"
+    },
+    {
+        "gene_name": "annotation$gene_name"
+    },
+    {
+        "gene_id": "annotation$gene_id"
+    },
+    {
+        "feature_id": "annotation$feature_id"
+    },
+    {
+        "consequences": "annotation$effect"
+    },
+    {
+        "putative_impact": "annotation$putative_impact"
+    },
+    {
+        "hgvs_c": "annotation$hgvs_c"
+    },
+    {
+        "hgvs_p": "annotation$hgvs_p"
+    }
+]

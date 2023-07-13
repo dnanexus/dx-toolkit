@@ -20,7 +20,6 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
-import shlex # respects quoted substrings when splitting
 
 import requests
 import csv
@@ -41,14 +40,14 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import extract_dataset
+from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
+                           instance_type_arg, process_instance_type_arg, process_instance_type_by_executable_arg, process_instance_count_arg, get_update_project_args,
                            property_args, tag_args, contains_phi, process_phi_param, process_external_upload_restricted_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
@@ -1199,7 +1198,18 @@ def describe(args):
         if is_job_id(args.path):
             if args.verbose:
                 json_input['defaultFields'] = True
-                json_input['fields'] = {'internetUsageIPs': True}
+                json_input['fields'] = {'internetUsageIPs': True,
+                                        'runSystemRequirements': True,
+                                        'runSystemRequirementsByExecutable': True,
+                                        'mergedSystemRequirementsByExecutable': True}
+
+        if is_analysis_id(args.path):
+            if args.verbose:
+                json_input['defaultFields'] = True
+                json_input['fields'] = {'runSystemRequirements': True,
+                                        'runSystemRequirementsByExecutable': True,
+                                        'mergedSystemRequirementsByExecutable': True,
+                                        'runStageSystemRequirements': True}
 
         if args.job_try is not None:
             if not is_job_id(args.path):
@@ -3018,7 +3028,7 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
     if args.input_json is None and args.filename is None:
         # --input-json and --input-json-file completely override input
         # from the cloned job
-        exec_inputs.update(args.input_from_clone, strip_prefix=False)
+        exec_inputs.update(args.cloned_job_desc.get("runInput", {}), strip_prefix=False)
 
     # Update with inputs passed to the this function
     if preset_inputs is not None:
@@ -3128,24 +3138,61 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_type, str):
-        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
-                                  **(args.instance_type or {}))
+    requested_instance_type, requested_cluster_spec = {}, {}
+    executable_desc = None
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_count, str):
-        # extract instance counts from cloned sys reqs and override them with args provided with "dx run"
-        args.instance_count = dict({fn: reqs['clusterSpec']['initialInstanceCount']
-                                        for fn, reqs in list(args.sys_reqs_from_clone.items()) if 'clusterSpec' in reqs},
-                                   **(args.instance_count or {}))
+    from ..utils import merge
+    if args.cloned_job_desc:
+        # override systemRequirements and systemRequirementsByExecutable mapping with cloned job description
+        # Note: when cloning from a job, we have 1)runtime 2)cloned 3) default runSpec specifications, and we need to merge the first two to make the new request
+        # however when cloning from an analysis, the temporary workflow already has the cloned spec as its default, so no need to merge 1) and 2) here
+        cloned_system_requirements = copy.deepcopy(args.cloned_job_desc).get("systemRequirements", {})
+        cloned_instance_type = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceType')
+        cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='clusterSpec')
+        cloned_fpga_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='fpgaDriver')
+        cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {})
+    else:
+        cloned_system_requirements = {}
+        cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver = SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({})
+        cloned_system_requirements_by_executable = {}
 
-    executable_describe = None
-    srd_cluster_spec = SystemRequirementsDict(None)
-    if args.instance_count is not None:
-        executable_describe = executable.describe()
-        srd_default = SystemRequirementsDict.from_sys_requirements(
-            executable_describe['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
-        srd_requested = SystemRequirementsDict.from_instance_count(args.instance_count)
-        srd_cluster_spec = srd_default.override_cluster_spec(srd_requested)
+    # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
+    # here the args.instance_type no longer contains specifications for stage sys reqs
+    if args.instance_type:
+        requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
+        if not isinstance(args.instance_type, basestring):
+            requested_instance_type = SystemRequirementsDict(merge(cloned_instance_type.as_dict(), requested_instance_type.as_dict()))
+    else:
+        requested_instance_type = cloned_instance_type
+
+    # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
+    if args.instance_count:
+        # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
+        # and overwrite the field initialInstanceCount with the runtime mapping
+        requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)        
+        executable_desc = executable.describe()
+        cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable_desc.get('runSpec',{}).get('systemRequirements', {}),_type='clusterSpec')
+
+        if not isinstance(args.instance_count, basestring):
+            if cloned_cluster_spec.as_dict():
+                requested_instance_count = SystemRequirementsDict(merge(cloned_cluster_spec.as_dict(), requested_instance_count.as_dict()))
+                cluster_spec_to_override = SystemRequirementsDict(merge(cluster_spec_to_override.as_dict(), cloned_cluster_spec.as_dict()))
+        
+        requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count)
+    else:
+        requested_cluster_spec = cloned_cluster_spec
+
+    # fpga driver now does not have corresponding dx run option, so it can only be requested using the cloned value
+    requested_fpga_driver = cloned_fpga_driver
+
+    # combine the requested instance type, full cluster spec, fpga spec
+    # into the runtime systemRequirements
+    requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
+
+    # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
+    # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
+    # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
+    requested_system_requirements_by_executable = SystemRequirementsDict(args.instance_type_by_executable).as_dict() or cloned_system_requirements_by_executable
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -3171,14 +3218,15 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
         "priority": args.priority,
-        "instance_type": args.instance_type,
+        "system_requirements": requested_system_requirements or None,
+        "system_requirements_by_executable": requested_system_requirements_by_executable or None,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
-        "cluster_spec": srd_cluster_spec.as_dict(),
         "detach": args.detach,
         "cost_limit": args.cost_limit,
         "rank": args.rank,
+        "detailed_job_metrics": args.detailed_job_metrics,
         "max_tree_spot_wait_time": normalize_timedelta(args.max_tree_spot_wait_time)//1000 if args.max_tree_spot_wait_time else None,
         "max_job_spot_wait_time": normalize_timedelta(args.max_job_spot_wait_time)//1000 if args.max_job_spot_wait_time else None,
         "preserve_job_outputs": preserve_job_outputs,
@@ -3200,7 +3248,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
 
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
-        executable_desc = executable_describe or executable.describe()
+        executable_desc = executable_desc or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
         def check_for_special_access(access_spec):
             if not access_spec:
@@ -3474,8 +3522,6 @@ def run(args):
         err_exit(parser_map['run'].format_help() +
                  fill("Error: Either the executable must be specified, or --clone must be used to indicate a job or analysis to clone"), 2)
 
-    args.input_from_clone, args.sys_reqs_from_clone = {}, {}
-
     dest_proj, dest_path = None, None
 
     if args.project is not None:
@@ -3508,8 +3554,9 @@ def run(args):
             args.stage_folders = stage_folders
 
     clone_desc = None
+    args.cloned_job_desc = {}
     if args.clone is not None:
-        # Resolve job ID or name
+        # Resolve job ID or name; both job-id and analysis-id can be described using job_describe()
         if is_job_id(args.clone) or is_analysis_id(args.clone):
             clone_desc = dxpy.api.job_describe(args.clone)
         else:
@@ -3570,10 +3617,9 @@ def run(args):
                 setattr(args, metadata, clone_desc.get(metadata))
 
         if clone_desc['class'] == 'job':
+            args.cloned_job_desc = clone_desc
             if args.executable == "":
                 args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
-            args.input_from_clone = clone_desc["runInput"]
-            args.sys_reqs_from_clone = clone_desc["systemRequirements"]
             if args.details is None:
                 args.details = {
                     "clonedFrom": {
@@ -3639,6 +3685,8 @@ def run(args):
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
 
+    try_call(process_instance_type_by_executable_arg, args)
+
     # Validate and process instance_count argument
     if args.instance_count:
         if is_workflow or is_global_workflow:
@@ -3657,9 +3705,42 @@ def terminate(args):
             err_exit()
 
 def watch(args):
-    level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
-    level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
-    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
+    level_color_mapping = (
+        (("EMERG", "ALERT", "CRITICAL", "ERROR"), RED(), 2),
+        (("WARNING", "STDERR"), YELLOW(), 3),
+        (("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS"), GREEN(), 4),
+    )
+    level_colors = {lvl: item[1] for item in level_color_mapping for lvl in item[0]}
+    level_colors_curses = {lvl: item[2] for item in level_color_mapping for lvl in item[0]}
+
+    def check_args_compatibility(incompatible_list):
+        for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
+            if getattr(args, adest) != parser_watch.get_default(adest):
+                return "--" + (aarg.replace("_", "-"))
+
+    incompatible_args = None
+    if args.levels and "METRICS" in args.levels and args.metrics == "none":
+        incompatible_args = ("--levels METRICS", "--metrics none")
+    elif args.metrics == "top":
+        if args.levels and "METRICS" not in args.levels:
+            err_exit(exception=DXCLIError("'--metrics' is specified, but METRICS level is not included"))
+
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", ("tail", "no-wait"), "tree", "num_recent_messages"])
+        if iarg:
+            incompatible_args = ("--metrics top", iarg)
+    elif args.metrics == "csv":
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
+        if iarg:
+            incompatible_args = ("--metrics csv", iarg)
+
+    if incompatible_args:
+        err_exit(exception=DXCLIError("Can not specify both '%s' and '%s'" % incompatible_args))
+
+    def enrich_msg(log_client, message):
+        message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
+        message['level_color'] = level_colors.get(message.get('level', ''), '')
+        message['level_color_curses'] = level_colors_curses.get(message.get('level', ''), 0)
+        message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
 
     # FIXME [jstourac] how is try propagated from websocket?
 
@@ -3677,21 +3758,24 @@ def watch(args):
         args.levels = ['STDOUT', 'STDERR']
         args.format = "{msg}"
         args.job_info = False
+    elif args.metrics == "csv":
+        args.levels = ['METRICS']
+        args.format = "{msg}"
+        args.job_info = False
+        args.quiet = True
     elif args.format is None:
         if args.job_ids:
-            args.format = BLUE("{job_name} ({job}" + (" try {try}" if is_try_provided else "") + ")") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name} ({job})" + (" try {try}" if is_try_provided else "") + ")") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
-            args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            args.format = "{timestamp} " + args.format
+            format = "{timestamp} " + format
 
         def msg_callback(message):
-            message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
-            message['level_color'] = level_colors.get(message.get('level', ''), '')
-            message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
-            print(args.format.format(**message))
+            enrich_msg(log_client, message)
+            print(format.format(**message))
 
-    from dxpy.utils.job_log_client import DXJobLogStreamClient
+    from dxpy.utils.job_log_client import DXJobLogStreamClient, metrics_top
 
     input_params = {"numRecentMessages": args.num_recent_messages,
                     "recurseJobs": args.tree,
@@ -3700,29 +3784,48 @@ def watch(args):
     if is_try_provided:
         input_params['try'] = args.job_try
 
-    if args.levels:
-        input_params['levels'] = args.levels
-
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
 
     job_describe = dxpy.describe(args.jobid)
+
+    # For finished jobs and --metrics top, behave like --metrics none
+    if args.metrics == "top" and job_describe['state'] in ('terminated', 'failed', 'done'):
+        args.metrics = "none"
+        if args.levels and "METRICS" in args.levels:
+            args.levels.remove("METRICS")
+
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
       if not args.quiet:
-        print("Output reused from %s" %(args.jobid))
+        print("Output reused from %s" % args.jobid)
 
-    log_client = DXJobLogStreamClient(args.jobid, job_try=args.job_try, input_params=input_params, msg_callback=msg_callback,
-                                      msg_output_format=args.format, print_job_info=args.job_info)
+    if args.levels:
+        input_params['levels'] = args.levels
+
+    if args.metrics == "none":
+        input_params['excludeMetrics'] = True
+    elif args.metrics == "csv":
+        input_params['metricsFormat'] = "csv"
+    else:
+        input_params['metricsFormat'] = "text"
 
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
-        if not args.quiet:
-            print("Watching job %s%s. Press Ctrl+C to stop watching." % (
-                args.jobid + (" try %d" % args.job_try if is_try_provided else ""),
-                (" and sub-jobs" if args.tree else "")), file=sys.stderr)
-        log_client.connect()
+        if args.metrics == "top":
+            metrics_top(args, input_params, enrich_msg)
+        else:
+            log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+                                              msg_output_format=args.format, print_job_info=args.job_info)
+
+            if not args.quiet:
+                print("Watching job %s%s. Press Ctrl+C to stop watching." % (
+                    args.jobid + (" try %d" % args.job_try if is_try_provided else ""),
+                    (" and sub-jobs" if args.tree else "")
+                ), file=sys.stderr)
+
+            log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
 
@@ -5169,6 +5272,7 @@ parser_update_org.add_argument('--name', help='New name of the org')
 parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
 parser_update_org.add_argument('--saml-idp', help='New SAML identity provider')
+parser_update_org.add_argument('--detailed-job-metrics-collect-default', choices=['true', 'false'], help='If set to true, jobs launched in the projects billed to this org will collect detailed job metrics by default')
 update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
 update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
 update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
@@ -5397,9 +5501,10 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
 parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination. In case of workflows it is cost of the "
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
-parser_run.add_argument('-r', '--rank', type=int, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24), default=None)
+parser_run.add_argument('-r', '--rank', type=int, default=None, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24))
 parser_run.add_argument('--max-tree-spot-wait-time', help=fill('The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
 parser_run.add_argument('--max-job-spot-wait-time', help=fill('The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_run.add_argument('--detailed-job-metrics', action='store_true', default=None, help=fill('Collect CPU, memory, network and disk metrics every 60 seconds', width_adjustment=-24))
 
 preserve_outputs = parser_run.add_mutually_exclusive_group()
 preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
@@ -5433,7 +5538,7 @@ parser_watch_trygroup.add_argument('--tree', help='Include the entire job tree',
 parser_watch_trygroup.add_argument('--try', metavar="T", dest="job_try", type=int,
                                    help=fill('Allows to watch older tries of a restarted job. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
 parser_watch.add_argument('-l', '--levels', action='append', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
-                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT", "METRICS"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', action='store_true')
@@ -5446,6 +5551,63 @@ parser_watch.add_argument('-q', '--quiet', help='Do not print extra info message
 parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, try, level, msg, date')
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
+parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
+                          choices=["interspersed", "none", "top", "csv"], default="interspersed")
+
+class MetricsHelpAction(argparse.Action):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(
+"""Help: Displaying detailed job metrics
+Detailed job metrics describe job's consumption of CPU, memory, disk, network, etc at 60 second intervals.
+If collection of job metrics was enabled for a job (e.g with dx run --detailed-job-metrics), the metrics can be displayed by "dx watch" for 15 days from the time the job started running.
+
+Note that all reported data-related values are in base 2 units - i.e. 1 MB = 1024 * 1024 bytes.
+
+The "interspersed" default mode shows METRICS job log messages interspersed with other jog log messages.
+
+The "none" mode omits all METRICS messages from "dx watch" output.
+
+The "top" mode interactively shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics. Built-in help describing key bindings is available by pressing "?".
+
+The "csv" mode outputs the following columns with headers in csv format to stdout:
+- timestamp: An integer number representing the number of milliseconds since the Unix epoch.
+- cpuCount: A number of CPUs available on the instance that ran the job.
+- cpuUsageUser: The percentage of cpu time spent in user mode on the instance during the metric collection period.
+- cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period.
+- cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory).
+- memoryTotalBytes: Total memory available on the instance that ran the job.
+- diskUsedBytes: Bytes of storage allocated to the AEE that are used by the filesystem.
+- diskTotalBytes: Total bytes of disk space available to the job within the AEE.
+- networkOutBytes: Total network bytes transferred out from AEE since the job started. Includes "dx upload" bytes.
+- networkInBytes: Total network bytes transferred into AEE since the job started. Includes "dx download" bytes.
+- diskReadBytes: Total bytes read from the AEE-accessible disks since the job started.
+- diskWriteBytes: Total bytes written to the AEE-accessible disks since the job started.
+- diskReadOpsCount: Total disk read operation count against AEE-accessible disk since the job started.
+- diskWriteOpsCount: Total disk write operation count against AEE-accessible disk since the job started.
+
+Note 1: cpuUsageUser, cpuUsageSystem, cpuUsageIowait, cpuUsageIdle and memoryUsedBytes metrics reflect usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+Note 2: cpuUsageUser + cpuUsageSystem + cpuUsageIowait + cpuUsageIdle + cpuUsageSteal = 100. cpuUsageSteal is unreported, but can be derived from the other 4 quantities given that they add up to 100.
+Note 3: cpuUsage numbers are rounded to 2 decimal places.
+Note 4: networkOutBytes may be larger than job's egressReport which does not include "dx upload" bytes.
+
+The format of METRICS job log lines is defined as follows using the example below:
+
+2023-03-15 12:23:44 some-job-name METRICS ** CPU usr/sys/idl/wai: 24/11/1/64% (4 cores) * Memory: 1566/31649MB * Storage: 19/142GB * Net: 10↓/0↑MBps * Disk: r/w 20/174 MBps iops r/w 8/1300
+
+"2023-03-15 12:23:44" is the metrics collection time.
+"METRICS" is a type of job log line containing detailed job metrics.
+"CPU usr/sys/idl/wai: 24/11/1/64%" maps to cpuUsageUser, cpuUsageSystem, cpuUsageIdle, cpuUsageIowait values.
+"(4 cores)" maps to cpuCount.
+"Memory: 1566/31649MB" maps to memoryUsedBytes and memoryTotalBytes.
+"Storage: 19/142GB" maps to diskUsedBytes and diskTotalBytes.
+"Net: 10↓/0↑MBps" is derived from networkOutBytes and networkInBytes cumulative totals by subtracting previous measurement from the measurement at the metric collection time, and dividing the difference by the time span between the two measurements.
+"Disk: r/w 20/174 MBps iops r/w 8/1300" is derived similar to "Net:" from diskReadBytes, diskWriteBytes, diskReadOpsCount, and diskWriteOpsCount.""")
+        parser.exit(0)
+
+parser_watch.add_argument('--metrics-help', action=MetricsHelpAction, nargs=0, help='Print help for displaying detailed job metrics')
 parser_watch.set_defaults(func=watch)
 register_parser(parser_watch, categories='exec')
 
@@ -6256,6 +6418,179 @@ parser_extract_dataset.add_argument( "--list-entities", action="store_true", def
 parser_extract_dataset.add_argument("--entities", help='Similar output to "--list-fields", however using "--entities" will allow for specific entities to be specified. When multiple entities are specified, use comma as the delimiter. For example: "--list-fields --entities entityA,entityB,entityC"')
 parser_extract_dataset.set_defaults(func=extract_dataset)
 register_parser(parser_extract_dataset)
+
+#####################################
+# extract_assay
+#####################################
+parser_extract_assay = subparsers.add_parser(
+    "extract_assay",
+    help="Retrieve the selected data or generate SQL to retrieve the data from a genetic variant or somatic assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from a genetic variant or somatic assay in a dataset or cohort based on provided rules.",
+    prog="dx extract_assay",
+)
+subparsers_extract_assay = parser_extract_assay.add_subparsers(
+    parser_class=DXArgumentParser
+)
+parser_extract_assay.metavar = "class"
+register_parser(parser_extract_assay)
+
+#####################################
+# germline
+#####################################
+parser_extract_assay_germline = subparsers_extract_assay.add_parser(
+    "germline",
+    help="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
+    
+)
+
+parser_extract_assay_germline.add_argument(
+    "path",
+    type=str,
+    help='The name or project-id:record-id of a v3.0 Dataset or Cohort object ID, where "record-id" indicates the record-id in current selected project.',
+)
+
+
+parser_extract_assay_germline.add_argument(
+    "--assay-name",
+    default=None,
+    help='Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays"',
+)
+
+parser_e_a_g_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=True)
+parser_e_a_g_mutex_group.add_argument(
+    "--list-assays",
+    action="store_true",
+    help="List genetic variant assays available for query in the specified Dataset or Cohort object.",
+)
+
+parser_e_a_g_mutex_group.add_argument(
+    "--retrieve-allele",
+    type=str,
+    const='{}', 
+    default=None,
+    nargs='?',
+    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
+)
+parser_e_a_g_mutex_group.add_argument(
+    "--retrieve-annotation",
+    type=str,
+    const='{}',
+    default=None,
+    nargs='?',
+    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
+)
+parser_e_a_g_mutex_group.add_argument(
+    "--retrieve-genotype",
+    type=str,
+    const='{}',
+    default=None,
+    nargs='?',
+    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
+)
+parser_extract_assay_germline.add_argument(
+    '--json-help',
+    help=argparse.SUPPRESS,
+    action="store_true",
+)
+parser_extract_assay_germline.add_argument(
+    "--sql",
+    action="store_true",
+    help="If the flag is provided, a SQL statement (a string) will be returned for user to further query the specified data instead of actual value of the requested fields.",
+)
+parser_extract_assay_germline.add_argument(
+    "-o", "--output", 
+    type=str,
+    default=None,
+    help="Path to store the output file."
+)
+parser_extract_assay_germline.set_defaults(func=extract_assay_germline)
+register_parser(parser_extract_assay_germline)
+
+#####################################
+# somatic
+#####################################
+parser_extract_assay_somatic = subparsers_extract_assay.add_parser(
+    "somatic",
+    help="Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from an somatic variant assay in a dataset or cohort based on provided rules.",
+    
+)
+
+parser_extract_assay_somatic.add_argument(
+    "path",
+    type=str,
+    help='v3.0 Dataset or Cohort object ID (project-id:record-id where ":record-id" indicates the record-id in current selected project) or name.',
+)
+
+parser_e_a_s_mutex_group = parser_extract_assay_somatic.add_mutually_exclusive_group(required=True)
+parser_e_a_s_mutex_group.add_argument(
+    "--list-assays",
+    action="store_true",
+    help="List somatic variant assays available for query in the specified Dataset or Cohort object.",
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--retrieve-meta-info",
+    action="store_true",
+    help="List meta information, as it exists in the original VCF headers for both INFO and FORMAT fields.",
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--retrieve-variant",
+    type=str,
+    const='{}',
+    default=None,
+    nargs='?',
+    help='A JSON object, either in a file (.json extension) or as a string, specifying criteria of somatic variants to retrieve. Retrieves rows from the variant table, optionally extended with sample and annotation information (the extension is inline without affecting row count). By default returns the following set of fields; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", and "allele". Additional fields may be returned using --additional-fields. Specify "--json-help" following this option to get detailed information on the json format and filters. When filtering, must supply one, and only one of "location", "annotation.symbol", "annotation.gene", "annotation.feature", "allele.allele_id".',
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--additional-fields-help",
+    action="store_true",
+    help="List all fields available for output.",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--include-normal-sample",
+    action="store_true",
+    help="Include variants associated with normal samples in the assay. If no flag is supplied, variants from normal samples will not be supplied.",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--additional-fields",
+    nargs='+',
+    default=None,
+    help='A list of strings to specify what fields in the assay to return, in addition to the default fields always returned, "assay_sample_id", "allele_id",  "CHROM",  "POS",  "REF",  "allele". Supplied fields must be separated by commas. Use "--additional-fields-help" to get the full list of output fields available.',
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--assay-name",
+    default=None,
+    help='Specify a specific somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays"',
+)
+
+parser_extract_assay_somatic.add_argument(
+    '--json-help',
+    help=argparse.SUPPRESS,
+    action="store_true",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--sql",
+    action="store_true",
+    help="If the flag is provided, a SQL statement (a string) will be returned for user to further query the specified data instead of actual value of the requested fields.",
+)
+parser_extract_assay_somatic.add_argument(
+    "-o", "--output", 
+    type=str,
+    default=None,
+    help="Path to store the output file."
+)
+
+parser_extract_assay_somatic.set_defaults(func=extract_assay_somatic)
+register_parser(parser_extract_assay_somatic)
+
 
 #####################################
 # help

@@ -1,0 +1,15 @@
+{
+    "location": [
+        {
+            "chromosome": "chr21",
+            "starting_position": "40000000",
+            "ending_position": "41000000"
+        }
+    ],
+    "allele": {
+        "variant_type": [
+            "SNP",
+            "INS"
+        ]
+    }
+}

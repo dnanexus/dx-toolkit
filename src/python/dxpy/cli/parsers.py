@@ -231,23 +231,85 @@ class PrintInstanceTypeHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         print("Help: Specifying instance types for " + parser.prog)
         print()
+        print(fill('Instance types can be requested with --instance-type-by-executable and ' +
+                   '--instance-type arguments, with --instance-type-by-executable specification ' +
+                   'taking priority over --instance-type, workflow\'s stageSystemRequirements, ' +
+                   'and specifications provided during app and applet creation.'))
+        print()
+        print(fill('--instance-type specifications do not propagate to subjobs and sub-analyses ' +
+                   'launched from a job with a /executable-xxxx/run call, but --instance-type-by-executable do ' +
+                   '(where executable refers to an app, applet or workflow).'))
+        print()
+        print(fill('When running an app or an applet, --instance-type lets you specify the ' +
+                    'instance type to be used by each entry point.'))
         print(fill('A single instance type can be requested to be used by all entry points by providing the instance type name.  Different instance types can also be requested for different entry points of an app or applet by providing a JSON string mapping from function names to instance types, e.g.'))
         print()
         print('    {"main": "mem2_hdd2_v2_x2", "other_function": "mem1_ssd1_v2_x2"}')
         if parser.prog == 'dx run':
             print()
-            print(fill('If running a workflow, different stages can have different instance type ' +
-                       'requests by prepending the request with "<stage identifier>=" (where a ' +
-                       'stage identifier is an ID, a numeric index, or a unique stage name) and ' +
+            print(fill('When running a workflow, --instance-type lets you specify instance types for ' +
+                       'each entry point of each workflow stage by prepending the request with "<stage identifier>=" ' +
+                       '(where a stage identifier is an ID, a numeric index, or a unique stage name) and ' +
                        'repeating the argument for as many stages as desired.  If no stage ' +
                        'identifier is provided, the value is applied as a default for all stages.'))
             print()
-            print(fill('The following example runs all entry points of the first stage with ' +
-                       'mem2_hdd2_v2_x2, the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
+            print('Examples')
+            print()
+            print(fill('1. Run the main entry point of applet-xxxx on mem1_ssd1_v2_x2, and '
+                        'all other entry points on mem1_ssd1_v2_x4'))
+            print('    dx run applet-xxxx --instance-type \'{"main": "mem1_ssd1_v2_x2",\n' +
+                  '                                         "*":    "mem1_ssd1_v2_x4"}\'')
+            print()
+            print(fill('2. Runs all entry points of the first stage with ' +
+                       'mem2_hdd2_v2_x2, the main entry point of the second stage with mem1_ssd1_v2_x4, ' +
+                       'the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
                        'stages with mem2_hdd2_v2_x4'))
             print()
-            print('    Example: dx run workflow --instance-type 0=mem2_hdd2_v2_x2 \\')
-            print('               --instance-type BWA=mem1_ssd1_v2_x2 --instance-type mem2_hdd2_v2_x4')
+            print('    dx run workflow-xxxx \\\n' +
+                  '     --instance-type 0=mem2_hdd2_v2_x2 \\\n' +
+                  '     --instance-type 1=\'{"main": "mem1_ssd1_v2_x4"}\' \\\n' +
+                  '     --instance-type BWA=mem1_ssd1_v2_x2 \\\n' +
+                  '     --instance-type mem2_hdd2_v2_x4')
+            print()
+            print(fill('--instance-type-by-executable argument is a JSON string with a double mapping that ' +
+                       'specifies instance types by app or applet id, then by entry point within the executable.' +
+                       'This specification applies across the entire nested execution tree and is propagated ' +
+                       'across /executable-xxxx/run calls issued with the execution tree.'))
+            print()
+            print('More examples')
+            print(fill('3. Force every job in the execution tree to use mem2_ssd1_v2_x2'))
+            print()
+            print(
+                '    dx run workflow-xxxx --instance-type-by-executable \'{"*": {"*": "mem2_ssd1_v2_x2"}}\'')
+            print()
+            print(fill(
+                '4. Force every job in the execution tree executing applet-xyz1 to use mem2_ssd1_v2_x2'))
+            print()
+            print(
+                '    dx run workflow-xxxx --instance-type-by-executable \'{"applet-xyz1":{"*": "mem2_ssd1_v2_x2"}}\'')
+            print()
+            print(fill('5. Force every job executing applet-xyz1 to use mem2_ssd1_v2_x4 ' +
+                       'for the main entry point and mem2_ssd1_v2_x2 for all other entry points.' +
+                       'Also force the collect entry point of all executables other than applet-xyz1 to use mem2_ssd1_v2_x8.' +
+                       'Other entry points of executable other than applet-xyz1 may be overridden by ' +
+                       'lower-priority mechanisms'))
+            print()
+            print('    dx run workflow-xxxx --instance-type-by-executable \\\n' +
+                  '           \'{"applet-xyz1":  {"main":    "mem2_ssd1_v2_x4", "*": "mem2_ssd1_v2_x2"},\n' +
+                  '             "*":            {"collect": "mem2_ssd1_v2_x8"}}\'')
+            print()
+            print(fill('6. Force every job executing applet-xxxx to use mem2_ssd1_v2_x2 for all entry points ' +
+                       'in the entire execution tree. ' +
+                       'Also force stage 0 executable to run on mem2_ssd1_v2_x4, unless stage 0 invokes ' +
+                       'applet-xxxx, in which case applet-xxxx\'s jobs will use mem2_ssd1_v2_x2 as specified by ' +
+                       '--instance-type-by-executable.'))
+            print()
+            print('    dx run workflow-xxxx \\\n' +
+                  '     --instance-type-by-executable  \'{"applet-xxxx": {"*": "mem2_ssd1_v2_x2"}}\' \\\n' +
+                  '     --instance-type 0=mem2_ssd1_v2_x4')
+            print()
+            print(fill(
+                'See "Requesting Instance Types" in DNAnexus documentation for more details.'))
         print()
         print('Available instance types:')
         print()
@@ -258,8 +320,25 @@ class PrintInstanceTypeHelp(argparse.Action):
 instance_type_arg = argparse.ArgumentParser(add_help=False)
 instance_type_arg.add_argument('--instance-type',
                                metavar='INSTANCE_TYPE_OR_MAPPING',
-                               help=fill('Specify instance type(s) for jobs this executable will run; see --instance-type-help for more details', width_adjustment=-24),
+                               help=fill('''When running an app or applet, the mapping lists executable's entry points or "*" as keys, and instance types to use for these entry points as values.  
+When running a workflow, the specified instance types can be prefixed by a stage name or stage index followed by "=" to apply to a specific stage, or apply to all workflow stages without such prefix. 
+The instance type corresponding to the "*" key is applied to all entry points not explicitly mentioned in the --instance-type mapping. Specifying a single instance type is equivalent to using it for all entry points, so "--instance-type mem1_ssd1_v2_x2" is same as "--instance-type '{"*":"mem1_ssd1_v2_x2"}'. 
+Note that "dx run" calls within the execution subtree may override the values specified at the root of the execution tree.
+See dx run --instance-type-help for details.
+''', width_adjustment=-24, replace_whitespace=False),
                                action='append').completer = InstanceTypesCompleter()
+
+instance_type_arg.add_argument('--instance-type-by-executable',
+                               metavar='DOUBLE_MAPPING',
+                               help=fill(
+                                   '''Specifies instance types by app or applet id, then by entry point within the executable.
+The order of priority for this specification is:
+  * --instance-type, systemRequirements and stageSystemRequirements specified at runtime
+  * stage's systemRequirements, systemRequirements supplied to /app/new and /applet/new at workflow/app/applet build time
+  * systemRequirementsByExecutable specified in downstream executions (if any)
+See dx run --instance-type-help for details.
+''', width_adjustment=-24, replace_whitespace=False))
+
 instance_type_arg.add_argument('--instance-type-help',
                                nargs=0,
                                help=fill('Print help for specifying instance types'),
@@ -322,6 +401,17 @@ def process_instance_type_arg(args, for_workflow=False):
             # is a string
             args.instance_type = _parse_inst_type(args.instance_type)
 
+def process_instance_type_by_executable_arg(args):
+    if args.instance_type_by_executable:
+        if args.instance_type_by_executable.strip().startswith('{'):
+            # expects a map, e.g of entry point to instance type or instance count
+            try:
+                args.instance_type_by_executable = json.loads(args.instance_type_by_executable)
+            except ValueError:
+                raise DXParserError('Error while parsing JSON value for --instance-type-by-executable')
+        else:
+            raise DXParserError('Value given for --instance-type-by-executable could not be parsed as JSON')
+
 def process_instance_count_arg(args):
     if args.instance_count:
         # If --instance-count was used multiple times, the last one
@@ -341,15 +431,15 @@ def get_update_project_args(args):
     if args.description is not None:
         input_params["description"] = args.description
     if args.protected is not None:
-        input_params["protected"] = True if args.protected == 'true' else False
+        input_params["protected"] = args.protected == 'true'
     if args.restricted is not None:
-        input_params["restricted"] = True if args.restricted == 'true' else False
+        input_params["restricted"] = args.restricted == 'true'
     if args.download_restricted is not None:
-        input_params["downloadRestricted"] = True if args.download_restricted == 'true' else False
+        input_params["downloadRestricted"] = args.download_restricted == 'true'
     if args.containsPHI is not None:
-        input_params["containsPHI"] = True if args.containsPHI == 'true' else False
+        input_params["containsPHI"] = args.containsPHI == 'true'
     if args.database_ui_view_only is not None:
-        input_params["databaseUIViewOnly"] = True if args.database_ui_view_only == 'true' else False
+        input_params["databaseUIViewOnly"] = args.database_ui_view_only == 'true'
     if args.bill_to is not None:
         input_params["billTo"] = args.bill_to
     if args.allowed_executables is not None:
@@ -357,7 +447,7 @@ def get_update_project_args(args):
     if args.unset_allowed_executables:
         input_params['allowedExecutables'] = None
     if args.external_upload_restricted is not None:
-        input_params['externalUploadRestricted'] = True if args.external_upload_restricted == 'true' else False
+        input_params['externalUploadRestricted'] = args.external_upload_restricted == 'true'
     return input_params
 
 def process_phi_param(args):

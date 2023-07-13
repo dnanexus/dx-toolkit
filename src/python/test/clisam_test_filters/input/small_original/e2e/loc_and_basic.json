@@ -1,0 +1,25 @@
+{
+    "location": [
+        {
+            "chromosome": "chr1",
+            "starting_position": "1000",
+            "ending_position": "90000000"
+        },
+        {
+            "chromosome": "chr4",
+            "starting_position": "10",
+            "ending_position": "100000000"
+        },
+        {
+            "chromosome": "chrX",
+            "starting_position": "500",
+            "ending_position": "100000000"
+        }
+    ],
+    "allele": {
+        "variant_type": [
+            "SNP",
+            "INS"
+        ]
+    }
+}

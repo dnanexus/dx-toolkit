@@ -43,6 +43,7 @@ class TestDXTabCompletion(unittest.TestCase):
         dxpy.api.project_destroy(cls.project_id)
         for entity_id in cls.ids_to_destroy:
             dxpy.DXHTTPRequest("/" + entity_id + "/destroy", {})
+        dxpy.set_workspace_id(None)
 
     def setUp(self):
         os.environ['IFS'] = IFS
@@ -60,7 +61,7 @@ class TestDXTabCompletion(unittest.TestCase):
             if 'completed' not in resp:
                 raise DXError('Error removing folder')
             completed = resp['completed']
-        for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS':
+        for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS', 'DX_PROJECT_CONTEXT_ID':
             if var in os.environ:
                 del os.environ[var]
 
