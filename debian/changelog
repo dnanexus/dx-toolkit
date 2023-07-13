@@ -1,3 +1,9 @@
+dx-toolkit (0.352.1) trusty; urgency=medium
+
+  * Fixed: Remove non-ascii chars
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Thu, 13 Jul 2023 02:40:28 +0000
+
 dx-toolkit (0.352.0) trusty; urgency=medium
 
   * Added: `dx extract_assay somatic`
