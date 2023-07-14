@@ -3742,8 +3742,6 @@ def watch(args):
         message['level_color_curses'] = level_colors_curses.get(message.get('level', ''), 0)
         message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
 
-    # FIXME [jstourac] how is try propagated from websocket?
-
     is_try_provided = args.job_try is not None
     msg_callback, log_client = None, None
     if args.get_stdout:
@@ -3816,7 +3814,7 @@ def watch(args):
         if args.metrics == "top":
             metrics_top(args, input_params, enrich_msg)
         else:
-            log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+            log_client = DXJobLogStreamClient(args.jobid, job_try=args.job_try, input_params=input_params, msg_callback=msg_callback,
                                               msg_output_format=args.format, print_job_info=args.job_info)
 
             if not args.quiet:
