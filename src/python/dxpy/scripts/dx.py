@@ -6381,7 +6381,7 @@ register_parser(parser_extract_assay_germline)
 #####################################
 parser_extract_assay_somatic = subparsers_extract_assay.add_parser(
     "somatic",
-    help='Query a Dataset or Cohort for an instance of a somatic variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.'
+    help='Query a Dataset or Cohort for an instance of a somatic variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.',
     description='Query a Dataset or Cohort for an instance of a somatic variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.'    
 )
 
