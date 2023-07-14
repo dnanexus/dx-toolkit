@@ -6410,7 +6410,7 @@ parser_e_a_s_mutex_group.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of somatic variants to retrieve. Retrieves rows from the variant table, optionally extended with sample and annotation information (the extension is inline without affecting row count). By default returns the following set of fields; “assay_sample_id”, “allele_id”, “CHROM”, “POS”, “REF”, and “allele”. Additional fields may be returned using --additional-fields. Use --json-help with this option to get detailed information on the JSON format and filters. When filtering, the user must supply one, and only one of “location”, “annotation.symbol”, “annotation.gene”, “annotation.feature”, “allele.allele_id”.'
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of somatic variants to retrieve. Retrieves rows from the variant table, optionally extended with sample and annotation information (the extension is inline without affecting row count). By default returns the following set of fields; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", and "allele". Additional fields may be returned using --additional-fields. Use --json-help with this option to get detailed information on the JSON format and filters. When filtering, the user must supply one, and only one of "location", "annotation.symbol", "annotation.gene", "annotation.feature", "allele.allele_id".'
 )
 
 parser_e_a_s_mutex_group.add_argument(
@@ -6429,13 +6429,13 @@ parser_extract_assay_somatic.add_argument(
     "--additional-fields",
     nargs='+',
     default=None,
-    help='A set of fields to return, in addition to the default set; “assay_sample_id”, “allele_id”, “CHROM”, “POS”, “REF”, “allele”. Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, “fieldA,fieldB,fieldC.” Use --additional-fields-help with this option to get detailed information and the full list of output fields available.'
+    help='A set of fields to return, in addition to the default set; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", "allele". Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, "fieldA,fieldB,fieldC." Use --additional-fields-help with this option to get detailed information and the full list of output fields available.'
 )
 
 parser_extract_assay_somatic.add_argument(
     "--assay-name",
     default=None,
-    help = 'Specify the somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays.”'
+    help = 'Specify the somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays."'
 )
 
 parser_extract_assay_somatic.add_argument(
