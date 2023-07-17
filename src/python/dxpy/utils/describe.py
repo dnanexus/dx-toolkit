@@ -525,7 +525,8 @@ def print_app_desc(desc, verbose=False):
     print_field("Created", render_timestamp(desc['created']))
     print_field("Last modified", render_timestamp(desc['modified']))
     print_field("Created from", desc["applet"])
-    print_field("Tree TAT threshold", str(desc["treeTurnaroundTimeThreshold"]))
+    if 'treeTurnaroundTimeThreshold' in desc:
+        print_field("Tree TAT threshold", str(desc["treeTurnaroundTimeThreshold"]) if desc["treeTurnaroundTimeThreshold"] is not None else "-")
     print_json_field('Installed', desc['installed'])
     print_json_field('Open source', desc['openSource'])
     print_json_field('Deleted', desc['deleted'])
@@ -591,7 +592,8 @@ def print_globalworkflow_desc(desc, verbose=False):
     print_field("Created by", desc["createdBy"][5 if desc['createdBy'].startswith('user-') else 0:])
     print_field("Created", render_timestamp(desc['created']))
     print_field("Last modified", render_timestamp(desc['modified']))
-    print_field("Tree TAT threshold", str(desc['treeTurnaroundTimeThreshold']))
+    if 'treeTurnaroundTimeThreshold' in desc:
+        print_field("Tree TAT threshold", str(desc["treeTurnaroundTimeThreshold"]) if desc["treeTurnaroundTimeThreshold"] is not None else "-")
     # print_json_field('Open source', desc['openSource'])
     print_json_field('Deleted', desc.get('deleted', False))
     if not desc.get('deleted', False):
