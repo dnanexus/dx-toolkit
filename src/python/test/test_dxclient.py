@@ -7392,6 +7392,17 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         with self.assertRaisesRegexp(subprocess.CalledProcessError, "ResourceNotFound"):
             run("dx build --create-globalworkflow --json " + workflow_dir, env=env)
 
+    # this is NOT a global workflow
+    def test_build_workflow_with_tree_tat_threshold(self):
+        wf_name = "workflow_build_tree_tat_threshold"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=wf_name)
+        dxworkflow_json.update({"treeTurnaroundTimeThreshold": 2})
+        workflow_dir = self.write_workflow_directory(wf_name,
+                                                     json.dumps(dxworkflow_json))
+        new_workflow_with_tat = run_and_parse_json("dx build --json " + workflow_dir)
+        workflow_describe = dxpy.get_handler(new_workflow_with_tat["id"]).describe()
+        self.assertEqual(workflow_describe['treeTurnaroundTimeThreshold'], 2)
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
     def test_build_workflow_with_bill_to(self):
@@ -7413,7 +7424,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
                                                      json.dumps(dxworkflow_json))
         new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
         self.assertEqual(new_gwf["billTo"], org_id)
-    
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
     def test_build_workflow_without_bill_to_rights(self):
@@ -7871,6 +7882,19 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         job_desc = json.loads(run('dx describe --json ' + job_id))
         self.assertEqual(job_desc['name'], 'minimal_applet_to_run')
         self.assertEqual(job_desc['priority'], 'normal')
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_applet_tree_tat_threshold_and_run(self):
+        applet_spec = dict(self.base_app_spec, name="minimal_applet_with_tat_threshold")
+        applet_spec.update({"treeTurnaroundTimeThreshold": 2})
+        applet_dir = self.write_app_directory("minimal_applet_with_tat_threshold", json.dumps(applet_spec), "code.py")
+        new_applet_with_tat = run_and_parse_json("dx build --json " + applet_dir)
+        applet_describe = dxpy.get_handler(new_applet_with_tat["id"]).describe()
+        self.assertEqual(applet_describe['treeTurnaroundTimeThreshold'], 2)
+        job_id = run("dx run {} --yes --brief".format(applet_describe["id"])).strip()
+        job_describe = dxpy.describe(job_id)
+        self.assertEqual(job_describe['selectedTreeTurnaroundTimeThreshold'], 2)
+        self.assertEqual(job_describe['selectedTreeTurnaroundTimeThresholdFrom'], "executable")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_remote_build_applet_and_run_immediately(self):
@@ -10017,7 +10041,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "tags": ["bar"],
             "properties": {"sample_id": "123456"},
             "details": {"key1": "value1"},
-            "ignoreReuse": False
+            "ignoreReuse": False,
+            "treeTurnaroundTimeThreshold": 2
             }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
@@ -10070,6 +10095,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             self.assertNotIn("description", output_json)
             self.assertNotIn("developerNotes", output_json)
+            self.assertEqual(output_json["treeTurnaroundTimeThreshold"], 2)
             with open(os.path.join("get_applet", "Readme.md")) as fh:
                 self.assertEqual("Description\n", fh.read())
             with open(os.path.join("get_applet", "Readme.developer.md")) as fh:

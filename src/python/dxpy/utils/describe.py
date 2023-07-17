@@ -513,7 +513,7 @@ def get_advanced_inputs(desc, verbose):
 
 def print_app_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes',
-                         'authorizedUsers']
+                         'authorizedUsers', 'treeTurnaroundTimeThreshold']
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if 'billTo' in desc:
@@ -525,6 +525,7 @@ def print_app_desc(desc, verbose=False):
     print_field("Created", render_timestamp(desc['created']))
     print_field("Last modified", render_timestamp(desc['modified']))
     print_field("Created from", desc["applet"])
+    print_field("Tree TAT threshold", str(desc["treeTurnaroundTimeThreshold"]))
     print_json_field('Installed', desc['installed'])
     print_json_field('Open source', desc['openSource'])
     print_json_field('Deleted', desc['deleted'])
@@ -578,7 +579,7 @@ def print_globalworkflow_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created',
                          'modified', 'deleted', 'published', 'title', 'description',
                          'categories', 'dxapi', 'billTo', 'summary', 'billing', 'developerNotes',
-                         'authorizedUsers', 'regionalOptions']
+                         'authorizedUsers', 'regionalOptions', 'treeTurnaroundTimeThreshold']
     is_locked_workflow = False
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -590,6 +591,7 @@ def print_globalworkflow_desc(desc, verbose=False):
     print_field("Created by", desc["createdBy"][5 if desc['createdBy'].startswith('user-') else 0:])
     print_field("Created", render_timestamp(desc['created']))
     print_field("Last modified", render_timestamp(desc['modified']))
+    print_field("Tree TAT threshold", str(desc['treeTurnaroundTimeThreshold']))
     # print_json_field('Open source', desc['openSource'])
     print_json_field('Deleted', desc.get('deleted', False))
     if not desc.get('deleted', False):
@@ -645,7 +647,8 @@ def get_col_str(col_desc):
 
 def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
-                         'stages', 'inputs', 'outputs', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom', 'temporary']
+                         'stages', 'inputs', 'outputs', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom', 'temporary',
+                         'treeTurnaroundTimeThreshold']
 
     is_locked_workflow = False
     print_field("ID", desc["id"])
@@ -689,6 +692,8 @@ def print_data_obj_desc(desc, verbose=False):
         print_field("Description", desc["description"])
     if 'outputFolder' in desc:
         print_field("Output Folder", desc["outputFolder"] if desc["outputFolder"] is not None else "-")
+    if 'treeTurnaroundTimeThreshold' in desc:
+        print_field("Tree TAT threshold", str(desc["treeTurnaroundTimeThreshold"]) if desc["treeTurnaroundTimeThreshold"] is not None else "-")
     if 'access' in desc:
         print_json_field("Access", desc["access"])
     if 'dxapi' in desc:
@@ -783,7 +788,8 @@ def print_execution_desc(desc, verbose=False):
                          'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
                          'priority', 'sshHostKey', 'internetUsageIPs', 'spotWaitTime', 'maxTreeSpotWaitTime',
-                         'maxJobSpotWaitTime', 'spotCostSavings', 'preserveJobOutputs',
+                         'maxJobSpotWaitTime', 'spotCostSavings', 'preserveJobOutputs', 'treeTurnaroundTime',
+                         'selectedTreeTurnaroundTimeThreshold', 'selectedTreeTurnaroundTimeThresholdFrom',
                          'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']
 
     print_field("ID", desc["id"])
@@ -938,6 +944,12 @@ def print_execution_desc(desc, verbose=False):
         print_nofill_field("SSH Host Key", printable_ssh_host_key(desc['sshHostKey']))
     if 'internetUsageIPs' in desc:
         print_json_field("Internet Usage IPs", desc['internetUsageIPs'])
+    if 'treeTurnaroundTime' in desc:
+        print_field("Tree TAT", str(desc['treeTurnaroundTime']))
+    if 'selectedTreeTurnaroundTimeThreshold' in desc:
+        print_field("Selected tree TAT threshold", str(desc['selectedTreeTurnaroundTimeThreshold']))
+    if 'selectedTreeTurnaroundTimeThresholdFrom' in desc:
+        print_field("Selected tree TAT from", desc['selectedTreeTurnaroundTimeThresholdFrom'])
 
     if 'systemRequirements' in desc:
         print_json_field("Sys Requirements", desc['systemRequirements'])
