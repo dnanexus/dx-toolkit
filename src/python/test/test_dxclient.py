@@ -7646,7 +7646,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         new_applet_with_tat = run_and_parse_json("dx build --json " + applet_dir)
         applet_describe = dxpy.get_handler(new_applet_with_tat["id"]).describe()
         self.assertEqual(applet_describe['treeTurnaroundTimeThreshold'], 2)
-        job_describe = run_and_parse_json("dx run {} --json --yes --brief".format(applet_describe["id"]))
+        job_id = run("dx run {} --yes --brief".format(applet_describe["id"])).strip()
+        job_describe = dxpy.describe(job_id)
         self.assertEqual(job_describe['selectedTreeTurnaroundTimeThreshold'], 2)
         self.assertEqual(job_describe['selectedTreeTurnaroundTimeThresholdFrom'], "executable")
 
