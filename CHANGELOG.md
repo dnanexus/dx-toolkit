@@ -10,7 +10,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
 * Fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
 * `--metrics top` for `dx watch`
 
