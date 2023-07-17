@@ -381,7 +381,7 @@ def render_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp//1000).ctime()
 
 
-FIELD_NAME_WIDTH = 28
+FIELD_NAME_WIDTH = 45
 
 
 def print_field(label, value):
@@ -390,8 +390,9 @@ def print_field(label, value):
     else:
         sys.stdout.write(
             label + " " * (FIELD_NAME_WIDTH-len(label)) + fill(value,
-                                                               subsequent_indent=' '*FIELD_NAME_WIDTH,
-                                                               width_adjustment=-FIELD_NAME_WIDTH) +
+                                                               width=100, # revert back to width_adjustment=-FIELD_NAME_WIDTH when printing.std_width is increased
+                                                               initial_indent=' '*FIELD_NAME_WIDTH,
+                                                               subsequent_indent=' '*FIELD_NAME_WIDTH).lstrip() +
             '\n')
 
 
@@ -412,7 +413,8 @@ def print_project_desc(desc, verbose=False):
         'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties',
         'appCaches', 'billTo', 'version', 'createdBy', 'totalSponsoredEgressBytes', 'consumedSponsoredEgressBytes',
         'containsPHI', 'databaseUIViewOnly', 'externalUploadRestricted', 'region', 'storageCost', 'pendingTransfer',
-        'atSpendingLimit',
+        'atSpendingLimit', 'currentMonthComputeAvailableBudget', 'currentMonthEgressBytesAvailableBudget',
+        'currentMonthComputeUsage', 'currentMonthEgressBytesUsage',
         # Following are app container-specific
         'destroyAt', 'project', 'type', 'app', 'appName'
     ]
@@ -468,6 +470,18 @@ def print_project_desc(desc, verbose=False):
                               if 'consumedSponsoredEgressBytes' in desc else '??'
         print_field('Sponsored egress',
                     ('%s used of %s total' % (consumed_egress_str, total_egress_str)))
+    if 'currentMonthComputeUsage' in desc:
+        print_field('Compute usage for current month',
+                    format_currency(desc['currentMonthComputeUsage'], meta=desc['currency']) if desc['currentMonthComputeUsage'] is not None else '-')
+    if 'currentMonthComputeAvailableBudget' in desc:
+        print_field('Available compute budget for current month',
+                    format_currency(desc['currentMonthComputeAvailableBudget'], meta=desc['currency']) if desc['currentMonthComputeAvailableBudget'] is not None else '-')
+    if 'currentMonthEgressBytesUsage' in desc:
+        print_field('Egress usage for current month',
+                    ('%s B' % desc['currentMonthEgressBytesUsage']) if desc['currentMonthEgressBytesUsage'] is not None else '-')
+    if 'currentMonthEgressBytesAvailableBudget' in desc:
+        print_field('Available egress for current month',
+                    ('%s B' % desc['currentMonthEgressBytesAvailableBudget']) if desc['currentMonthEgressBytesAvailableBudget'] is not None else '-')
     if 'atSpendingLimit' in desc:
         print_json_field("At spending limit?", desc['atSpendingLimit'])
 
