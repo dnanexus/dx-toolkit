@@ -3763,7 +3763,7 @@ def watch(args):
         args.quiet = True
     elif args.format is None:
         if args.job_ids:
-            format = BLUE("{job_name} ({job})" + (" try {jobTry}" if is_try_provided else "") + ")") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name} ({job}" + (" try {jobTry}" if is_try_provided else "") + ")") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
             format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
