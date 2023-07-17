@@ -672,6 +672,11 @@ class TestDXJobutilNewJob(DXTestCase):
                 pipes.quote(json.dumps({"main": "mem2_hdd2_x2" , "other_function": "mem2_hdd2_x1" })),
                 {"systemRequirements": {"main": { "instanceType": "mem2_hdd2_x2" },
                                         "other_function": { "instanceType": "mem2_hdd2_x1" }}}),
+            ("--instance-type-by-executable " +
+                pipes.quote(json.dumps({"my_applet":{"main": { "instanceType": "mem2_hdd2_x2", "clusterSpec":{"initialInstanceCount": 3}},
+                                        "other_function": { "instanceType": "mem3_ssd2_fpga1_x8", "fpgaDriver": "edico-1.4.5"} }})),
+                {"systemRequirementsByExecutable": {"my_applet":{"main": { "instanceType": "mem2_hdd2_x2", "clusterSpec":{"initialInstanceCount": 3}},
+                                        "other_function": { "instanceType": "mem3_ssd2_fpga1_x8", "fpgaDriver": "edico-1.4.5"} }}}),
             # properties - mapping
             ("--property foo=foo_value --property bar=bar_value",
                 {"properties": {"foo": "foo_value", "bar": "bar_value"}}),

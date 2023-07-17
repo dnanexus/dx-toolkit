@@ -6,7 +6,25 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [351.0] - beta
+## [353.0] - beta
+
+### Added
+
+* '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
+* Fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
+* `--metrics top` for `dx watch`
+
+## [352.1] - 2023.7.12
+
+### Added
+
+* `dx extract_assay somatic`
+
+### Fixed
+
+* Log line truncation for strings > 8000 bytes
+
+## [351.0] -  2023.7.7
 
 * No significant changes
 
