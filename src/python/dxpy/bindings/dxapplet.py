@@ -58,10 +58,11 @@ class DXExecutable:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
 
-        if kwargs.get('instance_type') is not None or kwargs.get('cluster_spec') is not None:
-            instance_type_srd = SystemRequirementsDict.from_instance_type(kwargs.get('instance_type'))
-            cluster_spec_srd = SystemRequirementsDict(kwargs.get('cluster_spec'))
-            run_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd).as_dict()
+        if kwargs.get('system_requirements') is not None:
+            run_input["systemRequirements"] = kwargs.get('system_requirements')
+
+        if kwargs.get('system_requirements_by_executable') is not None:
+            run_input["systemRequirementsByExecutable"] = kwargs.get('system_requirements_by_executable')
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []
@@ -184,7 +185,7 @@ class DXExecutable:
         raise NotImplementedError('_get_cleanup_keys is not implemented')
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
-            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
+            system_requirements=None, stage_instance_types=None, system_requirements_by_executable=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None,
             ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
             max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None, **kwargs):
@@ -203,8 +204,12 @@ class DXExecutable:
         :type properties: dict with string values
         :param details: Details to set for the job
         :type details: dict or list
-        :param instance_type: Instance type on which the jobs will be run, or a dict mapping function names to instance type requests
-        :type instance_type: string or dict
+        :param system_requirements: System requirement single mapping
+        :type system_requirements: dict
+        :param stage_instance_types: Stage instance type single mapping
+        :type stage_instance_types: dict
+        :param system_requirements_by_executable: System requirement by executable double mapping
+        :type system_requirements_by_executable: dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
         :param allow_ssh: List of hostname or IP masks to allow SSH connections from
@@ -255,8 +260,9 @@ class DXExecutable:
                                         tags=tags,
                                         properties=properties,
                                         details=details,
-                                        instance_type=instance_type,
+                                        system_requirements=system_requirements,
                                         stage_instance_types=stage_instance_types,
+                                        system_requirements_by_executable=system_requirements_by_executable,
                                         stage_folders=stage_folders,
                                         rerun_stages=rerun_stages,
                                         cluster_spec=cluster_spec,
