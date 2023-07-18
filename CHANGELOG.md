@@ -8,7 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
+* Option '--instance-type-by-executable' for `dx run` and `dx-jobutil-job-new`
+* Parameters `system_requirements` and `system_requirements_by_executable` for `DXExecutable.run()` and `DXJob.new()`
 
 ## [353.0] - beta
 
