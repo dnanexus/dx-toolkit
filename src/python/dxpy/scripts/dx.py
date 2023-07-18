@@ -6435,7 +6435,7 @@ parser_extract_assay_somatic.add_argument(
 parser_extract_assay_somatic.add_argument(
     "--assay-name",
     default=None,
-    help = 'Specify the somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays."'
+    help='Specify the somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays."'
 )
 
 parser_extract_assay_somatic.add_argument(
@@ -6447,7 +6447,7 @@ parser_extract_assay_somatic.add_argument(
 parser_extract_assay_somatic.add_argument(
     "--sql",
     action="store_true",
-    help = 'If the flag is provided, a SQL statement, returned as a string, will be provided to query the specified data instead of returning data.'
+    help='If the flag is provided, a SQL statement, returned as a string, will be provided to query the specified data instead of returning data.'
 )
 parser_extract_assay_somatic.add_argument(
     "-o", "--output", 
