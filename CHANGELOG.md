@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* New argument '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
+
 ## [353.0] - beta
 
 ### Added
