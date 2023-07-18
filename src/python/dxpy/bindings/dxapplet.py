@@ -191,10 +191,11 @@ class DXExecutable:
         raise NotImplementedError('_get_cleanup_keys is not implemented')
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
-            system_requirements=None, stage_instance_types=None, system_requirements_by_executable=None, stage_folders=None, rerun_stages=None, 
+            system_requirements=None, system_requirements_by_executable=None,
+            stage_instance_types=None,  stage_folders=None, rerun_stages=None, ignore_reuse_stages=None, 
             instance_type=None, cluster_spec=None, fpga_driver=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None,
-            ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
+            ignore_reuse=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
             max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
@@ -213,10 +214,16 @@ class DXExecutable:
         :type details: dict or list
         :param system_requirements: System requirement single mapping
         :type system_requirements: dict
-        :param stage_instance_types: Stage instance type single mapping
-        :type stage_instance_types: dict
         :param system_requirements_by_executable: System requirement by executable double mapping
         :type system_requirements_by_executable: dict
+        :param stage_instance_types: Stage instance type single mapping
+        :type stage_instance_types: dict
+        :param stage_folders: A dict mapping stage IDs, names, indices, and/or the string "*" to folder values to be used for the stages' output folders (use "*" as the default for all unnamed stages)
+        :type stage_folders: dict
+        :param rerun_stages: A list of stage IDs, names, indices, and/or the string "*" to indicate which stages should be run even if there are cached executions available
+        :type rerun_stages: list of strings
+        :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
+        :type ignore_reuse_stages: list
         :param instance_type: Instance type on which the jobs will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
         :param cluster_spec: a dict mapping function names to cluster spec requests
@@ -237,8 +244,6 @@ class DXExecutable:
         :type head_job_on_demand: bool
         :param ignore_reuse: Disable job reuse for this execution
         :type ignore_reuse: boolean
-        :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
-        :type ignore_reuse_stages: list
         :param detach: If provided, job will not start as subjob if run inside of a different job.
         :type detach: boolean
         :param cost_limit: Maximum cost of the job before termination.
@@ -262,7 +267,7 @@ class DXExecutable:
         the given input *executable_input*.
 
         '''
-        # stage_instance_types, stage_folders, and rerun_stages are
+        # stage_instance_types, stage_folders, rerun_stages and ignore_reuse_stages are
         # only supported for workflows, but we include them
         # here. Applet-based executables should detect when they
         # receive a truthy workflow-specific value and raise an error.
@@ -274,17 +279,17 @@ class DXExecutable:
                                         properties=properties,
                                         details=details,
                                         system_requirements=system_requirements,
-                                        stage_instance_types=stage_instance_types,
                                         system_requirements_by_executable=system_requirements_by_executable,
+                                        stage_instance_types=stage_instance_types,
                                         stage_folders=stage_folders,
                                         rerun_stages=rerun_stages,
+                                        ignore_reuse_stages=ignore_reuse_stages,
                                         instance_type=instance_type,
                                         cluster_spec=cluster_spec,
                                         fpga_driver=fpga_driver,
                                         depends_on=depends_on,
                                         allow_ssh=allow_ssh,
                                         ignore_reuse=ignore_reuse,
-                                        ignore_reuse_stages=ignore_reuse_stages,
                                         debug=debug,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
