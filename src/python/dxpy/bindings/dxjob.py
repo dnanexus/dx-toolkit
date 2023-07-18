@@ -43,7 +43,7 @@ from ..compat import basestring
 #########
 
 def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=None,
-              instance_type=None, depends_on=None,
+              instance_type=None, cluster_spec=None, fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, depends_on=None,
               **kwargs):
     '''
     :param fn_input: Function input
@@ -60,6 +60,14 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     :type details: dict or list
     :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
     :type instance_type: string or dict
+    :param cluster_spec: a dict mapping function names to cluster spec requests
+    :type cluster_spec: dict
+    :param fpga_driver: a dict mapping function names to fpga driver requests
+    :type fpga_driver: dict
+    :param system_requirements: System requirement single mapping
+    :type system_requirements: dict
+    :param system_requirements_by_executable: System requirement by executable double mapping
+    :type system_requirements_by_executable: dict
     :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
     :type depends_on: list
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
@@ -86,7 +94,9 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     '''
     dxjob = DXJob()
     dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties,
-              details=details, instance_type=instance_type, depends_on=depends_on, **kwargs)
+              details=details, instance_type=instance_type, cluster_spec=cluster_spec, fpga_driver=fpga_driver, 
+              system_requirements=system_requirements, system_requirements_by_executable=system_requirements_by_executable, 
+              depends_on=depends_on, **kwargs)
     return dxjob
 
 class DXJob(DXObject):
@@ -102,7 +112,7 @@ class DXJob(DXObject):
         self.set_id(dxid)
 
     def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None,
-            instance_type=None, depends_on=None,
+            instance_type=None, cluster_spec=None, fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, depends_on=None,
             **kwargs):
         '''
         :param fn_input: Function input
@@ -119,6 +129,14 @@ class DXJob(DXObject):
         :type details: dict or list
         :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
+        :param cluster_spec: a dict mapping function names to cluster spec requests
+        :type cluster_spec: dict
+        :param fpga_driver: a dict mapping function names to fpga driver requests
+        :type fpga_driver: dict
+        :param system_requirements: System requirement single mapping
+        :type system_requirements: dict
+        :param system_requirements_by_executable: System requirement by executable double mapping
+        :type system_requirements_by_executable: dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
 
@@ -159,8 +177,15 @@ class DXJob(DXObject):
                 req_input["tags"] = tags
             if properties is not None:
                 req_input["properties"] = properties
-            if instance_type is not None:
-                req_input["systemRequirements"] = SystemRequirementsDict.from_instance_type(instance_type, fn_name).as_dict()
+            if instance_type is not None or cluster_spec is not None or fpga_driver is not None:
+                instance_type_srd = SystemRequirementsDict.from_instance_type(instance_type, fn_name)
+                cluster_spec_srd = SystemRequirementsDict(cluster_spec)
+                fpga_driver_srd = SystemRequirementsDict(fpga_driver)
+                req_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd + fpga_driver_srd).as_dict()
+            if system_requirements is not None:
+                req_input["systemRequirements"] = system_requirements
+            if system_requirements_by_executable is not None:
+                req_input["systemRequirementsByExecutable"] = system_requirements_by_executable
             if depends_on is not None:
                 req_input["dependsOn"] = final_depends_on
             if details is not None:
