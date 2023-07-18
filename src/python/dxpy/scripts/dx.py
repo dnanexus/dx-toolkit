@@ -6271,29 +6271,29 @@ register_parser(parser_extract_assay)
 #####################################
 parser_extract_assay_germline = subparsers_extract_assay.add_parser(
     "germline",
-    help="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
-    description="Retrieve the selected data or generate SQL to retrieve the data from an genetic variant assay in a dataset or cohort based on provided rules.",
+    help="Query a Dataset or Cohort for an instance of a germline variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.",
+    description="Query a Dataset or Cohort for an instance of a germline variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.",
     
 )
 
 parser_extract_assay_germline.add_argument(
     "path",
     type=str,
-    help='The name or project-id:record-id of a v3.0 Dataset or Cohort object ID, where "record-id" indicates the record-id in current selected project.',
+    help='v3.0 Dataset or Cohort object ID (project-id:record-id, where ":record-id" indicates the record-id in the currently selected project) or name.'
 )
 
 
 parser_extract_assay_germline.add_argument(
     "--assay-name",
     default=None,
-    help='Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays"',
+    help='Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays."'
 )
 
 parser_e_a_g_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=True)
 parser_e_a_g_mutex_group.add_argument(
     "--list-assays",
     action="store_true",
-    help="List genetic variant assays available for query in the specified Dataset or Cohort object.",
+    help='List genetic variant assays available for query in the specified Dataset or Cohort object.'
 )
 
 parser_e_a_g_mutex_group.add_argument(
@@ -6302,7 +6302,7 @@ parser_e_a_g_mutex_group.add_argument(
     const='{}', 
     default=None,
     nargs='?',
-    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of alleles to retrieve. Returns a list of allele IDs with additional information. Use --json-help with this option to get detailed information on the JSON format and filters'
 )
 parser_e_a_g_mutex_group.add_argument(
     "--retrieve-annotation",
@@ -6310,7 +6310,7 @@ parser_e_a_g_mutex_group.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria to retrieve corresponding alleles and their annotation. Use --json-help with this option to get detailed information on the JSON format and filters.'
 )
 parser_e_a_g_mutex_group.add_argument(
     "--retrieve-genotype",
@@ -6318,7 +6318,7 @@ parser_e_a_g_mutex_group.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help="Returns a list of allele IDs with additional information based on a set of criteria in JSON format. The JSON object can be either in a file (.json extension) or as a string. Use --json-help with this option for additional information on how to use this option.",
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Use --json-help with this option to get detailed information on the JSON format and filters.'
 )
 parser_extract_assay_germline.add_argument(
     '--json-help',
@@ -6328,13 +6328,13 @@ parser_extract_assay_germline.add_argument(
 parser_extract_assay_germline.add_argument(
     "--sql",
     action="store_true",
-    help="If the flag is provided, a SQL statement (a string) will be returned for user to further query the specified data instead of actual value of the requested fields.",
+    help='If the flag is provided, a SQL statement, returned as a string, will be provided to query the specified data instead of returning data.'
 )
 parser_extract_assay_germline.add_argument(
     "-o", "--output", 
     type=str,
     default=None,
-    help="Path to store the output file."
+    help = 'A local filename or directory to be used, where "-" indicates printing to STDOUT. If -o/--output is not supplied, default behavior is to create a file with a constructed name in the current folder.'
 )
 parser_extract_assay_germline.set_defaults(func=extract_assay_germline)
 register_parser(parser_extract_assay_germline)
