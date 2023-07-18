@@ -1,3 +1,9 @@
+dx-toolkit (0.353.1) trusty; urgency=medium
+
+  * Fixed: Revert breaking change in DXApplet.run()
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 18 Jul 2023 11:50:06 +0000
+
 dx-toolkit (0.353.0) trusty; urgency=medium
 
   * Added: New argument '--instance-type-by-executable' arg for dx run and dx-jobutil-job-new
