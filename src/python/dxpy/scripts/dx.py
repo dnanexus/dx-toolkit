@@ -3023,7 +3023,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
     requested_instance_type, requested_cluster_spec = {}, {}
-    executable_desc = None
+    executable_describe = None
 
     from ..utils import merge
     if args.cloned_job_desc:
@@ -3054,8 +3054,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
         # and overwrite the field initialInstanceCount with the runtime mapping
         requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)        
-        executable_desc = executable.describe()
-        cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable_desc.get('runSpec',{}).get('systemRequirements', {}),_type='clusterSpec')
+        executable_describe = executable.describe()
+        cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable_describe.get('runSpec',{}).get('systemRequirements', {}),_type='clusterSpec')
 
         if not isinstance(args.instance_count, basestring):
             if cloned_cluster_spec.as_dict():
@@ -3104,6 +3104,9 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "priority": args.priority,
         "system_requirements": requested_system_requirements or None,
         "system_requirements_by_executable": requested_system_requirements_by_executable or None,
+        "instance_type": None,
+        "cluster_spec": None,
+        "fpga_driver": None,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
@@ -3132,7 +3135,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
 
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
-        executable_desc = executable_desc or executable.describe()
+        executable_desc = executable_describe or executable.describe()
         write_perms = ['UPLOAD', 'CONTRIBUTE', 'ADMINISTER']
         def check_for_special_access(access_spec):
             if not access_spec:
