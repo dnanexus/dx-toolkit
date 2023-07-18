@@ -6,12 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [353.0] - beta
+## [353.1] - beta
 
 ### Added
 
-* Fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
-* `--metrics top` for `dx watch`
+* `dx watch --metrics top` mode
 
 ## [352.1] - 2023.7.12
 
