@@ -2168,6 +2168,9 @@ def find_executions(args):
         describe_args = {"io": include_io}
     id_desc = None
 
+    # DEVEX-2277: Increase limit by max number of retries (10) for resorting
+    jobs_to_fetch = args.num_results if args.trees else args.num_results + 10
+
     # Now start parsing flags
     if args.id is not None:
         id_desc = try_call(dxpy.api.job_describe, args.id, {"io": False})
@@ -2206,8 +2209,8 @@ def find_executions(args):
              'include_subjobs': False if args.no_subjobs else True,
              'root_execution': args.root_execution,
              'include_restarted': include_restarted}
-    if args.num_results < 1000 and not args.trees:
-        query['limit'] = args.num_results + 1
+    if jobs_to_fetch < 1000 and not args.trees:
+        query['limit'] = jobs_to_fetch + 1
 
     json_output = []                        # for args.json
 
@@ -2292,10 +2295,10 @@ def find_executions(args):
         num_processed_results = 0
         roots = collections.OrderedDict()
         execution_retries = {}
+        executions_cache = []
 
         for execution_result in dxpy.find_executions(**query):
             execution_id = execution_result['id']
-            execution_try = execution_result['describe'].get('try')
 
             if args.trees:
                 if args.classname == 'job':
@@ -2306,33 +2309,45 @@ def find_executions(args):
                     num_processed_results += 1
             else:
                 num_processed_results += 1
+                executions_cache.append(execution_result)
 
             if execution_id not in execution_retries:
                 execution_retries[execution_id] = execution_result['describe'].get('try')
 
-            if num_processed_results > args.num_results:
+            if num_processed_results > jobs_to_fetch:
                 more_results = True
                 break
 
-            show_try = include_restarted and execution_retries[execution_id] is not None and execution_retries[execution_id] > 0
-
-            if args.json:
-                json_output.append(execution_result['describe'])
-            elif args.trees:
+            if args.trees:
                 roots[root] = root
                 if args.classname == 'analysis' and root.startswith('job-'):
                     # Analyses in trees with jobs at their root found in "dx find analyses" are displayed unrooted,
                     # and only the last analysis found is displayed.
                     roots[root] = execution_result['describe']['id']
-            elif args.brief:
-                print_brief(execution_id, execution_try, show_try)
-            elif not args.trees:
-                print(format_tree({}, get_find_executions_string(execution_result['describe'],
-                                                                 has_children=False,
-                                                                 single_result=True,
-                                                                 show_outputs=args.show_outputs,
-                                                                 show_try=show_try)))
-        if args.trees:
+
+        if not args.trees:
+            # Handle situations where the number of results is between args.num_results and args.num_results + 10
+            if len(executions_cache) > args.num_results:
+                more_results = True
+
+            executions = sorted(executions_cache, key=lambda x: (-x['describe']['created'], -x['describe'].get('try', 0)))[:args.num_results]
+
+            for execution_result in executions:
+                execution_id = execution_result['id']
+                execution_try = execution_result['describe'].get('try')
+                show_try = include_restarted and execution_retries[execution_id] is not None and execution_retries[execution_id] > 0
+
+                if args.json:
+                    json_output.append(execution_result['describe'])
+                elif args.brief:
+                    print_brief(execution_id, execution_try, show_try)
+                else:
+                    print(format_tree({}, get_find_executions_string(execution_result['describe'],
+                                                                    has_children=False,
+                                                                    single_result=True,
+                                                                    show_outputs=args.show_outputs,
+                                                                    show_try=show_try)))
+        else:
             executions_by_parent, descriptions = collections.defaultdict(list), {}
             execution_retries = collections.defaultdict(list)
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
