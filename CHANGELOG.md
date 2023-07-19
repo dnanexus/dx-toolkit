@@ -11,12 +11,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Option '--instance-type-by-executable' for `dx run` and `dx-jobutil-job-new`
 * Parameters `system_requirements` and `system_requirements_by_executable` for `DXExecutable.run()` and `DXJob.new()`
 
-## [353.0] - beta
+## [353.1] - beta
 
 ### Added
 
 * Fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
-* `--metrics top` for `dx watch`
+* `dx watch --metrics top` mode
 
 ## [352.1] - 2023.7.12
 

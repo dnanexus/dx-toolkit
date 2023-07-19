@@ -311,7 +311,7 @@ class DXExecutable:
 _applet_required_keys = ['name', 'title', 'summary', 'types', 'tags',
                          'httpsApp', 'properties', 'dxapi', 'inputSpec', 'outputSpec',
                          'runSpec', 'access', 'details']
-_applet_optional_keys = ['ignoreReuse']
+_applet_optional_keys = ['ignoreReuse', 'treeTurnaroundTimeThreshold']
 _applet_describe_output_keys = ['properties', 'details']
 _applet_cleanup_keys = ['name', 'title', 'summary', 'types', 'tags',
                         'properties', 'runSpec', 'access', 'details']
