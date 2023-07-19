@@ -606,6 +606,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 _headers['User-Agent'] = USER_AGENT
                 _headers['DNAnexus-API'] = API_VERSION
+                _headers['X-dxpy-Python-Implementation'] = platform.python_implementation()
+                _headers['X-dxpy-Python-Version'] = platform.python_version()
 
                 # Converted Unicode headers to ASCII and throw an error if not possible
                 def ensure_ascii(i):
