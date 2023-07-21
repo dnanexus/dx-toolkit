@@ -2238,7 +2238,11 @@ def find_executions(args):
     def build_tree(root, root_try, executions_by_parent, execution_descriptions, execution_retries):
         tree, root_string = {}, ''
         # When try is not explicitly specified, use the most recent try
-        execution_id = ExecutionId(root, root_try if root_try is not None else execution_retries[root][0])
+        try:
+            execution_id = ExecutionId(root, root_try if root_try is not None else execution_retries[root][0])
+        except KeyError as e:
+            print(locals())
+            raise e
         root_has_retries = len(execution_retries[root]) > 1
         root_has_children = execution_id in executions_by_parent
         root_has_reused_output = execution_descriptions[execution_id].get('outputReusedFrom') is not None
