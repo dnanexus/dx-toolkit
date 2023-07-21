@@ -1603,13 +1603,12 @@ def add_tags(args):
                                                     args.all)
 
     if entity_results is not None:
-        payload = {"tags": args.tags}
+        payload = {"project": project, "tags": args.tags}
 
         if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
             err_exit('Parameter --try T can be used only with jobs')
 
         for result in entity_results:
-            payload['project'] = project
             if args.job_try is not None:
                 payload['try'] = args.job_try
             try:
@@ -1639,7 +1638,7 @@ def remove_tags(args):
                                                     args.all)
 
     if entity_results is not None:
-        payload = {"tags": args.tags}
+        payload = {"project": project, "tags": args.tags}
 
         if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
             err_exit('Parameter --try T can be used only with jobs')
@@ -1701,13 +1700,12 @@ def set_properties(args):
 
     try_call(process_properties_args, args)
     if entity_results is not None:
-        payload = {"properties": args.properties}
+        payload = {"project": project, "properties": args.properties}
 
         if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
             err_exit('Parameter --try T can be used only with jobs')
 
         for result in entity_results:
-            payload['project'] = project
             if args.job_try is not None:
                 payload['try'] = args.job_try
             try:
@@ -1737,13 +1735,12 @@ def unset_properties(args):
     for prop in args.properties:
         properties[prop] = None
     if entity_results is not None:
-        payload = {"properties": properties}
+        payload = {"project": project, "properties": properties}
 
         if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
             err_exit('Parameter --try T can be used only with jobs')
 
         for result in entity_results:
-            payload['project'] = project
             if args.job_try is not None:
                 payload['try'] = args.job_try
             try:
