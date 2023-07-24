@@ -197,7 +197,7 @@ class DXExecutable:
             max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None,
             fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, **kwargs):
         '''
-        :param executable_input: Hash of the executable's input arguments
+                :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
         :param project: Project ID of the project context
         :type project: string
@@ -211,24 +211,8 @@ class DXExecutable:
         :type properties: dict with string values
         :param details: Details to set for the job
         :type details: dict or list
-        :param system_requirements: System requirement single mapping
-        :type system_requirements: dict
-        :param system_requirements_by_executable: System requirement by executable double mapping
-        :type system_requirements_by_executable: dict
-        :param stage_instance_types: Stage instance type single mapping
-        :type stage_instance_types: dict
-        :param stage_folders: A dict mapping stage IDs, names, indices, and/or the string "*" to folder values to be used for the stages' output folders (use "*" as the default for all unnamed stages)
-        :type stage_folders: dict
-        :param rerun_stages: A list of stage IDs, names, indices, and/or the string "*" to indicate which stages should be run even if there are cached executions available
-        :type rerun_stages: list of strings
-        :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
-        :type ignore_reuse_stages: list
         :param instance_type: Instance type on which the jobs will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
-        :param cluster_spec: a dict mapping function names to cluster spec requests
-        :type cluster_spec: dict
-        :param fpga_driver: a dict mapping function names to fpga driver requests
-        :type fpga_driver: dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
         :param allow_ssh: List of hostname or IP masks to allow SSH connections from
@@ -243,6 +227,8 @@ class DXExecutable:
         :type head_job_on_demand: bool
         :param ignore_reuse: Disable job reuse for this execution
         :type ignore_reuse: boolean
+        :param ignore_reuse_stages: Stages of a workflow (IDs, names, or indices) or "*" for which job reuse should be disabled
+        :type ignore_reuse_stages: list
         :param detach: If provided, job will not start as subjob if run inside of a different job.
         :type detach: boolean
         :param cost_limit: Maximum cost of the job before termination.
@@ -260,6 +246,12 @@ class DXExecutable:
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
+        :param fpga_driver: a dict mapping function names to fpga driver requests
+        :type fpga_driver: dict
+        :param system_requirements: System requirement single mapping
+        :type system_requirements: dict
+        :param system_requirements_by_executable: System requirement by executable double mapping
+        :type system_requirements_by_executable: dict
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
         Creates a new job that executes the function "main" of this executable with
