@@ -95,9 +95,9 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     '''
     dxjob = DXJob()
     dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties,
-              details=details, instance_type=instance_type, cluster_spec=cluster_spec, fpga_driver=fpga_driver, 
-              system_requirements=system_requirements, system_requirements_by_executable=system_requirements_by_executable, 
-              depends_on=depends_on, **kwargs)
+              details=details, instance_type=instance_type, depends_on=depends_on,
+              cluster_spec=cluster_spec, fpga_driver=fpga_driver, 
+              system_requirements=system_requirements, system_requirements_by_executable=system_requirements_by_executable, **kwargs)
     return dxjob
 
 class DXJob(DXObject):
