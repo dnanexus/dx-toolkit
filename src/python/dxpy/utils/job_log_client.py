@@ -47,13 +47,15 @@ class DXJobLogStreamingException(Exception):
 
 class DXJobLogStreamClient:
     def __init__(
-        self, job_id, input_params=None, msg_output_format="{job} {level} {msg}",
+        self, job_id, job_try=None, input_params=None, msg_output_format="{job} {level} {msg}",
         msg_callback=None, print_job_info=True, exit_on_failed=True
     ):
         """Initialize job log client.
 
         :param job_id: dxid for a job (hash ID 'job-xxxx')
         :type job_id: str
+        :param job_try: try for given job. If None, it will use the latest try.
+        :type job_id: int or None
         :param input_params: blob with connection parameters, should have keys
         ``numRecentMessages`` (int) (wich may not be more than 1024 * 256, otherwise no logs will be returned),
         ``recurseJobs`` (bool) - if True, attempts to traverse subtree
@@ -78,6 +80,8 @@ class DXJobLogStreamClient:
         # TODO: add unit tests; note it is a public class
 
         self.job_id = job_id
+        self.job_try = job_try
+        self.job_has_try = job_try is not None
         self.input_params = input_params
         self.msg_output_format = msg_output_format
         self.msg_callback = msg_callback
@@ -123,7 +127,7 @@ class DXJobLogStreamClient:
                 # API call that will do the same and block while it retries.
                 logger.warn("Server restart, reconnecting...")
                 time.sleep(1)
-                dxpy.describe(self.job_id)
+                self._describe_job(self.job_id)
             else:
                 break
 
@@ -178,16 +182,17 @@ class DXJobLogStreamClient:
             if self.job_id not in self.seen_jobs:
                 self.seen_jobs[self.job_id] = {}
             for job_id in self.seen_jobs.keys():
-                self.seen_jobs[job_id] = dxpy.describe(job_id)
+                self.seen_jobs[job_id] = self._describe_job(job_id)
                 print(
                     get_find_executions_string(
                         self.seen_jobs[job_id],
                         has_children=False,
-                        show_outputs=True
+                        show_outputs=True,
+                        show_try=self.job_has_try
                     )
                 )
         else:
-            self.seen_jobs[self.job_id] = dxpy.describe(self.job_id)
+            self.seen_jobs[self.job_id] = self._describe_job(self.job_id)
 
         if (self.exit_on_failed
                 and self.seen_jobs[self.job_id].get('state') in {'failed', 'terminated'}):
@@ -201,12 +206,13 @@ class DXJobLogStreamClient:
             'job' in message_dict and
             message_dict['job'] not in self.seen_jobs
         ):
-            self.seen_jobs[message_dict['job']] = dxpy.describe(message_dict['job'])
+            self.seen_jobs[message_dict['job']] = self._describe_job(message_dict['job'])
             print(
                 get_find_executions_string(
                     self.seen_jobs[message_dict['job']],
                     has_children=False,
-                    show_outputs=False
+                    show_outputs=False,
+                    show_try=self.job_has_try
                 )
             )
 
@@ -219,6 +225,9 @@ class DXJobLogStreamClient:
             self.msg_callback(message_dict)
         else:
             print(self.msg_output_format.format(**message_dict))
+
+    def _describe_job(self, job_id):
+        return dxpy.api.job_describe(job_id, {'try': self.job_try} if self.job_has_try else {})
 
 
 class CursesDXJobLogStreamClient(DXJobLogStreamClient):

@@ -42,7 +42,7 @@ from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
 from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic
 from ..cli.download import (download_one_file, download_one_database_file, download)
-from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
+from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
@@ -1211,6 +1211,11 @@ def describe(args):
                                         'mergedSystemRequirementsByExecutable': True,
                                         'runStageSystemRequirements': True}
 
+        if args.job_try is not None:
+            if not is_job_id(args.path):
+                err_exit('Parameter --try T can be used only when describing jobs')
+            json_input['try'] = args.job_try
+
         # Otherwise, attempt to look for it as a data object or
         # execution
         try:
@@ -1598,11 +1603,16 @@ def add_tags(args):
                                                     args.all)
 
     if entity_results is not None:
+        payload = {"project": project, "tags": args.tags}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/addTags',
-                                   {"project": project,
-                                    "tags": args.tags})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/addTags', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1611,6 +1621,9 @@ def add_tags(args):
     elif not project.startswith('project-'):
         err_exit('Cannot add tags to a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
+
         try:
             dxpy.DXHTTPRequest('/' + project + '/addTags',
                                {"tags": args.tags})
@@ -1625,11 +1638,16 @@ def remove_tags(args):
                                                     args.all)
 
     if entity_results is not None:
+        payload = {"project": project, "tags": args.tags}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags',
-                                   {"project": project,
-                                    "tags": args.tags})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1638,6 +1656,9 @@ def remove_tags(args):
     elif not project.startswith('project-'):
         err_exit('Cannot remove tags from a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
+
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeTags',
                                {"tags": args.tags})
@@ -1679,11 +1700,16 @@ def set_properties(args):
 
     try_call(process_properties_args, args)
     if entity_results is not None:
+        payload = {"project": project, "properties": args.properties}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
-                                   {"project": project,
-                                    "properties": args.properties})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1692,6 +1718,8 @@ def set_properties(args):
     elif not project.startswith('project-'):
         err_exit('Cannot set properties on a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
         try:
             dxpy.api.project_set_properties(project, {"properties": args.properties})
         except:
@@ -1707,11 +1735,16 @@ def unset_properties(args):
     for prop in args.properties:
         properties[prop] = None
     if entity_results is not None:
+        payload = {"project": project, "properties": properties}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
-                                   {"project": project,
-                                    "properties": properties})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1720,6 +1753,8 @@ def unset_properties(args):
     elif not project.startswith('project-'):
         err_exit('Cannot unset properties on a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
         try:
             dxpy.api.project_set_properties(project, {"properties": properties})
         except:
@@ -2113,7 +2148,8 @@ def find_executions(args):
     origin = None
     more_results = False
     include_io = (args.verbose and args.json) or args.show_outputs
-    include_internetUsageIPs = args.verbose and args.json
+    include_internet_usage_ips = args.verbose and args.json
+    include_restarted = args.include_restarted
     if args.classname == 'job':
         describe_args = {
         "defaultFields": True,
@@ -2122,12 +2158,15 @@ def find_executions(args):
             "originalInput": include_io,
             "input": include_io,
             "output": include_io,
-            "internetUsageIPs":include_internetUsageIPs
+            "internetUsageIPs": include_internet_usage_ips
         }
     }
     else:
         describe_args = {"io": include_io}
     id_desc = None
+
+    # DEVEX-2277: Increase limit by max number of retries (10) for resorting
+    jobs_to_fetch = args.num_results if args.trees else args.num_results + 10
 
     # Now start parsing flags
     if args.id is not None:
@@ -2165,46 +2204,99 @@ def find_executions(args):
              'tags': args.tag,
              'properties': args.properties,
              'include_subjobs': False if args.no_subjobs else True,
-             'root_execution': args.root_execution}
-    if args.num_results < 1000 and not args.trees:
-        query['limit'] = args.num_results + 1
+             'root_execution': args.root_execution,
+             'include_restarted': include_restarted}
+    if jobs_to_fetch < 1000 and not args.trees:
+        query['limit'] = jobs_to_fetch + 1
 
     json_output = []                        # for args.json
 
-    def build_tree(root, executions_by_parent, execution_descriptions, is_cached_result=False):
+    class ExecutionId:
+
+        def __init__(self, id, try_num=None):
+            self.id = id
+            self.try_num = try_num or -1
+
+        def __eq__(self, other):
+            if not isinstance(other, ExecutionId):
+                return NotImplemented
+
+            return self.id == other.id and self.try_num == other.try_num
+
+        def __hash__(self):
+            return hash((self.id, self.try_num))
+
+        def __str__(self):
+            return "%s_%d" % (self.id, self.try_num)
+
+        def __repr__(self):
+            return "ExecutionId(execution_id='%s',retry_num=%d)" % (self.id, self.try_num)
+
+    def print_brief(job_id, job_try, has_retries):
+        print(job_id + (" try %d" % job_try if has_retries and include_restarted and job_try is not None else ""))
+
+    def build_tree(root, root_try, executions_by_parent, execution_descriptions, execution_retries):
         tree, root_string = {}, ''
+        # When try is not explicitly specified, use the most recent try
+        execution_id = ExecutionId(root, root_try if root_try is not None else execution_retries[root][0])
+        root_has_retries = len(execution_retries[root]) > 1
+        root_has_children = execution_id in executions_by_parent
+        root_has_reused_output = execution_descriptions[execution_id].get('outputReusedFrom') is not None
+
+        if root_try is None:
+            if root_has_retries:
+                if not args.json and not args.brief:
+                    root_string = get_find_executions_string(execution_descriptions[execution_id],
+                                                        has_children=root_has_children,
+                                                        show_outputs=args.show_outputs,
+                                                        is_cached_result=root_has_reused_output,
+                                                        show_try=include_restarted,
+                                                        as_try_group_root=True)
+                    tree[root_string] = collections.OrderedDict()
+                for rtry in execution_retries[root]:
+                    subtree, _ = build_tree(root, rtry, executions_by_parent, execution_descriptions, execution_retries)
+                    if tree:
+                        tree[root_string].update(subtree)
+                return tree, root_string
+            else:
+                return build_tree(root, execution_retries[root][0], executions_by_parent, execution_descriptions, execution_retries)
+
         if args.json:
-            json_output.append(execution_descriptions[root])
+            json_output.append(execution_descriptions[execution_id])
         elif args.brief:
-            print(root)
+            print_brief(root, root_try, root_has_retries)
         else:
-            root_string = get_find_executions_string(execution_descriptions[root],
-                                                     has_children=root in executions_by_parent,
+            root_string = get_find_executions_string(execution_descriptions[execution_id],
+                                                     has_children=root_has_children,
                                                      show_outputs=args.show_outputs,
-                                                     is_cached_result=is_cached_result)
+                                                     is_cached_result=root_has_reused_output,
+                                                     show_try=include_restarted and root_has_retries)
             tree[root_string] = collections.OrderedDict()
-        for child_execution in executions_by_parent.get(root, {}):
-            child_is_cached_result = is_cached_result or (execution_descriptions[child_execution].get('outputReusedFrom') is not None)
+        for child_execution in executions_by_parent.get(execution_id, {}):
             subtree, _subtree_root = build_tree(child_execution,
+                                                execution_retries[child_execution][0] if len(execution_retries[child_execution]) == 1 else None,
                                                 executions_by_parent,
                                                 execution_descriptions,
-                                                is_cached_result=child_is_cached_result)
+                                                execution_retries)
             if tree:
                 tree[root_string].update(subtree)
+
         return tree, root_string
 
-    def process_tree(result, executions_by_parent, execution_descriptions):
-        is_cached_result = False
-        if 'outputReusedFrom' in result and result['outputReusedFrom'] is not None:
-            is_cached_result = True
-        tree, root = build_tree(result['id'], executions_by_parent, execution_descriptions, is_cached_result)
+    def process_tree(root_id, executions_by_parent, execution_descriptions, executions_retries):
+        tree, root = build_tree(root_id, None, executions_by_parent, execution_descriptions, executions_retries)
         if tree:
             print(format_tree(tree[root], root))
 
     try:
         num_processed_results = 0
         roots = collections.OrderedDict()
+        execution_retries = collections.defaultdict(set)
+        executions_cache = []
+
         for execution_result in dxpy.find_executions(**query):
+            execution_id = ExecutionId(execution_result['id'], execution_result['describe'].get('try'))
+
             if args.trees:
                 if args.classname == 'job':
                     root = execution_result['describe']['originJob']
@@ -2214,33 +2306,52 @@ def find_executions(args):
                     num_processed_results += 1
             else:
                 num_processed_results += 1
+                executions_cache.append(execution_result)
 
-            if (num_processed_results > args.num_results):
+            execution_retries[execution_id.id].add(execution_id.try_num)
+
+            if num_processed_results > jobs_to_fetch:
                 more_results = True
                 break
 
-            if args.json:
-                json_output.append(execution_result['describe'])
-            elif args.trees:
+            if args.trees:
                 roots[root] = root
                 if args.classname == 'analysis' and root.startswith('job-'):
                     # Analyses in trees with jobs at their root found in "dx find analyses" are displayed unrooted,
                     # and only the last analysis found is displayed.
                     roots[root] = execution_result['describe']['id']
-            elif args.brief:
-                print(execution_result['id'])
-            elif not args.trees:
-                print(format_tree({}, get_find_executions_string(execution_result['describe'],
-                                                                 has_children=False,
-                                                                 single_result=True,
-                                                                 show_outputs=args.show_outputs)))
-        if args.trees:
+
+        if not args.trees:
+            # Handle situations where the number of results is between args.num_results and args.num_results + 10
+            if len(executions_cache) > args.num_results:
+                more_results = True
+
+            executions = sorted(executions_cache, key=lambda x: (-x['describe']['created'], -x['describe'].get('try', 0)))[:args.num_results]
+
+            for execution_result in executions:
+                execution_id = execution_result['id']
+                execution_try = execution_result['describe'].get('try')
+                execution_max_try = max(execution_retries[execution_id])
+                show_try = include_restarted and execution_max_try > 0
+
+                if args.json:
+                    json_output.append(execution_result['describe'])
+                elif args.brief:
+                    print_brief(execution_id, execution_try, show_try)
+                else:
+                    print(format_tree({}, get_find_executions_string(execution_result['describe'],
+                                                                    has_children=False,
+                                                                    single_result=True,
+                                                                    show_outputs=args.show_outputs,
+                                                                    show_try=show_try)))
+        else:
             executions_by_parent, descriptions = collections.defaultdict(list), {}
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
             parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
             query = {'classname': args.classname,
                      'describe': describe_args,
                      'include_subjobs': False if args.no_subjobs else True,
+                     'include_restarted': include_restarted,
                      root_field: list(roots.keys())}
             if not args.all_projects:
                 # If the query doesn't specify a project, the server finds all projects to which the user has explicit
@@ -2255,20 +2366,30 @@ def find_executions(args):
 
             def process_execution_result(execution_result):
                 execution_desc = execution_result['describe']
-                parent = execution_desc.get(parent_field) or execution_desc.get('parentAnalysis')
-                descriptions[execution_result['id']] = execution_desc
-                if parent:
-                    executions_by_parent[parent].append(execution_result['id'])
+                execution_id = ExecutionId(execution_result['id'], execution_desc.get('try'))
+
+                if execution_desc.get(parent_field) or execution_desc.get('parentAnalysis'):
+                    if parent_field == 'parentJob' and execution_desc.get(parent_field):
+                        parent = ExecutionId(execution_desc.get(parent_field), execution_desc.get('parentJobTry'))
+                    else:
+                        parent = ExecutionId(execution_desc.get(parent_field) or execution_desc.get('parentAnalysis'))
+                    if execution_id.id not in executions_by_parent[parent]:
+                        executions_by_parent[parent].append(execution_id.id)
+
+                descriptions[execution_id] = execution_desc
+                execution_retries[execution_id.id].add(execution_id.try_num)
 
                 # If an analysis with cached children, also insert those
                 if execution_desc['class'] == 'analysis':
                     for stage_desc in execution_desc['stages']:
                         if 'parentAnalysis' in stage_desc['execution'] and stage_desc['execution']['parentAnalysis'] != execution_result['id'] and \
                            (args.classname != 'analysis' or stage_desc['execution']['class'] == 'analysis'):
-                            # this is a cached stage (with a different parent)
-                            executions_by_parent[execution_result['id']].append(stage_desc['execution']['id'])
-                            if stage_desc['execution']['id'] not in descriptions:
-                                descriptions[stage_desc['execution']['id']] = stage_desc['execution']
+                            stage_execution_id = stage_desc['execution']['id']
+                            if stage_execution_id not in executions_by_parent[execution_id.id]:
+                                # this is a cached stage (with a different parent)
+                                executions_by_parent[execution_id.id].append(stage_execution_id)
+                            if stage_execution_id not in descriptions:
+                                descriptions[stage_execution_id] = stage_desc['execution']
 
             # Short-circuit the find_execution API call(s) if there are
             # no root executions (and therefore we would have gotten 0
@@ -2277,11 +2398,17 @@ def find_executions(args):
                 for execution_result in dxpy.find_executions(**query):
                     process_execution_result(execution_result)
 
+                # ensure tries are sorted from newest to oldest
+                execution_retries = {k: sorted(v, reverse=True) for k, v in execution_retries.items()}
+
                 # ensure roots are sorted by their creation time
-                sorted_roots = sorted(roots, key=lambda root: -descriptions[roots[root]]['created'])
+                sorted_roots = sorted(
+                    roots.keys(),
+                    key=lambda root: -descriptions[ExecutionId(roots[root], execution_retries[roots[root]][-1])]['created']
+                )
 
                 for root in sorted_roots:
-                    process_tree(descriptions[roots[root]], executions_by_parent, descriptions)
+                    process_tree(roots[root], executions_by_parent, descriptions, execution_retries)
         if args.json:
             print(json.dumps(json_output, indent=4))
 
@@ -3589,6 +3716,7 @@ def watch(args):
         message['level_color_curses'] = level_colors_curses.get(message.get('level', ''), 0)
         message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
 
+    is_try_provided = args.job_try is not None
     msg_callback, log_client = None, None
     if args.get_stdout:
         args.levels = ['STDOUT']
@@ -3609,7 +3737,7 @@ def watch(args):
         args.quiet = True
     elif args.format is None:
         if args.job_ids:
-            format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name} ({job}" + (" try {jobTry}" if is_try_provided else "") + ")") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
             format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
@@ -3624,6 +3752,9 @@ def watch(args):
     input_params = {"numRecentMessages": args.num_recent_messages,
                     "recurseJobs": args.tree,
                     "tail": args.tail}
+
+    if is_try_provided:
+        input_params['try'] = args.job_try
 
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
@@ -3657,11 +3788,14 @@ def watch(args):
         if args.metrics == "top":
             metrics_top(args, input_params, enrich_msg)
         else:
-            log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
+            log_client = DXJobLogStreamClient(args.jobid, job_try=args.job_try, input_params=input_params, msg_callback=msg_callback,
                                               msg_output_format=args.format, print_job_info=args.job_info)
 
             if not args.quiet:
-                print("Watching job %s%s. Press Ctrl+C to stop watching." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
+                print("Watching job %s%s. Press Ctrl+C to stop watching." % (
+                    args.jobid + (" try %d" % args.job_try if is_try_provided else ""),
+                    (" and sub-jobs" if args.tree else "")
+                ), file=sys.stderr)
 
             log_client.connect()
     except Exception as details:
@@ -4650,6 +4784,9 @@ parser_describe.add_argument('--verbose', help='Include additional metadata', ac
 parser_describe.add_argument('--name', help='Only print the matching names, one per line', action='store_true')
 parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24),
                              action='store_true')
+parser_describe.add_argument('--try', metavar="T", dest="job_try", type=int,
+                             help=fill('When describing a job that was restarted, describe job try T. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
+
 describe_path_action = parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 describe_path_action.completer = DXPathCompleter()
 parser_describe.set_defaults(func=describe)
@@ -5362,13 +5499,16 @@ register_parser(parser_run, categories='exec')
 # watch
 #####################################
 parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its subjobs', prog='dx watch',
-                                     description='Monitors logging output from a running job',
+                                     description='Monitors logging output from a running or finished job',
                                      parents=[env_args, no_color_arg])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
 # .completer = TODO
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get',
                           type=int, default=1024*256)
-parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
+parser_watch_trygroup = parser_watch.add_mutually_exclusive_group()
+parser_watch_trygroup.add_argument('--tree', help='Include the entire job tree', action='store_true')
+parser_watch_trygroup.add_argument('--try', metavar="T", dest="job_try", type=int,
+                                   help=fill('Allows to watch older tries of a restarted job. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
 parser_watch.add_argument('-l', '--levels', action='append', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
                                                                       "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT", "METRICS"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
@@ -5380,7 +5520,7 @@ parser_watch.add_argument('--job-ids', help='Print job ID in each message', acti
 parser_watch.add_argument('--no-job-info', help='Omit job info and status updates', action='store_false',
                           dest='job_info')
 parser_watch.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
-parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
+parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, try, level, msg, date')
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
 parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
@@ -5662,7 +5802,7 @@ register_parser(parser_remove_types, categories='metadata')
 #####################################
 parser_tag = subparsers.add_parser('tag', help='Tag a project, data object, or execution', prog='dx tag',
                                    description='Tag a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
-                                   parents=[env_args, all_arg])
+                                   parents=[env_args, all_arg, try_arg])
 parser_tag.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_tag.add_argument('tags', nargs='+', metavar='tag', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
@@ -5673,7 +5813,7 @@ register_parser(parser_tag, categories='metadata')
 #####################################
 parser_untag = subparsers.add_parser('untag', help='Untag a project, data object, or execution', prog='dx untag',
                                      description='Untag a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
-                                     parents=[env_args, all_arg])
+                                     parents=[env_args, all_arg, try_arg])
 parser_untag.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_untag.add_argument('tags', nargs='+', metavar='tag', help='Tags to remove')
 parser_untag.set_defaults(func=remove_tags)
@@ -5698,7 +5838,7 @@ register_parser(parser_rename, categories='metadata')
 #####################################
 parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of a project, data object, or execution',
                                               description='Set properties of a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx set_properties',
-                                              parents=[env_args, all_arg])
+                                              parents=[env_args, all_arg, try_arg])
 parser_set_properties.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_set_properties.add_argument('properties', nargs='+', metavar='propertyname=value',
                                    help='Key-value pairs of property names and their new values')
@@ -5711,7 +5851,7 @@ register_parser(parser_set_properties, categories='metadata')
 parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of a project, data object, or execution',
                                                 description='Unset properties of a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
                                                 prog='dx unset_properties',
-                                                parents=[env_args, all_arg])
+                                                parents=[env_args, all_arg, try_arg])
 path_action = parser_unset_properties.add_argument('path', help='ID or path to project, data object, or execution to modify')
 path_action.completer = DXPathCompleter()
 parser_unset_properties.add_argument('properties', nargs='+', metavar='propertyname', help='Property names to unset')

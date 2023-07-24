@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `--try T` for `dx watch`, `dx tag/untag`, `dx set_properties/unset_properties`
+* `--include-restarted` for `dx find executions/jobs/analyses`
+* Fields related to restarted jobs to `dx describe job-xxxx`
+
 ## [353.1] - beta
 
 ### Added
