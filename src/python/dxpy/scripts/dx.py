@@ -2215,7 +2215,7 @@ def find_executions(args):
 
         def __init__(self, id, try_num=None):
             self.id = id
-            self.try_num = try_num or -1
+            self.try_num = try_num if try_num is not None else -1
 
         def __eq__(self, other):
             if not isinstance(other, ExecutionId):
