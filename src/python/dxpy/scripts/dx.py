@@ -2334,7 +2334,7 @@ def find_executions(args):
             for execution_result in executions:
                 execution_id = execution_result['id']
                 execution_try = execution_result['describe'].get('try')
-                execution_max_try = max(map(lambda x: x.try_num, execution_retries[execution_id]))
+                execution_max_try = max(execution_retries[execution_id])
                 show_try = include_restarted and execution_max_try > 0
 
                 if args.json:
