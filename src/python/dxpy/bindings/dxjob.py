@@ -43,7 +43,8 @@ from ..compat import basestring
 #########
 
 def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=None,
-              instance_type=None, cluster_spec=None, fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, depends_on=None,
+              instance_type=None, depends_on=None,
+              cluster_spec=None, fpga_driver=None, system_requirements=None, system_requirements_by_executable=None,
               **kwargs):
     '''
     :param fn_input: Function input
@@ -60,6 +61,8 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     :type details: dict or list
     :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
     :type instance_type: string or dict
+    :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
+    :type depends_on: list
     :param cluster_spec: a dict mapping function names to cluster spec requests
     :type cluster_spec: dict
     :param fpga_driver: a dict mapping function names to fpga driver requests
@@ -68,8 +71,6 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     :type system_requirements: dict
     :param system_requirements_by_executable: System requirement by executable double mapping
     :type system_requirements_by_executable: dict
-    :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
-    :type depends_on: list
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
     Creates and enqueues a new job that will execute a particular
@@ -112,7 +113,8 @@ class DXJob(DXObject):
         self.set_id(dxid)
 
     def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None,
-            instance_type=None, cluster_spec=None, fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, depends_on=None,
+            instance_type=None, depends_on=None,
+            cluster_spec=None, fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, 
             **kwargs):
         '''
         :param fn_input: Function input
@@ -129,6 +131,8 @@ class DXJob(DXObject):
         :type details: dict or list
         :param instance_type: Instance type on which the job will be run, or a dict mapping function names to instance type requests
         :type instance_type: string or dict
+        :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
+        :type depends_on: list
         :param cluster_spec: a dict mapping function names to cluster spec requests
         :type cluster_spec: dict
         :param fpga_driver: a dict mapping function names to fpga driver requests
@@ -137,8 +141,6 @@ class DXJob(DXObject):
         :type system_requirements: dict
         :param system_requirements_by_executable: System requirement by executable double mapping
         :type system_requirements_by_executable: dict
-        :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
-        :type depends_on: list
 
         Creates and enqueues a new job that will execute a particular
         function (from the same app or applet as the one the current job

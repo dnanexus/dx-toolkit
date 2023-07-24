@@ -191,12 +191,11 @@ class DXExecutable:
         raise NotImplementedError('_get_cleanup_keys is not implemented')
 
     def run(self, executable_input, project=None, folder=None, name=None, tags=None, properties=None, details=None,
-            system_requirements=None, system_requirements_by_executable=None,
-            stage_instance_types=None,  stage_folders=None, rerun_stages=None, ignore_reuse_stages=None, 
-            instance_type=None, cluster_spec=None, fpga_driver=None,
+            instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None,
-            ignore_reuse=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
-            max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None, **kwargs):
+            ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
+            max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None,
+            fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -278,18 +277,15 @@ class DXExecutable:
                                         tags=tags,
                                         properties=properties,
                                         details=details,
-                                        system_requirements=system_requirements,
-                                        system_requirements_by_executable=system_requirements_by_executable,
+                                        instance_type=instance_type,
                                         stage_instance_types=stage_instance_types,
                                         stage_folders=stage_folders,
                                         rerun_stages=rerun_stages,
-                                        ignore_reuse_stages=ignore_reuse_stages,
-                                        instance_type=instance_type,
                                         cluster_spec=cluster_spec,
-                                        fpga_driver=fpga_driver,
                                         depends_on=depends_on,
                                         allow_ssh=allow_ssh,
                                         ignore_reuse=ignore_reuse,
+                                        ignore_reuse_stages=ignore_reuse_stages,
                                         debug=debug,
                                         delay_workspace_destruction=delay_workspace_destruction,
                                         priority=priority,
@@ -301,7 +297,10 @@ class DXExecutable:
                                         max_job_spot_wait_time=max_job_spot_wait_time,
                                         preserve_job_outputs=preserve_job_outputs,
                                         detailed_job_metrics=detailed_job_metrics,
-                                        extra_args=extra_args)
+                                        extra_args=extra_args,
+                                        fpga_driver=fpga_driver,
+                                        system_requirements=system_requirements,
+                                        system_requirements_by_executable=system_requirements_by_executable)
         return self._run_impl(run_input, **kwargs)
 
 
