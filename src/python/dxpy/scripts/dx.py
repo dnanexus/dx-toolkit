@@ -2411,7 +2411,7 @@ def find_executions(args):
                 )
 
                 for root in sorted_roots:
-                    process_tree(root, executions_by_parent, descriptions, execution_retries)
+                    process_tree(roots[root], executions_by_parent, descriptions, execution_retries)
         if args.json:
             print(json.dumps(json_output, indent=4))
 
