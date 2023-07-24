@@ -6,13 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [354.0] - beta
+
 ### Added
 
 * `--try T` for `dx watch`, `dx tag/untag`, `dx set_properties/unset_properties`
-* `--include-restarted` for `dx find executions/jobs/analyses`
-* Fields related to restarted jobs to `dx describe job-xxxx`
+* `--include-restarted` parameter for `dx find executions/jobs/analyses`
+* Restarted job fields in `dx describe job-xxxx`
+* `treeTurnaroundTime` fields in `dx get` and `dx describe`
 
-## [353.1] - beta
+## [353.1] - 2023.7.24
 
 ### Added
 
