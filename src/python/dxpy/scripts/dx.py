@@ -2215,7 +2215,7 @@ def find_executions(args):
 
         def __init__(self, id, try_num=None):
             self.id = id
-            self.try_num = try_num or 0
+            self.try_num = try_num or -1
 
         def __eq__(self, other):
             if not isinstance(other, ExecutionId):
@@ -2295,11 +2295,11 @@ def find_executions(args):
     try:
         num_processed_results = 0
         roots = collections.OrderedDict()
-        execution_retries = {}
+        execution_retries = collections.defaultdict(set)
         executions_cache = []
 
         for execution_result in dxpy.find_executions(**query):
-            execution_id = execution_result['id']
+            execution_id = ExecutionId(execution_result['id'], execution_result['describe'].get('try'))
 
             if args.trees:
                 if args.classname == 'job':
@@ -2312,8 +2312,7 @@ def find_executions(args):
                 num_processed_results += 1
                 executions_cache.append(execution_result)
 
-            if execution_id not in execution_retries:
-                execution_retries[execution_id] = execution_result['describe'].get('try')
+            execution_retries[execution_id.id].add(execution_id.try_num)
 
             if num_processed_results > jobs_to_fetch:
                 more_results = True
@@ -2336,7 +2335,8 @@ def find_executions(args):
             for execution_result in executions:
                 execution_id = execution_result['id']
                 execution_try = execution_result['describe'].get('try')
-                show_try = include_restarted and execution_retries[execution_id] is not None and execution_retries[execution_id] > 0
+                execution_max_try = max(map(lambda x: x.try_num, execution_retries[execution_id]))
+                show_try = include_restarted and execution_max_try > 0
 
                 if args.json:
                     json_output.append(execution_result['describe'])
@@ -2350,7 +2350,6 @@ def find_executions(args):
                                                                     show_try=show_try)))
         else:
             executions_by_parent, descriptions = collections.defaultdict(list), {}
-            execution_retries = collections.defaultdict(list)
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
             parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
             query = {'classname': args.classname,
@@ -2382,7 +2381,7 @@ def find_executions(args):
                         executions_by_parent[parent].append(execution_id.id)
 
                 descriptions[execution_id] = execution_desc
-                execution_retries[execution_id.id].append(execution_id.try_num)
+                execution_retries[execution_id.id].add(execution_id.try_num)
 
                 # If an analysis with cached children, also insert those
                 if execution_desc['class'] == 'analysis':
