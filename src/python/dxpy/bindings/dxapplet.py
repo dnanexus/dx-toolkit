@@ -197,7 +197,7 @@ class DXExecutable:
             max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None,
             fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, **kwargs):
         '''
-                :param executable_input: Hash of the executable's input arguments
+        :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
         :param project: Project ID of the project context
         :type project: string
