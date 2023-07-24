@@ -11,7 +11,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Option '--instance-type-by-executable' for `dx run` and `dx-jobutil-job-new`
 * Parameters `system_requirements` and `system_requirements_by_executable` for `DXExecutable.run()` and `DXJob.new()`
 
-## [353.1] - beta
+## [354.0] - beta
+
+### Added
+
+* `--try T` for `dx watch`, `dx tag/untag`, `dx set_properties/unset_properties`
+* `--include-restarted` parameter for `dx find executions/jobs/analyses`
+* Restarted job fields in `dx describe job-xxxx`
+* `treeTurnaroundTime` fields in `dx get` and `dx describe`
+
+## [353.1] - 2023.7.24
 
 ### Added
 

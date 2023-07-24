@@ -199,9 +199,10 @@ _UPGRADE_NOTIFY = True
 
 INCOMPLETE_READS_NUM_SUBCHUNKS = 8
 
-USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
+USER_AGENT = "{name}/{version} ({platform}) Python/{python_version}".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
-                                                    platform=platform.platform())
+                                                    platform=platform.platform(),
+                                                    python_version=platform.python_version())
 _default_certs = requests.certs.where()
 _default_headers = requests.utils.default_headers()
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)

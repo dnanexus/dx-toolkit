@@ -779,15 +779,15 @@ def printable_ssh_host_key(ssh_host_key):
 
 
 def print_execution_desc(desc, verbose=False):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'region',
+    recognized_fields = ['id', 'try', 'class', 'project', 'workspace', 'region',
                          'app', 'applet', 'executable', 'workflow',
                          'state',
-                         'rootExecution', 'parentAnalysis', 'parentJob', 'originJob', 'analysis', 'stage',
+                         'rootExecution', 'parentAnalysis', 'parentJob', 'parentJobTry', 'originJob', 'analysis', 'stage',
                          'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
                          'dependsOn', 'resources', 'projectCache', 'details', 'tags', 'properties',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
-                         'startedRunning', 'stoppedRunning', 'stateTransitions',
+                         'tryCreated', 'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
                          'priority', 'sshHostKey', 'internetUsageIPs', 'spotWaitTime', 'maxTreeSpotWaitTime',
                          'maxJobSpotWaitTime', 'spotCostSavings', 'preserveJobOutputs', 'treeTurnaroundTime',
@@ -795,6 +795,8 @@ def print_execution_desc(desc, verbose=False):
                          'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']
 
     print_field("ID", desc["id"])
+    if desc.get('try') is not None:
+        print_field("Try", str(desc['try']))
     print_field("Class", desc["class"])
 
     if desc['class'] == 'analysis' and verbose:
@@ -839,6 +841,8 @@ def print_execution_desc(desc, verbose=False):
         print_field("Parent job", "-")
     else:
         print_field("Parent job", desc["parentJob"])
+    if desc.get("parentJobTry") is not None:
+        print_field("Parent job try", str(desc["parentJobTry"]))
     if "parentAnalysis" in desc:
         if desc["parentAnalysis"] is not None:
             print_field("Parent analysis", desc["parentAnalysis"])
@@ -869,6 +873,8 @@ def print_execution_desc(desc, verbose=False):
     print_field('Preserve Job Outputs Folder', desc['preserveJobOutputs']['folder'] if desc.get('preserveJobOutputs') and 'folder' in desc['preserveJobOutputs'] else '-')
     print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", render_timestamp(desc['created']))
+    if desc.get('tryCreated') is not None:
+        print_field("Try created", render_timestamp(desc['tryCreated']))
     if 'startedRunning' in desc:
         if 'stoppedRunning' in desc:
             print_field("Started running", render_timestamp(desc['startedRunning']))
@@ -895,7 +901,10 @@ def print_execution_desc(desc, verbose=False):
     if "failureMessage" in desc:
         print_field("Failure message", desc["failureMessage"])
     if "failureFrom" in desc and desc['failureFrom'] is not None and desc['failureFrom']['id'] != desc['id']:
-        print_field("Failure is from", desc['failureFrom']['id'])
+        failure_from = desc['failureFrom']['id']
+        if desc['failureFrom'].get('try') is not None:
+            failure_from += " try %d" % desc['failureFrom']['try']
+        print_field("Failure is from", failure_from)
     if "tags" in desc:
         print_list_field("Tags", desc["tags"])
     if "properties" in desc:
@@ -1157,12 +1166,14 @@ def print_ls_l_desc(desc, **kwargs):
 
 
 def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True,
-                               is_cached_result=False):
+                               is_cached_result=False, show_try=False, as_try_group_root=False):
     '''
     :param desc: hash of execution's describe output
     :param has_children: whether the execution has children to be printed
     :param single_result: whether the execution is displayed as a single result or as part of an execution tree
     :param is_cached_result: whether the execution should be formatted as a cached result
+    :param show_try: whether to include also try no
+    :param as_try_group_root: whether the execution should be formatted as an artifical root for multiple tries
     '''
     is_not_subjob = desc['parentJob'] is None or desc['class'] == 'analysis' or single_result
     result = ("* " if is_not_subjob and get_delimiter() is None else "")
@@ -1187,6 +1198,12 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
 
     # Format state
     result += DELIMITER(' (') + JOB_STATES(desc['state']) + DELIMITER(') ') + desc['id']
+
+    if as_try_group_root:
+        return result + ' tries'
+
+    if show_try and desc.get('try') is not None:
+        result += ' try %d' % desc.get('try')
 
     # Add unicode pipe to child if necessary
     result += DELIMITER('\n' + (u'│ ' if is_not_subjob and has_children else ("  " if is_not_subjob else "")))
