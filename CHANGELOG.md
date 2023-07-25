@@ -15,6 +15,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Restarted job fields in `dx describe job-xxxx`
 * `treeTurnaroundTime` fields in `dx get` and `dx describe`
 
+### Changed
+
+* dxpy User-Agent header includes Python version
+
 ## [353.1] - 2023.7.24
 
 ### Added
