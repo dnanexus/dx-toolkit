@@ -5393,7 +5393,7 @@ class TestDXClientFind(DXTestCase):
         def get_ids(data):
             return [item['id'] for item in json.loads(data)]
 
-        options2 = options + " --json"
+        options2 = "--user=self --json"
         self.assertEqual(len(get_ids(run("dx find executions " + options2))), 4)
         self.assertEqual(len(get_ids(run("dx find jobs " + options2))), 3)
         self.assertEqual(len(get_ids(run("dx find analyses " + options2))), 1)
