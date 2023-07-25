@@ -5389,6 +5389,23 @@ class TestDXClientFind(DXTestCase):
         self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 0)
         self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 0)
 
+        # JSON output
+        def get_ids(data):
+            return [item['id'] for item in json.loads(data)]
+
+        options2 = options + " --json"
+        self.assertEqual(len(get_ids(run("dx find executions " + options2))), 4)
+        self.assertEqual(len(get_ids(run("dx find jobs " + options2))), 3)
+        self.assertEqual(len(get_ids(run("dx find analyses " + options2))), 1)
+        options3 = options2 + " --origin-jobs"
+        self.assertEqual(len(get_ids(run("dx find executions " + options3))), 4)
+        self.assertEqual(len(get_ids(run("dx find jobs " + options3))), 3)
+        self.assertEqual(len(get_ids(run("dx find analyses " + options3))), 1)
+        options3 = options2 + " --all-jobs"
+        self.assertEqual(len(get_ids(run("dx find executions " + options3))), 4)
+        self.assertEqual(len(get_ids(run("dx find jobs " + options3))), 3)
+        self.assertEqual(len(get_ids(run("dx find analyses " + options3))), 1)
+
         # Search by tag
         options2 = options + " --all-jobs --brief"
         options3 = options2 + " --tag foo"
@@ -5546,6 +5563,23 @@ class TestDXClientFind(DXTestCase):
             self.assert_cmd_gives_ids("dx find executions "+options2, [])
             self.assert_cmd_gives_ids("dx find jobs "+options2, [])
             self.assert_cmd_gives_ids("dx find analyses "+options2, [])
+
+            # JSON output
+            def get_ids(data):
+                return set([item['id'] for item in json.loads(data)])
+
+            options2 = "--json --user=self --project=" + temp_proj_id
+            self.assertEqual(get_ids(run("dx find executions " + options2)), set([job_id, analysis_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find jobs " + options2)), set([job_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find analyses " + options2)), set([analysis_id]))
+            options3 = options2 + " --origin-jobs"
+            self.assertEqual(get_ids(run("dx find executions " + options3)), set([job_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find jobs " + options3)), set([job_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find analyses " + options3)), set([]))
+            options3 = options2 + " --all-jobs"
+            self.assertEqual(get_ids(run("dx find executions " + options3)), set([job_id, analysis_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find jobs " + options3)), set([job_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find analyses " + options3)), set([analysis_id]))
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_ORGS"])
