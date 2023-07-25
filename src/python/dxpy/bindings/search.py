@@ -272,7 +272,7 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
                     created_after=None, created_before=None, describe=False,
                     name=None, name_mode="exact", tags=None, properties=None, limit=None,
                     first_page_size=100, return_handler=False, include_subjobs=True,
-                    **kwargs):
+                    include_restarted=None, **kwargs):
     '''
     :param classname:
         Class with which to restrict the search, i.e. one of "job",
@@ -326,6 +326,8 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     :type return_handler: boolean
     :param include_subjobs: If False, no subjobs will be returned by the API
     :type include_subjobs: boolean
+    :param include_restarted: If True, API response will include restarted jobs and job trees rooted in restarted jobs
+    :type include_restarted: boolean
     :rtype: generator
 
     Returns a generator that yields all executions (jobs or analyses) that match the query. It transparently handles
@@ -412,6 +414,8 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
         query['properties'] = properties
     if include_subjobs is not True:
         query["includeSubjobs"] = include_subjobs
+    if include_restarted is not None:
+        query["includeRestarted"] = include_restarted
     if limit is not None:
         query["limit"] = limit
 

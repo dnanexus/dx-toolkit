@@ -6,13 +6,24 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [353.0] - beta
+## [354.0] - beta
 
 ### Added
 
-* '--instance-type-by-executable' arg for `dx run` and `dx-jobutil-job-new`
-* Fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
-* `--metrics top` for `dx watch`
+* `--try T` for `dx watch`, `dx tag/untag`, `dx set_properties/unset_properties`
+* `--include-restarted` parameter for `dx find executions/jobs/analyses`
+* Restarted job fields in `dx describe job-xxxx`
+* `treeTurnaroundTime` fields in `dx get` and `dx describe`
+
+### Changed
+
+* dxpy User-Agent header includes Python version
+
+## [353.1] - 2023.7.24
+
+### Added
+
+* `dx watch --metrics top` mode
 
 ## [352.1] - 2023.7.12
 

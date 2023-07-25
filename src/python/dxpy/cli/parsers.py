@@ -56,6 +56,10 @@ delim_arg.add_argument('--delimiter', '--delim',
 json_arg = argparse.ArgumentParser(add_help=False)
 json_arg.add_argument('--json', help='Display return value in JSON', action='store_true')
 
+try_arg = argparse.ArgumentParser(add_help=False)
+try_arg.add_argument('--try', metavar="T", dest="job_try", type=int,
+                     help=fill('When modifying a job that was restarted, apply the change to try T of the restarted job. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
+
 stdout_args = argparse.ArgumentParser(add_help=False)
 stdout_args_gp = stdout_args.add_mutually_exclusive_group()
 stdout_args_gp.add_argument('--brief', help=fill('Display a brief version of the return value; for most commands, prints a DNAnexus ID per line', width_adjustment=-24), action='store_true')
@@ -100,6 +104,7 @@ find_executions_args.add_argument('--no-subjobs', help=fill('Do not show any sub
 find_executions_args.add_argument('--root-execution', '--root', help=fill('Execution ID of the top-level (user-initiated) job or analysis', width_adjustment=-24))
 find_executions_args.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
 find_executions_args.add_argument('-o', '--show-outputs', help=fill('Show job outputs in results', width_adjustment=-24), action='store_true')
+find_executions_args.add_argument('--include-restarted', help=fill('if specified, results will include restarted jobs and job trees rooted in restarted jobs', width_adjustment=-24), action='store_true')
 
 def add_find_executions_search_gp(parser):
     find_executions_search_gp = parser.add_argument_group('Search mode')
@@ -315,25 +320,8 @@ class PrintInstanceTypeHelp(argparse.Action):
 instance_type_arg = argparse.ArgumentParser(add_help=False)
 instance_type_arg.add_argument('--instance-type',
                                metavar='INSTANCE_TYPE_OR_MAPPING',
-                               help=fill('''When running an app or applet, the mapping lists executable's entry points or "*" as keys, and instance types to use for these entry points as values.  
-When running a workflow, the specified instance types can be prefixed by a stage name or stage index followed by "=" to apply to a specific stage, or apply to all workflow stages without such prefix. 
-The instance type corresponding to the "*" key is applied to all entry points not explicitly mentioned in the --instance-type mapping. Specifying a single instance type is equivalent to using it for all entry points, so "--instance-type mem1_ssd1_v2_x2" is same as "--instance-type '{"*":"mem1_ssd1_v2_x2"}'. 
-Note that "dx run" calls within the execution subtree may override the values specified at the root of the execution tree.
-See dx run --instance-type-help for details.
-''', width_adjustment=-24, replace_whitespace=False),
+                               help=fill('Specify instance type(s) for jobs this executable will run; see --instance-type-help for more details', width_adjustment=-24),
                                action='append').completer = InstanceTypesCompleter()
-
-instance_type_arg.add_argument('--instance-type-by-executable',
-                               metavar='DOUBLE_MAPPING',
-                               help=fill(
-                                   '''Specifies instance types by app or applet id, then by entry point within the executable.
-The order of priority for this specification is:
-  * --instance-type, systemRequirements and stageSystemRequirements specified at runtime
-  * stage's systemRequirements, systemRequirements supplied to /app/new and /applet/new at workflow/app/applet build time
-  * systemRequirementsByExecutable specified in downstream executions (if any)
-See dx run --instance-type-help for details.
-''', width_adjustment=-24, replace_whitespace=False))
-
 instance_type_arg.add_argument('--instance-type-help',
                                nargs=0,
                                help=fill('Print help for specifying instance types'),
@@ -395,17 +383,6 @@ def process_instance_type_arg(args, for_workflow=False):
         else:
             # is a string
             args.instance_type = _parse_inst_type(args.instance_type)
-
-def process_instance_type_by_executable_arg(args):
-    if args.instance_type_by_executable:
-        if args.instance_type_by_executable.strip().startswith('{'):
-            # expects a map, e.g of entry point to instance type or instance count
-            try:
-                args.instance_type_by_executable = json.loads(args.instance_type_by_executable)
-            except ValueError:
-                raise DXParserError('Error while parsing JSON value for --instance-type-by-executable')
-        else:
-            raise DXParserError('Value given for --instance-type-by-executable could not be parsed as JSON')
 
 def process_instance_count_arg(args):
     if args.instance_count:

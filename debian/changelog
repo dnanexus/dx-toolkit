@@ -1,3 +1,12 @@
+dx-toolkit (0.354.0) trusty; urgency=medium
+
+  * Added: '--try T' for dx watch, dx tag/untag, dx set_properties/unset_properties
+  * Added: '--include-restarted' for dx find executions/jobs/analyses
+  * Added: Fields related to restarted jobs to dx describe job-xxxx
+  * Changed: dxpy User-Agent header to include Python version
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 24 Jul 2023 15:40:58 +0000
+
 dx-toolkit (0.353.0) trusty; urgency=medium
 
   * Added: New argument '--instance-type-by-executable' arg for dx run and dx-jobutil-job-new
