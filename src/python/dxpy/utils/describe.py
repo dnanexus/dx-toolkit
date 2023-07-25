@@ -381,7 +381,7 @@ def render_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp//1000).ctime()
 
 
-FIELD_NAME_WIDTH = 45
+FIELD_NAME_WIDTH = 34
 
 
 def print_field(label, value):
@@ -471,17 +471,23 @@ def print_project_desc(desc, verbose=False):
         print_field('Sponsored egress',
                     ('%s used of %s total' % (consumed_egress_str, total_egress_str)))
     if 'currentMonthComputeUsage' in desc:
-        print_field('Compute usage for current month',
-                    format_currency(desc['currentMonthComputeUsage'], meta=desc['currency']) if desc['currentMonthComputeUsage'] is not None else '-')
-    if 'currentMonthComputeAvailableBudget' in desc:
-        print_field('Available compute budget for current month',
-                    format_currency(desc['currentMonthComputeAvailableBudget'], meta=desc['currency']) if desc['currentMonthComputeAvailableBudget'] is not None else '-')
+        current_usage = format_currency(desc['currentMonthComputeUsage'] if desc['currentMonthComputeUsage'] is not None else 0, meta=desc['currency'])
+        if desc.get('currentMonthComputeUsage') is None and desc.get('currentMonthComputeAvailableBudget') is None:
+            msg = '-'
+        elif desc.get('currentMonthComputeAvailableBudget') is not None:
+            msg = '%s of %s total' % (current_usage, format_currency(desc['currentMonthComputeAvailableBudget'], meta=desc['currency']))
+        else:
+            msg = '%s of unlimited' % current_usage
+        print_field('Compute usage for current month', msg)
     if 'currentMonthEgressBytesUsage' in desc:
-        print_field('Egress usage for current month',
-                    ('%s B' % desc['currentMonthEgressBytesUsage']) if desc['currentMonthEgressBytesUsage'] is not None else '-')
-    if 'currentMonthEgressBytesAvailableBudget' in desc:
-        print_field('Available egress for current month',
-                    ('%s B' % desc['currentMonthEgressBytesAvailableBudget']) if desc['currentMonthEgressBytesAvailableBudget'] is not None else '-')
+        current_usage = desc['currentMonthEgressBytesUsage'] if desc['currentMonthEgressBytesUsage'] is not None else 0
+        if desc.get('currentMonthEgressBytesUsage') is None and desc.get('') is None:
+            msg = '-'
+        elif desc.get('currentMonthEgressBytesAvailableBudget') is not None:
+            msg = '%s Bytes of %s Bytes total' % (current_usage, desc['currentMonthEgressBytesAvailableBudget'])
+        else:
+            msg = '%s Bytes of unlimited' % current_usage
+        print_field('Egress usage for current month', msg)
     if 'atSpendingLimit' in desc:
         print_json_field("At spending limit?", desc['atSpendingLimit'])
 
