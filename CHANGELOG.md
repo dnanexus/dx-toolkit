@@ -8,6 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Added new return fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
+* `--monthly-compute-limit` and `--monthly-egress-bytes-limit` for `dx new project`
 * Option '--instance-type-by-executable' for `dx run` and `dx-jobutil-job-new`
 * Parameters `system_requirements` and `system_requirements_by_executable` for `DXExecutable.run()` and `DXJob.new()`
 
@@ -19,6 +21,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `--include-restarted` parameter for `dx find executions/jobs/analyses`
 * Restarted job fields in `dx describe job-xxxx`
 * `treeTurnaroundTime` fields in `dx get` and `dx describe`
+
+### Changed
+
+* dxpy User-Agent header includes Python version
 
 ## [353.1] - 2023.7.24
 
