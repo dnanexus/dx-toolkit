@@ -54,7 +54,7 @@ from ..cli.org import (get_org_invite_args, add_membership, remove_membership, u
                        find_orgs, org_find_members, org_find_projects, org_find_apps)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
-from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
+from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input, merge
 from ..utils.batch_utils import (batch_run, batch_launch_args)
 
 from ..app_categories import APP_CATEGORIES
@@ -3156,7 +3156,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     requested_instance_type, requested_cluster_spec = {}, {}
     executable_describe = None
 
-    from ..utils import merge
     if args.cloned_job_desc:
         # override systemRequirements and systemRequirementsByExecutable mapping with cloned job description
         # Note: when cloning from a job, we have 1)runtime 2)cloned 3) default runSpec specifications, and we need to merge the first two to make the new request
