@@ -17,8 +17,7 @@ system requirements.
 class SystemRequirementsDict(object):
     """
     A class representing system requirements that can be passed as
-    "systemRequirements" or an entry of the "systemRequirementsByExecutable"
-    to the class-xxxx/run or job/new API call (after converting
+    "systemRequirements" to the class-xxxx/run API call (after converting
     it to a dictionary with as_dict()).
     """
 
@@ -41,8 +40,7 @@ class SystemRequirementsDict(object):
     def from_instance_count(cls, instance_count_arg, entrypoint="*"):
         """
         Returns a SystemRequirementsDict that can be passed as a
-        "systemRequirements" input or an entry of the "systemRequirementsByExecutable" mapping
-        to job/new or run/ API calls.
+        "systemRequirements" input to job/new or run/ API calls.
         The instance_count_arg should be either a:
         * string or int eg. "6" or 8
         * dictionary, eg. {"main": 4, "other_function": 2}
@@ -62,8 +60,7 @@ class SystemRequirementsDict(object):
     def from_instance_type(cls, instance_type_arg, entrypoint="*"):
         """
         Returns SystemRequirementsDict that can be passed as a
-        "systemRequirements" input or an entry of the "systemRequirementsByExecutable" mapping
-        to job/new or run/ API calls.
+        "systemRequirements" input to job/new or run/ API calls.
         The instance_type_arg should be either a:
         * string, eg. mem1_ssd1_x2
         * dictionary, eg. {"main": "mem2_hdd2_x2", "other_function": "mem2_hdd2_x1"}
@@ -85,9 +82,8 @@ class SystemRequirementsDict(object):
         It can extract only entrypoints with specific fields ('clusterSpec',
         'instanceType', etc), depending on the value of _type.
         """
-        allowed_types = ['all', 'clusterSpec', 'instanceType', 'fpgaDriver']
-        if _type not in (allowed_types):
-            raise DXError("Expected '_type' to be one of the following: {}".format(allowed_types))
+        if _type not in ('all', 'clusterSpec', 'instanceType'):
+            raise DXError("Expected '_type' to be either 'all', 'clusterSpec', or 'instanceType'")
 
         if _type == 'all':
             return cls(system_requirements)
@@ -101,8 +97,7 @@ class SystemRequirementsDict(object):
     def override_cluster_spec(self, srd):
         """
         Returns SystemRequirementsDict can be passed in a "systemRequirements"
-        input or as an entry of the "systemRequirementsByExecutable" mapping
-        to app-xxx/run, e.g. {'fn': {'clusterSpec': {initialInstanceCount: 3, version: "2.4.0", ..}}}
+        input to app-xxx/run, e.g. {'fn': {'clusterSpec': {initialInstanceCount: 3, version: "2.4.0", ..}}}
         Since full clusterSpec must be passed to the API server, we need to retrieve the cluster
         spec defined in app doc's systemRequirements and overwrite the field initialInstanceCount
         with the value the user passed to dx run for each entrypoint.
@@ -166,16 +161,6 @@ class SystemRequirementsDict(object):
                 merged_cluster_spec[entry_pt]["clusterSpec"].update(req["clusterSpec"])
 
         return SystemRequirementsDict(merged_cluster_spec)
-
-    def override_spec(self, requested_spec):
-        if "*" in requested_spec.as_dict():
-            return requested_spec
-        
-        entrypoints = self.entrypoints.keys() | requested_spec.entrypoints.keys()
-        merged_spec = dict.fromkeys(entrypoints)
-        for e in entrypoints:
-            merged_spec[e] = requested_spec.entrypoints.get(e) or requested_spec.entrypoints.get("*") or self.entrypoints.get(e) or self.entrypoints.get("*")
-        return SystemRequirementsDict(merged_spec)
 
     def _add_dict_values(self, d1, d2):
         """
