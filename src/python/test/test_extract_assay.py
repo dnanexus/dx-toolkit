@@ -291,10 +291,14 @@ class TestDXExtractAssay(unittest.TestCase):
             json.dumps(filter),
         )
         try:
-            process = subprocess.check_output(command, shell=True)
+            # Redirect stdout of the process to the stderr pipe on the error
+            process = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
             print("error, bad filter passed detection")
             exit(1)
-        except:
+        except subprocess.CalledProcessError as e:
+            error_message = e.stdout.decode("ascii").strip()
+            expected_error_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
+            self.assertEqual(error_message,expected_error_message)
             print("bad rsid detected succesfully")
 
     ##########
