@@ -184,14 +184,12 @@ def validate_filter(filter, filter_type):
         # Check genotype field
         if "genotype_type" in keys:
             if not is_list_of_strings(filter["genotype_type"]):
-                err_exit("genotype type is not a list of strings")
-                err_exit(malformed_filter.format("genotype_type"))
+                err_exit(malformed_filter.format("genotype_type") + "\ngenotype type is not a list of strings")
 
             # Check against allowed values
             for item in filter["genotype_type"]:
                 if item not in ["hom-alt", "het-ref", "het-alt", "half"]:
-                    err_exit("value {} is not a valid genotype_type".format(item))
-                    err_exit(malformed_filter.format("genotype_type"))
+                    err_exit(malformed_filter.format("genotype_type") +"\nvalue {} is not a valid genotype_type".format(item))
 
             # Check for too many values given
             if len(filter["genotype_type"]) > 4:
