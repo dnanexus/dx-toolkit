@@ -18,7 +18,7 @@
 #   under the License.
 
 
-# Run manually with python3 src/python/test/test_extract_assay.py
+# Run manually with python2 and python3 src/python/test/test_extract_assay.py
 
 import unittest
 import dxpy
@@ -51,12 +51,6 @@ class TestDXExtractAssay(unittest.TestCase):
         )
         cls.output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
         cls.malformed_json_dir = os.path.join(dirname, "ea_malformed_json")
-        # Controls whether output files for the end to end tests are written to file or stdout
-        cls.write_output = False
-        if cls.write_output:
-            if not os.path.exists(cls.output_folder):
-                os.makedirs(cls.output_folder)
-
         cls.proj_id = list(
             dxpy.find_projects(describe=False, level="VIEW", name=test_project_name)
         )[0]["id"]
@@ -258,8 +252,10 @@ class TestDXExtractAssay(unittest.TestCase):
         }
         type = "allele"
 
-        # This just needs to complete without error
-        validate_JSON(filter, type)
+        try:
+            validate_JSON(filter, type)
+        except:
+            self.fail("This just needs to complete without error")
 
     def test_malformed_json(self):
         for filter_type in ["allele", "annotation", "genotype"]:
@@ -270,67 +266,97 @@ class TestDXExtractAssay(unittest.TestCase):
                 file_path = os.path.join(self.malformed_json_dir, filter_type, name)
                 with open(file_path, "r") as infile:
                     filter = json.load(infile)
-                    try:
-                        validate_JSON(filter, filter_type)
-                        print(
-                            "Uh oh, malformed JSON passed detection, file is {}".format(
-                                file_path
-                            )
-                        )
-                    except:
-                        print("task failed succesfully")
+                with self.assertRaises(SystemExit) as cm:
+                    validate_JSON(filter, filter_type)
+                self.assertEqual(cm.exception.code, 1)
 
     def test_bad_rsid(self):
         filter = {"rsid": ["rs1342568097","rs1342568098"]}
         test_project = "dx-toolkit_test_data"
         test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
 
-        command = "dx extract_assay germline {} --retrieve-{} '{}'".format(
-            test_record,
-            "allele",
-            json.dumps(filter),
-        )
-        try:
-            process = subprocess.check_output(command, shell=True)
-            print("error, bad filter passed detection")
-            exit(1)
-        except:
-            print("bad rsid detected succesfully")
+        command = ["dx", "extract_assay", "germline", test_record, "--retrieve-allele", json.dumps(filter)]
+        process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
+        expected_error_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
+        self.assertTrue(expected_error_message in process.communicate()[1])
 
     ##########
     # Normal Command Lines
     ##########
 
     def test_json_help(self):
-        """Print the help text for the retrieve allele filter"""
-        # TODO this should eventually be compared to a static output
-        command = "dx extract_assay germline fakepath --retrieve-allele --json-help > /dev/null"
-        process = subprocess.check_call(command, shell=True)
+        """Check successful call of help for the retrieve allele filter"""
+        command = ["dx", "extract_assay", "germline", "fakepath", "--retrieve-allele", "--json-help"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+        expected_help = """# Filters and respective definitions
+#
+#  rsid: rsID associated with an allele or set of alleles. If multiple values
+#  are provided, the conditional search will be, "OR." For example, ["rs1111",
+#  "rs2222"], will search for alleles which match either "rs1111" or "rs2222".
+#  String match is case sensitive.
+#
+#  type: Type of allele. Accepted values are "SNP", "Ins", "Del", "Mixed". If
+#  multiple values are provided, the conditional search will be, "OR." For
+#  example, ["SNP", "Ins"], will search for variants which match either "SNP"
+#  or "Ins". String match is case sensitive.
+#
+#  dataset_alt_af: Dataset alternate allele frequency, a json object with
+#  empty content or two sets of key/value pair: {min: 0.1, max:0.5}. Accepted
+#  numeric value for each key is between and including 0 and 1.  If a user
+#  does not want to apply this filter but still wants this information in the
+#  output, an empty json object should be provided.
+#
+#  gnomad_alt_af: gnomAD alternate allele frequency. a json object with empty
+#  content or two sets of key/value pair: {min: 0.1, max:0.5}. Accepted value
+#  for each key is between 0 and 1. If a user does not want to apply this
+#  filter but still wants this information in the output, an empty json object
+#  should be provided.
+#
+#  location: Genomic range in the reference genome where the starting position
+#  of alleles fall into. If multiple values are provided in the list, the
+#  conditional search will be, "OR." String match is case sensitive.
+#
+# JSON filter template for --retrieve-allele
+{
+  "rsid": ["rs11111", "rs22222"],
+  "type": ["SNP", "Del", "Ins"],
+  "dataset_alt_af": {"min": 0.001, "max": 0.05},
+  "gnomad_alt_af": {"min": 0.001, "max": 0.05},
+  "location": [
+    {
+      "chromosome": "1",
+      "starting_position": "10000",
+      "ending_position": "20000"
+    },
+    {
+      "chromosome": "X",
+      "starting_position": "500",
+      "ending_position": "1700"
+    }
+  ]
+}
+"""
+        self.assertEqual(expected_help, process.communicate()[0])
 
     def test_generic_help(self):
         """Test the generic help message"""
-
-    command = "dx extract_assay germline -h > /dev/null"
-    process = subprocess.check_call(command, shell=True)
-
-    # Does not write any output to file, function only outputs to stdout
-    def test_list_assays(self):
-        print("testing --list-assays")
-        command = "dx extract_assay germline {} --list-assays".format(self.test_record)
+        command = "dx extract_assay germline -h > /dev/null"
         subprocess.check_call(command, shell=True)
 
-    # A test of the --assay-name functionality, returns the same output as allele_rsid.json
-    def test_assay_name(self):
-        print("testing --assay-name")
-        output_filename = os.path.join(self.output_folder, "assay_name_output.tsv")
-        allele_rsid_filter = {"rsid": ["rs1342568097"]}
+    def test_list_assays(self):
+        command = ["dx", "extract_assay", "germline", self.test_record, "--list-assays"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+        self.assertEqual("test01_assay", process.communicate()[0].strip())
 
-        command = "dx extract_assay germline {} --assay-name test01_assay --retrieve-allele '{}' --output {}".format(
-            self.test_record,
-            json.dumps(allele_rsid_filter),
-            output_filename if self.write_output else "- > /dev/null",
-        )
-        subprocess.check_call(command, stderr=subprocess.STDOUT, shell=True)
+
+    def test_assay_name(self):
+        """A test of the --assay-name functionality, returns the same output."""
+        allele_rsid_filter = json.dumps({"rsid": ["rs1342568097"]})
+        command1 = ["dx", "extract_assay", "germline", self.test_record, "--assay-name", "test01_assay", "--retrieve-allele", allele_rsid_filter, "-o", "-"]
+        process1 = subprocess.Popen(command1, stdout=subprocess.PIPE, universal_newlines=True)
+        command2 = ["dx", "extract_assay", "germline", self.test_record, "--retrieve-allele", allele_rsid_filter, "-o", "-"]
+        process2 = subprocess.Popen(command2, stdout=subprocess.PIPE, universal_newlines=True)
+        self.assertEqual(process1.communicate(), process2.communicate())
 
     ###########
     # Malformed command lines
@@ -342,15 +368,11 @@ class TestDXExtractAssay(unittest.TestCase):
         # Grab two random filter JSONs of different types
         allele_json = '{"rsid": ["rs1342568097"]}'
         annotation_json = '{"allele_id": ["18_47408_G_A"]}'
+        command = ["dx", "extract_assay", "germline", self.test_record,  "--retrieve-allele", allele_json, "--retrieve-annotation", annotation_json, "-o", "-"]
 
-        command = "dx extract_assay germline {} --retrieve-allele {} --retrieve-annotation {} - 2>&1 /dev/null".format(
-            self.test_record, allele_json, annotation_json
-        )
-        try:
-            process = subprocess.check_output(command, shell=True)
-            print("Uh oh, malformed command line passed detection")
-        except:
-            print("filter mutex failed succesfully")
+        process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
+        expected_error_message = "dx extract_assay germline: error: argument --retrieve-annotation: not allowed with argument --retrieve-allele"
+        self.assertTrue(expected_error_message in process.communicate()[1])
 
 
 if __name__ == "__main__":

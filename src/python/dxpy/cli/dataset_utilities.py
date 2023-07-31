@@ -131,18 +131,16 @@ def raw_api_call(resp, payload, sql_message=True):
         )
         if "error" in resp_raw.keys():
             if resp_raw["error"]["type"] == "InvalidInput":
-                print("Insufficient permissions due to the project policy.")
-                print(resp_raw["error"]["message"])
+                err_message = "Insufficient permissions due to the project policy.\n" + resp_raw["error"]["message"]
+                
             elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
-                print(resp_raw["error"]["message"])
-                print(
-                    "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster."
-                )
+
+                err_message = "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster.\n" + resp_raw["error"]["message"]        
             elif resp_raw["error"]["type"] == "QueryBuilderError" and resp_raw["error"]["details"] == "rsid exists in request filters without rsid entries in rsid_lookup_table.":
-                err_exit("At least one rsID provided in the filter is not present in the provided dataset or cohort")
+                err_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
             else:
-                print(resp_raw["error"])
-            sys.exit(1)
+                err_message = resp_raw["error"]
+            err_exit(err_message)
     except Exception as details:
         err_exit(str(details))
     return resp_raw
