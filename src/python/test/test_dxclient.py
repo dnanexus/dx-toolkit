@@ -3276,12 +3276,62 @@ dx-jobutil-add-output record_array $second_record --array
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
+    def test_dx_run_sys_reqs(self):
+        app_spec = {"project": self.project,
+                    "dxapi": "1.0.0",
+                    "runSpec": {"interpreter": "bash",
+                                "distribution": "Ubuntu",
+                                "release": "20.04",
+                                "version": "0",
+                                "code": "echo 'hello'",
+                                "systemRequirements": {
+                                    "main": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": {"type": "spark",
+                                                        "initialInstanceCount": 1,
+                                                        "version": "2.4.4",
+                                                        "bootstrapScript": "x.sh"}
+                                    },
+                                    "other": {
+                                        "instanceType": "mem2_hdd2_x4",
+                                        "clusterSpec": {"type": "spark",
+                                                        "initialInstanceCount": 5,
+                                                        "version": "2.4.4",
+                                                        "bootstrapScript": "x.sh"}
+                                    },
+                                }
+                                }
+                    }
+        applet_id = dxpy.api.applet_new(app_spec)['id']
+        requested_inst_type_by_exec = {
+            applet_id: {
+                "main": {
+                    "instanceType": "mem2_ssd1_v2_x2",
+                    "clusterSpec": {"initialInstanceCount": 3}}}}
+
+        (stdout, stderr) = run('_DX_DEBUG=2 dx run ' + applet_id + ' ' +
+                               '--instance-type mem2_hdd2_x2 ' +
+                               '--instance-count 15 ' +
+                               '--instance-type-by-executable ' +
+                               '\'' +
+                               json.dumps(requested_inst_type_by_exec) + '\'',
+                               also_return_stderr=True)
+        expected_sys_reqs_by_exec = '"systemRequirementsByExecutable": ' + \
+            json.dumps(requested_inst_type_by_exec)
+        self.assertIn(expected_sys_reqs_by_exec, stderr)
+
+        # parsing error
+        with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
+            run("dx run " + applet_id +
+                " --instance-type-by-executable not-a-JSON-string")
+
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
-                                                     "release": "14.04",
+                                                     "release": "20.04",
+                                                     "version": "0",
                                                      "code": "echo 'hello'"}
                                          })['id']
         other_applet_id = dxpy.api.applet_new({"project": self.project,
@@ -3289,8 +3339,31 @@ dx-jobutil-add-output record_array $second_record --array
                                                "runSpec": {"interpreter": "bash",
                                                            "code": "echo 'hello'",
                                                            "distribution": "Ubuntu",
-                                                           "release": "14.04"}
-                                           })['id']
+                                                           "release": "20.04",
+                                                           "version": "0",
+                                                           "systemRequirements": {
+                                                               "main": {
+                                                                   "instanceType": "mem2_hdd2_x1",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 1,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}
+                                                               },
+                                                               "some_ep": {
+                                                                   "instanceType": "mem2_hdd2_x2",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 3,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}
+                                                               },
+                                                               "*": {
+                                                                   "instanceType": "mem2_hdd2_x4",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 5,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}}}
+                                                           }}
+                                              )['id']
 
         def check_new_job_metadata(new_job_desc, cloned_job_desc, overridden_fields=[]):
             '''
@@ -3321,17 +3394,21 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + applet_id +
                           ' -inumber=32 --name jobname --folder /output ' +
                           '--instance-type mem2_hdd2_x2 ' +
+                          '--instance-type-by-executable \'{"' + applet_id + '": {"*": {"instanceType": "mem1_ssd1_v2_x2"}}}\' '   
                           '--tag Ψ --tag $hello.world ' +
                           '--property Σ_1^n=n --property $hello.=world ' +
                           '--priority normal ' +
                           '--brief -y').strip()
-        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        orig_job_desc = dxpy.api.job_describe(orig_job_id, {"defaultFields": True, "fields":{"runSystemRequirements":True, "runSystemRequirementsByExecutable":True, "mergedSystemRequirementsByExecutable":True}} )
         # control
         self.assertEqual(orig_job_desc['name'], 'jobname')
         self.assertEqual(orig_job_desc['project'], self.project)
         self.assertEqual(orig_job_desc['folder'], '/output')
         self.assertEqual(orig_job_desc['input'], {'number': 32})
-        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
+        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem1_ssd1_v2_x2'}})
+        self.assertEqual(orig_job_desc['runSystemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
+        self.assertEqual(orig_job_desc['runSystemRequirementsByExecutable'], {applet_id: {'*': {'instanceType': 'mem1_ssd1_v2_x2'}}})
+        self.assertEqual(orig_job_desc['mergedSystemRequirementsByExecutable'], {applet_id: {'*': {'instanceType': 'mem1_ssd1_v2_x2'}}})
 
         # clone the job
 
@@ -3347,7 +3424,7 @@ dx-jobutil-add-output record_array $second_record --array
         # override applet
         new_job_desc = get_new_job_desc(other_applet_id)
         self.assertEqual(new_job_desc['applet'], other_applet_id)
-        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['applet'])
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['applet', 'systemRequirements'])
 
         # override name
         new_job_desc = get_new_job_desc("--name newname")
@@ -3401,6 +3478,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['input'], {"number2": 42})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
+        # --instance-type override: original job with universal instance type 
         # override the blanket instance type
         new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_x1")
         self.assertEqual(new_job_desc['systemRequirements'],
@@ -3413,13 +3491,13 @@ dx-jobutil-add-output record_array $second_record --array
                                         json.dumps({"some_ep": "mem2_hdd2_x1",
                                                     "some_other_ep": "mem2_hdd2_x4"}) + "'")
         self.assertEqual(new_job_desc['systemRequirements'],
-                         {'*': {'instanceType': 'mem2_hdd2_x2'},
+                         {'*': {'instanceType': 'mem1_ssd1_v2_x2'},
                           'some_ep': {'instanceType': 'mem2_hdd2_x1'},
                           'some_other_ep': {'instanceType': 'mem2_hdd2_x4'}})
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
-        # new original job with entry point-specific systemRequirements
+        # --instance-type override: original job with entry point-specific systemRequirements
         orig_job_id = run("dx run " + applet_id +
                           " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\"}' --brief -y").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
@@ -3443,6 +3521,119 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'some_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        # --instance-type override: original job with entrypoint specific systemRequirements
+        orig_job_id = run("dx run " + applet_id +
+                          " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\", \"*\": \"mem2_hdd2_x2\"}' --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        self.assertEqual(orig_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_x2'}})
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_v2_x2")
+        self.assertEqual(new_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        # override all entry points with wildcard entry point, which is treated in the same way as specific ones
+        new_job_desc = get_new_job_desc("--instance-type '" +
+                                        json.dumps({"*": "mem2_hdd2_v2_x2"}) + "'")
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+        
+        # override a different entry point; original is merged and overrided
+        new_job_desc = get_new_job_desc("--instance-type '" +
+                                        json.dumps({"some_other_ep": "mem2_hdd2_x4",
+                                                    "*": "mem2_hdd2_v2_x2"}) + "'")
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'some_other_ep': {'instanceType': 'mem2_hdd2_x4'},
+                          'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        def check_instance_count(job_desc , entrypoints , expected_counts):
+            for ep, count in zip(entrypoints, expected_counts):
+                self.assertEqual(job_desc['systemRequirements'][ep]["clusterSpec"]["initialInstanceCount"], count)
+
+        # --instance-count override: new original job with universal instance count
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count 2 --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 2, 2])
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-count 4")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [4, 4, 4])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override single entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep": 6}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 6, 2])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override wildcard entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"*": 8}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 2, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # --instance-count override: new original job with entrypoint specific instance count
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count '{\"some_ep\": \"2\"}' --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [1, 2, 5])
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-count 4")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [4, 4, 4])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override single entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep": 6}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [1, 6, 5])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override wildcard entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"*": 8}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [1, 2, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # fpgaDriver override: new original job with extra_args
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count 2 --brief -y " +
+                          "--extra-args '" +
+                          json.dumps({"systemRequirements": {"some_ep": {"clusterSpec": {"initialInstanceCount": 12, "bootstrapScript": "z.sh"}, 
+                                                                         "fpgaDriver": "edico-1.4.5"}}}) + "'").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 12, 2])
+        # --instance-type and --instance-count override: instance type and cluster spec are resolved independently
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep":6,
+                                                    "*": 8}) + "' " +
+                                                    "--instance-type '" +
+                                        json.dumps({"main": "mem2_hdd2_x4",
+                                                    "*": "mem2_hdd2_v2_x2"}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 6, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+        
+        self.assertEqual(new_job_desc['systemRequirements']['main']['instanceType'], 'mem2_hdd2_x4')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['instanceType'], 'mem2_hdd2_x2')
+        self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
+        
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.5')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['clusterSpec']['bootstrapScript'], 'z.sh')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
@@ -3655,7 +3846,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
-        dxpy.api.applet_new({
+        applet_id = dxpy.api.applet_new({
             "project": self.project,
             "name": "myapplet",
             "dxapi": "1.0.0",
@@ -3665,7 +3856,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                         "distribution": "Ubuntu",
                         "release": "14.04",
                         "code": "dx-jobutil-add-output number 32"}
-        })
+        })["id"]
 
         # make a workflow with the stage twice
         run("dx new workflow myworkflow")
@@ -3682,6 +3873,10 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                           " -i0.number=52 --brief -y").strip()
         change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
                                            " --instance-type mem2_hdd2_x2 --brief -y").strip()
+        change_inst_type_by_exec_analysis_id = run("dx run --clone " + analysis_id +
+                                           " --instance-type-by-executable \'" + 
+                                           json.dumps({applet_id:{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) +
+                                           "\' --brief -y").strip()
 
         time.sleep(25) # May need to wait for any new jobs to be created in the system
 
@@ -3701,10 +3896,21 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x2')
 
+        # change inst type by executable: only affects stage with different inst type
+        change_inst_type_by_exec_analysis_desc = dxpy.describe(change_inst_type_by_exec_analysis_id)
+
+        self.assertEqual(change_inst_type_by_exec_analysis_desc['stages'][0]['execution']['instanceType'],'mem2_ssd1_v2_x2')
+        self.assertEqual(change_inst_type_by_exec_analysis_desc['stages'][1]['execution']['instanceType'],'mem2_ssd1_v2_x2')
+
         # Cannot provide workflow executable (ID or name) with --clone analysis
         error_mesg = 'cannot be provided when re-running an analysis'
         with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
             run("dx run myworkflow --clone " + analysis_id)
+
+        # Cannot provide --instance-count when running workflow
+        error_mesg = '--instance-count is not supported for workflows'
+        with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
+            run("dx run --instance-count 5 --clone " + analysis_id)
 
         # Run in a different project and add some metadata
         try:
@@ -3787,6 +3993,12 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 ' +
                          '--instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
+        # request for an executable
+        exec_req_id = run("dx run myworkflow" + 
+                         " --instance-type-by-executable \'" + 
+                         json.dumps({applet_id:{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) +
+                         "\' --brief -y").strip()
+        
         time.sleep(10) # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
@@ -3804,6 +4016,11 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                          'mem2_hdd2_x2')
         self.assertEqual(stg_req_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x1')
+        exec_req_desc = dxpy.describe(exec_req_id)
+        self.assertEqual(exec_req_desc['stages'][0]['execution']['instanceType'],
+                         'mem2_ssd1_v2_x2')
+        self.assertEqual(exec_req_desc['stages'][1]['execution']['instanceType'],
+                         'mem2_ssd1_v2_x2')
 
         # request for a stage specifically (by index); if same inst
         # type as before, should reuse results

@@ -10,6 +10,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Added new return fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
 * `--monthly-compute-limit` and `--monthly-egress-bytes-limit` for `dx new project`
+* Option '--instance-type-by-executable' for `dx run` and `dx-jobutil-job-new`
+* Parameters `system_requirements` and `system_requirements_by_executable` for `DXExecutable.run()` and `DXJob.new()`
 
 ## [354.0] - beta
 
@@ -28,6 +30,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
 * `dx watch --metrics top` mode
 
 ## [352.1] - 2023.7.12

@@ -58,10 +58,17 @@ class DXExecutable:
             if kwargs.get(arg) is not None:
                 run_input[arg] = kwargs[arg]
 
-        if kwargs.get('instance_type') is not None or kwargs.get('cluster_spec') is not None:
+        if kwargs.get('instance_type') is not None or kwargs.get('cluster_spec') is not None or kwargs.get('fpga_driver') is not None:
             instance_type_srd = SystemRequirementsDict.from_instance_type(kwargs.get('instance_type'))
             cluster_spec_srd = SystemRequirementsDict(kwargs.get('cluster_spec'))
-            run_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd).as_dict()
+            fpga_driver_srd = SystemRequirementsDict(kwargs.get('fpga_driver'))
+            run_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd + fpga_driver_srd).as_dict()
+
+        if kwargs.get('system_requirements') is not None:
+            run_input["systemRequirements"] = kwargs.get('system_requirements')
+
+        if kwargs.get('system_requirements_by_executable') is not None:
+            run_input["systemRequirementsByExecutable"] = kwargs.get('system_requirements_by_executable')
 
         if kwargs.get('depends_on') is not None:
             run_input["dependsOn"] = []
@@ -187,7 +194,8 @@ class DXExecutable:
             instance_type=None, stage_instance_types=None, stage_folders=None, rerun_stages=None, cluster_spec=None,
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None,
             ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
-            max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None, **kwargs):
+            max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None,
+            fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -238,13 +246,19 @@ class DXExecutable:
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job
+        :param fpga_driver: a dict mapping function names to fpga driver requests
+        :type fpga_driver: dict
+        :param system_requirements: System requirement single mapping
+        :type system_requirements: dict
+        :param system_requirements_by_executable: System requirement by executable double mapping
+        :type system_requirements_by_executable: dict
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
         Creates a new job that executes the function "main" of this executable with
         the given input *executable_input*.
 
         '''
-        # stage_instance_types, stage_folders, and rerun_stages are
+        # stage_instance_types, stage_folders, rerun_stages and ignore_reuse_stages are
         # only supported for workflows, but we include them
         # here. Applet-based executables should detect when they
         # receive a truthy workflow-specific value and raise an error.
@@ -275,7 +289,10 @@ class DXExecutable:
                                         max_job_spot_wait_time=max_job_spot_wait_time,
                                         preserve_job_outputs=preserve_job_outputs,
                                         detailed_job_metrics=detailed_job_metrics,
-                                        extra_args=extra_args)
+                                        extra_args=extra_args,
+                                        fpga_driver=fpga_driver,
+                                        system_requirements=system_requirements,
+                                        system_requirements_by_executable=system_requirements_by_executable)
         return self._run_impl(run_input, **kwargs)
 
 

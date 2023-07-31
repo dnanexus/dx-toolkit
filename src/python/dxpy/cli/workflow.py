@@ -111,7 +111,7 @@ def add_stage(args):
     elif args.relative_output_folder is not None:
         folderpath = args.relative_output_folder
 
-    # process instance type
+    # process instance type only; instance type by executable is not applicable for add stage
     try_call(process_instance_type_arg, args)
 
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
@@ -207,7 +207,7 @@ def update_stage(args):
     workflow_id, project = get_workflow_id_and_project(args.workflow)
     dxworkflow = dxpy.DXWorkflow(workflow_id, project=project)
 
-    # process instance type
+    # process instance type only; instance type by executable is not applicable for update stage
     try_call(process_instance_type_arg, args)
 
     initial_edit_version = dxworkflow.editVersion
