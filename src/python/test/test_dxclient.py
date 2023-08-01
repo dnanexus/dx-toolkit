@@ -3670,6 +3670,8 @@ def main(array):
             time.sleep(0.1)
         second_job_desc = run("dx describe " + second_job_handler.get_id())
         first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 5 ]"
+        print(first_job_res)
+        print(second_job_desc)
         self.assertIn(first_job_res, second_job_desc)
 
         # Launch another job which depends on the first done job and
