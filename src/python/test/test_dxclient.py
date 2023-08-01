@@ -3669,7 +3669,7 @@ def main(array):
         while second_job_handler.describe()['state'] in ['idle', 'waiting_on_input']:
             time.sleep(0.1)
         second_job_desc = run("dx describe " + second_job_handler.get_id())
-        first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 5 ]"
+        first_job_res = first_job_handler.get_id() + ":array => [ 0,\n                                   1, 5 ]"
         self.assertIn(first_job_res, second_job_desc)
 
         # Launch another job which depends on the first done job and
