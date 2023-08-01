@@ -1,3 +1,12 @@
+dx-toolkit (0.355.0) trusty; urgency=medium
+
+  * Added: New return fields from dx describe {job/analysis}-xxxx with --verbose argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
+  * Added: --monthly-compute-limit and --monthly-egress-bytes-limit for dx new project
+  * Added: Option '--instance-type-by-executable' for dx run and dx-jobutil-job-new
+  * Added: Parameters system_requirements and system_requirements_by_executable for DXExecutable.run() and DXJob.new()
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 01 Aug 2023 12:19:58 +0000
+
 dx-toolkit (0.354.0) trusty; urgency=medium
 
   * Added: '--try T' for dx watch, dx tag/untag, dx set_properties/unset_properties
