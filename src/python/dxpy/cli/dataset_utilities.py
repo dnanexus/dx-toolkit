@@ -1043,6 +1043,12 @@ def extract_assay_somatic(args):
                 quoting=csv.QUOTE_NONE,
             )
 
+def create_cohort(args): 
+    """
+    Create a cohort from dataset/cohort and specified list of samples. 
+    """
+    print(args)
+    pass
 
 class DXDataset(DXRecord):
     """
