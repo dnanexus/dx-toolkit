@@ -146,6 +146,20 @@ def raw_api_call(resp, payload, sql_message=True):
     return resp_raw
 
 
+def cohort_query_api_call(resp, payload):
+    # TODO: use updated "cohort-query" route
+    resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/cohort-query"
+    try:
+        resp_raw_query = dxpy.DXHTTPRequest(
+            resource=resource_val, data=payload, prepend_srv=False
+        )
+
+    except Exception as details:
+        err_exit(str(details))
+    sql_results = resp_raw_query["sql"] + ";"
+    return sql_results
+
+
 def extract_dataset(args):
     """
     Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.
