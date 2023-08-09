@@ -33,7 +33,7 @@ import subprocess
 from dxpy_testutil import cd
 from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
-    resolve_validate_path,
+    resolve_validate_record_path,
     DXDataset,
 )
 from dxpy.dx_extract_utils.somatic_filter_payload import (
@@ -96,7 +96,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         # When assay name is none, function looks for and selects first assay of type somatic that it finds
         assay_name = None
         friendly_assay_type = "somatic"
-        project, entity_result, resp, dataset_project = resolve_validate_path(
+        project, entity_result, resp, dataset_project = resolve_validate_record_path(
             self.test_record
         )
         dataset_id = resp["dataset"]
