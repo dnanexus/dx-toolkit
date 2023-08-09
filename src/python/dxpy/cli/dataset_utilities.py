@@ -30,9 +30,9 @@ import codecs
 import subprocess
 from ..utils.printing import fill
 from ..bindings import DXRecord
-from ..bindings.dxdataobject_functions import is_dxlink
+from ..bindings.dxdataobject_functions import is_dxlink, describe
 from ..bindings.dxfile import DXFile
-from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
+from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError, resolve_path, check_folder_exists
 from ..utils.file_handle import as_handle
 from ..exceptions import (
     err_exit,
@@ -51,7 +51,8 @@ database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
 
 
-def resolve_validate_path(path):
+def resolve_validate_record_path(path):
+
     project, folder_path, entity_result = resolve_existing_path(path)
 
     if project is None:
@@ -199,7 +200,7 @@ def extract_dataset(args):
     else:
         err_exit("Invalid delimiter specified")
 
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
 
     dataset_id = resp["dataset"]
     out_directory = ""
@@ -716,7 +717,7 @@ def extract_assay_germline(args):
             )
 
     ######## Data Processing ########
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
 
     if "CohortBrowser" in resp["recordTypes"] and any(
         [args.list_assays, args.assay_name]
@@ -975,7 +976,7 @@ def extract_assay_somatic(args):
                 err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
             
     ######## Data Processing ########
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
     if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
         err_exit(
             "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
@@ -1042,6 +1043,53 @@ def extract_assay_somatic(args):
                 quote_char=str("\t"),
                 quoting=csv.QUOTE_NONE,
             )
+
+def resolve_validate_dx_path(path):
+    """
+    Resolves dx path into project, folder and name. Fails if non existing folder is provided. 
+    """
+    
+    project, folder, name = resolve_path(path)
+    if folder != '/':
+        folder_name = '/{}'.format(os.path.basename(folder))
+        folder_path = os.path.dirname(folder)
+        try:
+            folder_exists = check_folder_exists(project, folder_path, folder_name )
+        except Exception as e:
+            raise ResolutionError(e)
+        
+        if not folder_exists:
+            raise ResolutionError('The folder: {} could not be found in the project: {}'.format(folder, project))
+    
+    return project, folder, name
+
+def create_cohort(args): 
+    """
+    Create a cohort from dataset/cohort and specified list of samples. 
+    """
+    #### Validation ####
+    # validate and resolve 'PATH' input
+    if args.PATH:
+        path_project, path_folder, path_name = resolve_validate_dx_path(args.PATH)
+        path_project_describe = describe(path_project)
+        if path_project_describe["level"] not in ['CONTRIBUTE', 'ADMINISTER']:
+            raise ResolutionError('At least CONTRIBUTE permission is required to create a record in a project')
+
+    # validate and resolve 'from' input
+    FROM = args.__dict__.get("from")
+    from_project, entity_result, resp, dataset_project = resolve_validate_record_path(FROM)
+    
+
+    #### Reading sample ids ####
+    # samples=[]
+    # # from file
+    # if args.cohort_ids_file:
+    #     for line in args.cohort_ids_file:
+    #         samples.append(line)
+    # # from string
+    # if args.cohort_ids:
+    #     samples = args.cohort_ids.split(",")
+
 
 
 class DXDataset(DXRecord):
