@@ -1070,9 +1070,9 @@ def create_cohort(args):
     #### Validation ####
     # validate input combinations
     if args.cohort_ids and args.cohort_ids_file:
-        err_exit('You provided both "--cohort-ids" and "--cohort-ids-file". You can use only one at the time.')
+        err_exit('You provided both "--cohort-ids" and "--cohort-ids-file". Only one can be used at the time.')
     if args.cohort_ids is None and args.cohort_ids_file is None:
-        err_exit('Use "--cohort-ids" or "--cohort-ids-file" to specify cohort-ids.')
+        err_exit('Use "--cohort-ids" or "--cohort-ids-file" argument to specify cohort-ids.')
     # validate and resolve 'PATH' input
     if args.PATH:
         path_project, path_folder, path_name = resolve_validate_dx_path(args.PATH)
