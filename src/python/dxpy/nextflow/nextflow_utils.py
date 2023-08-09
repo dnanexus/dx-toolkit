@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-
-
+import logging
 from os import path, makedirs
 import errno
 import dxpy
 import json
+import shutil
 from dxpy.exceptions import ResourceNotFound
 
 def get_source_file_name():
@@ -40,6 +40,21 @@ def write_exec(folder, content):
         pass
     with open(exec_file, "w") as fh:
         fh.write(content)
+
+def copy_readme(dxapp_dir, resources_dir):
+    dx_readme = "Readme.md"
+    possible_filenames = ["README.md", "Readme.md", "README.MD", "README.txt", "README"]
+    source_path = None
+    destination_path = path.join(dxapp_dir, dx_readme)
+
+    for filename in possible_filenames:
+        file_path = path.join(resources_dir, filename)
+        if path.exists(file_path):
+            source_path = file_path
+            break
+
+    if source_path:
+        shutil.copy2(source_path, destination_path)
 
 def write_dxapp(folder, content):
     dxapp_file = "{}/dxapp.json".format(folder)
