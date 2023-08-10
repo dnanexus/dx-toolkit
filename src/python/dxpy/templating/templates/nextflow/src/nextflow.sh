@@ -75,6 +75,20 @@ generate_runtime_config() {
   fi
 }
 
+generate_params_file() {
+  touch nxf_params.yml
+  # make a runtime config file to override optional inputs
+  # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
+  @@GENERATE_PARAMS_FILE@@
+
+  if [[ -s nxf_params.yml ]]; then
+    if [[ $debug == true ]]; then
+      cat nxf_params.yml
+    fi
+    RUNTIME_PARAMS_CMD='-params-file nxf_params.yml'
+  fi
+}
+
 # On exit, for the main Nextflow orchestrator job
 on_exit() {
   ret=$?
@@ -130,7 +144,7 @@ on_exit() {
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
-  rm nxf_runtime.config
+  # rm nxf_runtime.config
 
   # try uploading the log file if it is not empty
   if [[ -s $LOG_NAME ]]; then
@@ -146,6 +160,11 @@ on_exit() {
 
   dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
   # done
+
+  if [[ $ret -ne 0 ]]; then   # upload log file
+    FAILED_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" "${DX_JOB_OUTDIR%/}"/"${LOG_NAME}" --wait --brief --no-progress --parents)
+    dx-jobutil-add-output nextflow_log $FAILED_LOG_ID --class=file
+  fi
   exit $ret
 }
 
@@ -237,7 +256,7 @@ validate_run_opts() {
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
     -w=* | -work-dir=*)
-      NXF_WORK="${i#*=}"
+      NXF_WORK="${arr[i]#*=}"
       break
       ;;
     -w | -work-dir)
@@ -301,6 +320,32 @@ dx_path() {
   esac
 }
 
+parse_pipeline_params(){
+  IFS=" " read -r -a arr <<<"$nextflow_pipeline_params"
+  nextflow_pipeline_params_final=()
+  declare -i i
+  i=-1
+  for a in "${arr[@]}"; do
+    case $a in
+    --*=* | -*=*)
+      i+=1
+      nextflow_pipeline_params_final+=("${a}")
+      ;;
+    --* | -*)
+      i+=1
+      nextflow_pipeline_params_final+=("${a}")
+      i+=1
+      ;;
+    *)
+    if [[ -n ${nextflow_pipeline_params_final[i]} ]]; then
+      nextflow_pipeline_params_final[i]="${nextflow_pipeline_params_final[i]} ${a}"
+    else
+      nextflow_pipeline_params_final[i]="${a}"
+    fi
+    ;;
+    esac
+  done
+}
 # Entry point for the main Nextflow orchestrator job
 main() {
   if [[ $debug == true ]]; then
@@ -392,8 +437,10 @@ main() {
   export NXF_WORK
 
   # for optional inputs, pass to the run command by using a runtime config
-  RUNTIME_CONFIG_CMD=""
-  generate_runtime_config
+  # RUNTIME_CONFIG_CMD=""
+  # generate_runtime_config
+  RUNTIME_PARAMS_CMD=""
+  generate_params_file
 
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
@@ -406,34 +453,37 @@ main() {
     fi
   fi
 
+  set -x
+  parse_pipeline_params
+  echo "${nextflow_pipeline_params_final[@]}"
+
   # execution starts
-  NEXTFLOW_CMD="nextflow \
+  NEXTFLOW_CMD=(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
-    ${RUNTIME_CONFIG_CMD} \
     -log ${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
     -name $DX_JOB_ID \
     $RESUME_CMD \
     $nextflow_run_opts \
-    $nextflow_pipeline_params \
-    $required_inputs
-      "
+    ${RUNTIME_PARAMS_CMD} \
+    "${nextflow_pipeline_params_final[@]}" \
+    $required_inputs)
 
   trap on_exit EXIT
   echo "============================================================="
-  echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
+  echo "=== NF projectDir   : /home/dnanexus/hello_1728"
   echo "=== NF session ID   : ${NXF_UUID}"
   echo "=== NF log file     : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
   if [[ $preserve_cache == true ]]; then
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
-  echo "=== NF command      :" $NEXTFLOW_CMD
-  echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
+  echo "=== NF command      :" ${NEXTFLOW_CMD[@]}
+  echo "=== Built with dxpy : 0.354.0"
   echo "============================================================="
 
-    $NEXTFLOW_CMD & NXF_EXEC_PID=$!
+    "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
     # forwarding nextflow log file to job monitor
     set +x
     if [[ $debug == true ]] ; then

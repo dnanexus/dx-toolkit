@@ -68,6 +68,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
 
     required_runtime_params = ""
     generate_runtime_config= ""
+    generate_params_file = ""
     for i in custom_inputs:
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
@@ -81,6 +82,12 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
                 echo params.%s=%s >> nxf_runtime.config
             fi    
             '''% (i['name'], i['name'], value)
+
+            generate_params_file = generate_params_file + '''
+            if [ -n "$%s" ]; then
+                echo "%s:  %s" >> nxf_params.yml
+            fi
+            '''% (i['name'], i['name'], value)
         # required inputs need to be added as runtime pipeline params
         else:
             # required_inputs variable is initialized in the nextflow.sh script template
@@ -92,6 +99,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
 
     profile_arg = "-profile {}".format(profile) if profile else ""
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
+    src = src.replace("@@GENERATE_PARAMS_FILE@@", generate_params_file)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
     src = src.replace("@@DXPY_BUILD_VERSION@@", TOOLKIT_VERSION)
