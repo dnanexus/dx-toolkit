@@ -46,6 +46,7 @@ from ..exceptions import (
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
+from ..dx_extract_utils.cohort_filter_payload import cohort_final_payload
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -1099,6 +1100,11 @@ def create_cohort(args):
     # if args.cohort_ids:
     #     samples = args.cohort_ids.split(",")
 
+    #entity = 'ENTITY'
+    #field = 'FIELD'
+    #cohort_filter = {}
+    #payload = cohort_final_payload(samples, entity, field, cohort_filter, from_project)
+    #sql = cohort_query_api_call(resp, payload)
 
 
 class DXDataset(DXRecord):
