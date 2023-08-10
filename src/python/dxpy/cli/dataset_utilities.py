@@ -110,26 +110,26 @@ def resolve_validate_path(path):
     return project, entity_result, resp, dataset_project
 
 
-def query_api_call(resp, payload, route):
+def viz_query_api_call(resp, payload, route):
     resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/" + route
     try:
-        resp_raw_query = dxpy.DXHTTPRequest(
+        resp_query = dxpy.DXHTTPRequest(
             resource=resource_val, data=payload, prepend_srv=False
         )
 
     except Exception as details:
         err_exit(str(details))
-    sql_results = resp_raw_query["sql"] + ";"
+    sql_results = resp_query["sql"] + ";"
     return sql_results
 
 
 def raw_query_api_call(resp, payload):
-    return query_api_call(resp, payload, 'raw-query')
+    return viz_query_api_call(resp, payload, 'raw-query')
 
 
 def cohort_query_api_call(resp, payload):
     # TODO: use updated "cohort-query" route
-    return query_api_call(resp, payload, 'cohort-query')
+    return viz_query_api_call(resp, payload, 'cohort-query')
 
 
 def raw_api_call(resp, payload, sql_message=True):
