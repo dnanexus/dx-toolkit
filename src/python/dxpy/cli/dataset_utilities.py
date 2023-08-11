@@ -1083,8 +1083,9 @@ def create_cohort(args):
     samples=[]
     # from file
     if args.cohort_ids_file:
-        for line in args.cohort_ids_file:
-            samples.append(line)
+        with open(args.cohort_ids_file,"r") as infile:
+            for line in infile:
+                samples.append(line)
     # from string
     if args.cohort_ids:
         samples = args.cohort_ids.split(",")
@@ -1132,13 +1133,6 @@ def create_cohort(args):
         err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = from_project,ids = missing_samples)
         err_exit(err_msg)
     # Input cohort IDs have been succesfully validated    
-
-
-
-
-
-
-
 
    
 
