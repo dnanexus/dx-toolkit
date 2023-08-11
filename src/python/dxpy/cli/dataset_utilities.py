@@ -149,7 +149,7 @@ def raw_api_call(resp, payload, sql_message=True):
 
 def extract_dataset(args):
     """
-    Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.
+    Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.
     """
     if (
         not args.dump_dataset_dictionary
@@ -1078,18 +1078,66 @@ def create_cohort(args):
     # validate and resolve 'from' input
     FROM = args.__dict__.get("from")
     from_project, entity_result, resp, dataset_project = resolve_validate_record_path(FROM)
+
+    #### Reading input sample ids from file or command line ####
+    samples=[]
+    # from file
+    if args.cohort_ids_file:
+        for line in args.cohort_ids_file:
+            samples.append(line)
+    # from string
+    if args.cohort_ids:
+        samples = args.cohort_ids.split(",")
     
+    #### Validate the input cohort IDs ####
+    # Get the table/entity and field/column of the dataset from the descriptor
+    rec_descriptor = DXDataset(entity_result["id"], project=from_project).get_descriptor()
 
-    #### Reading sample ids ####
-    # samples=[]
-    # # from file
-    # if args.cohort_ids_file:
-    #     for line in args.cohort_ids_file:
-    #         samples.append(line)
-    # # from string
-    # if args.cohort_ids:
-    #     samples = args.cohort_ids.split(",")
+    # Usually the name of the table
+    entity_name = rec_descriptor.model["global_primary_key"]["entity"]
+    # The name of the column or field in the table
+    field_name = rec_descriptor.model["global_primary_key"]["field"] 
 
+    # Prepare a payload to find entries matching the input ids in the dataset
+    table_column_name = "{}${}".format(entity_name, field_name)
+    fields_list = [{field_name: table_column_name}]
+    
+    # Note that pheno filters do not need name or id fields
+    payload = {
+        "project_context": from_project,
+        "fields": fields_list,
+        "raw_filters": {
+            "pheno_filters": {
+                "filters": {
+                    table_column_name: [
+                        {"condition": "in", "values": samples}
+                    ]
+                }
+            }
+        },
+    }
+
+    # Use the dxpy raw_api_function to send a POST request to the server with our payload
+    resp_raw = raw_api_call(resp, payload)
+    # Order of samples doesn't matter so using set here
+    discovered_samples = set()
+    # Parse the results objects for the cohort ids
+    for result in resp_raw["results"]:
+        discovered_samples.add(result[field_name])
+
+    # Compare the discovered cohort ids to the user-provided cohort ids
+    if discovered_samples != set(samples):
+        err_exit("cohort ids provided in input do not match cohort ids found in dataset")
+    # Input cohort IDs have been succesfully validated    
+
+
+
+
+
+
+
+
+   
 
 
 class DXDataset(DXRecord):
