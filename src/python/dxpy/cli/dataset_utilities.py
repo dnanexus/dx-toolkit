@@ -1127,7 +1127,10 @@ def create_cohort(args):
 
     # Compare the discovered cohort ids to the user-provided cohort ids
     if discovered_samples != set(samples):
-        err_exit("cohort ids provided in input do not match cohort ids found in dataset")
+        # Find which given samples are not present in the dataset
+        missing_samples = set(samples).difference(discovered_samples)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = from_project,ids = missing_samples)
+        err_exit(err_msg)
     # Input cohort IDs have been succesfully validated    
 
 
