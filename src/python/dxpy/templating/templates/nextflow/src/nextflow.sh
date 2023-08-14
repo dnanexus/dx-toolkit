@@ -406,6 +406,14 @@ main() {
     fi
   fi
 
+  custom_config_arg=''
+  if [ -n "$nextflow_soft_confs" ]; then
+    for c in  $(jq -r '.[] |.["$dnanexus_link"]' <<<"$nextflow_soft_confs" ); do 
+      sed -e '$s/$/\n/' "$c" >> nxf_runtime.config
+    done
+    custom_config_arg='-c nxf_runtime.config'
+  fi
+
   # execution starts
   NEXTFLOW_CMD="nextflow \
     ${TRACE_CMD} \
@@ -419,6 +427,7 @@ main() {
     $nextflow_run_opts \
     $nextflow_pipeline_params \
     $required_inputs
+    $custom_config_arg
       "
 
   trap on_exit EXIT
@@ -428,6 +437,9 @@ main() {
   echo "=== NF log file     : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
   if [[ $preserve_cache == true ]]; then
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
+  fi
+  if [[ $preserve_cache == true ]]; then
+    echo "=== NF config       :" cat nxf_runtime.config
   fi
   echo "=== NF command      :" $NEXTFLOW_CMD
   echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
