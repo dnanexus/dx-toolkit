@@ -28,9 +28,6 @@ import pandas as pd
 import dxpy
 from dxpy_testutil import cd, chdir
 
-from dxpy.cli.dataset_utilities import (
-    create_cohort
-)
 
 class TestDXCreateCohort(unittest.TestCase):
     @classmethod
@@ -45,3 +42,15 @@ class TestDXCreateCohort(unittest.TestCase):
         cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(
                 proj_name
             )
+
+    def test_retrieve_cohort_id(self):
+        pass
+
+    def test_accept_file_ids(self):
+        pass
+
+    def test_accept_cli_ids(self):
+        pass
+
+
+    
