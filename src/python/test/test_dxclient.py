@@ -2353,8 +2353,11 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         analysis_desc_json = run("dx describe {} --json".format(dxanalysis.get_id()))
         analysis_desc_verbose_json = run("dx describe {} --verbose --json".format(dxanalysis.get_id()))
         self.assertTrue(all(key in analysis_desc_verbose for key in ["Run Sys Reqs", "Run Sys Reqs by Exec", "Merged Sys Reqs By Exec", "Run Stage Sys Reqs"]))
+        self.assertTrue(all(key in analysis_desc_verbose for key in ["ID", "Job name", "Executable name", "Class", "Workspace", "Project context"]))
         self.assertFalse(any(key in json.loads(analysis_desc_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        self.assertTrue(all(key in json.loads(analysis_desc_json) for key in ['id','name','executable','class','workspace','project']))
         self.assertTrue(all(key in json.loads(analysis_desc_verbose_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        self.assertTrue(all(key in json.loads(analysis_desc_verbose_json) for key in ['id','name','executable','class','workspace','project']))
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run jobs')
