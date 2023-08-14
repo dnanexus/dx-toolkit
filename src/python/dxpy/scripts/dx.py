@@ -1283,6 +1283,9 @@ def describe(args):
             if len(entity_results) > 0:
                 found_match = True
             for result in entity_results:
+                if is_analysis_id(result['id']) and args.verbose:
+                    default_analysis_desc = dxpy.DXAnalysis(result['id']).describe()
+                    result['describe'].update(default_analysis_desc)
                 if args.json:
                     json_output.append(result['describe'])
                 elif args.name:
