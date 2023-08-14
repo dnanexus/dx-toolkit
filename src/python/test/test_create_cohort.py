@@ -1,3 +1,4 @@
+from __future__ import print_function, unicode_literals, division, absolute_import
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -19,14 +20,18 @@
 
 # Run manually with python2 and python3 src/python/test/test_create_cohort.py
 
-import dxpy
-import unittest
-import os
-import sys
-import subprocess
-import hashlib
 
-from dxpy_testutil import cd
+import unittest
+import tempfile
+import shutil
+import os
+import re
+import subprocess
+import pandas as pd
+import dxpy
+import sys
+from dxpy_testutil import cd, chdir
+
 from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
     resolve_validate_record_path,
@@ -41,13 +46,16 @@ python_version = sys.version_info.major
 class TestCreateCohort(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        test_project_name = "dx-toolkit_test_data"
-        cls.proj_id = list(
-            dxpy.find_projects(describe=False, level="VIEW", name=test_project_name)
-        )[0]["id"]
-        cd(cls.proj_id + ":/")
-        #cls.general_input_dir = os.path.join(dirname, "clisam_test_filters/input/")
-        #cls.general_output_dir = os.path.join(dirname, "clisam_test_filters/output/")
+        proj_name = "dx-toolkit_test_data"
+        proj_id = list(dxpy.find_projects(describe=False, level='VIEW', name=proj_name))[0]['id']
+        cd(proj_id + ":/")
+        cls.general_input_dir = os.path.join(dirname, "create_cohort_test_files/input/")
+        # cls.general_output_dir = os.path.join(dirname, "create_cohort_test_files/output/")
+
+        #TODO: setup project folders 
+        cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(
+                proj_name
+            )
 
     def test_help_text(self):
         print("testing help text")
@@ -61,6 +69,16 @@ class TestCreateCohort(unittest.TestCase):
         test_md5sum = hashlib.md5(process.encode("utf-8")).hexdigest()
 
         self.assertEqual(expected_result,test_md5sum)
+
+
+    def test_retrieve_cohort_id(self):
+        pass
+
+    def test_accept_file_ids(self):
+        pass
+
+    def test_accept_cli_ids(self):
+        pass
 
 
 if __name__ == "__main__":
