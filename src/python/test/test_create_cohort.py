@@ -24,6 +24,7 @@ import unittest
 import os
 import sys
 import subprocess
+import hashlib
 
 from dxpy_testutil import cd
 from dxpy.cli.dataset_utilities import (
@@ -51,31 +52,15 @@ class TestCreateCohort(unittest.TestCase):
     def test_help_text(self):
         print("testing help text")
 
+        expected_result = "fae9f07f1aad8cf69223ca666b20de35"
+
         command = 'dx create_cohort --help'
 
-        process = subprocess.check_output(command, shell=True)
+        process = subprocess.check_output(command, shell=True,text=True)
 
-        print(process)
+        test_md5sum = hashlib.md5(process.encode("utf-8")).hexdigest()
 
-    def test_additional_fields(self):
-        input_filter_path = os.path.join(self.e2e_filter_directory, "single_location.json")
-        output_path = os.path.join(
-            self.general_output_dir, self.dataset, "e2e_output", "additional_fields_output.tsv"
-        )
-        project = "project-GX0Jpp00ZJ46qYPq5G240k1k"
-        record = "record-GX9k6J80ZJ4KqbzQ48J1KbQY"
-        #cohort_ids = 
-
-        command = 'dx create_cohort --from project-GX0Jpp00ZJ46qYPq5G240k1k:record-GX9k6J80ZJ4KqbzQ48J1KbQY --cohort-ids "sample_0,sample_2,sample_bad" fakepath'
-
-        command = 'dx extract_assay somatic {} --retrieve-variant {} --output {} --additional-fields "{}"'.format(
-            self.test_record,
-            input_filter_path,
-            output_path,
-            "sample_id,tumor_normal,symbolic_type",
-        )
-
-        process = subprocess.check_output(command, shell=True)
+        self.assertEqual(expected_result,test_md5sum)
 
 
 if __name__ == "__main__":
