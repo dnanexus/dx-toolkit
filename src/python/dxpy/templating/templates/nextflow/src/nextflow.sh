@@ -59,25 +59,10 @@ docker_registry_login() {
   fi
 }
 
-generate_runtime_config() {
-  set +x
-  touch nxf_runtime.config
-  # make a runtime config file to override optional inputs
-  # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
-  @@GENERATE_RUNTIME_CONFIG@@
-
-  if [[ -s nxf_runtime.config ]]; then
-    if [[ $debug == true ]]; then
-      cat nxf_runtime.config
-      set -x
-    fi
-    RUNTIME_CONFIG_CMD='-c nxf_runtime.config'
-  fi
-}
 
 generate_params_file() {
   touch nxf_params.yml
-  # make a runtime config file to override optional inputs
+  # make a runtime parameter file to override optional inputs
   # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
   @@GENERATE_PARAMS_FILE@@
 
@@ -144,7 +129,6 @@ on_exit() {
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
-  # rm nxf_runtime.config
 
   # try uploading the log file if it is not empty
   if [[ -s $LOG_NAME ]]; then
@@ -436,9 +420,7 @@ main() {
   setup_workdir
   export NXF_WORK
 
-  # for optional inputs, pass to the run command by using a runtime config
-  # RUNTIME_CONFIG_CMD=""
-  # generate_runtime_config
+  # for optional inputs, pass to the run command by using a runtime parameter file
   RUNTIME_PARAMS_CMD=""
   generate_params_file
 

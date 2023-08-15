@@ -67,7 +67,6 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
         src = f.read()
 
     required_runtime_params = ""
-    generate_runtime_config= ""
     generate_params_file = ""
     for i in custom_inputs:
         value = "${%s}" % (i['name'])
@@ -77,11 +76,6 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
         if "Nextflow pipeline optional" in i.get("help", ""):
             if i.get("class") not in ("int","float","boolean"):
                 value = '\\"' + value + '\\"'
-            generate_runtime_config = generate_runtime_config + '''
-            if [ -n "$%s" ]; then
-                echo params.%s=%s >> nxf_runtime.config
-            fi    
-            '''% (i['name'], i['name'], value)
 
             generate_params_file = generate_params_file + '''
             if [ -n "$%s" ]; then
@@ -98,7 +92,6 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
             '''.format(i['name'], i['name'], value)
 
     profile_arg = "-profile {}".format(profile) if profile else ""
-    src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@GENERATE_PARAMS_FILE@@", generate_params_file)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
