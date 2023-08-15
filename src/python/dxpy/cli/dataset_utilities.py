@@ -1055,7 +1055,6 @@ def extract_assay_somatic(args):
             )
 
 #### CREATE COHORT ####
-
 def resolve_validate_dx_path(path):
     """
     Resolves dx path into project, folder and name. Fails if non existing folder is provided. 
@@ -1075,6 +1074,7 @@ def resolve_validate_dx_path(path):
     
     return project, folder, name
 
+  
 def validate_cohort_ids(descriptor, project, resp, ids):
     # Usually the name of the table
     entity_name = descriptor.model["global_primary_key"]["entity"]
