@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
@@ -44,19 +45,23 @@ dirname = os.path.dirname(__file__)
 
 python_version = sys.version_info.major
 
+
 class TestCreateCohort(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         proj_name = "dx-toolkit_test_data"
-        proj_id = list(dxpy.find_projects(describe=False, level='VIEW', name=proj_name))[0]['id']
+        proj_id = list(
+            dxpy.find_projects(describe=False, level="VIEW", name=proj_name)
+        )[0]["id"]
         cd(proj_id + ":/")
         cls.general_input_dir = os.path.join(dirname, "create_cohort_test_files/input/")
         # cls.general_output_dir = os.path.join(dirname, "create_cohort_test_files/output/")
 
-        #TODO: setup project folders 
-        cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(
-                proj_name
-            )
+        # TODO: Update when we get more data
+        cls.test_record = "{}:record-GXJZy600vGPbZVv0KXqVZxBF".format(proj_name)
+
+    def is_recod_object(self, name):
+        bool(re.match(r"^(record-[A-Za-z0-9]{24}|[a-z][a-z_0-9]{1,255})$", name))
 
     def test_help_text(self):
         print("testing help text")
@@ -64,14 +69,14 @@ class TestCreateCohort(unittest.TestCase):
         # An MD5sum hash of the correct error message
         expected_result = "fae9f07f1aad8cf69223ca666b20de35"
 
-        command = 'dx create_cohort --help'
+        command = "dx create_cohort --help"
 
-        process = subprocess.check_output(command, shell=True,text=True)
+        process = subprocess.check_output(command, shell=True, text=True)
 
         # Get the md5sum hash of the captured error message
         test_md5sum = hashlib.md5(process.encode("utf-8")).hexdigest()
 
-        self.assertEqual(expected_result,test_md5sum)
+        self.assertEqual(expected_result, test_md5sum)
 
     # Supplied IDs do not match IDs of main entity in Dataset/Cohort
     def test_errmsg_id_match(self):
@@ -92,7 +97,7 @@ class TestCreateCohort(unittest.TestCase):
     # The record id or path is a cohort or dataset but is invalid (maybe corrupted, descriptor not accessible...etc)
     def test_errmsg_invalid_record(self):
         pass
-    
+
     # The record id or path is a cohort or dataset but the version is less than 3.0.
     def test_errmsg_dataset_version(self):
         pass
@@ -100,7 +105,7 @@ class TestCreateCohort(unittest.TestCase):
     # If PATH is of the format `project-xxxx:folder/` and the project does not exist
     def test_errmsg_project_not_exist(self):
         pass
-    
+
     # If PATH is of the format `project-xxxx:folder/` and the user does not have CONTRIBUTE or ADMINISTER access
     # Note that this is the PATH that the output cohort is being created in, not the input dataset or cohort
     def test_errmsg_no_path_access(self):
@@ -114,14 +119,92 @@ class TestCreateCohort(unittest.TestCase):
     def test_errmsg_incompat_args(self):
         pass
 
-    def test_retrieve_cohort_id(self):
-        pass
-
     def test_accept_file_ids(self):
-        pass
+        command = [
+            "dx",
+            "create_cohort",
+            "--from",
+            self.test_record,
+            "--cohort-ids-file",
+            "{}sample_ids_valid.txt".format(self.general_input_dir),
+        ]
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        stdout, stderr = process.communicate()
+        self.assertTrue(stderr == "")
+
+        # TODO: uncomment when record-id is returned + get record id from stdout
+        # self.assertTrue(self.is_recod_object(stdout))
+        # Make sure to remove created record
+        # subprocess.check_output('dx rm {}'.format(stdout), shell=True, text=True)
+
+    def test_accept_file_ids_negative(self):
+        command = [
+            "dx",
+            "create_cohort",
+            "--from",
+            self.test_record,
+            "--cohort-ids-file",
+            "{}sample_ids_wrong.txt".format(self.general_input_dir),
+        ]
+        process = subprocess.Popen(
+            command, stderr=subprocess.PIPE, universal_newlines=True
+        )
+        stderr = process.communicate()[1]
+        expected_error = (
+            "The following supplied IDs do not match IDs in the main entity of dataset"
+        )
+        self.assertTrue(expected_error in stderr)
 
     def test_accept_cli_ids(self):
-        pass
+        command = [
+            "dx",
+            "create_cohort",
+            "--from",
+            self.test_record,
+            "--cohort-ids",
+            "sample_2,sample_3",
+        ]
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        stdout, stderr = process.communicate()
+        self.assertTrue(stderr == "")
+
+        # TODO: uncomment when record-id is returned + get record id from stdout
+        # self.assertTrue(self.is_recod_object(stdout))
+        # Make sure to remove created record
+        # subprocess.check_output('dx rm {}'.format(stdout), shell=True, text=True)
+
+    def test_accept_cli_ids_negative(self):
+        command = [
+            "dx",
+            "create_cohort",
+            "--from",
+            self.test_record,
+            "--cohort-ids",
+            "wrong,sample,id",
+        ]
+        process = subprocess.Popen(
+            command, stderr=subprocess.PIPE, universal_newlines=True
+        )
+        stderr = process.communicate()[1]
+        expected_error = (
+            "The following supplied IDs do not match IDs in the main entity of dataset"
+        )
+        self.assertTrue(expected_error in stderr)
+
+        # TODO: uncomment when record-id is returned + get record id from stdout
+        # self.assertTrue(self.is_recod_object(stdout))
+        # Make sure to remove created record
+        # subprocess.check_output('dx rm {}'.format(stdout), shell=True, text=True)
 
 
 if __name__ == "__main__":
