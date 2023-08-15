@@ -1073,7 +1073,6 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     table_column_name = "{}${}".format(entity_name, field_name)
     fields_list = [{field_name: table_column_name}]
 
-
     
     # Note that pheno filters do not need name or id fields
     payload = {
@@ -1089,6 +1088,11 @@ def validate_cohort_ids(descriptor,project,resp,ids):
             }
         },
     }
+
+    if "CohortBrowser" in resp["recordTypes"]:
+        if resp.get("baseSql"):
+            payload["base_sql"] = resp.get("baseSql")
+        payload["filters"] = resp["filters"]
 
     # Use the dxpy raw_api_function to send a POST request to the server with our payload
     resp_raw = raw_api_call(resp, payload)
@@ -1132,19 +1136,9 @@ def create_cohort(args):
     if args.cohort_ids:
         samples = args.cohort_ids.split(",")
     
-    #print(json.dumps(resp))
-
-    # If --from record is a cohort, get the dxid from the resolve_validate_record_path response
-    # Otherwise use the dxid in the entity_result
-    if "CohortBrowser" in resp["recordTypes"]:
-        dxid = resp["dataset"]
-    else:
-        dxid = entity_result["id"]
-    print("dxid: {}".format(dxid))
-
     #### Validate the input cohort IDs ####
     # Get the table/entity and field/column of the dataset from the descriptor
-    rec_descriptor = DXDataset(dxid, project=dataset_project).get_descriptor()
+    rec_descriptor = DXDataset(entity_result["id"], project=dataset_project).get_descriptor()
 
     validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
     # Input cohort IDs have been succesfully validated    
