@@ -1116,6 +1116,33 @@ def validate_cohort_ids(descriptor, project, resp, ids):
         err_exit(err_msg)
 
 
+def has_access_level(project, access_level_list):
+    """
+    Validates that issuing user has required access level.
+    Args: 
+        project: tasked project_id
+        access_level_list: list of accepted levels, lower first
+    Retuns: boolean
+    """
+    try:
+        project_describe = describe(project)
+    except PermissionDenied:
+        return False
+    if project_describe["level"] not in access_level_list:
+        return False
+    return True
+
+def validate_project_access(project, access_level_list = ['CONTRIBUTE', 'ADMINISTER']):
+    """
+    Validates that project has requested access.
+    Args: 
+        project: tasked project_id
+        access_level_list: list of accepted levels, lower first. Default at least CONTRIBUTE
+    """
+    if not has_access_level(project, access_level_list):
+        raise ResolutionError('At least {} permission is required to create a record in a project'.format(access_level_list[0]))
+
+
 def create_cohort(args): 
     """
     Create a cohort from dataset/cohort and specified list of samples. 
@@ -1124,9 +1151,7 @@ def create_cohort(args):
     # validate and resolve 'PATH' input
     if args.PATH:
         path_project, path_folder, path_name = resolve_validate_dx_path(args.PATH)
-        path_project_describe = describe(path_project)
-        if path_project_describe["level"] not in ['CONTRIBUTE', 'ADMINISTER']:
-            raise ResolutionError('At least CONTRIBUTE permission is required to create a record in a project')
+        validate_project_access(path_project)
 
     # validate and resolve 'from' input
     FROM = args.__dict__.get("from")
