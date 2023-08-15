@@ -133,15 +133,15 @@ def raw_api_call(resp, payload, sql_message=True):
         if "error" in resp_raw.keys():
             if resp_raw["error"]["type"] == "InvalidInput":
                 err_message = "Insufficient permissions due to the project policy.\n" + resp_raw["error"]["message"]
-                
             elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
-
                 err_message = "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster.\n" + resp_raw["error"]["message"]        
             elif resp_raw["error"]["type"] == "QueryBuilderError" and resp_raw["error"]["details"] == "rsid exists in request filters without rsid entries in rsid_lookup_table.":
                 err_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
+            elif resp_raw["error"]["type"] == "DxApiError":
+                err_message = resp_raw["error"]["message"]
             else:
                 err_message = resp_raw["error"]
-            err_exit(err_message)
+            err_exit(str(err_message))
     except Exception as details:
         err_exit(str(details))
     return resp_raw
@@ -1075,10 +1075,10 @@ def validate_cohort_ids(descriptor,project,resp,ids):
 
     
     # Note that pheno filters do not need name or id fields
-    payload = {
-        "project_context": project,
-        "fields": fields_list,
-        "raw_filters": {
+    if "CohortBrowser" in resp["recordTypes"]:
+        payload = {
+            "project_context": project,
+            "fields": fields_list,
             "pheno_filters": {
                 "filters": {
                     table_column_name: [
@@ -1086,8 +1086,21 @@ def validate_cohort_ids(descriptor,project,resp,ids):
                     ]
                 }
             }
-        },
-    }
+        }
+    else:
+        payload = {
+            "project_context": project,
+            "fields": fields_list,
+            "raw_filters": {
+                "pheno_filters": {
+                    "filters": {
+                        table_column_name: [
+                            {"condition": "in", "values": ids}
+                        ]
+                    }
+                }
+            },
+        }
 
     if "CohortBrowser" in resp["recordTypes"]:
         if resp.get("baseSql"):
@@ -1095,7 +1108,11 @@ def validate_cohort_ids(descriptor,project,resp,ids):
         payload["filters"] = resp["filters"]
 
     # Use the dxpy raw_api_function to send a POST request to the server with our payload
-    resp_raw = raw_api_call(resp, payload)
+    try:
+        resp_raw = raw_api_call(resp, payload)
+    except Exception as exc:
+        print("exception caught:")
+        print(exc)
     # Order of samples doesn't matter so using set here
     discovered_ids = set()
     # Parse the results objects for the cohort ids
@@ -1138,7 +1155,7 @@ def create_cohort(args):
     
     #### Validate the input cohort IDs ####
     # Get the table/entity and field/column of the dataset from the descriptor
-    rec_descriptor = DXDataset(entity_result["id"], project=dataset_project).get_descriptor()
+    rec_descriptor = DXDataset(resp["dataset"], project=resp["datasetRecordProject"]).get_descriptor()
 
     validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
     # Input cohort IDs have been succesfully validated    
