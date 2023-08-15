@@ -1091,16 +1091,16 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     # Use the dxpy raw_api_function to send a POST request to the server with our payload
     resp_raw = raw_api_call(resp, payload)
     # Order of samples doesn't matter so using set here
-    discovered_samples = set()
+    discovered_ids = set()
     # Parse the results objects for the cohort ids
     for result in resp_raw["results"]:
-        discovered_samples.add(result[field_name])
+        discovered_ids.add(result[field_name])
 
     # Compare the discovered cohort ids to the user-provided cohort ids
-    if discovered_samples != set(ids):
+    if discovered_ids != set(ids):
         # Find which given samples are not present in the dataset
-        missing_samples = set(ids).difference(discovered_samples)
-        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = from_project,ids = missing_samples)
+        missing_ids = set(ids).difference(discovered_ids)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = project,ids = missing_ids)
         err_exit(err_msg)
 
 def create_cohort(args): 
