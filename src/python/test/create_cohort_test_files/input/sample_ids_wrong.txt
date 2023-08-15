@@ -1,4 +1,4 @@
-sample00759
-sample00713
-sample00870
+sample_4
+sample_2
+sample_3
 wrong_sample_id
