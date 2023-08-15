@@ -73,22 +73,34 @@ class TestCreateCohort(unittest.TestCase):
 
         self.assertEqual(expected_result,test_md5sum)
 
+    # EM-1
     # Supplied IDs do not match IDs of main entity in Dataset/Cohort
     def test_errmsg_id_match(self):
-        pass
 
+        command = 'dx create_cohort fakepath --from {} --cohortids "bad_id_1,bad_id_2"'.format(self.test_record)
+        
+        process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
+        # For now lets examine the error message
+        # stdout should be the first element in this list and stderr the second
+        print(process.communicate()[1])
+
+
+    # EM-2
     # The structure of “Path” is invalid. This should be able to be reused from other dx functions
     def test_errmsg_invalid_path(self):
         pass
 
+    # EM-3
     # The user does not have access to the object
     def test_errmsg_no_data_access(self):
         pass
 
+    # EM-4
     # The record id or path is not a cohort or dataset
     def test_errmsg_not_cohort_dataset(self):
         pass
 
+    # EM-5
     # The record id or path is a cohort or dataset but is invalid (maybe corrupted, descriptor not accessible...etc)
     def test_errmsg_invalid_record(self):
         pass
