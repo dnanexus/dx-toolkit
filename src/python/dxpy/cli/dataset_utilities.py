@@ -1054,6 +1054,8 @@ def extract_assay_somatic(args):
                 quoting=csv.QUOTE_NONE,
             )
 
+#### CREATE COHORT ####
+
 def resolve_validate_dx_path(path):
     """
     Resolves dx path into project, folder and name. Fails if non existing folder is provided. 
@@ -1073,7 +1075,7 @@ def resolve_validate_dx_path(path):
     
     return project, folder, name
 
-def validate_cohort_ids(descriptor,project,resp,ids):
+def validate_cohort_ids(descriptor, project, resp, ids):
     # Usually the name of the table
     entity_name = descriptor.model["global_primary_key"]["entity"]
     # The name of the column or field in the table
@@ -1110,8 +1112,9 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     if discovered_samples != set(ids):
         # Find which given samples are not present in the dataset
         missing_samples = set(ids).difference(discovered_samples)
-        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = from_project,ids = missing_samples)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = descriptor.name, ids = missing_samples)
         err_exit(err_msg)
+
 
 def create_cohort(args): 
     """
