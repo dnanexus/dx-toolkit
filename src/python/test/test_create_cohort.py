@@ -91,8 +91,12 @@ class TestCreateCohort(unittest.TestCase):
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
+
+        experimental_message = process.communicate()[1].strip()
+        print(experimental_message)
+
         # stdout should be the first element in this list and stderr the second
-        self.assertEqual(expected_error_message.strip(), process.communicate()[1].strip())
+        self.assertEqual(expected_error_message.strip(), experimental_message)
 
     # EM-2
     # The structure of “Path” is invalid. This should be able to be reused from other dx functions
