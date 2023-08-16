@@ -46,6 +46,7 @@ from ..exceptions import (
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
+from ..dx_extract_utils.cohort_filter_payload import cohort_final_payload
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -1072,6 +1073,46 @@ def resolve_validate_dx_path(path):
     
     return project, folder, name
 
+def validate_cohort_ids(descriptor,project,resp,ids):
+    # Usually the name of the table
+    entity_name = descriptor.model["global_primary_key"]["entity"]
+    # The name of the column or field in the table
+    field_name = descriptor.model["global_primary_key"]["field"] 
+
+    # Prepare a payload to find entries matching the input ids in the dataset
+    table_column_name = "{}${}".format(entity_name, field_name)
+    fields_list = [{field_name: table_column_name}]
+    
+    # Note that pheno filters do not need name or id fields
+    payload = {
+        "project_context": project,
+        "fields": fields_list,
+        "raw_filters": {
+            "pheno_filters": {
+                "filters": {
+                    table_column_name: [
+                        {"condition": "in", "values": ids}
+                    ]
+                }
+            }
+        },
+    }
+
+    # Use the dxpy raw_api_function to send a POST request to the server with our payload
+    resp_raw = raw_api_call(resp, payload)
+    # Order of samples doesn't matter so using set here
+    discovered_samples = set()
+    # Parse the results objects for the cohort ids
+    for result in resp_raw["results"]:
+        discovered_samples.add(result[field_name])
+
+    # Compare the discovered cohort ids to the user-provided cohort ids
+    if discovered_samples != set(ids):
+        # Find which given samples are not present in the dataset
+        missing_samples = set(ids).difference(discovered_samples)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = from_project,ids = missing_samples)
+        err_exit(err_msg)
+
 def create_cohort(args): 
     """
     Create a cohort from dataset/cohort and specified list of samples. 
@@ -1101,49 +1142,17 @@ def create_cohort(args):
     
     #### Validate the input cohort IDs ####
     # Get the table/entity and field/column of the dataset from the descriptor
-    rec_descriptor = DXDataset(entity_result["id"], project=from_project).get_descriptor()
+    rec_descriptor = DXDataset(entity_result["id"], project=dataset_project).get_descriptor()
 
-    # Usually the name of the table
-    entity_name = rec_descriptor.model["global_primary_key"]["entity"]
-    # The name of the column or field in the table
-    field_name = rec_descriptor.model["global_primary_key"]["field"] 
 
-    # Prepare a payload to find entries matching the input ids in the dataset
-    table_column_name = "{}${}".format(entity_name, field_name)
-    fields_list = [{field_name: table_column_name}]
+    validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
+    # Input cohort IDs have been succesfully validated
     
-    # Note that pheno filters do not need name or id fields
-    payload = {
-        "project_context": from_project,
-        "fields": fields_list,
-        "raw_filters": {
-            "pheno_filters": {
-                "filters": {
-                    table_column_name: [
-                        {"condition": "in", "values": samples}
-                    ]
-                }
-            }
-        },
-    }
-
-    # Use the dxpy raw_api_function to send a POST request to the server with our payload
-    resp_raw = raw_api_call(resp, payload)
-    # Order of samples doesn't matter so using set here
-    discovered_samples = set()
-    # Parse the results objects for the cohort ids
-    for result in resp_raw["results"]:
-        discovered_samples.add(result[field_name])
-
-    # Compare the discovered cohort ids to the user-provided cohort ids
-    if discovered_samples != set(samples):
-        # Find which given samples are not present in the dataset
-        missing_samples = set(samples).difference(discovered_samples)
-        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = from_project,ids = missing_samples)
-        err_exit(err_msg)
-    # Input cohort IDs have been succesfully validated    
-
-   
+    #entity = 'ENTITY'
+    #field = 'FIELD'
+    #cohort_filter = {}
+    #payload = cohort_final_payload(samples, entity, field, cohort_filter, from_project)
+    #sql = cohort_query_api_call(resp, payload)
 
 
 class DXDataset(DXRecord):
