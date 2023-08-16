@@ -87,7 +87,7 @@ class TestCreateCohort(unittest.TestCase):
             "--cohort-ids",
             "sample00000,sample00003,bad_id_1",
         ]
-        expected_error_message = "The following supplied IDs do not match IDs in the main entity of dataset, project-G9j1pX00vGPzF2XQ7843k2Jq: {{'bad_id_1'}}".format()
+        expected_error_message = "The following supplied IDs do not match IDs in the main entity of dataset, {}: {{'bad_id_1'}}".format(self.proj_id)
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
@@ -112,9 +112,8 @@ class TestCreateCohort(unittest.TestCase):
     # The record id or path is not a cohort or dataset
     # This should fail before the id validity check
     def test_errmsg_not_cohort_dataset(self):
-        quaytest_applet_id = (
-            "project-G9j1pX00vGPzF2XQ7843k2Jq:applet-GPbxvJQ0vGPx0yQV5843YYqy"
-        )
+        quaytest_applet_id = "{}:applet-GPbxvJQ0vGPx0yQV5843YYqy".format(self.proj_id)
+        
         expected_error_message = "{} : Invalid path. The path must point to a record type of cohort or dataset".format(
             quaytest_applet_id
         )
@@ -191,7 +190,7 @@ class TestCreateCohort(unittest.TestCase):
 
     # EM-10
     # If both --cohort-ids and --cohort-ids-file are supplied in the same call
-    # This should fail before checking to see if the cohort id file actually exists
+    # The file needs to exist for this check to be performed
     def test_errmsg_incompat_args(self):
         expected_error_message = "Only one --cohort-ids and --cohort-ids-file may be supplied at a given time. Please use either --cohort-ids or --cohort-ids-file, and not both."
         command = command = [
@@ -203,7 +202,7 @@ class TestCreateCohort(unittest.TestCase):
             "--cohort-ids",
             "id1,id2",
             "--cohort-file",
-            "cohort_id_file.txt",
+            "{}/sample_ids_10.txt".format(self.general_input_dir),
         ]
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
