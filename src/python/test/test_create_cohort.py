@@ -23,12 +23,9 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 
 import unittest
-import tempfile
-import shutil
 import os
 import re
 import subprocess
-import pandas as pd
 import dxpy
 import sys
 import hashlib
@@ -83,7 +80,7 @@ class TestCreateCohort(unittest.TestCase):
     def test_errmsg_id_match(self):
         pass
 
-    # The structure of “Path” is invalid. This should be able to be reused from other dx functions
+    # The structure of "Path" is invalid. This should be able to be reused from other dx functions
     def test_errmsg_invalid_path(self):
         pass
 
