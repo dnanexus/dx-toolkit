@@ -87,14 +87,12 @@ class TestCreateCohort(unittest.TestCase):
             "--cohort-ids",
             "sample00000,sample00003,bad_id_1",
         ]
-        print(command)
-        expected_error_message = "The following supplied IDs do not match IDs in the main entity of dataset, project-G9j1pX00vGPzF2XQ7843k2Jq: {{bad_id_1}}".format()
-        print(expected_error_message)
+        expected_error_message = "The following supplied IDs do not match IDs in the main entity of dataset, project-G9j1pX00vGPzF2XQ7843k2Jq: {{'bad_id_1'}}".format()
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
         # stdout should be the first element in this list and stderr the second
-        self.assertEqual(expected_error_message, process.communicate()[1])
+        self.assertEqual(expected_error_message.strip(), process.communicate()[1].strip())
 
     # EM-2
     # The structure of “Path” is invalid. This should be able to be reused from other dx functions
