@@ -1116,31 +1116,33 @@ def validate_cohort_ids(descriptor, project, resp, ids):
         err_exit(err_msg)
 
 
-def has_access_level(project, access_level_list):
+def has_access_level(project, access_level):
     """
     Validates that issuing user has required access level.
     Args: 
-        project: tasked project_id
-        access_level_list: list of accepted levels, lower first
+        project: str: tasked project_id
+        access_level: str: minimum requested level
     Retuns: boolean
     """
+    level_rank=["VIEW", "UPLOAD", "CONTRIBUTE", "ADMINISTER"]
+    access_level_idx = level_rank.index(access_level)
     try:
         project_describe = describe(project)
     except PermissionDenied:
         return False
-    if project_describe["level"] not in access_level_list:
+    if level_rank.index(project_describe["level"]) < access_level_idx:
         return False
     return True
 
-def validate_project_access(project, access_level_list = ['CONTRIBUTE', 'ADMINISTER']):
+def validate_project_access(project, access_level = "UPLOAD"):
     """
     Validates that project has requested access.
     Args: 
-        project: tasked project_id
-        access_level_list: list of accepted levels, lower first. Default at least CONTRIBUTE
+        project: str: tasked project_id
+        access_level: str: minimum requested level Default at least UPLOAD
     """
-    if not has_access_level(project, access_level_list):
-        raise ResolutionError('At least {} permission is required to create a record in a project'.format(access_level_list[0]))
+    if not has_access_level(project, access_level):
+        raise ResolutionError('At least {} permission is required to create a record in a project'.format(access_level))
 
 
 def create_cohort(args): 
