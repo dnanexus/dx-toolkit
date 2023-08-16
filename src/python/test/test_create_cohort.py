@@ -57,8 +57,9 @@ class TestCreateCohort(unittest.TestCase):
         cls.general_input_dir = os.path.join(dirname, "create_cohort_test_files/input/")
         # cls.general_output_dir = os.path.join(dirname, "create_cohort_test_files/output/")
 
-        # TODO: Update when we get more data
-        cls.test_record = "{}:record-GXJZy600vGPbZVv0KXqVZxBF".format(proj_name)
+
+        cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
+        cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
 
     def is_recod_object(self, name):
         bool(re.match(r"^(record-[A-Za-z0-9]{24}|[a-z][a-z_0-9]{1,255})$", name))
@@ -124,9 +125,9 @@ class TestCreateCohort(unittest.TestCase):
             "dx",
             "create_cohort",
             "--from",
-            self.test_record,
+            self.test_record_pheno,
             "--cohort-ids-file",
-            "{}sample_ids_valid.txt".format(self.general_input_dir),
+            "{}sample_ids_valid_pheno.txt".format(self.general_input_dir),
         ]
         process = subprocess.Popen(
             command,
@@ -135,7 +136,7 @@ class TestCreateCohort(unittest.TestCase):
             universal_newlines=True,
         )
         stdout, stderr = process.communicate()
-        self.assertTrue(stderr == "")
+        self.assertTrue(stderr == "", msg = stderr)
 
         # TODO: uncomment when record-id is returned + get record id from stdout
         # self.assertTrue(self.is_recod_object(stdout))
@@ -147,7 +148,7 @@ class TestCreateCohort(unittest.TestCase):
             "dx",
             "create_cohort",
             "--from",
-            self.test_record,
+            self.test_record_pheno,
             "--cohort-ids-file",
             "{}sample_ids_wrong.txt".format(self.general_input_dir),
         ]
@@ -158,16 +159,16 @@ class TestCreateCohort(unittest.TestCase):
         expected_error = (
             "The following supplied IDs do not match IDs in the main entity of dataset"
         )
-        self.assertTrue(expected_error in stderr)
+        self.assertTrue(expected_error in stderr, msg = stderr)
 
     def test_accept_cli_ids(self):
         command = [
             "dx",
             "create_cohort",
             "--from",
-            self.test_record,
+            self.test_record_geno,
             "--cohort-ids",
-            "sample_2,sample_3",
+            "sample_1_1,sample_1_10",
         ]
         process = subprocess.Popen(
             command,
@@ -176,7 +177,7 @@ class TestCreateCohort(unittest.TestCase):
             universal_newlines=True,
         )
         stdout, stderr = process.communicate()
-        self.assertTrue(stderr == "")
+        self.assertTrue(stderr == "", msg = stderr)
 
         # TODO: uncomment when record-id is returned + get record id from stdout
         # self.assertTrue(self.is_recod_object(stdout))
@@ -188,7 +189,7 @@ class TestCreateCohort(unittest.TestCase):
             "dx",
             "create_cohort",
             "--from",
-            self.test_record,
+            self.test_record_geno,
             "--cohort-ids",
             "wrong,sample,id",
         ]
@@ -199,7 +200,7 @@ class TestCreateCohort(unittest.TestCase):
         expected_error = (
             "The following supplied IDs do not match IDs in the main entity of dataset"
         )
-        self.assertTrue(expected_error in stderr)
+        self.assertTrue(expected_error in stderr, msg = stderr)
 
         # TODO: uncomment when record-id is returned + get record id from stdout
         # self.assertTrue(self.is_recod_object(stdout))
