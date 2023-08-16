@@ -1,4 +1,4 @@
-sample_4
-sample_2
-sample_3
+patient_2
+patient_3
+patient_4
 wrong_sample_id
