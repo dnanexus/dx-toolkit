@@ -72,7 +72,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
             value = "dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)" % i['name']
-        # optional inputs will be added to custom runtime config file
+        # optional inputs will be added to custom runtime parameter file
         if "Nextflow pipeline optional" in i.get("help", ""):
             if i.get("class") not in ("int","float","boolean"):
                 value = '\\"' + value + '\\"'
