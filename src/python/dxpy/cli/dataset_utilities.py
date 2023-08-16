@@ -46,6 +46,7 @@ from ..exceptions import (
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
+from ..dx_extract_utils.cohort_filter_payload import cohort_final_payload
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -111,17 +112,26 @@ def resolve_validate_record_path(path):
     return project, entity_result, resp, dataset_project
 
 
-def raw_query_api_call(resp, payload):
-    resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/raw-query"
+def viz_query_api_call(resp, payload, route):
+    resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/" + route
     try:
-        resp_raw_query = dxpy.DXHTTPRequest(
+        resp_query = dxpy.DXHTTPRequest(
             resource=resource_val, data=payload, prepend_srv=False
         )
 
     except Exception as details:
         err_exit(str(details))
-    sql_results = resp_raw_query["sql"] + ";"
+    sql_results = resp_query["sql"] + ";"
     return sql_results
+
+
+def raw_query_api_call(resp, payload):
+    return viz_query_api_call(resp, payload, 'raw-query')
+
+
+def cohort_query_api_call(resp, payload):
+    # TODO: use updated "cohort-query" route
+    return viz_query_api_call(resp, payload, 'cohort-query')
 
 
 def raw_api_call(resp, payload, sql_message=True):
@@ -1159,6 +1169,12 @@ def create_cohort(args):
 
     validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
     # Input cohort IDs have been succesfully validated    
+
+    #entity = 'ENTITY'
+    #field = 'FIELD'
+    #cohort_filter = {}
+    #payload = cohort_final_payload(samples, entity, field, cohort_filter, from_project)
+    #sql = cohort_query_api_call(resp, payload)
 
 
 class DXDataset(DXRecord):
