@@ -1,3 +1,9 @@
+dx-toolkit (0.356.0) trusty; urgency=medium
+
+  * Fixed: dx describe analysis-xxxx --json --verbose
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 16 Aug 2023 16:50:06 +0000
+
 dx-toolkit (0.355.0) trusty; urgency=medium
 
   * Added: New return fields from dx describe {job/analysis}-xxxx with --verbose argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
