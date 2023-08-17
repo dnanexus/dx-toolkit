@@ -146,6 +146,11 @@ on_exit() {
 
   dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
   # done
+
+  if [[ $ret -ne 0 ]]; then   # upload log file
+    FAILED_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" "${DX_JOB_OUTDIR%/}"/"${LOG_NAME}" --wait --brief --no-progress --parents)
+    # dx-jobutil-add-output nextflow_log $FAILED_LOG_ID --class=file
+  fi
   exit $ret
 }
 
@@ -237,7 +242,7 @@ validate_run_opts() {
   for i in "${!arr[@]}"; do
     case ${arr[i]} in
     -w=* | -work-dir=*)
-      NXF_WORK="${i#*=}"
+      NXF_WORK="${arr[i]#*=}"
       break
       ;;
     -w | -work-dir)
@@ -301,6 +306,34 @@ dx_path() {
   esac
 }
 
+parse_pipeline_params(){
+  IFS=" " read -r -a arr <<<"$nextflow_pipeline_params"
+  nextflow_pipeline_params_final=()
+  # declare -i i
+  # i=-1
+  # for a in "${arr[@]}"; do
+  #   case $a in
+  #   --*=* | -*=*)
+  #     i+=1
+  #     nextflow_pipeline_params_final+=("${a}")
+  #     ;;
+  #   --* | -*)
+  #     i+=1
+  #     nextflow_pipeline_params_final+=("${a}")
+  #     i+=1
+  #     ;;
+  #   *)
+  #   if [[ -n ${nextflow_pipeline_params_final[i]} ]]; then
+  #     nextflow_pipeline_params_final[i]="${nextflow_pipeline_params_final[i]} ${a}"
+  #   else
+  #     nextflow_pipeline_params_final[i]="${a}"
+  #   fi
+  #   ;;
+  #   esac
+  # done
+  IFS=';' read -r -a arrIN <<<"${nextflow_pipeline_params//--/;}" unset IFS
+  nextflow_pipeline_params_final=("${arrIN[@]/#/--}")
+}
 # Entry point for the main Nextflow orchestrator job
 main() {
   if [[ $debug == true ]]; then
@@ -406,8 +439,14 @@ main() {
     fi
   fi
 
+  set -x
+  parse_pipeline_params
+  echo "pipeline params:" "${nextflow_pipeline_params_final[@]}"
+  # nextflow_pipeline_params_final=( ${nextflow_pipeline_params} )
+  # echo "simple parsed pipeline params:" "${nextflow_pipeline_params_final[@]}"
+
   # execution starts
-  NEXTFLOW_CMD="nextflow \
+  NEXTFLOW_CMD=(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
     ${RUNTIME_CONFIG_CMD} \
@@ -417,9 +456,8 @@ main() {
     -name $DX_JOB_ID \
     $RESUME_CMD \
     $nextflow_run_opts \
-    $nextflow_pipeline_params \
-    $required_inputs
-      "
+    "${nextflow_pipeline_params_final[@]:1}" \
+    $required_inputs)
 
   trap on_exit EXIT
   echo "============================================================="
@@ -429,11 +467,11 @@ main() {
   if [[ $preserve_cache == true ]]; then
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
-  echo "=== NF command      :" $NEXTFLOW_CMD
+  echo "=== NF command      :" ${NEXTFLOW_CMD[@]}
   echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
   echo "============================================================="
 
-    $NEXTFLOW_CMD & NXF_EXEC_PID=$!
+    "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
     # forwarding nextflow log file to job monitor
     set +x
     if [[ $debug == true ]] ; then
