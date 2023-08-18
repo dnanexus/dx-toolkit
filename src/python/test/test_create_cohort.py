@@ -59,21 +59,20 @@ class TestCreateCohort(unittest.TestCase):
         # TODO: setup project folders
         cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(proj_name)
         cls.proj_id = proj_id
+        with open(
+            os.path.join(cls.general_input_dir, "usage_message.txt"), "r"
+        ) as infile:
+            cls.usage_message = infile.read()
 
+    # Test the message printed on stdout when the --help flag is provided
+    # This message is also printed on every error caught by argparse, before the specific message
     def test_help_text(self):
-        print("testing help text")
-
-        # An MD5sum hash of the correct error message
-        expected_result = "fae9f07f1aad8cf69223ca666b20de35"
-
+        expected_result = self.usage_message
         command = "dx create_cohort --help"
 
         process = subprocess.check_output(command, shell=True, text=True)
 
-        # Get the md5sum hash of the captured error message
-        test_md5sum = hashlib.md5(process.encode("utf-8")).hexdigest()
-
-        self.assertEqual(expected_result, test_md5sum)
+        self.assertEqual(expected_result, process)
 
     # EM-1
     # Supplied IDs do not match IDs of main entity in Dataset/Cohort
@@ -87,21 +86,39 @@ class TestCreateCohort(unittest.TestCase):
             "--cohort-ids",
             "sample00000,sample00003,bad_id_1",
         ]
-        expected_error_message = "The following supplied IDs do not match IDs in the main entity of dataset, {}: {{'bad_id_1'}}".format(self.proj_id)
+        expected_error_message = "The following supplied IDs do not match IDs in the main entity of dataset, {}: {{'bad_id_1'}}".format(
+            self.proj_id
+        )
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
 
-        experimental_message = process.communicate()[1].strip()
-        print(experimental_message)
-
+        err_msg = process.communicate()[1].strip()
         # stdout should be the first element in this list and stderr the second
-        self.assertEqual(expected_error_message.strip(), experimental_message)
+        self.assertEqual(expected_error_message.strip(), err_msg)
 
     # EM-2
     # The structure of “Path” is invalid. This should be able to be reused from other dx functions
     def test_errmsg_invalid_path(self):
-        pass
+        expected_error_message = (
+            "Structure of PATH is invalid.  Must be in format *.cohort"
+        )
+        command = [
+            "dx",
+            "create_cohort",
+            "{}:/Create_Cohort/bad_name_format.txt".format(self.proj_id),
+            "--from",
+            self.test_record,
+            "--cohort-ids",
+            "id1,id2",
+        ]
+
+        process = subprocess.Popen(
+            command, stderr=subprocess.PIPE, universal_newlines=True
+        )
+
+        # stdout should be the first element in this list and stderr the second
+        self.assertEqual(expected_error_message, process.communicate()[1])
 
     # EM-3
     # The user does not have access to the object
@@ -113,8 +130,8 @@ class TestCreateCohort(unittest.TestCase):
     # This should fail before the id validity check
     def test_errmsg_not_cohort_dataset(self):
         quaytest_applet_id = "{}:applet-GPbxvJQ0vGPx0yQV5843YYqy".format(self.proj_id)
-        
-        expected_error_message = "{} : Invalid path. The path must point to a record type of cohort or dataset".format(
+
+        expected_error_message = "{}: Invalid path. The path must point to a record type of cohort or dataset".format(
             quaytest_applet_id
         )
         command = [
@@ -129,8 +146,9 @@ class TestCreateCohort(unittest.TestCase):
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
+
         # stdout should be the first element in this list and stderr the second
-        self.assertEqual(expected_error_message, process.communicate()[1])
+        self.assertEqual(expected_error_message, process.communicate()[1].strip())
 
     # EM-5
     # The record id or path is a cohort or dataset but is invalid (maybe corrupted, descriptor not accessible...etc)
@@ -156,11 +174,13 @@ class TestCreateCohort(unittest.TestCase):
             "--from",
             bad_path,
             "--cohort-ids",
+            "id_1,id_2",
         ]
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
-        self.assertEqual(expected_error_message, process.communicate()[1])
+        err_msg = process.communicate()[1]
+        self.assertEqual(expected_error_message, err_msg)
 
     # EM-8
     # If PATH is of the format `project-xxxx:folder/` and the user does not have CONTRIBUTE or ADMINISTER access
@@ -182,17 +202,21 @@ class TestCreateCohort(unittest.TestCase):
             "--from",
             bad_path,
             "--cohort-ids",
+            "id_1,id_2",
         ]
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
-        self.assertEqual(expected_error_message, process.communicate()[1])
+        err_msg = process.communicate()[1]
+        self.assertEqual(expected_error_message, err_msg)
 
     # EM-10
     # If both --cohort-ids and --cohort-ids-file are supplied in the same call
     # The file needs to exist for this check to be performed
     def test_errmsg_incompat_args(self):
-        expected_error_message = "Only one --cohort-ids and --cohort-ids-file may be supplied at a given time. Please use either --cohort-ids or --cohort-ids-file, and not both."
+        expected_error_message = "{}\ndx create_cohort: error: argument --cohort-ids-file: not allowed with argument --cohort-ids".format(
+            self.usage_message
+        )
         command = command = [
             "dx",
             "create_cohort",
@@ -201,13 +225,15 @@ class TestCreateCohort(unittest.TestCase):
             self.test_record,
             "--cohort-ids",
             "id1,id2",
-            "--cohort-file",
-            "{}/sample_ids_10.txt".format(self.general_input_dir),
+            "--cohort-ids-file",
+            os.path.join(self.general_input_dir, "sample_ids_10.txt"),
         ]
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
-        self.assertEqual(expected_error_message, process.communicate()[1])
+        err_msg = process.communicate()[1]
+        # removing all whitespace before comparing
+        self.assertEqual("".join(expected_error_message.split()), "".join(err_msg.split()))
 
     def test_retrieve_cohort_id(self):
         pass
