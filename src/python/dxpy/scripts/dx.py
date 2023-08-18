@@ -6620,7 +6620,7 @@ parser_create_cohort.add_argument('PATH', nargs='?', type=str, help='DNAnexus pa
 parser_create_cohort.add_argument('--from', type=str, help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name')
 parser_create_c_mutex_group = parser_create_cohort.add_mutually_exclusive_group(required=True)
 parser_create_c_mutex_group.add_argument('--cohort-ids', type=str, help='A set of IDs used to subset the Dataset or Cohort object as a comma-separated string. IDs must match identically in the supplied Dataset. Ifa Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
-parser_create_c_mutex_group.add_argument('--cohort-ids-file', type=str, help='A set of IDs used to subset the Dataset or Cohort object in a file with one ID per line and no header. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
+parser_create_c_mutex_group.add_argument('--cohort-ids-file', type=argparse.FileType('r'), help='A set of IDs used to subset the Dataset or Cohort object in a file with one ID per line and no header. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
 parser_create_cohort.add_argument('-h','--help', help='Return the docstring and exit', action='help')
 
 parser_create_cohort.set_defaults(func=create_cohort)
