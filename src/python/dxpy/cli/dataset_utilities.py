@@ -1136,11 +1136,9 @@ def validate_cohort_ids(descriptor,project,resp,ids):
         # Find which given samples are not present in the dataset
         missing_ids = set(ids).difference(discovered_ids)
         err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = project,ids = missing_ids)
-        err_exit(err_msg)
+        raise ValueError(err_msg)
 
         
-  
-
 def has_access_level(project, access_level):
     """
     Validates that issuing user has required access level.
@@ -1210,7 +1208,10 @@ def create_cohort(args):
     # Get the table/entity and field/column of the dataset from the descriptor
     rec_descriptor = DXDataset(resp["dataset"], project=resp["datasetRecordProject"]).get_descriptor()
 
-    validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
+    try:
+        validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
+    except ValueError as err:
+        err_exit(err)
     # Input cohort IDs have been succesfully validated    
 
     #entity = 'ENTITY'
