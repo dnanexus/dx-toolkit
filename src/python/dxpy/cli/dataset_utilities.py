@@ -1054,24 +1054,26 @@ def extract_assay_somatic(args):
                 quoting=csv.QUOTE_NONE,
             )
 
+#### CREATE COHORT ####
 def resolve_validate_dx_path(path):
     """
-    Resolves dx path into project, folder and name. Fails if non existing folder is provided. 
+    Resolves dx path into project, folder and name. Fails if non existing folder is provided.
     """
-    
+
     project, folder, name = resolve_path(path)
-    if folder != '/':
-        folder_name = '/{}'.format(os.path.basename(folder))
+    if folder != "/":
+        folder_name = "/{}".format(os.path.basename(folder))
         folder_path = os.path.dirname(folder)
         try:
-            folder_exists = check_folder_exists(project, folder_path, folder_name )
-        except Exception as e:
-            raise ResolutionError(e)
-        
+            folder_exists = check_folder_exists(project, folder_path, folder_name)
+        except ResolutionError as e:
+            err_msg = str(e)
         if not folder_exists:
-            raise ResolutionError('The folder: {} could not be found in the project: {}'.format(folder, project))
-    
-    return project, folder, name
+            err_msg = "The folder: {} could not be found in the project: {}".format(
+                folder, project
+            )
+
+    return project, folder, name, err_msg
 
 def validate_cohort_ids(descriptor,project,resp,ids):
     # Usually the name of the table
@@ -1136,18 +1138,59 @@ def validate_cohort_ids(descriptor,project,resp,ids):
         err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = project,ids = missing_ids)
         err_exit(err_msg)
 
-def create_cohort(args): 
+        
+  
+
+def has_access_level(project, access_level):
     """
-    Create a cohort from dataset/cohort and specified list of samples. 
+    Validates that issuing user has required access level.
+    Args:
+        project: str: tasked project_id
+        access_level: str: minimum requested level
+    Retuns: boolean
+    """
+    level_rank = ["VIEW", "UPLOAD", "CONTRIBUTE", "ADMINISTER"]
+    access_level_idx = level_rank.index(access_level)
+    try:
+        project_describe = describe(project)
+    except PermissionDenied:
+        return False
+    if level_rank.index(project_describe["level"]) < access_level_idx:
+        return False
+    return True
+
+
+def validate_project_access(project, access_level="UPLOAD"):
+    """
+    Validates that project has requested access.
+    Args:
+        project: str: tasked project_id
+        access_level: str: minimum requested level Default at least UPLOAD
+    Returns:
+        Error message
+
+    """
+    if not has_access_level(project, access_level):
+        return "At least {} permission is required to create a record in a project".format(
+            access_level
+        )
+
+
+def create_cohort(args):
+    """
+    Create a cohort from dataset/cohort and specified list of samples.
     """
     #### Validation ####
     # validate and resolve 'PATH' input
     if args.PATH:
-        path_project, path_folder, path_name = resolve_validate_dx_path(args.PATH)
-        path_project_describe = describe(path_project)
-        if path_project_describe["level"] not in ['CONTRIBUTE', 'ADMINISTER']:
-            raise ResolutionError('At least CONTRIBUTE permission is required to create a record in a project')
-
+        path_project, path_folder, path_name, err_msg = resolve_validate_dx_path(
+            args.PATH
+        )
+        if err_msg:
+            err_exit(err_msg)
+        err_msg = validate_project_access(path_project)
+        if err_msg:
+            err_exit(err_msg)
     # validate and resolve 'from' input
     FROM = args.__dict__.get("from")
     from_project, entity_result, resp, dataset_project = resolve_validate_record_path(FROM)
