@@ -1068,8 +1068,6 @@ def resolve_validate_dx_path(path):
             folder_exists = check_folder_exists(project, folder_path, folder_name)
         except ResolutionError as e:
             err_msg = str(e)
-        except Exception as e:
-            err_msg = str(e)
 
         if not folder_exists:
             err_msg = "The folder: {} could not be found in the project: {}".format(
@@ -1139,7 +1137,7 @@ def has_access_level(project, access_level):
     return True
 
 
-def validate_project_access(project, access_level="UPLOAD"):
+def validate_project_access(project, access_level="UPLOAD":
     """
     Validates that project has requested access.
     Args:
@@ -1149,14 +1147,11 @@ def validate_project_access(project, access_level="UPLOAD"):
         Error message
 
     """
-    try:
-        if not has_access_level(project, access_level):
-            err_mesg = "At least {} permission is required to create a record in a project".format(
-                access_level
-            )
-    except Exception as e:
-        err_mesg = str(e)
-    return err_mesg
+    if not has_access_level(project, access_level):
+        return "At least {} permission is required to create a record in a project".format(
+            access_level
+        )
+
 
 
 def create_cohort(args):
