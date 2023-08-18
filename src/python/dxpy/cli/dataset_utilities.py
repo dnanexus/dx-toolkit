@@ -1216,6 +1216,8 @@ def create_cohort(args):
         err_exit(err)
     except VizserverError as err:
         err_exit(err)
+    except Exception as err:
+        err_exit(err)
     # Input cohort IDs have been succesfully validated    
 
     #entity = 'ENTITY'
