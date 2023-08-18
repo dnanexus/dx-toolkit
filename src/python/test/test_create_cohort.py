@@ -23,8 +23,6 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 
 import unittest
-import tempfile
-import shutil
 import os
 import re
 import subprocess
@@ -59,10 +57,15 @@ class TestCreateCohort(unittest.TestCase):
         # TODO: setup project folders
         cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(proj_name)
         cls.proj_id = proj_id
+        cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
+        cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
         with open(
             os.path.join(cls.general_input_dir, "usage_message.txt"), "r"
         ) as infile:
             cls.usage_message = infile.read()
+
+    def is_record_object(self, name):
+        bool(re.match(r"^(record-[A-Za-z0-9]{24}|[a-z][a-z_0-9]{1,255})$", name))
 
     # Test the message printed on stdout when the --help flag is provided
     # This message is also printed on every error caught by argparse, before the specific message
@@ -74,28 +77,95 @@ class TestCreateCohort(unittest.TestCase):
 
         self.assertEqual(expected_result, process)
 
-    # EM-1
-    # Supplied IDs do not match IDs of main entity in Dataset/Cohort
-    def test_errmsg_id_match(self):
+    def test_accept_file_ids(self):
         command = [
             "dx",
             "create_cohort",
             "fakepath",
             "--from",
-            self.test_record,
-            "--cohort-ids",
-            "sample00000,sample00003,bad_id_1",
+            self.test_record_pheno,
+            "--cohort-ids-file",
+            "{}sample_ids_valid_pheno.txt".format(self.general_input_dir),
         ]
-        expected_error_message = "The following supplied IDs do not match IDs in the main entity of dataset, {}: {{'bad_id_1'}}".format(
-            self.proj_id
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
         )
+        stdout, stderr = process.communicate()
+        self.assertTrue(stderr == "", msg = stderr)
+
+        # TODO: uncomment when record-id is returned + get record id from stdout
+        # self.assertTrue(self.is_record_object(stdout))
+        # Make sure to remove created record
+        # subprocess.check_output('dx rm {}'.format(stdout), shell=True, text=True)
+
+    # EM-1
+    def test_accept_file_ids_negative(self):
+        command = [
+            "dx",
+            "create_cohort",
+            "fakepath",
+            "--from",
+            self.test_record_pheno,
+            "--cohort-ids-file",
+            "{}sample_ids_wrong.txt".format(self.general_input_dir),
+        ]
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
+        stderr = process.communicate()[1]
+        expected_error = (
+            "The following supplied IDs do not match IDs in the main entity of dataset"
+        )
+        self.assertTrue(expected_error in stderr, msg = stderr)
 
-        err_msg = process.communicate()[1].strip()
-        # stdout should be the first element in this list and stderr the second
-        self.assertEqual(expected_error_message.strip(), err_msg)
+    def test_accept_cli_ids(self):
+        command = [
+            "dx",
+            "create_cohort",
+            "fakepath",
+            "--from",
+            self.test_record_geno,
+            "--cohort-ids",
+            "sample_1_1,sample_1_10",
+        ]
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+        )
+        stdout, stderr = process.communicate()
+        self.assertTrue(stderr == "", msg = stderr)
+
+        # TODO: uncomment when record-id is returned + get record id from stdout
+        # self.assertTrue(self.is_record_object(stdout))
+        # Make sure to remove created record
+        # subprocess.check_output('dx rm {}'.format(stdout), shell=True, text=True)
+
+    # EM-1
+    # Supplied IDs do not match IDs of main entity in Dataset/Cohort
+    def test_accept_cli_ids_negative(self):
+        command = [
+            "dx",
+            "create_cohort",
+            "fakepath",
+            "--from",
+            self.test_record_geno,
+            "--cohort-ids",
+            "wrong,sample,id",
+        ]
+        process = subprocess.Popen(
+            command, stderr=subprocess.PIPE, universal_newlines=True
+        )
+        stderr = process.communicate()[1]
+        expected_error = (
+            "The following supplied IDs do not match IDs in the main entity of dataset"
+        )
+        self.assertTrue(expected_error in stderr, msg = stderr)
+
 
     # EM-2
     # The structure of “Path” is invalid. This should be able to be reused from other dx functions
@@ -235,14 +305,7 @@ class TestCreateCohort(unittest.TestCase):
         # removing all whitespace before comparing
         self.assertEqual("".join(expected_error_message.split()), "".join(err_msg.split()))
 
-    def test_retrieve_cohort_id(self):
-        pass
-
-    def test_accept_file_ids(self):
-        pass
-
-    def test_accept_cli_ids(self):
-        pass
+    
 
 
 if __name__ == "__main__":
