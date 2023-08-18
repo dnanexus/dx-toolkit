@@ -1075,6 +1075,9 @@ def resolve_validate_dx_path(path):
 
     return project, folder, name, err_msg
 
+class VizserverError(Exception):
+    pass
+
 def validate_cohort_ids(descriptor,project,resp,ids):
     # Usually the name of the table
     entity_name = descriptor.model["global_primary_key"]["entity"]
@@ -1123,8 +1126,7 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     try:
         resp_raw = raw_api_call(resp, payload)
     except Exception as exc:
-        print("exception caught:")
-        print(exc)
+        raise VizserverError("Exception caught while validating cohort ids.  Bad response from Vizserver") from exc
     # Order of samples doesn't matter so using set here
     discovered_ids = set()
     # Parse the results objects for the cohort ids
@@ -1211,6 +1213,8 @@ def create_cohort(args):
     try:
         validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
     except ValueError as err:
+        err_exit(err)
+    except VizserverError as err:
         err_exit(err)
     # Input cohort IDs have been succesfully validated    
 
