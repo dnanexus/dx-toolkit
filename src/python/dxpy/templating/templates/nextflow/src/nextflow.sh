@@ -307,8 +307,8 @@ dx_path() {
 }
 
 parse_pipeline_params(){
-  IFS=" " read -r -a arr <<<"$nextflow_pipeline_params"
-  nextflow_pipeline_params_final=()
+  # IFS=" " read -r -a arr <<<"$nextflow_pipeline_params"
+  # nextflow_pipeline_params_final=()
   # declare -i i
   # i=-1
   # for a in "${arr[@]}"; do
@@ -331,8 +331,8 @@ parse_pipeline_params(){
   #   ;;
   #   esac
   # done
-  IFS=';' read -r -a arrIN <<<"${nextflow_pipeline_params//--/;}" unset IFS
-  nextflow_pipeline_params_final=("${arrIN[@]/#/--}")
+  # IFS=';' read -r -a arrIN <<<"${nextflow_pipeline_params//--/;}" unset IFS
+  IFS=$'\t' read -r -a nextflow_pipeline_params_final < <(echo "$nextflow_pipeline_params" | sed -e 's/\s\+--/\t--/g')
 }
 # Entry point for the main Nextflow orchestrator job
 main() {
@@ -375,6 +375,7 @@ main() {
   export NXF_ANSI_LOG=false
   export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
   export NXF_EXECUTOR='dnanexus'
+  export NXF_JVM_ARGS='-XX:-StackTraceInThrowable'
 
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
@@ -440,8 +441,12 @@ main() {
   fi
 
   set -x
-  parse_pipeline_params
-  echo "pipeline params:" "${nextflow_pipeline_params_final[@]}"
+  # parse_pipeline_params
+  # echo "pipeline params:" "${nextflow_pipeline_params_final[@]/#/arg:}"
+
+  declare -a nextflow_pipeline_params_final="($nextflow_pipeline_params)"
+  for item in "${nextflow_pipeline_params_final[@]}"; do echo "[$item]"; done
+  # echo "pipeline params:" "${nextflow_pipeline_params_final[@]/#/arg:}"
   # nextflow_pipeline_params_final=( ${nextflow_pipeline_params} )
   # echo "simple parsed pipeline params:" "${nextflow_pipeline_params_final[@]}"
 
@@ -456,7 +461,7 @@ main() {
     -name $DX_JOB_ID \
     $RESUME_CMD \
     $nextflow_run_opts \
-    "${nextflow_pipeline_params_final[@]:1}" \
+    "${nextflow_pipeline_params_final[@]}" \
     $required_inputs)
 
   trap on_exit EXIT
