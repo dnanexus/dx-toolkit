@@ -2307,7 +2307,7 @@ def find_executions(args):
             if args.trees:
                 if args.classname != 'job':
                     root = execution_result['describe']['rootExecution']
-                # We want to get only top-level jobs
+                # We want to collect only top-level jobs
                 elif execution_result['id'] != execution_result['describe']['originJob']:
                     continue
                 else:
