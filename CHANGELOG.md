@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Potentially missing jobs in `dx find jobs/executions --tree` output
+
 ## [356.0] - beta
 
 ### Fixed
