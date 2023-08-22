@@ -73,8 +73,8 @@ def resolve_validate_record_path(path):
 
     if entity_result["describe"]["class"] != "record":
         err_exit(
-            "%s : Invalid path. The path must point to a record type of cohort or dataset"
-            % entity_result["describe"]["class"]
+            "{}: Invalid path. The path must point to a record type of cohort or dataset".format(path)
+            
         )
 
     try:
