@@ -66,33 +66,21 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     with open(os.path.join(str(get_template_dir()), get_source_file_name()), 'r') as f:
         src = f.read()
 
-    required_runtime_params = ""
-    generate_runtime_config= ""
+    applet_runtime_params = ""
     for i in custom_inputs:
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
             value = "dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)" % i['name']
-        # optional inputs will be added to custom runtime config file
-        if "Nextflow pipeline optional" in i.get("help", ""):
-            if i.get("class") not in ("int","float","boolean"):
-                value = '\\"' + value + '\\"'
-            generate_runtime_config = generate_runtime_config + '''
-            if [ -n "$%s" ]; then
-                echo params.%s=%s >> nxf_runtime.config
-            fi    
-            '''% (i['name'], i['name'], value)
-        # required inputs need to be added as runtime pipeline params
-        else:
-            # required_inputs variable is initialized in the nextflow.sh script template
-            required_runtime_params = required_runtime_params + '''
-            if [ -n "${}" ]; then
-                required_inputs="${{required_inputs}} --{}={}" 
-            fi
-            '''.format(i['name'], i['name'], value)
+
+        # applet_runtime_inputs variable is initialized in the nextflow.sh script template
+        applet_runtime_params = applet_runtime_params + '''
+        if [ -n "${}" ]; then
+            applet_runtime_inputs="${{applet_runtime_inputs}} --{}={}" 
+        fi
+        '''.format(i['name'], i['name'], value)
 
     profile_arg = "-profile {}".format(profile) if profile else ""
-    src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
-    src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
+    src = src.replace("@@APPLET_RUNTIME_PARAMS@@", applet_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
     src = src.replace("@@DXPY_BUILD_VERSION@@", TOOLKIT_VERSION)
     if USING_PYTHON2:

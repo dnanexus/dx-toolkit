@@ -59,21 +59,6 @@ docker_registry_login() {
   fi
 }
 
-generate_runtime_config() {
-  set +x
-  touch nxf_runtime.config
-  # make a runtime config file to override optional inputs
-  # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
-  @@GENERATE_RUNTIME_CONFIG@@
-
-  if [[ -s nxf_runtime.config ]]; then
-    if [[ $debug == true ]]; then
-      cat nxf_runtime.config
-      set -x
-    fi
-    RUNTIME_CONFIG_CMD='-c nxf_runtime.config'
-  fi
-}
 
 # On exit, for the main Nextflow orchestrator job
 on_exit() {
@@ -130,7 +115,6 @@ on_exit() {
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
-  rm nxf_runtime.config
 
   # try uploading the log file if it is not empty
   if [[ -s $LOG_NAME ]]; then
@@ -346,8 +330,8 @@ main() {
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
-  required_inputs=""
-  @@REQUIRED_RUNTIME_PARAMS@@
+  applet_runtime_inputs=""
+  @@APPLET_RUNTIME_PARAMS@@
 
   # get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
@@ -391,10 +375,6 @@ main() {
   setup_workdir
   export NXF_WORK
 
-  # for optional inputs, pass to the run command by using a runtime config
-  RUNTIME_CONFIG_CMD=""
-  generate_runtime_config
-
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
@@ -410,7 +390,6 @@ main() {
   NEXTFLOW_CMD="nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
-    ${RUNTIME_CONFIG_CMD} \
     -log ${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
@@ -418,7 +397,7 @@ main() {
     $RESUME_CMD \
     $nextflow_run_opts \
     $nextflow_pipeline_params \
-    $required_inputs
+    $applet_runtime_inputs
       "
 
   trap on_exit EXIT
