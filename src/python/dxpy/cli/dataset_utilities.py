@@ -143,15 +143,15 @@ def raw_api_call(resp, payload, sql_message=True):
         if "error" in resp_raw.keys():
             if resp_raw["error"]["type"] == "InvalidInput":
                 err_message = "Insufficient permissions due to the project policy.\n" + resp_raw["error"]["message"]
-                
             elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
-
                 err_message = "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster.\n" + resp_raw["error"]["message"]        
             elif resp_raw["error"]["type"] == "QueryBuilderError" and resp_raw["error"]["details"] == "rsid exists in request filters without rsid entries in rsid_lookup_table.":
                 err_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
+            elif resp_raw["error"]["type"] == "DxApiError":
+                err_message = resp_raw["error"]["message"]
             else:
                 err_message = resp_raw["error"]
-            err_exit(err_message)
+            err_exit(str(err_message))
     except Exception as details:
         err_exit(str(details))
     return resp_raw
@@ -159,7 +159,7 @@ def raw_api_call(resp, payload, sql_message=True):
 
 def extract_dataset(args):
     """
-    Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.
+    Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.
     """
     if (
         not args.dump_dataset_dictionary
@@ -1068,15 +1068,65 @@ def resolve_validate_dx_path(path):
             folder_exists = check_folder_exists(project, folder_path, folder_name)
         except ResolutionError as e:
             err_msg = str(e)
-
         if not folder_exists:
             err_msg = "The folder: {} could not be found in the project: {}".format(
                 folder, project
             )
 
     return project, folder, name, err_msg
-  
 
+class VizserverError(Exception):
+    pass
+
+def validate_cohort_ids(descriptor,project,resp,ids):
+    # Usually the name of the table
+    entity_name = descriptor.model["global_primary_key"]["entity"]
+    # The name of the column or field in the table
+    field_name = descriptor.model["global_primary_key"]["field"] 
+
+    # Prepare a payload to find entries matching the input ids in the dataset
+    table_column_name = "{}${}".format(entity_name, field_name)
+    fields_list = [{field_name: table_column_name}]
+
+    
+    # Note that pheno filters do not need name or id fields
+    payload = {
+        "project_context": project,
+        "fields": fields_list,
+        "pheno_filters": {
+            "filters": {
+                table_column_name: [
+                    {"condition": "in", "values": ids}
+                ]
+            }
+        }
+    }
+    
+
+    if "CohortBrowser" in resp["recordTypes"]:
+        if resp.get("baseSql"):
+            payload["base_sql"] = resp.get("baseSql")
+        payload["filters"] = resp["filters"]
+
+    # Use the dxpy raw_api_function to send a POST request to the server with our payload
+    try:
+        resp_raw = raw_api_call(resp, payload)
+    except Exception as exc:
+        raise VizserverError("Exception caught while validating cohort ids.  Bad response from Vizserver") from exc
+    # Order of samples doesn't matter so using set here
+    discovered_ids = set()
+    # Parse the results objects for the cohort ids
+    for result in resp_raw["results"]:
+        discovered_ids.add(result[field_name])
+
+    # Compare the discovered cohort ids to the user-provided cohort ids
+    if discovered_ids != set(ids):
+        # Find which given samples are not present in the dataset
+        missing_ids = set(ids).difference(discovered_ids)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = project,ids = missing_ids)
+        raise ValueError(err_msg)
+
+        
 def has_access_level(project, access_level):
     """
     Validates that issuing user has required access level.
@@ -1130,17 +1180,31 @@ def create_cohort(args):
     # validate and resolve 'from' input
     FROM = args.__dict__.get("from")
     from_project, entity_result, resp, dataset_project = resolve_validate_record_path(FROM)
-    
 
-    #### Reading sample ids ####
-    # samples=[]
-    # # from file
-    # if args.cohort_ids_file:
-    #     for line in args.cohort_ids_file:
-    #         samples.append(line)
-    # # from string
-    # if args.cohort_ids:
-    #     samples = args.cohort_ids.split(",")
+    #### Reading input sample ids from file or command line ####
+    samples=[]
+    # from file
+    if args.cohort_ids_file:
+        with open(args.cohort_ids_file,"r") as infile:
+            for line in infile:
+                samples.append(line)
+    # from string
+    if args.cohort_ids:
+        samples = args.cohort_ids.split(",")
+    
+    #### Validate the input cohort IDs ####
+    # Get the table/entity and field/column of the dataset from the descriptor
+    rec_descriptor = DXDataset(resp["dataset"], project=resp["datasetRecordProject"]).get_descriptor()
+
+    try:
+        validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
+    except ValueError as err:
+        err_exit(err)
+    except VizserverError as err:
+        err_exit(err)
+    except Exception as err:
+        err_exit(err)
+    # Input cohort IDs have been succesfully validated    
 
     #entity = 'ENTITY'
     #field = 'FIELD'
