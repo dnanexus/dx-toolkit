@@ -306,34 +306,6 @@ dx_path() {
   esac
 }
 
-parse_pipeline_params(){
-  # IFS=" " read -r -a arr <<<"$nextflow_pipeline_params"
-  # nextflow_pipeline_params_final=()
-  # declare -i i
-  # i=-1
-  # for a in "${arr[@]}"; do
-  #   case $a in
-  #   --*=* | -*=*)
-  #     i+=1
-  #     nextflow_pipeline_params_final+=("${a}")
-  #     ;;
-  #   --* | -*)
-  #     i+=1
-  #     nextflow_pipeline_params_final+=("${a}")
-  #     i+=1
-  #     ;;
-  #   *)
-  #   if [[ -n ${nextflow_pipeline_params_final[i]} ]]; then
-  #     nextflow_pipeline_params_final[i]="${nextflow_pipeline_params_final[i]} ${a}"
-  #   else
-  #     nextflow_pipeline_params_final[i]="${a}"
-  #   fi
-  #   ;;
-  #   esac
-  # done
-  # IFS=';' read -r -a arrIN <<<"${nextflow_pipeline_params//--/;}" unset IFS
-  IFS=$'\t' read -r -a nextflow_pipeline_params_final < <(echo "$nextflow_pipeline_params" | sed -e 's/\s\+--/\t--/g')
-}
 # Entry point for the main Nextflow orchestrator job
 main() {
   if [[ $debug == true ]]; then
@@ -375,7 +347,7 @@ main() {
   export NXF_ANSI_LOG=false
   export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
   export NXF_EXECUTOR='dnanexus'
-  export NXF_JVM_ARGS='-XX:-StackTraceInThrowable'
+  # export NXF_JVM_ARGS='-XX:-StackTraceInThrowable'
 
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
@@ -446,9 +418,6 @@ main() {
 
   declare -a nextflow_pipeline_params_final="($nextflow_pipeline_params)"
   for item in "${nextflow_pipeline_params_final[@]}"; do echo "[$item]"; done
-  # echo "pipeline params:" "${nextflow_pipeline_params_final[@]/#/arg:}"
-  # nextflow_pipeline_params_final=( ${nextflow_pipeline_params} )
-  # echo "simple parsed pipeline params:" "${nextflow_pipeline_params_final[@]}"
 
   # execution starts
   NEXTFLOW_CMD=(nextflow \
@@ -472,7 +441,7 @@ main() {
   if [[ $preserve_cache == true ]]; then
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
-  echo "=== NF command      :" ${NEXTFLOW_CMD[@]}
+  echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
   echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
   echo "============================================================="
 
