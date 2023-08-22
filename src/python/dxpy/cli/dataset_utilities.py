@@ -1090,32 +1090,18 @@ def validate_cohort_ids(descriptor,project,resp,ids):
 
     
     # Note that pheno filters do not need name or id fields
-    if "CohortBrowser" in resp["recordTypes"]:
-        payload = {
-            "project_context": project,
-            "fields": fields_list,
-            "pheno_filters": {
-                "filters": {
-                    table_column_name: [
-                        {"condition": "in", "values": ids}
-                    ]
-                }
+    payload = {
+        "project_context": project,
+        "fields": fields_list,
+        "pheno_filters": {
+            "filters": {
+                table_column_name: [
+                    {"condition": "in", "values": ids}
+                ]
             }
         }
-    else:
-        payload = {
-            "project_context": project,
-            "fields": fields_list,
-            "raw_filters": {
-                "pheno_filters": {
-                    "filters": {
-                        table_column_name: [
-                            {"condition": "in", "values": ids}
-                        ]
-                    }
-                }
-            },
-        }
+    }
+    
 
     if "CohortBrowser" in resp["recordTypes"]:
         if resp.get("baseSql"):
