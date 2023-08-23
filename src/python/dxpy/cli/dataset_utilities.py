@@ -1091,34 +1091,19 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     fields_list = [{field_name: table_column_name}]
 
     # Note that pheno filters do not need name or id fields
-    if "CohortBrowser" in resp["recordTypes"]:
-        payload = {
-            "project_context": project,
-            "fields": fields_list,
-            "raw_filters":{
-                "pheno_filters": {
-                    "filters": {
-                        table_column_name: [
-                            {"condition": "in", "values": ids}
-                        ]
-                    }
+    payload = {
+        "project_context": project,
+        "fields": fields_list,
+        "raw_filters":{
+            "pheno_filters": {
+                "filters": {
+                    table_column_name: [
+                        {"condition": "in", "values": ids}
+                    ]
                 }
             }
         }
-    else:
-        payload = {
-            "project_context": project,
-            "fields": fields_list,
-            "raw_filters":{
-                "pheno_filters": {
-                    "filters": {
-                        table_column_name: [
-                            {"condition": "in", "values": ids}
-                        ]
-                    }
-                }
-            }
-        }
+    }
     
 
     if "CohortBrowser" in resp["recordTypes"]:
@@ -1232,7 +1217,6 @@ def create_cohort(args):
     #sql = cohort_query_api_call(resp, payload)
 
     cohort_payload = {
-        "name": "sciprod_1587_dataset_as_input",
         "folder": "/Create_Cohort/manually_created_output_cohorts",
         "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
         "types": [
@@ -1278,17 +1262,16 @@ def create_cohort(args):
         "close": True
     }
 
-
-
+    
     new_record_response = dxpy.bindings.dxrecord.new_dxrecord(
     details=cohort_payload['details'],
     project=cohort_payload['project'],
-    name=cohort_payload['name'],
+    name=None,
     types=cohort_payload['types'],
     folder=cohort_payload['folder'],
     close=cohort_payload['close']
     )
-    #print(dir(new_record_response))
+    # Examine the dxrecord object
     print(new_record_response.describe())
 
 
