@@ -1122,8 +1122,6 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     for result in resp_raw["results"]:
         discovered_ids.add(result[field_name])
 
-    print(discovered_ids)
-
     # Compare the discovered cohort ids to the user-provided cohort ids
     if discovered_ids != set(ids):
         # Find which given samples are not present in the dataset
