@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [355.0] - beta
+## [356.0] - beta
+
+### Fixed
+
+* `dx describe analysis-xxxx --json --verbose`
+
+## [355.0] - 2023.8.16
 
 ### Added
 
