@@ -132,7 +132,6 @@ on_exit() {
   rm -rf .nextflow
   rm nxf_runtime.config
 
-  # try uploading the log file if it is not empty
   if [[ -s $LOG_NAME ]]; then
     mkdir -p /home/dnanexus/out/nextflow_log
     mv "$LOG_NAME" "/home/dnanexus/out/nextflow_log/$LOG_NAME" || true
@@ -140,12 +139,16 @@ on_exit() {
     echo "No nextflow log file available."
   fi
 
-  # upload the log file and published files if any
-  mkdir -p /home/dnanexus/out/published_files
-  find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
-
-  dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
-  # done
+  if [[ $ret -ne 0 ]]; then   # pipeline failed, upload log file
+    FAILED_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents)
+    dx-jobutil-add-output nextflow_log $FAILED_LOG_ID --class=file
+  else
+    # upload the log file and published files if any
+    mkdir -p /home/dnanexus/out/published_files
+    find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
+    dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
+    # done
+  fi
   exit $ret
 }
 
