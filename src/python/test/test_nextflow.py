@@ -19,6 +19,8 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 from parameterized import parameterized
 
+import tempfile
+import shutil
 import os
 import sys
 import unittest
@@ -32,7 +34,7 @@ from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError
 import dxpy
 from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
-
+from dxpy.nextflow.nextflow_utils import find_readme
 if USING_PYTHON2:
     spawn_extra_args = {}
 else:
@@ -66,6 +68,27 @@ input4 = {
     "help": "(Nextflow pipeline required)fourth input",
     "label": "Test4"
 }
+
+
+class TestNextflowUtils(DXTestCase):
+
+    @parameterized.expand([
+        [None, 'file1.txt', 'file2.txt', 'main.nf'],
+        ['README.txt', 'README.txt', 'readme.txt', 'main.nf'],
+        ['README.md', 'README.md', 'main.nf'],
+        [None]
+    ])
+    def test_searching_readmes(self, expected, *file_list):
+        temp_dir = tempfile.mkdtemp()
+        try:
+            # creating a folder with files for find_readme
+            for filename in file_list:
+                file_path = os.path.join(temp_dir, filename)
+                open(file_path, 'a').close()
+            actual = find_readme(temp_dir)
+        finally:
+            shutil.rmtree(temp_dir)
+        assert actual == expected
 
 
 class TestNextflowTemplates(DXTestCase):
