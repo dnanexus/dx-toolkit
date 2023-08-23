@@ -48,6 +48,20 @@ def write_exec(folder, content):
         fh.write(content)
 
 
+def find_readme(dir):
+    """
+    Returns first readme (in alphabetical order) from a root of a given folder
+    :param dir: Directory in which we search for readme files
+    :type dir: str or Path
+    :returns: List[str]
+    """
+    readme_pattern = re.compile(r"readme(\.(txt|md|rst|adoc|html|txt|asciidoc|org|text|textile|pod|wiki))?", re.IGNORECASE)
+    file_list = [f for f in listdir(dir) if path.isfile(path.join(dir, f))]
+    readme_files = [file for file in file_list if readme_pattern.match(file)]
+    readme_files.sort()
+    return readme_files[0] if readme_files else None
+
+
 def create_readme(source_dir, destination_dir):
     """
     :param destination_dir: Directory where readme is going to be created
@@ -56,14 +70,11 @@ def create_readme(source_dir, destination_dir):
     :type source_dir: str or Path
     :returns: None
     """
-    readme_pattern = re.compile(r"readme(\.(txt|md|rst|adoc|html|txt|asciidoc|org|text|textile|pod|wiki))?", re.IGNORECASE)
-    destination_path = path.join(destination_dir, "Readme.md")
-    file_list = [f for f in listdir(source_dir) if path.isfile(path.join(source_dir, f))]
-    matching_files = [file for file in file_list if readme_pattern.match(file)]
-    matching_files.sort()
+    readme_file = find_readme(source_dir)
 
-    if matching_files:
-        source_path = path.join(source_dir, matching_files[0])
+    if readme_file:
+        source_path = path.join(source_dir, readme_file)
+        destination_path = path.join(destination_dir, "Readme.md")
         shutil.copy2(source_path, destination_path)
 
 
