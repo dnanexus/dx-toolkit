@@ -1,14 +1,16 @@
 #!/usr/bin/env python
-import logging
-from os import path, makedirs
+from os import path, makedirs, listdir
+import re
 import errno
 import dxpy
 import json
 import shutil
 from dxpy.exceptions import ResourceNotFound
 
+
 def get_source_file_name():
     return "src/nextflow.sh"
+
 
 def get_resources_dir_name(resources_dir):
     """
@@ -21,14 +23,18 @@ def get_resources_dir_name(resources_dir):
         return ''
     return path.basename(path.abspath(resources_dir))
 
+
 def get_resources_subpath(resources_dir):
     return path.join("/home/dnanexus/", get_resources_dir_name(resources_dir))
+
 
 def get_importer_name():
     return "nextflow_pipeline_importer"
 
+
 def get_template_dir():
     return path.join(path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
+
 
 def write_exec(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())
@@ -41,25 +47,31 @@ def write_exec(folder, content):
     with open(exec_file, "w") as fh:
         fh.write(content)
 
-def copy_readme(dxapp_dir, resources_dir):
-    dx_readme = "Readme.md"
-    possible_filenames = ["README.md", "Readme.md", "README.MD", "README.txt", "README"]
-    source_path = None
-    destination_path = path.join(dxapp_dir, dx_readme)
 
-    for filename in possible_filenames:
-        file_path = path.join(resources_dir, filename)
-        if path.exists(file_path):
-            source_path = file_path
-            break
+def create_readme(source_dir, destination_dir):
+    """
+    :param destination_dir: Directory where readme is going to be created
+    :type destination_dir: str or Path
+    :param source_dir: Directory from which readme is going to be copied
+    :type source_dir: str or Path
+    :returns: None
+    """
+    readme_pattern = re.compile(r"readme(\.(txt|md|rst|adoc|html|txt|asciidoc|org|text|textile|pod|wiki))?", re.IGNORECASE)
+    destination_path = path.join(destination_dir, "Readme.md")
+    file_list = [f for f in listdir(source_dir) if path.isfile(path.join(source_dir, f))]
+    matching_files = [file for file in file_list if readme_pattern.match(file)]
+    matching_files.sort()
 
-    if source_path:
+    if matching_files:
+        source_path = path.join(source_dir, matching_files[0])
         shutil.copy2(source_path, destination_path)
+
 
 def write_dxapp(folder, content):
     dxapp_file = "{}/dxapp.json".format(folder)
     with open(dxapp_file, "w") as dxapp:
         json.dump(content, dxapp)
+
 
 def get_regional_options(region):
     nextaur_asset, nextflow_asset = get_nextflow_assets(region)
@@ -78,6 +90,7 @@ def get_regional_options(region):
         }
     }
     return regional_options
+
 
 def get_instance_type(region):
     instance_type = {
@@ -110,4 +123,3 @@ def get_nextflow_assets(region):
 
         with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f:
             return json.load(nextaur_f)[region], json.load(nextflow_f)[region]
-
