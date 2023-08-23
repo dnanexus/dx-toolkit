@@ -1122,6 +1122,7 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     for result in resp_raw["results"]:
         discovered_ids.add(result[field_name])
 
+    print(discovered_ids)
 
     # Compare the discovered cohort ids to the user-provided cohort ids
     if discovered_ids != set(ids):
@@ -1217,8 +1218,8 @@ def create_cohort(args):
     #sql = cohort_query_api_call(resp, payload)
 
     cohort_payload = {
-        "folder": "/Create_Cohort/manually_created_output_cohorts",
-        "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+        "folder": "/test_output",
+        "project": "project-GXKBVGj09QxjGPkpGjz0BjPJ",
         "types": [
             "DatabaseQuery",
             "CohortBrowser"
