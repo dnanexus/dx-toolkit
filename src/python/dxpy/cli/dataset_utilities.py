@@ -47,6 +47,11 @@ from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
+from ..dx_extract_utils.ExpressionInputsValidator import ExpressionInputsValidator
+
+
+
+
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
 
@@ -1042,6 +1047,21 @@ def extract_assay_somatic(args):
                 quote_char=str("\t"),
                 quoting=csv.QUOTE_NONE,
             )
+
+def extract_assay_expression(args):
+    """
+    Retrieve the selected data or generate SQL to retrieve the data from an expression assay in a dataset or cohort based on provided rules.
+    """
+
+    # Validating input combinations
+    input_validator = ExpressionInputsValidator(
+        args.retrieve_expression, args.input_json
+    )
+    input_validator.validate_input_combination()
+
+    # Validating json path
+    # json_validator = JsonPathValidator(args.path)
+
 
 
 class DXDataset(DXRecord):
