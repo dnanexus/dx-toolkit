@@ -117,9 +117,7 @@ class TestNextflowTemplates(DXTestCase):
     def test_src_inputs(self):
         '''
         Tests that code that handles custom nextflow input parameters (e.g. from nextflow schema) with different classes
-        are properly added in the applet source script. These input arguments should be
-        1) appended to nextflow cmd as runtime parameters
-        2) added to runtime configuration nxf_runtime.config if it is an optional param in nextflow_schema
+        are properly added in the applet source script. These input arguments should be appended to nextflow cmd as runtime parameters
         '''
         src = get_nextflow_src(custom_inputs=[input1, input2, input3, input4])
         # case 1: file input, need to convert from dnanexus link to its file path inside job workspace
@@ -131,12 +129,11 @@ class TestNextflowTemplates(DXTestCase):
         self.assertTrue("if [ -n \"${}\" ];".format(input2.get("name")) in src)
         value2 = '${%s}' % input2.get("name")
         self.assertTrue("--{}={}".format(input2.get("name"), value2) in src)
-        # case 3: file input (nextflow pipeline optional), added to nxf_runtime.config
+        # case 3: file input (nextflow pipeline optional), same as case 1
         self.assertTrue("if [ -n \"${}\" ];".format(input3.get("name")) in src)
-        value3 = '\\"dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)\\"' % input3.get(
+        value3 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input3.get(
             "name")
-        self.assertTrue("echo params.{}={} >> nxf_runtime.config".format(
-            input3.get("name"), value3) in src)
+        self.assertTrue("--{}={}".format(input3.get("name"), value3) in src)
         # case 4: file input (nextflow pipeline required), same as case 1
         self.assertTrue("if [ -n \"${}\" ];".format(input4.get("name")) in src)
         value4 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input4.get(
