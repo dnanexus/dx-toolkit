@@ -1,6 +1,3 @@
-from ...exceptions import err_exit
-
-
 class JSONValidator(object):
     """
     JSON validator class to validate a JSON against a schema.
@@ -73,8 +70,12 @@ class JSONValidator(object):
 
     """
 
-    def __init__(self, schema):
+    def __init__(self, schema, error_handler=print):
         self.schema = schema
+        self.error_handler = error_handler
+
+        if not isinstance(schema, dict) or not schema:
+            error_handler("Schema must be a non-empty dict.")
 
     def validate(self, input_json):
         for key, value in self.schema.items():
@@ -96,11 +97,11 @@ class JSONValidator(object):
     def validate_properties(self, properties, input_dict):
         for key, value in properties.items():
             if key not in input_dict and value.get("required"):
-                err_exit(
+                error_handler(
                     "Required key '{}' was not found in the input JSON.".format(key)
                 )
             if key in input_dict and not isinstance(input_dict[key], value.get("type")):
-                err_exit(
+                error_handler(
                     "Key '{}' has an invalid type. Expected {} but got {}".format(
                         key, value.get("type"), type(input_dict[key])
                     )
@@ -113,12 +114,12 @@ class JSONValidator(object):
                 self.validate_properties(item_schema.get("properties", {}), item)
         else:
             if not isinstance(input_list, list):
-                err_exit(
+                error_handler(
                     "Expected list but got {} for {}".format(type(input_list), key_name)
                 )
             for item in input_list:
                 if not isinstance(item, str):
-                    err_exit(
+                    error_handler(
                         "Expected list items to be of type string for {}.".format(
                             key_name
                         )
@@ -127,7 +128,7 @@ class JSONValidator(object):
     def check_incompatible_subkeys(self, input_json, current_key):
         for keys in self.schema.get(current_key, {}).get("conflicting_keys", []):
             if all(k in input_json for k in keys):
-                err_exit(
+                error_handler(
                     "Conflicting keys {} cannot be present together.".format(
                         " and ".join(keys)
                     )
@@ -136,7 +137,7 @@ class JSONValidator(object):
     def check_incompatible_keys(self, input_json):
         for keys in self.schema.get("conflicting_keys", []):
             if all(key in input_json for key in keys):
-                err_exit(
+                error_handler(
                     "Conflicting keys {} cannot be present together.".format(
                         " and ".join(keys)
                     )
@@ -152,13 +153,13 @@ class JSONValidator(object):
                     key for key in associated_keys if key in input_json
                 ]
                 if len(present_associated_keys) == 0:
-                    err_exit(
+                    error_handler(
                         "When {} is present, one of the following keys must be also present: {}.".format(
                             main_key, ", ".join(associated_keys)
                         )
                     )
                 if len(present_associated_keys) > 1 and enforce_one_associated_key:
-                    err_exit(
+                    error_handler(
                         "Only one of the associated keys {} can be present for main key {}".format(
                             ", ".join(associated_keys)
                         )
