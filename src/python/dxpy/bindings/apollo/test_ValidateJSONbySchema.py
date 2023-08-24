@@ -1,3 +1,5 @@
+# These are temporary dev-phase tests, and will be removed once unittests are implemented.
+
 from ValidateJSONbySchema import JSONValidator
 
 # Test schema
