@@ -140,12 +140,12 @@ on_exit() {
   fi
 
   if [[ $ret -ne 0 ]]; then
-    echo "=== Execution failed - upload log file to job output destination as ${DX_JOB_OUTDIR%/}/${LOG_NAME}"
+    echo "=== Execution failed — upload log file to job output destination as ${DX_JOB_OUTDIR%/}/${LOG_NAME}"
     FAILED_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
       echo "Upload nextflow log as file: $FAILED_LOG_ID" ||
       echo "Failed to upload log file of current session $NXF_UUID"
   else
-    echo "=== Execution succeeded - upload log file and published files to job output destination ${DX_JOB_OUTDIR%/}"
+    echo "=== Execution succeeded — upload log file and published files to job output destination ${DX_JOB_OUTDIR%/}"
     mkdir -p /home/dnanexus/out/published_files
     find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
     dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
