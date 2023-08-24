@@ -166,58 +166,22 @@ input_schema_2 = {
 
 # Create an instance of the JSONValidator class and validate the input JSON
 validator = JSONValidator(schema)
+for input_json in [input_json, input_json2, input_json3, input_json4, input_json5]:
+    try:
+        validator.validate(input_json)
+    except ValueError as e:
+        print(e)
 
-try:
-    validator.validate(input_json)
-except ValueError as e:
-    print(e)
-
-try:
-    validator.validate(input_json2)
-except ValueError as e:
-    print(e)
-
-try:
-    validator.validate(input_json3)
-except ValueError as e:
-    print(e)
-
-try:
-    validator.validate(input_json4)
-except ValueError as e:
-    print(e)
-
-try:
-    validator.validate(input_json5)
-except ValueError as e:
-    print(e)
 
 
 validator = JSONValidator(cliexpress_schema)
-try:
-    validator.validate(cliexpress_input_json_1)
-except ValueError as e:
-    print(e)
+for input_json in [cliexpress_input_json_1, cliexpress_input_json_2, cliexpress_input_json_3, cliexpress_input_json_4, cliexpress_input_json_5]:
+    try:
+        validator.validate(input_json)
+    except ValueError as e:
+        print(e)
 
-try:
-    validator.validate(cliexpress_input_json_2)
-except ValueError as e:
-    print(e)
 
-try:
-    validator.validate(cliexpress_input_json_3)
-except ValueError as e:
-    print(e)
-
-try:
-    validator.validate(cliexpress_input_json_4)
-except ValueError as e:
-    print(e)
-
-try:
-    validator.validate(cliexpress_input_json_5)
-except ValueError as e:
-    print(e)
 
 validator = JSONValidator(schema2)
 try:
