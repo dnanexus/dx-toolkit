@@ -140,7 +140,7 @@ on_exit() {
   fi
 
   if [[ $ret -ne 0 ]]; then   # pipeline failed, upload log file
-    FAILED_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents)
+    FAILED_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents)
     dx-jobutil-add-output nextflow_log $FAILED_LOG_ID --class=file
   else
     # upload the log file and published files if any
