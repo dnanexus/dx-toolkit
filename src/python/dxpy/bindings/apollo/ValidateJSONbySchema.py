@@ -97,11 +97,11 @@ class JSONValidator(object):
     def validate_properties(self, properties, input_dict):
         for key, value in properties.items():
             if key not in input_dict and value.get("required"):
-                error_handler(
+                self.error_handler(
                     "Required key '{}' was not found in the input JSON.".format(key)
                 )
             if key in input_dict and not isinstance(input_dict[key], value.get("type")):
-                error_handler(
+                self.error_handler(
                     "Key '{}' has an invalid type. Expected {} but got {}".format(
                         key, value.get("type"), type(input_dict[key])
                     )
@@ -114,7 +114,7 @@ class JSONValidator(object):
                 self.validate_properties(item_schema.get("properties", {}), item)
         else:
             if not isinstance(input_list, list):
-                error_handler(
+                self.error_handler(
                     "Expected list but got {} for {}".format(type(input_list), key_name)
                 )
             for item in input_list:
@@ -128,7 +128,7 @@ class JSONValidator(object):
     def check_incompatible_subkeys(self, input_json, current_key):
         for keys in self.schema.get(current_key, {}).get("conflicting_keys", []):
             if all(k in input_json for k in keys):
-                error_handler(
+                self.error_handler(
                     "Conflicting keys {} cannot be present together.".format(
                         " and ".join(keys)
                     )
@@ -137,7 +137,7 @@ class JSONValidator(object):
     def check_incompatible_keys(self, input_json):
         for keys in self.schema.get("conflicting_keys", []):
             if all(key in input_json for key in keys):
-                error_handler(
+                self.error_handler(
                     "Conflicting keys {} cannot be present together.".format(
                         " and ".join(keys)
                     )
@@ -153,13 +153,13 @@ class JSONValidator(object):
                     key for key in associated_keys if key in input_json
                 ]
                 if len(present_associated_keys) == 0:
-                    error_handler(
+                    self.error_handler(
                         "When {} is present, one of the following keys must be also present: {}.".format(
                             main_key, ", ".join(associated_keys)
                         )
                     )
                 if len(present_associated_keys) > 1 and enforce_one_associated_key:
-                    error_handler(
+                    self.error_handler(
                         "Only one of the associated keys {} can be present for main key {}".format(
                             ", ".join(associated_keys)
                         )
