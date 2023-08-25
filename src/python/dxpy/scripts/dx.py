@@ -6714,8 +6714,7 @@ parser_extract_assay_expression.add_argument(
     "--output",
     "-o",
     type=str,
-    nargs="?",
-    default=None,
+    nargs=1,
     help='A local filename or directory to be used, where "-" indicates printing to STDOUT. If -o/--output is not supplied, default behavior is to create a file with a constructed name in the current folder.',
 )
 

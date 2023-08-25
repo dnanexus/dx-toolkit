@@ -17,7 +17,7 @@ import os
 class ExpressionInputsValidator:
     """InputsValidator class for extract_assay expresion. Checks for invalid input combinations"""
 
-    def __init__(self, args) -> None:
+    def __init__(self, args):
         self.error_handler = None
 
         self.list_assays = args.list_assays
@@ -50,12 +50,16 @@ class ExpressionInputsValidator:
                     self.output,
                 ]
             ),
-            error_message="--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matix, or --output",
+            error_message='"--json-help" cannot be passed with any of "--assay-name", "--sql", "--additional-fields", "--expression-matrix", or "--output"',
         )
         self.forbiden_combination_validation(
             invalid_combination=self.retrieve_expression_flag
             and not any([self.input_json, self.json_help]),
-            error_message="The flag, --retrieve_expression must be followed by a json input or json help.",
+            error_message='The flag, "--retrieve_expression" must be followed by a json input or json help.',
+        )
+        self.forbiden_combination_validation(
+            invalid_combination=(self.input_json == "{}"),
+            error_message='JSON for "--retrieve-expression" does not contain valid filter information.',
         )
 
     def end_arguments_check(self, end_arg):
@@ -70,8 +74,10 @@ class ExpressionInputsValidator:
         invalid_combination = getattr(self, end_arg) and any(args_specific_list)
 
         if invalid_combination:
-            self.error_handler = "--{} cannot be presented with other options.".format(
-                end_arg.replace("_", "-")
+            self.error_handler = (
+                '"--{}" cannot be presented with other options.'.format(
+                    end_arg.replace("_", "-")
+                )
             )
 
     def forbiden_combination_validation(self, invalid_combination, error_message):
