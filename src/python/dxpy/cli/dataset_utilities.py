@@ -1054,14 +1054,13 @@ def extract_assay_expression(args):
     """
 
     # Validating input combinations
-    input_validator = ExpressionInputsValidator(
-        args.retrieve_expression, args.input_json
-    )
-    input_validator.validate_input_combination()
+    input_validator = ExpressionInputsValidator(args)
+    if input_validator.error_handler:
+        err_exit(input_validator.error_handler)
 
-    # Validating json path
-    # json_validator = JsonPathValidator(args.path)
-
+    # path_validator = PathValidator(args.path)
+    # http_request_info = path_validator.get_http_request_info()
+    # input_validator.validate_cohort_list_assay(http_request_info)
 
 
 class DXDataset(DXRecord):
