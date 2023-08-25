@@ -1206,11 +1206,11 @@ def create_cohort(args):
         err_exit(err)
     # Input cohort IDs have been succesfully validated    
 
-    #entity = 'ENTITY'
-    #field = 'FIELD'
-    #cohort_filter = {}
-    #payload = cohort_final_payload(samples, entity, field, cohort_filter, from_project)
-    #sql = cohort_query_api_call(resp, payload)
+    entity = rec_descriptor.model["global_primary_key"]["entity"]
+    field = rec_descriptor.model["global_primary_key"]["field"]
+    filters = resp.get("filters", {})
+    payload = cohort_final_payload(samples, entity, field, filters, from_project)
+    sql = cohort_query_api_call(resp, payload)
 
 
 class DXDataset(DXRecord):
