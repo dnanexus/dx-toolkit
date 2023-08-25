@@ -1,8 +1,7 @@
-import json
-import pprint
 import os
 
-from ..exceptions import err_exit, ResourceNotFound
+from ..exceptions import err_exit
+from .retrieve_bins import retrieve_bins
 import dxpy
 
 # A dictionary relating the user-facing names of columns to their actual column
@@ -33,6 +32,33 @@ column_conditions = {
     "tumor_normal": "is",
 }
 
+extract_utils_basepath = os.path.join(
+    os.path.dirname(dxpy.__file__), "dx_extract_utils"
+)
+
+chrs = []
+for i in range(1, 23):
+    chrs.append(str(i))
+chrs.extend(["Y", "X"])
+
+def retrieve_geno_bins(list_of_genes, project, genome_reference, friendly_name):
+    """
+    A function for determining appropriate geno bins to attach to a given SYMBOL, Gene or Feature
+    """
+    stage_file = "Homo_sapiens_genes_manifest_staging_vep.json"
+    platform_file = "Homo_sapiens_genes_manifest_vep.json"
+    error_message = "Following symbols, genes or features are invalid"
+    genome_reference = genome_reference + "_" + friendly_name
+    geno_bins = retrieve_bins(list_of_genes, project, genome_reference, extract_utils_basepath,
+                  stage_file,platform_file,error_message)
+    updated_bins = []
+    # If a gene, symbol or feature has non standard contig,
+    # The correct bin is 'Other'
+    for bin in geno_bins:
+        if bin['chr'].strip("chr").strip("Chr") not in chrs:
+            bin['chr'] = 'Other'
+        updated_bins.append(bin)
+    return updated_bins
 
 def basic_filter(
     table, friendly_name, values=[], project_context=None, genome_reference=None
@@ -64,46 +90,44 @@ def basic_filter(
     # Get the condition ofr this field
     condition = column_conditions.get(friendly_name, "in")
 
-    listed_filter = {filter_key: [{"condition": condition, "values": values}]}
-    return listed_filter
-
-
-def location_filter(raw_location_list):
-    """
-    The somatic assay model does not currently support geno bins
-    Locations are implemented as filters on chromosome and starting position
-    Returns structure of the form:
-    {
-    "logic":"or",
-    "compound":{
-        "logic":"and"
-        "filters":{
-            "variant_read_optimized$CHROM":[
-                    {
-                    "condition":"is",
-                    "values":"12"
-                    }
-                ]
-            },
-            "variant_read_optimized$POS":[
+    # Check if we need to add geno bins as well
+    if friendly_name in ["symbol", "gene", "feature"]:
+        listed_filter = {
+            filter_key: [
                 {
-                "condition":"greater-than",
-                "values":"1000"
-                },
-                {
-                "condition":"less-than",
-                "values":"5000"
+                    "condition": condition,
+                    "values": values,
+                    "geno_bins": retrieve_geno_bins(
+                        values, project_context, genome_reference, friendly_name
+                    ),
                 }
             ]
         }
-    }
+    else:
+        listed_filter = {filter_key: [{"condition": condition, "values": values}]}
+    
+    return listed_filter
+
+def location_filter(location_list):
+    """
+    A location filter is actually an variant_read_optimized$allele_id filter with no filter values
+    The geno_bins perform the actual location filtering. Related to other geno_bins filters by "or"
     """
 
-    # Location filters are related to each other by "or"
-    location_compound = {"compound": [], "logic": "or"}
-    for location in raw_location_list:
-        # atomic filters within an individual location filters are related by "and"
-        indiv_loc_filter = {"filters": {}, "logic": "and"}
+    location_aid_filter = {
+        "variant_read_optimized$allele_id": [
+            {
+                "condition": "in",
+                "values": [],
+                "geno_bins": [],
+            }
+        ]
+    }
+
+    chrom =[]
+
+    for location in location_list:
+        # First, ensure that the geno bins width isn't greater than 250 megabases
         start = int(location["starting_position"])
         end = int(location["ending_position"])
         if end - start > 250000000:
@@ -112,18 +136,26 @@ def location_filter(raw_location_list):
                     location
                 )
             )
-        # First make the chr filter
-        indiv_loc_filter["filters"]["variant_read_optimized$CHROM"] = [
-            {"condition": "is", "values": location["chromosome"]}
-        ]
-        # Then the positional filters
-        indiv_loc_filter["filters"]["variant_read_optimized$POS"] = [
-            {"condition": "greater-than", "values": start},
-            {"condition": "less-than", "values": end},
-        ]
-        location_compound["compound"].append(indiv_loc_filter)
 
-    return location_compound
+        # Fill out the contents of an object in the geno_bins array
+        chrom.append(location["chromosome"])
+        chr = location["chromosome"].strip("chr").strip("Chr")
+        
+        # If a non standard contig ID is passed in location filter's chr,
+        # Add the filter as a CHROM filter and pass 'Other' in geno_bins
+        # Standard contigs are also passed to CHROM filter
+        if chr not in chrs:
+            chr = "Other"
+            
+        location_aid_filter["variant_read_optimized$allele_id"][0]["geno_bins"].append(
+            {
+                "chr": chr,
+                "start": start,
+                "end": end,
+            }
+        )
+    
+    return location_aid_filter, list(set(chrom))
 
 
 def generate_assay_filter(
@@ -149,40 +181,51 @@ def generate_assay_filter(
         }
     }
     """
-    assay_filter = {
-        "assay_filters": {"name": name, "id": id, "logic": "and", "compound": []}
-    }
-    basic_filters = {"filters": {}, "logic": "and"}
+
+    filters_dict = {}
 
     for filter_group in full_input_dict.keys():
         if filter_group == "location":
-            location_compound = location_filter(full_input_dict["location"])
-            assay_filter["assay_filters"]["compound"].append(location_compound)
+            location_list = full_input_dict["location"]
+            location_aid_filter, chrom = location_filter(location_list)
+            filters_dict.update(location_aid_filter)
+            # Add a CHROM filter to handle non standard contigs
+            filters_dict.update(basic_filter(
+                "variant_read_optimized",
+                "CHROM",
+                chrom,
+                project_context,
+                genome_reference,
+            ))
+            
         else:
             for individual_filter_name in full_input_dict[filter_group].keys():
-                indiv_basic_filter = basic_filter(
+                filters_dict.update(basic_filter(
                     "variant_read_optimized",
                     individual_filter_name,
                     full_input_dict[filter_group][individual_filter_name],
                     project_context,
                     genome_reference,
-                )
-                basic_filters["filters"].update(indiv_basic_filter)
+                ))
+
     # If include_normal is False, then add a filter to select data where tumor_normal = tumor
     if not include_normal:
-        tumor_normal_filter = basic_filter(
+        filters_dict.update(basic_filter(
             "variant_read_optimized",
             "tumor_normal",
             "tumor",
             project_context,
             genome_reference,
-        )
-        basic_filters["filters"].update(tumor_normal_filter)
+        ))
 
-    if len(basic_filters["filters"]) > 0:
-        assay_filter["assay_filters"]["compound"].append(basic_filters)
+    final_filter_dict = {"assay_filters": {"name": name, "id": id}}
 
-    return assay_filter
+    # Additional structure of the payload
+    final_filter_dict["assay_filters"].update({"filters": filters_dict})
+    # The general filters are related by "and"
+    final_filter_dict["assay_filters"]["logic"] = "and"
+
+    return final_filter_dict
 
 
 def somatic_final_payload(
@@ -235,6 +278,7 @@ def somatic_final_payload(
     final_payload["order_by"] = order_by
     final_payload["raw_filters"] = assay_filter
     final_payload["distinct"] = True
+    final_payload["adjust_geno_bins"] = False
 
     field_names = []
     for f in fields:

@@ -140,7 +140,7 @@ def raw_api_call(resp, payload, sql_message=True):
                 err_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
             else:
                 err_message = resp_raw["error"]
-            err_exit(err_message)
+            err_exit(str(err_message))
     except Exception as details:
         err_exit(str(details))
     return resp_raw
@@ -614,6 +614,10 @@ def get_assay_name_info(
         for a in target_assays:
             if a["name"] == selected_assay_name and a["reference_genome"]:
                 selected_ref_genome = a["reference_genome"]["name"]
+    elif friendly_assay_type == "somatic":
+        for a in target_assays:
+            if a["name"] == selected_assay_name and a["reference"]:
+                selected_ref_genome = a["reference"]["name"] + "." + a["reference"]["annotation_source_version"]
 
     return(selected_assay_name, selected_assay_id, selected_ref_genome)
 

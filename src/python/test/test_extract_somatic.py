@@ -104,7 +104,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         # Expected Results
         expected_assay_name = "test_single_assay_202306231200"
         expected_assay_id = "5c359e55-0639-46bc-bbf3-5eb22d5a5780"
-        expected_ref_genome = "GRCh38.92"
+        expected_ref_genome = "GRCh38.109"
 
         (
             selected_assay_name,
@@ -151,24 +151,24 @@ class TestDXExtractSomatic(unittest.TestCase):
             }
         ]
         expected_output = {
-            "compound": [
+            "variant_read_optimized$allele_id": [
                 {
-                    "filters": {
-                        "variant_read_optimized$CHROM": [
-                            {"condition": "is", "values": "chr21"}
-                        ],
-                        "variant_read_optimized$POS": [
-                            {"condition": "greater-than", "values": 100},
-                            {"condition": "less-than", "values": 50000000},
-                        ],
-                    },
-                    "logic": "and",
-                }
-            ],
-            "logic": "or",
+                    "condition": "in",
+                    "values": [],
+                    "geno_bins": [
+                        {
+                            "chr": "21",
+                            "start": 100,
+                            "end": 50000000
+                        }
+                    ]
+                },
+            ]
         }
-
-        self.assertEqual(location_filter(raw_location_list), expected_output)
+        expected_chrom = ['chr21']
+        loc_filter, chrom = location_filter(raw_location_list)
+        self.assertEqual(loc_filter, expected_output)
+        self.assertEqual(chrom, expected_chrom)
 
     def test_generate_assay_filter(self):
         print("testing generate assay filter")
@@ -181,19 +181,14 @@ class TestDXExtractSomatic(unittest.TestCase):
                 "name": "test_single_assay_202306231200",
                 "id": "0c69a39f-a34f-4030-a866-5056c8112da4",
                 "logic": "and",
-                "compound": [
-                    {
-                        "filters": {
-                            "variant_read_optimized$allele_id": [
-                                {"condition": "in", "values": ["chr21_40590995_C_C"]}
-                            ],
-                            "variant_read_optimized$tumor_normal": [
-                                {"condition": "is", "values": "tumor"}
-                            ],
-                        },
-                        "logic": "and",
-                    }
-                ],
+                "filters": {
+                    "variant_read_optimized$allele_id": [
+                        {"condition": "in", "values": ["chr21_40590995_C_C"]}
+                    ],
+                    "variant_read_optimized$tumor_normal": [
+                        {"condition": "is", "values": "tumor"}
+                    ],
+                }
             }
         }
         self.assertEqual(
@@ -228,25 +223,21 @@ class TestDXExtractSomatic(unittest.TestCase):
                     "name": "test_single_assay_202306231200",
                     "id": "0c69a39f-a34f-4030-a866-5056c8112da4",
                     "logic": "and",
-                    "compound": [
-                        {
-                            "filters": {
-                                "variant_read_optimized$allele_id": [
-                                    {
-                                        "condition": "in",
-                                        "values": ["chr21_40590995_C_C"],
-                                    }
-                                ],
-                                "variant_read_optimized$tumor_normal": [
-                                    {"condition": "is", "values": "tumor"}
-                                ],
-                            },
-                            "logic": "and",
-                        }
-                    ],
+                    "filters": {
+                        "variant_read_optimized$allele_id": [
+                            {
+                                "condition": "in",
+                                "values": ["chr21_40590995_C_C"],
+                            }
+                        ],
+                        "variant_read_optimized$tumor_normal": [
+                            {"condition": "is", "values": "tumor"}
+                        ],
+                    }
                 }
             },
             "distinct": True,
+            "adjust_geno_bins": False
         }
         expected_output_fields = [
             "assay_sample_id",
