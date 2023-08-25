@@ -607,14 +607,14 @@ def get_assay_name_info(
             for ga in target_assays:
                 if ga["name"] == assay_name:
                     selected_assay_id = ga["uuid"]
-
-    selected_ref_genome = "GRCh38.92"
     
     if friendly_assay_type == "germline":
+        selected_ref_genome = "GRCh38.92"
         for a in target_assays:
             if a["name"] == selected_assay_name and a["reference_genome"]:
                 selected_ref_genome = a["reference_genome"]["name"]
     elif friendly_assay_type == "somatic":
+        selected_ref_genome = ""
         for a in target_assays:
             if a["name"] == selected_assay_name and a["reference"]:
                 selected_ref_genome = a["reference"]["name"] + "." + a["reference"]["annotation_source_version"]
