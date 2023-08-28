@@ -35,6 +35,7 @@ from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
     resolve_validate_record_path,
     DXDataset,
+    cohort_query_api_call
 )
 
 
@@ -299,7 +300,46 @@ class TestCreateCohort(unittest.TestCase):
         # removing all whitespace before comparing
         self.assertEqual("".join(expected_error_message.split()), "".join(err_msg.split()))
 
-    
+    # EM-11 The vizserver returns an error when attempting to validate cohort IDs
+    def test_vizserver_error(self):
+        pass
+
+    def test_cohort_query_api(self):
+        test_payload = {
+            "filters": {
+                "pheno_filters": {
+                    "compound": [
+                        {
+                            "name": "phenotype",
+                            "logic": "and",
+                            "filters": {
+                                "patient$patient_id": [
+                                    {
+                                        "condition": "in",
+                                        "values": [
+                                            "patient_1",
+                                            "patient_2",
+                                            "patient_3"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "logic": "and"
+                },
+                "logic": "and"
+            },
+            "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+        }
+
+        expected_results = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
+
+        from_project, entity_result, resp, dataset_project = resolve_validate_record_path(self.test_record_pheno)
+        sql = cohort_query_api_call(resp, test_payload)
+        self.assertEqual(expected_results,sql)
+
+
 
 
 if __name__ == "__main__":
