@@ -45,6 +45,7 @@ def retrieve_bins(list_of_genes, project, genome_reference, extract_utils_basepa
             geno_positions.append(bin)
 
     if invalid_genes:
-        err_exit("%r: %r" % (error_message, invalid_genes))
+        error_message = error_message + ": " + str(invalid_genes)
+        err_exit(error_message)
 
     return geno_positions
