@@ -29,6 +29,7 @@ import unittest
 import os
 import sys
 import subprocess
+import shutil
 
 from dxpy_testutil import cd
 from dxpy.cli.dataset_utilities import (
@@ -85,6 +86,9 @@ class TestDXExtractSomatic(unittest.TestCase):
         if not os.path.exists(cls.e2e_output_directory):
             os.makedirs(cls.e2e_output_directory)
 
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.general_output_dir)
 
     ############
     # Unit Tests
@@ -250,6 +254,47 @@ class TestDXExtractSomatic(unittest.TestCase):
         test_payload, test_fields = somatic_final_payload(full_input_dict, name, id, project_context, genome_reference=None, additional_fields=None, include_normal=False)
         self.assertEqual(test_payload, expected_output)
         self.assertEqual(test_fields, expected_output_fields)
+
+    def test_somatic_final_payload_location(self):
+        print("testing somatic final payload with location filter")
+        full_input_dict = {"location":[{"chromosome":"chrUn_JTFH01000732v1_decoy","starting_position":"40", "ending_position":"45"}]}
+        name = "assay_dummy"
+        id = "id_dummy"
+        project_context = "project-dummy"
+        expected_output = {
+            "filters": {
+                "variant_read_optimized$allele_id": [
+                    {
+                        "condition": "in",
+                        "values": [],
+                        "geno_bins": [
+                            {
+                                "chr": "Other",
+                                "start": 40,
+                                "end": 45
+                            }
+                        ] 
+                    }
+                ],
+                "variant_read_optimized$CHROM": [
+                    {
+                        "condition": "in",
+                        "values": [
+                            "chrUn_JTFH01000732v1_decoy"
+                        ]
+                    }
+                ],
+                "variant_read_optimized$tumor_normal": [
+                    {
+                        "condition": "is",
+                        "values": "tumor"
+                    }
+                ]
+            }
+        }
+
+        test_payload, _ = somatic_final_payload(full_input_dict, name, id, project_context, genome_reference=None, additional_fields=None, include_normal=False)
+        self.assertEqual(test_payload["raw_filters"]["assay_filters"]["filters"], expected_output["filters"])
 
     def test_additional_fields(self):
         print("testing --additional-fields")
