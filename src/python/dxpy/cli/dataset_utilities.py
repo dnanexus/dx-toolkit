@@ -612,7 +612,7 @@ def get_assay_name_info(
         selected_ref_genome = "GRCh38.92"
         for a in target_assays:
             if a["name"] == selected_assay_name and a["reference_genome"]:
-                selected_ref_genome = a["reference_genome"]["name"]
+                selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
     elif friendly_assay_type == "somatic":
         selected_ref_genome = ""
         for a in target_assays:

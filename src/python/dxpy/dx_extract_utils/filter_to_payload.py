@@ -112,7 +112,6 @@ def basic_filter(
 
     # Check if we need to add geno bins as well
     if friendly_name == "gene_id" or friendly_name == "gene_name":
-        genome_reference = "GRCh38.92"
         listed_filter = {
             filter_key: [
                 {
