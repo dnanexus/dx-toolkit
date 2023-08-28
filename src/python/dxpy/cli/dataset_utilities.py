@@ -50,8 +50,6 @@ from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.ExpressionInputsValidator import ExpressionInputsValidator
 
 
-
-
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
 
@@ -1054,9 +1052,10 @@ def extract_assay_expression(args):
     """
 
     # Validating input combinations
-    input_validator = ExpressionInputsValidator(args)
-    if input_validator.error_handler:
-        err_exit(input_validator.error_handler)
+    input_validator = ExpressionInputsValidator(args, None)
+    input_validator.run_validations()
+    input_validator.error_exit()
+
 
     # path_validator = PathValidator(args.path)
     # http_request_info = path_validator.get_http_request_info()

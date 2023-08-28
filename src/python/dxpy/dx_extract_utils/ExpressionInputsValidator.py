@@ -1,25 +1,10 @@
-import dxpy
-
-from ..exceptions import (
-    err_exit,
-    PermissionDenied,
-    InvalidInput,
-    InvalidState,
-    ResourceNotFound,
-    default_expected_exceptions,
-)
-from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
-
-import json
-import os
+from ..exceptions import err_exit
 
 
 class ExpressionInputsValidator:
     """InputsValidator class for extract_assay expresion. Checks for invalid input combinations"""
 
-    def __init__(self, args):
-        self.error_handler = None
-
+    def __init__(self, args, error_handler):
         self.list_assays = args.list_assays
         self.retrieve_expression_flag = args.retrieve_expression
         self.assay_name = args.assay_name
@@ -33,34 +18,34 @@ class ExpressionInputsValidator:
         self.delim = args.delim
         self.output = args.output
 
-        self.validations_to_run()
+        self.error_handler = error_handler
 
-    def validations_to_run(self):
+    def run_validations(self):
         self.end_arguments_check("list_assays")
         self.end_arguments_check("additional_fields_help")
 
-        self.forbiden_combination_validation(
-            invalid_combination=self.json_help
-            and any(
-                [
-                    self.assay_name,
-                    self.sql,
-                    self.additional_fields,
-                    self.expression_matrix,
-                    self.output,
-                ]
-            ),
-            error_message='"--json-help" cannot be passed with any of "--assay-name", "--sql", "--additional-fields", "--expression-matrix", or "--output"',
-        )
-        self.forbiden_combination_validation(
-            invalid_combination=self.retrieve_expression_flag
-            and not any([self.input_json, self.json_help]),
-            error_message='The flag, "--retrieve_expression" must be followed by a json input or json help.',
-        )
-        self.forbiden_combination_validation(
-            invalid_combination=(self.input_json == "{}"),
-            error_message='JSON for "--retrieve-expression" does not contain valid filter information.',
-        )
+        if self.json_help and any(
+            [
+                self.assay_name,
+                self.sql,
+                self.additional_fields,
+                self.expression_matrix,
+                self.output,
+            ]
+        ):
+            self.error_handler = (
+                '"--json-help" cannot be passed with any of "--assay-name", "--sql", "--additional-fields", "--expression-matrix", or "--output"',
+            )
+
+        if self.retrieve_expression_flag and not any([self.input_json, self.json_help]):
+            self.error_handler = (
+                'The flag "--retrieve_expression" must be followed by a json input or json help.',
+            )
+
+        if self.input_json == "{}":
+            self.error_handler = (
+                'JSON for "--retrieve-expression" does not contain valid filter information.',
+            )
 
     def end_arguments_check(self, end_arg):
         args_specific_list = [
@@ -80,9 +65,9 @@ class ExpressionInputsValidator:
                 )
             )
 
-    def forbiden_combination_validation(self, invalid_combination, error_message):
-        if invalid_combination:
-            self.error_handler = error_message
+    def error_exit(self):
+        if self.error_handler:
+            err_exit(self.error_handler[0])
 
 
 # class PathValidator:
