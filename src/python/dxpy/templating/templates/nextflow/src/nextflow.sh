@@ -140,6 +140,7 @@ on_exit() {
   else
     echo "=== Execution complete — no nextflow log file available."
   fi
+  rm $LOG_NAME || true
 
   if [[ $ret -ne 0 ]]; then
     echo "=== Execution failed — skip uploading published files to job output destination ${DX_JOB_OUTDIR%/}"
