@@ -2,58 +2,55 @@ class ExpressionInputsValidator:
     """InputsValidator class for extract_assay expresion. Checks for invalid input combinations"""
 
     def __init__(self, args, error_handler=print):
-        self.list_assays = args.list_assays
-        self.retrieve_expression_flag = args.retrieve_expression
-        self.assay_name = args.assay_name
-        self.input_json = args.input_json
-        self.input_json_file = args.input_json_file
-        self.json_help = args.json_help
-        self.sql = args.sql
-        self.additional_fields = args.additional_fields
-        self.additional_fields_help = args.additional_fields_help
-        self.expression_matrix = args.expression_matrix
-        self.delim = args.delim
-        self.output = args.output
-
+        self.args = args
         self.error_handler = error_handler
 
     def validate(self):
         self.end_arguments_check("list_assays")
         self.end_arguments_check("additional_fields_help")
 
-        if self.json_help and any(
-            [
-                self.assay_name,
-                self.sql,
-                self.additional_fields,
-                self.expression_matrix,
-                self.output,
-            ]
-        ):
-            self.error_handler(
-                '"--json-help" cannot be passed with any of "--assay-name", "--sql", "--additional-fields", "--expression-matrix", or "--output"',
-            )
-
-        if self.retrieve_expression_flag and not any([self.input_json, self.json_help]):
-            self.error_handler(
-                'The flag "--retrieve_expression" must be followed by a json input or json help.',
-            )
-
-        if self.input_json == "{}":
-            self.error_handler(
-                'JSON for "--retrieve-expression" does not contain valid filter information.',
-            )
+        invalid_combination_infos = {
+            "json_help_unique": {
+                "invalid_combination": self.args["json_help"]
+                and any(
+                    [
+                        self.args["assay_name"],
+                        self.args["sql"],
+                        self.args["additional_fields"],
+                        self.args["expression_matrix"],
+                        self.args["output"],
+                    ]
+                ),
+                "error_message": '"--json-help" cannot be passed with any of "--assay-name", "--sql", "--additional-fields", "--expression-matrix", or "--output"',
+            },
+            "retrieve_expression_json": {
+                "invalid_combination": self.args["retrieve_expression"] and not any(
+            [self.args["input_json"], self.args["json_help"]]),
+                "error_message": 'The flag "--retrieve_expression" must be followed by a json input or json help.',
+            },
+            "empty_json": {
+                "invalid_combination": self.args["input_json"] == "{}",
+                "error_message": 'JSON for "--retrieve-expression" does not contain valid filter information.',
+            },
+        }
+        self.invalid_combinations_check(invalid_combination_infos)
 
     def end_arguments_check(self, end_arg):
-        args_specific_list = [
-            getattr(self, arg)
-            for arg in dir(self)
-            if not callable(getattr(self, arg))
-            and not arg.startswith("__")
-            and arg != end_arg
+        args_to_check = [
+            "list_assays",
+            "retrieve_expression",
+            "assay_name",
+            "input_json",
+            "input_json_file",
+            "json_help",
+            "sql",
+            "additional_fields",
+            "expression_matrix",
+            "delim",
+            "output",
         ]
-
-        invalid_combination = getattr(self, end_arg) and any(args_specific_list)
+        args_specific_list = [self.args[e] for e in args_to_check if e != end_arg]
+        invalid_combination = self.args[end_arg] and any(args_specific_list)
 
         if invalid_combination:
             self.error_handler(
@@ -61,6 +58,11 @@ class ExpressionInputsValidator:
                     end_arg.replace("_", "-")
                 )
             )
+
+    def invalid_combinations_check(self, invalid_combinations_info):
+        for e in invalid_combinations_info:
+            if invalid_combinations_info[e]["invalid_combination"]:
+                self.error_handler(invalid_combinations_info[e]["error_message"])
 
 
 # class PathValidator:

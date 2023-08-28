@@ -1052,8 +1052,9 @@ def extract_assay_expression(args):
     """
 
     # Validating input combinations
-    input_validator = ExpressionInputsValidator(args, err_exit)
+    input_validator = ExpressionInputsValidator(vars(args), err_exit)
     input_validator.validate()
+
 
 
     # path_validator = PathValidator(args.path)
