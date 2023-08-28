@@ -60,7 +60,7 @@ class TestCreateCohort(unittest.TestCase):
         cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
         cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
         with open(
-            os.path.join(dirname,"create_cohort_test_files", "usage_message.txt"), "r"
+            os.path.join(dirname, "create_cohort_test_files", "usage_message.txt"), "r"
         ) as infile:
             cls.usage_message = infile.read()
 
