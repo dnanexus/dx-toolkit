@@ -59,21 +59,6 @@ docker_registry_login() {
   fi
 }
 
-generate_runtime_config() {
-  set +x
-  touch nxf_runtime.config
-  # make a runtime config file to override optional inputs
-  # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
-  @@GENERATE_RUNTIME_CONFIG@@
-
-  if [[ -s nxf_runtime.config ]]; then
-    if [[ $debug == true ]]; then
-      cat nxf_runtime.config
-      set -x
-    fi
-    RUNTIME_CONFIG_CMD='-c nxf_runtime.config'
-  fi
-}
 
 # On exit, for the main Nextflow orchestrator job
 on_exit() {
@@ -130,9 +115,7 @@ on_exit() {
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
-  rm nxf_runtime.config
 
-  # try uploading the log file if it is not empty
   if [[ -s $LOG_NAME ]]; then
     mkdir -p /home/dnanexus/out/nextflow_log
     mv "$LOG_NAME" "/home/dnanexus/out/nextflow_log/$LOG_NAME" || true
@@ -140,16 +123,17 @@ on_exit() {
     echo "No nextflow log file available."
   fi
 
-  # upload the log file and published files if any
-  mkdir -p /home/dnanexus/out/published_files
-  find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
-
-  dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
-  # done
-
-  if [[ $ret -ne 0 ]]; then   # upload log file
-    FAILED_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" "${DX_JOB_OUTDIR%/}"/"${LOG_NAME}" --wait --brief --no-progress --parents)
-    # dx-jobutil-add-output nextflow_log $FAILED_LOG_ID --class=file
+  if [[ $ret -ne 0 ]]; then
+    echo "=== Execution failed — upload log file to job output destination as ${DX_JOB_OUTDIR%/}/${LOG_NAME}"
+    FAILED_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
+      echo "Upload nextflow log as file: $FAILED_LOG_ID" ||
+      echo "Failed to upload log file of current session $NXF_UUID"
+  else
+    echo "=== Execution succeeded — upload log file and published files to job output destination ${DX_JOB_OUTDIR%/}"
+    mkdir -p /home/dnanexus/out/published_files
+    find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
+    dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
+    # done
   fi
   exit $ret
 }
@@ -352,8 +336,8 @@ main() {
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
-  required_inputs=""
-  @@REQUIRED_RUNTIME_PARAMS@@
+  applet_runtime_inputs=()
+  @@APPLET_RUNTIME_PARAMS@@
 
   # get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
@@ -397,10 +381,6 @@ main() {
   setup_workdir
   export NXF_WORK
 
-  # for optional inputs, pass to the run command by using a runtime config
-  RUNTIME_CONFIG_CMD=""
-  generate_runtime_config
-
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
@@ -416,22 +396,24 @@ main() {
   # parse_pipeline_params
   # echo "pipeline params:" "${nextflow_pipeline_params_final[@]/#/arg:}"
 
-  declare -a nextflow_pipeline_params_final="($nextflow_pipeline_params)"
-  for item in "${nextflow_pipeline_params_final[@]}"; do echo "[$item]"; done
+  # declare -a nextflow_pipeline_params_final="($nextflow_pipeline_params)"
+  # for item in "${nextflow_pipeline_params_final[@]}"; do echo "[$item]"; done
 
   # execution starts
-  NEXTFLOW_CMD=(nextflow \
+  for item in "${applet_runtime_inputs[@]}"; do echo "[$item]"; done
+  declare -a NEXTFLOW_CMD="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
-    ${RUNTIME_CONFIG_CMD} \
     -log ${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
     -name $DX_JOB_ID \
     $RESUME_CMD \
     $nextflow_run_opts \
-    "${nextflow_pipeline_params_final[@]}" \
-    $required_inputs)
+    $nextflow_pipeline_params)"
+
+  NEXTFLOW_CMD+=( "${applet_runtime_inputs[@]}" )
+  for item in "${NEXTFLOW_CMD[@]}"; do echo "[$item]"; done
 
   trap on_exit EXIT
   echo "============================================================="
