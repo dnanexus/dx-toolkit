@@ -168,7 +168,7 @@ class TestCreateCohort(unittest.TestCase):
     def test_errmsg_invalid_path(self):
         bad_record = "record-badrecord"
         expected_error_message = (
-            "Unable to resolve {} to a data object or folder name in {}".format(bad_record,self.proj_id)
+            "Unable to resolve {} to a data object or folder name in {}".format(bad_record, self.proj_id)
         )
         command = [
             "dx",
