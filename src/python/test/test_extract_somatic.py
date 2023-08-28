@@ -296,6 +296,48 @@ class TestDXExtractSomatic(unittest.TestCase):
         test_payload, _ = somatic_final_payload(full_input_dict, name, id, project_context, genome_reference=None, additional_fields=None, include_normal=False)
         self.assertEqual(test_payload["raw_filters"]["assay_filters"]["filters"], expected_output["filters"])
 
+    def test_multiple_empty_required_keys(self):
+        print("testing multiple empty required keys")
+        full_input_dict = {"location":[{"chromosome":"chr21","starting_position":"40", "ending_position":"45"}],
+                           "allele": {"allele_id": []},
+                           "annotation": {"gene": [], "symbol": [], "feature": []}}
+        name = "assay_dummy"
+        id = "id_dummy"
+        project_context = "project-dummy"
+        expected_output = {
+            "filters": {
+                "variant_read_optimized$allele_id": [
+                    {
+                        "condition": "in",
+                        "values": [],
+                        "geno_bins": [
+                            {
+                                "chr": "21",
+                                "start": 40,
+                                "end": 45
+                            }
+                        ] 
+                    }
+                ],
+                "variant_read_optimized$CHROM": [
+                    {
+                        "condition": "in",
+                        "values": [
+                            "chr21"
+                        ]
+                    }
+                ],
+                "variant_read_optimized$tumor_normal": [
+                    {
+                        "condition": "is",
+                        "values": "tumor"
+                    }
+                ]
+            }
+        }
+        test_payload, _ = somatic_final_payload(full_input_dict, name, id, project_context, genome_reference=None, additional_fields=None, include_normal=False)
+        self.assertEqual(test_payload["raw_filters"]["assay_filters"]["filters"], expected_output["filters"])
+
     def test_additional_fields(self):
         print("testing --additional-fields")
         input_filter_path = os.path.join(self.e2e_filter_directory, "single_location.json")

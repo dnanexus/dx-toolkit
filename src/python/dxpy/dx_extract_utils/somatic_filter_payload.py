@@ -187,26 +187,29 @@ def generate_assay_filter(
     for filter_group in full_input_dict.keys():
         if filter_group == "location":
             location_list = full_input_dict["location"]
-            location_aid_filter, chrom = location_filter(location_list)
-            filters_dict.update(location_aid_filter)
-            # Add a CHROM filter to handle non standard contigs
-            filters_dict.update(basic_filter(
-                "variant_read_optimized",
-                "CHROM",
-                chrom,
-                project_context,
-                genome_reference,
-            ))
-            
-        else:
-            for individual_filter_name in full_input_dict[filter_group].keys():
+            if location_list:
+                location_aid_filter, chrom = location_filter(location_list)
+                filters_dict.update(location_aid_filter)
+                # Add a CHROM filter to handle non standard contigs
                 filters_dict.update(basic_filter(
                     "variant_read_optimized",
-                    individual_filter_name,
-                    full_input_dict[filter_group][individual_filter_name],
+                    "CHROM",
+                    chrom,
                     project_context,
                     genome_reference,
                 ))
+            
+        else:
+            for individual_filter_name in full_input_dict[filter_group].keys():
+                individual_filter = full_input_dict[filter_group][individual_filter_name]
+                if individual_filter:
+                    filters_dict.update(basic_filter(
+                        "variant_read_optimized",
+                        individual_filter_name,
+                        individual_filter,
+                        project_context,
+                        genome_reference,
+                    ))
 
     # If include_normal is False, then add a filter to select data where tumor_normal = tumor
     if not include_normal:
