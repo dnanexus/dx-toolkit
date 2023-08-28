@@ -1,10 +1,7 @@
-from ..exceptions import err_exit
-
-
 class ExpressionInputsValidator:
     """InputsValidator class for extract_assay expresion. Checks for invalid input combinations"""
 
-    def __init__(self, args, error_handler):
+    def __init__(self, args, error_handler=print):
         self.list_assays = args.list_assays
         self.retrieve_expression_flag = args.retrieve_expression
         self.assay_name = args.assay_name
@@ -20,7 +17,7 @@ class ExpressionInputsValidator:
 
         self.error_handler = error_handler
 
-    def run_validations(self):
+    def validate(self):
         self.end_arguments_check("list_assays")
         self.end_arguments_check("additional_fields_help")
 
@@ -33,17 +30,17 @@ class ExpressionInputsValidator:
                 self.output,
             ]
         ):
-            self.error_handler = (
+            self.error_handler(
                 '"--json-help" cannot be passed with any of "--assay-name", "--sql", "--additional-fields", "--expression-matrix", or "--output"',
             )
 
         if self.retrieve_expression_flag and not any([self.input_json, self.json_help]):
-            self.error_handler = (
+            self.error_handler(
                 'The flag "--retrieve_expression" must be followed by a json input or json help.',
             )
 
         if self.input_json == "{}":
-            self.error_handler = (
+            self.error_handler(
                 'JSON for "--retrieve-expression" does not contain valid filter information.',
             )
 
@@ -59,15 +56,11 @@ class ExpressionInputsValidator:
         invalid_combination = getattr(self, end_arg) and any(args_specific_list)
 
         if invalid_combination:
-            self.error_handler = (
+            self.error_handler(
                 '"--{}" cannot be presented with other options.'.format(
                     end_arg.replace("_", "-")
                 )
             )
-
-    def error_exit(self):
-        if self.error_handler:
-            err_exit(self.error_handler[0])
 
 
 # class PathValidator:
