@@ -61,7 +61,7 @@ class TestCreateCohort(unittest.TestCase):
         cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
         cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
         with open(
-            os.path.join(dirname,"create_cohort_test_files", "usage_message.txt"), "r"
+            os.path.join(dirname, "create_cohort_test_files", "usage_message.txt"), "r"
         ) as infile:
             cls.usage_message = infile.read()
 
@@ -82,7 +82,6 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "fakepath",
             "--from",
             self.test_record_pheno,
             "--cohort-ids-file",
@@ -107,7 +106,6 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "fakepath",
             "--from",
             self.test_record_pheno,
             "--cohort-ids-file",
@@ -126,7 +124,6 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "fakepath",
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -152,7 +149,6 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "fakepath",
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -169,17 +165,17 @@ class TestCreateCohort(unittest.TestCase):
 
 
     # EM-2
-    # The structure of “Path” is invalid. This should be able to be reused from other dx functions
+    # The structure of “--from” is invalid. This should be able to be reused from other dx functions
     def test_errmsg_invalid_path(self):
+        bad_record = "record-badrecord"
         expected_error_message = (
-            "Structure of PATH is invalid.  Must be in format *.cohort"
+            "Unable to resolve {} to a data object or folder name in {}".format(bad_record, self.proj_id)
         )
         command = [
             "dx",
             "create_cohort",
-            "{}:/Create_Cohort/bad_name_format.txt".format(self.proj_id),
             "--from",
-            self.test_record,
+            "{}:{}".format(self.proj_id, bad_record),
             "--cohort-ids",
             "id1,id2",
         ]
@@ -188,8 +184,10 @@ class TestCreateCohort(unittest.TestCase):
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
 
+        err_msg = process.communicate()[1]
+
         # stdout should be the first element in this list and stderr the second
-        self.assertEqual(expected_error_message, process.communicate()[1])
+        self.assertEqual(expected_error_message, err_msg)
 
     # EM-3
     # The user does not have access to the object
@@ -200,17 +198,16 @@ class TestCreateCohort(unittest.TestCase):
     # The record id or path is not a cohort or dataset
     # This should fail before the id validity check
     def test_errmsg_not_cohort_dataset(self):
-        quaytest_applet_id = "{}:applet-GPbxvJQ0vGPx0yQV5843YYqy".format(self.proj_id)
+        non_dataset_record = "{}:workflow-GYYBq4j0vGPq598PY8JJX7x9".format(self.proj_id)
 
         expected_error_message = "{}: Invalid path. The path must point to a record type of cohort or dataset".format(
-            quaytest_applet_id
+            non_dataset_record
         )
         command = [
             "dx",
             "create_cohort",
-            "fakepath",
             "--from",
-            quaytest_applet_id,
+            non_dataset_record,
             "--cohort-ids",
             "fakeid",
         ]
@@ -241,7 +238,6 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "fakepath",
             "--from",
             bad_path,
             "--cohort-ids",
@@ -269,7 +265,6 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "fakepath",
             "--from",
             bad_path,
             "--cohort-ids",
@@ -291,7 +286,6 @@ class TestCreateCohort(unittest.TestCase):
         command = command = [
             "dx",
             "create_cohort",
-            "fakepath",
             "--from",
             self.test_record,
             "--cohort-ids",
