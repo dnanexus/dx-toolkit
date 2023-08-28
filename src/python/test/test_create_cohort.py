@@ -174,7 +174,7 @@ class TestCreateCohort(unittest.TestCase):
             "dx",
             "create_cohort",
             "--from",
-            "{}:{}".format(self.proj_id,bad_record),
+            "{}:{}".format(self.proj_id, bad_record),
             "--cohort-ids",
             "id1,id2",
         ]
