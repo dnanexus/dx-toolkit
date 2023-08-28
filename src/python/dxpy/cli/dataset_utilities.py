@@ -1263,12 +1263,12 @@ def create_cohort(args):
 
     
     new_record_response = dxpy.bindings.dxrecord.new_dxrecord(
-    details=cohort_payload['details'],
-    project=cohort_payload['project'],
-    name=None,
-    types=cohort_payload['types'],
-    folder=cohort_payload['folder'],
-    close=cohort_payload['close']
+        details=cohort_payload['details'],
+        project=cohort_payload['project'],
+        name=None,
+        types=cohort_payload['types'],
+        folder=cohort_payload['folder'],
+        close=cohort_payload['close']
     )
     # Examine the dxrecord object
     print(new_record_response.describe())
