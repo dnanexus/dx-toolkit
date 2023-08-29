@@ -143,10 +143,10 @@ on_exit() {
   rm $LOG_NAME || true
 
   if [[ $ret -ne 0 ]]; then
-    echo "=== Execution failed — skip uploading published files to job output destination ${DX_JOB_OUTDIR%/}"
+    echo "=== Execution failed — skip uploading published files to job output destination ${DX_JOB_OUTDIR%/}/"
 
   else
-    echo "=== Execution succeeded — upload published files to job output destination ${DX_JOB_OUTDIR%/}"
+    echo "=== Execution succeeded — upload published files to job output destination ${DX_JOB_OUTDIR%/}/"
     mkdir -p /home/dnanexus/out/published_files
     find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
     dx-upload-all-outputs --parallel --wait-on-close || echo "No published files has been generated."
