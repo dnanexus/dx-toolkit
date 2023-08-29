@@ -1061,7 +1061,7 @@ def resolve_validate_dx_path(path):
     """
 
     project, folder, name = resolve_path(path)
-    err_msg = ""
+    err_msg = None
     if folder != "/":
         folder_name = "/{}".format(os.path.basename(folder))
         folder_path = os.path.dirname(folder)
