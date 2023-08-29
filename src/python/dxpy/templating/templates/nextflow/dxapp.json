@@ -68,12 +68,6 @@
       "help": "Output files published by current Nextflow pipeline and uploaded to the job output destination.",
       "class": "array:file",
       "optional": true
-    },
-    {
-      "name": "nextflow_log",
-      "label": "Log file of Nextflow pipeline",
-      "class": "file",
-      "optional": true
     }
   ],
   "runSpec": {
