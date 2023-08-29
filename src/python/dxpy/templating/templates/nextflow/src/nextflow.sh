@@ -134,7 +134,7 @@ on_exit() {
 
   if [[ -s $LOG_NAME ]]; then
     echo "=== Execution complete — upload nextflow log to job output destination ${DX_JOB_OUTDIR%/}"
-    NEXFLOW_LOG_ID=$(dx upload "/home/dnanexus/out/nextflow_log/$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
+    NEXFLOW_LOG_ID=$(dx upload "$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
       echo "Upload nextflow log as file: $NEXFLOW_LOG_ID" ||
       echo "Failed to upload log file of current session $NXF_UUID"
   else
