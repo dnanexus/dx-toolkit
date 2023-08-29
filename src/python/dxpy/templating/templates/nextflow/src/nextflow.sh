@@ -108,7 +108,7 @@ on_exit() {
 
   # backup cache
   if [[ $preserve_cache == true ]]; then
-    echo "=== Execution complete — caching current session to $DX_CACHEDIR/$NXF_UUID"
+    echo "=== Execution completed — caching current session to $DX_CACHEDIR/$NXF_UUID"
 
     # wrap cache folder and upload cache.tar
     if [[ -n "$(ls -A .nextflow)" ]]; then
@@ -125,7 +125,7 @@ on_exit() {
   # preserve_cache is false
   # clean up files of this session
   else
-    echo "=== Execution complete — cache and working files will not be resumable"
+    echo "=== Execution completed — cache and working files will not be resumable"
   fi
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
@@ -133,12 +133,12 @@ on_exit() {
   rm nxf_runtime.config
 
   if [[ -s $LOG_NAME ]]; then
-    echo "=== Execution complete — upload nextflow log to job output destination ${DX_JOB_OUTDIR%/}/"
+    echo "=== Execution completed — upload nextflow log to job output destination ${DX_JOB_OUTDIR%/}/"
     NEXFLOW_LOG_ID=$(dx upload "$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
       echo "Upload nextflow log as file: $NEXFLOW_LOG_ID" ||
       echo "Failed to upload log file of current session $NXF_UUID"
   else
-    echo "=== Execution complete — no nextflow log file available."
+    echo "=== Execution completed — no nextflow log file available."
   fi
   rm $LOG_NAME || true
 
