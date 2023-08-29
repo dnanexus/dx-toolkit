@@ -1061,6 +1061,7 @@ def resolve_validate_dx_path(path):
     """
 
     project, folder, name = resolve_path(path)
+    err_msg = None
     if folder != "/":
         folder_name = "/{}".format(os.path.basename(folder))
         folder_path = os.path.dirname(folder)
@@ -1072,6 +1073,7 @@ def resolve_validate_dx_path(path):
             err_msg = "The folder: {} could not be found in the project: {}".format(
                 folder, project
             )
+        
 
     return project, folder, name, err_msg
 
@@ -1088,16 +1090,17 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     table_column_name = "{}${}".format(entity_name, field_name)
     fields_list = [{field_name: table_column_name}]
 
-    
     # Note that pheno filters do not need name or id fields
     payload = {
         "project_context": project,
         "fields": fields_list,
-        "pheno_filters": {
-            "filters": {
-                table_column_name: [
-                    {"condition": "in", "values": ids}
-                ]
+        "raw_filters":{
+            "pheno_filters": {
+                "filters": {
+                    table_column_name: [
+                        {"condition": "in", "values": ids}
+                    ]
+                }
             }
         }
     }
@@ -1199,11 +1202,11 @@ def create_cohort(args):
     try:
         validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
     except ValueError as err:
-        err_exit(err)
+        err_exit(str(err))
     except VizserverError as err:
-        err_exit(err)
+        err_exit(str(err))
     except Exception as err:
-        err_exit(err)
+        err_exit(str(err))
     # Input cohort IDs have been succesfully validated    
 
     entity = rec_descriptor.model["global_primary_key"]["entity"]
@@ -1211,6 +1214,65 @@ def create_cohort(args):
     filters = resp.get("filters", {})
     payload = cohort_final_payload(samples, entity, field, filters, from_project)
     sql = cohort_query_api_call(resp, payload)
+
+    cohort_payload = {
+        "folder": "/test_output",
+        "project": "project-GXKBVGj09QxjGPkpGjz0BjPJ",
+        "types": [
+            "DatabaseQuery",
+            "CohortBrowser"
+        ],
+        "details": {
+            "databases": [
+                "database-GYK2yg00vGPpzj7YGY3VJxb9"
+            ],
+            "dataset": {
+                "$dnanexus_link": "record-GYK2zyQ0g1bx86fBp2X8KpjY"
+            },
+            "description": "",
+            "filters": {
+                "pheno_filters": {
+                    "compound": [
+                        {
+                            "name": "phenotype",
+                            "logic": "and",
+                            "filters": {
+                                "patient$patient_id": [
+                                    {
+                                        "condition": "in",
+                                        "values": [
+                                            "patient_1",
+                                            "patient_2",
+                                            "patient_3"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "logic": "and"
+                },  
+                "logic": "and"
+            },
+            "schema": "create_cohort_schema",
+            "sql": "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3')",
+            "version": "3.0"
+        },
+        "close": True
+    }
+
+    
+    new_record_response = dxpy.bindings.dxrecord.new_dxrecord(
+        details=cohort_payload['details'],
+        project=cohort_payload['project'],
+        name=None,
+        types=cohort_payload['types'],
+        folder=cohort_payload['folder'],
+        close=cohort_payload['close']
+    )
+    # Examine the dxrecord object
+    print(new_record_response.describe())
+
 
 
 class DXDataset(DXRecord):
