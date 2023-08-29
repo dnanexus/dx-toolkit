@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Remove optional output param `nextflow_log` from Nextflow pipeline applets; instead, always upload Nextflow log file to head job destination when execution completes
+
 ## [356.0] - beta
 
 ### Fixed
