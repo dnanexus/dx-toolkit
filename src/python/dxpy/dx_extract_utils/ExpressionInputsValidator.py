@@ -68,6 +68,7 @@ class ExpressionInputsValidator:
             "json_help",
             "sql",
             "additional_fields",
+            "additional_fields_help",
             "expression_matrix",
             "delim",
             "output",
