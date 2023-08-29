@@ -65,8 +65,11 @@ class TestCreateCohort(unittest.TestCase):
         ) as infile:
             cls.usage_message = infile.read()
 
-    def is_record_object(self, name):
-        bool(re.match(r"^(record-[A-Za-z0-9]{24}|[a-z][a-z_0-9]{1,255})$", name))
+    def find_record_id(self, text): 
+        match = re.search(r"\b(record-[A-Za-z0-9]{24})\b", text)
+        if match:
+            return match[1]
+    
 
     # Test the message printed on stdout when the --help flag is provided
     # This message is also printed on every error caught by argparse, before the specific message
@@ -78,6 +81,7 @@ class TestCreateCohort(unittest.TestCase):
 
         self.assertEqual(expected_result, process)
 
+    # testing that command accepts file with sample ids
     def test_accept_file_ids(self):
         command = [
             "dx",
@@ -96,12 +100,14 @@ class TestCreateCohort(unittest.TestCase):
         stdout, stderr = process.communicate()
         self.assertTrue(stderr == "", msg = stderr)
 
-        # TODO: uncomment when record-id is returned + get record id from stdout
-        # self.assertTrue(self.is_record_object(stdout))
+        # testing if record object was created, retrieve record_id from stdout
+        recod_id = self.find_record_id(stdout)
+        self.assertTrue(bool(recod_id), "Record object was not created!")
         # Make sure to remove created record
-        # subprocess.check_output('dx rm {}'.format(stdout), shell=True, text=True)
+        subprocess.check_output('dx rm {}'.format(recod_id), shell=True, text=True)
 
     # EM-1
+    # testing resolution of invalid sample_id provided via file
     def test_accept_file_ids_negative(self):
         command = [
             "dx",
@@ -138,10 +144,11 @@ class TestCreateCohort(unittest.TestCase):
         stdout, stderr = process.communicate()
         self.assertTrue(stderr == "", msg = stderr)
 
-        # TODO: uncomment when record-id is returned + get record id from stdout
-        # self.assertTrue(self.is_record_object(stdout))
+        # testing if record object was created, retrieve record_id from stdout
+        recod_id = self.find_record_id(stdout)
+        self.assertTrue(bool(recod_id), "Record object was not created!")
         # Make sure to remove created record
-        # subprocess.check_output('dx rm {}'.format(stdout), shell=True, text=True)
+        subprocess.check_output('dx rm {}'.format(recod_id), shell=True, text=True)
 
     # EM-1
     # Supplied IDs do not match IDs of main entity in Dataset/Cohort
