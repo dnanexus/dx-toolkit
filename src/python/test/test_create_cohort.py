@@ -37,7 +37,7 @@ from dxpy.cli.dataset_utilities import (
     DXDataset,
     cohort_query_api_call
 )
-
+from dxpy.dx_extract_utils.cohort_filter_payload import generate_pheno_filter
 
 dirname = os.path.dirname(__file__)
 
@@ -338,6 +338,60 @@ class TestCreateCohort(unittest.TestCase):
         from_project, entity_result, resp, dataset_project = resolve_validate_record_path(self.test_record_pheno)
         sql = cohort_query_api_call(resp, test_payload)
         self.assertEqual(expected_results,sql)
+
+    def test_create_pheno_filter(self):
+        # test creating pheno filter without existing 
+        values = ["patient_1", "patient_2", "patient_3"]
+        entity = "patient"
+        field = "patient_id"
+        filters = {
+                "pheno_filters": {
+                    "compound": [
+                        {
+                            "name": "phenotype",
+                            "logic": "and",
+                            "filters": {
+                                "patient$patient_id": [
+                                    {
+                                        "condition": "in",
+                                        "values": ["patient_4", "patient_5", "patient_6"]
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    "logic": "and"
+                },
+                "logic": "and"
+            }
+
+        expected_filter = {
+            "pheno_filters": {
+                "compound": [
+                    {
+                        "name": "phenotype",
+                        "logic": "and",
+                        "filters": {
+                            "patient$patient_id": [
+                                {
+                                    "condition": "in",
+                                    "values": ["patient_4", "patient_5", "patient_6"],
+                                },
+                                {
+                                    "condition": "in",
+                                    "values": ["patient_1", "patient_2", "patient_3"],
+                                },
+                            ]
+                        },
+                    }
+                ],
+                "logic": "and",
+            },
+            "logic": "and",
+        }
+
+        generated_filter = generate_pheno_filter(values, entity, field, filters)
+        self.assertEqual(expected_filter, generated_filter)
 
 
 
