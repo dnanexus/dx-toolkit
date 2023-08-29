@@ -1190,7 +1190,7 @@ def create_cohort(args):
     if args.cohort_ids_file:
         with open(args.cohort_ids_file,"r") as infile:
             for line in infile:
-                samples.append(line)
+                samples.append(line.strip("\n"))
     # from string
     if args.cohort_ids:
         samples = args.cohort_ids.split(",")
