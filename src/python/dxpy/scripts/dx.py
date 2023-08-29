@@ -6619,37 +6619,25 @@ parser_extract_assay_expression = subparsers_extract_assay.add_parser(
     description="Query a Dataset or Cohort for an instance of a expression assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.",
 )
 
-parser_e_a_e_mutex_group_main = (
-    parser_extract_assay_expression.add_mutually_exclusive_group(required=True)
-)
-
-parser_e_a_e_mutex_group_json = (
-    parser_extract_assay_expression.add_mutually_exclusive_group()
-)
-
-parser_e_a_e_mutex_group_extras = (
-    parser_extract_assay_expression.add_mutually_exclusive_group()
-)
-
 parser_extract_assay_expression.add_argument(
     "path",
     type=str,
     help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name',
 )
 
-parser_e_a_e_mutex_group_main.add_argument(
+parser_extract_assay_expression.add_argument(
     "--list-assays",
     action="store_true",
     help="List molecular expression assays available for query in the specified Dataset or Cohort object",
 )
 
-parser_e_a_e_mutex_group_main.add_argument(
+parser_extract_assay_expression.add_argument(
     "--retrieve-expression",
     action="store_true",
     help='A flag to support, specifying criteria of molecular expression to retrieve. Retrieves rows from the expression table, optionally extended with sample and annotation information where the extension is inline without affecting row count. By default returns the following set of fields; “sample_id”, “feature_id”, and “value”. Additional fields may be returned using "--additional-fields". Must be used with either "--input-json" or "--input-json-file". Specify “--json-help” following this option to get detailed information on the json format and filters. When filtering, one, and only one of “location”, “annotation.feature_id”, or “annotation.feature_name” may be supplied. If a Cohort object is supplied, returned samples will be initially filtered to match the cohort-defined set of samples, and any additional filters will only further refine the cohort-defined set.',
 )
 
-parser_e_a_e_mutex_group_main.add_argument(
+parser_extract_assay_expression.add_argument(
     "--additional-fields-help",
     action="store_true",
     help="List all fields available for output.",
@@ -6662,40 +6650,40 @@ parser_extract_assay_expression.add_argument(
     help='Specify a specific molecular expression assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays"',
 )
 
-parser_e_a_e_mutex_group_json.add_argument(
+parser_extract_assay_expression.add_argument(
     "--input-json",
     "-j",
     type=str,
     help='The full input JSON object as a string and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--input-json" or "--input-json-file" may be supplied, not both.',
 )
 
-parser_e_a_e_mutex_group_json.add_argument(
+parser_extract_assay_expression.add_argument(
     "--input-json-file",
     "-f",
     type=str,
     help='The full input JSON object as a file and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--input-json" or "--input-json-file" may be supplied, not both.',
 )
 
-parser_e_a_e_mutex_group_json.add_argument(
+parser_extract_assay_expression.add_argument(
     "--json-help",
     help="When set, return a json template of “--retrieve-expression” and a list of filters with definitions.",
     action="store_true",
 )
 
-parser_e_a_e_mutex_group_extras.add_argument(
+parser_extract_assay_expression.add_argument(
     "--sql",
     action="store_true",
     help="If the flag is provided, a SQL statement (as a string) will be returned for the user to further query the specified data, instead of returning actual data values.",
 )
 
-parser_e_a_e_mutex_group_extras.add_argument(
+parser_extract_assay_expression.add_argument(
     "--additional-fields",
     nargs="+",
     default=None,
     help="A set of fields to return, in addition to the default set; “sample_id”, “feature_id”, and “value”. Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, “fieldA,fieldB,fieldC.” Use “--additional-fields-help” to get the full list of output fields available.",
 )
 
-parser_e_a_e_mutex_group_extras.add_argument(
+parser_extract_assay_expression.add_argument(
     "--expression-matrix",
     "-em",
     action="store_true",
