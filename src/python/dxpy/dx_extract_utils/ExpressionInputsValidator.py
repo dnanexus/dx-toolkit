@@ -8,14 +8,18 @@ class ExpressionInputsValidator:
 
     def validate(self):
         # Checking exclusive arguments
-        # TODO pass as dict later on
-        self.exclusive_argument_check("list_assays", [])
-        self.exclusive_argument_check("additional_fields_help", ["retrieve_expression"])
-        self.exclusive_argument_check("json_help", ["retrieve_expression"])
-        self.exclusive_argument_check(
-            "expression_matrix",
-            ["retrieve_expression", "input_json", "input_json_file"],
-        )
+        exclusive_arguments_definition = {
+            "list_assays": {"exclusive_arg": "list_assays", "exceptions": []},
+            "additional_fields_help": {
+                "exclusive_arg": "additional_fields_help",
+                "exceptions": ["retrieve_expression"],
+            },
+            "json_help": {
+                "exclusive_arg": "json_help",
+                "exceptions": ["retrieve_expression"],
+            },
+        }
+        self.exclusive_argument_check(exclusive_arguments_definition)
 
         # Checking multiple exclusive groups
         mutually_exclusive_groups_definition = {
@@ -38,7 +42,7 @@ class ExpressionInputsValidator:
                         self.args["json_help"],
                     ]
                 ),
-                "error_message": 'One of the arguments "--retrieve-expression", "--list_assays", "--additional-fields-help", "--json-help" is required.',
+                "error_message": 'One of the arguments "--retrieve-expression", "--list-assays", "--additional-fields-help", "--json-help" is required.',
             },
             "retrieve_expression": {
                 "invalid_combination": self.args["retrieve_expression"]
@@ -51,6 +55,10 @@ class ExpressionInputsValidator:
                 ),
                 "error_message": 'The flag "--retrieve_expression" must be followed by "--input-json", "--json-help", "--json-help", or "--additional-fields-help".',
             },
+            "expression_matrix_out_of_context": {
+                "invalid_combination": self.args["expression_matrix"] and not self.args["retrieve_expression"],
+                "error_message": '“--expression-matrix" cannot be passed with any argument other than "--retrieve-expression”',
+            },
             "empty_json": {
                 "invalid_combination": self.args["input_json"] == "{}",
                 "error_message": 'JSON for "--retrieve-expression" does not contain valid filter information.',
@@ -58,44 +66,52 @@ class ExpressionInputsValidator:
         }
         self.invalid_combinations_check(invalid_combinations_definition)
 
-    def exclusive_argument_check(self, exclusive_arg, exceptions):
-        args_to_check = [
-            "list_assays",
-            "retrieve_expression",
-            "assay_name",
-            "input_json",
-            "input_json_file",
-            "json_help",
-            "sql",
-            "additional_fields",
-            "additional_fields_help",
-            "expression_matrix",
-            "delim",
-            "output",
-        ]
-        exception_str = []
-        for e in exceptions:
-            args_to_check.remove(e)
-            exception_str.append("--{}".format(e).replace("_", "-"))
-        exception_str = (
-            str(exception_str).replace("[", "").replace("]", "").replace("'", '"')
-        )
-        args_specific_list = [self.args[e] for e in args_to_check if e != exclusive_arg]
-        invalid_combination = self.args[exclusive_arg] and any(args_specific_list)
+    def exclusive_argument_check(self, exclusive_arguments_definition):       
+        for key, value in exclusive_arguments_definition.items():
+            args_to_check = [
+                "list_assays",
+                "retrieve_expression",
+                "assay_name",
+                "input_json",
+                "input_json_file",
+                "json_help",
+                "sql",
+                "additional_fields",
+                "additional_fields_help",
+                "expression_matrix",
+                "delim",
+                "output",
+            ]
+            exception_str = []
 
-        if invalid_combination:
-            if exceptions == []:
-                self.error_handler(
-                    '"--{}" cannot be presented with other options.'.format(
-                        exclusive_arg.replace("_", "-")
+            for exception in value.get("exceptions"):
+                args_to_check.remove(exception)
+                exception_str.append("--{}".format(exception).replace("_", "-"))
+            
+            exception_str = (
+                str(exception_str).replace("[", "").replace("]", "").replace("'", '"')
+            )
+            args_to_check_values = [
+                self.args[argument]
+                for argument in args_to_check
+                if argument != value.get("exclusive_arg")
+            ]
+            invalid_combination = self.args[
+                value.get("exclusive_arg")
+            ] and any(args_to_check_values)
+
+            if invalid_combination:
+                if value.get("exceptions") == []:
+                    self.error_handler(
+                        '"--{}" cannot be passed with other options.'.format(
+                            value.get("exclusive_arg").replace("_", "-")
+                        )
                     )
-                )
-            else:
-                self.error_handler(
-                    '"--{}" cannot be passed with any option other than {}'.format(
-                        (exclusive_arg.replace("_", "-")), (exception_str)
-                    )
-                )
+                else:
+                    self.error_handler(
+                        '"--{}" cannot be passed with any option other than {}.'.format(
+                            value.get("exclusive_arg").replace("_", "-"), (exception_str))
+                        )                   
 
     def invalid_combinations_check(self, invalid_combinations_definition):
         for key, value in invalid_combinations_definition.items():
