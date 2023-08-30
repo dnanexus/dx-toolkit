@@ -148,7 +148,7 @@ class TestCreateCohort(unittest.TestCase):
         recod_id = self.find_record_id(stdout)
         self.assertTrue(bool(record_id), "Record object was not created!")
         # Make sure to remove created record
-        subprocess.check_output('dx rm {}'.format(recod_id), shell=True, text=True)
+        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
 
     # EM-1
     # Supplied IDs do not match IDs of main entity in Dataset/Cohort
