@@ -363,7 +363,6 @@ class TestCreateCohort(unittest.TestCase):
         """
 
         # test creating pheno filter
-        print("Testing creating pheno filter")
         values = ["patient_1", "patient_2", "patient_3"]
         entity = "patient"
         field = "patient_id"
@@ -416,16 +415,14 @@ class TestCreateCohort(unittest.TestCase):
         generated_filter = generate_pheno_filter(values, entity, field, filters)
         self.assertEqual(expected_filter, generated_filter)
 
-        # cohort query api
-        print("Testing cohort query api")
+        # Testing cohort query api
         resp = resolve_validate_record_path(self.test_record_pheno)[2]
         payload = {"filters": generated_filter, "project_context": self.proj_id}
 
         sql = cohort_query_api_call(resp, payload)
         self.assertEqual(expected_sql, sql)
 
-        # create record
-        print("Testing new record")
+        # Testing new record with generated filter and sql
         details = {
             "databases": [resp["databases"]],
             "dataset": {"$dnanexus_link": resp["dataset"]},
