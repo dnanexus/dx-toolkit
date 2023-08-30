@@ -99,13 +99,17 @@ class TestCreateCohort(unittest.TestCase):
             universal_newlines=True,
         )
         stdout, stderr = process.communicate()
-        self.assertTrue(stderr == "", msg = stderr)
+        self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        record_id = self.find_record_id(stdout)
-        self.assertTrue(bool(recod_id), "Record object was not created!")
-        # Make sure to remove created record
-        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+        try:
+            record_id = self.find_record_id(stdout)
+            subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+            e = None
+        except Exception as e:
+            pass 
+        self.assertTrue(bool(record_id), str(e))
+        
 
     # EM-1
     # testing resolution of invalid sample_id provided via file
@@ -143,13 +147,17 @@ class TestCreateCohort(unittest.TestCase):
             universal_newlines=True,
         )
         stdout, stderr = process.communicate()
-        self.assertTrue(stderr == "", msg = stderr)
+        self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        recod_id = self.find_record_id(stdout)
-        self.assertTrue(bool(record_id), "Record object was not created!")
-        # Make sure to remove created record
-        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+        try:
+            record_id = self.find_record_id(stdout)
+            subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+            e = None
+        except Exception as e:
+            pass 
+        self.assertTrue(bool(record_id), str(e))
+
 
     # EM-1
     # Supplied IDs do not match IDs of main entity in Dataset/Cohort
@@ -379,7 +387,6 @@ class TestCreateCohort(unittest.TestCase):
             },
             "logic": "and",
         }
-
         expected_filter = {
             "pheno_filters": {
                 "compound": [
@@ -404,9 +411,8 @@ class TestCreateCohort(unittest.TestCase):
             },
             "logic": "and",
         }
-
         expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_4', 'patient_5', 'patient_6') AND `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
-        # create filter
+        
         generated_filter = generate_pheno_filter(values, entity, field, filters)
         self.assertEqual(expected_filter, generated_filter)
 
@@ -440,6 +446,7 @@ class TestCreateCohort(unittest.TestCase):
                 close=True,
             )
             new_record_details = new_record.get_details()
+            print(new_record_details)
             new_record.remove()
             e = None
         except Exception as e:
