@@ -30,6 +30,7 @@ import dxpy
 import sys
 import hashlib
 from dxpy_testutil import cd, chdir
+from dxpy.bindings import DXRecord
 
 from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
@@ -340,30 +341,37 @@ class TestCreateCohort(unittest.TestCase):
         self.assertEqual(expected_results,sql)
 
     def test_create_pheno_filter(self):
-        # test creating pheno filter without existing 
+        """Verifying the correctness of created filters by examining this flow:
+            1. creating the filter with: dxpy.dx_extract_utils.cohort_filter_payload.generate_pheno_filter
+            2. obtaining sql with: dxpy.cli.dataset_utilities.cohort_query_api_call
+            3. creating record with obtained sql and the filter by: dxpy.bindings.dxrecord.new_dxrecord
+        """
+
+        # test creating pheno filter
+        print("Testing creating pheno filter")
         values = ["patient_1", "patient_2", "patient_3"]
         entity = "patient"
         field = "patient_id"
         filters = {
-                "pheno_filters": {
-                    "compound": [
-                        {
-                            "name": "phenotype",
-                            "logic": "and",
-                            "filters": {
-                                "patient$patient_id": [
-                                    {
-                                        "condition": "in",
-                                        "values": ["patient_4", "patient_5", "patient_6"]
-                                    }
-                                ]
-                            }
-                        }
-                    ],
-                    "logic": "and"
-                },
-                "logic": "and"
-            }
+            "pheno_filters": {
+                "compound": [
+                    {
+                        "name": "phenotype",
+                        "logic": "and",
+                        "filters": {
+                            "patient$patient_id": [
+                                {
+                                    "condition": "in",
+                                    "values": ["patient_4", "patient_5", "patient_6"],
+                                }
+                            ]
+                        },
+                    }
+                ],
+                "logic": "and",
+            },
+            "logic": "and",
+        }
 
         expected_filter = {
             "pheno_filters": {
@@ -390,9 +398,48 @@ class TestCreateCohort(unittest.TestCase):
             "logic": "and",
         }
 
+        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_4', 'patient_5', 'patient_6') AND `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
+        # create filter
         generated_filter = generate_pheno_filter(values, entity, field, filters)
         self.assertEqual(expected_filter, generated_filter)
 
+        # cohort query api
+        print("Testing cohort query api")
+        resp = resolve_validate_record_path(self.test_record_pheno)[2]
+        payload = {"filters": generated_filter, "project_context": self.proj_id}
+
+        sql = cohort_query_api_call(resp, payload)
+        self.assertEqual(expected_sql, sql)
+
+        # create record
+        print("Testing new record")
+        details = {
+            "databases": [resp["databases"]],
+            "dataset": {"$dnanexus_link": resp["dataset"]},
+            "description": "",
+            "filters": generated_filter,
+            "schema": "create_cohort_schema",
+            "sql": sql,
+            "version": "3.0",
+        }
+
+        try:
+            new_record = dxpy.bindings.dxrecord.new_dxrecord(
+                details=details,
+                project=self.proj_id,
+                name=None,
+                types=["DatabaseQuery", "CohortBrowser"],
+                folder="/",
+                close=True,
+            )
+            new_record_details = new_record.get_details()
+            new_record.remove()
+            e = None
+        except Exception as e:
+            pass
+
+        self.assertTrue(isinstance(new_record, DXRecord), str(e))
+        self.assertEquals(new_record_details, details, "Details of created record does not match expected details.")
 
 
 
