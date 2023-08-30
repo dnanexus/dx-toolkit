@@ -223,25 +223,23 @@ check_cache_db_storage() {
 }
 
 validate_run_opts() {
-  IFS=" " read -r -a arr <<<"$nextflow_run_opts"
-  for i in "${!arr[@]}"; do
-    case ${arr[i]} in
-    -w=* | -work-dir=*)
-      NXF_WORK="${arr[i]#*=}"
-      break
+  profile_arg="@@PROFILE_ARG@@"
+
+  IFS=" " read -r -a opts <<<"$nextflow_run_opts"
+  for opt in "${opts[@]}"; do
+    case $opt in
+    -w=* | -work-dir=* | -w | -work-dir)
+      dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
       ;;
-    -w | -work-dir)
-      NXF_WORK=${arr[i + 1]}
-      break
+    -profile | -profile=*)
+      if [ -n "$profile_arg" ]; then
+        echo "Profile was given in run options... overriding the default profile ($profile_arg)"
+        profile_arg=""
+      fi
       ;;
     *) ;;
     esac
   done
-
-  # if there is a user specified workdir, error out as currently user workdir is not supported
-  if [[ -n $NXF_WORK ]]; then
-    dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
-  fi
 }
 
 check_running_jobs() {
@@ -385,14 +383,6 @@ main() {
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
-  profile_arg="@@PROFILE_ARG@@"
-  if [ -n "$profile_arg" ]; then
-    if [[ "$nextflow_run_opts" == *"-profile "* ]]; then
-      echo "Profile was given in run options... overriding the default profile ($profile_arg)"
-      profile_arg=""
-    fi
-  fi
-
   set -x
   # parse_pipeline_params
   # echo "pipeline params:" "${nextflow_pipeline_params_final[@]/#/arg:}"
@@ -413,7 +403,7 @@ main() {
     $nextflow_run_opts \
     $nextflow_pipeline_params)"
 
-  NEXTFLOW_CMD+=( "${applet_runtime_inputs[@]}" )
+  NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
   for item in "${NEXTFLOW_CMD[@]}"; do echo "[$item]"; done
 
   trap on_exit EXIT
