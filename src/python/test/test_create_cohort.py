@@ -446,7 +446,6 @@ class TestCreateCohort(unittest.TestCase):
                 close=True,
             )
             new_record_details = new_record.get_details()
-            print(new_record_details)
             new_record.remove()
             e = None
         except Exception as e:
