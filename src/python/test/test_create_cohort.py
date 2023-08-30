@@ -104,7 +104,7 @@ class TestCreateCohort(unittest.TestCase):
         record_id = self.find_record_id(stdout)
         self.assertTrue(bool(recod_id), "Record object was not created!")
         # Make sure to remove created record
-        subprocess.check_output('dx rm {}'.format(recod_id), shell=True, text=True)
+        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
 
     # EM-1
     # testing resolution of invalid sample_id provided via file
