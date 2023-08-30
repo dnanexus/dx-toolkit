@@ -101,7 +101,7 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(stderr == "", msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        recod_id = self.find_record_id(stdout)
+        record_id = self.find_record_id(stdout)
         self.assertTrue(bool(recod_id), "Record object was not created!")
         # Make sure to remove created record
         subprocess.check_output('dx rm {}'.format(recod_id), shell=True, text=True)
