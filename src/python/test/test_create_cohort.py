@@ -181,7 +181,7 @@ class TestCreateCohort(unittest.TestCase):
 
 
     # EM-2
-    # The structure of “--from” is invalid. This should be able to be reused from other dx functions
+    # The structure of '--from' is invalid. This should be able to be reused from other dx functions
     def test_errmsg_invalid_path(self):
         bad_record = "record-badrecord"
         expected_error_message = (
