@@ -1059,7 +1059,6 @@ def resolve_validate_dx_path(path):
     """
     Resolves dx path into project, folder and name. Fails if non existing folder is provided.
     """
-
     project, folder, name = resolve_path(path)
     err_msg = None
     if folder != "/":
@@ -1073,8 +1072,7 @@ def resolve_validate_dx_path(path):
             err_msg = "The folder: {} could not be found in the project: {}".format(
                 folder, project
             )
-        
-
+    
     return project, folder, name, err_msg
 
 class VizserverError(Exception):
