@@ -330,7 +330,6 @@ main() {
   export NXF_ANSI_LOG=false
   export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
   export NXF_EXECUTOR='dnanexus'
-  # export NXF_JVM_ARGS='-XX:-StackTraceInThrowable'
 
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
@@ -383,13 +382,6 @@ main() {
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
-  set -x
-  # parse_pipeline_params
-  # echo "pipeline params:" "${nextflow_pipeline_params_final[@]/#/arg:}"
-
-  # declare -a nextflow_pipeline_params_final="($nextflow_pipeline_params)"
-  # for item in "${nextflow_pipeline_params_final[@]}"; do echo "[$item]"; done
-
   # execution starts
   for item in "${applet_runtime_inputs[@]}"; do echo "[$item]"; done
   declare -a NEXTFLOW_CMD="(nextflow \
@@ -404,7 +396,6 @@ main() {
     $nextflow_pipeline_params)"
 
   NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
-  for item in "${NEXTFLOW_CMD[@]}"; do echo "[$item]"; done
 
   trap on_exit EXIT
   echo "============================================================="
