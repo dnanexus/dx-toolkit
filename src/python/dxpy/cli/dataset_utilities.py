@@ -1169,7 +1169,7 @@ def create_cohort(args):
     """
     #### Validation ####
     # validate and resolve 'PATH' input
-    path_name=None
+    path_project, path_folder, path_name = None, None, None
     if args.PATH:
         path_project, path_folder, path_name, err_msg = resolve_validate_dx_path(
             args.PATH
