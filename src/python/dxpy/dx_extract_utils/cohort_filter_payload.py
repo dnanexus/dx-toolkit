@@ -80,13 +80,48 @@ def generate_pheno_filter(values, entity, field, filters):
     return filters
 
 
-def cohort_final_payload(values, entity, field, filters, project_context):
+def cohort_filter_payload(values, entity, field, filters, project_context, base_sql=None):
     if "logic" in filters and filters["logic"] != "and":
         raise NotImplementedError("cannot filter cohort when top-level logic is not \"and\"")
-    final_payload = {}
-    final_payload["project_context"] = project_context
-    final_payload["filters"] = generate_pheno_filter(values, entity, field, filters)
-    if "logic" not in final_payload["filters"]:
-        final_payload["filters"]["logic"] = "and"
+    filter_payload = {}
+    filter_payload["filters"] = generate_pheno_filter(values, entity, field, filters)
+    if "logic" not in filter_payload["filters"]:
+        filter_payload["filters"]["logic"] = "and"
+    filter_payload["project_context"] = project_context
+    if base_sql is not None:
+        filter_payload["base_sql"] = base_sql
+
+    return filter_payload
+
+
+def cohort_combined_payload(combined):
+    return combined
+
+
+def cohort_final_payload(name, folder, project, databases, dataset_id, filters, sql, base_sql=None, combined=None):
+    details = {
+        "databases": databases,
+        "dataset": {"$dnanexus_link": dataset_id},
+        "description": "",
+        "filters": filters,
+        "schema": "create_cohort_schema",
+        "sql": sql,
+        "version": "3.0",
+    }
+    if base_sql is not None:
+        details["baseSql"] = base_sql
+    if combined is not None:
+        details["combined"] = cohort_combined_payload(combined)
+
+    final_payload = {
+        "name": None,
+        "folder": "/Create_Cohort/manually_created_output_cohorts",
+        "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+        "types": ["DatabaseQuery", "CohortBrowser"],
+        "details": details,
+        "close": True,
+    }
+    if combined is not None:
+        final_payload["types"].append("CombinedDatabaseQuery")
 
     return final_payload
