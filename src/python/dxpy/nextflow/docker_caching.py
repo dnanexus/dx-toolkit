@@ -25,11 +25,11 @@ def collect_docker_images(resources_dir):
     :type resources_dir: String
     :returns: an array of DockerImageRef objects.
     """
-    container_configs = _collect_config_files(resources_dir)
+    container_configs = _collect_container_configs(resources_dir)
     return None
 
 
-def _collect_config_files(resources_dir):
+def _collect_container_configs(resources_dir):
     """
     :param resources_dir: URL to the local(ized) NF pipeline in the app(let) resources.
     :type resources_dir: String

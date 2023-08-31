@@ -32,6 +32,7 @@ from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError
 import dxpy
 from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
+from dxpy.nextflow.docker_caching import collect_docker_images, _collect_container_configs
 
 if USING_PYTHON2:
     spawn_extra_args = {}
@@ -339,6 +340,25 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
         self.assertTrue("second_config world!" in watched_run_output, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
         self.assertTrue("test_config world!" not in watched_run_output, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
+
+    def test_collect_docker_images(self):
+        pipeline_name = "profile_with_docker"
+
+        applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, "nextflow/profile_with_docker/")
+        image_refs = collect_docker_images(os.path.join(applet_dir, "resources"))
+
+        self.assertTrue(len(image_refs) == 3)
+        self.assertTrue(all([x.digest for x in image_refs]) in ["foo", "bar", "baz"])
+
+
+    def test__collect_container_configs(self):
+        pipeline_name = "profile_with_docker"
+
+        applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, "nextflow/profile_with_docker/")
+        container_configs = _collect_container_configs(os.path.join(applet_dir, "resources"))
+
+        self.assertTrue(len(container_configs) == 1)
+        self.assertTrue(all([x.image_ref for x in container_configs]) in ["foo", "bar", "baz"])
 
     def test_dx_build_nextflow_with_destination(self):
         pipeline_name = "hello"
