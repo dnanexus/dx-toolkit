@@ -29,7 +29,9 @@ import subprocess
 import dxpy
 import sys
 import hashlib
+import uuid
 from dxpy_testutil import cd, chdir
+from dxpy.bindings import DXRecord, DXProject
 
 from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
@@ -37,7 +39,7 @@ from dxpy.cli.dataset_utilities import (
     DXDataset,
     cohort_query_api_call
 )
-
+from dxpy.dx_extract_utils.cohort_filter_payload import generate_pheno_filter
 
 dirname = os.path.dirname(__file__)
 
@@ -58,12 +60,19 @@ class TestCreateCohort(unittest.TestCase):
         # TODO: setup project folders
         cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(proj_name)
         cls.proj_id = proj_id
+        cls.temp_proj = DXProject()
+        cls.temp_proj.new(name="temp_test_create_cohort_{}".format(uuid.uuid4()))
         cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
         cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
         with open(
             os.path.join(dirname, "create_cohort_test_files", "usage_message.txt"), "r"
         ) as infile:
             cls.usage_message = infile.read()
+
+    @classmethod
+    def tearDownClass(cls):
+        print("Remmoving testing temp project {}".format(cls.temp_proj._dxid))
+        cls.temp_proj.destroy()
 
     def find_record_id(self, text): 
         match = re.search(r"\b(record-[A-Za-z0-9]{24})\b", text)
@@ -86,6 +95,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
             "--from",
             self.test_record_pheno,
             "--cohort-ids-file",
@@ -98,13 +108,17 @@ class TestCreateCohort(unittest.TestCase):
             universal_newlines=True,
         )
         stdout, stderr = process.communicate()
-        self.assertTrue(stderr == "", msg = stderr)
+        self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        record_id = self.find_record_id(stdout)
-        self.assertTrue(bool(recod_id), "Record object was not created!")
-        # Make sure to remove created record
-        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+        try:
+            record_id = self.find_record_id(stdout)
+            subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+            e = None
+        except Exception as e:
+            pass 
+        self.assertTrue(bool(record_id), str(e))
+        
 
     # EM-1
     # testing resolution of invalid sample_id provided via file
@@ -112,6 +126,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
             "--from",
             self.test_record_pheno,
             "--cohort-ids-file",
@@ -130,6 +145,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -142,13 +158,17 @@ class TestCreateCohort(unittest.TestCase):
             universal_newlines=True,
         )
         stdout, stderr = process.communicate()
-        self.assertTrue(stderr == "", msg = stderr)
+        self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        recod_id = self.find_record_id(stdout)
-        self.assertTrue(bool(record_id), "Record object was not created!")
-        # Make sure to remove created record
-        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+        try:
+            record_id = self.find_record_id(stdout)
+            subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+            e = None
+        except Exception as e:
+            pass 
+        self.assertTrue(bool(record_id), str(e))
+
 
     # EM-1
     # Supplied IDs do not match IDs of main entity in Dataset/Cohort
@@ -156,6 +176,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -172,7 +193,7 @@ class TestCreateCohort(unittest.TestCase):
 
 
     # EM-2
-    # The structure of “--from” is invalid. This should be able to be reused from other dx functions
+    # The structure of '--from' is invalid. This should be able to be reused from other dx functions
     def test_errmsg_invalid_path(self):
         bad_record = "record-badrecord"
         expected_error_message = (
@@ -346,6 +367,101 @@ class TestCreateCohort(unittest.TestCase):
         sql = cohort_query_api_call(resp, test_payload)
         self.assertEqual(expected_results,sql)
 
+    def test_create_pheno_filter(self):
+        """Verifying the correctness of created filters by examining this flow:
+            1. creating the filter with: dxpy.dx_extract_utils.cohort_filter_payload.generate_pheno_filter
+            2. obtaining sql with: dxpy.cli.dataset_utilities.cohort_query_api_call
+            3. creating record with obtained sql and the filter by: dxpy.bindings.dxrecord.new_dxrecord
+        """
+
+        # test creating pheno filter
+        values = ["patient_1", "patient_2", "patient_3"]
+        entity = "patient"
+        field = "patient_id"
+        filters = {
+            "pheno_filters": {
+                "compound": [
+                    {
+                        "name": "phenotype",
+                        "logic": "and",
+                        "filters": {
+                            "patient$patient_id": [
+                                {
+                                    "condition": "in",
+                                    "values": ["patient_4", "patient_5", "patient_6"],
+                                }
+                            ]
+                        },
+                    }
+                ],
+                "logic": "and",
+            },
+            "logic": "and",
+        }
+        expected_filter = {
+            "pheno_filters": {
+                "compound": [
+                    {
+                        "name": "phenotype",
+                        "logic": "and",
+                        "filters": {
+                            "patient$patient_id": [
+                                {
+                                    "condition": "in",
+                                    "values": ["patient_4", "patient_5", "patient_6"],
+                                },
+                                {
+                                    "condition": "in",
+                                    "values": ["patient_1", "patient_2", "patient_3"],
+                                },
+                            ]
+                        },
+                    }
+                ],
+                "logic": "and",
+            },
+            "logic": "and",
+        }
+        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_4', 'patient_5', 'patient_6') AND `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
+        
+        generated_filter = generate_pheno_filter(values, entity, field, filters)
+        self.assertEqual(expected_filter, generated_filter)
+
+        # Testing cohort query api
+        resp = resolve_validate_record_path(self.test_record_pheno)[2]
+        payload = {"filters": generated_filter, "project_context": self.proj_id}
+
+        sql = cohort_query_api_call(resp, payload)
+        self.assertEqual(expected_sql, sql)
+
+        # Testing new record with generated filter and sql
+        details = {
+            "databases": [resp["databases"]],
+            "dataset": {"$dnanexus_link": resp["dataset"]},
+            "description": "",
+            "filters": generated_filter,
+            "schema": "create_cohort_schema",
+            "sql": sql,
+            "version": "3.0",
+        }
+
+        try:
+            new_record = dxpy.bindings.dxrecord.new_dxrecord(
+                details=details,
+                project=self.temp_proj._dxid,
+                name=None,
+                types=["DatabaseQuery", "CohortBrowser"],
+                folder="/",
+                close=True,
+            )
+            new_record_details = new_record.get_details()
+            new_record.remove()
+            e = None
+        except Exception as e:
+            pass
+
+        self.assertTrue(isinstance(new_record, DXRecord), str(e))
+        self.assertEqual(new_record_details, details, "Details of created record does not match expected details.")
 
 
 

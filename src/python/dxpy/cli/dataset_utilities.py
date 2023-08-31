@@ -1169,6 +1169,7 @@ def create_cohort(args):
     """
     #### Validation ####
     # validate and resolve 'PATH' input
+    path_project, path_folder, path_name = None, None, None
     if args.PATH:
         path_project, path_folder, path_name, err_msg = resolve_validate_dx_path(
             args.PATH
@@ -1213,60 +1214,25 @@ def create_cohort(args):
     payload = cohort_final_payload(samples, entity, field, filters, from_project)
     sql = cohort_query_api_call(resp, payload)
 
-    cohort_payload = {
-        "folder": "/test_output",
-        "project": "project-GXKBVGj09QxjGPkpGjz0BjPJ",
-        "types": [
-            "DatabaseQuery",
-            "CohortBrowser"
-        ],
-        "details": {
-            "databases": [
-                "database-GYK2yg00vGPpzj7YGY3VJxb9"
-            ],
-            "dataset": {
-                "$dnanexus_link": "record-GYK2zyQ0g1bx86fBp2X8KpjY"
-            },
-            "description": "",
-            "filters": {
-                "pheno_filters": {
-                    "compound": [
-                        {
-                            "name": "phenotype",
-                            "logic": "and",
-                            "filters": {
-                                "patient$patient_id": [
-                                    {
-                                        "condition": "in",
-                                        "values": [
-                                            "patient_1",
-                                            "patient_2",
-                                            "patient_3"
-                                        ]
-                                    }
-                                ]
-                            }
-                        }
-                    ],
-                    "logic": "and"
-                },  
-                "logic": "and"
-            },
-            "schema": "create_cohort_schema",
-            "sql": "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3')",
-            "version": "3.0"
-        },
-        "close": True
+    ### temporary
+    details = {
+        "databases": [resp["databases"]],
+        "dataset": {"$dnanexus_link": resp["dataset"]},
+        "description": "",
+        "filters": payload["filters"],
+        "schema": "create_cohort_schema",
+        "sql": sql,
+        "version": "3.0",
     }
+    ###
 
-    
     new_record_response = dxpy.bindings.dxrecord.new_dxrecord(
-        details=cohort_payload['details'],
-        project=cohort_payload['project'],
-        name=None,
-        types=cohort_payload['types'],
-        folder=cohort_payload['folder'],
-        close=cohort_payload['close']
+        details=details,
+        project=path_project,
+        name=path_name,
+        types=["DatabaseQuery", "CohortBrowser"],
+        folder=path_folder,
+        close=True
     )
     # Examine the dxrecord object
     print(new_record_response.describe())
