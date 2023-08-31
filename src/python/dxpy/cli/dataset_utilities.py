@@ -1046,14 +1046,56 @@ def extract_assay_somatic(args):
                 quoting=csv.QUOTE_NONE,
             )
 
-def extract_assay_expression(args):
+def extract_assay_expression(parser_obj):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an expression assay in a dataset or cohort based on provided rules.
     """
 
     # Validating input combinations
-    input_validator = ExpressionInputsValidator(vars(args), err_exit)
+    parser_dict = vars(parser_obj)
+
+    schema = {
+        "schema_version": "1.0",
+        "check2_json_help": {
+            "type": "dict",
+            "items": {
+                "main_key": "json_help",
+                "exceptions": ["path", "retrieve_expression"],
+            },
+            "condition": "exclusive_with_exceptions",
+            "error_message": {"message": '"--json-help" cannot be passed with any option other than "--retrieve-expression".'},
+        },
+        "check_dummy_list_assays": {
+            "type": "dict",
+            "items": {
+                "main_key": "list_assays",
+            },
+            "condition": "exclusive",
+            "error_message": {"message": 'DUMMY: list assays cant go with others'},
+        },
+        # "check2": {
+        #     "type": "dict",
+        #     "items": {"key1": ["value1", "value2"]},
+        #     "condition": "one_of",
+        #     "error_message": {"message": "...", "throw": "warning"},
+        # },
+        # "check2_abc": {
+        #     "type": "list",
+        #     "items": ["abc", "xyz"],
+        #     "condition": "one_required",
+        #     "error_message": {"message": "..."},
+        # },
+        # "check3_xyz": {
+        #     "type": "list",
+        #     "items": ["Path"],
+        #     "condition": "required",
+        #     "error_message": {"message": "...", "throw": "warning"},
+        # },
+    }
+
+    input_validator = ExpressionInputsValidator(parser_dict=parser_dict, schema=schema, error_handler=err_exit)
     input_validator.validate()
+    # input_validator.validate()
 
 
 

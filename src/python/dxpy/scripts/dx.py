@@ -6621,6 +6621,7 @@ parser_extract_assay_expression = subparsers_extract_assay.add_parser(
 
 parser_extract_assay_expression.add_argument(
     "path",
+    nargs='?',
     type=str,
     help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name',
 )
