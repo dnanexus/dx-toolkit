@@ -412,12 +412,10 @@ main() {
     fi
   fi
 
+  dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@
   custom_config_arg=''
   if [ -n "$nextflow_soft_confs" ]; then
-    for c in  $(jq -r '.[] |.["$dnanexus_link"]' <<<"$nextflow_soft_confs" ); do 
-      sed -e '$s/$/\n/' "$c" >> nxf_runtime.config
-    done
-    custom_config_arg='-c nxf_runtime.config'
+    custom_config_arg=$(find $HOME/in/nextflow_soft_confs/ -name "*.config" -printf "-c %p ")
   fi
 
   # execution starts

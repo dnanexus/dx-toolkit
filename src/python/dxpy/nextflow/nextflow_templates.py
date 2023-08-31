@@ -68,10 +68,13 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
 
     required_runtime_params = ""
     generate_runtime_config= ""
+    exclude_input_download=""
     for i in custom_inputs:
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
             value = "dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)" % i['name']
+            exclude_input_download+="--except {}".format(i['name'])
+
         # optional inputs will be added to custom runtime config file
         if "Nextflow pipeline optional" in i.get("help", ""):
             if i.get("class") not in ("int","float","boolean"):
@@ -94,6 +97,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     src = src.replace("@@GENERATE_RUNTIME_CONFIG@@", generate_runtime_config)
     src = src.replace("@@REQUIRED_RUNTIME_PARAMS@@", required_runtime_params)
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
+    src = src.replace("@@EXCLUDE_INPUT_DOWNLOAD@@", exclude_input_download)
     src = src.replace("@@DXPY_BUILD_VERSION@@", TOOLKIT_VERSION)
     if USING_PYTHON2:
         src = src.replace("@@RESOURCES_SUBPATH@@",
