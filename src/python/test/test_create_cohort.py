@@ -29,8 +29,9 @@ import subprocess
 import dxpy
 import sys
 import hashlib
+import uuid
 from dxpy_testutil import cd, chdir
-from dxpy.bindings import DXRecord
+from dxpy.bindings import DXRecord, DXProject
 
 from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
@@ -59,12 +60,19 @@ class TestCreateCohort(unittest.TestCase):
         # TODO: setup project folders
         cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(proj_name)
         cls.proj_id = proj_id
+        cls.temp_proj = DXProject()
+        cls.temp_proj.new(name="temp_test_create_cohort_{}".format(uuid.uuid4()))
         cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
         cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
         with open(
             os.path.join(dirname, "create_cohort_test_files", "usage_message.txt"), "r"
         ) as infile:
             cls.usage_message = infile.read()
+
+    @classmethod
+    def tearDownClass(cls):
+        print("Remmoving testing temp project {}".format(cls.temp_proj._dxid))
+        cls.temp_proj.destroy()
 
     def find_record_id(self, text): 
         match = re.search(r"\b(record-[A-Za-z0-9]{24})\b", text)
@@ -87,6 +95,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
             "--from",
             self.test_record_pheno,
             "--cohort-ids-file",
@@ -117,6 +126,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
             "--from",
             self.test_record_pheno,
             "--cohort-ids-file",
@@ -135,6 +145,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -165,6 +176,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -436,7 +448,7 @@ class TestCreateCohort(unittest.TestCase):
         try:
             new_record = dxpy.bindings.dxrecord.new_dxrecord(
                 details=details,
-                project=self.proj_id,
+                project=self.temp_proj._dxid,
                 name=None,
                 types=["DatabaseQuery", "CohortBrowser"],
                 folder="/",
@@ -449,7 +461,7 @@ class TestCreateCohort(unittest.TestCase):
             pass
 
         self.assertTrue(isinstance(new_record, DXRecord), str(e))
-        self.assertEquals(new_record_details, details, "Details of created record does not match expected details.")
+        self.assertEqual(new_record_details, details, "Details of created record does not match expected details.")
 
 
 
