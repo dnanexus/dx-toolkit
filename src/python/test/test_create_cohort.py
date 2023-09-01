@@ -503,7 +503,7 @@ class TestCreateCohort(unittest.TestCase):
 
     def _test_cohort_final_payload(self, payload_name):
         name = None
-        folder = "/Create_Cohort/manually_created_output_cohorts",
+        folder = "/Create_Cohort/manually_created_output_cohorts"
         project = "project-G9j1pX00vGPzF2XQ7843k2Jq"
 
         with open(os.path.join(self.payloads_dir, "visualize_response", "{}.json".format(payload_name))) as f:
