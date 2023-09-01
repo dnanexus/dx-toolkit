@@ -75,7 +75,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
         # applet_runtime_inputs variable is initialized in the nextflow.sh script template
         applet_runtime_params = applet_runtime_params + '''
         if [ -n "${}" ]; then
-            applet_runtime_inputs="${{applet_runtime_inputs}} --{}={}" 
+            applet_runtime_inputs+=(--{} "{}")
         fi
         '''.format(i['name'], i['name'], value)
 

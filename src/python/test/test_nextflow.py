@@ -384,12 +384,12 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         applet = dxpy.DXApplet(applet_id)
 
         job = applet.run({
-                         "nextflow_pipeline_params": "--input 'Printed_test_message'",
+                         "nextflow_pipeline_params": "--input 'Printed test message'",
                          "nextflow_top_level_opts": "-quiet"
         })
 
         watched_run_output = run("dx watch {}".format(job.get_id()))
-        self.assertIn("Printed_test_message", watched_run_output)
+        self.assertIn("hello STDOUT Printed test message world!", watched_run_output)
         # Running with the -quiet option reduces the amount of log and the lines such as:
         # STDOUT Launching `/home/dnanexus/hello/main.nf` [run-c8804f26-2eac-48d2-9a1a-a707ad1189eb] DSL2 - revision: 72a5d52d07
         # are not printed

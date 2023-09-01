@@ -13,6 +13,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Nextflow applets passes schema input params explicitly in `nextflow run` command, as parameters assigned in runtime config are not handled properly by nextflow-io
+* Unexpected splitting at whitespaces inside quotes when parsing string-type input parameters of Nextflow applets
 
 ## [356.0] - beta
 
