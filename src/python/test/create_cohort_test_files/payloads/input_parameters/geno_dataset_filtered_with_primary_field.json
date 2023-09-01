@@ -1,0 +1,11 @@
+{
+    "values": [
+        "sample_1_1",
+        "sample_1_2",
+        "sample_1_3",
+        "sample_1_4",
+        "sample_1_5"
+    ],
+    "entity": "sample",
+    "field": "sample_id"
+}

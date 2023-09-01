@@ -95,13 +95,24 @@ def cohort_filter_payload(values, entity, field, filters, project_context, base_
 
 
 def cohort_combined_payload(combined):
+    combined = copy.copy(combined)
+    source = []
+    for source_dict in combined["source"]:
+        source.append({
+            "$dnanexus_link": {
+                "id": source_dict["id"],
+                "project": source_dict["project"],
+            }
+        })
+    combined["source"] = source
+
     return combined
 
 
-def cohort_final_payload(name, folder, project, databases, dataset_id, filters, sql, base_sql=None, combined=None):
+def cohort_final_payload(name, folder, project, databases, dataset, filters, sql, base_sql=None, combined=None):
     details = {
         "databases": databases,
-        "dataset": {"$dnanexus_link": dataset_id},
+        "dataset": {"$dnanexus_link": dataset},
         "description": "",
         "filters": filters,
         "schema": "create_cohort_schema",
@@ -114,7 +125,7 @@ def cohort_final_payload(name, folder, project, databases, dataset_id, filters, 
         details["combined"] = cohort_combined_payload(combined)
 
     final_payload = {
-        "name": None,
+        "name": name,
         "folder": "/Create_Cohort/manually_created_output_cohorts",
         "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
         "types": ["DatabaseQuery", "CohortBrowser"],

@@ -1,0 +1,8 @@
+{
+    "values": [
+        "patient_1",
+        "patient_2"
+    ],
+    "entity": "patient",
+    "field": "patient_id"
+}
