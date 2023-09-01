@@ -1,0 +1,19 @@
+{
+    "location": [
+        {
+            "chromosome": "1",
+            "starting_position": "1",
+            "ending_position": "200"
+        },
+        {
+            "chromosome": "2",
+            "starting_position": "1",
+            "ending_position": "500"
+        },
+        {
+            "chromosome": "10",
+            "starting_position": "1000",
+            "ending_position": "20000000"
+        }
+    ]
+}
