@@ -1140,7 +1140,6 @@ def extract_assay_expression(parser_obj):
                     "input_json_file",
                     "sql",
                     "expression_matrix",
-                    "json_help",
                     "input_json",
                 ],
             },
@@ -1149,10 +1148,21 @@ def extract_assay_expression(parser_obj):
                 "message": '"--json-help" cannot be passed with any option other than "--retrieve-expression".'
             },
         },
-        "6_additional_fields_help": {
+        "6_additional_fields_help_with_none_of": {
             "properties": {
                 "main_key": "additional_fields_help",
-                "exceptions": ["path", "retrieve_expression"],
+                "items": [
+                    "assay_name",
+                    "output",
+                    "list_assays",
+                    "additional_fields",
+                    "json_help",
+                    "delim",
+                    "input_json_file",
+                    "sql",
+                    "expression_matrix",
+                    "input_json",
+                ],
             },
             "condition": "exclusive_with_exceptions",
             "error_message": {
