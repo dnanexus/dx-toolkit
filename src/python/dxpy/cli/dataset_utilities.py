@@ -1056,23 +1056,45 @@ def extract_assay_expression(parser_obj):
 
     schema = {
         "schema_version": "1.0",
-        "check2_json_help": {
-            "type": "dict",
-            "items": {
-                "main_key": "json_help",
-                "exceptions": ["path", "retrieve_expression"],
-            },
-            "condition": "exclusive_with_exceptions",
-            "error_message": {"message": '"--json-help" cannot be passed with any option other than "--retrieve-expression".'},
-        },
-        "check_dummy_list_assays": {
+        "check1_list_assays_exclusive": {
             "type": "dict",
             "items": {
                 "main_key": "list_assays",
+                "exceptions": ["path"],
             },
-            "condition": "exclusive",
-            "error_message": {"message": 'DUMMY: list assays cant go with others'},
+            "condition": "exclusive_with_exceptions",
+            "error_message": {"message": '"--list-assays" cannot be presented with other options'},
         },
+        # "check1_list_assays_with_none_of": {
+        #     "type": "dict",
+        #     "items": {
+        #         "main_key": "list_assays",
+        #         "exceptions": ["path"],
+        #     },
+        #     "condition": "with_none_of",
+        #     "error_message": {"message": '"--list-assays" cannot be presented with other options'},
+        # },
+        # "check2_json_help": {
+        #     "type": "dict",
+        #     "items": {
+        #         "main_key": "json_help",
+        #         "exceptions": ["path", "retrieve_expression"],
+        #     },
+        #     "condition": "exclusive_with_exceptions",
+        #     "error_message": {"message": '"--json-help" cannot be passed with any option other than "--retrieve-expression".'},
+        # },
+        # "check3_path_or_json_help": {
+        #     "type": "list",
+        #     "items": ["path", "json_help"],
+        #     "condition": "at_least_one_required",
+        #     "error_message": {"message": 'At least one of tne following arguments is required: "Path", "--json-help"'},
+        # },
+        # "check3_dummy": {
+        #     "type": "list",
+        #     "items": ["input_json", "delim"],
+        #     "condition": "required",
+        #     "error_message": {"message": "wer"},
+        # },
         # "check2": {
         #     "type": "dict",
         #     "items": {"key1": ["value1", "value2"]},
@@ -1084,12 +1106,6 @@ def extract_assay_expression(parser_obj):
         #     "items": ["abc", "xyz"],
         #     "condition": "one_required",
         #     "error_message": {"message": "..."},
-        # },
-        # "check3_xyz": {
-        #     "type": "list",
-        #     "items": ["Path"],
-        #     "condition": "required",
-        #     "error_message": {"message": "...", "throw": "warning"},
         # },
     }
 

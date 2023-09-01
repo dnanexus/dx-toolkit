@@ -2,7 +2,12 @@
 class ExpressionInputsValidator:
     """InputsValidator class for extract_assay expresion. Checks for invalid input combinations"""
 
-    conditions_funcs = ["exclusive", "exclusive_with_exceptions"]
+    conditions_funcs = [
+        "exclusive",
+        "exclusive_with_exceptions",
+        "at_least_one_required",
+        "required",
+    ]
 
     def __init__(
         self,
@@ -16,7 +21,25 @@ class ExpressionInputsValidator:
         self.error_handler = error_handler
         self.built_in_args = built_in_args
 
-    def get_arguments_list(self):
+    # Schema methods
+    def populate_schema_version(self):
+        # TODO: deal with this
+        self.schema_version = self.schema.get("schema_version")
+
+    def validate_schema_conditions(self):
+        # Checking if all conditions exist
+        present_conditions = [
+            value.get("condition")
+            for key, value in self.schema.items()
+            if key != "schema_version"
+        ]
+        not_found = set(present_conditions) - set(
+            ExpressionInputsValidator.conditions_funcs
+        )
+        if len(not_found) != 0:
+            self.error_handler("{} schema condition is not defined".format(not_found))
+
+    def populate_arguments_list(self):
         # Do I leave this here or in dataset_utilities? I guess this is not exclusive from expression but I'd leave it mutable
         if self.built_in_args == None:
             self.built_in_args = [
@@ -36,54 +59,76 @@ class ExpressionInputsValidator:
 
         self.arguments_list = list(set(parser_dict_keys) - set(self.built_in_args))
 
-    def validate(self):
-        self.get_arguments_list()
-        # TODO: deal with this
-        self.schema_version = self.schema.get("schema_version")
-
-        # Checking if all conditions exist
-        present_conditions = [
-            value.get("condition")
-            for key, value in self.schema.items()
-            if key != "schema_version"
-        ]
-        not_found = set(present_conditions) - set(
-            ExpressionInputsValidator.conditions_funcs
-        )
-        if len(not_found) != 0:
-            self.error_handler("at least one of the schemas condition is not defined")
-
-        # Calling method according to condition
+    # Checking general methods
+    def call_condition_method(self):
         for key, value in self.schema.items():
             if key != "schema_version":
                 method_to_call = value.get("condition")
                 getattr(self, method_to_call)(key)
 
+    def throw_exit_error(self, check):
+        self.error_handler(self.schema.get(check).get("error_message").get("message"))
+
+    def get_values(self, check, params):
+        values = [self.parser_dict.get(p) for p in params]
+        return values
+
+    # def get_items(self, check):
+    #     return self.get_values(check,["items"])
+
+    # def get_items_values(self, check):
+    #     items = self.get_items(check)
+    #     return [self.parser_dict[i] for i in items]
+
+    def get_main_key(self, check):
+        return self.schema.get(check).get("items").get("main_key")
+
+    def get_exceptions_list(self, check):
+        return self.schema.get(check).get("items").get("exceptions")
+
+    def remove_exceptions_from_list(self, check, list):
+        exceptions_list = self.get_exceptions_list(check)
+        for e in exceptions_list:
+            list.remove(e)
+        return list
+
+    # Checking specific methods
     def exclusive(self, check):
         self.exclusive_with_exceptions(check, no_exception=True)
 
     def exclusive_with_exceptions(self, check, no_exception=False):
-        # Defining if exceptions exist
-        if no_exception:
-            exception_list = []
-        else:
-            exception_list = self.schema[check]["items"]["exceptions"]
+        main_key = self.get_main_key(check)
 
         # Defining args to check and its values
         args_to_check = self.arguments_list.copy()
-
-        args_to_check.remove(self.schema[check].get("items").get("main_key"))
-
-        for e in exception_list:
-            args_to_check.remove(e)
-        args_to_check_values = [self.parser_dict[arg] for arg in args_to_check]
+        args_to_check.remove(main_key)
+        if not no_exception:
+            args_to_check = self.remove_exceptions_from_list(check, args_to_check)
+        args_to_check_values = self.get_values(check, args_to_check)
 
         # True check
-        if self.parser_dict[self.schema[check].get("items").get("main_key")] and any(
-            args_to_check_values
-        ):
-            # TODO configurate warning when set
-            self.error_handler(self.schema[check].get("error_message").get("message"))
+        if self.parser_dict.get(main_key) and any(args_to_check_values):
+            self.throw_exit_error(check)
+
+    # def required(self, check):
+    #     args_to_check_values = self.get_items_values(check)
+    #     if None in args_to_check_values:
+    #         self.throw_exit_error(check)
+
+    # def at_least_one_required(self, check):
+    #     args_to_check_values = self.get_items_values(check)
+    #     if not any(args_to_check_values):
+    #         self.throw_exit_error(check)
+
+    # VALIDATION
+    def validate(self):
+        # TODO only necessary if exclusive methods are used (maybe remove later)
+        self.populate_arguments_list()
+        # TODO: figure what to do with versioning
+        self.populate_schema_version()
+        self.validate_schema_conditions()
+
+        self.call_condition_method()
 
     # def __init__(self, args, error_handler=print):
     #     self.args = args
