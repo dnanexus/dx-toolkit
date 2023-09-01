@@ -124,21 +124,21 @@ class TestNextflowTemplates(DXTestCase):
         self.assertTrue("if [ -n \"${}\" ];".format(input1.get("name")) in src)
         value1 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input1.get(
             "name")
-        self.assertTrue("--{}={}".format(input1.get("name"), value1) in src)
+        self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input1.get("name"), value1) in src)
         # case 2: string input, need no conversion
         self.assertTrue("if [ -n \"${}\" ];".format(input2.get("name")) in src)
         value2 = '${%s}' % input2.get("name")
-        self.assertTrue("--{}={}".format(input2.get("name"), value2) in src)
+        self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input2.get("name"), value2) in src)
         # case 3: file input (nextflow pipeline optional), same as case 1
         self.assertTrue("if [ -n \"${}\" ];".format(input3.get("name")) in src)
         value3 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input3.get(
             "name")
-        self.assertTrue("--{}={}".format(input3.get("name"), value3) in src)
+        self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input3.get("name"), value3) in src)
         # case 4: file input (nextflow pipeline required), same as case 1
         self.assertTrue("if [ -n \"${}\" ];".format(input4.get("name")) in src)
         value4 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input4.get(
             "name")
-        self.assertTrue("--{}={}".format(input4.get("name"), value4) in src)
+        self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input4.get("name"), value4) in src)
 
     def test_prepare_inputs(self):
         inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
