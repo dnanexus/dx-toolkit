@@ -1208,21 +1208,20 @@ def create_cohort(args):
         err_exit(str(err))
     # Input cohort IDs have been succesfully validated    
 
-    cohort_project = path_project or from_project  # TODO: from_project -> current_project
     base_sql = resp.get("baseSql", resp.get("base_sql"))
     cohort_query_payload = cohort_filter_payload(
         samples,
         rec_descriptor.model["global_primary_key"]["entity"],
         rec_descriptor.model["global_primary_key"]["field"],
         resp.get("filters", {}),
-        cohort_project,
+        path_project,
         base_sql,
     )
     sql = cohort_query_api_call(resp, cohort_query_payload)
     cohort_payload = cohort_final_payload(
         path_name,
         path_folder,
-        cohort_project,
+        path_project,
         resp["databases"],
         resp["dataset"],
         cohort_query_payload["filters"],
@@ -1230,30 +1229,8 @@ def create_cohort(args):
         base_sql,
         resp.get("combined"),
     )
-    from pprint import pprint
-    pprint(cohort_payload)
-    return
 
-    ### temporary
-    details = {
-        "databases": [resp["databases"]],
-        "dataset": {"$dnanexus_link": resp["dataset"]},
-        "description": "",
-        "filters": payload["filters"],
-        "schema": "create_cohort_schema",
-        "sql": sql,
-        "version": "3.0",
-    }
-    ###
-
-    new_record_response = dxpy.bindings.dxrecord.new_dxrecord(
-        details=details,
-        project=path_project,
-        name=path_name,
-        types=["DatabaseQuery", "CohortBrowser"],
-        folder=path_folder,
-        close=True
-    )
+    new_record_response = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
     # Examine the dxrecord object
     print(new_record_response.describe())
 

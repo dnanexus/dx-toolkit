@@ -126,8 +126,8 @@ def cohort_final_payload(name, folder, project, databases, dataset, filters, sql
 
     final_payload = {
         "name": name,
-        "folder": "/Create_Cohort/manually_created_output_cohorts",
-        "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+        "folder": folder,
+        "project": project,
         "types": ["DatabaseQuery", "CohortBrowser"],
         "details": details,
         "close": True,
