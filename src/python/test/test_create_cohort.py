@@ -476,13 +476,12 @@ class TestCreateCohort(unittest.TestCase):
             yield os.path.splitext(file_name)[0]
 
     def _test_cohort_filter_payload(self, payload_name):
-        project_context = "project-G9j1pX00vGPzF2XQ7843k2Jq"
-
         with open(os.path.join(self.payloads_dir, "input_parameters", "{}.json".format(payload_name))) as f:
             input_parameters = json.load(f)
         values = input_parameters["values"]
         entity = input_parameters["entity"]
         field = input_parameters["field"]
+        project_context = input_parameters["project"]
 
         with open(os.path.join(self.payloads_dir, "visualize_response", "{}.json".format(payload_name))) as f:
             visualize_response = json.load(f)
@@ -503,8 +502,11 @@ class TestCreateCohort(unittest.TestCase):
 
     def _test_cohort_final_payload(self, payload_name):
         name = None
-        folder = "/Create_Cohort/manually_created_output_cohorts"
-        project = "project-G9j1pX00vGPzF2XQ7843k2Jq"
+
+        with open(os.path.join(self.payloads_dir, "input_parameters", "{}.json".format(payload_name))) as f:
+            input_parameters = json.load(f)
+        folder = input_parameters["folder"]
+        project = input_parameters["project"]
 
         with open(os.path.join(self.payloads_dir, "visualize_response", "{}.json".format(payload_name))) as f:
             visualize = json.load(f)
