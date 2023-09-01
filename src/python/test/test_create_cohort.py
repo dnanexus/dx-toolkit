@@ -464,5 +464,38 @@ class TestCreateCohort(unittest.TestCase):
 
 
 
+    def test_brief_verbose(self):
+        command = [
+            "dx",
+            "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
+            "--from",
+            self.test_record_geno,
+            "--cohort-ids",
+            "sample_1_1,sample_1_10",
+        ]
+
+        for stdout_mode in ["--verbose", "--brief"] #, "" ]:
+            process = subprocess.Popen(
+                command + [stdout_mode],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            stdout, stderr = process.communicate()
+            self.assertTrue(len(stderr) == 0, msg = stderr)
+            print(stderr)
+            print(stdout)
+
+            if stdout_mode == "--brief":
+                record_id = re.fullmatch(r"^(record-[A-Za-z0-9]{24})", stdout.strip("\n").strip(" "))
+                self.assertTrue(bool(record_id), "Brief stdout has to be a record-id")
+            if stdout_mode == "--verbose":
+                self.assertTrue("Details" in stdout, "Verbose stdout has to contain 'Details' string")
+            # else:
+            #     self.assertTrue("Types" in stdout, "Default stdout has to contain 'Types' string")
+
+
+
 if __name__ == "__main__":
     unittest.main()
