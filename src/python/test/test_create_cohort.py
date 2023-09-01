@@ -71,7 +71,7 @@ class TestCreateCohort(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print("Remmoving testing temp project {}".format(cls.temp_proj._dxid))
+        print("Remmoving temporary testing project {}".format(cls.temp_proj._dxid))
         cls.temp_proj.destroy()
 
     def find_record_id(self, text): 
@@ -475,25 +475,23 @@ class TestCreateCohort(unittest.TestCase):
             "sample_1_1,sample_1_10",
         ]
 
-        for stdout_mode in ["--verbose", "--brief"] #, "" ]:
+        for stdout_mode in ["--verbose", "--brief", "" ]:
+            cmd = command + [stdout_mode] if stdout_mode != "" else command
             process = subprocess.Popen(
-                command + [stdout_mode],
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
             )
             stdout, stderr = process.communicate()
             self.assertTrue(len(stderr) == 0, msg = stderr)
-            print(stderr)
-            print(stdout)
-
             if stdout_mode == "--brief":
-                record_id = re.fullmatch(r"^(record-[A-Za-z0-9]{24})", stdout.strip("\n").strip(" "))
+                record_id = re.match(r"^(record-[A-Za-z0-9]{24})", stdout.strip("\n").strip(" "))
                 self.assertTrue(bool(record_id), "Brief stdout has to be a record-id")
-            if stdout_mode == "--verbose":
-                self.assertTrue("Details" in stdout, "Verbose stdout has to contain 'Details' string")
-            # else:
-            #     self.assertTrue("Types" in stdout, "Default stdout has to contain 'Types' string")
+            elif stdout_mode == "--verbose":
+                self.assertIn("Details", stdout, "Verbose stdout has to contain 'Details' string")
+            else:
+                self.assertIn("Types", stdout, "Default stdout has to contain 'Types' string")
 
 
 
