@@ -1,12 +1,146 @@
 # TODO: check number of arguments and type manually
+# TODO: warning error handler
+# TODO: maybe remove exclusive condition
+# TODO: schema versioning handling?
+
+schema = {
+    "schema_version": "1.0",
+    "1_path_or_json_help-at_least_one_required": {
+        "properties": {
+            "items": ["path", "json_help"],
+        },
+        "condition": "at_least_one_required",
+        "error_message": {
+            "message": 'At least one of the following arguments is required: "Path", "--json-help"'
+        },
+    },
+    "2_path_with_no_args-with_at_least_one_required": {
+        "properties": {
+            "main_key": "path",
+            "items": [
+                "list_assays",
+                "retrieve_expression",
+                "additional_fields_help",
+                "json_help",
+            ],
+        },
+        "condition": "with_at_least_one_required",
+        "error_message": {
+            "message": 'One of the arguments "--retrieve-expression", "--list-assays", "--additional-fields-help", "--json-help" is required.'
+        },
+    },
+    # "3_list_assays_exclusive": {
+    #     "properties": {
+    #         "main_key": "list_assays",
+    #         "exceptions": ["path"],
+    #     },
+    #     "condition": "exclusive_with_exceptions",
+    #     "error_message": {
+    #         "message": '"--list-assays" cannot be presented with other options'
+    #     },
+    # },
+    "3_list_assays_with_none_of": {
+        "properties": {
+            "main_key": "list_assays",
+            "items": [
+                "assay_name",
+                "output",
+                "retrieve_expression",
+                "additional_fields",
+                "additional_fields_help",
+                "delim",
+                "input_json_file",
+                "sql",
+                "expression_matrix",
+                "json_help",
+                "input_json",
+            ],
+        },
+        "condition": "with_none_of",
+        "error_message": {
+            "message": '"--list-assays" cannot be presented with other options'
+        },
+    },
+    "4_retrieve_expression_with_at_least_one_required": {
+        "properties": {
+            "main_key": "retrieve_expression",
+            "items": [
+                "input_json",
+                "input_json_file",
+                "json_help",
+                "additional_fields_help",
+            ],
+        },
+        "condition": "with_at_least_one_required",
+        "error_message": {
+            "message": 'The flag "--retrieve_expression" must be followed by "--input-json", "--input-json-file", "--json-help", or "--additional-fields-help".'
+        },
+    },
+    "5_json_help_with_none_of": {
+        "properties": {
+            "main_key": "json_help",
+            "items": [
+                "assay_name",
+                "output",
+                "list_assays",
+                "additional_fields",
+                "additional_fields_help",
+                "delim",
+                "input_json_file",
+                "sql",
+                "expression_matrix",
+                "json_help",
+                "input_json",
+            ],
+        },
+        "condition": "with_none_of",
+        "error_message": {
+            "message": '"--json-help" cannot be passed with any option other than "--retrieve-expression".'
+        },
+    },
+    "6_additional_fields_help": {
+        "properties": {
+            "main_key": "additional_fields_help",
+            "exceptions": ["path", "retrieve_expression"],
+        },
+        "condition": "exclusive_with_exceptions",
+        "error_message": {
+            "message": '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
+        },
+    },
+    "7_json_inputs-mutually_exclusive": {
+        "properties": {
+            "items": ["input_json", "input_json_file"],
+        },
+        "condition": "mutually_exclusive_group",
+        "error_message": {
+            "message": 'The arguments "--input-json" and "--input-json-file" are not allowed together.'
+        },
+    },
+    "8_expression_matrix-with_at_least_one_required": {
+        "properties": {
+            "main_key": "expression_matrix",
+            "items": ["retrieve_expression"],
+        },
+        "condition": "with_at_least_one_required",
+        "error_message": {
+            "message": '“--expression-matrix" cannot be passed with any argument other than "--retrieve-expression”'
+        },
+    },
+}
+
+
 class ExpressionInputsValidator:
     """InputsValidator class for extract_assay expresion. Checks for invalid input combinations"""
 
     conditions_funcs = [
         "exclusive",
         "exclusive_with_exceptions",
-        "at_least_one_required",
         "required",
+        "at_least_one_required",
+        "with_at_least_one_required",
+        "with_none_of",
+        "mutually_exclusive_group",
     ]
 
     def __init__(
@@ -21,9 +155,8 @@ class ExpressionInputsValidator:
         self.error_handler = error_handler
         self.built_in_args = built_in_args
 
-    # Schema methods
+    ### Schema methods ###
     def populate_schema_version(self):
-        # TODO: deal with this
         self.schema_version = self.schema.get("schema_version")
 
     def validate_schema_conditions(self):
@@ -39,8 +172,8 @@ class ExpressionInputsValidator:
         if len(not_found) != 0:
             self.error_handler("{} schema condition is not defined".format(not_found))
 
+    # TODO: maybe remove the whole function
     def populate_arguments_list(self):
-        # Do I leave this here or in dataset_utilities? I guess this is not exclusive from expression but I'd leave it mutable
         if self.built_in_args == None:
             self.built_in_args = [
                 "apiserver_host",
@@ -59,8 +192,8 @@ class ExpressionInputsValidator:
 
         self.arguments_list = list(set(parser_dict_keys) - set(self.built_in_args))
 
-    # Checking general methods
-    def call_condition_method(self):
+    ### Checking general methods ###
+    def interpret_conditions(self):
         for key, value in self.schema.items():
             if key != "schema_version":
                 method_to_call = value.get("condition")
@@ -69,212 +202,90 @@ class ExpressionInputsValidator:
     def throw_exit_error(self, check):
         self.error_handler(self.schema.get(check).get("error_message").get("message"))
 
-    def get_values(self, check, params):
+    def get_parser_values(self, params):
         values = [self.parser_dict.get(p) for p in params]
         return values
 
-    # def get_items(self, check):
-    #     return self.get_values(check,["items"])
-
-    # def get_items_values(self, check):
-    #     items = self.get_items(check)
-    #     return [self.parser_dict[i] for i in items]
-
     def get_main_key(self, check):
-        return self.schema.get(check).get("items").get("main_key")
+        return self.schema.get(check).get("properties").get("main_key")
 
-    def get_exceptions_list(self, check):
-        return self.schema.get(check).get("items").get("exceptions")
+    def get_items(self, check):
+        return self.schema.get(check).get("properties").get("items")
+
+    def get_items_values(self, check):
+        items = self.get_items(check)
+        return [self.parser_dict[i] for i in items]
+
+    def get_exceptions(self, check):
+        return self.schema.get(check).get("properties").get("exceptions")
 
     def remove_exceptions_from_list(self, check, list):
-        exceptions_list = self.get_exceptions_list(check)
+        exceptions_list = self.get_exceptions(check)
         for e in exceptions_list:
             list.remove(e)
         return list
 
-    # Checking specific methods
+    ### Checking specific methods ###
     def exclusive(self, check):
-        self.exclusive_with_exceptions(check, no_exception=True)
+        self.exclusive_with_exceptions(check, exception_present=False)
 
-    def exclusive_with_exceptions(self, check, no_exception=False):
+    def exclusive_with_exceptions(self, check, exception_present=True):
         main_key = self.get_main_key(check)
 
         # Defining args to check and its values
         args_to_check = self.arguments_list.copy()
         args_to_check.remove(main_key)
-        if not no_exception:
+        if exception_present:
             args_to_check = self.remove_exceptions_from_list(check, args_to_check)
-        args_to_check_values = self.get_values(check, args_to_check)
+        args_to_check_values = self.get_parser_values(args_to_check)
 
         # True check
         if self.parser_dict.get(main_key) and any(args_to_check_values):
             self.throw_exit_error(check)
 
-    # def required(self, check):
-    #     args_to_check_values = self.get_items_values(check)
-    #     if None in args_to_check_values:
-    #         self.throw_exit_error(check)
+    def with_none_of(self, check):
+        main_key = self.get_main_key(check)
+        args_to_check_values = self.get_items_values(check)
+        if self.parser_dict.get(main_key) and any(args_to_check_values):
+            self.throw_exit_error(check)
 
-    # def at_least_one_required(self, check):
-    #     args_to_check_values = self.get_items_values(check)
-    #     if not any(args_to_check_values):
-    #         self.throw_exit_error(check)
+    def required(self, check):
+        self.at_least_one_required(check)
+
+    def at_least_one_required(self, check, main_key=None):
+        args_to_check_values = self.get_items_values(check)
+
+        if main_key:
+            if self.parser_dict.get(main_key) and not any(args_to_check_values):
+                self.throw_exit_error(check)
+        else:
+            if not any(args_to_check_values):
+                self.throw_exit_error(check)
+
+    def with_at_least_one_required(self, check):
+        main_key = self.get_main_key(check)
+        self.at_least_one_required(check, main_key)
+
+    def mutually_exclusive_group(self, check):
+        args_to_check_values = self.get_items_values(check)
+        present_args_count = 0
+
+        for arg in args_to_check_values:
+            if arg is not None and not self.parser_dict.get(arg):
+                present_args_count += 1
+
+        if present_args_count > 1:
+            self.throw_exit_error(check)
 
     # VALIDATION
     def validate(self):
         # TODO only necessary if exclusive methods are used (maybe remove later)
         self.populate_arguments_list()
-        # TODO: figure what to do with versioning
+        # we're not really using this but I guess we can keep it here?
         self.populate_schema_version()
         self.validate_schema_conditions()
 
-        self.call_condition_method()
-
-    # def __init__(self, args, error_handler=print):
-    #     self.args = args
-    #     self.error_handler = error_handler
-
-    # def validate(self):
-    #     # Checking exclusive arguments
-    #     exclusive_arguments_definition = {
-    #         "list_assays": {"exclusive_arg": "list_assays", "exceptions": []},
-    #         "additional_fields_help": {
-    #             "exclusive_arg": "additional_fields_help",
-    #             "exceptions": ["retrieve_expression"],
-    #         },
-    #         "json_help": {
-    #             "exclusive_arg": "json_help",
-    #             "exceptions": ["retrieve_expression"],
-    #         },
-    #     }
-    #     self.exclusive_argument_check(exclusive_arguments_definition)
-
-    #     # Checking multiple exclusive groups
-    #     mutually_exclusive_groups_definition = {
-    #         "json_inputs": {
-    #             "arguments": ["input_json", "input_json_file"],
-    #             "required": False,
-    #         },
-    #     }
-    #     self.mutually_exclusive_groups_check(mutually_exclusive_groups_definition)
-
-    #     # Checking invalid combinations
-    #     invalid_combinations_definition = {
-    #         "no_args": {
-    #             "invalid_combination": self.args["command"] == "extract_assay"
-    #             and not any(
-    #                 [
-    #                     self.args["list_assays"],
-    #                     self.args["retrieve_expression"],
-    #                     self.args["additional_fields_help"],
-    #                     self.args["json_help"],
-    #                 ]
-    #             ),
-    #             "error_message": 'One of the arguments "--retrieve-expression", "--list-assays", "--additional-fields-help", "--json-help" is required.',
-    #         },
-    #         "retrieve_expression": {
-    #             "invalid_combination": self.args["retrieve_expression"]
-    #             and not any(
-    #                 [
-    #                     self.args["input_json"],
-    #                     self.args["json_help"],
-    #                     self.args["additional_fields_help"],
-    #                 ]
-    #             ),
-    #             "error_message": 'The flag "--retrieve_expression" must be followed by "--input-json", "--json-help", "--json-help", or "--additional-fields-help".',
-    #         },
-    #         "expression_matrix_out_of_context": {
-    #             "invalid_combination": self.args["expression_matrix"] and not self.args["retrieve_expression"],
-    #             "error_message": '“--expression-matrix" cannot be passed with any argument other than "--retrieve-expression”',
-    #         },
-    #         "empty_json": {
-    #             "invalid_combination": self.args["input_json"] == "{}",
-    #             "error_message": 'JSON for "--retrieve-expression" does not contain valid filter information.',
-    #         },
-    #     }
-    #     self.invalid_combinations_check(invalid_combinations_definition)
-
-    # def exclusive_argument_check(self, exclusive_arguments_definition):
-    #     for key, value in exclusive_arguments_definition.items():
-    #         args_to_check = [
-    #             "list_assays",
-    #             "retrieve_expression",
-    #             "assay_name",
-    #             "input_json",
-    #             "input_json_file",
-    #             "json_help",
-    #             "sql",
-    #             "additional_fields",
-    #             "additional_fields_help",
-    #             "expression_matrix",
-    #             "delim",
-    #             "output",
-    #         ]
-    #         exception_str = []
-
-    #         for exception in value.get("exceptions"):
-    #             args_to_check.remove(exception)
-    #             exception_str.append("--{}".format(exception).replace("_", "-"))
-
-    #         exception_str = (
-    #             str(exception_str).replace("[", "").replace("]", "").replace("'", '"')
-    #         )
-    #         args_to_check_values = [
-    #             self.args[argument]
-    #             for argument in args_to_check
-    #             if argument != value.get("exclusive_arg")
-    #         ]
-    #         invalid_combination = self.args[
-    #             value.get("exclusive_arg")
-    #         ] and any(args_to_check_values)
-
-    #         if invalid_combination:
-    #             if value.get("exceptions") == []:
-    #                 self.error_handler(
-    #                     '"--{}" cannot be passed with other options.'.format(
-    #                         value.get("exclusive_arg").replace("_", "-")
-    #                     )
-    #                 )
-    #             else:
-    #                 self.error_handler(
-    #                     '"--{}" cannot be passed with any option other than {}.'.format(
-    #                         value.get("exclusive_arg").replace("_", "-"), (exception_str))
-    #                     )
-
-    # def invalid_combinations_check(self, invalid_combinations_definition):
-    #     for key, value in invalid_combinations_definition.items():
-    #         if value.get("invalid_combination"):
-    #             self.error_handler(value.get("error_message"))
-
-    # def mutually_exclusive_groups_check(self, mutually_exclusive_groups_definition):
-    #     for key in mutually_exclusive_groups_definition.keys():
-    #         present_args = 0
-    #         arguments_str = []
-
-    #         # for arg in mutually_exclusive_groups_definition[key]["arguments"]:
-    #         for arg in mutually_exclusive_groups_definition[key]["arguments"]:
-    #             if self.args[arg] is not None and self.args[arg] is not False:
-    #                 present_args += 1
-    #             arguments_str.append("--{}".format(arg).replace("_", "-"))
-
-    #         arguments_str = (
-    #             str(arguments_str).replace("[", "").replace("]", "").replace("'", '"')
-    #         )
-
-    #         if present_args > 1:
-    #             self.error_handler(
-    #                 "The arguments {} are not allowed together.".format(arguments_str)
-    #             )
-
-    #         if (
-    #             present_args < 1
-    #             and mutually_exclusive_groups_definition[key]["required"]
-    #         ):
-    #             self.error_handler(
-    #                 "Missing one of the following required arguments: {}.".format(
-    #                     arguments_str
-    #                 )
-    #             )
+        self.interpret_conditions()
 
 
 # class PathValidator:
