@@ -111,13 +111,10 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        try:
-            record_id = self.find_record_id(stdout)
-            subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
-            e = None
-        except Exception as err:
-            e = err 
-        self.assertTrue(bool(record_id), str(e))
+        record_id = self.find_record_id(stdout)
+        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+
+        self.assertTrue(bool(record_id), "Record object was not created")
         
 
     # EM-1
@@ -161,13 +158,9 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        try:
-            record_id = self.find_record_id(stdout)
-            subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
-            e = None
-        except Exception as err:
-            e = err
-        self.assertTrue(bool(record_id), str(e))
+        record_id = self.find_record_id(stdout)
+        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+        self.assertTrue(bool(record_id), "Record object was not created")
 
 
     # EM-1
@@ -445,21 +438,19 @@ class TestCreateCohort(unittest.TestCase):
             "version": "3.0",
         }
 
-        try:
-            new_record = dxpy.bindings.dxrecord.new_dxrecord(
-                details=details,
-                project=self.temp_proj._dxid,
-                name=None,
-                types=["DatabaseQuery", "CohortBrowser"],
-                folder="/",
-                close=True,
-            )
-            new_record_details = new_record.get_details()
-            new_record.remove()
-            e = None
-        except Exception as err:
-            e = err
-        self.assertTrue(isinstance(new_record, DXRecord), str(e))
+
+        new_record = dxpy.bindings.dxrecord.new_dxrecord(
+            details=details,
+            project=self.temp_proj._dxid,
+            name=None,
+            types=["DatabaseQuery", "CohortBrowser"],
+            folder="/",
+            close=True,
+        )
+        new_record_details = new_record.get_details()
+        new_record.remove()
+        e = None
+        self.assertTrue(isinstance(new_record, DXRecord))
         self.assertEqual(new_record_details, details, "Details of created record does not match expected details.")
 
 
