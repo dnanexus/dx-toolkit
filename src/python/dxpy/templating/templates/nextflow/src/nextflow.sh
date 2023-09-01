@@ -59,21 +59,6 @@ docker_registry_login() {
   fi
 }
 
-generate_runtime_config() {
-  set +x
-  touch nxf_runtime.config
-  # make a runtime config file to override optional inputs
-  # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
-  @@GENERATE_RUNTIME_CONFIG@@
-
-  if [[ -s nxf_runtime.config ]]; then
-    if [[ $debug == true ]]; then
-      cat nxf_runtime.config
-      set -x
-    fi
-    RUNTIME_CONFIG_CMD='-c nxf_runtime.config'
-  fi
-}
 
 # On exit, for the main Nextflow orchestrator job
 on_exit() {
@@ -130,7 +115,6 @@ on_exit() {
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
-  rm nxf_runtime.config
 
   if [[ -s $LOG_NAME ]]; then
     echo "=== Execution completed — upload nextflow log to job output destination ${DX_JOB_OUTDIR%/}/"
@@ -239,25 +223,23 @@ check_cache_db_storage() {
 }
 
 validate_run_opts() {
-  IFS=" " read -r -a arr <<<"$nextflow_run_opts"
-  for i in "${!arr[@]}"; do
-    case ${arr[i]} in
-    -w=* | -work-dir=*)
-      NXF_WORK="${i#*=}"
-      break
+  profile_arg="@@PROFILE_ARG@@"
+
+  IFS=" " read -r -a opts <<<"$nextflow_run_opts"
+  for opt in "${opts[@]}"; do
+    case $opt in
+    -w=* | -work-dir=* | -w | -work-dir)
+      dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
       ;;
-    -w | -work-dir)
-      NXF_WORK=${arr[i + 1]}
-      break
+    -profile | -profile=*)
+      if [ -n "$profile_arg" ]; then
+        echo "Profile was given in run options... overriding the default profile ($profile_arg)"
+        profile_arg=""
+      fi
       ;;
     *) ;;
     esac
   done
-
-  # if there is a user specified workdir, error out as currently user workdir is not supported
-  if [[ -n $NXF_WORK ]]; then
-    dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
-  fi
 }
 
 check_running_jobs() {
@@ -352,8 +334,8 @@ main() {
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
-  required_inputs=""
-  @@REQUIRED_RUNTIME_PARAMS@@
+  applet_runtime_inputs=()
+  @@APPLET_RUNTIME_PARAMS@@
 
   # get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
@@ -397,35 +379,23 @@ main() {
   setup_workdir
   export NXF_WORK
 
-  # for optional inputs, pass to the run command by using a runtime config
-  RUNTIME_CONFIG_CMD=""
-  generate_runtime_config
-
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
-  profile_arg="@@PROFILE_ARG@@"
-  if [ -n "$profile_arg" ]; then
-    if [[ "$nextflow_run_opts" == *"-profile "* ]]; then
-      echo "Profile was given in run options... overriding the default profile ($profile_arg)"
-      profile_arg=""
-    fi
-  fi
-
   # execution starts
-  NEXTFLOW_CMD="nextflow \
+  for item in "${applet_runtime_inputs[@]}"; do echo "[$item]"; done
+  declare -a NEXTFLOW_CMD="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
-    ${RUNTIME_CONFIG_CMD} \
     -log ${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
     -name $DX_JOB_ID \
     $RESUME_CMD \
     $nextflow_run_opts \
-    $nextflow_pipeline_params \
-    $required_inputs
-      "
+    $nextflow_pipeline_params)"
+
+  NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
 
   trap on_exit EXIT
   echo "============================================================="
@@ -435,11 +405,11 @@ main() {
   if [[ $preserve_cache == true ]]; then
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
-  echo "=== NF command      :" $NEXTFLOW_CMD
+  echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
   echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
   echo "============================================================="
 
-    $NEXTFLOW_CMD & NXF_EXEC_PID=$!
+    "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
     # forwarding nextflow log file to job monitor
     set +x
     if [[ $debug == true ]] ; then
