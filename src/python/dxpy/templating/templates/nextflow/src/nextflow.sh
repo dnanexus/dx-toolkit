@@ -343,6 +343,7 @@ main() {
     if [[ "${#applet_runtime_inputs}" -gt 0 ]]; then
       echo "Will specify the following runtime parameters:"
       printf "[%s] " "${applet_runtime_inputs[@]}"
+      echo
     else
       echo "No runtime parameter is specified. Will use the default values."
     fi
