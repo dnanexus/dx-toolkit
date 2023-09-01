@@ -123,8 +123,8 @@ class TestCreateCohort(unittest.TestCase):
             record_id = self.find_record_id(stdout)
             subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
             e = None
-        except Exception as e:
-            pass 
+        except Exception as err:
+            e = err 
         self.assertTrue(bool(record_id), str(e))
         
 
@@ -173,8 +173,8 @@ class TestCreateCohort(unittest.TestCase):
             record_id = self.find_record_id(stdout)
             subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
             e = None
-        except Exception as e:
-            pass 
+        except Exception as err:
+            e = err
         self.assertTrue(bool(record_id), str(e))
 
 
@@ -465,9 +465,8 @@ class TestCreateCohort(unittest.TestCase):
             new_record_details = new_record.get_details()
             new_record.remove()
             e = None
-        except Exception as e:
-            pass
-
+        except Exception as err:
+            e = err
         self.assertTrue(isinstance(new_record, DXRecord), str(e))
         self.assertEqual(new_record_details, details, "Details of created record does not match expected details.")
 

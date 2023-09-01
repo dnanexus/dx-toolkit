@@ -34,6 +34,7 @@ from ..bindings.dxdataobject_functions import is_dxlink, describe
 from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError, resolve_path, check_folder_exists
 from ..utils.file_handle import as_handle
+from ..utils.describe import print_desc
 from ..exceptions import (
     err_exit,
     PermissionDenied,
@@ -1230,10 +1231,15 @@ def create_cohort(args):
         resp.get("combined"),
     )
 
-    new_record_response = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
-    # Examine the dxrecord object
-    print(new_record_response.describe())
-
+    dx_record = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
+    # print record details to stdout
+    if args.brief:
+        print(dx_record.get_id())
+    else:
+        try:
+            print_desc(dx_record.describe(incl_properties=True, incl_details=True), args.verbose)
+        except Exception as e:
+            err_exit(str(e))
 
 
 class DXDataset(DXRecord):
