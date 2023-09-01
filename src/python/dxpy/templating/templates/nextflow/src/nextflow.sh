@@ -334,8 +334,21 @@ main() {
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
+
+  # make runtime parameter arguments from applet inputs
+  set +x
   applet_runtime_inputs=()
   @@APPLET_RUNTIME_PARAMS@@
+  if [[ $debug == true ]]; then
+    if [[ "${#applet_runtime_inputs}" -gt 0 ]]; then
+      echo "Will specify the following runtime parameters:"
+      printf "[%s] " "${applet_runtime_inputs[@]}"
+      echo
+    else
+      echo "No runtime parameter is specified. Will use the default values."
+    fi
+    set -x
+  fi
 
   # get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
@@ -383,7 +396,6 @@ main() {
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
   # execution starts
-  for item in "${applet_runtime_inputs[@]}"; do echo "[$item]"; done
   declare -a NEXTFLOW_CMD="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
