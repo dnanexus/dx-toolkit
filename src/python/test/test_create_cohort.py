@@ -475,7 +475,7 @@ class TestCreateCohort(unittest.TestCase):
             "sample_1_1,sample_1_10",
         ]
 
-        for stdout_mode in ["--verbose", "--brief", "" ]:
+        for stdout_mode in ["--verbose", "--brief", ""]:
             cmd = command + [stdout_mode] if stdout_mode != "" else command
             process = subprocess.Popen(
                 cmd,
@@ -484,14 +484,20 @@ class TestCreateCohort(unittest.TestCase):
                 universal_newlines=True,
             )
             stdout, stderr = process.communicate()
-            self.assertTrue(len(stderr) == 0, msg = stderr)
+            self.assertTrue(len(stderr) == 0, msg=stderr)
             if stdout_mode == "--brief":
-                record_id = re.match(r"^(record-[A-Za-z0-9]{24})", stdout.strip("\n").strip(" "))
+                record_id = re.match(
+                    r"^(record-[A-Za-z0-9]{24})", stdout.strip("\n").strip(" ")
+                )
                 self.assertTrue(bool(record_id), "Brief stdout has to be a record-id")
             elif stdout_mode == "--verbose":
-                self.assertIn("Details", stdout, "Verbose stdout has to contain 'Details' string")
+                self.assertIn(
+                    "Details", stdout, "Verbose stdout has to contain 'Details' string"
+                )
             else:
-                self.assertIn("Types", stdout, "Default stdout has to contain 'Types' string")
+                self.assertIn(
+                    "Types", stdout, "Default stdout has to contain 'Types' string"
+                )
 
 
 
