@@ -1,5 +1,5 @@
 {
-    "name": "unfiltered_cohort_as_input",
+    "name": "pheno_geno_merged_dataset_as_input",
     "folder": "/Create_Cohort/manually_created_output_cohorts",
     "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
     "types": [
@@ -8,10 +8,13 @@
     ],
     "details": {
         "databases": [
-            "database-GYK2yg00vGPpzj7YGY3VJxb9"
+            "database-GYK2yg00vGPpzj7YGY3VJxb9",
+            "database-FkypXj80bgYvQqyqBx1FJG6y",
+            "database-GYK3JJj0vGPQ2Y1y98pj8pGg",
+            "database-GYgzGf80vGPvvQG47p5bpX7x"
         ],
         "dataset": {
-            "$dnanexus_link": "record-GYK2zyQ0g1bx86fBp2X8KpjY"
+            "$dnanexus_link": "record-GYgzjV80yB6QPJJ6kk40bBFy"
         },
         "description": "",
         "filters": {
@@ -31,19 +34,9 @@
                                     ]
                                 }
                             ]
-                        },
-                        "entity": {
-                            "logic": "and",
-                            "name": "patient",
-                            "operator": "exists",
-                            "children": []
                         }
                     }
                 ],
-                "logic": "and"
-            },
-            "assay_filters": {
-                "compound": [],
                 "logic": "and"
             },
             "logic": "and"
