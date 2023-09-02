@@ -1212,7 +1212,10 @@ def create_cohort(args):
     entity = rec_descriptor.model["global_primary_key"]["entity"]
     field = rec_descriptor.model["global_primary_key"]["field"]
     filters = resp.get("filters", {})
-    payload = cohort_final_payload(samples, entity, field, filters, from_project)
+    try:
+        payload = cohort_final_payload(samples, entity, field, filters, from_project)
+    except Exception as e:
+        err_exit("{}: {}".format(entity_result["id"], e))
     sql = cohort_query_api_call(resp, payload)
 
     ### temporary
