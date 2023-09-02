@@ -26,16 +26,20 @@ class NfContainerConfig(object):
         Abstract class to represent and store information about a single file with docker references in a given NF
         pipeline.
         """
-        self.image_ref = None
+        self._image_refs = None
         self.file_url = file_url
 
     @property
-    def image_ref(self):
-        return self.image_ref
+    def image_refs(self):
+        """
+        :returns: List[DockerImageRef], an array of DockerImageRef objects per config file
+        """
+        if not self._image_refs:
+            self._extract_docker_refs_from_src()
+        return self._image_refs
 
-    @image_ref.setter
-    def image_ref(self, value):
-        self._image_ref = value
+    def _extract_docker_refs_from_src(self):
+        raise NotImplementedError("This method is not implemented in the abstract class. Use one of the subclasses")
 
 
 class NfConfigFile(NfContainerConfig):
@@ -45,9 +49,8 @@ class NfConfigFile(NfContainerConfig):
         """
         super().__init__(file_url)
 
-
     def _extract_docker_refs_from_src(self):
-        self.image_ref = None
+        self._image_refs = None
 
 
 class NfSource(NfContainerConfig):
@@ -60,7 +63,7 @@ class NfSource(NfContainerConfig):
         raise NotImplementedError("Parsing *.nf files is not supported")
 
     def _extract_docker_refs_from_src(self):
-        self.image_ref = None
+        self._image_refs = None
 
 
 

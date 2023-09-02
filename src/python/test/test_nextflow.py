@@ -358,7 +358,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         container_configs = _collect_container_configs(os.path.join(applet_dir, "resources"))
 
         self.assertTrue(len(container_configs) == 1)
-        self.assertTrue(all([x.image_ref for x in container_configs]) in ["foo", "bar", "baz"])
+        self.assertTrue(all([x.image_refs in ["foo", "bar", "baz"] for x in container_configs]))
 
     def test_dx_build_nextflow_with_destination(self):
         pipeline_name = "hello"

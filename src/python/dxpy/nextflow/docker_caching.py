@@ -36,4 +36,5 @@ def _collect_container_configs(resources_dir):
     :returns: an array of objects of NfConfigFile and NfSource (subclasses of NfContainerConfig).
     """
 
+    # unwrap from each NfContainerConfig
     return None

@@ -17,24 +17,29 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 from __future__ import print_function, unicode_literals, division, absolute_import
-from parameterized import parameterized
 
 import os
-import sys
-import unittest
-import json
-from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
 
-import uuid
-from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
-import dxpy_testutil as testutil
-from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
-from dxpy.utils.resolver import ResolutionError
-import dxpy
-from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
+from dxpy_testutil import DXTestCase
+from dxpy.compat import USING_PYTHON2
+from dxpy.nextflow.NfContainerConfig import NfConfigFile
+from dxpy.nextflow.DockerImageRef import DockerImageRef
 
 if USING_PYTHON2:
     spawn_extra_args = {}
 else:
     # Python 3 requires specifying the encoding
     spawn_extra_args = {"encoding": "utf-8"}
+
+
+class TestNfConfigFile(DXTestCase):
+
+    def test__extract_docker_refs_from_src(self):
+        pipeline_name = "profile_with_docker"
+
+        config_file_url = os.path.join("nextflow", pipeline_name, "nextflow.config")
+        nf_config = NfConfigFile(config_file_url)
+        _ = nf_config._extract_docker_refs_from_src()
+
+        self.assertTrue(len(nf_config.image_refs) == 2)
+        self.assertTrue(all(isinstance(x, DockerImageRef) for x in nf_config.image_refs))
