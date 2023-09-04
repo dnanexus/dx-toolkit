@@ -1164,7 +1164,7 @@ def extract_assay_expression(parser_obj):
                     "input_json",
                 ],
             },
-            "condition": "exclusive_with_exceptions",
+            "condition": "with_none_of",
             "error_message": {
                 "message": '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
             },

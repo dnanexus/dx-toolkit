@@ -1,8 +1,6 @@
 # TODO: check number of arguments and type manually
-# TODO: warning error handler
 # TODO: maybe remove exclusive condition
 # TODO: schema versioning handling?
-import warnings
 
 
 class ExpressionInputsValidator:
@@ -23,14 +21,14 @@ class ExpressionInputsValidator:
         parser_dict,
         schema,
         error_handler=print,
+        warning_handler=print,
         built_in_args=None,
     ):
         self.parser_dict = parser_dict
         self.schema = schema
         self.error_handler = error_handler
+        self.warning_handler = warning_handler
         self.built_in_args = built_in_args
-
-        # warnings.warn("WARN TEST")
 
     ### Schema methods ###
     def populate_schema_version(self):
@@ -76,11 +74,25 @@ class ExpressionInputsValidator:
                 method_to_call = value.get("condition")
                 getattr(self, method_to_call)(key)
 
+    def throw_message(self, check):
+        if (self.schema.get(check).get("error_message").get("type")) == "warning":
+            self.throw_warning(check)
+        elif (self.schema.get(check).get("error_message").get("type") == None) or (
+            self.schema.get(check).get("error_message").get("type") == "error"
+        ):
+            self.throw_exit_error(check)
+        else:
+            self.error_handler(
+                'Unkown error message in schema: "{}" for key "{}"'.format(
+                    self.schema.get(check).get("error_message").get("type"), (check)
+                )
+            )
+
     def throw_exit_error(self, check):
         self.error_handler(self.schema.get(check).get("error_message").get("message"))
 
     def throw_warning(self, check):
-        pass
+        self.warning_handler(self.schema.get(check).get("error_message").get("message"))
 
     def get_parser_values(self, params):
         values = [self.parser_dict.get(p) for p in params]
@@ -121,13 +133,13 @@ class ExpressionInputsValidator:
 
         # True check
         if self.parser_dict.get(main_key) and any(args_to_check_values):
-            self.throw_exit_error(check)
+            self.throw_message(check)
 
     def with_none_of(self, check):
         main_key = self.get_main_key(check)
         args_to_check_values = self.get_items_values(check)
         if self.parser_dict.get(main_key) and any(args_to_check_values):
-            self.throw_exit_error(check)
+            self.throw_message(check)
 
     def required(self, check):
         self.at_least_one_required(check)
@@ -137,10 +149,10 @@ class ExpressionInputsValidator:
 
         if main_key:
             if self.parser_dict.get(main_key) and not any(args_to_check_values):
-                self.throw_exit_error(check)
+                self.throw_message(check)
         else:
             if not any(args_to_check_values):
-                self.throw_exit_error(check)
+                self.throw_message(check)
 
     def with_at_least_one_required(self, check):
         main_key = self.get_main_key(check)
@@ -155,7 +167,7 @@ class ExpressionInputsValidator:
                 present_args_count += 1
 
         if present_args_count > 1:
-            self.throw_exit_error(check)
+            self.throw_message(check)
 
     # VALIDATION
     def validate(self):
