@@ -2,132 +2,7 @@
 # TODO: warning error handler
 # TODO: maybe remove exclusive condition
 # TODO: schema versioning handling?
-
-schema = {
-    "schema_version": "1.0",
-    "1_path_or_json_help-at_least_one_required": {
-        "properties": {
-            "items": ["path", "json_help"],
-        },
-        "condition": "at_least_one_required",
-        "error_message": {
-            "message": 'At least one of the following arguments is required: "Path", "--json-help"'
-        },
-    },
-    "2_path_with_no_args-with_at_least_one_required": {
-        "properties": {
-            "main_key": "path",
-            "items": [
-                "list_assays",
-                "retrieve_expression",
-                "additional_fields_help",
-                "json_help",
-            ],
-        },
-        "condition": "with_at_least_one_required",
-        "error_message": {
-            "message": 'One of the arguments "--retrieve-expression", "--list-assays", "--additional-fields-help", "--json-help" is required.'
-        },
-    },
-    # "3_list_assays_exclusive": {
-    #     "properties": {
-    #         "main_key": "list_assays",
-    #         "exceptions": ["path"],
-    #     },
-    #     "condition": "exclusive_with_exceptions",
-    #     "error_message": {
-    #         "message": '"--list-assays" cannot be presented with other options'
-    #     },
-    # },
-    "3_list_assays_with_none_of": {
-        "properties": {
-            "main_key": "list_assays",
-            "items": [
-                "assay_name",
-                "output",
-                "retrieve_expression",
-                "additional_fields",
-                "additional_fields_help",
-                "delim",
-                "input_json_file",
-                "sql",
-                "expression_matrix",
-                "json_help",
-                "input_json",
-            ],
-        },
-        "condition": "with_none_of",
-        "error_message": {
-            "message": '"--list-assays" cannot be presented with other options'
-        },
-    },
-    "4_retrieve_expression_with_at_least_one_required": {
-        "properties": {
-            "main_key": "retrieve_expression",
-            "items": [
-                "input_json",
-                "input_json_file",
-                "json_help",
-                "additional_fields_help",
-            ],
-        },
-        "condition": "with_at_least_one_required",
-        "error_message": {
-            "message": 'The flag "--retrieve_expression" must be followed by "--input-json", "--input-json-file", "--json-help", or "--additional-fields-help".'
-        },
-    },
-    "5_json_help_with_none_of": {
-        "properties": {
-            "main_key": "json_help",
-            "items": [
-                "assay_name",
-                "output",
-                "list_assays",
-                "additional_fields",
-                "additional_fields_help",
-                "delim",
-                "input_json_file",
-                "sql",
-                "expression_matrix",
-                "json_help",
-                "input_json",
-            ],
-        },
-        "condition": "with_none_of",
-        "error_message": {
-            "message": '"--json-help" cannot be passed with any option other than "--retrieve-expression".'
-        },
-    },
-    "6_additional_fields_help": {
-        "properties": {
-            "main_key": "additional_fields_help",
-            "exceptions": ["path", "retrieve_expression"],
-        },
-        "condition": "exclusive_with_exceptions",
-        "error_message": {
-            "message": '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
-        },
-    },
-    "7_json_inputs-mutually_exclusive": {
-        "properties": {
-            "items": ["input_json", "input_json_file"],
-        },
-        "condition": "mutually_exclusive_group",
-        "error_message": {
-            "message": 'The arguments "--input-json" and "--input-json-file" are not allowed together.'
-        },
-    },
-    "8_expression_matrix-with_at_least_one_required": {
-        "properties": {
-            "main_key": "expression_matrix",
-            "items": ["retrieve_expression"],
-        },
-        "condition": "with_at_least_one_required",
-        "error_message": {
-            "message": '“--expression-matrix" cannot be passed with any argument other than "--retrieve-expression”'
-        },
-    },
-}
+import warnings
 
 
 class ExpressionInputsValidator:
@@ -154,6 +29,8 @@ class ExpressionInputsValidator:
         self.schema = schema
         self.error_handler = error_handler
         self.built_in_args = built_in_args
+
+        # warnings.warn("WARN TEST")
 
     ### Schema methods ###
     def populate_schema_version(self):
@@ -201,6 +78,9 @@ class ExpressionInputsValidator:
 
     def throw_exit_error(self, check):
         self.error_handler(self.schema.get(check).get("error_message").get("message"))
+
+    def throw_warning(self, check):
+        pass
 
     def get_parser_values(self, params):
         values = [self.parser_dict.get(p) for p in params]
