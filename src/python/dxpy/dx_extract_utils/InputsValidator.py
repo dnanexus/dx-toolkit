@@ -35,16 +35,6 @@ class InputsValidator:
 
     """
 
-    conditions_funcs = [
-        "exclusive",
-        "exclusive_with_exceptions",
-        "required",
-        "at_least_one_required",
-        "with_at_least_one_required",
-        "with_none_of",
-        "mutually_exclusive_group",
-    ]
-
     def __init__(
         self,
         parser_dict,
@@ -59,6 +49,16 @@ class InputsValidator:
         self.warning_handler = warning_handler
         self.built_in_args = built_in_args
 
+        self.conditions_funcs = {
+            "exclusive": "interpret_exclusive",
+            "exclusive_with_exceptions": "interpret_exclusive_with_exceptions",
+            "required": "interpret_required",
+            "at_least_one_required": "interpret_at_least_one_required",
+            "with_at_least_one_required": "interpret_with_at_least_one_required",
+            "with_none_of": "interpret_with_none_of",
+            "mutually_exclusive_group": "interpret_mutually_exclusive_group",
+        }
+
     ### Schema methods ###
     def populate_schema_version(self):
         self.schema_version = self.schema.get("schema_version")
@@ -70,7 +70,7 @@ class InputsValidator:
             for key, value in self.schema.items()
             if key != "schema_version"
         ]
-        not_found = set(present_conditions) - set(InputsValidator.conditions_funcs)
+        not_found = set(present_conditions) - set(self.conditions_funcs)
         if len(not_found) != 0:
             self.error_handler("{} schema condition is not defined".format(not_found))
 
@@ -98,7 +98,8 @@ class InputsValidator:
     def interpret_conditions(self):
         for key, value in self.schema.items():
             if key != "schema_version":
-                method_to_call = value.get("condition")
+                condition = value.get("condition")
+                method_to_call = self.conditions_funcs.get(condition)
                 getattr(self, method_to_call)(key)
 
     def throw_message(self, check):
@@ -142,10 +143,10 @@ class InputsValidator:
         return list
 
     ### Checking specific methods ###
-    def exclusive(self, check):
-        self.exclusive_with_exceptions(check, exception_present=False)
+    def interpret_exclusive(self, check):
+        self.interpret_exclusive_with_exceptions(check, exception_present=False)
 
-    def exclusive_with_exceptions(self, check, exception_present=True):
+    def interpret_exclusive_with_exceptions(self, check, exception_present=True):
         main_key = self.get_main_key(check)
 
         # Defining args to check and its values
@@ -159,16 +160,16 @@ class InputsValidator:
         if self.parser_dict.get(main_key) and any(args_to_check_values):
             self.throw_message(check)
 
-    def with_none_of(self, check):
+    def interpret_with_none_of(self, check):
         main_key = self.get_main_key(check)
         args_to_check_values = self.get_items_values(check)
         if self.parser_dict.get(main_key) and any(args_to_check_values):
             self.throw_message(check)
 
-    def required(self, check):
-        self.at_least_one_required(check)
+    def interpret_required(self, check):
+        self.interpret_at_least_one_required(check)
 
-    def at_least_one_required(self, check, main_key=None):
+    def interpret_at_least_one_required(self, check, main_key=None):
         args_to_check_values = self.get_items_values(check)
 
         if main_key:
@@ -178,11 +179,11 @@ class InputsValidator:
             if not any(args_to_check_values):
                 self.throw_message(check)
 
-    def with_at_least_one_required(self, check):
+    def interpret_with_at_least_one_required(self, check):
         main_key = self.get_main_key(check)
-        self.at_least_one_required(check, main_key)
+        self.interpret_at_least_one_required(check, main_key)
 
-    def mutually_exclusive_group(self, check):
+    def interpret_mutually_exclusive_group(self, check):
         args_to_check_values = self.get_items_values(check)
         present_args_count = 0
 
