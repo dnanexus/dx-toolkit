@@ -49,6 +49,8 @@ class InputsValidator:
         self.warning_handler = warning_handler
         self.built_in_args = built_in_args
 
+        # for now we're not using this. Should I still keep it?
+        self.schema_version = schema.get("schema_version")
         self.conditions_funcs = {
             "exclusive": "interpret_exclusive",
             "exclusive_with_exceptions": "interpret_exclusive_with_exceptions",
@@ -60,9 +62,6 @@ class InputsValidator:
         }
 
     ### Schema methods ###
-    def populate_schema_version(self):
-        self.schema_version = self.schema.get("schema_version")
-
     def validate_schema_conditions(self):
         # Checking if all conditions exist
         present_conditions = [
@@ -198,8 +197,6 @@ class InputsValidator:
     def validate(self):
         # TODO only necessary if exclusive methods are used (maybe remove later)
         self.populate_arguments_list()
-        # we're not really using this but I guess we can keep it here?
-        self.populate_schema_version()
         self.validate_schema_conditions()
 
         self.interpret_conditions()
