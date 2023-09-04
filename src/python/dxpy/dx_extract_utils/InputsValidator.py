@@ -2,6 +2,8 @@
 # TODO: maybe remove exclusive condition
 # TODO: schema versioning handling?
 
+from __future__ import print_function
+
 
 class InputsValidator:
     """
@@ -24,7 +26,7 @@ class InputsValidator:
         "properties": {
             "main_key": "path",
             "items": ["output","delim"]
-        },            
+        },
         "condition": "with_at_least_one_required",
         "error_message": {
             "message": "...",
@@ -68,9 +70,7 @@ class InputsValidator:
             for key, value in self.schema.items()
             if key != "schema_version"
         ]
-        not_found = set(present_conditions) - set(
-            ExpressionInputsValidator.conditions_funcs
-        )
+        not_found = set(present_conditions) - set(InputsValidator.conditions_funcs)
         if len(not_found) != 0:
             self.error_handler("{} schema condition is not defined".format(not_found))
 
@@ -102,17 +102,14 @@ class InputsValidator:
                 getattr(self, method_to_call)(key)
 
     def throw_message(self, check):
-        if (self.schema.get(check).get("error_message").get("type")) == "warning":
+        type = self.schema.get(check).get("error_message").get("type")
+        if type == "warning":
             self.throw_warning(check)
-        elif (self.schema.get(check).get("error_message").get("type") == None) or (
-            self.schema.get(check).get("error_message").get("type") == "error"
-        ):
+        elif (type == None) or (type == "error"):
             self.throw_exit_error(check)
         else:
             self.error_handler(
-                'Unkown error message in schema: "{}" for key "{}"'.format(
-                    self.schema.get(check).get("error_message").get("type"), (check)
-                )
+                'Unkown error message in schema: "{}" for key "{}"'.format(type, check)
             )
 
     def throw_exit_error(self, check):
