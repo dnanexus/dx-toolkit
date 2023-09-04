@@ -3,8 +3,35 @@
 # TODO: schema versioning handling?
 
 
-class ExpressionInputsValidator:
-    """InputsValidator class for extract_assay expresion. Checks for invalid input combinations"""
+class InputsValidator:
+    """
+    InputsValidator class for extract_assay expresion. Checks for invalid input combinations set by a JSON schema.
+
+    The schema is a dictionary with the following structure:
+
+    {
+    "schema_version": "1.0",
+    "condition_1": {
+        "properties": {
+            "items": ["path", "json_help"],
+        },
+        "condition": "at_least_one_required",
+        "error_message": {
+            "message": "..."
+        },
+    },
+    "condition_2": {
+        "properties": {
+            "main_key": "path",
+            "items": ["output","delim"]
+        },            
+        "condition": "with_at_least_one_required",
+        "error_message": {
+            "message": "...",
+            "type": "warning"
+            },
+
+    """
 
     conditions_funcs = [
         "exclusive",

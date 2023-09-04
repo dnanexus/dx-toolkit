@@ -47,7 +47,7 @@ from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
-from ..dx_extract_utils.ExpressionInputsValidator import ExpressionInputsValidator
+from ..dx_extract_utils.InputsValidator import InputsValidator
 
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
@@ -1191,7 +1191,7 @@ def extract_assay_expression(parser_obj):
     }
 
 
-    input_validator = ExpressionInputsValidator(parser_dict=parser_dict, schema=schema, error_handler=err_exit)
+    input_validator = InputsValidator(parser_dict=parser_dict, schema=schema, error_handler=err_exit)
     input_validator.validate()
 
 
