@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [357.0] - beta
+
 ### Changed
 
 * Remove optional output param `nextflow_log` from Nextflow pipeline applets; instead, always upload Nextflow log file to head job destination when execution completes
@@ -15,7 +17,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Nextflow applets passes schema input params explicitly in `nextflow run` command, as parameters assigned in runtime config are not handled properly by nextflow-io
 * Unexpected splitting at whitespaces inside quotes when parsing string-type input parameters of Nextflow applets
 
-## [356.0] - beta
+## [356.0] - 2023.9.1
 
 ### Fixed
 
