@@ -1056,6 +1056,21 @@ def extract_assay_expression(parser_obj):
 
     schema = {
         "schema_version": "1.0",
+        "parser_args":[
+            "path",
+            "assay_name",
+            "list_assays",
+            "output",
+            "retrieve_expression",
+            "additional_fields",
+            "additional_fields_help",
+            "delim",
+            "input_json_file",
+            "sql",
+            "expression_matrix",
+            "json_help",
+            "input_json",
+        ],
         "1_path_or_json_help-at_least_one_required": {
             "properties": {
                 "items": ["path", "json_help"],
@@ -1080,34 +1095,12 @@ def extract_assay_expression(parser_obj):
                 "message": 'One of the arguments "--retrieve-expression", "--list-assays", "--additional-fields-help", "--json-help" is required.'
             },
         },
-        # "3_list_assays_exclusive": {
-        #     "properties": {
-        #         "main_key": "list_assays",
-        #         "exceptions": ["path"],
-        #     },
-        #     "condition": "exclusive_with_exceptions",
-        #     "error_message": {
-        #         "message": '"--list-assays" cannot be presented with other options'
-        #     },
-        # },
-        "3_list_assays_with_none_of": {
+        "3_list_assays_exclusive_with_exceptions": {
             "properties": {
                 "main_key": "list_assays",
-                "items": [
-                    "assay_name",
-                    "output",
-                    "retrieve_expression",
-                    "additional_fields",
-                    "additional_fields_help",
-                    "delim",
-                    "input_json_file",
-                    "sql",
-                    "expression_matrix",
-                    "json_help",
-                    "input_json",
-                ],
+                "exceptions": ["path"],
             },
-            "condition": "with_none_of",
+            "condition": "exclusive_with_exceptions",
             "error_message": {
                 "message": '"--list-assays" cannot be presented with other options'
             },
@@ -1127,44 +1120,28 @@ def extract_assay_expression(parser_obj):
                 "message": 'The flag "--retrieve_expression" must be followed by "--input-json", "--input-json-file", "--json-help", or "--additional-fields-help".'
             },
         },
-        "5_json_help_with_none_of": {
+        "5_json_help_exclusive_with_exceptions": {
             "properties": {
                 "main_key": "json_help",
                 "items": [
-                    "assay_name",
-                    "output",
-                    "list_assays",
-                    "additional_fields",
-                    "additional_fields_help",
-                    "delim",
-                    "input_json_file",
-                    "sql",
-                    "expression_matrix",
-                    "input_json",
+                    "path",
+                    "retrieve_expression",
                 ],
             },
-            "condition": "with_none_of",
+            "condition": "exclusive_with_exceptions",
             "error_message": {
                 "message": '"--json-help" cannot be passed with any option other than "--retrieve-expression".'
             },
         },
-        "6_additional_fields_help_with_none_of": {
+        "6_additional_fields_help_exclusive_with_exceptions": {
             "properties": {
                 "main_key": "additional_fields_help",
                 "items": [
-                    "assay_name",
-                    "output",
-                    "list_assays",
-                    "additional_fields",
-                    "json_help",
-                    "delim",
-                    "input_json_file",
-                    "sql",
-                    "expression_matrix",
-                    "input_json",
+                    "path",
+                    "retrieve_expression",
                 ],
             },
-            "condition": "with_none_of",
+            "condition": "exclusive_with_exceptions",
             "error_message": {
                 "message": '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
             },
@@ -1190,9 +1167,9 @@ def extract_assay_expression(parser_obj):
         },
     }
 
-
     input_validator = InputsValidator(parser_dict=parser_dict, schema=schema, error_handler=err_exit)
     input_validator.validate()
+
 
 
 

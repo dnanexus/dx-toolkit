@@ -1,5 +1,4 @@
 # TODO: check number of arguments and type manually
-# TODO: maybe remove exclusive condition
 # TODO: schema versioning handling?
 
 from __future__ import print_function
@@ -13,6 +12,10 @@ class InputsValidator:
 
     {
     "schema_version": "1.0",
+    "parser_args":[
+                  "path"
+                  "...",
+                  ]
     "condition_1": {
         "properties": {
             "items": ["path", "json_help"],
@@ -41,15 +44,12 @@ class InputsValidator:
         schema,
         error_handler=print,
         warning_handler=print,
-        built_in_args=None,
     ):
         self.parser_dict = parser_dict
         self.schema = schema
         self.error_handler = error_handler
         self.warning_handler = warning_handler
-        self.built_in_args = built_in_args
 
-        # for now we're not using this. Should I still keep it?
         self.schema_version = schema.get("schema_version")
         self.conditions_funcs = {
             "exclusive": "interpret_exclusive",
@@ -67,36 +67,16 @@ class InputsValidator:
         present_conditions = [
             value.get("condition")
             for key, value in self.schema.items()
-            if key != "schema_version"
+            if key != "schema_version" and key != "parser_args"
         ]
         not_found = set(present_conditions) - set(self.conditions_funcs)
         if len(not_found) != 0:
             self.error_handler("{} schema condition is not defined".format(not_found))
 
-    # TODO: maybe remove the whole function
-    def populate_arguments_list(self):
-        if self.built_in_args == None:
-            self.built_in_args = [
-                "apiserver_host",
-                "apiserver_port",
-                "apiserver_protocol",
-                "project_context_id",
-                "workspace_id",
-                "security_context",
-                "auth_token",
-                "env_help",
-                "version",
-                "command",
-                "func",
-            ]
-        parser_dict_keys = self.parser_dict.keys()
-
-        self.arguments_list = list(set(parser_dict_keys) - set(self.built_in_args))
-
     ### Checking general methods ###
     def interpret_conditions(self):
         for key, value in self.schema.items():
-            if key != "schema_version":
+            if key != "schema_version" and key != "parser_args":
                 condition = value.get("condition")
                 method_to_call = self.conditions_funcs.get(condition)
                 getattr(self, method_to_call)(key)
@@ -149,7 +129,7 @@ class InputsValidator:
         main_key = self.get_main_key(check)
 
         # Defining args to check and its values
-        args_to_check = self.arguments_list.copy()
+        args_to_check = (self.schema.get("parser_args")).copy()
         args_to_check.remove(main_key)
         if exception_present:
             args_to_check = self.remove_exceptions_from_list(check, args_to_check)
@@ -195,10 +175,7 @@ class InputsValidator:
 
     # VALIDATION
     def validate(self):
-        # TODO only necessary if exclusive methods are used (maybe remove later)
-        self.populate_arguments_list()
         self.validate_schema_conditions()
-
         self.interpret_conditions()
 
 
