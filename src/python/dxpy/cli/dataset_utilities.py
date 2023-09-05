@@ -1068,7 +1068,10 @@ def resolve_validate_dx_path(path):
         try:
             folder_exists = check_folder_exists(project, folder_path, folder_name)
         except ResolutionError as e:
-            err_msg = str(e)
+            if "folder could not be found" in str(e):
+                folder_exists = False
+            else:
+                raise e
         if not folder_exists:
             err_msg = "The folder: {} could not be found in the project: {}".format(
                 folder, project
