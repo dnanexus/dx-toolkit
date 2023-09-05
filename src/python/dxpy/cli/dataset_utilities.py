@@ -1114,7 +1114,10 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     try:
         resp_raw = raw_api_call(resp, payload)
     except Exception as exc:
-        raise VizserverError("Exception caught while validating cohort ids.  Bad response from Vizserver") from exc
+        raise VizserverError(
+            "Exception caught while validating cohort ids.  Bad response from Vizserver."
+            "Original Error message:\n{}"
+        ).format(str(exc))
     # Order of samples doesn't matter so using set here
     discovered_ids = set()
     # Parse the results objects for the cohort ids

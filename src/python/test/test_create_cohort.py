@@ -71,7 +71,7 @@ class TestCreateCohort(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print("Remmoving testing temp project {}".format(cls.temp_proj._dxid))
+        print("Remmoving temporary testing project {}".format(cls.temp_proj._dxid))
         cls.temp_proj.destroy()
 
     def find_record_id(self, text): 
@@ -111,13 +111,10 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        try:
-            record_id = self.find_record_id(stdout)
-            subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
-            e = None
-        except Exception as err:
-            e = err 
-        self.assertTrue(bool(record_id), str(e))
+        record_id = self.find_record_id(stdout)
+        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+
+        self.assertTrue(bool(record_id), "Record object was not created")
         
 
     # EM-1
@@ -161,13 +158,9 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
-        try:
-            record_id = self.find_record_id(stdout)
-            subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
-            e = None
-        except Exception as err:
-            e = err
-        self.assertTrue(bool(record_id), str(e))
+        record_id = self.find_record_id(stdout)
+        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
+        self.assertTrue(bool(record_id), "Record object was not created")
 
 
     # EM-1
@@ -445,22 +438,57 @@ class TestCreateCohort(unittest.TestCase):
             "version": "3.0",
         }
 
-        try:
-            new_record = dxpy.bindings.dxrecord.new_dxrecord(
-                details=details,
-                project=self.temp_proj._dxid,
-                name=None,
-                types=["DatabaseQuery", "CohortBrowser"],
-                folder="/",
-                close=True,
-            )
-            new_record_details = new_record.get_details()
-            new_record.remove()
-            e = None
-        except Exception as err:
-            e = err
-        self.assertTrue(isinstance(new_record, DXRecord), str(e))
+
+        new_record = dxpy.bindings.dxrecord.new_dxrecord(
+            details=details,
+            project=self.temp_proj._dxid,
+            name=None,
+            types=["DatabaseQuery", "CohortBrowser"],
+            folder="/",
+            close=True,
+        )
+        new_record_details = new_record.get_details()
+        new_record.remove()
+        e = None
+        self.assertTrue(isinstance(new_record, DXRecord))
         self.assertEqual(new_record_details, details, "Details of created record does not match expected details.")
+
+
+
+    def test_brief_verbose(self):
+        command = [
+            "dx",
+            "create_cohort",
+            "{}:/".format(self.temp_proj._dxid),
+            "--from",
+            self.test_record_geno,
+            "--cohort-ids",
+            "sample_1_1,sample_1_10",
+        ]
+
+        for stdout_mode in ["--verbose", "--brief", ""]:
+            cmd = command + [stdout_mode] if stdout_mode != "" else command
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            stdout, stderr = process.communicate()
+            self.assertTrue(len(stderr) == 0, msg=stderr)
+            if stdout_mode == "--brief":
+                record_id = re.match(
+                    r"^(record-[A-Za-z0-9]{24})", stdout.strip("\n").strip(" ")
+                )
+                self.assertTrue(bool(record_id), "Brief stdout has to be a record-id")
+            elif stdout_mode == "--verbose":
+                self.assertIn(
+                    "Details", stdout, "Verbose stdout has to contain 'Details' string"
+                )
+            else:
+                self.assertIn(
+                    "Types", stdout, "Default stdout has to contain 'Types' string"
+                )
 
 
 
