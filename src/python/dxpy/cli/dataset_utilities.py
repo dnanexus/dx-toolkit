@@ -1222,17 +1222,20 @@ def create_cohort(args):
         base_sql,
     )
     sql = cohort_query_api_call(resp, cohort_query_payload)
-    cohort_payload = cohort_final_payload(
-        path_name,
-        path_folder,
-        path_project,
-        resp["databases"],
-        resp["dataset"],
-        cohort_query_payload["filters"],
-        sql,
-        base_sql,
-        resp.get("combined"),
-    )
+    try:
+        cohort_payload = cohort_final_payload(
+            path_name,
+            path_folder,
+            path_project,
+            resp["databases"],
+            resp["dataset"],
+            cohort_query_payload["filters"],
+            sql,
+            base_sql,
+            resp.get("combined"),
+        )
+    except Exception as e:
+        err_exit("{}: {}".format(entity_result["id"], e))
 
     dx_record = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
     # print record details to stdout
