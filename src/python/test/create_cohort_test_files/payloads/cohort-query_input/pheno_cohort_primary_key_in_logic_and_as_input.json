@@ -12,16 +12,6 @@
                                 "values": [
                                     "patient_1",
                                     "patient_2",
-                                    "patient_3",
-                                    "patient_8",
-                                    "patient_9"
-                                ]
-                            },
-                            {
-                                "condition": "in",
-                                "values": [
-                                    "patient_1",
-                                    "patient_2",
                                     "patient_3"
                                 ]
                             }
