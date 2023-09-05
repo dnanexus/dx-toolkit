@@ -33,6 +33,15 @@ def generate_pheno_filter(values, entity, field, filters):
         if "logic" in compound_filter and compound_filter["logic"] != "and":
             raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
         # The entity field filter is valid for addition of the "in" values condition
+        # Add to an existing "in" condition if one exists for the entity and field
+        for condition in compound_filter["filters"][entity_field]:
+            if condition["condition"] == "in":
+                for value in values:
+                    if value in condition["values"]:
+                        continue
+                    condition["values"].append(value)
+                return filters
+        # Create a new "in" condition for the entity and field
         compound_filter["filters"][entity_field].append(entity_field_filter)
         return filters
 
