@@ -1,0 +1,85 @@
+{
+    "name": "geno_cohort_with_geno_filters_filtered_with_primary_field",
+    "folder": "/Create_Cohort/manually_created_output_cohorts",
+    "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "types": [
+        "DatabaseQuery",
+        "CohortBrowser"
+    ],
+    "details": {
+        "databases": [
+            "database-GYK3JJj0vGPQ2Y1y98pj8pGg",
+            "database-FkypXj80bgYvQqyqBx1FJG6y"
+        ],
+        "dataset": {
+            "$dnanexus_link": "record-GYK40bj06Yy4KPpB4zqX8kGb"
+        },
+        "description": "",
+        "filters": {
+            "pheno_filters": {
+                "compound": [
+                    {
+                        "name": "phenotype",
+                        "logic": "and",
+                        "filters": {
+                            "sample$sample_id": [
+                                {
+                                    "condition": "in",
+                                    "values": [
+                                        "sample_1_1",
+                                        "sample_1_2",
+                                        "sample_1_5"
+                                    ]
+                                }
+                            ]
+                        },
+                        "entity": {
+                            "logic": "and",
+                            "name": "sample",
+                            "operator": "exists",
+                            "children": []
+                        }
+                    }
+                ],
+                "logic": "and"
+            },
+            "assay_filters": {
+                "compound": [
+                    {
+                        "name": "genotype@b07df2d4-a05c-4c6a-9a20-7602695d9e47",
+                        "logic": "and",
+                        "filters": {
+                            "annotation$gene_name": [
+                                {
+                                    "condition": "in",
+                                    "values": [],
+                                    "geno_bins": [
+                                        {
+                                            "chr": "18",
+                                            "start": 47368,
+                                            "end": 47368
+                                        }
+                                    ]
+                                }
+                            ],
+                            "genotype$type": [
+                                {
+                                    "condition": "in",
+                                    "values": [
+                                        "hom"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "logic": "and"
+            },
+            "logic": "and"
+        },
+        "schema": "create_cohort_schema",
+        "sql": "SELECT `sample_1`.`sample_id` AS `sample_id` FROM `database_gyk3jjj0vgpq2y1y98pj8pgg__create_cohort_geno_database`.`sample` AS `sample_1` WHERE `sample_1`.`sample_id` IN ('sample_1_1', 'sample_1_2', 'sample_1_5') AND `sample_1`.`sample_id` IN (SELECT `assay_cohort_query`.`sample_id` FROM (SELECT `genotype_alt_read_optimized_1`.`sample_id` AS `sample_id` FROM `database_gyk3jjj0vgpq2y1y98pj8pgg__create_cohort_geno_database`.`genotype_alt_read_optimized` AS `genotype_alt_read_optimized_1` WHERE `genotype_alt_read_optimized_1`.`ref_yn` = false AND `genotype_alt_read_optimized_1`.`chr` = '18' AND `genotype_alt_read_optimized_1`.`pos` BETWEEN 46368 AND 48368 AND `genotype_alt_read_optimized_1`.`bin` IN (0) AND `genotype_alt_read_optimized_1`.`type` IN ('hom')) AS `assay_cohort_query`)",
+        "version": "3.0"
+    },
+    "close": true
+}

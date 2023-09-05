@@ -1,0 +1,10 @@
+{
+    "values": [
+        "patient_1",
+        "patient_2"
+    ],
+    "entity": "patient",
+    "field": "patient_id",
+    "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "folder": "/Create_Cohort/manually_created_output_cohorts"
+}

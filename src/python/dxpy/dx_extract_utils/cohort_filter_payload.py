@@ -71,13 +71,59 @@ def generate_pheno_filter(values, entity, field, filters):
     return filters
 
 
-def cohort_final_payload(values, entity, field, filters, project_context):
+def cohort_filter_payload(values, entity, field, filters, project_context, base_sql=None):
     if "logic" in filters and filters["logic"] != "and":
         raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
-    final_payload = {}
-    final_payload["project_context"] = project_context
-    final_payload["filters"] = generate_pheno_filter(values, entity, field, filters)
-    if "logic" not in final_payload["filters"]:
-        final_payload["filters"]["logic"] = "and"
+    filter_payload = {}
+    filter_payload["filters"] = generate_pheno_filter(values, entity, field, filters)
+    if "logic" not in filter_payload["filters"]:
+        filter_payload["filters"]["logic"] = "and"
+    filter_payload["project_context"] = project_context
+    if base_sql is not None:
+        filter_payload["base_sql"] = base_sql
+
+    return filter_payload
+
+
+def cohort_combined_payload(combined):
+    combined = copy.copy(combined)
+    source = []
+    for source_dict in combined["source"]:
+        source.append({
+            "$dnanexus_link": {
+                "id": source_dict["id"],
+                "project": source_dict["project"],
+            }
+        })
+    combined["source"] = source
+
+    return combined
+
+
+def cohort_final_payload(name, folder, project, databases, dataset, filters, sql, base_sql=None, combined=None):
+    details = {
+        "databases": databases,
+        "dataset": {"$dnanexus_link": dataset},
+        "description": "",
+        "filters": filters,
+        "schema": "create_cohort_schema",
+        "sql": sql,
+        "version": "3.0",
+    }
+    if base_sql is not None:
+        details["baseSql"] = base_sql
+    if combined is not None:
+        details["combined"] = cohort_combined_payload(combined)
+
+    final_payload = {
+        "name": name,
+        "folder": folder,
+        "project": project,
+        "types": ["DatabaseQuery", "CohortBrowser"],
+        "details": details,
+        "close": True,
+    }
+    if combined is not None:
+        final_payload["types"].append("CombinedDatabaseQuery")
 
     return final_payload

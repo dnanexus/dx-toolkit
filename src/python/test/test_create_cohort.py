@@ -22,6 +22,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 # Run manually with python2 and python3 src/python/test/test_create_cohort.py
 
 
+import json
 import unittest
 import os
 import re
@@ -39,7 +40,11 @@ from dxpy.cli.dataset_utilities import (
     DXDataset,
     cohort_query_api_call
 )
-from dxpy.dx_extract_utils.cohort_filter_payload import generate_pheno_filter
+from dxpy.dx_extract_utils.cohort_filter_payload import (
+    generate_pheno_filter,
+    cohort_filter_payload,
+    cohort_final_payload,
+)
 
 dirname = os.path.dirname(__file__)
 
@@ -56,6 +61,7 @@ class TestCreateCohort(unittest.TestCase):
         cd(proj_id + ":/")
         cls.general_input_dir = os.path.join(dirname, "create_cohort_test_files/input/")
         # cls.general_output_dir = os.path.join(dirname, "create_cohort_test_files/output/")
+        cls.payloads_dir = os.path.join(dirname, "create_cohort_test_files/payloads/")
 
         # TODO: setup project folders
         cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(proj_name)
@@ -68,6 +74,8 @@ class TestCreateCohort(unittest.TestCase):
             os.path.join(dirname, "create_cohort_test_files", "usage_message.txt"), "r"
         ) as infile:
             cls.usage_message = infile.read()
+
+        cls.maxDiff = None
 
     @classmethod
     def tearDownClass(cls):
@@ -453,6 +461,70 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(isinstance(new_record, DXRecord))
         self.assertEqual(new_record_details, details, "Details of created record does not match expected details.")
 
+    @property
+    def _payload_names(self):
+        for file_name in sorted(os.listdir(os.path.join(self.payloads_dir, "dx_new_input"))):
+            yield os.path.splitext(file_name)[0]
+
+    def _test_cohort_filter_payload(self, payload_name):
+        with open(os.path.join(self.payloads_dir, "input_parameters", "{}.json".format(payload_name))) as f:
+            input_parameters = json.load(f)
+        values = input_parameters["values"]
+        entity = input_parameters["entity"]
+        field = input_parameters["field"]
+        project_context = input_parameters["project"]
+
+        with open(os.path.join(self.payloads_dir, "visualize_response", "{}.json".format(payload_name))) as f:
+            visualize_response = json.load(f)
+        filters = visualize_response.get("filters", {})
+        base_sql = visualize_response.get("baseSql", visualize_response.get("base_sql"))
+
+        test_payload = cohort_filter_payload(values, entity, field, filters, project_context, base_sql)
+
+        with open(os.path.join(self.payloads_dir, "cohort-query_input", "{}.json".format(payload_name))) as f:
+            valid_payload = json.load(f)
+
+        with self.subTest(payload_name):
+            self.assertDictEqual(test_payload, valid_payload)
+
+    def test_cohort_filter_payloads(self):
+        for payload_name in self._payload_names:
+            self._test_cohort_filter_payload(payload_name)
+
+    def _test_cohort_final_payload(self, payload_name):
+        name = None
+
+        with open(os.path.join(self.payloads_dir, "input_parameters", "{}.json".format(payload_name))) as f:
+            input_parameters = json.load(f)
+        folder = input_parameters["folder"]
+        project = input_parameters["project"]
+
+        with open(os.path.join(self.payloads_dir, "visualize_response", "{}.json".format(payload_name))) as f:
+            visualize = json.load(f)
+        dataset = visualize["dataset"]
+        databases = visualize["databases"]
+        base_sql = visualize.get("baseSql", visualize.get("base_sql"))
+        combined = visualize.get("combined")
+
+        with open(os.path.join(self.payloads_dir, "cohort-query_input", "{}.json".format(payload_name))) as f:
+            filters = json.load(f)["filters"]
+
+        with open(os.path.join(self.payloads_dir, "cohort-query_output", "{}.sql".format(payload_name))) as f:
+            sql = f.read()
+
+        test_output = cohort_final_payload(name, folder, project, databases, dataset, filters, sql, base_sql, combined)
+
+        with open(os.path.join(self.payloads_dir, "dx_new_input", "{}.json".format(payload_name))) as f:
+            valid_output = json.load(f)
+
+        valid_output["name"] = None
+
+        with self.subTest(payload_name):
+            self.assertDictEqual(test_output, valid_output)
+
+    def test_cohort_final_payloads(self):
+        for payload_name in self._payload_names:
+            self._test_cohort_final_payload(payload_name)
 
 
     def test_brief_verbose(self):

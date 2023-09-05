@@ -47,7 +47,7 @@ from ..exceptions import (
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
-from ..dx_extract_utils.cohort_filter_payload import cohort_final_payload
+from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -1212,35 +1212,32 @@ def create_cohort(args):
         err_exit(str(err))
     # Input cohort IDs have been succesfully validated    
 
-    entity = rec_descriptor.model["global_primary_key"]["entity"]
-    field = rec_descriptor.model["global_primary_key"]["field"]
-    filters = resp.get("filters", {})
+    base_sql = resp.get("baseSql", resp.get("base_sql"))
+    cohort_query_payload = cohort_filter_payload(
+        samples,
+        rec_descriptor.model["global_primary_key"]["entity"],
+        rec_descriptor.model["global_primary_key"]["field"],
+        resp.get("filters", {}),
+        path_project,
+        base_sql,
+    )
+    sql = cohort_query_api_call(resp, cohort_query_payload)
     try:
-        payload = cohort_final_payload(samples, entity, field, filters, from_project)
+        cohort_payload = cohort_final_payload(
+            path_name,
+            path_folder,
+            path_project,
+            resp["databases"],
+            resp["dataset"],
+            cohort_query_payload["filters"],
+            sql,
+            base_sql,
+            resp.get("combined"),
+        )
     except Exception as e:
         err_exit("{}: {}".format(entity_result["id"], e))
-    sql = cohort_query_api_call(resp, payload)
 
-    ### temporary
-    details = {
-        "databases": [resp["databases"]],
-        "dataset": {"$dnanexus_link": resp["dataset"]},
-        "description": "",
-        "filters": payload["filters"],
-        "schema": "create_cohort_schema",
-        "sql": sql,
-        "version": "3.0",
-    }
-    ###
-
-    dx_record = dxpy.bindings.dxrecord.new_dxrecord(
-        details=details,
-        project=path_project,
-        name=path_name,
-        types=["DatabaseQuery", "CohortBrowser"],
-        folder=path_folder,
-        close=True
-    )
+    dx_record = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
     # print record details to stdout
     if args.brief:
         print(dx_record.get_id())
@@ -1249,7 +1246,6 @@ def create_cohort(args):
             print_desc(dx_record.describe(incl_properties=True, incl_details=True), args.verbose)
         except Exception as e:
             err_exit(str(e))
-
 
 
 class DXDataset(DXRecord):
