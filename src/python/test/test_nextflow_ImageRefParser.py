@@ -24,7 +24,7 @@ from parameterized import parameterized
 from dxpy_testutil import DXTestCase
 from dxpy import DXFile
 from dxpy.compat import USING_PYTHON2
-from dxpy.nextflow.ImageRefParser import ImageRefParser, DxPathParser, ImageRefParserFactory
+from dxpy.nextflow.ImageRefParser import ImageRefParser, DxPathParser, DockerImageParser, ImageRefParserFactory
 
 if USING_PYTHON2:
     spawn_extra_args = {}
@@ -73,21 +73,21 @@ class TestImageRefParser(DXTestCase):
         self.assertTrue(dx_path_parser.context_id == context_id)
         self.assertTrue(dx_path_parser.file_path == file_path)
 
-
     @parameterized.expand([
-        fixture_7,
-        fixture_8,
-        fixture_9
+        fixture_9,
+        fixture_10,
+        fixture_11,
+        fixture_12,
+        fixture_13,
+        fixture_14,
+        fixture_15,
+        fixture_16,
+        fixture_17
     ])
-    def test_bundled_depends(self, image_ref, expected_bundled_depends):
-        docker_image_ref = ImageRefParser(image_ref)
-        self.assertTrue(docker_image_ref.bundled_depends == expected_bundled_depends)
-
-    def test_cache(self):
-        docker_image_ref = ImageRefParser('busybox:1.36')
-        cached_file_id = docker_image_ref.cache()
-        self.assertTrue(cached_file_id.starts_with("file-"))
-        if cached_file_id:
-            dx_file = DXFile(cached_file_id)
-            dx_file.remove()
-
+    def test_DockerImageParser(self, image_ref, repository, image, tag, digest):
+        dx_path_parser = ImageRefParserFactory.parse(image_ref)
+        self.assertTrue(isinstance(dx_path_parser, DockerImageParser))
+        self.assertTrue(dx_path_parser.repository == repository)
+        self.assertTrue(dx_path_parser.image == image)
+        self.assertTrue(dx_path_parser.tag == tag)
+        self.assertTrue(dx_path_parser.digest == digest)
