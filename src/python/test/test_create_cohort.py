@@ -495,18 +495,19 @@ class TestCreateCohort(unittest.TestCase):
 
     def test_path_upload_access(self):
         # Having at least UPLOAD access to a project
-        err_msg = validate_project_access(self.temp_proj)
+        err_msg = validate_project_access(self.temp_proj_id)
         self.assertIsNone(err_msg)
 
     def test_path_upload_access_negative(self):
-        # Could we use reference projects?
+        #TODO: delegate this to QE
         pass
 
     def test_path_options(self):
         """
-        Testing different path formats.
+        Testing different path formats. Both possitive a and negative scenarios. 
         """
         self.temp_proj.new_folder("/folder/subfolder", parents=True)
+        #Parametrizing the various path options and expected results. 
         expected_in_out_pairs = {
             "{}:/".format(self.proj_id): (self.proj_id, "/", None, None),
             "record_name": (self.temp_proj_id, "/", "record_name", None),
@@ -534,8 +535,6 @@ class TestCreateCohort(unittest.TestCase):
             print(result)
             self.assertEqual(result, expected_result) 
 
-    def test_path_options_negative(self):
-        pass
 
 
 
