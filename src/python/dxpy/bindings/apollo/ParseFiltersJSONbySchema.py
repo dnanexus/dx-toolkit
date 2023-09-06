@@ -56,23 +56,29 @@ class InputJSONFiltersValidator(object):
                 # multi-condition if list
 
                 # must be compounded because more than one filter
-                # must be recursed because more than one item
+                # must be recursed if more than one item in location
 
                 xt = {
                     "logic": current_filters.get("filters_combination_operator"),
                     "compound": [{},{}] # as many dicts inside as there are key conditions
+                    # so count the location.properties for this
                 }
 
                 full = {
                     "logic": current_filters.get("items_combination_operator"),
                     "compound": [{xt},{}] # as many dicts as there are "items"
+                    # count json list len for this
                 }
 
                 # multi-condition if dict within dict, if properties is list
 
                 # remember to iterate over all values in input_json
+                # remember that chr and genobin should be in one dict
                 for item in current_properties:
                     if item.get("key"):
+
+
+                        ### define this as a generic filter_builder function
                         filters = {
                             "filters": {
                                 item.get("table_column"): [
@@ -86,6 +92,7 @@ class InputJSONFiltersValidator(object):
                     
                     if item.get("keys") and item.get("condition") == "genobin_partial_overlap":
                         self.build_partial_overlap_genobin_filters(item, filter_values[0]) # change to iterate over all list items0
+                        # just append it to the list of dicts in the compound
 
                 # simple if just dict
                 ...
@@ -165,6 +172,43 @@ class InputJSONFiltersValidator(object):
 
     def get_general_filter_schema():
         ...
+
+    def build_one_key_generic_filter(table_column, condition, values):
+        ...
+        {
+                "filters": {
+                    "expr_annotation$chr": [{"condition": "between", "values": [1, 3]}]
+                },
+                "logic": "and",
+            }
+
+    def build_two_key_generic_filter(table_columns, condition, values):
+        ...
+        {
+                        "filters": {
+                            "expr_annotation$start": [
+                                {"condition": "between", "values": [1, 3]}
+                            ],
+                            "expr_annotation$end": [
+                                {"condition": "between", "values": [5, 7]}
+                            ],
+                        },
+                        "logic": "or",
+                    }
+
+    def build_two_key_multi_condition_filter(table_column, first_key_condition, second_key_condition, values):
+        ...
+        {
+                        "filters": {
+                            "expr_annotation$start": [
+                                {"condition": "less-than", "values": 100}
+                            ],
+                            "expr_annotation$end": [
+                                {"condition": "greater-than", "values": 500}
+                            ],
+                        },
+                        "logic": "and",
+                    }
 
     def build_partial_overlap_genobin_filters(self, filtering_condition, input_json_item):
 
