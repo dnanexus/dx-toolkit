@@ -38,7 +38,7 @@ from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
     resolve_validate_record_path,
     DXDataset,
-    cohort_query_api_call
+    raw_cohort_query_api_call
 )
 from dxpy.dx_extract_utils.cohort_filter_payload import (
     generate_pheno_filter,
@@ -333,7 +333,7 @@ class TestCreateCohort(unittest.TestCase):
     def test_vizserver_error(self):
         pass
 
-    def test_cohort_query_api(self):
+    def test_raw_cohort_query_api(self):
         test_payload = {
             "filters": {
                 "pheno_filters": {
@@ -365,13 +365,13 @@ class TestCreateCohort(unittest.TestCase):
         expected_results = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
 
         from_project, entity_result, resp, dataset_project = resolve_validate_record_path(self.test_record_pheno)
-        sql = cohort_query_api_call(resp, test_payload)
+        sql = raw_cohort_query_api_call(resp, test_payload)
         self.assertEqual(expected_results,sql)
 
     def test_create_pheno_filter(self):
         """Verifying the correctness of created filters by examining this flow:
             1. creating the filter with: dxpy.dx_extract_utils.cohort_filter_payload.generate_pheno_filter
-            2. obtaining sql with: dxpy.cli.dataset_utilities.cohort_query_api_call
+            2. obtaining sql with: dxpy.cli.dataset_utilities.raw_cohort_query_api_call
             3. creating record with obtained sql and the filter by: dxpy.bindings.dxrecord.new_dxrecord
         """
 
@@ -428,11 +428,11 @@ class TestCreateCohort(unittest.TestCase):
         generated_filter = generate_pheno_filter(values, entity, field, filters)
         self.assertEqual(expected_filter, generated_filter)
 
-        # Testing cohort query api
+        # Testing raw cohort query api
         resp = resolve_validate_record_path(self.test_record_pheno)[2]
         payload = {"filters": generated_filter, "project_context": self.proj_id}
 
-        sql = cohort_query_api_call(resp, payload)
+        sql = raw_cohort_query_api_call(resp, payload)
         self.assertEqual(expected_sql, sql)
 
         # Testing new record with generated filter and sql
@@ -481,7 +481,7 @@ class TestCreateCohort(unittest.TestCase):
 
         test_payload = cohort_filter_payload(values, entity, field, filters, project_context, base_sql)
 
-        with open(os.path.join(self.payloads_dir, "cohort-query_input", "{}.json".format(payload_name))) as f:
+        with open(os.path.join(self.payloads_dir, "raw-cohort-query_input", "{}.json".format(payload_name))) as f:
             valid_payload = json.load(f)
 
         with self.subTest(payload_name):
@@ -506,10 +506,10 @@ class TestCreateCohort(unittest.TestCase):
         base_sql = visualize.get("baseSql", visualize.get("base_sql"))
         combined = visualize.get("combined")
 
-        with open(os.path.join(self.payloads_dir, "cohort-query_input", "{}.json".format(payload_name))) as f:
+        with open(os.path.join(self.payloads_dir, "raw-cohort-query_input", "{}.json".format(payload_name))) as f:
             filters = json.load(f)["filters"]
 
-        with open(os.path.join(self.payloads_dir, "cohort-query_output", "{}.sql".format(payload_name))) as f:
+        with open(os.path.join(self.payloads_dir, "raw-cohort-query_output", "{}.sql".format(payload_name))) as f:
             sql = f.read()
 
         test_output = cohort_final_payload(name, folder, project, databases, dataset, filters, sql, base_sql, combined)
