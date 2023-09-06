@@ -25,7 +25,11 @@ import subprocess
 import sys
 import os
 import dxpy
+import json
+import shutil
 from dxpy_testutil import cd, chdir
+from dxpy.bindings.apollo.ValidateJSONbySchema import JSONValidator
+from dxpy.bindings.apollo.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
 
 dirname = os.path.dirname(__file__)
 
@@ -41,6 +45,198 @@ class TestDXExtractExpression(unittest.TestCase):
         cd(cls.proj_id + ":/")
         cls.general_input_dir = os.path.join(dirname, "expression_test_files/input/")
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
+        cls.schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
 
-    def bad_toplevel_key(self):
-        pass
+        if not os.path.exists(cls.general_output_dir):
+            os.makedirs(cls.general_output_dir)
+
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.general_output_dir)
+
+    @classmethod
+    def json_error_handler(cls,message):
+        raise ValueError(message)
+
+    #
+    # Malformed input json tests
+    #
+
+    def test_annotation_conflicting_keys(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","annotation_conflicting_keys.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Conflicting keys feature_name and feature_id cannot be present together."
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_annotation_conflicting_keys(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","annotation_id_type.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Key 'feature_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_annotation_name_type(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","annotation_name_type.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Key 'feature_name' has an invalid type. Expected <class 'list'> but got <class 'dict'>"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())    
+
+    def test_annotation_type(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","annotation_type.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Key 'annotation' has an invalid type. Expected <class 'dict'> but got <class 'list'>"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_bad_dependent_conditional(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","bad_dependent_conditional.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "When expression is present, one of the following keys must be also present: annotation, location."
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_bad_toplevel_key(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","bad_toplevel_key.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "error message not yet defined"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_conflicting_toplevel(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","conflicting_toplevel.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Conflicting keys feature_name and feature_id cannot be present together."
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+    
+    def test_empty_dict(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","empty_dict.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "error message not yet defined"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_expression_empty_dict(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","expression_empty_dict.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "error message not yet defined"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_expression_max_type(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","expression_max_type.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Key 'max_value' has an invalid type. Expected <class 'str'> but got <class 'int'>"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+
+    def test_expression_min_type(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","expression_min_type.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Key 'min_value' has an invalid type. Expected <class 'str'> but got <class 'int'>"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_expression_type(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","expression_type.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Key 'expression' has an invalid type. Expected <class 'dict'> but got <class 'list'>"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_location_chrom_type(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","location_chrom_type.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "Key 'chromosome' has an invalid type. Expected <class 'str'> but got <class 'int'>"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    def test_location_end_before_start(self):
+        json_path = os.path.join(self.general_input_dir,"malformed","location_end_before_start.json")
+        validator = JSONValidator(self.schema,error_handler =self.json_error_handler)
+        expected_error_message = "error message not yet defined"
+        with open(json_path,"r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+        
+        self.assertEqual(expected_error_message,str(cm.exception).strip())
+
+    #
+    # Correct JSON inputs
+    #
+
+
+# Start the test
+if __name__ == '__main__':
+    unittest.main()
