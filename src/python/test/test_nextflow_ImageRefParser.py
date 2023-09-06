@@ -67,11 +67,12 @@ class TestImageRefParser(DXTestCase):
         fixture_8
     ])
     def test_DxPathParser(self, image_ref, name, context_id, file_path):
-        dx_path_parser = ImageRefParserFactory.parse(image_ref)
-        self.assertTrue(isinstance(dx_path_parser, DxPathParser))
-        self.assertTrue(dx_path_parser.name == name)
-        self.assertTrue(dx_path_parser.context_id == context_id)
-        self.assertTrue(dx_path_parser.file_path == file_path)
+        dx_path_parser = ImageRefParserFactory(image_ref)
+        tokens = dx_path_parser.parse()
+        self.assertTrue(isinstance(tokens, DxPathParser))
+        self.assertTrue(tokens.name == name)
+        self.assertTrue(tokens.context_id == context_id)
+        self.assertTrue(tokens.file_path == file_path)
 
     @parameterized.expand([
         fixture_9,
@@ -85,9 +86,10 @@ class TestImageRefParser(DXTestCase):
         fixture_17
     ])
     def test_DockerImageParser(self, image_ref, repository, image, tag, digest):
-        dx_path_parser = ImageRefParserFactory.parse(image_ref)
-        self.assertTrue(isinstance(dx_path_parser, DockerImageParser))
-        self.assertTrue(dx_path_parser.repository == repository)
-        self.assertTrue(dx_path_parser.image == image)
-        self.assertTrue(dx_path_parser.tag == tag)
-        self.assertTrue(dx_path_parser.digest == digest)
+        docker_parser = ImageRefParserFactory(image_ref)
+        tokens = docker_parser.parse()
+        self.assertTrue(isinstance(tokens, DockerImageParser))
+        self.assertTrue(tokens.repository == repository)
+        self.assertTrue(tokens.image == image)
+        self.assertTrue(tokens.tag == tag)
+        self.assertTrue(tokens.digest == digest)
