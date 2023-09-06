@@ -73,7 +73,7 @@ class DxPathParser(ImageRefParser):
         self._parse()
 
     def _parse(self):
-        self.context_id, self.name = self._regex_matcher.group(2)
+        self.context_id = self.name = self._regex_matcher.group(2)
         extracted_path = self._regex_matcher.group(3)
         if self._file_id_regex.search(extracted_path):
             self.file_id = extracted_path
@@ -94,11 +94,11 @@ class DockerImageParser(ImageRefParser):
     def _parse(self):
         self.repository = self._regex_matcher.group(1)
         self.image = self._regex_matcher.group(2)
-        if self._regex_matcher.group(3).startsWith("@sha"):     # last match group is a digest
+        if self._regex_matcher.group(3).startswith("@sha"):     # last match group is a digest
             self.digest = self._regex_matcher.group(3)[1:]
             self.tag = ""
 
-        elif self._regex_matcher.group(3).startsWith(":"):      # last match group is a version tag
+        elif self._regex_matcher.group(3).startswith(":"):      # last match group is a version tag
             self.tag = self._regex_matcher.group(3)[1:]
             self.digest = ""
 

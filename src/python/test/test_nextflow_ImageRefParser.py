@@ -19,12 +19,13 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os
+import sys
+import unittest
 
 from parameterized import parameterized
 from dxpy_testutil import DXTestCase
-from dxpy import DXFile
 from dxpy.compat import USING_PYTHON2
-from dxpy.nextflow.ImageRefParser import ImageRefParser, DxPathParser, DockerImageParser, ImageRefParserFactory
+from dxpy.nextflow.ImageRefParser import DxPathParser, DockerImageParser, ImageRefParserFactory
 
 if USING_PYTHON2:
     spawn_extra_args = {}
@@ -35,61 +36,47 @@ else:
 
 class TestImageRefParser(DXTestCase):
 
-    # for dx path
-    fixture_1 = ['dx:///alpha/beta', None, None, '/alpha/beta']
-    fixture_2 = ['dx://project-123:/alpha/beta', 'project-123', 'project-123', '/alpha/beta']
-    fixture_3 = ['dx://project-123:alpha/beta', 'project-123', 'project-123', 'alpha/beta']
-    fixture_4 = ['dx://project-123:/', 'project-123', 'project-123', '/']
-    fixture_5 = ['dx://project-123:/some/path/*_{1,2}.fq', 'project-123', 'project-123', '/some/path/*_{1,2}.fq']
-    fixture_6 = ['dx://hola:/', 'hola', 'hola', '/']
-    fixture_7 = ['dx://hola:', 'hola', 'hola', '']
-    fixture_8 = ['dx://hola:', 'hola', 'hola', '']
-
-    # for docker image
-    fixture_9 = ['myregistryhost:5000/fedora/httpd:version1.0', 'myregistryhost:5000/fedora/', 'httpd', 'version1.0', '']
-    fixture_10 = ['fedora/httpd:version1.0-alpha', 'fedora/', 'httpd', 'version1.0-alpha', '']
-    fixture_11 = ['fedora/httpd:version1.0', 'fedora/', 'httpd', 'version1.0', '']
-    fixture_12 = ['rabbit:3', '', 'rabbit', '3', '']
-    fixture_13 = ['rabbit', '', 'rabbit', '', '']
-    fixture_14 = ['repository/rabbit:3', 'repository/', 'rabbit', '3', '']
-    fixture_15 = ['repository/rabbit', 'repository/', 'rabbit', '', '']
-    fixture_16 = ['rabbit@sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d', '', 'rabbit', '', 'sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d']
-    fixture_17 = ['repository/rabbit@sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d', 'repository/', 'rabbit', '', 'sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d']
-
     @parameterized.expand([
-        fixture_1,
-        fixture_2,
-        fixture_3,
-        fixture_4,
-        fixture_5,
-        fixture_6,
-        fixture_7,
-        fixture_8
+        ['dx:///alpha/beta', None, None, '/alpha/beta'],
+        ['dx://project-123:/alpha/beta', 'project-123', 'project-123', '/alpha/beta'],
+        ['dx://project-123:alpha/beta', 'project-123', 'project-123', 'alpha/beta'],
+        ['dx://project-123:/', 'project-123', 'project-123', '/'],
+        ['dx://project-123:/some/path/*_{1,2}.fq', 'project-123', 'project-123', '/some/path/*_{1,2}.fq'],
+        ['dx://hola:/', 'hola', 'hola', '/'],
+        ['dx://hola:', 'hola', 'hola', ''],
+        ['dx://hola:', 'hola', 'hola', '']
     ])
     def test_DxPathParser(self, image_ref, name, context_id, file_path):
         dx_path_parser = ImageRefParserFactory(image_ref)
-        tokens = dx_path_parser.parse()
+        tokens = dx_path_parser.parse
         self.assertTrue(isinstance(tokens, DxPathParser))
         self.assertTrue(tokens.name == name)
         self.assertTrue(tokens.context_id == context_id)
         self.assertTrue(tokens.file_path == file_path)
 
     @parameterized.expand([
-        fixture_9,
-        fixture_10,
-        fixture_11,
-        fixture_12,
-        fixture_13,
-        fixture_14,
-        fixture_15,
-        fixture_16,
-        fixture_17
+        ['myregistryhost:5000/fedora/httpd:version1.0', 'myregistryhost:5000/fedora/', 'httpd', 'version1.0', ''],
+        ['fedora/httpd:version1.0-alpha', 'fedora/', 'httpd', 'version1.0-alpha', ''],
+        ['fedora/httpd:version1.0', 'fedora/', 'httpd', 'version1.0', ''],
+        ['rabbit:3', '', 'rabbit', '3', ''],
+        ['rabbit', '', 'rabbit', '', ''],
+        ['repository/rabbit:3', 'repository/', 'rabbit', '3', ''],
+        ['repository/rabbit', 'repository/', 'rabbit', '', ''],
+        ['rabbit@sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d', '', 'rabbit', '', 'sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d'],
+        ['repository/rabbit@sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d', 'repository/', 'rabbit', '', 'sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d']
     ])
     def test_DockerImageParser(self, image_ref, repository, image, tag, digest):
         docker_parser = ImageRefParserFactory(image_ref)
-        tokens = docker_parser.parse()
+        tokens = docker_parser.parse
         self.assertTrue(isinstance(tokens, DockerImageParser))
         self.assertTrue(tokens.repository == repository)
         self.assertTrue(tokens.image == image)
         self.assertTrue(tokens.tag == tag)
         self.assertTrue(tokens.digest == digest)
+
+
+if __name__ == '__main__':
+    if 'DXTEST_FULL' not in os.environ:
+        sys.stderr.write(
+            'WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')
+    unittest.main()
