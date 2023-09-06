@@ -505,9 +505,12 @@ class TestCreateCohort(unittest.TestCase):
     def test_path_options(self):
         """
         Testing different path formats. Both possitive a and negative scenarios. 
+        Various path options and expected results are parametrized. 
+        The dictionary `expected_in_out_pairs` expects form: {"<path>": (<results tuple>)}
+        #
         """
         self.temp_proj.new_folder("/folder/subfolder", parents=True)
-        #Parametrizing the various path options and expected results. 
+        
         expected_in_out_pairs = {
             "{}:/".format(self.proj_id): (self.proj_id, "/", None, None),
             "record_name": (self.temp_proj_id, "/", "record_name", None),
