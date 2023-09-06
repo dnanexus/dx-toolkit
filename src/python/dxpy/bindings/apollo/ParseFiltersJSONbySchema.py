@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 class InputJSONFiltersValidator(object):
     """
     A specialized class that parsers input JSON according to a schema to prepare vizserver-compliant raw_filters.
@@ -21,7 +23,6 @@ class InputJSONFiltersValidator(object):
 
     def parse_v1(self):
         """
-        v1 parser is currently only intended for raw_filters
         """
         vizserver_compound_filters = {
             "logic": self.get_toplevel_filtering_logic(),
@@ -48,6 +49,9 @@ class InputJSONFiltersValidator(object):
             # Validate max number of allowed items if max_item_limit is defined at the top level within key
             # It will be later validated for each property as well
             self.validate_max_item_limit(current_filters, filter_values, filter_key)
+            
+            # must apply to keys within properties too
+            # self.validate_max_item_limit(current_properties, filter_values, filter_key)
 
             # There are several ways filtering_conditions can be defined
             # 1. Basic use-case: no properties, just condition
@@ -111,7 +115,10 @@ class InputJSONFiltersValidator(object):
                 # now need to check if min_value and max_value map to the same column
                 # consider changing min_/max_ to "keys": ["min_value", "max_value"]
 
-            else:
+                # check if min_ and max_ are both provided
+                # check if there's a single key
+
+            if current_properties is None:
                 # no properties, so just apply conditions
                 filters = {
                     "filters": {
@@ -127,6 +134,9 @@ class InputJSONFiltersValidator(object):
                 }
                 return filters
                 # .append
+
+                # just use the generic filter_builder function
+                self.build_one_key_generic_filter(table_column, condition, values)
                 ...
 
     def collect_input_filters():
