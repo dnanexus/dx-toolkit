@@ -1172,8 +1172,12 @@ def create_cohort(args):
     Create a cohort from dataset/cohort and specified list of samples.
     """
     #### Validation ####
-    # validate and resolve 'PATH' input
-    path_project, path_folder, path_name = None, None, None
+    # Validate and resolve 'PATH' input
+    
+    # default path values
+    path_project = dxpy.WORKSPACE_ID
+    path_folder = dxpy.config.get('DX_CLI_WD', '/')
+    path_name = None
     if args.PATH:
         path_project, path_folder, path_name, err_msg = resolve_validate_dx_path(
             args.PATH
