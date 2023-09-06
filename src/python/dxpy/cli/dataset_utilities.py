@@ -130,9 +130,8 @@ def raw_query_api_call(resp, payload):
     return viz_query_api_call(resp, payload, 'raw-query')
 
 
-def cohort_query_api_call(resp, payload):
-    # TODO: use updated "cohort-query" route
-    return viz_query_api_call(resp, payload, 'cohort-query')
+def raw_cohort_query_api_call(resp, payload):
+    return viz_query_api_call(resp, payload, 'raw-cohort-query')
 
 
 def raw_api_call(resp, payload, sql_message=True):
@@ -1217,7 +1216,7 @@ def create_cohort(args):
     # Input cohort IDs have been succesfully validated    
 
     base_sql = resp.get("baseSql", resp.get("base_sql"))
-    cohort_query_payload = cohort_filter_payload(
+    raw_cohort_query_payload = cohort_filter_payload(
         samples,
         rec_descriptor.model["global_primary_key"]["entity"],
         rec_descriptor.model["global_primary_key"]["field"],
@@ -1225,7 +1224,7 @@ def create_cohort(args):
         path_project,
         base_sql,
     )
-    sql = cohort_query_api_call(resp, cohort_query_payload)
+    sql = raw_cohort_query_api_call(resp, raw_cohort_query_payload)
     try:
         cohort_payload = cohort_final_payload(
             path_name,
@@ -1233,7 +1232,7 @@ def create_cohort(args):
             path_project,
             resp["databases"],
             resp["dataset"],
-            cohort_query_payload["filters"],
+            raw_cohort_query_payload["filters"],
             sql,
             base_sql,
             resp.get("combined"),
