@@ -18,23 +18,24 @@ class InputJSONFiltersValidator(object):
             self.parse_v1()
         else:
             raise NotImplementedError
-    
+
     def parse_v1(self):
         """
         v1 parser is currently only intended for raw_filters
         """
         vizserver_compound_filters = {
             "logic": self.get_toplevel_filtering_logic(),
-            "compound": []
+            "compound": [],
         }
 
         all_filters = self.collect_filtering_conditions(self.schema)
 
         for filter_key, filter_values in self.input_json.items():
-
             if filter_key not in all_filters:
                 self.error_handler(
-                    "No filtering condition was defined for {} in the schema.".format(filter_key)
+                    "No filtering condition was defined for {} in the schema.".format(
+                        filter_key
+                    )
                 )
 
             # Look at the input_json
@@ -43,7 +44,7 @@ class InputJSONFiltersValidator(object):
             # Get the filtering conditions for the current key
             current_filters = all_filters[filter_key]
             current_properties = current_filters.get("properties")
-            
+
             # Validate max number of allowed items if max_item_limit is defined at the top level within key
             # It will be later validated for each property as well
             self.validate_max_item_limit(current_filters, filter_values, filter_key)
@@ -60,13 +61,16 @@ class InputJSONFiltersValidator(object):
 
                 xt = {
                     "logic": current_filters.get("filters_combination_operator"),
-                    "compound": [{},{}] # as many dicts inside as there are key conditions
+                    "compound": [
+                        {},
+                        {},
+                    ]  # as many dicts inside as there are key conditions
                     # so count the location.properties for this
                 }
 
                 full = {
                     "logic": current_filters.get("items_combination_operator"),
-                    "compound": [{xt},{}] # as many dicts as there are "items"
+                    "compound": [{xt}, {}]  # as many dicts as there are "items"
                     # count json list len for this
                 }
 
@@ -76,22 +80,25 @@ class InputJSONFiltersValidator(object):
                 # remember that chr and genobin should be in one dict
                 for item in current_properties:
                     if item.get("key"):
-
-
                         ### define this as a generic filter_builder function
                         filters = {
                             "filters": {
                                 item.get("table_column"): [
                                     {
                                         "condition": item.get("condition"),
-                                        "values": filter_values.get(item.get("key"))
+                                        "values": filter_values.get(item.get("key")),
                                     }
                                 ]
                             }
                         }
-                    
-                    if item.get("keys") and item.get("condition") == "genobin_partial_overlap":
-                        self.build_partial_overlap_genobin_filters(item, filter_values[0]) # change to iterate over all list items0
+
+                    if (
+                        item.get("keys")
+                        and item.get("condition") == "genobin_partial_overlap"
+                    ):
+                        self.build_partial_overlap_genobin_filters(
+                            item, filter_values[0]
+                        )  # change to iterate over all list items0
                         # just append it to the list of dicts in the compound
 
                 # simple if just dict
@@ -101,20 +108,19 @@ class InputJSONFiltersValidator(object):
                 for k, v in current_properties.items():
                     self.validate_max_item_limit(v, filter_values[k], k)
 
-                    
-
                 # now need to check if min_value and max_value map to the same column
                 # consider changing min_/max_ to "keys": ["min_value", "max_value"]
 
-            
             else:
                 # no properties, so just apply conditions
                 filters = {
                     "filters": {
                         current_properties.get("table_column"): [
                             {
-                                "condition": current_properties.get("condition"), # special condition or not?
-                                "values": filter_values.get(item.get("key"))
+                                "condition": current_properties.get(
+                                    "condition"
+                                ),  # special condition or not?
+                                "values": filter_values.get(item.get("key")),
                             }
                         ]
                     }
@@ -123,20 +129,18 @@ class InputJSONFiltersValidator(object):
                 # .append
                 ...
 
-
-    
     def collect_input_filters():
         ...
 
     def get_toplevel_filtering_logic(self):
         return self.schema.get("filters_combination_operator")
-    
+
     def collect_output_fields_mappings(self, schema):
         return schema.get("output_fields_mapping")
 
     def collect_filtering_conditions(self, schema):
         return schema.get("filtering_conditions")
-        
+
     def validate_max_item_limit(self, current, input_json_values, field_name):
         if not current.get("max_item_limit"):
             pass
@@ -151,6 +155,7 @@ class InputJSONFiltersValidator(object):
     def translate_conditions():
         def IN():
             ...
+
         def BETWEEN():
             ...
 
@@ -160,7 +165,7 @@ class InputJSONFiltersValidator(object):
 
     def get_schema_version(self, schema):
         return schema.get("version")
-    
+
     def get_number_of_filters(self):
         return len(self.input_json)
 
@@ -176,47 +181,44 @@ class InputJSONFiltersValidator(object):
     def build_one_key_generic_filter(table_column, condition, values):
         ...
         {
-                "filters": {
-                    "expr_annotation$chr": [{"condition": "between", "values": [1, 3]}]
-                },
-                "logic": "and",
-            }
+            "filters": {
+                "expr_annotation$chr": [{"condition": "between", "values": [1, 3]}]
+            },
+            "logic": "and",
+        }
 
     def build_two_key_generic_filter(table_columns, condition, values):
         ...
         {
-                        "filters": {
-                            "expr_annotation$start": [
-                                {"condition": "between", "values": [1, 3]}
-                            ],
-                            "expr_annotation$end": [
-                                {"condition": "between", "values": [5, 7]}
-                            ],
-                        },
-                        "logic": "or",
-                    }
+            "filters": {
+                "expr_annotation$start": [{"condition": "between", "values": [1, 3]}],
+                "expr_annotation$end": [{"condition": "between", "values": [5, 7]}],
+            },
+            "logic": "or",
+        }
 
-    def build_two_key_multi_condition_filter(table_column, first_key_condition, second_key_condition, values):
+    def build_two_key_multi_condition_filter(
+        table_column, first_key_condition, second_key_condition, values
+    ):
         ...
         {
-                        "filters": {
-                            "expr_annotation$start": [
-                                {"condition": "less-than", "values": 100}
-                            ],
-                            "expr_annotation$end": [
-                                {"condition": "greater-than", "values": 500}
-                            ],
-                        },
-                        "logic": "and",
-                    }
+            "filters": {
+                "expr_annotation$start": [{"condition": "less-than", "values": 100}],
+                "expr_annotation$end": [{"condition": "greater-than", "values": 500}],
+            },
+            "logic": "and",
+        }
 
-    def build_partial_overlap_genobin_filters(self, filtering_condition, input_json_item):
-
-        if "starting_position" not in filtering_condition["keys"] or "ending_position" not in filtering_condition["keys"]:
+    def build_partial_overlap_genobin_filters(
+        self, filtering_condition, input_json_item
+    ):
+        if (
+            "starting_position" not in filtering_condition["keys"]
+            or "ending_position" not in filtering_condition["keys"]
+        ):
             self.error_handler(
                 "Error in location filtering. starting_position and ending_position must be defined in filtering conditions"
             )
-
 
         db_table_column_start = filtering_condition["table_column"]["starting_position"]
         db_table_column_end = filtering_condition["table_column"]["ending_position"]
@@ -228,26 +230,32 @@ class InputJSONFiltersValidator(object):
             "logic": "or",
             "compound": [
                 {
-                        "filters": {
-                            db_table_column_start: [
-                                {"condition": "between", "values": [input_start_value, input_end_value]}
-                            ],
-                            db_table_column_end: [
-                                {"condition": "between", "values": [input_start_value, input_end_value]}
-                            ],
-                        },
-                        "logic": "or",
+                    "filters": {
+                        db_table_column_start: [
+                            {
+                                "condition": "between",
+                                "values": [input_start_value, input_end_value],
+                            }
+                        ],
+                        db_table_column_end: [
+                            {
+                                "condition": "between",
+                                "values": [input_start_value, input_end_value],
+                            }
+                        ],
                     },
-                    {
-                        "filters": {
-                            db_table_column_start: [
-                                {"condition": "less-than", "values": input_start_value}
-                            ],
-                            db_table_column_end: [
-                                {"condition": "greater-than", "values": input_end_value}
-                            ],
-                        },
-                        "logic": "and",
+                    "logic": "or",
+                },
+                {
+                    "filters": {
+                        db_table_column_start: [
+                            {"condition": "less-than", "values": input_start_value}
+                        ],
+                        db_table_column_end: [
+                            {"condition": "greater-than", "values": input_end_value}
+                        ],
                     },
-            ]
+                    "logic": "and",
+                },
+            ],
         }
