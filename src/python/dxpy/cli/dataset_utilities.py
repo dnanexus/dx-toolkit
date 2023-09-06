@@ -1058,15 +1058,10 @@ def extract_assay_expression(parser_obj):
 
     # Validating input combinations
     parser_dict = vars(parser_obj)
-
     input_validator = InputsValidator(parser_dict=parser_dict, schema=input_arguments_validation_schemas.EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
-    
     input_validator.validate()
 
-
-
-
-    # path_validator = PathValidator(args.path)
+    path_validator = PathValidator(args.path)
     # http_request_info = path_validator.get_http_request_info()
     # input_validator.validate_cohort_list_assay(http_request_info)
 
