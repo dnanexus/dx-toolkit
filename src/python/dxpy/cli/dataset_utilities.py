@@ -130,9 +130,8 @@ def raw_query_api_call(resp, payload):
     return viz_query_api_call(resp, payload, 'raw-query')
 
 
-def cohort_query_api_call(resp, payload):
-    # TODO: use updated "cohort-query" route
-    return viz_query_api_call(resp, payload, 'cohort-query')
+def raw_cohort_query_api_call(resp, payload):
+    return viz_query_api_call(resp, payload, 'raw-cohort-query')
 
 
 def raw_api_call(resp, payload, sql_message=True):
@@ -1172,8 +1171,12 @@ def create_cohort(args):
     Create a cohort from dataset/cohort and specified list of samples.
     """
     #### Validation ####
-    # validate and resolve 'PATH' input
-    path_project, path_folder, path_name = None, None, None
+    # Validate and resolve 'PATH' input
+    
+    # default path values
+    path_project = dxpy.WORKSPACE_ID
+    path_folder = dxpy.config.get('DX_CLI_WD', '/')
+    path_name = None
     if args.PATH:
         path_project, path_folder, path_name, err_msg = resolve_validate_dx_path(
             args.PATH
@@ -1214,7 +1217,7 @@ def create_cohort(args):
 
     base_sql = resp.get("baseSql", resp.get("base_sql"))
     try:
-        cohort_query_payload = cohort_filter_payload(
+        raw_cohort_query_payload = cohort_filter_payload(
             samples,
             rec_descriptor.model["global_primary_key"]["entity"],
             rec_descriptor.model["global_primary_key"]["field"],
@@ -1224,14 +1227,14 @@ def create_cohort(args):
         )
     except Exception as e:
         err_exit("{}: {}".format(entity_result["id"], e))
-    sql = cohort_query_api_call(resp, cohort_query_payload)
+    sql = raw_cohort_query_api_call(resp, raw_cohort_query_payload)
     cohort_payload = cohort_final_payload(
         path_name,
         path_folder,
         path_project,
         resp["databases"],
         resp["dataset"],
-        cohort_query_payload["filters"],
+        raw_cohort_query_payload["filters"],
         sql,
         base_sql,
         resp.get("combined"),
