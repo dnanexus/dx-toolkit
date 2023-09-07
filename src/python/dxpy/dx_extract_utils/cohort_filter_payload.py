@@ -32,6 +32,9 @@ def generate_pheno_filter(values, entity, field, filters):
         for primary_filter in compound_filter["filters"][entity_field]:
             if "condition" not in primary_filter:
                 continue
+            if primary_filter["condition"] == "not-exists":
+                raise ValueError("Invalid input cohort."
+                                 " Cohorts cannot have a “not-exists” condition on the primary entity and field.")
             if primary_filter["condition"] == "in":
                 values = [value for value in values if value in primary_filter["values"]]
             elif primary_filter["condition"] == "not-in":

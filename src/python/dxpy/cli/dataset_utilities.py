@@ -1213,29 +1213,29 @@ def create_cohort(args):
     # Input cohort IDs have been succesfully validated    
 
     base_sql = resp.get("baseSql", resp.get("base_sql"))
-    cohort_query_payload = cohort_filter_payload(
-        samples,
-        rec_descriptor.model["global_primary_key"]["entity"],
-        rec_descriptor.model["global_primary_key"]["field"],
-        resp.get("filters", {}),
-        path_project,
-        base_sql,
-    )
-    sql = cohort_query_api_call(resp, cohort_query_payload)
     try:
-        cohort_payload = cohort_final_payload(
-            path_name,
-            path_folder,
+        cohort_query_payload = cohort_filter_payload(
+            samples,
+            rec_descriptor.model["global_primary_key"]["entity"],
+            rec_descriptor.model["global_primary_key"]["field"],
+            resp.get("filters", {}),
             path_project,
-            resp["databases"],
-            resp["dataset"],
-            cohort_query_payload["filters"],
-            sql,
             base_sql,
-            resp.get("combined"),
         )
     except Exception as e:
         err_exit("{}: {}".format(entity_result["id"], e))
+    sql = cohort_query_api_call(resp, cohort_query_payload)
+    cohort_payload = cohort_final_payload(
+        path_name,
+        path_folder,
+        path_project,
+        resp["databases"],
+        resp["dataset"],
+        cohort_query_payload["filters"],
+        sql,
+        base_sql,
+        resp.get("combined"),
+    )
 
     dx_record = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
     # print record details to stdout
