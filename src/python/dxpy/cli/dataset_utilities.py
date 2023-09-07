@@ -47,7 +47,7 @@ from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
-from ..dx_extract_utils.InputsValidator import InputsValidator
+from ..dx_extract_utils.InputsValidator import InputsValidator, PathValidator
 from ..bindings.apollo import input_arguments_validation_schemas
 
 
@@ -1058,17 +1058,20 @@ def extract_assay_expression(parser_obj):
 
     # Validating input combinations
     parser_dict = vars(parser_obj)
-
     input_validator = InputsValidator(parser_dict=parser_dict, schema=input_arguments_validation_schemas.EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
-    
-    input_validator.validate()
+    input_validator.validate_input_combination()
 
+    # Validating Assay Path
+    assay_path = parser_dict.get("path")
+    project, folder_path, entity_result = resolve_existing_path(
+                assay_path
+            )
 
-
-
-    # path_validator = PathValidator(args.path)
-    # http_request_info = path_validator.get_http_request_info()
-    # input_validator.validate_cohort_list_assay(http_request_info)
+    path_validator = PathValidator(parser_dict=parser_dict, project=project, entity_result=entity_result, error_handler=err_exit)
+    path_validator.resolve_project()
+    path_validator.assure_cohort_or_dataset()
+    path_validator.assure_dataset_version()
+    path_validator.cohort_list_assays_invalid_combination()
 
 
 class DXDataset(DXRecord):

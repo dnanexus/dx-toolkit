@@ -1,7 +1,13 @@
-# TODO: check number of arguments and type manually
-# TODO: schema versioning handling?
+# TODO: maybe check number of arguments and type manually
 
 from __future__ import print_function
+from dxpy import DXHTTPRequest
+from dxpy.exceptions import (
+    PermissionDenied,
+    InvalidState,
+    InvalidInput,
+    ResourceNotFound,
+)
 
 
 class InputsValidator:
@@ -129,7 +135,7 @@ class InputsValidator:
         main_key = self.get_main_key(check)
 
         # Defining args to check and its values
-        args_to_check = (self.schema.get("parser_args")).copy()
+        args_to_check = self.schema.get("parser_args")[:]
         args_to_check.remove(main_key)
         if exception_present:
             args_to_check = self.remove_exceptions_from_list(check, args_to_check)
@@ -174,100 +180,88 @@ class InputsValidator:
             self.throw_message(check)
 
     # VALIDATION
-    def validate(self):
+    def validate_input_combination(self):
         self.validate_schema_conditions()
         self.interpret_conditions()
 
 
-# class PathValidator:
-#     def __init__(self, path) -> None:
-#         self.path = path
-#         self.project = None
-#         self.folder_path = None
-#         self.entity_result = None
-#         self.http_request = None
-#         self.dataset_project = None
-#         self.which_json = None
+class PathValidator:
+    def __init__(self, parser_dict, project, entity_result, error_handler=print):
+        # is it ok to leave err_exit as default? should I do the same for inputvalidator?
+        self.parser_dict = parser_dict
+        self.project = project
+        self.entity_result = entity_result
+        self.error_handler = error_handler
 
-#         self.variable_assigning()
-#         self.resolve_project()
-#         self.assure_record_type()
-#         self.resolve_permission()
-#         self.assure_dataset_version()
-#         self.resolve_dataset_project()
+        self.record_http_request_info = None
 
-#     def variable_assigning(self):
-#         # Assigning platform information
-#         self.project, self.folder_path, self.entity_result = resolve_existing_path(
-#             self.path
-#         )
-#         # print(f"{self.project}, pths {self.folder_path}, ent {self.entity_result}")
+    def throw_error(self, message):
+        self.error_handler(message)
 
-#     def resolve_project(self):
-#         # resolving project issues
-#         if self.project is None:
-#             raise ResolutionError(
-#                 'Unable to resolve "'
-#                 + self.path
-#                 + '" to a data object or folder name in a project'
-#             )
-#         elif self.project != self.entity_result["describe"]["project"]:
-#             raise ResolutionError(
-#                 'Unable to resolve "'
-#                 + self.path
-#                 + "\" to a data object or folder name in '"
-#                 + self.project
-#                 + "'"
-#             )
+    def try_populate_record_http_request_info(self):
+        try:
+            self.record_http_request_info = DXHTTPRequest(
+                "/" + self.entity_result["id"] + "/visualize",
+                {"project": self.project, "cohortBrowser": False},
+            )
+        except (InvalidInput, InvalidState):
+            self.throw_error(
+                "Invalid cohort or dataset: {}".format(self.entity_result["id"]),
+            )
+        except Exception as details:
+            self.throw_error(str(details))
 
-#     def assure_record_type(self):
-#         # resolving non record/cohort and permission issues
-#         if self.entity_result["describe"]["class"] != "record":
-#             err_exit(
-#                 "%s : Invalid path. The path must point to a record type of cohort or dataset"
-#                 % self.entity_result["describe"]["class"]
-#             )
+    def resolve_project(self):
+        # object in a different project
+        if self.project != self.entity_result["describe"]["project"]:
+            self.throw_error(
+                'Unable to resolve "{}" to a data object or folder name in {}. Please make sure your object is in your selected project.'.format(
+                    self.parser_dict.get("path"), self.project
+                )
+            )
 
-#     def resolve_permission(self):
-#         try:
-#             self.http_request = dxpy.DXHTTPRequest(
-#                 "/" + self.entity_result["id"] + "/visualize",
-#                 {"project": self.project, "cohortBrowser": False},
-#             )
-#         except PermissionDenied:
-#             err_exit(
-#                 "Insufficient permissions", expected_exceptions=(PermissionDenied,)
-#             )
-#         except (InvalidInput, InvalidState):
-#             err_exit(
-#                 "%s : Invalid cohort or dataset" % self.entity_result["id"],
-#                 expected_exceptions=(
-#                     InvalidInput,
-#                     InvalidState,
-#                 ),
-#             )
-#         except Exception as details:
-#             err_exit(str(details))
+    def assure_cohort_or_dataset(self):
+        # resolving non record/cohort type
+        if self.entity_result is None:
+            self.throw_error(
+                "The path must point to a record type of cohort or dataset, not a folder."
+            )
 
-#     def assure_dataset_version(self):
-#         # checking cohort/dataset version
-#         if self.http_request["datasetVersion"] != "3.0":
-#             err_exit(
-#                 "%s : Invalid version of cohort or dataset. Version must be 3.0"
-#                 % self.http_request["datasetVersion"]
-#             )
+        if self.entity_result["describe"]["class"] != "record":
+            self.throw_error(
+                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
+                    self.entity_result["describe"]["class"]
+                )
+            )
 
-#     def resolve_dataset_project(self):
-#         # Defining dataset project
-#         if ("Dataset" in self.http_request["recordTypes"]) or (
-#             "CohortBrowser" in self.http_request["recordTypes"]
-#         ):
-#             self.dataset_project = self.http_request["datasetRecordProject"]
-#         else:
-#             err_exit(
-#                 "%s : Invalid path. The path must point to a record type of cohort or dataset"
-#                 % self.http_request["recordTypes"]
-#             )
+        # since object is record:
+        self.try_populate_record_http_request_info()
+        if not (
+            ("Dataset" in self.record_http_request_info["recordTypes"])
+            or ("CohortBrowser" in self.record_http_request_info["recordTypes"])
+        ):
+            self.throw_error(
+                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object."
+            ).format(self.record_http_request_info["recordTypes"])
 
-#     def get_http_request_info(self):
-#         return self.http_request
+    def assure_dataset_version(self):
+        # checking cohort/dataset version
+        dataset_version = float(self.record_http_request_info["datasetVersion"])
+        if dataset_version < 3.0:
+            self.throw_error(
+                "Invalid version of cohort or dataset. Version must be 3.0 and not {}.".format(
+                    dataset_version
+                )
+            )
+
+    def cohort_list_assays_invalid_combination(self):
+        invalid_combination = "CohortBrowser" in self.record_http_request_info[
+            "recordTypes"
+        ] and (
+            self.parser_dict.get("list_assays") or self.parser_dict.get("assay_name")
+        )
+
+        if invalid_combination:
+            self.throw_error(
+                'Currently "--assay-name" and "--list-assays" may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input.'
+            )

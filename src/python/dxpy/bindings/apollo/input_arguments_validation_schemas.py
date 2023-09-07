@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
     "schema_version": "1.0",
     "parser_args": [
@@ -106,7 +108,7 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
         },
         "condition": "with_at_least_one_required",
         "error_message": {
-            "message": '“--expression-matrix" cannot be passed with any argument other than "--retrieve-expression”'
+            "message": '“--expression-matrix" cannot be passed with any argument other than "--retrieve-expression”.'
         },
     },
 }
