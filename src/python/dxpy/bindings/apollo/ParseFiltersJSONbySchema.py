@@ -156,7 +156,8 @@ class InputJSONFiltersValidator(object):
                                             item.get("condition")
                                         ]
                                     )
-                                    special_filtering_function(item, current_list_item)
+                                    temp_filter = special_filtering_function(item, current_list_item)
+                                    current_compound_filter["compound"].append(temp_filter)
 
                 # multi-condition if dict within dict, if properties is list
 
@@ -269,17 +270,22 @@ class InputJSONFiltersValidator(object):
     def get_general_filter_schema():
         ...
 
-    def build_one_key_generic_filter(table_column_mapping, condition, value):
+    def build_one_key_generic_filter(
+        self, table_column_mapping, condition, value, return_complete_filter=True
+    ):
         """
         {
                 "filters": {"expr_annotation$chr": [{"condition": "is", "values": 5}]},
         }
         """
-        return {
-            "filters": {
-                table_column_mapping: [{"condition": condition, "values": value}]
-            }
+        base_filter = {
+            table_column_mapping: [{"condition": condition, "values": value}]
         }
+
+        if return_complete_filter:
+            return {"filters": base_filter}
+        else:
+            return base_filter
 
     def build_two_key_generic_filter(table_columns, condition, values):
         ...
@@ -321,6 +327,46 @@ class InputJSONFiltersValidator(object):
 
         input_start_value = input_json_item["starting_position"]
         input_end_value = input_json_item["ending_position"]
+
+        return {
+            "logic": "or",
+            "compound": [
+                {
+                    "filters": {
+                        **self.build_one_key_generic_filter(
+                            db_table_column_start,
+                            "between",
+                            [input_start_value, input_end_value],
+                            return_complete_filter=False,
+                        ),
+                        **self.build_one_key_generic_filter(
+                            db_table_column_end,
+                            "between",
+                            [input_start_value, input_end_value],
+                            return_complete_filter=False,
+                        ),
+                    },
+                    "logic": "or",
+                },
+                {
+                    "filters": {
+                        **self.build_one_key_generic_filter(
+                            db_table_column_start,
+                            "less-than-eq",
+                            input_start_value,
+                            return_complete_filter=False,
+                        ),
+                        **self.build_one_key_generic_filter(
+                            db_table_column_end,
+                            "greater-than-eq",
+                            input_end_value,
+                            return_complete_filter=False,
+                        ),
+                    },
+                    "logic": "and",
+                },
+            ],
+        }
 
         filter = {
             "logic": "or",
