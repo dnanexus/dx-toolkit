@@ -174,6 +174,8 @@ class InputJSONFiltersValidator(object):
                 # check if min_ and max_ are both provided
                 # check if there's a single key
 
+                # is there a filters_combination_operator? if not, then single filter assumed
+
                 vizserver_compound_filters["compound"].append(...)
 
             if current_properties is None:
