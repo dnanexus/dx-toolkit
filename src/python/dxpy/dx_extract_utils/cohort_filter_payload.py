@@ -19,7 +19,7 @@ def generate_pheno_filter(values, entity, field, filters):
         # pheno_filter is a compound filter, but the logic is not "and" so
         # entity field values cannot be selected by adding a filter to the
         # existing compound pheno_filter.
-        raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
+        raise ValueError("Invalid input cohort. Cohorts must have 'and' logic on the primary entity and field.")
 
     entity_field = "$".join([entity, field])
     entity_field_filter = {"condition": "in", "values": values}
