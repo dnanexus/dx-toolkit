@@ -3,16 +3,14 @@
 from __future__ import print_function
 from dxpy import DXHTTPRequest
 from dxpy.exceptions import (
-    PermissionDenied,
     InvalidState,
     InvalidInput,
-    ResourceNotFound,
 )
 
 
 class InputsValidator:
     """
-    InputsValidator class for extract_assay expresion. Checks for invalid input combinations set by a JSON schema.
+    InputsValidator class. Checks for invalid input combinations set by a JSON schema.
 
     The schema is a dictionary with the following structure:
 
@@ -186,8 +184,11 @@ class InputsValidator:
 
 
 class PathValidator:
+    """
+    PathValidator class checks for invalid object inputs and its combination with passed arguments.
+    """
+
     def __init__(self, parser_dict, project, entity_result, error_handler=print):
-        # is it ok to leave err_exit as default? should I do the same for inputvalidator?
         self.parser_dict = parser_dict
         self.project = project
         self.entity_result = entity_result
@@ -199,6 +200,7 @@ class PathValidator:
         self.error_handler(message)
 
     def try_populate_record_http_request_info(self):
+        # record_http_request_info contains crucial information for records
         try:
             self.record_http_request_info = DXHTTPRequest(
                 "/" + self.entity_result["id"] + "/visualize",
@@ -211,8 +213,8 @@ class PathValidator:
         except Exception as details:
             self.throw_error(str(details))
 
-    def resolve_project(self):
-        # object in a different project
+    def assure_object_found(self):
+        # for object in a different project:
         if self.project != self.entity_result["describe"]["project"]:
             self.throw_error(
                 'Unable to resolve "{}" to a data object or folder name in {}. Please make sure your object is in your selected project.'.format(

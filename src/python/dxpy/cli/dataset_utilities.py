@@ -1068,7 +1068,7 @@ def extract_assay_expression(parser_obj):
             )
 
     path_validator = PathValidator(parser_dict=parser_dict, project=project, entity_result=entity_result, error_handler=err_exit)
-    path_validator.resolve_project()
+    path_validator.assure_object_found()
     path_validator.assure_cohort_or_dataset()
     path_validator.assure_dataset_version()
     path_validator.cohort_list_assays_invalid_combination()
