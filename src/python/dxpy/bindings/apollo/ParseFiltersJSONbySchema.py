@@ -107,8 +107,8 @@ class InputJSONFiltersValidator(object):
                 full_filter_for_all_items = {
                     "logic": current_filters.get("items_combination_operator"),
                     "compound": [
-                        {base_filter_for_each_item},
-                        {},
+                        #{base_filter_for_each_item},
+                        #{},
                     ]  # as many dicts as there are "items"
                     # count json list len for this
                 }
@@ -159,35 +159,10 @@ class InputJSONFiltersValidator(object):
                                     temp_filter = special_filtering_function(item, current_list_item)
                                     current_compound_filter["compound"].append(temp_filter)
 
-                # multi-condition if dict within dict, if properties is list
+                    # Consider checking if current_compound_filter contains any new elements
+                    full_filter_for_all_items["compound"].append(current_compound_filter)
 
-                # remember to iterate over all values in input_json
-                # remember that chr and genobin should be in one dict
-                for item in current_properties:
-                    if item.get("key"):
-                        ### define this as a generic filter_builder function
-                        filters = {
-                            "filters": {
-                                item.get("table_column"): [
-                                    {
-                                        "condition": item.get("condition"),
-                                        "values": filter_values.get(item.get("key")),
-                                    }
-                                ]
-                            }
-                        }
-
-                    if (
-                        item.get("keys")
-                        and item.get("condition") == "genobin_partial_overlap"
-                    ):
-                        self.build_partial_overlap_genobin_filters(
-                            item, filter_values[0]
-                        )  # change to iterate over all list items0
-                        # just append it to the list of dicts in the compound
-
-                # simple if just dict
-                ...
+                vizserver_compound_filters["compound"].append(full_filter_for_all_items)
 
             if isinstance(type(current_properties), dict):
                 for k, v in current_properties.items():
