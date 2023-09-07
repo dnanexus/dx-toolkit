@@ -16,7 +16,6 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS = {
     },
     "filtering_conditions": {
         "location": {
-            "type": list,
             "items_combination_operator": "or",
             "filters_combination_operator": "and",
             "max_item_limit": 10,

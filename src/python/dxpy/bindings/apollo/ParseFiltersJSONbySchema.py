@@ -1,8 +1,9 @@
 from __future__ import print_function
 
+
 class InputJSONFiltersValidator(object):
     """
-    A specialized class that parsers input JSON according to a schema to prepare vizserver-compliant raw_filters.
+    A specialized class that parses input JSON according to a schema to prepare vizserver-compliant compound filters.
     """
 
     def __init__(self, input_json, schema, error_handler=print):
@@ -10,28 +11,59 @@ class InputJSONFiltersValidator(object):
         self.schema = schema
         self.error_handler = error_handler
         self.condition_function_mapping = {
-            "between": self.BETWEEN,
-            "in": self.IN,
+            "genobin_partial_overlap": self.build_partial_overlap_genobin_filters,
         }
+        self.SUPPORTED_VIZSERVER_CONDITIONS = [
+            "contains",
+            "exists",
+            "not-exists",
+            "any",
+            "not-any",
+            "all",
+            "not-empty",
+            "in",
+            "not-in",
+            "is",
+            "is-not",
+            "greater-than",
+            "less-than",
+            "greater-than-eq",
+            "less-than-eq",
+            "between",
+            "between-ex",
+            "between-left-inc",
+            "between-right-inc",
+            "not-between",
+            "not-between-ex",
+            "not-between-left-inc",
+            "not-between-right-inc",
+            "compare-before",
+            "compare-after",
+            "compare-within",
+        ]
 
     def parse(self):
         self.is_valid_json(self.schema)
-        if self.get_schema_version() == "1.0":
+        if self.get_schema_version(self.schema) == "1.0":
             self.parse_v1()
         else:
             raise NotImplementedError
 
     def parse_v1(self):
-        """
-        """
+        """ """
         vizserver_compound_filters = {
             "logic": self.get_toplevel_filtering_logic(),
             "compound": [],
         }
 
+        # Get 'filtering_conditions' from the schema
         all_filters = self.collect_filtering_conditions(self.schema)
 
+        # Looking at the input_json
+        # go through each key: location, annotation, expression, sample.
         for filter_key, filter_values in self.input_json.items():
+            # filter_key -> location
+            # filter_values -> list of dicts
             if filter_key not in all_filters:
                 self.error_handler(
                     "No filtering condition was defined for {} in the schema.".format(
@@ -39,44 +71,92 @@ class InputJSONFiltersValidator(object):
                     )
                 )
 
-            # Look at the input_json
-            # go through each key: location, annotation, expression, sample.
-
-            # Get the filtering conditions for the current key
+            # Filtering conditions for the current "key" in input_json
             current_filters = all_filters[filter_key]
             current_properties = current_filters.get("properties")
 
             # Validate max number of allowed items if max_item_limit is defined at the top level within key
             # It will be later validated for each property as well
             self.validate_max_item_limit(current_filters, filter_values, filter_key)
-            
+
             # must apply to keys within properties too
             # self.validate_max_item_limit(current_properties, filter_values, filter_key)
 
             # There are several ways filtering_conditions can be defined
-            # 1. Basic use-case: no properties, just condition
-            # 2. Properties defined as dict of dicts (relatively straightforward use-case)
-            # 3. Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that need interpretation)
-            if isinstance(type(current_properties), list):
-                # multi-condition if list
-
+            # 1. Basic use-case: no properties, just condition (see 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS')
+            # 2. Properties defined as dict of dicts (see 'annotation' and 'expression')
+            # 3. Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that needs translation)
+            if isinstance(type(current_properties), list) and isinstance(
+                type(filter_values), list
+            ):
+                # multi-condition if list of dicts
                 # must be compounded because more than one filter
                 # must be recursed if more than one item in location
 
-                xt = {
+                # check number of properties
+
+                base_filter_for_each_item = {
                     "logic": current_filters.get("filters_combination_operator"),
                     "compound": [
-                        {},
-                        {},
+                        # {},
+                        # {},
                     ]  # as many dicts inside as there are key conditions
                     # so count the location.properties for this
                 }
 
-                full = {
+                full_filter_for_all_items = {
                     "logic": current_filters.get("items_combination_operator"),
-                    "compound": [{xt}, {}]  # as many dicts as there are "items"
+                    "compound": [
+                        {base_filter_for_each_item},
+                        {},
+                    ]  # as many dicts as there are "items"
                     # count json list len for this
                 }
+
+                ### current_properties is a list of dicts and each dict is a filter
+                ### therefore, we need to iterate over each dict and build a filter for each one
+                ### However, also remember than inside filter_values from input_json we have a list of dicts
+                ### therefore there might be more than one element within that list
+                ### so we need to build the filters for each element in the list as well
+                ### and then append them to the compound list of dicts
+                ### Here is the full code to do that:
+
+                # Build filters for each item in the list (input_json.filter_values)
+                for current_list_item in filter_values:
+                    # CONSIDER keeping track of input_json keys and properties so far verified and used
+
+                    current_compound_filter = base_filter_for_each_item.copy()
+                    ## now if key is found in properties['key'] then it's simple
+                    ## but if key is found in properties['keys'] then it's more complex
+                    ## collect filter_values keys
+                    ## just look at properties, get key or keys and get values from current_list_item
+                    ## also check if key is defined in current_list_item
+
+                    for item in current_properties:
+                        if item.get("key"):
+                            # might need a separate check for list type
+                            temp_filter = self.build_one_key_generic_filter(
+                                item["table_column"],
+                                item[
+                                    "condition"
+                                ],  # consider verifying conditions according to a predefined list
+                                current_list_item[item.get("key")],
+                            )
+
+                            current_compound_filter["compound"].append(temp_filter)
+
+                        if item.get("keys"):
+                            if len(item.get("keys")) == 2:
+                                if (
+                                    item.get("condition")
+                                    not in self.SUPPORTED_VIZSERVER_CONDITIONS
+                                ):
+                                    special_filtering_function = (
+                                        self.condition_function_mapping[
+                                            item.get("condition")
+                                        ]
+                                    )
+                                    special_filtering_function(item, current_list_item)
 
                 # multi-condition if dict within dict, if properties is list
 
@@ -152,13 +232,14 @@ class InputJSONFiltersValidator(object):
         return schema.get("filtering_conditions")
 
     def validate_max_item_limit(self, current, input_json_values, field_name):
-        if not current.get("max_item_limit"):
+        max_item_limit = current.get("max_item_limit")
+        if not max_item_limit:
             pass
 
-        if len(input_json_values) > current.get("max_item_limit"):
+        if len(input_json_values) > max_item_limit:
             self.error_handler(
                 "Too many items given in field {}, maximum is {}.".format(
-                    field_name, current.get("max_item_limit")
+                    field_name, max_item_limit
                 )
             )
 
@@ -188,13 +269,16 @@ class InputJSONFiltersValidator(object):
     def get_general_filter_schema():
         ...
 
-    def build_one_key_generic_filter(table_column, condition, values):
-        ...
+    def build_one_key_generic_filter(table_column_mapping, condition, value):
+        """
         {
+                "filters": {"expr_annotation$chr": [{"condition": "is", "values": 5}]},
+        }
+        """
+        return {
             "filters": {
-                "expr_annotation$chr": [{"condition": "between", "values": [1, 3]}]
-            },
-            "logic": "and",
+                table_column_mapping: [{"condition": condition, "values": value}]
+            }
         }
 
     def build_two_key_generic_filter(table_columns, condition, values):
@@ -225,6 +309,8 @@ class InputJSONFiltersValidator(object):
         if (
             "starting_position" not in filtering_condition["keys"]
             or "ending_position" not in filtering_condition["keys"]
+            or "starting_position" not in input_json_item
+            or "ending_position" not in input_json_item
         ):
             self.error_handler(
                 "Error in location filtering. starting_position and ending_position must be defined in filtering conditions"
