@@ -1,0 +1,7 @@
+{
+    "location": [
+        {"chromosome": "1", "starting_position": "1", "ending_position": "260000000"},
+        {"chromosome": "X", "starting_position": "500", "ending_position": "1700"}
+    ],
+    "expression": {"min_value": "10.2", "max_value": "10000"}
+}

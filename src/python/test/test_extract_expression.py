@@ -81,9 +81,40 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertEqual(expected_error_message, str(cm.exception).strip())
 
-    def test_annotation_conflicting_keys(self):
+    def test_annotation_id_maxitem(self):
+        json_path = os.path.join(
+            self.general_input_dir, "malformed", "annotation_id_maxitem.json"
+        )
+        validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
+        expected_error_message = (
+            "error message not yet defined"
+        )
+        with open(json_path, "r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
+
+
+    def test_annotation_id_type(self):
         json_path = os.path.join(
             self.general_input_dir, "malformed", "annotation_id_type.json"
+        )
+        validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
+        expected_error_message = "Key 'feature_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>"
+        with open(json_path, "r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
+
+    def test_annotation_name_maxitem(self):
+        json_path = os.path.join(
+            self.general_input_dir, "malformed", "annotation_name_maxitem.json"
         )
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
         expected_error_message = "Key 'feature_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>"
@@ -291,6 +322,20 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertEqual(expected_error_message, str(cm.exception).strip())
 
+    def test_location_max_width(self):
+        json_path = os.path.join(
+            self.general_input_dir, "malformed", "location_max_width.json"
+        )
+        validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
+        expected_error_message = "error message not yet defined"
+        with open(json_path, "r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
+
     def test_location_missing_chr(self):
         json_path = os.path.join(
             self.general_input_dir, "malformed", "location_missing_chr.json"
@@ -356,6 +401,20 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_type(self):
         json_path = os.path.join(
             self.general_input_dir, "malformed", "location_type.json"
+        )
+        validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
+        expected_error_message = "error message not yet defined"
+        with open(json_path, "r") as infile:
+            input_json = json.load(infile)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
+
+    def test_sample_id_maxitem(self):
+        json_path = os.path.join(
+            self.general_input_dir, "malformed", "sample_id_maxitem.json"
         )
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
         expected_error_message = "error message not yet defined"
