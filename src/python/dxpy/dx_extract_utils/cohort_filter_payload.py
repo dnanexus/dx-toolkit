@@ -33,9 +33,9 @@ def generate_pheno_filter(values, entity, field, filters):
             if "condition" not in primary_filter:
                 continue
             if primary_filter["condition"] == "in":
-                values = list(set(primary_filter["values"]).intersection(set(values)))
+                values = [value for value in values if value in primary_filter["values"]]
             elif primary_filter["condition"] == "not-in":
-                values = list(set(values) - set(primary_filter["values"]))
+                values = [value for value in values if value not in primary_filter["values"]]
         compound_filter["filters"][entity_field] = [{"condition": "in", "values": values}]
         return filters
 
