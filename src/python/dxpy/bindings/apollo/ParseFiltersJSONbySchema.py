@@ -174,6 +174,8 @@ class InputJSONFiltersValidator(object):
                 # check if min_ and max_ are both provided
                 # check if there's a single key
 
+                vizserver_compound_filters["compound"].append(...)
+
             if current_properties is None:
                 # no properties, so just apply conditions
                 filters = {
@@ -195,8 +197,10 @@ class InputJSONFiltersValidator(object):
                 self.build_one_key_generic_filter(table_column, condition, values)
                 ...
 
-    def collect_input_filters():
-        ...
+                vizserver_compound_filters["compound"].append(...)
+
+    def collect_input_filters(self):
+        return self.input_json.keys()
 
     def get_toplevel_filtering_logic(self):
         return self.schema.get("filters_combination_operator")
@@ -221,10 +225,10 @@ class InputJSONFiltersValidator(object):
 
     def translate_conditions():
         def IN():
-            ...
+            return "in"
 
         def BETWEEN():
-            ...
+            return "between"
 
     def is_valid_json(self, schema):
         if not isinstance(schema, dict) or not schema:
