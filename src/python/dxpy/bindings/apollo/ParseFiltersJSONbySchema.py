@@ -45,7 +45,7 @@ class InputJSONFiltersValidator(object):
     def parse(self):
         self.is_valid_json(self.schema)
         if self.get_schema_version(self.schema) == "1.0":
-            self.parse_v1()
+            return self.parse_v1()
         else:
             raise NotImplementedError
 
@@ -62,6 +62,7 @@ class InputJSONFiltersValidator(object):
         # Looking at the input_json
         # go through each key: location, annotation, expression, sample.
         for filter_key, filter_values in self.input_json.items():
+            print("######DEBUG")
             # filter_key -> location
             # filter_values -> list of dicts
             if filter_key not in all_filters:
@@ -77,6 +78,9 @@ class InputJSONFiltersValidator(object):
 
             # Validate max number of allowed items if max_item_limit is defined at the top level within key
             # It will be later validated for each property as well
+            print("######DEBUG")
+            print(current_filters)
+            print(filter_values)
             self.validate_max_item_limit(current_filters, filter_values, filter_key)
 
             # must apply to keys within properties too
@@ -86,9 +90,16 @@ class InputJSONFiltersValidator(object):
             # 1. Basic use-case: no properties, just condition (see 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS')
             # 2. Properties defined as dict of dicts (see 'annotation' and 'expression')
             # 3. Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that needs translation)
-            if isinstance(type(current_properties), list) and isinstance(
-                type(filter_values), list
+            
+            print("######DEBUG")
+            print(type(current_properties))
+            print(type(filter_values))
+            
+            
+            if isinstance(current_properties, list) and isinstance(
+                filter_values, list
             ):
+                print("######DEBUG")
                 # multi-condition if list of dicts
                 # must be compounded because more than one filter
                 # must be recursed if more than one item in location
@@ -168,11 +179,14 @@ class InputJSONFiltersValidator(object):
                         current_compound_filter
                     )
 
+                print("######DEBUG")
+                print(full_filter_for_all_items)
                 vizserver_compound_filters["compound"].append(full_filter_for_all_items)
 
-            if isinstance(type(current_properties), dict):
+            if isinstance(current_properties, dict):
                 for k, v in current_properties.items():
-                    self.validate_max_item_limit(v, filter_values[k], k)
+                    if k in filter_values:
+                        self.validate_max_item_limit(v, filter_values[k], k)
 
                 # now need to check if min_value and max_value map to the same column
                 # consider changing min_/max_ to "keys": ["min_value", "max_value"]
@@ -187,7 +201,7 @@ class InputJSONFiltersValidator(object):
                 # if filtering_logic isn't defined at this level then there must be only one 'key' to filter
 
                 if filtering_logic:
-                    ...
+                    
                     # check if there two filters with same key in table_column
                     # check if both are defined in input_json
                     # check if conditions are compatible, use between instead
@@ -242,10 +256,24 @@ class InputJSONFiltersValidator(object):
                             raise NotImplementedError
 
                 else:
+                    # no filtering logic, so it's similar to the annotation case
                     if len(current_properties) > 1:
-                        # if there are also more than 1 in input_json
-                        ...
-                        # self.error_handler("More than one filter")
+                        if len(filter_values) > 1:
+                            # if there are also more than 1 in input_json
+                            self.error_handler(
+                                "More than one filter found at this level, but no filters_combination_operator was specified."
+                            )
+
+                        else:
+                            temp_key = next(iter(filter_values.keys()))
+                            matched_filter = current_properties[temp_key]
+                            temp_filter = self.build_one_key_generic_filter(
+                                matched_filter.get("table_column"),
+                                matched_filter.get("condition"),
+                                filter_values.get(temp_key),
+                            )
+                        vizserver_compound_filters["compound"].append(temp_filter)
+                        # self.build_one_key_generic_filter()
 
                 """
                 {
@@ -282,30 +310,38 @@ class InputJSONFiltersValidator(object):
                 
                 """
 
-                vizserver_compound_filters["compound"].append(...)
+                # TO DO #############
+                # vizserver_compound_filters["compound"].append(...)
 
             if current_properties is None:
                 # no properties, so just apply conditions
-                filters = {
-                    "filters": {
-                        current_properties.get("table_column"): [
-                            {
-                                "condition": current_properties.get(
-                                    "condition"
-                                ),  # special condition or not?
-                                "values": filter_values.get(item.get("key")),
-                            }
-                        ]
-                    }
-                }
-                return filters
-                # .append
+                temp_filter = self.build_one_key_generic_filter(
+                    current_filters.get("table_column"),
+                    current_filters.get("condition"),
+                    filter_values,
+                )
+                # filters = {
+                #     "filters": {
+                #         current_properties.get("table_column"): [
+                #             {
+                #                 "condition": current_properties.get(
+                #                     "condition"
+                #                 ),  # special condition or not?
+                #                 "values": filter_values.get(item.get("key")),
+                #             }
+                #         ]
+                #     }
+                # }
+                # return filters
+                # # .append
 
-                # just use the generic filter_builder function
-                self.build_one_key_generic_filter(table_column, condition, values)
-                ...
+                # # just use the generic filter_builder function
+                # self.build_one_key_generic_filter(table_column, condition, values)
+                # ...
 
-                vizserver_compound_filters["compound"].append(...)
+                vizserver_compound_filters["compound"].append(temp_filter)
+
+        return vizserver_compound_filters
 
     def collect_input_filters(self):
         return self.input_json.keys()
@@ -322,7 +358,7 @@ class InputJSONFiltersValidator(object):
     def validate_max_item_limit(self, current, input_json_values, field_name):
         max_item_limit = current.get("max_item_limit")
         if not max_item_limit:
-            pass
+            return True
 
         if len(input_json_values) > max_item_limit:
             self.error_handler(
