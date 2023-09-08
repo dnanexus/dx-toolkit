@@ -29,17 +29,19 @@ def generate_pheno_filter(values, entity, field, filters):
             continue
         if "logic" in compound_filter and compound_filter["logic"] != "and":
             raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
+        primary_filters = []
         for primary_filter in compound_filter["filters"][entity_field]:
-            if "condition" not in primary_filter:
-                continue
-            if primary_filter["condition"] == "not-exists":
-                raise ValueError("Invalid input cohort."
-                                 " Cohorts cannot have a “not-exists” condition on the primary entity and field.")
-            if primary_filter["condition"] == "in":
+            if "condition" not in primary_filter or primary_filter["condition"] == "exists":
+                pass
+            elif primary_filter["condition"] == "in":
                 values = [value for value in values if value in primary_filter["values"]]
             elif primary_filter["condition"] == "not-in":
                 values = [value for value in values if value not in primary_filter["values"]]
-        compound_filter["filters"][entity_field] = [{"condition": "in", "values": values}]
+            else:
+                raise ValueError("Invalid input cohort."
+                                 " Cohorts cannot have conditions other than \"in\", \"not-in\", or \"exists\" on the primary entity and field.")
+        primary_filters.append({"condition": "in", "values": values})
+        compound_filter["filters"][entity_field] = primary_filters
         return filters
 
     entity_field_filter = {"condition": "in", "values": values}
