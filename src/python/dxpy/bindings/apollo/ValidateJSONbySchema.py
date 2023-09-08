@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+
 class JSONValidator(object):
     """
     JSON validator class to validate a JSON against a schema.
