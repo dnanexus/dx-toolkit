@@ -1,0 +1,29 @@
+{
+    "GRCh38.109_symbol":
+        {
+            "aws:us-east-1"    : "file-GYZVZZQ0vF54Xj6K8gY2p1fp",
+            "aws:eu-west-2"    : "file-GYZX2PQJjG8p0x9749bKg9fB",
+            "azure:westus"     : "file-GYZVkQQ9zxzfXv1BFyqb2Xj5",
+            "aws:eu-west-2-g"  : "file-GYZVy6XK3qJz5QP498bJV1Y8",
+            "aws:eu-central-1" : "file-GYZVvX04kv93yV5PG68vX7Bg",
+            "azure:uksouth-ofh": "file-GYZVfp127PxZXj6K8gY2p1kX"
+        },
+    "GRCh38.109_gene":
+        {
+            "aws:us-east-1"    : "file-GYZVZZQ0vF5Bbky21PF7j53B",
+            "aws:eu-west-2"    : "file-GYZX2PQJjG8VXx57F1jQ8z8F",
+            "azure:westus"     : "file-GYZVkQQ9zxzYyV5PG68vX75v",
+            "aws:eu-west-2-g"  : "file-GYZVy6XK3qJVF9G6xYqbxq7j",
+            "aws:eu-central-1" : "file-GYZVvX04kv932101g4jf24K8",
+            "azure:uksouth-ofh": "file-GYZVfp127Pxy39GVXFZZ1Yx2"
+        },
+    "GRCh38.109_feature":
+        {
+            "aws:us-east-1"    : "file-GYZVZZQ0vF5K39GVXFZZ1YZ9",
+            "aws:eu-west-2"    : "file-GYZX2PQJjG8z5QP498bJV1qj",
+            "azure:westus"     : "file-GYZVkQQ9zxzY2101g4jf244Z",
+            "aws:eu-west-2-g"  : "file-GYZVy6XK3qJZbJ45y0JFB4B9",
+            "aws:eu-central-1" : "file-GYZVvX04kv9Bbky21PF7j5f0",
+            "azure:uksouth-ofh": "file-GYZVfp127PxQQk86BV1y7QXP"
+        }
+}

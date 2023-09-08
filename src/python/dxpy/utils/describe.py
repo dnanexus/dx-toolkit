@@ -819,10 +819,6 @@ def print_execution_desc(desc, verbose=False):
         print_field("Try", str(desc['try']))
     print_field("Class", desc["class"])
 
-    if desc['class'] == 'analysis' and verbose:
-        default_analysis_desc = dxpy.DXAnalysis(desc['id']).describe()
-        desc.update(default_analysis_desc)
-
     if "name" in desc and desc['name'] is not None:
         print_field("Job name", desc['name'])
     if "executableName" in desc and desc['executableName'] is not None:

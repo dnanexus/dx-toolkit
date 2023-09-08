@@ -1,3 +1,17 @@
+dx-toolkit (0.357.0) trusty; urgency=medium
+
+  * Fixed: Nextflow applets passes schema input params explicitly in nextflow run command, as parameters assigned in runtime config are not handled properly by nextflow-io
+  * Fixed: Unexpected splitting at whitespaces inside quotes when parsing string-type input parameters of Nextflow applets
+  * Changed: Remove optional output param nextflow_log from Nextflow pipeline applets; instead, always upload Nextflow log file to head job destination when execution completes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 01 Sep 2023 17:02:49 +0000
+
+dx-toolkit (0.356.0) trusty; urgency=medium
+
+  * Fixed: dx describe analysis-xxxx --json --verbose
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Wed, 16 Aug 2023 16:50:06 +0000
+
 dx-toolkit (0.355.0) trusty; urgency=medium
 
   * Added: New return fields from dx describe {job/analysis}-xxxx with --verbose argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
