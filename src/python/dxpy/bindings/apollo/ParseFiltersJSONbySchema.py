@@ -176,6 +176,59 @@ class InputJSONFiltersValidator(object):
 
                 # is there a filters_combination_operator? if not, then single filter assumed
 
+
+                filtering_logic = current_filters.get("filters_combination_operator")
+
+                if filtering_logic:
+                    ...
+                    # check if there two filters with same key in table_column
+                    # check if both are defined in input_json
+                    # check if conditions are compatible, use between instead
+                    # else use one
+
+                else:
+                    if len(current_properties) > 1:
+                        # if there are also more than 1 in input_json
+                        ...
+                        # self.error_handler("More than one filter")
+
+                """
+                {
+                    "filters": {
+                        "expression$value": [
+                            {"condition": "between", "values": [1,9]}
+                        ]
+                    }
+                }
+
+                or
+
+                {
+                    "filters": {
+                        "annotation$feature_id": [
+                            {"condition": "in", "values": [1,2,3]}
+                        ]
+                    }
+                }
+
+                or
+
+                {
+                    "logic": "and",
+                    "filters": {
+                        "expression$value": [
+                            {"condition": "greater-than", "values": 2},
+                        ],
+                        "expression$feature_id": [
+                            {"condition": "in", "values": ['1']}
+                        ]
+                    }
+                }
+                
+                """
+
+
+
                 vizserver_compound_filters["compound"].append(...)
 
             if current_properties is None:
