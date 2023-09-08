@@ -24,6 +24,7 @@ import sys
 import unittest
 import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
+from dxpy.nextflow.nextflow_utils import get_template_dir
 
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
@@ -40,7 +41,6 @@ else:
     spawn_extra_args = {"encoding": "utf-8"}
 
 
-default_input_len = 7
 input1 = {
     "class": "file",
     "name": "first_input",
@@ -70,17 +70,6 @@ input4 = {
 
 class TestNextflowTemplates(DXTestCase):
 
-    def are_inputs_in_spec(self, inputSpec, inputs):
-        found = [False] * len(inputs)
-        input_names = [i["name"] for i in inputs]
-        input_pairs = dict(zip(input_names, found))
-        for i in inputSpec:
-            if i.get("name") in input_names:
-                if input_pairs.get(i.get("name")):
-                    raise Exception("Input was found twice!")
-                input_pairs[i.get("name")] = True
-        return all(value is True for value in input_pairs.values())
-
     def test_dxapp(self):
         dxapp = get_nextflow_dxapp()
         self.assertEqual(dxapp.get("name"), "Nextflow pipeline")
@@ -92,12 +81,12 @@ class TestNextflowTemplates(DXTestCase):
         [input1, input2]
     ])
     def test_dxapp_custom_input(self, *inputs):
+        with open(os.path.join(str(get_template_dir()), 'dxapp.json'), 'r') as f:
+            default_dxapp = json.load(f)
+
         inputs = list(inputs)
         dxapp = get_nextflow_dxapp(custom_inputs=inputs)
-        self.assertTrue(self.are_inputs_in_spec(
-            dxapp.get("inputSpec"), inputs))
-        self.assertEqual(len(dxapp.get("inputSpec")),
-                         default_input_len + len(inputs))
+        self.assertEqual(dxapp.get("inputSpec"), inputs + default_dxapp.get("inputSpec"))
 
     @unittest.skipIf(USING_PYTHON2,
         'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
