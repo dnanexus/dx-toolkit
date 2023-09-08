@@ -1106,12 +1106,6 @@ def validate_cohort_ids(descriptor,project,resp,ids):
             }
         }
     }
-    
-
-    if "CohortBrowser" in resp["recordTypes"]:
-        if resp.get("baseSql"):
-            payload["base_sql"] = resp.get("baseSql")
-        payload["filters"] = resp["filters"]
 
     # Use the dxpy raw_api_function to send a POST request to the server with our payload
     try:
