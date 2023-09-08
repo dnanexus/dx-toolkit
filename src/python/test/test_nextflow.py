@@ -139,6 +139,9 @@ class TestNextflowTemplates(DXTestCase):
         value4 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input4.get(
             "name")
         self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input4.get("name"), value4) in src)
+        
+        self.assertTrue("dx-download-all-inputs --parallel --except {} --except {} --except {}".format(
+            input1.get("name"), input3.get("name"), input4.get("name")) in src)
 
     def test_prepare_inputs(self):
         inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")

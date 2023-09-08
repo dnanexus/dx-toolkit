@@ -72,7 +72,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
             value = "dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)" % i['name']
-            exclude_input_download+="--except {}".format(i['name'])
+            exclude_input_download+="--except {} ".format(i['name'])
 
         # applet_runtime_inputs variable is initialized in the nextflow.sh script template
         applet_runtime_params = applet_runtime_params + '''
