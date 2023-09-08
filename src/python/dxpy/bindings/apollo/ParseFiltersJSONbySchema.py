@@ -3,7 +3,29 @@ from __future__ import print_function
 
 class InputJSONFiltersValidator(object):
     """
-    A specialized class that parses input JSON according to a schema to prepare vizserver-compliant compound filters.
+    A specialized class that parses user input JSON according to a schema to prepare vizserver-compliant compound filters.
+
+    See assay_filtering_conditions.py for current schemas.
+
+    Filters must be defined in schema["filtering_conditions"]
+
+    There are currently three ways to define filtering_conditions when version is 1.0:
+    1. Basic use-case: no "properties" are defined. Only "condition", "table_column" and optionally "max_item_limit" are defined.
+                       In this case, there are no sub-keys for the current key in input_json.
+                       (see 'sample_id' in 'assay_filtering_conditions.EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS')
+    2. Properties defined as dict of dicts (see 'annotation' and 'expression' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS)
+        2.1. If filters_combination_operator is not defined, the assumption is that there is only one sub-key in input_json
+
+    3. Complex use-case: Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that needs translation)
+        Filtering conditions defined this way indicate that input_json may contain more than one item for the current key, and elements are stored in a list.
+        In this case, the schema must define "items_combination_operator" and "filters_combination_operator".
+        items_combination_operator: how to combine filters for list items in input_json
+        filters_combination_operator: how to combine filters within each item
+        (see 'location' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS)
+
+        Within 'properties' if "key" is defined, then a generic one-key filter is built.
+        If "keys" is defined, then more complex use-cases are handled via special conditions that are defined in condition_function_mapping.
+
     """
 
     def __init__(self, input_json, schema, error_handler=print):
@@ -50,21 +72,23 @@ class InputJSONFiltersValidator(object):
             raise NotImplementedError
 
     def parse_v1(self):
-        """ """
-        vizserver_compound_filters = {
-            "logic": self.get_toplevel_filtering_logic(),
-            "compound": [],
-        }
+        """
+        Parse input_json according to schema version 1.0, and build vizserver compound filters.
+        """
+
+        # Get the general structure of vizserver-compliant compound filter dict
+        vizserver_compound_filters = self.get_vizserver_basic_filter_structure()
 
         # Get 'filtering_conditions' from the schema
         all_filters = self.collect_filtering_conditions(self.schema)
 
-        # Looking at the input_json
-        # go through each key: location, annotation, expression, sample.
+        # Go through the input_json (iterate through keys and values in user input JSON)
         for filter_key, filter_values in self.input_json.items():
-            print("######DEBUG")
+            # Example: if schema is EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+            # Then input JSON would probably contain location or annotation
+            # In this case:
             # filter_key -> location
-            # filter_values -> list of dicts
+            # filter_values -> list of dicts (where each dict contains "chromosome", "starting_position", "ending_position")
             if filter_key not in all_filters:
                 self.error_handler(
                     "No filtering condition was defined for {} in the schema.".format(
@@ -72,56 +96,48 @@ class InputJSONFiltersValidator(object):
                     )
                 )
 
-            # Filtering conditions for the current "key" in input_json
+            # Get the filtering conditions for the current "key" in input_json
             current_filters = all_filters[filter_key]
+
+            # Get the properties if any (this might be None,
+            # if so we will just execute the basic use case defined in the docstring of the class)
             current_properties = current_filters.get("properties")
 
-            # Validate max number of allowed items if max_item_limit is defined at the top level within key
+            # Validate max number of allowed items
+            # if max_item_limit is defined at the top level within this key
             # It will be later validated for each property as well
-            print("######DEBUG")
-            print(current_filters)
-            print(filter_values)
-            self.validate_max_item_limit(current_filters, filter_values, filter_key)
 
-            # must apply to keys within properties too
-            # self.validate_max_item_limit(current_properties, filter_values, filter_key)
+            self.validate_max_item_limit(current_filters, filter_values, filter_key)
 
             # There are several ways filtering_conditions can be defined
             # 1. Basic use-case: no properties, just condition (see 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS')
             # 2. Properties defined as dict of dicts (see 'annotation' and 'expression')
             # 3. Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that needs translation)
-            
-            print("######DEBUG")
-            print(type(current_properties))
-            print(type(filter_values))
-            
-            
-            if isinstance(current_properties, list) and isinstance(
-                filter_values, list
-            ):
-                print("######DEBUG")
-                # multi-condition if list of dicts
-                # must be compounded because more than one filter
-                # must be recursed if more than one item in location
+            # For more information see the docstring of the class
+            # The following if conditions will go through each of the aforementioned scenarios
 
-                # check number of properties
+            if isinstance(current_properties, list) and isinstance(filter_values, list):
+                # There are two important aspects:
+                # Filters (if more than one) must be compounded for each item with filters_combination_operator logic
+                # All items must be compounded together as one large compounded filter with the logic defined in items_combination_operator
 
                 base_filter_for_each_item = {
                     "logic": current_filters.get("filters_combination_operator"),
                     "compound": [
                         # {},
                         # {},
-                    ]  # as many dicts inside as there are key conditions
-                    # so count the location.properties for this
+                        # here there will be as many dicts inside as there are qualifying [key] conditions
+                    ],
                 }
 
                 full_filter_for_all_items = {
                     "logic": current_filters.get("items_combination_operator"),
                     "compound": [
-                        # {base_filter_for_each_item},
-                        # {},
-                    ]  # as many dicts as there are "items"
-                    # count json list len for this
+                        # {base_filter_for_each_item_1},
+                        # {base_filter_for_each_item_2},
+                        # {etc.}
+                        # as many dicts as there are "items" in input_json[filter_key]
+                    ],
                 }
 
                 ### current_properties is a list of dicts and each dict is a filter
@@ -130,27 +146,24 @@ class InputJSONFiltersValidator(object):
                 ### therefore there might be more than one element within that list
                 ### so we need to build the filters for each element in the list as well
                 ### and then append them to the compound list of dicts
-                ### Here is the full code to do that:
 
-                # Build filters for each item in the list (input_json.filter_values)
+                # Build filters for each item in the list (input_json[filter_values])
                 for current_list_item in filter_values:
-                    # CONSIDER keeping track of input_json keys and properties so far verified and used
+                    # Consider keeping track of input_json keys and properties evaluated and used so far
 
                     current_compound_filter = base_filter_for_each_item.copy()
-                    ## now if key is found in properties['key'] then it's simple
-                    ## but if key is found in properties['keys'] then it's more complex
-                    ## collect filter_values keys
-                    ## just look at properties, get key or keys and get values from current_list_item
-                    ## also check if key is defined in current_list_item
+
+                    ## properties['key'] -> simple case
+                    ## properties['keys'] -> reserved for complex, special cases
+                    ## specifically for those cases where SUPPORTED_VIZSERVER_CONDITIONS is not sufficient
 
                     for item in current_properties:
                         if item.get("key"):
-                            # might need a separate check for list type
+                            # Consider a separate check for list type
+                            # Currently not necessary
                             temp_filter = self.build_one_key_generic_filter(
                                 item["table_column"],
-                                item[
-                                    "condition"
-                                ],  # consider verifying conditions according to a predefined list
+                                item["condition"],
                                 current_list_item[item.get("key")],
                             )
 
@@ -174,13 +187,11 @@ class InputJSONFiltersValidator(object):
                                         temp_filter
                                     )
 
-                    # Consider checking if current_compound_filter contains any new elements
+                    # Consider checking if current_compound_filter contains any new elements before appending
                     full_filter_for_all_items["compound"].append(
                         current_compound_filter
                     )
 
-                print("######DEBUG")
-                print(full_filter_for_all_items)
                 vizserver_compound_filters["compound"].append(full_filter_for_all_items)
 
             if isinstance(current_properties, dict):
@@ -188,26 +199,12 @@ class InputJSONFiltersValidator(object):
                     if k in filter_values:
                         self.validate_max_item_limit(v, filter_values[k], k)
 
-                # now need to check if min_value and max_value map to the same column
-                # consider changing min_/max_ to "keys": ["min_value", "max_value"]
-
-                # check if min_ and max_ are both provided
-                # check if there's a single key
-
                 # is there a filters_combination_operator? if not, then single filter assumed
 
                 filtering_logic = current_filters.get("filters_combination_operator")
 
-                # if filtering_logic isn't defined at this level then there must be only one 'key' to filter
-
+                # if filtering_logic isn't defined at this level then there must be only one 'key' to filter on
                 if filtering_logic:
-                    
-                    # check if there two filters with same key in table_column
-                    # check if both are defined in input_json
-                    # check if conditions are compatible, use between instead
-                    # else use one
-                    current_properties.values()
-
                     if len(filter_values) == 1:
                         temp_key = next(iter(filter_values.keys()))
                         matched_filter = current_properties[temp_key]
@@ -222,10 +219,19 @@ class InputJSONFiltersValidator(object):
                         temp_keys = list(filter_values.keys())
                         first_key = current_properties[temp_keys[0]]
                         second_key = current_properties[temp_keys[1]]
+
+                        # check if there are two filtering conditions that need to be applied on the same table_column
+                        # check if both of those are defined in input_json
+                        # an example of such a case is 'expression' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+                        # where we might have a `max_value` and a `min_value`
+                        # however providing both is not mandatory
+
                         if first_key.get("table_column") == second_key.get(
                             "table_column"
                         ):
                             if filtering_logic == "and":
+                                # where possible we will use "between" operator
+                                # instead of defining two separate conditions with greater-than AND less-than
                                 temp_condition = self.convert_to_between_operator(
                                     [
                                         first_key.get("condition"),
@@ -256,14 +262,14 @@ class InputJSONFiltersValidator(object):
                             raise NotImplementedError
 
                 else:
-                    # no filtering logic, so it's similar to the annotation case
+                    # There's no filtering logic, in other words, filters_combination_operator is not defined at this level
+                    # (see 'annotation' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS' for an example)
                     if len(current_properties) > 1:
                         if len(filter_values) > 1:
                             # if there are also more than 1 in input_json
                             self.error_handler(
                                 "More than one filter found at this level, but no filters_combination_operator was specified."
                             )
-
                         else:
                             temp_key = next(iter(filter_values.keys()))
                             matched_filter = current_properties[temp_key]
@@ -273,75 +279,33 @@ class InputJSONFiltersValidator(object):
                                 filter_values.get(temp_key),
                             )
                         vizserver_compound_filters["compound"].append(temp_filter)
-                        # self.build_one_key_generic_filter()
-
-                """
-                {
-                    "filters": {
-                        "expression$value": [
-                            {"condition": "between", "values": [1,9]}
-                        ]
-                    }
-                }
-
-                or
-
-                {
-                    "filters": {
-                        "annotation$feature_id": [
-                            {"condition": "in", "values": [1,2,3]}
-                        ]
-                    }
-                }
-
-                or
-
-                {
-                    "logic": "and",
-                    "filters": {
-                        "expression$value": [
-                            {"condition": "greater-than", "values": 2},
-                        ],
-                        "expression$feature_id": [
-                            {"condition": "in", "values": ['1']}
-                        ]
-                    }
-                }
-                
-                """
 
                 # TO DO #############
+
+                # double-check with tests to see if
                 # vizserver_compound_filters["compound"].append(...)
+                # is needed at this level too.
 
             if current_properties is None:
                 # no properties, so just apply conditions
+                # In other words get("properties") returns None
+                # Therefore we are dealing with a basic use-case scenario
+                # (See 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS' for an example)
                 temp_filter = self.build_one_key_generic_filter(
                     current_filters.get("table_column"),
                     current_filters.get("condition"),
                     filter_values,
                 )
-                # filters = {
-                #     "filters": {
-                #         current_properties.get("table_column"): [
-                #             {
-                #                 "condition": current_properties.get(
-                #                     "condition"
-                #                 ),  # special condition or not?
-                #                 "values": filter_values.get(item.get("key")),
-                #             }
-                #         ]
-                #     }
-                # }
-                # return filters
-                # # .append
-
-                # # just use the generic filter_builder function
-                # self.build_one_key_generic_filter(table_column, condition, values)
-                # ...
 
                 vizserver_compound_filters["compound"].append(temp_filter)
 
         return vizserver_compound_filters
+
+    def get_vizserver_basic_filter_structure(self):
+        return {
+            "logic": self.get_toplevel_filtering_logic(),
+            "compound": [],
+        }
 
     def collect_input_filters(self):
         return self.input_json.keys()
@@ -390,9 +354,6 @@ class InputJSONFiltersValidator(object):
     def build_raw_filters():
         Ellipsis
 
-    def get_general_filter_schema():
-        ...
-
     def convert_to_between_operator(self, operators_list):
         if len(operators_list) == 2:
             self.error_handler("Expected exactly two operators")
@@ -421,7 +382,7 @@ class InputJSONFiltersValidator(object):
             return base_filter
 
     def build_two_key_generic_filter(table_columns, condition, values):
-        ...
+        """
         {
             "filters": {
                 "expr_annotation$start": [{"condition": "between", "values": [1, 3]}],
@@ -429,11 +390,13 @@ class InputJSONFiltersValidator(object):
             },
             "logic": "or",
         }
+        """
+        Ellipsis
 
     def build_two_key_multi_condition_filter(
         table_column, first_key_condition, second_key_condition, values
     ):
-        ...
+        """
         {
             "filters": {
                 "expr_annotation$start": [{"condition": "less-than", "values": 100}],
@@ -441,10 +404,51 @@ class InputJSONFiltersValidator(object):
             },
             "logic": "and",
         }
+        """
+        Ellipsis
 
     def build_partial_overlap_genobin_filters(
         self, filtering_condition, input_json_item
     ):
+        """
+
+        Returns a nested compound filter in the following format:
+
+        filter = {
+            "logic": "or",
+            "compound": [
+                {
+                    "filters": {
+                        db_table_column_start: [
+                            {
+                                "condition": "between",
+                                "values": [input_start_value, input_end_value],
+                            }
+                        ],
+                        db_table_column_end: [
+                            {
+                                "condition": "between",
+                                "values": [input_start_value, input_end_value],
+                            }
+                        ],
+                    },
+                    "logic": "or",
+                },
+                {
+                    "filters": {
+                        db_table_column_start: [
+                            {"condition": "less-than", "values": input_start_value}
+                        ],
+                        db_table_column_end: [
+                            {"condition": "greater-than", "values": input_end_value}
+                        ],
+                    },
+                    "logic": "and",
+                },
+            ],
+        }
+
+        """
         if (
             "starting_position" not in filtering_condition["keys"]
             or "ending_position" not in filtering_condition["keys"]
@@ -495,40 +499,6 @@ class InputJSONFiltersValidator(object):
                             input_end_value,
                             return_complete_filter=False,
                         ),
-                    },
-                    "logic": "and",
-                },
-            ],
-        }
-
-        filter = {
-            "logic": "or",
-            "compound": [
-                {
-                    "filters": {
-                        db_table_column_start: [
-                            {
-                                "condition": "between",
-                                "values": [input_start_value, input_end_value],
-                            }
-                        ],
-                        db_table_column_end: [
-                            {
-                                "condition": "between",
-                                "values": [input_start_value, input_end_value],
-                            }
-                        ],
-                    },
-                    "logic": "or",
-                },
-                {
-                    "filters": {
-                        db_table_column_start: [
-                            {"condition": "less-than", "values": input_start_value}
-                        ],
-                        db_table_column_end: [
-                            {"condition": "greater-than", "values": input_end_value}
-                        ],
                     },
                     "logic": "and",
                 },
