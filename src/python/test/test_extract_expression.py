@@ -542,7 +542,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_single_location(self):
         json_path = os.path.join(
-            self.general_input_dir, "valid", "expression_min_only.json"
+            self.general_input_dir, "valid", "single_location.json"
         )
         
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
