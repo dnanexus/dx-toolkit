@@ -107,8 +107,8 @@ class InputJSONFiltersValidator(object):
                 full_filter_for_all_items = {
                     "logic": current_filters.get("items_combination_operator"),
                     "compound": [
-                        #{base_filter_for_each_item},
-                        #{},
+                        # {base_filter_for_each_item},
+                        # {},
                     ]  # as many dicts as there are "items"
                     # count json list len for this
                 }
@@ -156,11 +156,17 @@ class InputJSONFiltersValidator(object):
                                             item.get("condition")
                                         ]
                                     )
-                                    temp_filter = special_filtering_function(item, current_list_item)
-                                    current_compound_filter["compound"].append(temp_filter)
+                                    temp_filter = special_filtering_function(
+                                        item, current_list_item
+                                    )
+                                    current_compound_filter["compound"].append(
+                                        temp_filter
+                                    )
 
                     # Consider checking if current_compound_filter contains any new elements
-                    full_filter_for_all_items["compound"].append(current_compound_filter)
+                    full_filter_for_all_items["compound"].append(
+                        current_compound_filter
+                    )
 
                 vizserver_compound_filters["compound"].append(full_filter_for_all_items)
 
@@ -176,8 +182,9 @@ class InputJSONFiltersValidator(object):
 
                 # is there a filters_combination_operator? if not, then single filter assumed
 
-
                 filtering_logic = current_filters.get("filters_combination_operator")
+
+                # if filtering_logic isn't defined at this level then there must be only one 'key' to filter
 
                 if filtering_logic:
                     ...
@@ -185,6 +192,54 @@ class InputJSONFiltersValidator(object):
                     # check if both are defined in input_json
                     # check if conditions are compatible, use between instead
                     # else use one
+                    current_properties.values()
+
+                    if len(filter_values) == 1:
+                        temp_key = next(iter(filter_values.keys()))
+                        matched_filter = current_properties[temp_key]
+                        temp_filter = self.build_one_key_generic_filter(
+                            matched_filter.get("table_column"),
+                            matched_filter.get("condition"),
+                            filter_values.get(temp_key),
+                        )
+                        vizserver_compound_filters["compound"].append(temp_filter)
+
+                    if len(filter_values) == 2:
+                        temp_keys = list(filter_values.keys())
+                        first_key = current_properties[temp_keys[0]]
+                        second_key = current_properties[temp_keys[1]]
+                        if first_key.get("table_column") == second_key.get(
+                            "table_column"
+                        ):
+                            if filtering_logic == "and":
+                                temp_condition = self.convert_to_between_operator(
+                                    [
+                                        first_key.get("condition"),
+                                        second_key.get("condition"),
+                                    ]
+                                )
+                                if temp_condition in ["between", "between-ex"]:
+                                    temp_values = [
+                                        filter_values.get(temp_keys[0]),
+                                        filter_values.get(temp_keys[1]),
+                                    ]
+                                    temp_values.sort()
+                                    temp_filter = self.build_one_key_generic_filter(
+                                        first_key.get("table_column"),
+                                        temp_condition,
+                                        temp_values,
+                                    )
+                                    vizserver_compound_filters["compound"].append(
+                                        temp_filter
+                                    )
+                                else:
+                                    raise NotImplementedError
+
+                            if filtering_logic == "or":
+                                raise NotImplementedError
+
+                        else:
+                            raise NotImplementedError
 
                 else:
                     if len(current_properties) > 1:
@@ -226,8 +281,6 @@ class InputJSONFiltersValidator(object):
                 }
                 
                 """
-
-
 
                 vizserver_compound_filters["compound"].append(...)
 
@@ -303,6 +356,16 @@ class InputJSONFiltersValidator(object):
 
     def get_general_filter_schema():
         ...
+
+    def convert_to_between_operator(self, operators_list):
+        if len(operators_list) == 2:
+            self.error_handler("Expected exactly two operators")
+
+        if set(operators_list) == {"greater-than-eq", "less-than-eq"}:
+            return "between"
+
+        if set(operators_list) == {"greater-than", "less-than"}:
+            return "between-ex"
 
     def build_one_key_generic_filter(
         self, table_column_mapping, condition, value, return_complete_filter=True
