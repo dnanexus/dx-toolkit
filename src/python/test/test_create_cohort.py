@@ -31,11 +31,12 @@ import dxpy
 import sys
 import hashlib
 import uuid
-from dxpy_testutil import cd, chdir
 from dxpy.bindings import DXRecord, DXProject
 
 from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
+    resolve_validate_dx_path,
+    validate_project_access,
     resolve_validate_record_path,
     DXDataset,
     raw_cohort_query_api_call
@@ -58,7 +59,6 @@ class TestCreateCohort(unittest.TestCase):
         proj_id = list(
             dxpy.find_projects(describe=False, level="VIEW", name=proj_name)
         )[0]["id"]
-        cd(proj_id + ":/")
         cls.general_input_dir = os.path.join(dirname, "create_cohort_test_files/input/")
         # cls.general_output_dir = os.path.join(dirname, "create_cohort_test_files/output/")
         cls.payloads_dir = os.path.join(dirname, "create_cohort_test_files/payloads/")
@@ -68,6 +68,8 @@ class TestCreateCohort(unittest.TestCase):
         cls.proj_id = proj_id
         cls.temp_proj = DXProject()
         cls.temp_proj.new(name="temp_test_create_cohort_{}".format(uuid.uuid4()))
+        cls.temp_proj_id = cls.temp_proj._dxid
+        dxpy.config["DX_PROJECT_CONTEXT_ID"] = cls.temp_proj_id
         cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
         cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
         with open(
@@ -81,6 +83,7 @@ class TestCreateCohort(unittest.TestCase):
     def tearDownClass(cls):
         print("Remmoving temporary testing project {}".format(cls.temp_proj._dxid))
         cls.temp_proj.destroy()
+        del cls.temp_proj
 
     def find_record_id(self, text): 
         match = re.search(r"\b(record-[A-Za-z0-9]{24})\b", text)
@@ -526,7 +529,6 @@ class TestCreateCohort(unittest.TestCase):
         for payload_name in self._payload_names:
             self._test_cohort_final_payload(payload_name)
 
-
     def test_brief_verbose(self):
         command = [
             "dx",
@@ -562,6 +564,51 @@ class TestCreateCohort(unittest.TestCase):
                     "Types", stdout, "Default stdout has to contain 'Types' string"
                 )
 
+
+    def test_path_upload_access(self):
+        # Having at least UPLOAD access to a project
+        err_msg = validate_project_access(self.temp_proj_id)
+        self.assertIsNone(err_msg)
+
+    def test_path_upload_access_negative(self):
+        #TODO: delegate this to QE
+        pass
+
+    def test_path_options(self):
+        """
+        Testing different path formats. Both possitive a and negative scenarios. 
+        Various path options and expected results are parametrized. 
+        The dictionary `expected_in_out_pairs` expects form: {"<path>": (<results tuple>)}
+        #
+        """
+        self.temp_proj.new_folder("/folder/subfolder", parents=True)
+        
+        expected_in_out_pairs = {
+            "{}:/".format(self.proj_id): (self.proj_id, "/", None, None),
+            "record_name": (self.temp_proj_id, "/", "record_name", None),
+            "/folder/record_name": (self.temp_proj_id, "/folder", "record_name", None),
+            "/folder/subfolder/record_name": (
+                self.temp_proj_id,
+                "/folder/subfolder",
+                "record_name",
+                None,
+            ),
+            "/folder/subfolder/no_exist/record_name": (
+                self.temp_proj_id,
+                "/folder/subfolder/no_exist",
+                "record_name",
+                "The folder: /folder/subfolder/no_exist could not be found in the project: {}".format(
+                    self.temp_proj_id
+                ),
+            ),
+            "/folder/": (self.temp_proj_id, "/folder", None, None),
+        }
+
+        for path, expected_result in expected_in_out_pairs.items():
+            result = resolve_validate_dx_path(path)
+
+            print(result)
+            self.assertEqual(result, expected_result) 
 
 
 if __name__ == "__main__":

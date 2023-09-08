@@ -1064,14 +1064,17 @@ def resolve_validate_dx_path(path):
     Resolves dx path into project, folder and name. Fails if non existing folder is provided.
     """
     project, folder, name = resolve_path(path)
-    err_msg = None
+    err_msg, folder_exists = None, None
     if folder != "/":
-        folder_name = "/{}".format(os.path.basename(folder))
+        folder_name = os.path.basename(folder)
         folder_path = os.path.dirname(folder)
         try:
             folder_exists = check_folder_exists(project, folder_path, folder_name)
         except ResolutionError as e:
-            err_msg = str(e)
+            if "folder could not be found" in str(e):
+                folder_exists = False
+            else:
+                raise e
         if not folder_exists:
             err_msg = "The folder: {} could not be found in the project: {}".format(
                 folder, project
