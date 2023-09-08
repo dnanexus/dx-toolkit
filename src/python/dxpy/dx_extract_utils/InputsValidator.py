@@ -85,22 +85,26 @@ class InputsValidator:
                 method_to_call = self.conditions_funcs.get(condition)
                 getattr(self, method_to_call)(key)
 
-    def throw_message(self, check):
+    def throw_schema_message(self, check):
         type = self.schema.get(check).get("error_message").get("type")
         if type == "warning":
-            self.throw_warning(check)
+            self.throw_warning(
+                self.schema.get(check).get("error_message").get("message")
+            )
         elif (type == None) or (type == "error"):
-            self.throw_exit_error(check)
+            self.throw_exit_error(
+                self.schema.get(check).get("error_message").get("message")
+            )
         else:
             self.error_handler(
                 'Unkown error message in schema: "{}" for key "{}"'.format(type, check)
             )
 
-    def throw_exit_error(self, check):
-        self.error_handler(self.schema.get(check).get("error_message").get("message"))
+    def throw_exit_error(self, message):
+        self.error_handler(message)
 
-    def throw_warning(self, check):
-        self.warning_handler(self.schema.get(check).get("error_message").get("message"))
+    def throw_warning(self, message):
+        self.warning_handler(message)
 
     def get_parser_values(self, params):
         values = [self.parser_dict.get(p) for p in params]
@@ -141,13 +145,13 @@ class InputsValidator:
 
         # True check
         if self.parser_dict.get(main_key) and any(args_to_check_values):
-            self.throw_message(check)
+            self.throw_schema_message(check)
 
     def interpret_with_none_of(self, check):
         main_key = self.get_main_key(check)
         args_to_check_values = self.get_items_values(check)
         if self.parser_dict.get(main_key) and any(args_to_check_values):
-            self.throw_message(check)
+            self.throw_schema_message(check)
 
     def interpret_required(self, check):
         self.interpret_at_least_one_required(check)
@@ -157,10 +161,10 @@ class InputsValidator:
 
         if main_key:
             if self.parser_dict.get(main_key) and not any(args_to_check_values):
-                self.throw_message(check)
+                self.throw_schema_message(check)
         else:
             if not any(args_to_check_values):
-                self.throw_message(check)
+                self.throw_schema_message(check)
 
     def interpret_with_at_least_one_required(self, check):
         main_key = self.get_main_key(check)
@@ -175,7 +179,7 @@ class InputsValidator:
                 present_args_count += 1
 
         if present_args_count > 1:
-            self.throw_message(check)
+            self.throw_schema_message(check)
 
     # VALIDATION
     def validate_input_combination(self):
@@ -213,7 +217,7 @@ class PathValidator:
         except Exception as details:
             self.throw_error(str(details))
 
-    def assure_object_found(self):
+    def is_object_in_current_project(self):
         # for object in a different project:
         if self.project != self.entity_result["describe"]["project"]:
             self.throw_error(
@@ -222,7 +226,7 @@ class PathValidator:
                 )
             )
 
-    def assure_cohort_or_dataset(self):
+    def is_cohort_or_dataset(self):
         # resolving non record/cohort type
         if self.entity_result is None:
             self.throw_error(
@@ -246,12 +250,12 @@ class PathValidator:
                 "Invalid path. The path must point to a record type of cohort or dataset and not a {} object."
             ).format(self.record_http_request_info["recordTypes"])
 
-    def assure_dataset_version(self):
+    def assert_dataset_version(self, expected_min_dataset_version=3.0):
         # checking cohort/dataset version
         dataset_version = float(self.record_http_request_info["datasetVersion"])
-        if dataset_version < 3.0:
+        if dataset_version < expected_min_dataset_version:
             self.throw_error(
-                "Invalid version of cohort or dataset. Version must be 3.0 and not {}.".format(
+                "{}: Version of the cohort or dataset is too old. Version must be 3.0.".format(
                     dataset_version
                 )
             )

@@ -48,7 +48,7 @@ from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
 from ..dx_extract_utils.InputsValidator import InputsValidator, PathValidator
-from ..bindings.apollo import input_arguments_validation_schemas
+from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
@@ -1058,7 +1058,7 @@ def extract_assay_expression(parser_obj):
 
     # Validating input combinations
     parser_dict = vars(parser_obj)
-    input_validator = InputsValidator(parser_dict=parser_dict, schema=input_arguments_validation_schemas.EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
+    input_validator = InputsValidator(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
     input_validator.validate_input_combination()
 
     # Validating Assay Path
@@ -1068,9 +1068,9 @@ def extract_assay_expression(parser_obj):
             )
 
     path_validator = PathValidator(parser_dict=parser_dict, project=project, entity_result=entity_result, error_handler=err_exit)
-    path_validator.assure_object_found()
-    path_validator.assure_cohort_or_dataset()
-    path_validator.assure_dataset_version()
+    path_validator.is_object_in_current_project()
+    path_validator.is_cohort_or_dataset()
+    path_validator.assert_dataset_version(3.0)
     path_validator.cohort_list_assays_invalid_combination()
 
 
