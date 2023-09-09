@@ -438,6 +438,54 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertTrue("second_config world!" in watched_run_output, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
         self.assertTrue("test_config world!" not in watched_run_output, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_run_nextflow_with_soft_conf_files(self):
+        pipeline_name = "print_env"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name,  existing_nf_file_path="nextflow/print_env_nextflow_soft_confs/main.nf")
+        applet_id = json.loads(run(
+            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
+
+        # Run with "dx run".
+        first_config = dxpy.upload_local_file("nextflow/print_env_nextflow_soft_confs/first.config", project=self.project, wait_on_close=True).get_id()
+        second_config = dxpy.upload_local_file("nextflow/print_env_nextflow_soft_confs/second.config", project=self.project, wait_on_close=True).get_id()
+
+        job_id = run(
+            "dx run {applet_id} -idebug=true -inextflow_soft_confs={first_config} -inextflow_soft_confs={second_config} --brief -y".format(
+                applet_id=applet_id, first_config=first_config, second_config=second_config)
+        ).strip()
+        job_handler = dxpy.DXJob(job_id)
+        job_handler.wait_on_done()
+        watched_run_output = run("dx watch {} --no-follow".format(job_id))
+        self.assertTrue("-c /home/dnanexus/in/nextflow_soft_confs/0/first.config -c /home/dnanexus/in/nextflow_soft_confs/1/second.config" in watched_run_output)
+        self.assertTrue("The env var ALPHA is: runtime alpha 2" in watched_run_output)
+        self.assertTrue("The env var BETA is: runtime beta 1" in watched_run_output)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_run_nextflow_with_runtime_param_file(self):
+        pipeline_name = "print_params"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name,  existing_nf_file_path="nextflow/print_param_nextflow_params_file/main.nf")
+        applet_id = json.loads(run(
+            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
+
+        # Run with "dx run".
+        params_file = dxpy.upload_local_file("nextflow/print_param_nextflow_params_file/params_file.yml", project=self.project, wait_on_close=True).get_id()
+
+        job_id = run(
+            "dx run {applet_id} -idebug=true -inextflow_params_file={params_file} -inextflow_pipeline_params=\"--BETA 'CLI beta'\" --brief -y".format(
+                applet_id=applet_id, params_file=params_file)
+        ).strip()
+        job_handler = dxpy.DXJob(job_id)
+        job_handler.wait_on_done()
+        watched_run_output = run("dx watch {} --no-follow".format(job_id))
+
+        self.assertTrue("-params-file /home/dnanexus/in/nextflow_params_file/params_file.yml" in watched_run_output)
+        self.assertTrue("The parameter ALPHA is: param file alpha" in watched_run_output)
+        self.assertTrue("The parameter BETA is: CLI beta" in watched_run_output)
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write(
