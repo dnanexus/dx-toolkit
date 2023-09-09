@@ -279,56 +279,6 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         details = applet.get_details()
         self.assertEqual(details["repository"], hello_repo_url)
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping tests that would run jobs')
-    def test_dx_build_nextflow_with_publishDir(self):
-        pipeline_name = "cat_ls"
-        # extra_args = '{"name": "testing_cat_ls"}'
-        applet_dir = self.write_nextflow_applet_directory(
-            pipeline_name, nf_file_name="main.nf", existing_nf_file_path="nextflow/publishDir/main.nf")
-        applet_id = json.loads(run(
-            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
-        desc = dxpy.describe(applet_id)
-
-        # Run with "dx run".
-        dxfile = dxpy.upload_string("foo", name="foo.txt", folder="/a/b/c",
-                                    project=self.project, parents=True, wait_on_close=True)
-        inFile_path = "dx://{}:/a/b/c/foo.txt".format(self.project)
-        inFolder_path = "dx://{}:/a/".format(self.project)
-        outdir = "nxf_outdir"
-        pipeline_args = "'--outdir {} --inFile {} --inFolder {}'".format(
-            outdir, inFile_path, inFolder_path)
-
-        job_id = run(
-            "dx run {applet_id} -idebug=true -inextflow_pipeline_params={pipeline_args} --folder :/test-cat-ls/ -y --brief".format(
-                applet_id=applet_id, pipeline_args=pipeline_args)
-        ).strip()
-        job_handler = dxpy.DXJob(job_id)
-        job_handler.wait_on_done()
-        job_desc = dxpy.describe(job_id)
-
-        # the output files will be: ls_folder.txt, cat_file.txt
-        self.assertEqual(len(job_desc["output"]["published_files"]), 2)
-
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping tests that would run jobs')
-    def test_dx_run_override_profile(self):
-        pipeline_name = "profile_test"
-
-        applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, "nextflow/profile/")
-        applet_id = json.loads(run(
-            "dx build --nextflow --profile test '{}' --json".format(applet_dir)))["id"]
-        job_id = run(
-            "dx run {applet_id} -y -inextflow_run_opts=\"-profile second\" --brief".format(applet_id=applet_id)
-        ).strip()
-
-        job_handler = dxpy.DXJob(job_id)
-        job_handler.wait_on_done()
-        watched_run_output = run("dx watch {} --no-follow".format(job_id))
-
-        self.assertTrue("second_config world!" in watched_run_output, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
-        self.assertTrue("test_config world!" not in watched_run_output, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
-
     def test_dx_build_nextflow_with_destination(self):
         pipeline_name = "hello"
         applet_dir = self.write_nextflow_applet_directory(
@@ -437,6 +387,56 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(job_desc["failureReason"], "AppError")
         self.assertIn("Please remove workDir specification",
                       job_desc["failureMessage"])
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_run_nextflow_with_publishDir(self):
+        pipeline_name = "cat_ls"
+        # extra_args = '{"name": "testing_cat_ls"}'
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, nf_file_name="main.nf", existing_nf_file_path="nextflow/publishDir/main.nf")
+        applet_id = json.loads(run(
+            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
+        desc = dxpy.describe(applet_id)
+
+        # Run with "dx run".
+        dxfile = dxpy.upload_string("foo", name="foo.txt", folder="/a/b/c",
+                                    project=self.project, parents=True, wait_on_close=True)
+        inFile_path = "dx://{}:/a/b/c/foo.txt".format(self.project)
+        inFolder_path = "dx://{}:/a/".format(self.project)
+        outdir = "nxf_outdir"
+        pipeline_args = "'--outdir {} --inFile {} --inFolder {}'".format(
+            outdir, inFile_path, inFolder_path)
+
+        job_id = run(
+            "dx run {applet_id} -idebug=true -inextflow_pipeline_params={pipeline_args} --folder :/test-cat-ls/ -y --brief".format(
+                applet_id=applet_id, pipeline_args=pipeline_args)
+        ).strip()
+        job_handler = dxpy.DXJob(job_id)
+        job_handler.wait_on_done()
+        job_desc = dxpy.describe(job_id)
+
+        # the output files will be: ls_folder.txt, cat_file.txt
+        self.assertEqual(len(job_desc["output"]["published_files"]), 2)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_run_override_profile(self):
+        pipeline_name = "profile_test"
+
+        applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, "nextflow/profile/")
+        applet_id = json.loads(run(
+            "dx build --nextflow --profile test '{}' --json".format(applet_dir)))["id"]
+        job_id = run(
+            "dx run {applet_id} -y -inextflow_run_opts=\"-profile second\" --brief".format(applet_id=applet_id)
+        ).strip()
+
+        job_handler = dxpy.DXJob(job_id)
+        job_handler.wait_on_done()
+        watched_run_output = run("dx watch {} --no-follow".format(job_id))
+
+        self.assertTrue("second_config world!" in watched_run_output, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
+        self.assertTrue("test_config world!" not in watched_run_output, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
 
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
