@@ -189,10 +189,10 @@ class PathValidator:
     PathValidator class checks for invalid object inputs and its combination with passed arguments.
     """
 
-    def __init__(self, input_dict, project, entity_result, error_handler=print):
+    def __init__(self, input_dict, project, entity_describe, error_handler=print):
         self.input_dict = input_dict
         self.project = project
-        self.entity_result = entity_result
+        self.entity_describe = entity_describe
         self.error_handler = error_handler
 
         self.record_http_request_info = None
@@ -204,19 +204,19 @@ class PathValidator:
         # record_http_request_info contains crucial information for records
         try:
             self.record_http_request_info = DXHTTPRequest(
-                "/" + self.entity_result["id"] + "/visualize",
+                "/" + self.entity_describe["id"] + "/visualize",
                 {"project": self.project, "cohortBrowser": False},
             )
         except (InvalidInput, InvalidState):
             self.throw_error(
-                "Invalid cohort or dataset: {}".format(self.entity_result["id"]),
+                "Invalid cohort or dataset: {}".format(self.entity_describe["id"]),
             )
         except Exception as details:
             self.throw_error(str(details))
 
     def is_object_in_current_project(self):
         # for object in a different project:
-        if self.project != self.entity_result["describe"]["project"]:
+        if self.project != self.entity_describe["project"]:
             self.throw_error(
                 'Unable to resolve "{}" to a data object or folder name in {}. Please make sure your object is in your selected project.'.format(
                     self.input_dict.get("path"), self.project
@@ -225,15 +225,10 @@ class PathValidator:
 
     def is_cohort_or_dataset(self):
         # resolving non record/cohort type
-        if self.entity_result is None:
-            self.throw_error(
-                "The path must point to a record type of cohort or dataset, not a folder."
-            )
-
-        if self.entity_result["describe"]["class"] != "record":
+        if self.entity_describe["class"] != "record":
             self.throw_error(
                 "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
-                    self.entity_result["describe"]["class"]
+                    self.entity_describe["class"]
                 )
             )
 
@@ -267,8 +262,8 @@ class PathValidator:
                 'Currently "--assay-name" and "--list-assays" may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input.'
             )
 
-    def validate(self):
+    def validate(self, expected_min_dataset_version=3.0):
         self.is_object_in_current_project()
         self.is_cohort_or_dataset()
-        self.assert_dataset_version(3.0)
+        self.assert_dataset_version(expected_min_dataset_version)
         self.cohort_list_assays_invalid_combination()
