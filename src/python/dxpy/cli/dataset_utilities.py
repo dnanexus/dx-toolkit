@@ -1067,11 +1067,8 @@ def extract_assay_expression(parser_obj):
                 assay_path
             )
 
-    path_validator = PathValidator(parser_dict=parser_dict, project=project, entity_result=entity_result, error_handler=err_exit)
-    path_validator.is_object_in_current_project()
-    path_validator.is_cohort_or_dataset()
-    path_validator.assert_dataset_version(3.0)
-    path_validator.cohort_list_assays_invalid_combination()
+    path_validator = PathValidator(input_dict=parser_dict, project=project, entity_result=entity_result, error_handler=err_exit)
+    path_validator.validate()
 
 
 class DXDataset(DXRecord):

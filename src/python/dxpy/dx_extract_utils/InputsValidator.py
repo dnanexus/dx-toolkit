@@ -87,14 +87,11 @@ class InputsValidator:
 
     def throw_schema_message(self, check):
         type = self.schema.get(check).get("error_message").get("type")
+        message = self.schema.get(check).get("error_message").get("message")
         if type == "warning":
-            self.throw_warning(
-                self.schema.get(check).get("error_message").get("message")
-            )
+            self.throw_warning(message)
         elif (type == None) or (type == "error"):
-            self.throw_exit_error(
-                self.schema.get(check).get("error_message").get("message")
-            )
+            self.throw_exit_error(message)
         else:
             self.error_handler(
                 'Unkown error message in schema: "{}" for key "{}"'.format(type, check)
@@ -192,8 +189,8 @@ class PathValidator:
     PathValidator class checks for invalid object inputs and its combination with passed arguments.
     """
 
-    def __init__(self, parser_dict, project, entity_result, error_handler=print):
-        self.parser_dict = parser_dict
+    def __init__(self, input_dict, project, entity_result, error_handler=print):
+        self.input_dict = input_dict
         self.project = project
         self.entity_result = entity_result
         self.error_handler = error_handler
@@ -222,7 +219,7 @@ class PathValidator:
         if self.project != self.entity_result["describe"]["project"]:
             self.throw_error(
                 'Unable to resolve "{}" to a data object or folder name in {}. Please make sure your object is in your selected project.'.format(
-                    self.parser_dict.get("path"), self.project
+                    self.input_dict.get("path"), self.project
                 )
             )
 
@@ -255,19 +252,23 @@ class PathValidator:
         dataset_version = float(self.record_http_request_info["datasetVersion"])
         if dataset_version < expected_min_dataset_version:
             self.throw_error(
-                "{}: Version of the cohort or dataset is too old. Version must be 3.0.".format(
-                    dataset_version
+                "{}: Version of the cohort or dataset is too old. Version must be at least {}.".format(
+                    dataset_version, expected_min_dataset_version
                 )
             )
 
     def cohort_list_assays_invalid_combination(self):
         invalid_combination = "CohortBrowser" in self.record_http_request_info[
             "recordTypes"
-        ] and (
-            self.parser_dict.get("list_assays") or self.parser_dict.get("assay_name")
-        )
+        ] and (self.input_dict.get("list_assays") or self.input_dict.get("assay_name"))
 
         if invalid_combination:
             self.throw_error(
                 'Currently "--assay-name" and "--list-assays" may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input.'
             )
+
+    def validate(self):
+        self.is_object_in_current_project()
+        self.is_cohort_or_dataset()
+        self.assert_dataset_version(3.0)
+        self.cohort_list_assays_invalid_combination()
