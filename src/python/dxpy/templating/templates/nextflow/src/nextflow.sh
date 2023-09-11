@@ -42,13 +42,13 @@ docker_registry_login() {
       echo "        \"token\": \"<API token>\""
       echo "    }"
       echo "}"
-      return 1
+      exit 1
   fi
 
   jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
   if [ ! $? -eq 0 ]; then
       echo "Docker authentication failed, please check if the docker credentials file is correct." 1>&2
-      return 2
+      exit 2
   fi
 }
 
