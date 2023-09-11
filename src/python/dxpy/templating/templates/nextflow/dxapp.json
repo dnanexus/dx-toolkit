@@ -68,6 +68,15 @@
       "patterns": ["*.config"],
       "optional": true,
       "group": "Nextflow options"
+    },
+    {
+      "name": "nextflow_params_file",
+      "label": "Script Parameters File",
+      "help": "(Optional) A file, in YAML or JSON format, for specifying input parameter values",
+      "class": "file",
+      "patterns": ["*.yml", "*.yaml", "*.json"],
+      "optional": true,
+      "group": "Nextflow options"
     }
   ],
   "outputSpec": [
