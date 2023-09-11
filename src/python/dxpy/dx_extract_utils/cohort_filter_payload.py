@@ -34,9 +34,9 @@ def generate_pheno_filter(values, entity, field, filters):
             if "condition" not in primary_filter or primary_filter["condition"] == "exists":
                 pass
             elif primary_filter["condition"] == "in":
-                values = [value for value in values if value in primary_filter["values"]]
+                values = sorted(set(values).intersection(set(primary_filter["values"])))
             elif primary_filter["condition"] == "not-in":
-                values = [value for value in values if value not in primary_filter["values"]]
+                values = sorted(set(values) - set(primary_filter["values"]))
             else:
                 raise ValueError("Invalid input cohort."
                                  " Cohorts cannot have conditions other than \"in\", \"not-in\", or \"exists\" on the primary entity and field.")
