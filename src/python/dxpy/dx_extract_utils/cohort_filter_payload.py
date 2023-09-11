@@ -31,7 +31,7 @@ def generate_pheno_filter(values, entity, field, filters):
             raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
         primary_filters = []
         for primary_filter in compound_filter["filters"][entity_field]:
-            if "condition" not in primary_filter or primary_filter["condition"] == "exists":
+            if primary_filter["condition"] == "exists":
                 pass
             elif primary_filter["condition"] == "in":
                 values = sorted(set(values).intersection(set(primary_filter["values"])))
