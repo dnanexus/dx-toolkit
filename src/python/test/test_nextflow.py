@@ -483,6 +483,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         watched_run_output = run("dx watch {} --no-follow".format(job_id))
 
         self.assertTrue("-params-file /home/dnanexus/in/nextflow_params_file/params_file.yml" in watched_run_output)
+        # precedence of the input parameter values: nextflow_params_file < nextflow_pipeline_params < other applet runtime inputs parsed from nextflow schema
         self.assertTrue("The parameter ALPHA is: param file alpha" in watched_run_output)
         self.assertTrue("The parameter BETA is: CLI beta" in watched_run_output)
 
