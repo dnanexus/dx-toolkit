@@ -6622,7 +6622,7 @@ parser_create_cohort = subparsers.add_parser('create_cohort', help='Generates a 
                                    add_help=False)
 
 parser_create_cohort.add_argument('PATH', nargs='?', type=str, help='DNAnexus path for the new data object. If not provided, default behavior uses current project and folder, and will name the object identical to the assigned record-id.')
-parser_create_cohort.add_argument('--from', type=str, help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name')
+parser_create_cohort.add_argument('--from', required=True, type=str, help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name')
 parser_create_c_mutex_group = parser_create_cohort.add_mutually_exclusive_group(required=True)
 parser_create_c_mutex_group.add_argument('--cohort-ids', type=str, help='A set of IDs used to subset the Dataset or Cohort object as a comma-separated string. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
 parser_create_c_mutex_group.add_argument('--cohort-ids-file', type=str, help='A set of IDs used to subset the Dataset or Cohort object in a file with one ID per line and no header. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
