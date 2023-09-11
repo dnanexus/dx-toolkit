@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Default optional inputs `nextflow_soft_confs` and `nextflow_params_file` to Nextflow applets to support soft configuration override and custom parameters file in `nextflow run`
+
 ## [357.0] - beta
 
 ### Changed
