@@ -459,7 +459,10 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         job_handler.wait_on_done()
         watched_run_output = run("dx watch {} --no-follow".format(job_id))
         self.assertTrue("-c /home/dnanexus/in/nextflow_soft_confs/0/first.config -c /home/dnanexus/in/nextflow_soft_confs/1/second.config" in watched_run_output)
+        # env var ALPHA specified in first.config and second.config
+        # the value in second.config overrides the one in first.config
         self.assertTrue("The env var ALPHA is: runtime alpha 2" in watched_run_output)
+        # env var BETA specified in first.config only
         self.assertTrue("The env var BETA is: runtime beta 1" in watched_run_output)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
