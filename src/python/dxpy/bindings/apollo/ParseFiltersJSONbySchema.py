@@ -77,7 +77,6 @@ class InputJSONFiltersValidator(object):
         """
 
         try:
-            ...
 
             # Get the general structure of vizserver-compliant compound filter dict
             vizserver_compound_filters = self.get_vizserver_basic_filter_structure()
