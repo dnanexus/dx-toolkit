@@ -47,7 +47,8 @@ from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
-from ..dx_extract_utils.InputsValidator import InputsValidator, PathValidator
+from ..dx_extract_utils.cmd_line_options_validator import ValidateArgsBySchema
+from ..dx_extract_utils.path_validator import PathValidator
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 
 
@@ -1058,7 +1059,7 @@ def extract_assay_expression(parser_obj):
 
     # Validating input combinations
     parser_dict = vars(parser_obj)
-    input_validator = InputsValidator(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
+    input_validator = ValidateArgsBySchema(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
     input_validator.validate_input_combination()
 
     # Validating Assay Path
@@ -1073,7 +1074,7 @@ def extract_assay_expression(parser_obj):
         entity_describe = entity_result.get("describe")
 
     path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
-    path_validator.validate()
+    path_validator.validate(check_list_assays_invalid_combination=True)
 
 
 class DXDataset(DXRecord):
