@@ -117,80 +117,11 @@ class InputJSONFiltersValidator(object):
             # The following if conditions will go through each of the aforementioned scenarios
 
             if isinstance(current_properties, list) and isinstance(filter_values, list):
-                # There are two important aspects:
-                # Filters (if more than one) must be compounded for each item with filters_combination_operator logic
-                # All items must be compounded together as one large compounded filter with the logic defined in items_combination_operator
-
-                base_filter_for_each_item = {
-                    "logic": current_filters.get("filters_combination_operator"),
-                    "compound": [
-                        # {},
-                        # {},
-                        # here there will be as many dicts inside as there are qualifying [key] conditions
-                    ],
-                }
-
-                full_filter_for_all_items = {
-                    "logic": current_filters.get("items_combination_operator"),
-                    "compound": [
-                        # {base_filter_for_each_item_1},
-                        # {base_filter_for_each_item_2},
-                        # {etc.}
-                        # as many dicts as there are "items" in input_json[filter_key]
-                    ],
-                }
-
-                ### current_properties is a list of dicts and each dict is a filter
-                ### therefore, we need to iterate over each dict and build a filter for each one
-                ### However, also remember than inside filter_values from input_json we have a list of dicts
-                ### therefore there might be more than one element within that list
-                ### so we need to build the filters for each element in the list as well
-                ### and then append them to the compound list of dicts
-
-                # Build filters for each item in the list (input_json[filter_values])
-                for current_list_item in filter_values:
-                    # Consider keeping track of input_json keys and properties evaluated and used so far
-
-                    current_compound_filter = base_filter_for_each_item.copy()
-
-                    ## properties['key'] -> simple case
-                    ## properties['keys'] -> reserved for complex, special cases
-                    ## specifically for those cases where SUPPORTED_VIZSERVER_CONDITIONS is not sufficient
-
-                    for item in current_properties:
-                        if item.get("key"):
-                            # Consider a separate check for list type
-                            # Currently not necessary
-                            temp_filter = self.build_one_key_generic_filter(
-                                item["table_column"],
-                                item["condition"],
-                                current_list_item[item.get("key")],
-                            )
-
-                            current_compound_filter["compound"].append(temp_filter)
-
-                        if item.get("keys"):
-                            if len(item.get("keys")) == 2:
-                                if (
-                                    item.get("condition")
-                                    not in self.SUPPORTED_VIZSERVER_CONDITIONS
-                                ):
-                                    special_filtering_function = (
-                                        self.condition_function_mapping[
-                                            item.get("condition")
-                                        ]
-                                    )
-                                    temp_filter = special_filtering_function(
-                                        item, current_list_item
-                                    )
-                                    current_compound_filter["compound"].append(
-                                        temp_filter
-                                    )
-
-                    # Consider checking if current_compound_filter contains any new elements before appending
-                    full_filter_for_all_items["compound"].append(
-                        current_compound_filter
-                    )
+                full_filter_for_all_items = self.parse_list_v1(
+                    current_filters,
+                    filter_values,
+                    current_properties,
+                )
 
                 vizserver_compound_filters["compound"].append(full_filter_for_all_items)
 
@@ -199,86 +130,10 @@ class InputJSONFiltersValidator(object):
                     if k in filter_values:
                         self.validate_max_item_limit(v, filter_values[k], k)
 
-                # is there a filters_combination_operator? if not, then single filter assumed
-
-                filtering_logic = current_filters.get("filters_combination_operator")
-
-                # if filtering_logic isn't defined at this level then there must be only one 'key' to filter on
-                if filtering_logic:
-                    if len(filter_values) == 1:
-                        temp_key = next(iter(filter_values.keys()))
-                        matched_filter = current_properties[temp_key]
-                        temp_filter = self.build_one_key_generic_filter(
-                            matched_filter.get("table_column"),
-                            matched_filter.get("condition"),
-                            filter_values.get(temp_key),
-                        )
-                        vizserver_compound_filters["compound"].append(temp_filter)
-
-                    if len(filter_values) == 2:
-                        temp_keys = list(filter_values.keys())
-                        first_key = current_properties[temp_keys[0]]
-                        second_key = current_properties[temp_keys[1]]
-
-                        # check if there are two filtering conditions that need to be applied on the same table_column
-                        # check if both of those are defined in input_json
-                        # an example of such a case is 'expression' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
-                        # where we might have a `max_value` and a `min_value`
-                        # however providing both is not mandatory
-
-                        if first_key.get("table_column") == second_key.get(
-                            "table_column"
-                        ):
-                            if filtering_logic == "and":
-                                # where possible we will use "between" operator
-                                # instead of defining two separate conditions with greater-than AND less-than
-                                temp_condition = self.convert_to_between_operator(
-                                    [
-                                        first_key.get("condition"),
-                                        second_key.get("condition"),
-                                    ]
-                                )
-                                if temp_condition in ["between", "between-ex"]:
-                                    temp_values = [
-                                        filter_values.get(temp_keys[0]),
-                                        filter_values.get(temp_keys[1]),
-                                    ]
-                                    temp_values.sort()
-                                    temp_filter = self.build_one_key_generic_filter(
-                                        first_key.get("table_column"),
-                                        temp_condition,
-                                        temp_values,
-                                    )
-                                    vizserver_compound_filters["compound"].append(
-                                        temp_filter
-                                    )
-                                else:
-                                    raise NotImplementedError
-
-                            if filtering_logic == "or":
-                                raise NotImplementedError
-
-                        else:
-                            raise NotImplementedError
-
-                else:
-                    # There's no filtering logic, in other words, filters_combination_operator is not defined at this level
-                    # (see 'annotation' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS' for an example)
-                    if len(current_properties) > 1:
-                        if len(filter_values) > 1:
-                            # if there are also more than 1 in input_json
-                            self.error_handler(
-                                "More than one filter found at this level, but no filters_combination_operator was specified."
-                            )
-                        else:
-                            temp_key = next(iter(filter_values.keys()))
-                            matched_filter = current_properties[temp_key]
-                            temp_filter = self.build_one_key_generic_filter(
-                                matched_filter.get("table_column"),
-                                matched_filter.get("condition"),
-                                filter_values.get(temp_key),
-                            )
-                        vizserver_compound_filters["compound"].append(temp_filter)
+                filters = self.parse_dict_v1(
+                    current_filters, filter_values, current_properties
+                )
+                vizserver_compound_filters["compound"].append(filters)
 
                 # TO DO #############
 
@@ -300,6 +155,156 @@ class InputJSONFiltersValidator(object):
                 vizserver_compound_filters["compound"].append(temp_filter)
 
         return vizserver_compound_filters
+
+    def parse_list_v1(self, current_filters, filter_values, current_properties):
+        # There are two important aspects:
+        # Filters (if more than one) must be compounded for each item with filters_combination_operator logic
+        # All items must be compounded together as one large compounded filter with the logic defined in items_combination_operator
+        base_filter_for_each_item = {
+            "logic": current_filters.get("filters_combination_operator"),
+            "compound": [
+                # {},
+                # {},
+                # here there will be as many dicts inside as there are qualifying [key] conditions
+            ],
+        }
+
+        full_filter_for_all_items = {
+            "logic": current_filters.get("items_combination_operator"),
+            "compound": [
+                # {base_filter_for_each_item_1},
+                # {base_filter_for_each_item_2},
+                # {etc.}
+                # as many dicts as there are "items" in input_json[filter_key]
+            ],
+        }
+
+        ### current_properties is a list of dicts and each dict is a filter
+        ### therefore, we need to iterate over each dict and build a filter for each one
+        ### However, also remember than inside filter_values from input_json we have a list of dicts
+        ### therefore there might be more than one element within that list
+        ### so we need to build the filters for each element in the list as well
+        ### and then append them to the compound list of dicts
+
+        # Build filters for each item in the list (input_json[filter_values])
+        for current_list_item in filter_values:
+            # Consider keeping track of input_json keys and properties evaluated and used so far
+
+            current_compound_filter = base_filter_for_each_item.copy()
+
+            ## properties['key'] -> simple case
+            ## properties['keys'] -> reserved for complex, special cases
+            ## specifically for those cases where SUPPORTED_VIZSERVER_CONDITIONS is not sufficient
+
+            for item in current_properties:
+                if item.get("key"):
+                    # Consider a separate check for list type
+                    # Currently not necessary
+                    temp_filter = self.build_one_key_generic_filter(
+                        item["table_column"],
+                        item["condition"],
+                        current_list_item[item.get("key")],
+                    )
+
+                    current_compound_filter["compound"].append(temp_filter)
+
+                if item.get("keys"):
+                    if len(item.get("keys")) == 2:
+                        if (
+                            item.get("condition")
+                            not in self.SUPPORTED_VIZSERVER_CONDITIONS
+                        ):
+                            special_filtering_function = (
+                                self.condition_function_mapping[item.get("condition")]
+                            )
+                            temp_filter = special_filtering_function(
+                                item, current_list_item
+                            )
+                            current_compound_filter["compound"].append(temp_filter)
+
+            # Consider checking if current_compound_filter contains any new elements before appending
+            full_filter_for_all_items["compound"].append(current_compound_filter)
+
+        return full_filter_for_all_items
+
+    def parse_dict_v1(self, current_filters, filter_values, current_properties):
+        # is there a filters_combination_operator? if not, then single filter assumed
+
+        filtering_logic = current_filters.get("filters_combination_operator")
+
+        # if filtering_logic isn't defined at this level then there must be only one 'key' to filter on
+        if filtering_logic:
+            if len(filter_values) == 1:
+                temp_key = next(iter(filter_values.keys()))
+                matched_filter = current_properties[temp_key]
+                temp_filter = self.build_one_key_generic_filter(
+                    matched_filter.get("table_column"),
+                    matched_filter.get("condition"),
+                    filter_values.get(temp_key),
+                )
+                return temp_filter
+
+            if len(filter_values) == 2:
+                temp_keys = list(filter_values.keys())
+                first_key = current_properties[temp_keys[0]]
+                second_key = current_properties[temp_keys[1]]
+
+                # check if there are two filtering conditions that need to be applied on the same table_column
+                # check if both of those are defined in input_json
+                # an example of such a case is 'expression' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+                # where we might have a `max_value` and a `min_value`
+                # however providing both is not mandatory
+
+                if first_key.get("table_column") == second_key.get("table_column"):
+                    if filtering_logic == "and":
+                        # where possible we will use "between" operator
+                        # instead of defining two separate conditions with greater-than AND less-than
+                        temp_condition = self.convert_to_between_operator(
+                            [
+                                first_key.get("condition"),
+                                second_key.get("condition"),
+                            ]
+                        )
+                        if temp_condition in ["between", "between-ex"]:
+                            temp_values = [
+                                filter_values.get(temp_keys[0]),
+                                filter_values.get(temp_keys[1]),
+                            ]
+                            temp_values.sort()
+                            temp_filter = self.build_one_key_generic_filter(
+                                first_key.get("table_column"),
+                                temp_condition,
+                                temp_values,
+                            )
+                            return temp_filter
+
+                        else:
+                            raise NotImplementedError
+
+                    if filtering_logic == "or":
+                        raise NotImplementedError
+
+                else:
+                    raise NotImplementedError
+
+        else:
+            # There's no filtering logic, in other words, filters_combination_operator is not defined at this level
+            # (see 'annotation' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS' for an example)
+            if len(current_properties) > 1:
+                if len(filter_values) > 1:
+                    # if there are also more than 1 in input_json
+                    self.error_handler(
+                        "More than one filter found at this level, but no filters_combination_operator was specified."
+                    )
+                else:
+                    temp_key = next(iter(filter_values.keys()))
+                    matched_filter = current_properties[temp_key]
+                    temp_filter = self.build_one_key_generic_filter(
+                        matched_filter.get("table_column"),
+                        matched_filter.get("condition"),
+                        filter_values.get(temp_key),
+                    )
+                return temp_filter
 
     def get_vizserver_basic_filter_structure(self):
         return {
