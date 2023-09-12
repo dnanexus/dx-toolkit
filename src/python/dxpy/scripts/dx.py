@@ -40,7 +40,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic
+from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic, extract_assay_expression
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -6610,6 +6610,105 @@ parser_extract_assay_somatic.add_argument(
 parser_extract_assay_somatic.set_defaults(func=extract_assay_somatic)
 register_parser(parser_extract_assay_somatic)
 
+#####################################
+# expression
+#####################################
+parser_extract_assay_expression = subparsers_extract_assay.add_parser(
+    "expression",
+    help="Query a Dataset or Cohort for an instance of a molecular expression assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.",
+    description="Query a Dataset or Cohort for an instance of a expression assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.",
+)
+
+parser_extract_assay_expression.add_argument(
+    "path",
+    nargs='?',
+    type=str,
+    help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--list-assays",
+    action="store_true",
+    help="List molecular expression assays available for query in the specified Dataset or Cohort object",
+)
+
+parser_extract_assay_expression.add_argument(
+    "--retrieve-expression",
+    action="store_true",
+    help='A flag to support, specifying criteria of molecular expression to retrieve. Retrieves rows from the expression table, optionally extended with sample and annotation information where the extension is inline without affecting row count. By default returns the following set of fields; “sample_id”, “feature_id”, and “value”. Additional fields may be returned using "--additional-fields". Must be used with either "--input-json" or "--input-json-file". Specify “--json-help” following this option to get detailed information on the json format and filters. When filtering, one, and only one of “location”, “annotation.feature_id”, or “annotation.feature_name” may be supplied. If a Cohort object is supplied, returned samples will be initially filtered to match the cohort-defined set of samples, and any additional filters will only further refine the cohort-defined set.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--additional-fields-help",
+    action="store_true",
+    help="List all fields available for output.",
+)
+
+parser_extract_assay_expression.add_argument(
+    "--assay-name",
+    type=str,
+    nargs=1,
+    help='Specify a specific molecular expression assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays"',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--input-json",
+    "-j",
+    type=str,
+    help='The full input JSON object as a string and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--input-json" or "--input-json-file" may be supplied, not both.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--input-json-file",
+    "-f",
+    type=str,
+    help='The full input JSON object as a file and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--input-json" or "--input-json-file" may be supplied, not both.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--json-help",
+    help="When set, return a json template of “--retrieve-expression” and a list of filters with definitions.",
+    action="store_true",
+)
+
+parser_extract_assay_expression.add_argument(
+    "--sql",
+    action="store_true",
+    help="If the flag is provided, a SQL statement (as a string) will be returned for the user to further query the specified data, instead of returning actual data values.",
+)
+
+parser_extract_assay_expression.add_argument(
+    "--additional-fields",
+    nargs="+",
+    default=None,
+    help="A set of fields to return, in addition to the default set; “sample_id”, “feature_id”, and “value”. Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, “fieldA,fieldB,fieldC.” Use “--additional-fields-help” to get the full list of output fields available.",
+)
+
+parser_extract_assay_expression.add_argument(
+    "--expression-matrix",
+    "-em",
+    action="store_true",
+    help='If the flag is provided with "--retrieve-expression", the returned data will be a matrix of sample IDs (rows) by feature IDs (columns), where each cell is the respective pairwise value. The flag is not compatible with "--additional-fields". Additionally, the flag is not compatible with an “expression” filter. If the underlying expression value is missing, the value will be empty in returned data.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--delim",
+    "--delimiter",
+    type=str,
+    nargs=1,
+    help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used. If a file is specified and no "--delim" argument is passed or is COMMA, the file suffix will be “.csv”. If a file is specified and the "--delim" argument is TAB, the file suffix will be “.tsv”. Otherwise, if a file is specified and "--delim" is neither COMMA or TAB file suffix will be “.txt”.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--output",
+    "-o",
+    type=str,
+    nargs=1,
+    help='A local filename or directory to be used, where "-" indicates printing to STDOUT. If -o/--output is not supplied, default behavior is to create a file with a constructed name in the current folder.',
+)
+
+parser_extract_assay_expression.set_defaults(func=extract_assay_expression)
+register_parser(parser_extract_assay_expression)
 
 #####################################
 # help
