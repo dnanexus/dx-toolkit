@@ -47,8 +47,9 @@ from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
-from ..dx_extract_utils.InputsValidator import InputsValidator
-from ..bindings.apollo import input_arguments_validation_schemas
+from ..dx_extract_utils.cmd_line_options_validator import ValidateArgsBySchema
+from ..dx_extract_utils.path_validator import PathValidator
+from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
@@ -1058,17 +1059,22 @@ def extract_assay_expression(parser_obj):
 
     # Validating input combinations
     parser_dict = vars(parser_obj)
+    input_validator = ValidateArgsBySchema(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
+    input_validator.validate_input_combination()
 
-    input_validator = InputsValidator(parser_dict=parser_dict, schema=input_arguments_validation_schemas.EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
-    
-    input_validator.validate()
+    # Validating Assay Path
+    assay_path = parser_dict.get("path")
+    project, folder_path, entity_result = resolve_existing_path(
+                assay_path
+            )
+    if entity_result is None:
+        err_exit('Unable to resolve "{}" to a data object in {}.'.format(
+                    assay_path, project))
+    else:
+        entity_describe = entity_result.get("describe")
 
-
-
-
-    # path_validator = PathValidator(args.path)
-    # http_request_info = path_validator.get_http_request_info()
-    # input_validator.validate_cohort_list_assay(http_request_info)
+    path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
+    path_validator.validate(check_list_assays_invalid_combination=True)
 
 
 class DXDataset(DXRecord):
