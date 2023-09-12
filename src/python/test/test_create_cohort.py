@@ -51,6 +51,23 @@ dirname = os.path.dirname(__file__)
 
 python_version = sys.version_info.major
 
+class DescribeDetails:
+    """
+    Strictly parses describe output into objects attributes.
+    ID                                record-GYvjYf00F69fGVYkgXqfzfQ2
+    Class                             record
+    ...
+    Size                              620
+    """
+    def __init__(self, describe):
+        self.parse_atributes(describe)
+
+    def parse_atributes(self, describe):
+        for line in describe.split("\n"):
+            if line != "":
+                p_line = line.split("   ")
+                setattr(self, p_line[0].replace(" ", "_"), p_line[-1].strip(" "))
+
 
 class TestCreateCohort(unittest.TestCase):
     @classmethod
@@ -81,7 +98,7 @@ class TestCreateCohort(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        print("Remmoving temporary testing project {}".format(cls.temp_proj._dxid))
+        print("Remmoving temporary testing project {}".format(cls.temp_proj_id))
         cls.temp_proj.destroy()
         del cls.temp_proj
 
@@ -89,8 +106,10 @@ class TestCreateCohort(unittest.TestCase):
         match = re.search(r"\b(record-[A-Za-z0-9]{24})\b", text)
         if match:
             return match[1]
+        
+    def is_record_id(self, text):
+        return bool(re.match(r"^(record-[A-Za-z0-9]{24})",text))
     
-
     # Test the message printed on stdout when the --help flag is provided
     # This message is also printed on every error caught by argparse, before the specific message
     def test_help_text(self):
@@ -106,7 +125,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "{}:/".format(self.temp_proj._dxid),
+            "{}:/".format(self.temp_proj_id),
             "--from",
             self.test_record_pheno,
             "--cohort-ids-file",
@@ -134,7 +153,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "{}:/".format(self.temp_proj._dxid),
+            "{}:/".format(self.temp_proj_id),
             "--from",
             self.test_record_pheno,
             "--cohort-ids-file",
@@ -153,7 +172,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "{}:/".format(self.temp_proj._dxid),
+            "{}:/".format(self.temp_proj_id),
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -180,7 +199,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "{}:/".format(self.temp_proj._dxid),
+            "{}:/".format(self.temp_proj_id),
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -452,7 +471,7 @@ class TestCreateCohort(unittest.TestCase):
 
         new_record = dxpy.bindings.dxrecord.new_dxrecord(
             details=details,
-            project=self.temp_proj._dxid,
+            project=self.temp_proj_id,
             name=None,
             types=["DatabaseQuery", "CohortBrowser"],
             folder="/",
@@ -533,7 +552,7 @@ class TestCreateCohort(unittest.TestCase):
         command = [
             "dx",
             "create_cohort",
-            "{}:/".format(self.temp_proj._dxid),
+            "{}:/".format(self.temp_proj_id),
             "--from",
             self.test_record_geno,
             "--cohort-ids",
@@ -551,10 +570,10 @@ class TestCreateCohort(unittest.TestCase):
             stdout, stderr = process.communicate()
             self.assertTrue(len(stderr) == 0, msg=stderr)
             if stdout_mode == "--brief":
-                record_id = re.match(
-                    r"^(record-[A-Za-z0-9]{24})", stdout.strip("\n").strip(" ")
-                )
-                self.assertTrue(bool(record_id), "Brief stdout has to be a record-id")
+                record_id = stdout.strip("\n").strip(" ")
+                self.assertTrue(self.is_record_id(record_id), 
+                                "Brief stdout has to be a record-id"
+                                )
             elif stdout_mode == "--verbose":
                 self.assertIn(
                     "Details", stdout, "Verbose stdout has to contain 'Details' string"
@@ -576,15 +595,15 @@ class TestCreateCohort(unittest.TestCase):
 
     def test_path_options(self):
         """
-        Testing different path formats. Both possitive a and negative scenarios. 
+        Testing different path formats.
         Various path options and expected results are parametrized. 
         The dictionary `expected_in_out_pairs` expects form: {"<path>": (<results tuple>)}
-        #
         """
         self.temp_proj.new_folder("/folder/subfolder", parents=True)
         
         expected_in_out_pairs = {
             "{}:/".format(self.proj_id): (self.proj_id, "/", None, None),
+            "{}:/folder/subfolder/record_name1".format(self.temp_proj_id): (self.temp_proj_id, "/folder/subfolder", "record_name1", None ),
             "record_name": (self.temp_proj_id, "/", "record_name", None),
             "/folder/record_name": (self.temp_proj_id, "/folder", "record_name", None),
             "/folder/subfolder/record_name": (
@@ -606,10 +625,99 @@ class TestCreateCohort(unittest.TestCase):
 
         for path, expected_result in expected_in_out_pairs.items():
             result = resolve_validate_dx_path(path)
-
-            print(result)
             self.assertEqual(result, expected_result) 
+
+    def test_path_options_negative(self):
+        expected_result = (
+            self.temp_proj_id,
+            "/folder/subfolder/no_exist",
+            "record_name",
+            "The folder: /folder/subfolder/no_exist could not be found in the project: {}".format(
+                self.temp_proj_id
+            )
+        )
+        result = resolve_validate_dx_path("/folder/subfolder/no_exist/record_name") 
+        self.assertEqual(result, expected_result)
+
+    def test_path_options_cli(self):
+        """
+        Testing different path formats. 
+        Focusing on default values with record name or folder not specified. 
+        """
+        # create subfolder structure
+        self.temp_proj.new_folder("/folder/subfolder", parents=True)
+        # set cwd
+        dxpy.config['DX_CLI_WD'] = "/folder"
+
+        command = [
+            "dx",
+            "create_cohort",
+            "--from",
+            self.test_record_geno,
+            "--cohort-ids",
+            "sample_1_1,sample_1_10",
+        ]
+        
+        path_options = [        
+            "record_name2", #Should create record in CWD
+            "/folder/subfolder/", #Name of record should be record-id
+            "", #Combination of above
+        ]
+        for path_format in path_options:
+            cmd = command.copy()
+            if path_format != "":
+                cmd.insert(2, path_format)
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                universal_newlines=True,
+            )
+            stdout = process.communicate()[0]
+            desc = DescribeDetails(stdout)
+
+            if path_format == "record_name2":
+                self.assertEqual(desc.Folder, "/folder")
+                self.assertEqual(desc.Project, self.temp_proj_id)
+                self.assertEqual(desc.Name, "record_name2")
+            elif path_format =="/folder/subfolder/":
+                self.assertEqual(desc.Folder, "/folder/subfolder")
+                self.assertEqual(desc.Project, self.temp_proj_id)
+                self.assertTrue(self.is_record_id(desc.Name), 
+                                "Record name should be a record-id"
+                                )
+            elif path_format =="":
+                self.assertEqual(desc.Folder, "/folder")
+                self.assertEqual(desc.Project, self.temp_proj_id)
+                self.assertTrue(self.is_record_id(desc.Name), 
+                                "Record name should be a record-id"
+                                )
+                
+                
+    def test_path_options_cli_negative(self):
+        command = [
+            "dx",
+            "create_cohort",
+            "/folder/subfolder/no_exist/record_name", # invalid path
+            "--from",
+            self.test_record_geno,
+            "--cohort-ids",
+            "sample_1_1,sample_1_10",
+        ]
+        process = subprocess.Popen(
+                command,
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                universal_newlines=True,
+            )
+        stderr = process.communicate()[1]
+        self.assertEqual(
+            "The folder: /folder/subfolder/no_exist could not be found in the project: {}".format(
+                self.temp_proj_id
+                ), 
+            stderr.strip("\n"))
 
 
 if __name__ == "__main__":
     unittest.main()
+

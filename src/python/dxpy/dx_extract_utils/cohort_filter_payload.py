@@ -19,7 +19,7 @@ def generate_pheno_filter(values, entity, field, filters):
         # pheno_filter is a compound filter, but the logic is not "and" so
         # entity field values cannot be selected by adding a filter to the
         # existing compound pheno_filter.
-        raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
+        raise ValueError("Invalid input cohort. Cohorts must have 'and' logic on the primary entity and field.")
 
     entity_field = "$".join([entity, field])
 
@@ -53,7 +53,7 @@ def generate_pheno_filter(values, entity, field, filters):
         if compound_filter["entity"]["name"] != entity:
             continue
         if "logic" in compound_filter and compound_filter["logic"] != "and":
-            raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
+            raise ValueError("Invalid input cohort. Cohorts must have 'and' logic on the primary entity and field.")
         # The entity filter is valid for addition of field filter
         compound_filter["filters"][entity_field] = [entity_field_filter]
         return filters
@@ -85,7 +85,7 @@ def generate_pheno_filter(values, entity, field, filters):
 
 def cohort_filter_payload(values, entity, field, filters, project_context, base_sql=None):
     if "logic" in filters and filters["logic"] != "and":
-        raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
+        raise ValueError("Invalid input cohort. Cohorts must have 'and' logic on the primary entity and field.")
     filter_payload = {}
     filter_payload["filters"] = generate_pheno_filter(values, entity, field, filters)
     if "logic" not in filter_payload["filters"]:
