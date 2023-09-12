@@ -119,14 +119,18 @@ class InputJSONFiltersValidator(object):
                 # For more information see the docstring of the class
                 # The following if conditions will go through each of the aforementioned scenarios
 
-                if isinstance(current_properties, list) and isinstance(filter_values, list):
+                if isinstance(current_properties, list) and isinstance(
+                    filter_values, list
+                ):
                     full_filter_for_all_items = self.parse_list_v1(
                         current_filters,
                         filter_values,
                         current_properties,
                     )
 
-                    vizserver_compound_filters["compound"].append(full_filter_for_all_items)
+                    vizserver_compound_filters["compound"].append(
+                        full_filter_for_all_items
+                    )
 
                 if isinstance(current_properties, dict):
                     for k, v in current_properties.items():
@@ -158,7 +162,7 @@ class InputJSONFiltersValidator(object):
                     vizserver_compound_filters["compound"].append(temp_filter)
 
             return vizserver_compound_filters
-        
+
         except Exception as e:
             self.error_handler(str(e))
 
@@ -293,7 +297,7 @@ class InputJSONFiltersValidator(object):
                     if filtering_logic == "or":
                         # A special edge case that should probably never be used
                         # It is also not supported by vizserver
-                        # In other words, 'or' logic is not supported for 
+                        # In other words, 'or' logic is not supported for
                         # values for the same key in the filter.
                         # If "or" logic needs to be applied to two filters
                         # both with the same 'key', consider constructing two separate
