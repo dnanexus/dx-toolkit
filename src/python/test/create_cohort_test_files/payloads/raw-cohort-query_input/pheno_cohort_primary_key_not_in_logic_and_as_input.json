@@ -8,13 +8,6 @@
                     "filters": {
                         "patient$patient_id": [
                             {
-                                "condition": "not-in",
-                                "values": [
-                                    "patient_8",
-                                    "patient_9"
-                                ]
-                            },
-                            {
                                 "condition": "in",
                                 "values": [
                                     "patient_1",

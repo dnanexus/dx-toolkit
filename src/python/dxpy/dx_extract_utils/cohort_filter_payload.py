@@ -22,17 +22,29 @@ def generate_pheno_filter(values, entity, field, filters):
         raise ValueError("Invalid input cohort. Cohorts must have 'and' logic on the primary entity and field.")
 
     entity_field = "$".join([entity, field])
-    entity_field_filter = {"condition": "in", "values": values}
 
     # Search for an existing filter for the entity and field
     for compound_filter in filters["pheno_filters"]["compound"]:
         if "filters" not in compound_filter or entity_field not in compound_filter["filters"]:
             continue
         if "logic" in compound_filter and compound_filter["logic"] != "and":
-            raise ValueError("Invalid input cohort. Cohorts must have 'and' logic on the primary entity and field.")
-        # The entity field filter is valid for addition of the "in" values condition
-        compound_filter["filters"][entity_field].append(entity_field_filter)
+            raise ValueError("Invalid input cohort. Cohorts must have “and” logic on the primary entity and field.")
+        primary_filters = []
+        for primary_filter in compound_filter["filters"][entity_field]:
+            if primary_filter["condition"] == "exists":
+                pass
+            elif primary_filter["condition"] == "in":
+                values = sorted(set(values).intersection(set(primary_filter["values"])))
+            elif primary_filter["condition"] == "not-in":
+                values = sorted(set(values) - set(primary_filter["values"]))
+            else:
+                raise ValueError("Invalid input cohort."
+                                 " Cohorts cannot have conditions other than \"in\", \"not-in\", or \"exists\" on the primary entity and field.")
+        primary_filters.append({"condition": "in", "values": values})
+        compound_filter["filters"][entity_field] = primary_filters
         return filters
+
+    entity_field_filter = {"condition": "in", "values": values}
 
     # Search for an existing filter with the entity since no entity and field filter was found
     for compound_filter in filters["pheno_filters"]["compound"]:

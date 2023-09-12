@@ -10,9 +10,9 @@
                             {
                                 "condition": "in",
                                 "values": [
-                                    "patient_1",
-                                    "patient_2",
-                                    "patient_3"
+                                    "patient_3",
+                                    "patient_4",
+                                    "patient_5"
                                 ]
                             }
                         ]
