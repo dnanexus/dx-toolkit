@@ -76,85 +76,91 @@ class InputJSONFiltersValidator(object):
         Parse input_json according to schema version 1.0, and build vizserver compound filters.
         """
 
-        # Get the general structure of vizserver-compliant compound filter dict
-        vizserver_compound_filters = self.get_vizserver_basic_filter_structure()
+        try:
+            ...
 
-        # Get 'filtering_conditions' from the schema
-        all_filters = self.collect_filtering_conditions(self.schema)
+            # Get the general structure of vizserver-compliant compound filter dict
+            vizserver_compound_filters = self.get_vizserver_basic_filter_structure()
 
-        # Go through the input_json (iterate through keys and values in user input JSON)
-        for filter_key, filter_values in self.input_json.items():
-            # Example: if schema is EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
-            # Then input JSON would probably contain location or annotation
-            # In this case:
-            # filter_key -> location
-            # filter_values -> list of dicts (where each dict contains "chromosome", "starting_position", "ending_position")
-            if filter_key not in all_filters:
-                self.error_handler(
-                    "No filtering condition was defined for {} in the schema.".format(
-                        filter_key
+            # Get 'filtering_conditions' from the schema
+            all_filters = self.collect_filtering_conditions(self.schema)
+
+            # Go through the input_json (iterate through keys and values in user input JSON)
+            for filter_key, filter_values in self.input_json.items():
+                # Example: if schema is EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+                # Then input JSON would probably contain location or annotation
+                # In this case:
+                # filter_key -> location
+                # filter_values -> list of dicts (where each dict contains "chromosome", "starting_position", "ending_position")
+                if filter_key not in all_filters:
+                    self.error_handler(
+                        "No filtering condition was defined for {} in the schema.".format(
+                            filter_key
+                        )
                     )
-                )
 
-            # Get the filtering conditions for the current "key" in input_json
-            current_filters = all_filters[filter_key]
+                # Get the filtering conditions for the current "key" in input_json
+                current_filters = all_filters[filter_key]
 
-            # Get the properties if any (this might be None,
-            # if so we will just execute the basic use case defined in the docstring of the class)
-            current_properties = current_filters.get("properties")
+                # Get the properties if any (this might be None,
+                # if so we will just execute the basic use case defined in the docstring of the class)
+                current_properties = current_filters.get("properties")
 
-            # Validate max number of allowed items
-            # if max_item_limit is defined at the top level within this key
-            # It will be later validated for each property as well
+                # Validate max number of allowed items
+                # if max_item_limit is defined at the top level within this key
+                # It will be later validated for each property as well
 
-            self.validate_max_item_limit(current_filters, filter_values, filter_key)
+                self.validate_max_item_limit(current_filters, filter_values, filter_key)
 
-            # There are several ways filtering_conditions can be defined
-            # 1. Basic use-case: no properties, just condition (see 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS')
-            # 2. Properties defined as dict of dicts (see 'annotation' and 'expression')
-            # 3. Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that needs translation)
-            # For more information see the docstring of the class
-            # The following if conditions will go through each of the aforementioned scenarios
+                # There are several ways filtering_conditions can be defined
+                # 1. Basic use-case: no properties, just condition (see 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS')
+                # 2. Properties defined as dict of dicts (see 'annotation' and 'expression')
+                # 3. Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that needs translation)
+                # For more information see the docstring of the class
+                # The following if conditions will go through each of the aforementioned scenarios
 
-            if isinstance(current_properties, list) and isinstance(filter_values, list):
-                full_filter_for_all_items = self.parse_list_v1(
-                    current_filters,
-                    filter_values,
-                    current_properties,
-                )
+                if isinstance(current_properties, list) and isinstance(filter_values, list):
+                    full_filter_for_all_items = self.parse_list_v1(
+                        current_filters,
+                        filter_values,
+                        current_properties,
+                    )
 
-                vizserver_compound_filters["compound"].append(full_filter_for_all_items)
+                    vizserver_compound_filters["compound"].append(full_filter_for_all_items)
 
-            if isinstance(current_properties, dict):
-                for k, v in current_properties.items():
-                    if k in filter_values:
-                        self.validate_max_item_limit(v, filter_values[k], k)
+                if isinstance(current_properties, dict):
+                    for k, v in current_properties.items():
+                        if k in filter_values:
+                            self.validate_max_item_limit(v, filter_values[k], k)
 
-                filters = self.parse_dict_v1(
-                    current_filters, filter_values, current_properties
-                )
-                vizserver_compound_filters["compound"].append(filters)
+                    filters = self.parse_dict_v1(
+                        current_filters, filter_values, current_properties
+                    )
+                    vizserver_compound_filters["compound"].append(filters)
 
-                # TO DO #############
+                    # TO DO #############
 
-                # double-check with tests to see if
-                # vizserver_compound_filters["compound"].append(...)
-                # is needed at this level too.
+                    # double-check with tests to see if
+                    # vizserver_compound_filters["compound"].append(...)
+                    # is needed at this level too.
 
-            if current_properties is None:
-                # no properties, so just apply conditions
-                # In other words get("properties") returns None
-                # Therefore we are dealing with a basic use-case scenario
-                # (See 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS' for an example)
-                temp_filter = self.build_one_key_generic_filter(
-                    current_filters.get("table_column"),
-                    current_filters.get("condition"),
-                    filter_values,
-                )
+                if current_properties is None:
+                    # no properties, so just apply conditions
+                    # In other words get("properties") returns None
+                    # Therefore we are dealing with a basic use-case scenario
+                    # (See 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS' for an example)
+                    temp_filter = self.build_one_key_generic_filter(
+                        current_filters.get("table_column"),
+                        current_filters.get("condition"),
+                        filter_values,
+                    )
 
-                vizserver_compound_filters["compound"].append(temp_filter)
+                    vizserver_compound_filters["compound"].append(temp_filter)
 
-        return vizserver_compound_filters
+            return vizserver_compound_filters
+        
+        except Exception as e:
+            self.error_handler(str(e))
 
     def parse_list_v1(self, current_filters, filter_values, current_properties):
         # There are two important aspects:
@@ -279,12 +285,23 @@ class InputJSONFiltersValidator(object):
                             return temp_filter
 
                         else:
+                            # A more complex conversion scenario
+                            # that may not involve greater-than/less-than operators
+                            # This is currently neither implemented nor needed
                             raise NotImplementedError
 
                     if filtering_logic == "or":
+                        # A special edge case that should probably never be used
+                        # It is also not supported by vizserver
+                        # In other words, 'or' logic is not supported for 
+                        # values for the same key in the filter.
+                        # If "or" logic needs to be applied to two filters
+                        # both with the same 'key', consider constructing two separate
+                        # filters and then compounding them with "or" logic
                         raise NotImplementedError
 
                 else:
+                    # This is currently not needed anywhere
                     raise NotImplementedError
 
         else:
