@@ -169,15 +169,7 @@ class InputJSONFiltersValidator(object):
         # There are two important aspects:
         # Filters (if more than one) must be compounded for each item with filters_combination_operator logic
         # All items must be compounded together as one large compounded filter with the logic defined in items_combination_operator
-        base_filter_for_each_item = {
-            "logic": current_filters.get("filters_combination_operator"),
-            "compound": [
-                # {},
-                # {},
-                # here there will be as many dicts inside as there are qualifying [key] conditions
-            ],
-        }
-
+        
         full_filter_for_all_items = {
             "logic": current_filters.get("items_combination_operator"),
             "compound": [
@@ -199,7 +191,14 @@ class InputJSONFiltersValidator(object):
         for current_list_item in filter_values:
             # Consider keeping track of input_json keys and properties evaluated and used so far
 
-            current_compound_filter = base_filter_for_each_item.copy()
+            current_compound_filter = {
+            "logic": current_filters.get("filters_combination_operator"),
+            "compound": [
+                # {},
+                # {},
+                # here there will be as many dicts inside as there are qualifying [key] conditions
+            ],
+        }
 
             ## properties['key'] -> simple case
             ## properties['keys'] -> reserved for complex, special cases

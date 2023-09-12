@@ -45,6 +45,21 @@ input4 = {
     }
 }
 
+input5 = {
+    "location": [
+        {
+            "chromosome": "1",
+            "starting_position": 10000,
+            "ending_position": 20000
+        },
+        {
+            "chromosome": "2",
+            "starting_position": 30000,
+            "ending_position": 40000
+        }
+    ],
+}
+
 schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
 
 for i in [input1, input2, input3, input4]:
