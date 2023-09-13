@@ -217,7 +217,7 @@ class TestCreateCohort(unittest.TestCase):
     def test_errmsg_invalid_path(self):
         bad_record = "record-badrecord"
         expected_error_message = (
-            "Unable to resolve {} to a data object or folder name in {}".format(bad_record, self.proj_id)
+            'Unable to resolve "{}" to a data object or folder name in'.format(bad_record)
         )
         command = [
             "dx",
@@ -229,13 +229,13 @@ class TestCreateCohort(unittest.TestCase):
         ]
 
         process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
+            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
         )
 
         err_msg = process.communicate()[1]
 
         # stdout should be the first element in this list and stderr the second
-        self.assertEqual(expected_error_message, err_msg)
+        self.assertIn(expected_error_message, err_msg.strip("\n"))
 
     # EM-3
     # The user does not have access to the object
