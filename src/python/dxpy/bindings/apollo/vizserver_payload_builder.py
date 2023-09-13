@@ -1,6 +1,39 @@
 class VizPayloadBuilder(object):
     """
+
     'filters' and/or 'raw_filters' can be built with the help of vizserver_filters_from_json_parser.JSONFiltersValidator
+
+    assemble_raw_filters is a helper method to build a complete raw_filters structure for a single assay,
+    if raw_filters does not already have this information.
+
+    Example usage:
+
+    payload = VizPayloadBuilder(
+        "project-xyz",
+        {
+            "feature_id": "expr_annotation$feature_id",
+            "sample_id": "expression$sample_id",
+            "expression": "expression$value",
+        },
+        error_handler=print,
+    )
+
+    payload.assemble_raw_filters(
+        assay_name="xyz",
+        assay_id="a-b1-2c-f-xyz-test",
+        filters={
+            "logic": "or",
+            "compound": [
+                {
+                    "test": "1",
+                },
+                {"exmaple": 3},
+            ],
+        },
+    )
+
+    final_payload = payload.build()
+
 
     """
 
