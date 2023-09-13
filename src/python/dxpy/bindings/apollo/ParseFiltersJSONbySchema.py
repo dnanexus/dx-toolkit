@@ -77,7 +77,6 @@ class InputJSONFiltersValidator(object):
         """
 
         try:
-
             # Get the general structure of vizserver-compliant compound filter dict
             vizserver_compound_filters = self.get_vizserver_basic_filter_structure()
 
@@ -121,15 +120,15 @@ class InputJSONFiltersValidator(object):
                 if isinstance(current_properties, list) and isinstance(
                     filter_values, list
                 ):
-                    full_filter_for_all_items = self.parse_list_v1(
+                    filters = self.parse_list_v1(
                         current_filters,
                         filter_values,
                         current_properties,
                     )
 
-                    vizserver_compound_filters["compound"].append(
-                        full_filter_for_all_items
-                    )
+                    if filters is not None:
+                        vizserver_compound_filters["compound"].append(filters)
+                        filters = None
 
                 if isinstance(current_properties, dict):
                     for k, v in current_properties.items():
@@ -139,26 +138,24 @@ class InputJSONFiltersValidator(object):
                     filters = self.parse_dict_v1(
                         current_filters, filter_values, current_properties
                     )
-                    vizserver_compound_filters["compound"].append(filters)
-
-                    # TO DO #############
-
-                    # double-check with tests to see if
-                    # vizserver_compound_filters["compound"].append(...)
-                    # is needed at this level too.
+                    if filters is not None:
+                        vizserver_compound_filters["compound"].append(filters)
+                        filters = None
 
                 if current_properties is None:
                     # no properties, so just apply conditions
-                    # In other words get("properties") returns None
+                    # In other words .get("properties") returns None
                     # Therefore we are dealing with a basic use-case scenario
                     # (See 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS' for an example)
-                    temp_filter = self.build_one_key_generic_filter(
+                    filters = self.build_one_key_generic_filter(
                         current_filters.get("table_column"),
                         current_filters.get("condition"),
                         filter_values,
                     )
 
-                    vizserver_compound_filters["compound"].append(temp_filter)
+                    if filters is not None:
+                        vizserver_compound_filters["compound"].append(filters)
+                        filters = None
 
             return vizserver_compound_filters
 
@@ -166,10 +163,13 @@ class InputJSONFiltersValidator(object):
             self.error_handler(str(e))
 
     def parse_list_v1(self, current_filters, filter_values, current_properties):
+        if current_properties is None:
+            self.error_handler("Expected properties to be defined within schema.")
+
         # There are two important aspects:
         # Filters (if more than one) must be compounded for each item with filters_combination_operator logic
         # All items must be compounded together as one large compounded filter with the logic defined in items_combination_operator
-        
+
         full_filter_for_all_items = {
             "logic": current_filters.get("items_combination_operator"),
             "compound": [
@@ -192,13 +192,13 @@ class InputJSONFiltersValidator(object):
             # Consider keeping track of input_json keys and properties evaluated and used so far
 
             current_compound_filter = {
-            "logic": current_filters.get("filters_combination_operator"),
-            "compound": [
-                # {},
-                # {},
-                # here there will be as many dicts inside as there are qualifying [key] conditions
-            ],
-        }
+                "logic": current_filters.get("filters_combination_operator"),
+                "compound": [
+                    # {},
+                    # {},
+                    # here there will be as many dicts inside as there are qualifying [key] conditions
+                ],
+            }
 
             ## properties['key'] -> simple case
             ## properties['keys'] -> reserved for complex, special cases
@@ -236,7 +236,10 @@ class InputJSONFiltersValidator(object):
         return full_filter_for_all_items
 
     def parse_dict_v1(self, current_filters, filter_values, current_properties):
-        # is there a filters_combination_operator? if not, then single filter assumed
+        if current_properties is None:
+            self.error_handler("Expected properties to be defined within schema.")
+
+        # if no filters_combination_operator is specified, then single filter assumed
 
         filtering_logic = current_filters.get("filters_combination_operator")
 
@@ -354,13 +357,6 @@ class InputJSONFiltersValidator(object):
                     field_name, max_item_limit
                 )
             )
-
-    def translate_conditions():
-        def IN():
-            return "in"
-
-        def BETWEEN():
-            return "between"
 
     def is_valid_json(self, schema):
         if not isinstance(schema, dict) or not schema:
