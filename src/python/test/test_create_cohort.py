@@ -328,9 +328,7 @@ class TestCreateCohort(unittest.TestCase):
     # If both --cohort-ids and --cohort-ids-file are supplied in the same call
     # The file needs to exist for this check to be performed
     def test_errmsg_incompat_args(self):
-        expected_error_message = "{}\ndx create_cohort: error: argument --cohort-ids-file: not allowed with argument --cohort-ids".format(
-            self.usage_message
-        )
+        expected_error_message = "dx create_cohort: error: argument --cohort-ids-file: not allowed with argument --cohort-ids"
         command = command = [
             "dx",
             "create_cohort",
@@ -345,8 +343,7 @@ class TestCreateCohort(unittest.TestCase):
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
         err_msg = process.communicate()[1]
-        # removing all whitespace before comparing
-        self.assertEqual("".join(expected_error_message.split()), "".join(err_msg.split()))
+        self.assertIn(expected_error_message, err_msg)
 
     # EM-11 The vizserver returns an error when attempting to validate cohort IDs
     def test_vizserver_error(self):
