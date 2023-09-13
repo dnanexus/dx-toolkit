@@ -260,7 +260,7 @@ class TestCreateCohort(unittest.TestCase):
             "fakeid",
         ]
         process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
+            command, stdout=subprocess.PIPE ,stderr=subprocess.PIPE, universal_newlines=True
         )
 
         # stdout should be the first element in this list and stderr the second
