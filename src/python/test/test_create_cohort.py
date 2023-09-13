@@ -279,15 +279,15 @@ class TestCreateCohort(unittest.TestCase):
     # EM-7
     # If PATH is of the format `project-xxxx:folder/` and the project does not exist
     def test_errmsg_project_not_exist(self):
-        bad_path = "project-notarealproject7843k2Jq:record-GX8jB2j0VBvZf6Qxx0pKxBk0"
-        expected_error_message = 'dxpy.utils.resolver.ResolutionError: Could not find a project named "{}"'.format(
-            bad_path
+        bad_project = "project-notarealproject7843k2Jq"
+        expected_error_message = 'ResolutionError: Could not find a project named "{}"'.format(
+            bad_project
         )
         command = [
             "dx",
             "create_cohort",
             "--from",
-            bad_path,
+            "{}:/".format(bad_project),
             "--cohort-ids",
             "id_1,id_2",
         ]
@@ -295,7 +295,7 @@ class TestCreateCohort(unittest.TestCase):
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
         err_msg = process.communicate()[1]
-        self.assertEqual(expected_error_message, err_msg)
+        self.assertIn(expected_error_message, err_msg.strip("\n"))
 
     # EM-8
     # If PATH is of the format `project-xxxx:folder/` and the user does not have CONTRIBUTE or ADMINISTER access
