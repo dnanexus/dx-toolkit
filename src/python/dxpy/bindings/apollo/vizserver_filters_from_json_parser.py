@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 
-class InputJSONFiltersValidator(object):
+class JSONFiltersValidator(object):
     """
     A specialized class that parses user input JSON according to a schema to prepare vizserver-compliant compound filters.
 
@@ -368,12 +368,6 @@ class InputJSONFiltersValidator(object):
     def get_number_of_filters(self):
         return len(self.input_json)
 
-    def build_filters():
-        ...
-
-    def build_raw_filters():
-        Ellipsis
-
     def convert_to_between_operator(self, operators_list):
         if len(operators_list) == 2:
             self.error_handler("Expected exactly two operators")
@@ -400,32 +394,6 @@ class InputJSONFiltersValidator(object):
             return {"filters": base_filter}
         else:
             return base_filter
-
-    def build_two_key_generic_filter(table_columns, condition, values):
-        """
-        {
-            "filters": {
-                "expr_annotation$start": [{"condition": "between", "values": [1, 3]}],
-                "expr_annotation$end": [{"condition": "between", "values": [5, 7]}],
-            },
-            "logic": "or",
-        }
-        """
-        Ellipsis
-
-    def build_two_key_multi_condition_filter(
-        table_column, first_key_condition, second_key_condition, values
-    ):
-        """
-        {
-            "filters": {
-                "expr_annotation$start": [{"condition": "less-than", "values": 100}],
-                "expr_annotation$end": [{"condition": "greater-than", "values": 500}],
-            },
-            "logic": "and",
-        }
-        """
-        Ellipsis
 
     def build_partial_overlap_genobin_filters(
         self, filtering_condition, input_json_item

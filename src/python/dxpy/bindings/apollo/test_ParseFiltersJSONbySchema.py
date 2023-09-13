@@ -1,6 +1,6 @@
 import dxpy
 
-from ParseFiltersJSONbySchema import InputJSONFiltersValidator
+from vizserver_filters_from_json_parser import JSONFiltersValidator
 from assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
 
 input1 = {
@@ -65,11 +65,11 @@ schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
 for i in [input1, input2, input3, input4]:
     print(i)
     print("\n")
-    c = InputJSONFiltersValidator(i, schema)
+    c = JSONFiltersValidator(i, schema)
     print(c.parse())
     
 
-c = InputJSONFiltersValidator(input4, schema)
+c = JSONFiltersValidator(input4, schema)
 filters = c.parse()
 
 payload = {
