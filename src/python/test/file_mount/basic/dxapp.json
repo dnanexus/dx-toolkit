@@ -5,8 +5,8 @@
     "file": "run.sh",
     "interpreter": "bash",
     "distribution": "Ubuntu",
-    "release": "16.04",
-    "version": "1"
+    "release": "20.04",
+    "version": "0"
   },
   "inputSpec": [
     {"name": "seq1", "class": "file"},
