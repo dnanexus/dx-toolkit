@@ -661,7 +661,7 @@ class TestCreateCohort(unittest.TestCase):
             "", #Combination of above
         ]
         for path_format in path_options:
-            cmd = command.copy()
+            cmd = command[:]
             if path_format != "":
                 cmd.insert(2, path_format)
 
