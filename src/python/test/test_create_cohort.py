@@ -116,7 +116,7 @@ class TestCreateCohort(unittest.TestCase):
         expected_result = self.usage_message
         command = "dx create_cohort --help"
 
-        process = subprocess.check_output(command, shell=True, text=True)
+        process = subprocess.check_output(command, shell=True) 
 
         self.assertEqual(expected_result, process)
 
@@ -142,8 +142,6 @@ class TestCreateCohort(unittest.TestCase):
 
         # testing if record object was created, retrieve record_id from stdout
         record_id = self.find_record_id(stdout)
-        subprocess.check_output('dx rm {}'.format(record_id), shell=True, text=True)
-
         self.assertTrue(bool(record_id), "Record object was not created")
         
 
