@@ -5527,14 +5527,16 @@ parser_run.add_argument('--detailed-job-metrics', action='store_true', default=N
 preserve_outputs = parser_run.add_mutually_exclusive_group()
 preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
                               help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
-                                        "root execution into the \"intermediateJobOutputs\" subfolder under the output "
-                                        "folder for the root execution.",
+                                        "root execution R into the \"intermediateJobOutputs\" subfolder under R's output "
+                                        "folder.  As R's root job or root analysis' stages complete, R's regular outputs "
+                                        "will be moved to R's regular output folder.",
                                         width_adjustment=-24))
 preserve_outputs.add_argument('--preserve-job-outputs-folder', metavar="JOB_OUTPUTS_FOLDER",
-                              help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
-                                        "root execution to a folder in the project. JOB_OUTPUTS_FOLDER starting with '/' "
-                                        "refers to an absolute path within the project, otherwise, it refers to a subfolder "
-                                        "under root execution's output folder.",
+                              help=fill("Similar to --preserve-job-outputs, copy cloneable outputs of every non-reused "
+                                        "job entering \"done\" state in this root execution to the specified folder in "
+                                        "the project.  JOB_OUTPUTS_FOLDER starting with '/' refers to an absolute path "
+                                        "within the project, otherwise, it refers to a subfolder under root execution's "
+                                        "output folder.",
                                         width_adjustment=-24))
 
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
