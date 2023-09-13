@@ -50,6 +50,11 @@ from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 from ..bindings.apollo.path_validator import PathValidator
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
+from ..bindings.apollo.ValidateJSONbySchema import JSONValidator
+from ..bindings.apollo.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
+from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
+from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
