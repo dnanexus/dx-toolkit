@@ -47,8 +47,8 @@ from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
-from ..dx_extract_utils.cmd_line_options_validator import ValidateArgsBySchema
-from ..dx_extract_utils.path_validator import PathValidator
+from ..bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
+from ..bindings.apollo.path_validator import PathValidator
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 
 
