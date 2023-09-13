@@ -49,6 +49,7 @@ from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 
 from ..bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 from ..bindings.apollo.path_validator import PathValidator
+from ..bindings.apollo.dataset import Dataset
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 
 
@@ -1075,6 +1076,11 @@ def extract_assay_expression(parser_obj):
 
     path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
     path_validator.validate(check_list_assays_invalid_combination=True)
+
+    # Dataset handling
+    record_id = entity_describe["id"]
+    dataset_handler = Dataset(record_id = record_id, project = project)
+    
 
 
 class DXDataset(DXRecord):
