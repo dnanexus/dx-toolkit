@@ -1,3 +1,5 @@
+# Basic dev-stage tests. To-be-removed once unit tests are in place
+
 import dxpy
 
 from vizserver_filters_from_json_parser import JSONFiltersValidator
