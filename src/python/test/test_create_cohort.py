@@ -31,6 +31,7 @@ import dxpy
 import sys
 import hashlib
 import uuid
+from parameterized import parameterized
 from dxpy.bindings import DXRecord, DXProject
 
 from dxpy.cli.dataset_utilities import (
@@ -48,6 +49,7 @@ from dxpy.dx_extract_utils.cohort_filter_payload import (
 )
 
 dirname = os.path.dirname(__file__)
+payloads_dir = os.path.join(dirname, "create_cohort_test_files/payloads/")
 
 python_version = sys.version_info.major
 
@@ -78,7 +80,7 @@ class TestCreateCohort(unittest.TestCase):
         )[0]["id"]
         cls.general_input_dir = os.path.join(dirname, "create_cohort_test_files/input/")
         # cls.general_output_dir = os.path.join(dirname, "create_cohort_test_files/output/")
-        cls.payloads_dir = os.path.join(dirname, "create_cohort_test_files/payloads/")
+        cls.payloads_dir = payloads_dir
 
         # TODO: setup project folders
         cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(proj_name)
@@ -476,12 +478,10 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(isinstance(new_record, DXRecord))
         self.assertEqual(new_record_details, details, "Details of created record does not match expected details.")
 
-    @property
-    def _payload_names(self):
-        for file_name in sorted(os.listdir(os.path.join(self.payloads_dir, "dx_new_input"))):
-            yield os.path.splitext(file_name)[0]
-
-    def _test_cohort_filter_payload(self, payload_name):
+    @parameterized.expand(
+        os.path.splitext(file_name)[0] for file_name in sorted(os.listdir(os.path.join(payloads_dir, "raw-cohort-query_input")))
+    )
+    def test_cohort_filter_payload(self, payload_name):
         with open(os.path.join(self.payloads_dir, "input_parameters", "{}.json".format(payload_name))) as f:
             input_parameters = json.load(f)
         values = input_parameters["values"]
@@ -499,14 +499,12 @@ class TestCreateCohort(unittest.TestCase):
         with open(os.path.join(self.payloads_dir, "raw-cohort-query_input", "{}.json".format(payload_name))) as f:
             valid_payload = json.load(f)
 
-        with self.subTest(payload_name):
-            self.assertDictEqual(test_payload, valid_payload)
+        self.assertDictEqual(test_payload, valid_payload)
 
-    def test_cohort_filter_payloads(self):
-        for payload_name in self._payload_names:
-            self._test_cohort_filter_payload(payload_name)
-
-    def _test_cohort_final_payload(self, payload_name):
+    @parameterized.expand(
+        os.path.splitext(file_name)[0] for file_name in sorted(os.listdir(os.path.join(payloads_dir, "dx_new_input")))
+    )
+    def test_cohort_final_payload(self, payload_name):
         name = None
 
         with open(os.path.join(self.payloads_dir, "input_parameters", "{}.json".format(payload_name))) as f:
@@ -534,12 +532,7 @@ class TestCreateCohort(unittest.TestCase):
 
         valid_output["name"] = None
 
-        with self.subTest(payload_name):
-            self.assertDictEqual(test_output, valid_output)
-
-    def test_cohort_final_payloads(self):
-        for payload_name in self._payload_names:
-            self._test_cohort_final_payload(payload_name)
+        self.assertDictEqual(test_output, valid_output)
 
     def test_brief_verbose(self):
         command = [
