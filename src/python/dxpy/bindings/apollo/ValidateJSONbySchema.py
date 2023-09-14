@@ -136,7 +136,7 @@ class JSONValidator(object):
                 )
             for item in input_list:
                 if not isinstance(item, str):
-                    error_handler(
+                    self.error_handler(
                         "Expected list items to be of type string for {}.".format(
                             key_name
                         )
