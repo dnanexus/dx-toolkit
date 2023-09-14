@@ -61,18 +61,9 @@ class TestDXExtractExpression(unittest.TestCase):
     def json_error_handler(cls, message):
         raise ValueError(message)
 
-    #
-    # Malformed input json tests
-    #
-
-    def test_annotation_conflicting_keys(self):
-        json_path = os.path.join(
-            self.general_input_dir, "malformed", "annotation_conflicting_keys.json"
-        )
+    def standard_negative_filter_test(self, json_name, expected_error_message):
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        expected_error_message = (
-            "Conflicting keys feature_name and feature_id cannot be present together."
-        )
+        json_path = os.path.join(self.general_input_dir, "malformed", json_name)
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
@@ -80,15 +71,23 @@ class TestDXExtractExpression(unittest.TestCase):
             validator.validate(input_json)
 
         self.assertEqual(expected_error_message, str(cm.exception).strip())
+
+    #
+    # Malformed input json tests
+    #
+
+    def test_annotation_conflicting_keys(self):
+        self.standard_negative_filter_test(
+            "annotation_conflicting_keys.json",
+            "Conflicting keys feature_name and feature_id cannot be present together.",
+        )
 
     def test_annotation_id_maxitem(self):
         json_path = os.path.join(
             self.general_input_dir, "malformed", "annotation_id_maxitem.json"
         )
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        expected_error_message = (
-            "error message not yet defined"
-        )
+        expected_error_message = "error message not yet defined"
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
@@ -96,7 +95,6 @@ class TestDXExtractExpression(unittest.TestCase):
             validator.validate(input_json)
 
         self.assertEqual(expected_error_message, str(cm.exception).strip())
-
 
     def test_annotation_id_type(self):
         json_path = os.path.join(
@@ -448,9 +446,9 @@ class TestDXExtractExpression(unittest.TestCase):
         json_path = os.path.join(
             self.general_input_dir, "valid", "annotation_feature_id.json"
         )
-        
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
@@ -460,9 +458,9 @@ class TestDXExtractExpression(unittest.TestCase):
         json_path = os.path.join(
             self.general_input_dir, "valid", "annotation_feature_name.json"
         )
-        
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
@@ -472,9 +470,9 @@ class TestDXExtractExpression(unittest.TestCase):
         json_path = os.path.join(
             self.general_input_dir, "valid", "dependent_conditional_annotation.json"
         )
-        
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
@@ -484,21 +482,21 @@ class TestDXExtractExpression(unittest.TestCase):
         json_path = os.path.join(
             self.general_input_dir, "valid", "dependent_conditional_location.json"
         )
-        
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
         validator.validate(input_json)
-        
+
     def test_expression_max_only(self):
         json_path = os.path.join(
             self.general_input_dir, "valid", "expression_max_only.json"
         )
-        
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
@@ -508,9 +506,9 @@ class TestDXExtractExpression(unittest.TestCase):
         json_path = os.path.join(
             self.general_input_dir, "valid", "expression_min_and_max.json"
         )
-        
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
@@ -520,21 +518,19 @@ class TestDXExtractExpression(unittest.TestCase):
         json_path = os.path.join(
             self.general_input_dir, "valid", "expression_min_only.json"
         )
-        
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
         validator.validate(input_json)
 
     def test_multi_location(self):
-        json_path = os.path.join(
-            self.general_input_dir, "valid", "multi_location.json"
-        )
-        
+        json_path = os.path.join(self.general_input_dir, "valid", "multi_location.json")
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
@@ -544,14 +540,14 @@ class TestDXExtractExpression(unittest.TestCase):
         json_path = os.path.join(
             self.general_input_dir, "valid", "single_location.json"
         )
-        
+
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
-        
+
         with open(json_path, "r") as infile:
             input_json = json.load(infile)
 
         validator.validate(input_json)
-    
+
 
 # Start the test
 if __name__ == "__main__":
