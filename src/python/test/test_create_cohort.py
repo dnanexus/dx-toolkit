@@ -118,7 +118,7 @@ class TestCreateCohort(unittest.TestCase):
 
         process = subprocess.check_output(command, shell=True) 
 
-        self.assertEqual(expected_result, process)
+        self.assertEqual(expected_result, process.decode())
 
     # testing that command accepts file with sample ids
     def test_accept_file_ids(self):
@@ -306,22 +306,25 @@ class TestCreateCohort(unittest.TestCase):
     # EM-9
     # If PATH is of the format `folder/subfolder/` and the path does not exist
     def test_errmsg_subfolder_not_exist(self):
-        bad_path = "{}:Create_Cohort/missing_folder".format(self.proj_id)
-        expected_error_message = "dxpy.utils.resolver.ResolutionError: The folder: {} could not be found in the project: {}".format(
-            bad_path, self.proj_id
+        bad_path = "{}:Create_Cohort/missing_folder/file_name".format(self.proj_id)
+        expected_error_message = "The folder: {} could not be found in the project: {}".format(
+            "/Create_Cohort/missing_folder", self.proj_id
         )
         command = [
             "dx",
             "create_cohort",
-            "--from",
             bad_path,
+            "--from",
+            self.test_record,
             "--cohort-ids",
-            "id_1,id_2",
+            "sample00000,sample00001",
         ]
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
-        err_msg = process.communicate()[1]
+        # split("\n")[-1] is added to ignore the warning message that gets added
+        # since DX_PROJECT_CONTEXT_ID environment variable is manually updated in setup class
+        err_msg = process.communicate()[1].strip("\n").split("\n")[-1]
         self.assertEqual(expected_error_message, err_msg)
 
     # EM-10
@@ -405,7 +408,7 @@ class TestCreateCohort(unittest.TestCase):
                             "patient$patient_id": [
                                 {
                                     "condition": "in",
-                                    "values": ["patient_4", "patient_5", "patient_6"],
+                                    "values": ["patient_1", "patient_2", "patient_6"],
                                 }
                             ]
                         },
@@ -425,12 +428,8 @@ class TestCreateCohort(unittest.TestCase):
                             "patient$patient_id": [
                                 {
                                     "condition": "in",
-                                    "values": ["patient_4", "patient_5", "patient_6"],
-                                },
-                                {
-                                    "condition": "in",
-                                    "values": ["patient_1", "patient_2", "patient_3"],
-                                },
+                                    "values": ["patient_1", "patient_2"]
+                                }
                             ]
                         },
                     }
@@ -439,7 +438,7 @@ class TestCreateCohort(unittest.TestCase):
             },
             "logic": "and",
         }
-        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_4', 'patient_5', 'patient_6') AND `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
+        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2');"
         
         generated_filter = generate_pheno_filter(values, entity, field, filters)
         self.assertEqual(expected_filter, generated_filter)

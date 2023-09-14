@@ -1,7 +1,7 @@
-usage: dx create_cohort [--brief | --verbose] [--from FROM]
+usage: dx create_cohort [--brief | --verbose] --from FROM
                         (--cohort-ids COHORT_IDS | --cohort-ids-file COHORT_IDS_FILE)
                         [-h]
-                        PATH
+                        [PATH]
 
 Generates a new Cohort object on the platform from an existing Dataset or
 Cohort object and using list of IDs.

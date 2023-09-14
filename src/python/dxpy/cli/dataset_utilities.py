@@ -1128,7 +1128,7 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     if discovered_ids != set(ids):
         # Find which given samples are not present in the dataset
         missing_ids = set(ids).difference(discovered_ids)
-        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = project,ids = missing_ids)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = resp["dataset"],ids = missing_ids)
         raise ValueError(err_msg)
 
         
