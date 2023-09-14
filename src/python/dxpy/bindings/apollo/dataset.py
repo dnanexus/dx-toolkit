@@ -23,10 +23,6 @@ class Dataset:
         return self.http_request_info.get("recordTypes")
 
     @property
-    def base_sql(self):
-        return self.http_request_info.get("recordTypes")
-
-    @property
     def cohort_flag(self):
         return True if "CohortBrowser" in self.record_types else False
 
@@ -37,8 +33,11 @@ class Dataset:
 
     @property
     def cohort_sql_query(self):
-        if "CohortBrowser" in self.record_types:
-            return self.http_request_info.get("sql")
+        return self.http_request_info.get("sql")
+
+    @property
+    def cohort_base_sql(self):
+        return self.http_request_info.get("baseSql")
 
     @property
     def dataset_id(self):
