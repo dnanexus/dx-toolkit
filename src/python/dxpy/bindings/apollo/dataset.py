@@ -2,55 +2,27 @@ from dxpy import DXHTTPRequest
 
 
 class Dataset:
-    def __init__(self, record_id, project):
+    def __init__(self, record_id, project_id):
         self.record_id = record_id
-        self.project = project
+        self.project_id = project_id
+        self.vizualise_info = None
 
-        self.populate_http_request()
+    def get_vizualise_info(self):
+        if self.vizualise_info is None:
+            self.vizualise_info = DXHTTPRequest(
+                "/" + self.record_id + "/visualize",
+                {"project": self.project_id, "cohortBrowser": False},
+            )
+        return self.vizualise_info
 
-    def populate_http_request(self):
-        self.http_request_info = DXHTTPRequest(
-            "/" + self.record_id + "/visualize",
-            {"project": self.project, "cohortBrowser": False},
-        )
-
-    @property
-    def record_name(self):
-        return self.http_request_info.get("recordName")
-
-    @property
-    def record_types(self):
-        return self.http_request_info.get("recordTypes")
+    def __getattr__(self, key_name):
+        if key_name in self.get_vizualise_info():
+            return self.get_vizualise_info().get(key_name)
 
     @property
     def cohort_flag(self):
-        return True if "CohortBrowser" in self.record_types else False
-
-    @property
-    def cohort_filter(self):
-        if "CohortBrowser" in self.record_types:
-            return self.http_request_info.get("filters")
-
-    @property
-    def cohort_sql_query(self):
-        return self.http_request_info.get("sql")
-
-    @property
-    def cohort_base_sql(self):
-        return self.http_request_info.get("baseSql")
-
-    @property
-    def dataset_id(self):
-        return self.http_request_info.get("dataset")
-
-    @property
-    def dataset_name(self):
-        return self.http_request_info.get("datasetName")
-
-    @property
-    def database_id(self):
-        return self.http_request_info.get("databases")[0]
-
-    @property
-    def vizserver_url(self):
-        return self.http_request_info.get("url")
+        return (
+            True
+            if "CohortBrowser" in self.get_vizualise_info().get("recordTypes")
+            else False
+        )

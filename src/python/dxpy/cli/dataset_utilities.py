@@ -1065,21 +1065,22 @@ def extract_assay_expression(parser_obj):
 
     # Validating Assay Path
     assay_path = parser_dict.get("path")
-    project, folder_path, entity_result = resolve_existing_path(
+    project_id, folder_path, entity_result = resolve_existing_path(
                 assay_path
             )
     if entity_result is None:
         err_exit('Unable to resolve "{}" to a data object in {}.'.format(
-                    assay_path, project))
+                    assay_path, project_id))
     else:
         entity_describe = entity_result.get("describe")
 
-    path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
+    path_validator = PathValidator(input_dict=parser_dict, project=project_id, entity_describe=entity_describe, error_handler=err_exit)
     path_validator.validate(check_list_assays_invalid_combination=True)
 
     # Dataset handling
     record_id = entity_describe["id"]
-    dataset_handler = Dataset(record_id = record_id, project = project)
+    dataset_handler = Dataset(record_id = record_id, project_id = project_id)
+
 
     
 
