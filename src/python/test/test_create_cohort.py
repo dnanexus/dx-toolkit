@@ -31,6 +31,7 @@ import dxpy
 import sys
 import hashlib
 import uuid
+from parameterized import parameterized
 from dxpy.bindings import DXRecord, DXProject
 
 from dxpy.cli.dataset_utilities import (
@@ -48,6 +49,7 @@ from dxpy.dx_extract_utils.cohort_filter_payload import (
 )
 
 dirname = os.path.dirname(__file__)
+payloads_dir = os.path.join(dirname, "create_cohort_test_files/payloads/")
 
 python_version = sys.version_info.major
 
@@ -78,7 +80,7 @@ class TestCreateCohort(unittest.TestCase):
         )[0]["id"]
         cls.general_input_dir = os.path.join(dirname, "create_cohort_test_files/input/")
         # cls.general_output_dir = os.path.join(dirname, "create_cohort_test_files/output/")
-        cls.payloads_dir = os.path.join(dirname, "create_cohort_test_files/payloads/")
+        cls.payloads_dir = payloads_dir
 
         # TODO: setup project folders
         cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(proj_name)
@@ -118,7 +120,7 @@ class TestCreateCohort(unittest.TestCase):
 
         process = subprocess.check_output(command, shell=True) 
 
-        self.assertEqual(expected_result, process)
+        self.assertEqual(expected_result, process.decode())
 
     # testing that command accepts file with sample ids
     def test_accept_file_ids(self):
@@ -306,22 +308,25 @@ class TestCreateCohort(unittest.TestCase):
     # EM-9
     # If PATH is of the format `folder/subfolder/` and the path does not exist
     def test_errmsg_subfolder_not_exist(self):
-        bad_path = "{}:Create_Cohort/missing_folder".format(self.proj_id)
-        expected_error_message = "dxpy.utils.resolver.ResolutionError: The folder: {} could not be found in the project: {}".format(
-            bad_path, self.proj_id
+        bad_path = "{}:Create_Cohort/missing_folder/file_name".format(self.proj_id)
+        expected_error_message = "The folder: {} could not be found in the project: {}".format(
+            "/Create_Cohort/missing_folder", self.proj_id
         )
         command = [
             "dx",
             "create_cohort",
-            "--from",
             bad_path,
+            "--from",
+            self.test_record,
             "--cohort-ids",
-            "id_1,id_2",
+            "sample00000,sample00001",
         ]
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
-        err_msg = process.communicate()[1]
+        # split("\n")[-1] is added to ignore the warning message that gets added
+        # since DX_PROJECT_CONTEXT_ID environment variable is manually updated in setup class
+        err_msg = process.communicate()[1].strip("\n").split("\n")[-1]
         self.assertEqual(expected_error_message, err_msg)
 
     # EM-10
@@ -405,7 +410,7 @@ class TestCreateCohort(unittest.TestCase):
                             "patient$patient_id": [
                                 {
                                     "condition": "in",
-                                    "values": ["patient_4", "patient_5", "patient_6"],
+                                    "values": ["patient_1", "patient_2", "patient_6"],
                                 }
                             ]
                         },
@@ -425,12 +430,8 @@ class TestCreateCohort(unittest.TestCase):
                             "patient$patient_id": [
                                 {
                                     "condition": "in",
-                                    "values": ["patient_4", "patient_5", "patient_6"],
-                                },
-                                {
-                                    "condition": "in",
-                                    "values": ["patient_1", "patient_2", "patient_3"],
-                                },
+                                    "values": ["patient_1", "patient_2"]
+                                }
                             ]
                         },
                     }
@@ -439,7 +440,7 @@ class TestCreateCohort(unittest.TestCase):
             },
             "logic": "and",
         }
-        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_4', 'patient_5', 'patient_6') AND `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
+        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2');"
         
         generated_filter = generate_pheno_filter(values, entity, field, filters)
         self.assertEqual(expected_filter, generated_filter)
@@ -477,12 +478,10 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(isinstance(new_record, DXRecord))
         self.assertEqual(new_record_details, details, "Details of created record does not match expected details.")
 
-    @property
-    def _payload_names(self):
-        for file_name in sorted(os.listdir(os.path.join(self.payloads_dir, "dx_new_input"))):
-            yield os.path.splitext(file_name)[0]
-
-    def _test_cohort_filter_payload(self, payload_name):
+    @parameterized.expand(
+        os.path.splitext(file_name)[0] for file_name in sorted(os.listdir(os.path.join(payloads_dir, "raw-cohort-query_input")))
+    )
+    def test_cohort_filter_payload(self, payload_name):
         with open(os.path.join(self.payloads_dir, "input_parameters", "{}.json".format(payload_name))) as f:
             input_parameters = json.load(f)
         values = input_parameters["values"]
@@ -500,14 +499,12 @@ class TestCreateCohort(unittest.TestCase):
         with open(os.path.join(self.payloads_dir, "raw-cohort-query_input", "{}.json".format(payload_name))) as f:
             valid_payload = json.load(f)
 
-        with self.subTest(payload_name):
-            self.assertDictEqual(test_payload, valid_payload)
+        self.assertDictEqual(test_payload, valid_payload)
 
-    def test_cohort_filter_payloads(self):
-        for payload_name in self._payload_names:
-            self._test_cohort_filter_payload(payload_name)
-
-    def _test_cohort_final_payload(self, payload_name):
+    @parameterized.expand(
+        os.path.splitext(file_name)[0] for file_name in sorted(os.listdir(os.path.join(payloads_dir, "dx_new_input")))
+    )
+    def test_cohort_final_payload(self, payload_name):
         name = None
 
         with open(os.path.join(self.payloads_dir, "input_parameters", "{}.json".format(payload_name))) as f:
@@ -535,12 +532,7 @@ class TestCreateCohort(unittest.TestCase):
 
         valid_output["name"] = None
 
-        with self.subTest(payload_name):
-            self.assertDictEqual(test_output, valid_output)
-
-    def test_cohort_final_payloads(self):
-        for payload_name in self._payload_names:
-            self._test_cohort_final_payload(payload_name)
+        self.assertDictEqual(test_output, valid_output)
 
     def test_brief_verbose(self):
         command = [
