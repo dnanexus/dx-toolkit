@@ -67,6 +67,14 @@ class TestDXExtractExpression(unittest.TestCase):
     def tearDownClass(cls):
         shutil.rmtree(cls.general_output_dir)
 
+    def standard_path_validation_test(self,test_record,expected_error_message):
+        project, folder_path, entity_result = resolve_existing_path(test_record)
+        validator = PathValidator(self.input_args_schema,self.proj_id,entity_result["describe"],error_handler=self.input_arg_error_handler)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate()
+
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
 
     #
     # Path Validation tests
@@ -78,31 +86,19 @@ class TestDXExtractExpression(unittest.TestCase):
     # 5. Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
     #
 
-
     # 2. Object not of class record
     def test_bad_dataset_type_unit(self):
         test_record = self.wrong_type_path_file
         expected_error_message = "{}: Invalid path. The path must point to a record type of cohort or dataset".format(test_record)
-        project, folder_path, entity_result = resolve_existing_path(test_record)
-        validator = PathValidator(self.input_args_schema,self.proj_id,entity_result["describe"],error_handler=self.input_arg_error_handler)
-
-        with self.assertRaises(ValueError) as cm:
-            validator.validate()
-
-        self.assertEqual(expected_error_message, str(cm.exception).strip())
+        self.standard_path_validation_test(test_record,expected_error_message)
 
 
     # 3. Object not of recordType "Dataset" or "CohortBrowser"
     def test_bad_dataset_version(self):
+        test_record = self.bad_version_dataset
         expected_error_message = "{}: Version of the cohort or dataset is too old. Version must be 3.0".format(self.bad_version_dataset)
         project, folder_path, entity_result = resolve_existing_path(self.bad_version_dataset)
-        validator = PathValidator(self.input_args_schema,self.proj_id,entity_result["describe"],error_handler=self.input_arg_error_handler)
-
-        # print(entity_result["describe"])
-        with self.assertRaises(ValueError) as cm:
-            validator.validate()
-
-        self.assertEqual(expected_error_message, str(cm.exception).strip())
+        self.standard_path_validation_test(test_record,expected_error_message)
 
 
 if __name__ == "__main__":
