@@ -50,6 +50,11 @@ from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 from ..bindings.apollo.path_validator import PathValidator
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
+from ..bindings.apollo.ValidateJSONbySchema import JSONValidator
+from ..bindings.apollo.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
+from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
+from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
@@ -1075,6 +1080,33 @@ def extract_assay_expression(parser_obj):
 
     path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
     path_validator.validate(check_list_assays_invalid_combination=True)
+
+    # # Validating input JSON
+    # if parser_obj.input_json:
+    #     user_filters_json = parser_obj.input_json
+
+    # elif parser_obj.input_json_file:
+    #     with open(parser_obj.input_json_file) as f:
+    #         user_filters_json = json.load(f)
+
+    # input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
+    # input_json_validator.validate(input_json=user_filters_json)
+
+    # input_json_parser = JSONFiltersValidator(input_json=user_filters_json, schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS, error_handler=err_exit)
+    # vizserver_raw_filters = input_json_parser.parse()
+
+    # vizserver_payload = VizPayloadBuilder(
+    #     project_context=project, 
+    #     output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"],
+        
+    #     limit=100_000_000,
+    #     base_sql=...,
+    #     is_cohort=...,
+    #     error_handler=err_exit
+    # )
+
+    # vizserver_payload.assemble_assay_raw_filters(assay_name=..., assay_id=..., filters=vizserver_raw_filters)
+    # vizserver_full_payload = vizserver_payload.build()
 
 
 class DXDataset(DXRecord):
