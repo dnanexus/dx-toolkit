@@ -3,7 +3,7 @@ class VizPayloadBuilder(object):
 
     'filters' and/or 'raw_filters' can be built with the help of vizserver_filters_from_json_parser.JSONFiltersValidator
 
-    assemble_raw_filters is a helper method to build a complete raw_filters structure for a single assay,
+    assemble_assay_raw_filters is a helper method to build a complete raw_filters structure for a single assay,
     if raw_filters does not already have this information.
 
     Example usage:
@@ -18,7 +18,7 @@ class VizPayloadBuilder(object):
         error_handler=print,
     )
 
-    payload.assemble_raw_filters(
+    payload.assemble_assay_raw_filters(
         assay_name="xyz",
         assay_id="a-b1-2c-f-xyz-test",
         filters={
@@ -31,6 +31,8 @@ class VizPayloadBuilder(object):
             ],
         },
     )
+
+    # Hint: Use vizserver_filters_from_json_parser.JSONFiltersValidator to build "filters"
 
     final_payload = payload.build()
 
@@ -63,7 +65,6 @@ class VizPayloadBuilder(object):
             raise Exception("error_handler must be defined")
 
     def build(self):
-        
         payload = self.get_vizserver_payload_structure()
 
         if self.is_cohort and self.base_sql:
@@ -74,7 +75,7 @@ class VizPayloadBuilder(object):
             self.error_handler(
                 "base_sql is only allowed for cohorts. is_cohort must be set to True"
             )
-        
+
         if self.limit:
             self.validate_returned_records_limit()
             payload.update({"limit": self.limit})
@@ -87,9 +88,9 @@ class VizPayloadBuilder(object):
 
         return payload
 
-    def assemble_raw_filters(self, assay_name, assay_id, filters):
+    def assemble_assay_raw_filters(self, assay_name, assay_id, filters):
         """
-        Helper method to build a complete raw_filters structure for a single assay 
+        Helper method to build a complete raw_filters structure for a single assay
         if raw_filters does not already have this information.
 
         filters may be a dict with the following structure:
@@ -111,7 +112,10 @@ class VizPayloadBuilder(object):
         """
         raw_filters = {
             "raw_filters": {
-                "assay_filters": {"name": assay_name, "id": assay_id,}
+                "assay_filters": {
+                    "name": assay_name,
+                    "id": assay_id,
+                }
             }
         }
 
@@ -125,7 +129,7 @@ class VizPayloadBuilder(object):
             "fields": self.output_fields_mapping,
             "return_query": self.return_query,
         }
-    
+
     def validate_base_sql(self):
         if not isinstance(self.base_sql, str) or "".__eq__(self.base_sql):
             self.error_handler("base_sql is either not a string or is empty")

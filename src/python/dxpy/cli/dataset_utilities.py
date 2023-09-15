@@ -1105,7 +1105,7 @@ def extract_assay_expression(parser_obj):
     #     error_handler=err_exit
     # )
 
-    # vizserver_payload.assemble_raw_filters(assay_name=..., assay_id=..., filters=vizserver_raw_filters)
+    # vizserver_payload.assemble_assay_raw_filters(assay_name=..., assay_id=..., filters=vizserver_raw_filters)
     # vizserver_full_payload = vizserver_payload.build()
 
 
