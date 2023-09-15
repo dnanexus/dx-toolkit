@@ -29,6 +29,8 @@ import json
 import shutil
 from dxpy_testutil import cd, chdir
 from dxpy.bindings.apollo.ValidateJSONbySchema import JSONValidator
+from dxpy.bindings.apollo.path_validator import PathValidator
+
 from dxpy.bindings.apollo.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
@@ -68,6 +70,9 @@ class TestDXExtractExpression(unittest.TestCase):
         actual_err_msg = process.communicate()[1]
         
         self.assertTrue(expected_error_message in actual_err_msg)
+
+    def test_bad_dataset_version_unit(self):
+
 
      # Test list fields dataset validation
     def test_bad_dataset_type(self):
