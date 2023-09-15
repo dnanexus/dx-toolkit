@@ -30,11 +30,12 @@ import shutil
 from dxpy_testutil import cd, chdir
 from dxpy.bindings.apollo.ValidateJSONbySchema import JSONValidator
 from dxpy.bindings.apollo.path_validator import PathValidator
+from dxpy.utils.resolver import resolve_existing_path
 
 from dxpy.bindings.apollo.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
-
+from dxpy.bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 dirname = os.path.dirname(__file__)
 
 python_version = sys.version_info.major
@@ -50,41 +51,59 @@ class TestDXExtractExpression(unittest.TestCase):
         cd(cls.proj_id + ":/")
         cls.general_input_dir = os.path.join(dirname, "expression_test_files/input/")
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
-        cls.schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
+        cls.json_schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
+        cls.input_args_schema = EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
+        cls.bad_version_dataset = "{}:Extract_Expression/bad_version_dataset".format(cls.proj_id)
+        cls.wrong_type_path_file = "{}:Extract_Expression/wrong_type_file".format(cls.proj_id)
 
         if not os.path.exists(cls.general_output_dir):
             os.makedirs(cls.general_output_dir)
 
     @classmethod
+    def input_arg_error_handler(cls, message):
+        raise ValueError(message)
+
+    @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.general_output_dir)
 
-    # Test list fields dataset validation
-    def test_bad_dataset_version(self):
-        test_record = "{}:Extract_Expression/bad_version_dataset".format(self.proj_id)
-        expected_error_message = "{}: Version of the cohort or dataset is too old.. Version must be 3.0".format(test_record)
 
-        command = ["dx", "extract_assay", "expression", test_record, "--additional-fields-help"]
-        process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
-
-        actual_err_msg = process.communicate()[1]
-        
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    def test_bad_dataset_version_unit(self):
+    #
+    # Path Validation tests
+    # There are # ways this function can fail.  Each of the following assumes the previous conditions have been met:
+    # 1. Object in wrong project
+    # 2. Object not of class record
+    # 3. Object not of recordType "Dataset" or "CohortBrowser"
+    # 4. Object is not of correct version (3.0 at the time of this writing)
+    # 5. Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
+    #
 
 
-     # Test list fields dataset validation
-    def test_bad_dataset_type(self):
-        test_record = "{}:Extract_Expression/wrong_type_file".format(self.proj_id)
+    # 2. Object not of class record
+    def test_bad_dataset_type_unit(self):
+        test_record = self.wrong_type_path_file
         expected_error_message = "{}: Invalid path. The path must point to a record type of cohort or dataset".format(test_record)
+        project, folder_path, entity_result = resolve_existing_path(test_record)
+        validator = PathValidator(self.input_args_schema,self.proj_id,entity_result["describe"],error_handler=self.input_arg_error_handler)
 
-        command = ["dx", "extract_assay", "expression", test_record, "--additional-fields-help"]
-        process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
+        with self.assertRaises(ValueError) as cm:
+            validator.validate()
 
-        actual_err_msg = process.communicate()[1]
-       
-        self.assertTrue(expected_error_message in actual_err_msg)
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
+
+
+    # 3. Object not of recordType "Dataset" or "CohortBrowser"
+    def test_bad_dataset_version(self):
+        expected_error_message = "{}: Version of the cohort or dataset is too old. Version must be 3.0".format(self.bad_version_dataset)
+        project, folder_path, entity_result = resolve_existing_path(self.bad_version_dataset)
+        validator = PathValidator(self.input_args_schema,self.proj_id,entity_result["describe"],error_handler=self.input_arg_error_handler)
+
+        # print(entity_result["describe"])
+        with self.assertRaises(ValueError) as cm:
+            validator.validate()
+
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
+
 
 if __name__ == "__main__":
     unittest.main()
