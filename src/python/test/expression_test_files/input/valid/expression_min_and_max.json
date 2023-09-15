@@ -1,9 +1,0 @@
-{
-    "expression":{
-        "min_value":"1",
-        "max_value":"200"
-    },
-    "annotation": {
-        "feature_id": ["ENSG0000001", "ENSG00000002"]
-    }
-}

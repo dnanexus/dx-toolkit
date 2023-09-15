@@ -1,6 +1,0 @@
-{
-    "expression": {"min_value": "10.2", "max_value": "10000"},
-    "annotation": {
-        "feature_name": ["BRCA2"]
-    }
-}
