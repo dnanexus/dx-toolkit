@@ -97,7 +97,6 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_bad_dataset_version(self):
         test_record = self.bad_version_dataset
         expected_error_message = "{}: Version of the cohort or dataset is too old. Version must be 3.0".format(self.bad_version_dataset)
-        project, folder_path, entity_result = resolve_existing_path(self.bad_version_dataset)
         self.standard_path_validation_test(test_record,expected_error_message)
 
 
