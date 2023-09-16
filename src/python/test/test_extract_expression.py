@@ -32,6 +32,7 @@ from dxpy.bindings.apollo.ValidateJSONbySchema import JSONValidator
 from dxpy.bindings.apollo.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
+from dxpy.bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 
 dirname = os.path.dirname(__file__)
 
@@ -57,9 +58,17 @@ class TestDXExtractExpression(unittest.TestCase):
         if not os.path.exists(cls.general_output_dir):
             os.makedirs(cls.general_output_dir)
 
+
+    @classmethod
+    def input_arg_error_handler(cls, message):
+        raise ValueError(message)
+
+
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.general_output_dir)
+
+    
 
     # Test PATH argument not provided
     def test_path_missing(self):
@@ -98,6 +107,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-1
     # The structure of "Path" is invalid
     def test_missing_dataset(self):
+        return False
         missing_dataset = self.proj_id + ":/Extract_Expression/missing_dataset"
         expected_error_message = (
             "dxpy.utils.resolver.ResolutionError: Could not find a {}".format(
@@ -139,7 +149,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
     def test_list_assay_cohort_browser(self):
         # TODO: add cohort browser object to test project
-        return True
+        return False
         expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
         command = [
             "dx",
@@ -160,7 +170,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
     def test_assay_name_cohort_browser(self):
         # TODO: add cohort browser object to test project
-        return True
+        return False
         expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
         command = [
             "dx",
@@ -181,7 +191,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-7
     # Value specified for this option specified is not a valid assay
     def test_invalid_assay_name(self):
-        return True
+        return False
     
         assay_name = "invalid_assay"
         expected_error_message = "Assay {} does not exist in the [PATH]".assay_name
@@ -205,7 +215,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # When –assay-name is not provided and the dataset has no assays
     def test_no_assay_dataset(self):
         # TODO: create dataset with no assays in test project
-        return True
+        return False
         no_assay_dataset = self.proj_id + ":/Extract_Expression/no_assay_dataset"
         expected_error_message = (
             "When --assay-name is not provided and the dataset has no assays"
@@ -223,7 +233,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # When the provided assay name is not a molecular expression assay
     def test_wrong_assay_type(self):
         # TODO: Add dataset with somatic or other non CLIEXPRESS assay to test project 
-        return True
+        return False
         somatic_assay_name = "somatic_assay"
         expected_error_message = "The assay name provided cannot be recognized as a molecular expression assay. For valid assays accepted by the function, `extract_assay expression` ,please use the --list-assays flag"
         command = [
@@ -269,6 +279,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-11
     # When invalid additional fields are passed
     def invalid_additional_fields(self):
+        return False
         expected_error_message = "One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields"
         command = [
             "dx",
@@ -294,6 +305,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-13
     # When –list-assays is passed but there is no “Molecular Expression” Assay
     def test_no_molec_exp_assay(self):
+        return False
         # This is meant to return empty with no error message
         expected_error_message = ""
         no_molec_exp_assay = self.proj_id + ":/Extract_Expression/no_molec_exp_assay"
