@@ -33,6 +33,7 @@ from dxpy.bindings.apollo.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
 from dxpy.bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
+from dxpy.bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 
 dirname = os.path.dirname(__file__)
 
@@ -67,6 +68,10 @@ class TestDXExtractExpression(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.general_output_dir)
+
+    def standard_input_args_test(self,argument_list):
+        test_record = self.test_record
+        
 
     
 
