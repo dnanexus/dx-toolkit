@@ -60,7 +60,7 @@ class TestDXExtractExpression(unittest.TestCase):
             os.makedirs(cls.general_output_dir)
 
     @classmethod
-    def input_arg_error_handler(cls, message):
+    def path_validation_error_handler(cls, message):
         raise ValueError(message)
 
     @classmethod
@@ -69,7 +69,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def standard_path_validation_test(self,test_record,expected_error_message):
         project, folder_path, entity_result = resolve_existing_path(test_record)
-        validator = PathValidator(self.input_args_schema,self.proj_id,entity_result["describe"],error_handler=self.input_arg_error_handler)
+        validator = PathValidator(self.input_args_schema,self.proj_id,entity_result["describe"],error_handler=self.path_validation_error_handler)
 
         with self.assertRaises(ValueError) as cm:
             validator.validate()
