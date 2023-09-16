@@ -53,7 +53,7 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
         cls.json_schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
         cls.input_args_schema = EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
-        cls.bad_version_dataset = "{}:Extract_Expression/bad_version_dataset".format(cls.proj_id)
+        cls.bad_version_dataset = "{}:Extract_Expression/wrong_version_dataset_2".format(cls.proj_id)
         cls.wrong_type_path_file = "{}:Extract_Expression/wrong_type_file".format(cls.proj_id)
 
         if not os.path.exists(cls.general_output_dir):
