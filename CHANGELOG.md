@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [357.0] - beta
+## [358.0] - beta
+
+### Changed
+
+* `dx find org projects --property` in Python 3
+
+## [357.0] - 2023.9.15
 
 ### Changed
 
