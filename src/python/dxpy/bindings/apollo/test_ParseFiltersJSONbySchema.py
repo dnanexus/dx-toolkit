@@ -76,3 +76,5 @@ payload["raw_filters"]["assay_filters"].update(filters)
 
 # sql_query = dxpy.DXHTTPRequest(".../record-yyyy/raw-query", payload, prepend_srv=False)
 # compare `sql_query` with `expected_sql_query`
+
+# This file must be removed once unit tests are in place
