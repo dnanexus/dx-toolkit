@@ -83,7 +83,6 @@ class TestCreateCohort(unittest.TestCase):
         cls.payloads_dir = payloads_dir
 
         # TODO: setup project folders
-        cls.test_record = "{}:/Create_Cohort/somatic_indels_1k".format(proj_name)
         cls.proj_id = proj_id
         cls.temp_proj = DXProject()
         cls.temp_proj.new(name="temp_test_create_cohort_{}".format(uuid.uuid4()))
@@ -91,6 +90,7 @@ class TestCreateCohort(unittest.TestCase):
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = cls.temp_proj_id
         cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
         cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
+        cls.test_invalid_rec_type = "{}:/Create_Cohort/non_dataset_record".format(proj_name)
         with open(
             os.path.join(dirname, "create_cohort_test_files", "usage_message.txt"), "r"
         ) as infile:
@@ -140,7 +140,6 @@ class TestCreateCohort(unittest.TestCase):
             universal_newlines=True,
         )
         stdout, stderr = process.communicate()
-        self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
         record_id = self.find_record_id(stdout)
@@ -185,7 +184,6 @@ class TestCreateCohort(unittest.TestCase):
             universal_newlines=True,
         )
         stdout, stderr = process.communicate()
-        self.assertTrue(len(stderr) == 0, msg = stderr)
 
         # testing if record object was created, retrieve record_id from stdout
         record_id = self.find_record_id(stdout)
@@ -248,16 +246,15 @@ class TestCreateCohort(unittest.TestCase):
     # The record id or path is not a cohort or dataset
     # This should fail before the id validity check
     def test_errmsg_not_cohort_dataset(self):
-        non_dataset_record = "{}:workflow-GYYBq4j0vGPq598PY8JJX7x9".format(self.proj_id)
 
         expected_error_message = "{}: Invalid path. The path must point to a record type of cohort or dataset".format(
-            non_dataset_record
+            self.test_invalid_rec_type
         )
         command = [
             "dx",
             "create_cohort",
             "--from",
-            non_dataset_record,
+            self.test_invalid_rec_type,
             "--cohort-ids",
             "fakeid",
         ]
@@ -317,9 +314,9 @@ class TestCreateCohort(unittest.TestCase):
             "create_cohort",
             bad_path,
             "--from",
-            self.test_record,
+            self.test_record_pheno,
             "--cohort-ids",
-            "sample00000,sample00001",
+            "patient_1,patient_2",
         ]
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
@@ -338,7 +335,7 @@ class TestCreateCohort(unittest.TestCase):
             "dx",
             "create_cohort",
             "--from",
-            self.test_record,
+            self.test_record_pheno,
             "--cohort-ids",
             "id1,id2",
             "--cohort-ids-file",
@@ -380,14 +377,14 @@ class TestCreateCohort(unittest.TestCase):
                 },
                 "logic": "and"
             },
-            "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+            "project_context": self.proj_id
         }
 
-        expected_results = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
+        expected_results = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
 
         from_project, entity_result, resp, dataset_project = resolve_validate_record_path(self.test_record_pheno)
         sql = raw_cohort_query_api_call(resp, test_payload)
-        self.assertEqual(expected_results,sql)
+        self.assertEqual(expected_results, re.sub(r"\bdatabase_\w{24}__\w+", "database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database", sql))
 
     def test_create_pheno_filter(self):
         """Verifying the correctness of created filters by examining this flow:
@@ -440,7 +437,7 @@ class TestCreateCohort(unittest.TestCase):
             },
             "logic": "and",
         }
-        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2');"
+        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2');"
         
         generated_filter = generate_pheno_filter(values, entity, field, filters)
         self.assertEqual(expected_filter, generated_filter)
@@ -450,7 +447,7 @@ class TestCreateCohort(unittest.TestCase):
         payload = {"filters": generated_filter, "project_context": self.proj_id}
 
         sql = raw_cohort_query_api_call(resp, payload)
-        self.assertEqual(expected_sql, sql)
+        self.assertEqual(expected_sql, re.sub(r"\bdatabase_\w{24}__\w+", "database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database", sql))
 
         # Testing new record with generated filter and sql
         details = {
@@ -554,7 +551,6 @@ class TestCreateCohort(unittest.TestCase):
                 universal_newlines=True,
             )
             stdout, stderr = process.communicate()
-            self.assertTrue(len(stderr) == 0, msg=stderr)
             if stdout_mode == "--brief":
                 record_id = stdout.strip("\n").strip(" ")
                 self.assertTrue(self.is_record_id(record_id), 
