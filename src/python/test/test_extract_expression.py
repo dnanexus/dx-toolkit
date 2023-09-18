@@ -33,7 +33,9 @@ from dxpy.bindings.apollo.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
 from dxpy.bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
-from dxpy.bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
+from dxpy.bindings.apollo.input_arguments_validation_schemas import (
+    EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
+)
 
 dirname = os.path.dirname(__file__)
 
@@ -55,25 +57,46 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
+        # Note: there would usually be a "func" key with a function object as its value
+        cls.default_parser_dict = {
+            "apiserver_host": None,
+            "apiserver_port": None,
+            "apiserver_protocol": None,
+            "project_context_id": None,
+            "workspace_id": None,
+            "security_context": None,
+            "auth_token": None,
+            "env_help": None,
+            "version": None,
+            "command": "extract_assay",
+            "path": None,
+            "list_assays": False,
+            "retrieve_expression": False,
+            "additional_fields_help": False,
+            "assay_name": None,
+            "input_json": None,
+            "input_json_file": None,
+            "json_help": False,
+            "sql": False,
+            "additional_fields": None,
+            "expression_matrix": False,
+            "delim": None,
+            "output": None,
+        }
 
         if not os.path.exists(cls.general_output_dir):
             os.makedirs(cls.general_output_dir)
-
 
     @classmethod
     def input_arg_error_handler(cls, message):
         raise ValueError(message)
 
-
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.general_output_dir)
 
-    def standard_input_args_test(self,argument_list):
+    def standard_input_args_test(self, argument_list):
         test_record = self.test_record
-        
-
-    
 
     # Test PATH argument not provided
     def test_path_missing(self):
@@ -197,7 +220,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # Value specified for this option specified is not a valid assay
     def test_invalid_assay_name(self):
         return False
-    
+
         assay_name = "invalid_assay"
         expected_error_message = "Assay {} does not exist in the [PATH]".assay_name
         command = [
@@ -237,7 +260,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-9
     # When the provided assay name is not a molecular expression assay
     def test_wrong_assay_type(self):
-        # TODO: Add dataset with somatic or other non CLIEXPRESS assay to test project 
+        # TODO: Add dataset with somatic or other non CLIEXPRESS assay to test project
         return False
         somatic_assay_name = "somatic_assay"
         expected_error_message = "The assay name provided cannot be recognized as a molecular expression assay. For valid assays accepted by the function, `extract_assay expression` ,please use the --list-assays flag"
@@ -552,6 +575,7 @@ class TestDXExtractExpression(unittest.TestCase):
         # print(actual_err_msg)
 
         self.assertTrue(expected_error_message in actual_err_msg)
+
 
 if __name__ == "__main__":
     unittest.main()
