@@ -1,3 +1,6 @@
+from __future__ import print_function
+
+
 class JSONValidator(object):
     """
     JSON validator class to validate a JSON against a schema.
@@ -78,6 +81,11 @@ class JSONValidator(object):
             error_handler("Schema must be a non-empty dict.")
 
     def validate(self, input_json):
+        if not isinstance(input_json, dict) or not input_json:
+            self.error_handler("Input JSON must be a non-empty dict.")
+
+        self.validate_types(input_json)
+        
         for key, value in self.schema.items():
             if key in input_json:
                 self.validate_properties(value.get("properties", {}), input_json[key])
@@ -94,6 +102,15 @@ class JSONValidator(object):
         self.check_incompatible_keys(input_json)
         self.check_dependent_key_combinations(input_json)
 
+    def validate_types(self, input_dict):
+        for key, value in input_dict.items():
+            if not isinstance(value, self.schema.get(key, {}).get("type")):
+                self.error_handler(
+                    "Key '{}' has an invalid type. Expected {} but got {}".format(
+                        key, self.schema.get(key, {}).get("type"), type(value)
+                    )
+                )
+    
     def validate_properties(self, properties, input_dict):
         for key, value in properties.items():
             if key not in input_dict and value.get("required"):
@@ -119,7 +136,7 @@ class JSONValidator(object):
                 )
             for item in input_list:
                 if not isinstance(item, str):
-                    error_handler(
+                    self.error_handler(
                         "Expected list items to be of type string for {}.".format(
                             key_name
                         )
