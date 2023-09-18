@@ -140,31 +140,28 @@ class TestNextflowTemplates(DXTestCase):
     def test_src_inputs(self):
         '''
         Tests that code that handles custom nextflow input parameters (e.g. from nextflow schema) with different classes
-        are properly added in the applet source script. These input arguments should be
-        1) appended to nextflow cmd as runtime parameters
-        2) added to runtime configuration nxf_runtime.config if it is an optional param in nextflow_schema
+        are properly added in the applet source script. These input arguments should be appended to nextflow cmd as runtime parameters
         '''
         src = get_nextflow_src(custom_inputs=[input1, input2, input3, input4])
         # case 1: file input, need to convert from dnanexus link to its file path inside job workspace
         self.assertTrue("if [ -n \"${}\" ];".format(input1.get("name")) in src)
         value1 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input1.get(
             "name")
-        self.assertTrue("--{}={}".format(input1.get("name"), value1) in src)
+        self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input1.get("name"), value1) in src)
         # case 2: string input, need no conversion
         self.assertTrue("if [ -n \"${}\" ];".format(input2.get("name")) in src)
         value2 = '${%s}' % input2.get("name")
-        self.assertTrue("--{}={}".format(input2.get("name"), value2) in src)
-        # case 3: file input (nextflow pipeline optional), added to nxf_runtime.config
+        self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input2.get("name"), value2) in src)
+        # case 3: file input (nextflow pipeline optional), same as case 1
         self.assertTrue("if [ -n \"${}\" ];".format(input3.get("name")) in src)
-        value3 = '\\"dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)\\"' % input3.get(
+        value3 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input3.get(
             "name")
-        self.assertTrue("echo params.{}={} >> nxf_runtime.config".format(
-            input3.get("name"), value3) in src)
+        self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input3.get("name"), value3) in src)
         # case 4: file input (nextflow pipeline required), same as case 1
         self.assertTrue("if [ -n \"${}\" ];".format(input4.get("name")) in src)
         value4 = 'dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)' % input4.get(
             "name")
-        self.assertTrue("--{}={}".format(input4.get("name"), value4) in src)
+        self.assertTrue("applet_runtime_inputs+=(--{} \"{}\")".format(input4.get("name"), value4) in src)
 
     def test_prepare_inputs(self):
         inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
@@ -341,9 +338,6 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         job_handler.wait_on_done()
         job_desc = dxpy.describe(job_id)
 
-        print(job_desc["output"])
-        self.assertEqual(len(job_desc["output"]["nextflow_log"]), 1)
-
         # the output files will be: ls_folder.txt, cat_file.txt
         self.assertEqual(len(job_desc["output"]["published_files"]), 2)
 
@@ -413,12 +407,12 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         applet = dxpy.DXApplet(applet_id)
 
         job = applet.run({
-                         "nextflow_pipeline_params": "--input 'Printed_test_message'",
+                         "nextflow_pipeline_params": "--input 'Printed test message'",
                          "nextflow_top_level_opts": "-quiet"
         })
 
         watched_run_output = run("dx watch {}".format(job.get_id()))
-        self.assertIn("Printed_test_message", watched_run_output)
+        self.assertIn("hello STDOUT Printed test message world!", watched_run_output)
         # Running with the -quiet option reduces the amount of log and the lines such as:
         # STDOUT Launching `/home/dnanexus/hello/main.nf` [run-c8804f26-2eac-48d2-9a1a-a707ad1189eb] DSL2 - revision: 72a5d52d07
         # are not printed

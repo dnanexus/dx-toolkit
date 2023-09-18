@@ -10,7 +10,24 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Nextflow pipeline readme file is used as a readme file of Nextflow applet
 
-## [356.0] - beta
+## [358.0] - beta
+
+### Changed
+
+* `dx find org projects --property` in Python 3
+
+## [357.0] - 2023.9.15
+
+### Changed
+
+* Remove optional output param `nextflow_log` from Nextflow pipeline applets; instead, always upload Nextflow log file to head job destination when execution completes
+
+### Fixed
+
+* Nextflow applets passes schema input params explicitly in `nextflow run` command, as parameters assigned in runtime config are not handled properly by nextflow-io
+* Unexpected splitting at whitespaces inside quotes when parsing string-type input parameters of Nextflow applets
+
+## [356.0] - 2023.9.1
 
 ### Fixed
 

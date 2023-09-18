@@ -29,6 +29,7 @@ import unittest
 import os
 import sys
 import subprocess
+import shutil
 
 from dxpy_testutil import cd
 from dxpy.cli.dataset_utilities import (
@@ -85,6 +86,9 @@ class TestDXExtractSomatic(unittest.TestCase):
         if not os.path.exists(cls.e2e_output_directory):
             os.makedirs(cls.e2e_output_directory)
 
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.general_output_dir)
 
     ############
     # Unit Tests
@@ -104,7 +108,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         # Expected Results
         expected_assay_name = "test_single_assay_202306231200"
         expected_assay_id = "5c359e55-0639-46bc-bbf3-5eb22d5a5780"
-        expected_ref_genome = "GRCh38.92"
+        expected_ref_genome = "GRCh38.109"
 
         (
             selected_assay_name,
@@ -151,24 +155,24 @@ class TestDXExtractSomatic(unittest.TestCase):
             }
         ]
         expected_output = {
-            "compound": [
+            "variant_read_optimized$allele_id": [
                 {
-                    "filters": {
-                        "variant_read_optimized$CHROM": [
-                            {"condition": "is", "values": "chr21"}
-                        ],
-                        "variant_read_optimized$POS": [
-                            {"condition": "greater-than", "values": 100},
-                            {"condition": "less-than", "values": 50000000},
-                        ],
-                    },
-                    "logic": "and",
-                }
-            ],
-            "logic": "or",
+                    "condition": "in",
+                    "values": [],
+                    "geno_bins": [
+                        {
+                            "chr": "21",
+                            "start": 100,
+                            "end": 50000000
+                        }
+                    ]
+                },
+            ]
         }
-
-        self.assertEqual(location_filter(raw_location_list), expected_output)
+        expected_chrom = ['chr21']
+        loc_filter, chrom = location_filter(raw_location_list)
+        self.assertEqual(loc_filter, expected_output)
+        self.assertEqual(chrom, expected_chrom)
 
     def test_generate_assay_filter(self):
         print("testing generate assay filter")
@@ -181,19 +185,14 @@ class TestDXExtractSomatic(unittest.TestCase):
                 "name": "test_single_assay_202306231200",
                 "id": "0c69a39f-a34f-4030-a866-5056c8112da4",
                 "logic": "and",
-                "compound": [
-                    {
-                        "filters": {
-                            "variant_read_optimized$allele_id": [
-                                {"condition": "in", "values": ["chr21_40590995_C_C"]}
-                            ],
-                            "variant_read_optimized$tumor_normal": [
-                                {"condition": "is", "values": "tumor"}
-                            ],
-                        },
-                        "logic": "and",
-                    }
-                ],
+                "filters": {
+                    "variant_read_optimized$allele_id": [
+                        {"condition": "in", "values": ["chr21_40590995_C_C"]}
+                    ],
+                    "variant_read_optimized$tumor_normal": [
+                        {"condition": "is", "values": "tumor"}
+                    ],
+                }
             }
         }
         self.assertEqual(
@@ -228,25 +227,21 @@ class TestDXExtractSomatic(unittest.TestCase):
                     "name": "test_single_assay_202306231200",
                     "id": "0c69a39f-a34f-4030-a866-5056c8112da4",
                     "logic": "and",
-                    "compound": [
-                        {
-                            "filters": {
-                                "variant_read_optimized$allele_id": [
-                                    {
-                                        "condition": "in",
-                                        "values": ["chr21_40590995_C_C"],
-                                    }
-                                ],
-                                "variant_read_optimized$tumor_normal": [
-                                    {"condition": "is", "values": "tumor"}
-                                ],
-                            },
-                            "logic": "and",
-                        }
-                    ],
+                    "filters": {
+                        "variant_read_optimized$allele_id": [
+                            {
+                                "condition": "in",
+                                "values": ["chr21_40590995_C_C"],
+                            }
+                        ],
+                        "variant_read_optimized$tumor_normal": [
+                            {"condition": "is", "values": "tumor"}
+                        ],
+                    }
                 }
             },
             "distinct": True,
+            "adjust_geno_bins": False
         }
         expected_output_fields = [
             "assay_sample_id",
@@ -259,6 +254,89 @@ class TestDXExtractSomatic(unittest.TestCase):
         test_payload, test_fields = somatic_final_payload(full_input_dict, name, id, project_context, genome_reference=None, additional_fields=None, include_normal=False)
         self.assertEqual(test_payload, expected_output)
         self.assertEqual(test_fields, expected_output_fields)
+
+    def test_somatic_final_payload_location(self):
+        print("testing somatic final payload with location filter")
+        full_input_dict = {"location":[{"chromosome":"chrUn_JTFH01000732v1_decoy","starting_position":"40", "ending_position":"45"}]}
+        name = "assay_dummy"
+        id = "id_dummy"
+        project_context = "project-dummy"
+        expected_output = {
+            "filters": {
+                "variant_read_optimized$allele_id": [
+                    {
+                        "condition": "in",
+                        "values": [],
+                        "geno_bins": [
+                            {
+                                "chr": "Other",
+                                "start": 40,
+                                "end": 45
+                            }
+                        ] 
+                    }
+                ],
+                "variant_read_optimized$CHROM": [
+                    {
+                        "condition": "in",
+                        "values": [
+                            "chrUn_JTFH01000732v1_decoy"
+                        ]
+                    }
+                ],
+                "variant_read_optimized$tumor_normal": [
+                    {
+                        "condition": "is",
+                        "values": "tumor"
+                    }
+                ]
+            }
+        }
+
+        test_payload, _ = somatic_final_payload(full_input_dict, name, id, project_context, genome_reference=None, additional_fields=None, include_normal=False)
+        self.assertEqual(test_payload["raw_filters"]["assay_filters"]["filters"], expected_output["filters"])
+
+    def test_multiple_empty_required_keys(self):
+        print("testing multiple empty required keys")
+        full_input_dict = {"location":[{"chromosome":"chr21","starting_position":"40", "ending_position":"45"}],
+                           "allele": {"allele_id": []},
+                           "annotation": {"gene": [], "symbol": [], "feature": []}}
+        name = "assay_dummy"
+        id = "id_dummy"
+        project_context = "project-dummy"
+        expected_output = {
+            "filters": {
+                "variant_read_optimized$allele_id": [
+                    {
+                        "condition": "in",
+                        "values": [],
+                        "geno_bins": [
+                            {
+                                "chr": "21",
+                                "start": 40,
+                                "end": 45
+                            }
+                        ] 
+                    }
+                ],
+                "variant_read_optimized$CHROM": [
+                    {
+                        "condition": "in",
+                        "values": [
+                            "chr21"
+                        ]
+                    }
+                ],
+                "variant_read_optimized$tumor_normal": [
+                    {
+                        "condition": "is",
+                        "values": "tumor"
+                    }
+                ]
+            }
+        }
+        test_payload, _ = somatic_final_payload(full_input_dict, name, id, project_context, genome_reference=None, additional_fields=None, include_normal=False)
+        self.assertEqual(test_payload["raw_filters"]["assay_filters"]["filters"], expected_output["filters"])
 
     def test_additional_fields(self):
         print("testing --additional-fields")
