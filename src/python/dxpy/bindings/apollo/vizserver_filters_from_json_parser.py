@@ -450,45 +450,74 @@ class JSONFiltersValidator(object):
         db_table_column_start = filtering_condition["table_column"]["starting_position"]
         db_table_column_end = filtering_condition["table_column"]["ending_position"]
 
-        input_start_value = input_json_item["starting_position"]
-        input_end_value = input_json_item["ending_position"]
+        input_start_value = int(input_json_item["starting_position"])
+        input_end_value = int(input_json_item["ending_position"])
 
-        return {
+        start_filter = self.build_one_key_generic_filter(
+            db_table_column_start,
+            "between",
+            [input_start_value, input_end_value],
+            return_complete_filter=False,
+        )
+        end_filter = self.build_one_key_generic_filter(
+            db_table_column_end,
+            "between",
+            [input_start_value, input_end_value],
+            return_complete_filter=False,
+        )
+        compound_start_filter = self.build_one_key_generic_filter(
+            db_table_column_start,
+            "less-than-eq",
+            input_start_value,
+            return_complete_filter=False,
+        )
+
+        compound_end_filter = self.build_one_key_generic_filter(
+            db_table_column_end,
+            "greater-than-eq",
+            input_end_value,
+            return_complete_filter=False,
+        )
+
+        filter_structure = {
             "logic": "or",
             "compound": [
                 {
-                    "filters": {
-                        **self.build_one_key_generic_filter(
-                            db_table_column_start,
-                            "between",
-                            [input_start_value, input_end_value],
-                            return_complete_filter=False,
-                        ),
-                        **self.build_one_key_generic_filter(
-                            db_table_column_end,
-                            "between",
-                            [input_start_value, input_end_value],
-                            return_complete_filter=False,
-                        ),
-                    },
+                    "filters": {},
                     "logic": "or",
                 },
                 {
-                    "filters": {
-                        **self.build_one_key_generic_filter(
-                            db_table_column_start,
-                            "less-than-eq",
-                            input_start_value,
-                            return_complete_filter=False,
-                        ),
-                        **self.build_one_key_generic_filter(
-                            db_table_column_end,
-                            "greater-than-eq",
-                            input_end_value,
-                            return_complete_filter=False,
-                        ),
-                    },
+                    "filters": {},
                     "logic": "and",
                 },
             ],
         }
+
+        filter_structure["compound"][0]["filters"].update(start_filter)
+        filter_structure["compound"][0]["filters"].update(end_filter)
+        filter_structure["compound"][1]["filters"].update(compound_start_filter)
+        filter_structure["compound"][1]["filters"].update(compound_end_filter)
+
+        # In Python 3, this can be simply done via:
+
+        # return {
+        #     "logic": "or",
+        #     "compound": [
+        #         {
+        #             "filters": {
+        #                 **start_filter,
+        #                 **end_filter,
+        #             },
+        #             "logic": "or",
+        #         },
+        #         {
+        #             "filters": {
+        #                 **compound_start_filter,
+        #                 **compound_end_filter,
+        #             },
+        #             "logic": "and",
+        #         },
+        #     ],
+        # }
+
+        return filter_structure
