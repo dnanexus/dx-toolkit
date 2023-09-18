@@ -36,6 +36,7 @@ from dxpy.bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
+from expression_test_files.input_dict import CLIEXPRESS_TEST_INPUT
 
 dirname = os.path.dirname(__file__)
 
@@ -88,12 +89,32 @@ class TestDXExtractExpression(unittest.TestCase):
             os.makedirs(cls.general_output_dir)
 
     @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.general_output_dir)
+
+    @classmethod
     def input_arg_error_handler(cls, message):
         raise ValueError(message)
 
     @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.general_output_dir)
+    def json_error_handler(cls, message):
+        raise ValueError(message)
+
+    def standard_negative_filter_test(self, json_name, expected_error_message):
+        input_json = CLIEXPRESS_TEST_INPUT["malformed"][json_name]
+        validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate(input_json)
+
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
+
+    def standard_positive_filter_test(self, json_name):
+        input_json = CLIEXPRESS_TEST_INPUT["valid"][json_name]
+
+        validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
+
+        validator.validate(input_json)
 
     def standard_input_args_test(self, input_argument_dict, expected_error_message):
         # Deep copy the default parser dictionary
@@ -186,7 +207,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertTrue(expected_error_message in actual_err_msg)
 
-    # EM-6
+    # EM-6-2
     # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
     @unittest.skip("test record not yet created")
     def test_assay_name_cohort_browser(self):
@@ -417,18 +438,6 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertTrue(expected_error_message in actual_err_msg)
 
-    # EM-18
-    # When content in the JSON is mis-represented, including: invalid keys, invalid-values, duplicate keys
-    # TODO This set of tests is implemented on a different branch
-
-    # EM-19
-    # When a filter has more entries in the list than what is allowed
-    # TODO This set of tests is implemented on a different branch
-
-    # EM-20
-    # When none of the required filters is provided or when more than one of the required filters are provided
-    # TODO This set of tests is implemented on a different branch
-
     # EM-21
     # When --json-help is passed with another option from --assay-name, --sql, --additional-fields, --expression-matix, --output
     def test_json_help_other_option(self):
@@ -496,5 +505,191 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertTrue(expected_error_message in actual_err_msg)
 
 
+    
+
+    #
+    # Malformed input json tests
+    # EM-18, EM-19, EM-20
+    #
+
+    def test_annotation_conflicting_keys(self):
+        self.standard_negative_filter_test(
+            "annotation_conflicting_keys",
+            "Conflicting keys feature_name and feature_id cannot be present together.",
+        )
+
+    def test_annotation_id_maxitem(self):
+        self.standard_negative_filter_test(
+            "annotation_id_maxitem", "error message not yet defined"
+        )
+
+    def test_annotation_id_type(self):
+        self.standard_negative_filter_test(
+            "annotation_id_type",
+            "Key 'feature_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>",
+        )
+
+    def test_annotation_name_maxitem(self):
+        self.standard_negative_filter_test(
+            "annotation_name_maxitem",
+            "Key 'feature_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>",
+        )
+
+    def test_annotation_name_type(self):
+        self.standard_negative_filter_test(
+            "annotation_name_type",
+            "Key 'feature_name' has an invalid type. Expected <class 'list'> but got <class 'dict'>",
+        )
+
+    def test_annotation_type(self):
+        self.standard_negative_filter_test(
+            "annotation_type",
+            "Key 'annotation' has an invalid type. Expected <class 'dict'> but got <class 'list'>",
+        )
+
+    def test_bad_dependent_conditional(self):
+        self.standard_negative_filter_test(
+            "bad_dependent_conditional",
+            "When expression is present, one of the following keys must be also present: annotation, location.",
+        )
+
+    def test_bad_toplevel_key(self):
+        self.standard_negative_filter_test(
+            "bad_toplevel_key", "error message not yet defined"
+        )
+
+    def test_conflicting_toplevel(self):
+        self.standard_negative_filter_test(
+            "conflicting_toplevel",
+            "Conflicting keys feature_name and feature_id cannot be present together.",
+        )
+
+    def test_empty_dict(self):
+        self.standard_negative_filter_test(
+            "empty_dict", "error message not yet defined"
+        )
+
+    def test_expression_empty_dict(self):
+        self.standard_negative_filter_test(
+            "expression_empty_dict", "error message not yet defined"
+        )
+
+    def test_expression_max_type(self):
+        self.standard_negative_filter_test(
+            "expression_max_type",
+            "Key 'max_value' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+        )
+
+    def test_expression_min_type(self):
+        self.standard_negative_filter_test(
+            "expression_min_type",
+            "Key 'min_value' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+        )
+
+    def test_expression_type(self):
+        self.standard_negative_filter_test(
+            "expression_type",
+            "Key 'expression' has an invalid type. Expected <class 'dict'> but got <class 'list'>",
+        )
+
+    def test_location_chrom_type(self):
+        self.standard_negative_filter_test(
+            "location_chrom_type",
+            "Key 'chromosome' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+        )
+
+    def test_location_end_before_start(self):
+        self.standard_negative_filter_test(
+            "location_end_before_start", "error message not yet defined"
+        )
+
+    def test_location_end_type(self):
+        self.standard_negative_filter_test(
+            "location_end_type",
+            "Key 'ending_position' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+        )
+
+    def test_location_item_type(self):
+        self.standard_negative_filter_test(
+            "location_item_type", "error message not yet defined"
+        )
+
+    def test_location_max_width(self):
+        self.standard_negative_filter_test(
+            "location_max_width", "error message not yet defined"
+        )
+
+    def test_location_missing_chr(self):
+        self.standard_negative_filter_test(
+            "location_missing_chr",
+            "Required key 'chromosome' was not found in the input JSON.",
+        )
+
+    def test_location_missing_end(self):
+        self.standard_negative_filter_test(
+            "location_missing_end",
+            "Required key 'ending_position' was not found in the input JSON.",
+        )
+
+    def test_location_missing_start(self):
+        self.standard_negative_filter_test(
+            "location_missing_start",
+            "Required key 'starting_position' was not found in the input JSON.",
+        )
+
+    def test_location_start_type(self):
+        self.standard_negative_filter_test(
+            "location_start_type",
+            "Key 'starting_position' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+        )
+
+    def test_location_type(self):
+        self.standard_negative_filter_test(
+            "location_type", "error message not yet defined"
+        )
+
+    def test_sample_id_maxitem(self):
+        self.standard_negative_filter_test(
+            "sample_id_maxitem", "error message not yet defined"
+        )
+
+    def test_sample_id_type(self):
+        self.standard_negative_filter_test(
+            "sample_id_type", "Expected list but got <class 'dict'> for sample_id"
+        )
+
+    #
+    # Correct JSON inputs
+    #
+
+    def test_annotation_feature_id(self):
+        self.standard_positive_filter_test("annotation_feature_id")
+
+    def test_annotation_feature_name(self):
+        self.standard_positive_filter_test("annotation_feature_name")
+
+    def test_dependent_conditional_annotation(self):
+        self.standard_positive_filter_test("dependent_conditional_annotation")
+
+    def test_dependent_conditional_location(self):
+        self.standard_positive_filter_test("dependent_conditional_location")
+
+    def test_expression_max_only(self):
+        self.standard_positive_filter_test("expression_max_only")
+
+    def test_expression_min_and_max(self):
+        self.standard_positive_filter_test("expression_min_and_max")
+
+    def test_expression_min_only(self):
+        self.standard_positive_filter_test("expression_min_only")
+
+    def test_multi_location(self):
+        self.standard_positive_filter_test("multi_location")
+
+    def test_single_location(self):
+        self.standard_positive_filter_test("single_location")
+
+
+# Start the test
 if __name__ == "__main__":
     unittest.main()
