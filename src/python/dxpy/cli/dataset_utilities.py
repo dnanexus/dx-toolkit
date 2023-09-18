@@ -1057,13 +1057,13 @@ def extract_assay_somatic(args):
                 quoting=csv.QUOTE_NONE,
             )
 
-def extract_assay_expression(parser_obj):
+def extract_assay_expression(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an expression assay in a dataset or cohort based on provided rules.
     """
 
     # Validating input combinations
-    parser_dict = vars(parser_obj)
+    parser_dict = vars(args)
     input_validator = ValidateArgsBySchema(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
     input_validator.validate_input_combination()
 
@@ -1082,11 +1082,11 @@ def extract_assay_expression(parser_obj):
     path_validator.validate(check_list_assays_invalid_combination=True)
 
     # # Validating input JSON
-    # if parser_obj.input_json:
-    #     user_filters_json = parser_obj.input_json
+    # if args.input_json:
+    #     user_filters_json = json.loads(args.input_json)
 
-    # elif parser_obj.input_json_file:
-    #     with open(parser_obj.input_json_file) as f:
+    # elif args.input_json_file:
+    #     with open(args.input_json_file) as f:
     #         user_filters_json = json.load(f)
 
     # input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
