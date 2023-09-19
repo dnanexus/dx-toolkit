@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import os
 import dxpy
 import json
@@ -9,7 +8,7 @@ import tempfile
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
-                                          get_resources_dir_name)
+                                          get_resources_dir_name, create_readme)
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
@@ -106,6 +105,7 @@ def prepare_nextflow(resources_dir, profile, region):
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, dxapp_content)
     write_exec(dxapp_dir, exec_content)
+    create_readme(resources_dir, dxapp_dir)
     return dxapp_dir
 
 
