@@ -21,7 +21,7 @@ node{
 stage 'Build'
     parallel (
         "xenial-deb" : { 
-            node('master'){
+            node('22.04-agent'){
                 deleteDir()
                 sh  """
                     commit_hash=\"${env.commit_hash}\"
@@ -37,7 +37,7 @@ stage 'Build'
             }
         },
         "focal-deb" : { 
-            node('master'){
+            node('22.04-agent'){
                 deleteDir()
                 sh  """
                     commit_hash=\"${env.commit_hash}\"
