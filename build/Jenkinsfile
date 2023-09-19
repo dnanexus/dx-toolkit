@@ -1,4 +1,4 @@
-node{
+node('22.04-agent'){
     deleteDir()
     stage 'Git'
         dir('dx-toolkit'){
