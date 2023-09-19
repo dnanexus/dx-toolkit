@@ -112,6 +112,24 @@ class TestCreateCohort(unittest.TestCase):
     def is_record_id(self, text):
         return bool(re.match(r"^(record-[A-Za-z0-9]{24})",text))
     
+    def build_command(self, path=None, input_record=None, cohort_ids=None, cohort_ids_file=None):
+        command = [
+            "dx",
+            "create_cohort",
+            "--from",
+            input_record
+        ]
+        if path:
+            command.append(path)
+
+        if cohort_ids:
+            command.extend(["--cohort-ids", cohort_ids])
+        
+        if cohort_ids_file:
+            command.extend(["--cohort-ids-file", cohort_ids_file])
+        
+        return command
+    
     # Test the message printed on stdout when the --help flag is provided
     # This message is also printed on every error caught by argparse, before the specific message
     def test_help_text(self):
@@ -124,15 +142,12 @@ class TestCreateCohort(unittest.TestCase):
 
     # testing that command accepts file with sample ids
     def test_accept_file_ids(self):
-        command = [
-            "dx",
-            "create_cohort",
-            "{}:/".format(self.temp_proj_id),
-            "--from",
-            self.test_record_pheno,
-            "--cohort-ids-file",
-            "{}sample_ids_valid_pheno.txt".format(self.general_input_dir),
-        ]
+        command = self.build_command(
+            path = "{}:/".format(self.temp_proj_id),
+            input_record = self.test_record_pheno,
+            cohort_ids_file = "{}sample_ids_valid_pheno.txt".format(self.general_input_dir)
+        )
+
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -149,15 +164,11 @@ class TestCreateCohort(unittest.TestCase):
     # EM-1
     # testing resolution of invalid sample_id provided via file
     def test_accept_file_ids_negative(self):
-        command = [
-            "dx",
-            "create_cohort",
-            "{}:/".format(self.temp_proj_id),
-            "--from",
-            self.test_record_pheno,
-            "--cohort-ids-file",
-            "{}sample_ids_wrong.txt".format(self.general_input_dir),
-        ]
+        command = self.build_command(
+            path = "{}:/".format(self.temp_proj_id),
+            input_record = self.test_record_pheno,
+            cohort_ids_file = "{}sample_ids_wrong.txt".format(self.general_input_dir)
+        )
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
@@ -168,15 +179,11 @@ class TestCreateCohort(unittest.TestCase):
         self.assertTrue(expected_error in stderr, msg = stderr)
 
     def test_accept_cli_ids(self):
-        command = [
-            "dx",
-            "create_cohort",
-            "{}:/".format(self.temp_proj_id),
-            "--from",
-            self.test_record_geno,
-            "--cohort-ids",
-            "sample_1_1,sample_1_10",
-        ]
+        command = self.build_command(
+            path = "{}:/".format(self.temp_proj_id),
+            input_record = self.test_record_geno,
+            cohort_ids = " sample_1_1 , sample_1_10 "
+        )
         process = subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
@@ -193,15 +200,11 @@ class TestCreateCohort(unittest.TestCase):
     # EM-1
     # Supplied IDs do not match IDs of main entity in Dataset/Cohort
     def test_accept_cli_ids_negative(self):
-        command = [
-            "dx",
-            "create_cohort",
-            "{}:/".format(self.temp_proj_id),
-            "--from",
-            self.test_record_geno,
-            "--cohort-ids",
-            "wrong,sample,id",
-        ]
+        command = self.build_command(
+            path = "{}:/".format(self.temp_proj_id),
+            input_record = self.test_record_geno,
+            cohort_ids = "wrong,sample,id"
+        )
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
@@ -219,14 +222,10 @@ class TestCreateCohort(unittest.TestCase):
         expected_error_message = (
             'Unable to resolve "{}" to a data object or folder name in'.format(bad_record)
         )
-        command = [
-            "dx",
-            "create_cohort",
-            "--from",
-            "{}:{}".format(self.proj_id, bad_record),
-            "--cohort-ids",
-            "id1,id2",
-        ]
+        command = self.build_command(
+            input_record = "{}:{}".format(self.proj_id, bad_record),
+            cohort_ids = "id1,id2"
+        )
 
         process = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True
@@ -250,14 +249,10 @@ class TestCreateCohort(unittest.TestCase):
         expected_error_message = "{}: Invalid path. The path must point to a record type of cohort or dataset".format(
             self.test_invalid_rec_type
         )
-        command = [
-            "dx",
-            "create_cohort",
-            "--from",
-            self.test_invalid_rec_type,
-            "--cohort-ids",
-            "fakeid",
-        ]
+        command = self.build_command(
+            input_record = self.test_invalid_rec_type,
+            cohort_ids = "fakeid"
+        )
         process = subprocess.Popen(
             command, stdout=subprocess.PIPE ,stderr=subprocess.PIPE, universal_newlines=True
         )
@@ -282,14 +277,11 @@ class TestCreateCohort(unittest.TestCase):
         expected_error_message = 'ResolutionError: Could not find a project named "{}"'.format(
             bad_project
         )
-        command = [
-            "dx",
-            "create_cohort",
-            "--from",
-            "{}:/".format(bad_project),
-            "--cohort-ids",
-            "id_1,id_2",
-        ]
+        command = self.build_command(
+            path = "{}:/".format(self.temp_proj_id),
+            input_record = "{}:/".format(bad_project),
+            cohort_ids = "id_1,id_2"
+        )
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
@@ -309,15 +301,11 @@ class TestCreateCohort(unittest.TestCase):
         expected_error_message = "The folder: {} could not be found in the project: {}".format(
             "/Create_Cohort/missing_folder", self.proj_id
         )
-        command = [
-            "dx",
-            "create_cohort",
-            bad_path,
-            "--from",
-            self.test_record_pheno,
-            "--cohort-ids",
-            "patient_1,patient_2",
-        ]
+        command = self.build_command(
+            path = bad_path,
+            input_record = self.test_record_pheno,
+            cohort_ids = "patient_1,patient_2"
+        )
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
@@ -331,16 +319,11 @@ class TestCreateCohort(unittest.TestCase):
     # The file needs to exist for this check to be performed
     def test_errmsg_incompat_args(self):
         expected_error_message = "dx create_cohort: error: argument --cohort-ids-file: not allowed with argument --cohort-ids"
-        command = command = [
-            "dx",
-            "create_cohort",
-            "--from",
-            self.test_record_pheno,
-            "--cohort-ids",
-            "id1,id2",
-            "--cohort-ids-file",
-            os.path.join(self.general_input_dir, "sample_ids_10.txt"),
-        ]
+        command = self.build_command(
+            input_record = self.test_record_pheno,
+            cohort_ids = "id1,id2",
+            cohort_ids_file = os.path.join(self.general_input_dir, "sample_ids_10.txt")
+        )
         process = subprocess.Popen(
             command, stderr=subprocess.PIPE, universal_newlines=True
         )
@@ -513,6 +496,7 @@ class TestCreateCohort(unittest.TestCase):
             visualize = json.load(f)
         dataset = visualize["dataset"]
         databases = visualize["databases"]
+        schema = visualize["schema"]
         base_sql = visualize.get("baseSql", visualize.get("base_sql"))
         combined = visualize.get("combined")
 
@@ -522,7 +506,7 @@ class TestCreateCohort(unittest.TestCase):
         with open(os.path.join(self.payloads_dir, "raw-cohort-query_output", "{}.sql".format(payload_name))) as f:
             sql = f.read()
 
-        test_output = cohort_final_payload(name, folder, project, databases, dataset, filters, sql, base_sql, combined)
+        test_output = cohort_final_payload(name, folder, project, databases, dataset, schema, filters, sql, base_sql, combined)
 
         with open(os.path.join(self.payloads_dir, "dx_new_input", "{}.json".format(payload_name))) as f:
             valid_output = json.load(f)
@@ -532,15 +516,11 @@ class TestCreateCohort(unittest.TestCase):
         self.assertDictEqual(test_output, valid_output)
 
     def test_brief_verbose(self):
-        command = [
-            "dx",
-            "create_cohort",
-            "{}:/".format(self.temp_proj_id),
-            "--from",
-            self.test_record_geno,
-            "--cohort-ids",
-            "sample_1_1,sample_1_10",
-        ]
+        command = self.build_command(
+            path = "{}:/".format(self.temp_proj_id),
+            input_record = self.test_record_geno,
+            cohort_ids = "sample_1_1,sample_1_10"
+        )
 
         for stdout_mode in ["--verbose", "--brief", ""]:
             cmd = command + [stdout_mode] if stdout_mode != "" else command
@@ -631,14 +611,10 @@ class TestCreateCohort(unittest.TestCase):
         # set cwd
         dxpy.config['DX_CLI_WD'] = "/folder"
 
-        command = [
-            "dx",
-            "create_cohort",
-            "--from",
-            self.test_record_geno,
-            "--cohort-ids",
-            "sample_1_1,sample_1_10",
-        ]
+        command = self.build_command(
+            input_record = self.test_record_geno,
+            cohort_ids = "sample_1_1,sample_1_10"
+        )
         
         path_options = [        
             "record_name2", #Should create record in CWD
@@ -677,15 +653,11 @@ class TestCreateCohort(unittest.TestCase):
                 
                 
     def test_path_options_cli_negative(self):
-        command = [
-            "dx",
-            "create_cohort",
-            "/folder/subfolder/no_exist/record_name", # invalid path
-            "--from",
-            self.test_record_geno,
-            "--cohort-ids",
-            "sample_1_1,sample_1_10",
-        ]
+        command = self.build_command(
+            path = "/folder/subfolder/no_exist/record_name",
+            input_record = self.test_record_geno,
+            cohort_ids = "sample_1_1,sample_1_10"
+        )
         process = subprocess.Popen(
                 command,
                 stderr=subprocess.PIPE,

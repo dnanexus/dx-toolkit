@@ -1085,24 +1085,24 @@ def resolve_validate_dx_path(path):
 class VizserverError(Exception):
     pass
 
-def validate_cohort_ids(descriptor,project,resp,ids):
+def validate_cohort_ids(descriptor, project, resp,ids):
     # Usually the name of the table
     entity_name = descriptor.model["global_primary_key"]["entity"]
     # The name of the column or field in the table
     field_name = descriptor.model["global_primary_key"]["field"] 
 
     # Prepare a payload to find entries matching the input ids in the dataset
-    table_column_name = "{}${}".format(entity_name, field_name)
-    fields_list = [{field_name: table_column_name}]
+    entity_field_name = "{}${}".format(entity_name, field_name)
+    fields_list = [{field_name: entity_field_name}]
 
     # Note that pheno filters do not need name or id fields
     payload = {
         "project_context": project,
         "fields": fields_list,
-        "raw_filters":{
+        "filters":{
             "pheno_filters": {
                 "filters": {
-                    table_column_name: [
+                    entity_field_name: [
                         {"condition": "in", "values": ids}
                     ]
                 }
@@ -1128,7 +1128,7 @@ def validate_cohort_ids(descriptor,project,resp,ids):
     if discovered_ids != set(ids):
         # Find which given samples are not present in the dataset
         missing_ids = set(ids).difference(discovered_ids)
-        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = resp["dataset"],ids = missing_ids)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = resp["dataset"], ids = missing_ids)
         raise ValueError(err_msg)
 
         
@@ -1195,19 +1195,19 @@ def create_cohort(args):
     samples=[]
     # from file
     if args.cohort_ids_file:
-        with open(args.cohort_ids_file,"r") as infile:
+        with open(args.cohort_ids_file, "r") as infile:
             for line in infile:
                 samples.append(line.strip("\n"))
     # from string
     if args.cohort_ids:
-        samples = args.cohort_ids.split(",")
+        samples = [id.strip() for id in args.cohort_ids.split(",")]
     
     #### Validate the input cohort IDs ####
     # Get the table/entity and field/column of the dataset from the descriptor
     rec_descriptor = DXDataset(resp["dataset"], project=resp["datasetRecordProject"]).get_descriptor()
 
     try:
-        validate_cohort_ids(rec_descriptor,dataset_project,resp,samples)
+        validate_cohort_ids(rec_descriptor, dataset_project, resp,samples)
     except ValueError as err:
         err_exit(str(err))
     except VizserverError as err:
@@ -1235,6 +1235,7 @@ def create_cohort(args):
         path_project,
         resp["databases"],
         resp["dataset"],
+        resp["schema"],
         raw_cohort_query_payload["filters"],
         sql,
         base_sql,

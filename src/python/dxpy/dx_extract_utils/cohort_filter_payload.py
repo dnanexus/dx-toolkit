@@ -2,7 +2,6 @@ import copy
 
 
 def generate_pheno_filter(values, entity, field, filters):
-    filters = copy.deepcopy(filters)
 
     if "pheno_filters" not in filters:
         # Create a pheno_filter if none exists. This will be a compound filter
@@ -112,13 +111,13 @@ def cohort_combined_payload(combined):
     return combined
 
 
-def cohort_final_payload(name, folder, project, databases, dataset, filters, sql, base_sql=None, combined=None):
+def cohort_final_payload(name, folder, project, databases, dataset, schema, filters, sql, base_sql=None, combined=None):
     details = {
         "databases": databases,
         "dataset": {"$dnanexus_link": dataset},
         "description": "",
         "filters": filters,
-        "schema": "create_cohort_schema",
+        "schema": schema,
         "sql": sql,
         "version": "3.0",
     }
