@@ -1,3 +1,9 @@
+dx-toolkit (0.358.0) trusty; urgency=medium
+
+  * Fixed: `dx find org projects --property` in Python 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 15 Sep 2023 18:48:21 +0000
+
 dx-toolkit (0.357.0) trusty; urgency=medium
 
   * Fixed: Nextflow applets passes schema input params explicitly in nextflow run command, as parameters assigned in runtime config are not handled properly by nextflow-io

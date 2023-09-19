@@ -46,6 +46,8 @@ class TestImageRefParser(DXTestCase):
         ['dx://hola:', 'hola', 'hola', ''],
         ['dx://hola:', 'hola', 'hola', '']
     ])
+    @unittest.skipIf(USING_PYTHON2,
+        'Skipping Python 3 code')
     def test_DxPathParser(self, image_ref, name, context_id, file_path):
         dx_path_parser = ImageRefParserFactory(image_ref)
         tokens = dx_path_parser.parse
@@ -65,6 +67,8 @@ class TestImageRefParser(DXTestCase):
         ['rabbit@sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d', '', 'rabbit', '', 'sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d'],
         ['repository/rabbit@sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d', 'repository/', 'rabbit', '', 'sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d']
     ])
+    @unittest.skipIf(USING_PYTHON2,
+        'Skipping Python 3 code')
     def test_DockerImageParser(self, image_ref, repository, image, tag, digest):
         docker_parser = ImageRefParserFactory(image_ref)
         tokens = docker_parser.parse
