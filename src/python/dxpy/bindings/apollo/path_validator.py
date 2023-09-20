@@ -64,7 +64,7 @@ class PathValidator:
         ):
             # Check recordTypes first, then types, and if neither have data, put TYPENOTFOUND in the type part of the string
             self.throw_error(
-                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(self.record_http_request_info.get("recordTypes",self.record_http_request_info.get("types","TYPENOTFOUND")))
+                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(self.record_http_request_info.get("recordTypes") or self.record_http_request_info.get("types") or "TYPENOTFOUND")
             )
 
     def assert_dataset_version(self, expected_min_dataset_version=3.0):
