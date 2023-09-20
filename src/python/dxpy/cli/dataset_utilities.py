@@ -1108,7 +1108,7 @@ def extract_assay_expression(args):
     vizserver_payload = VizPayloadBuilder(
         project_context=project, 
         output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"],
-        limit=100_000_000,
+        # limit=100_000_000, ### TODO -- update later
         base_sql=BASE_SQL,
         is_cohort=IS_COHORT,
         error_handler=err_exit
