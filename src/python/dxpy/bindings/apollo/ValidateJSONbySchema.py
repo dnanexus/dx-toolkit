@@ -85,9 +85,9 @@ class JSONValidator(object):
             self.error_handler("Input JSON must be a non-empty dict.")
 
         self.error_on_invalid_keys(input_json)
-        
+
         self.validate_types(input_json)
-        
+
         for key, value in self.schema.items():
             if key in input_json:
                 self.validate_properties(value.get("properties", {}), input_json[key])
@@ -112,7 +112,7 @@ class JSONValidator(object):
                         key, self.schema.get(key, {}).get("type"), type(value)
                     )
                 )
-    
+
     def validate_properties(self, properties, input_dict):
         for key, value in properties.items():
             if key not in input_dict and value.get("required"):
@@ -189,18 +189,24 @@ class JSONValidator(object):
         for key in input_json:
             if key not in self.schema:
                 invalid_keys.append(key)
-        
+
         if invalid_keys:
             self.error_handler("Found following invalid filters: {}".format(key))
 
-    
-    def are_list_items_within_range(self, input_json, key, start_subkey, end_subkey, window_width=250_000_000, check_each_separately=False):
+    def are_list_items_within_range(
+        self,
+        input_json,
+        key,
+        start_subkey,
+        end_subkey,
+        window_width=250_000_000,
+        check_each_separately=False,
+    ):
         """
         This won't run by default when calling .validate() on a JSONValidator object. Run it separately when necessary
         """
 
         for item in input_json[key]:
-
             if int(item[end_subkey]) <= int(item[start_subkey]):
                 self.error_handler(
                     "{} cannot be less than or equal to the {}".format(
@@ -223,9 +229,5 @@ class JSONValidator(object):
 
             if max(end_values) - min(start_values) > window_width:
                 self.error_handler(
-                    "Range cannot be greater than {} for {}".format(
-                        window_width, key
-                    )
+                    "Range cannot be greater than {} for {}".format(window_width, key)
                 )
-
-
