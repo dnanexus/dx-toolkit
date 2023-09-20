@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Nextflow pipeline readme file is used as a readme file of Nextflow applet
+
 ## [358.0] - beta
 
 ### Changed
