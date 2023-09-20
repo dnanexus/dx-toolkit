@@ -1092,16 +1092,18 @@ def extract_assay_expression(args):
     input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
     input_json_validator.validate(input_json=user_filters_json)
     
-    if "location" in user_filters_json and not args.sql:
-        input_json_validator.are_list_items_within_range(input_json=user_filters_json,
-                                                         key="location", 
-                                                         start_subkey="starting_position", 
-                                                         end_subkey="ending_position", 
-                                                         window_width=250_000_000, 
-                                                         check_each_separately=False)
+    if "location" in user_filters_json:
+        if args.sql:
+            EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["filtering_conditions"]["location"]["max_item_limit"] = None
 
-    if args.sql:
-        EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["filtering_conditions"]["location"]["max_item_limit"] = None
+        else:
+            input_json_validator.are_list_items_within_range(input_json=user_filters_json,
+                                                            key="location", 
+                                                            start_subkey="starting_position", 
+                                                            end_subkey="ending_position", 
+                                                            window_width=250_000_000, 
+                                                            check_each_separately=False)
+        
     input_json_parser = JSONFiltersValidator(input_json=user_filters_json,
                                              schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS, 
                                              error_handler=err_exit)
