@@ -191,7 +191,7 @@ class JSONValidator(object):
                 invalid_keys.append(key)
 
         if invalid_keys:
-            self.error_handler("Found following invalid filters: {}".format(key))
+            self.error_handler("Found following invalid filters: {}".format(invalid_keys))
 
     def are_list_items_within_range(
         self,
