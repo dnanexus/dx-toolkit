@@ -1122,8 +1122,11 @@ def extract_assay_expression(args):
     vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
     vizserver_full_payload = vizserver_payload.build()
 
-    ### TODO -- remove
+    ### TODO -- remove later -- only for testing
     print(vizserver_full_payload)
+    viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
+    print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"])))
+    ### TODO --- remove the above code -- only for testing
 
 
 class DXDataset(DXRecord):
