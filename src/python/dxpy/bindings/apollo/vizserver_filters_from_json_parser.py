@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 
-class InputJSONFiltersValidator(object):
+class JSONFiltersValidator(object):
     """
     A specialized class that parses user input JSON according to a schema to prepare vizserver-compliant compound filters.
 
@@ -368,12 +368,6 @@ class InputJSONFiltersValidator(object):
     def get_number_of_filters(self):
         return len(self.input_json)
 
-    def build_filters():
-        ...
-
-    def build_raw_filters():
-        Ellipsis
-
     def convert_to_between_operator(self, operators_list):
         if len(operators_list) == 2:
             self.error_handler("Expected exactly two operators")
@@ -400,32 +394,6 @@ class InputJSONFiltersValidator(object):
             return {"filters": base_filter}
         else:
             return base_filter
-
-    def build_two_key_generic_filter(table_columns, condition, values):
-        """
-        {
-            "filters": {
-                "expr_annotation$start": [{"condition": "between", "values": [1, 3]}],
-                "expr_annotation$end": [{"condition": "between", "values": [5, 7]}],
-            },
-            "logic": "or",
-        }
-        """
-        Ellipsis
-
-    def build_two_key_multi_condition_filter(
-        table_column, first_key_condition, second_key_condition, values
-    ):
-        """
-        {
-            "filters": {
-                "expr_annotation$start": [{"condition": "less-than", "values": 100}],
-                "expr_annotation$end": [{"condition": "greater-than", "values": 500}],
-            },
-            "logic": "and",
-        }
-        """
-        Ellipsis
 
     def build_partial_overlap_genobin_filters(
         self, filtering_condition, input_json_item
@@ -482,45 +450,74 @@ class InputJSONFiltersValidator(object):
         db_table_column_start = filtering_condition["table_column"]["starting_position"]
         db_table_column_end = filtering_condition["table_column"]["ending_position"]
 
-        input_start_value = input_json_item["starting_position"]
-        input_end_value = input_json_item["ending_position"]
+        input_start_value = int(input_json_item["starting_position"])
+        input_end_value = int(input_json_item["ending_position"])
 
-        return {
+        start_filter = self.build_one_key_generic_filter(
+            db_table_column_start,
+            "between",
+            [input_start_value, input_end_value],
+            return_complete_filter=False,
+        )
+        end_filter = self.build_one_key_generic_filter(
+            db_table_column_end,
+            "between",
+            [input_start_value, input_end_value],
+            return_complete_filter=False,
+        )
+        compound_start_filter = self.build_one_key_generic_filter(
+            db_table_column_start,
+            "less-than-eq",
+            input_start_value,
+            return_complete_filter=False,
+        )
+
+        compound_end_filter = self.build_one_key_generic_filter(
+            db_table_column_end,
+            "greater-than-eq",
+            input_end_value,
+            return_complete_filter=False,
+        )
+
+        filter_structure = {
             "logic": "or",
             "compound": [
                 {
-                    "filters": {
-                        **self.build_one_key_generic_filter(
-                            db_table_column_start,
-                            "between",
-                            [input_start_value, input_end_value],
-                            return_complete_filter=False,
-                        ),
-                        **self.build_one_key_generic_filter(
-                            db_table_column_end,
-                            "between",
-                            [input_start_value, input_end_value],
-                            return_complete_filter=False,
-                        ),
-                    },
+                    "filters": {},
                     "logic": "or",
                 },
                 {
-                    "filters": {
-                        **self.build_one_key_generic_filter(
-                            db_table_column_start,
-                            "less-than-eq",
-                            input_start_value,
-                            return_complete_filter=False,
-                        ),
-                        **self.build_one_key_generic_filter(
-                            db_table_column_end,
-                            "greater-than-eq",
-                            input_end_value,
-                            return_complete_filter=False,
-                        ),
-                    },
+                    "filters": {},
                     "logic": "and",
                 },
             ],
         }
+
+        filter_structure["compound"][0]["filters"].update(start_filter)
+        filter_structure["compound"][0]["filters"].update(end_filter)
+        filter_structure["compound"][1]["filters"].update(compound_start_filter)
+        filter_structure["compound"][1]["filters"].update(compound_end_filter)
+
+        # In Python 3, this can be simply done via:
+
+        # return {
+        #     "logic": "or",
+        #     "compound": [
+        #         {
+        #             "filters": {
+        #                 **start_filter,
+        #                 **end_filter,
+        #             },
+        #             "logic": "or",
+        #         },
+        #         {
+        #             "filters": {
+        #                 **compound_start_filter,
+        #                 **compound_end_filter,
+        #             },
+        #             "logic": "and",
+        #         },
+        #     ],
+        # }
+
+        return filter_structure
