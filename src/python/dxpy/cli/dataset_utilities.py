@@ -1084,7 +1084,35 @@ def extract_assay_expression(parser_obj):
     # assay names listing
     descriptor = DXDataset(dataset_handler.dataset, project=dataset_handler.datasetRecordProject).get_descriptor()
     dataset_handler.populate_descriptor(descriptor)
-    print(dataset_handler.list_assay_names("molecular_expression"))
+    
+    assay_names_list = dataset_handler.get_assay_names("molecular_expression")
+
+    if parser_dict.get("list_assays"):
+        print(assay_names_list)
+        sys.exit(0)
+
+    # possible assay picking
+    if parser_dict.get("assay_name"):
+        assay_name = parser_dict.get("assay_name")
+        # print(assay_name)
+        assay_index = dataset_handler.get_assay_indice_in_list(assay_names_list, assay_name)
+    else:
+        assay_index = 0
+
+    dataset_handler.get_assay_reference(assay_index)
+
+    # print(dataset_handler.list_assay_names("molecular_expression"))
+    # print(dataset_handler.descriptor.get("reference"))
+    # if "reference" in dataset_handler.descriptor.keys():
+    #     print("it is")
+    # print(dataset_handler.descriptor.get("assays").get("entities"))
+    # print(dataset_handler.get_assay_names("molecular_expression"))
+    # print(dataset_handler.get_assay_indice_in_list("assay_automated_test"))
+
+    assay_index = dataset_handler.get_assay_indice_in_list(assay_names_list, "assay_automated_test")
+    print(dataset_handler.get_assay_reference(assay_index))
+
+
 
 
 
