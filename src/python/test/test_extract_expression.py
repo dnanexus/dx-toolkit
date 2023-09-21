@@ -384,7 +384,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # When a --retrieve-expression flag is passed without any value or when an empty JSON (an empty file or just {}) is passed with --retrieve-expression flag
     # Note: empty JSON is tested in the JSON validation section
     def test_no_value_retrieve_exp(self):
-        expected_error_message = "No filter json is passed with --retrieve-expression or JSON or --retrieve-expression does not contain valid filter information."
+        expected_error_message = "No filter json is passed with --retrieve-expression or JSON for --retrieve-expression does not contain valid filter information."
         input_dict = {"path": self.test_record, "retrieve_expression": True}
         self.standard_input_args_test(input_dict, expected_error_message)
 
