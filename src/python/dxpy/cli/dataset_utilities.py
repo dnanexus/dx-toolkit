@@ -51,6 +51,11 @@ from ..bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 from ..bindings.apollo.path_validator import PathValidator
 from ..bindings.apollo.dataset import Dataset
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
+from ..bindings.apollo.ValidateJSONbySchema import JSONValidator
+from ..bindings.apollo.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
+from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
+from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
@@ -1053,13 +1058,13 @@ def extract_assay_somatic(args):
                 quoting=csv.QUOTE_NONE,
             )
 
-def extract_assay_expression(parser_obj):
+def extract_assay_expression(args):
     """
     Retrieve the selected data or generate SQL to retrieve the data from an expression assay in a dataset or cohort based on provided rules.
     """
 
     # Validating input combinations
-    parser_dict = vars(parser_obj)
+    parser_dict = vars(args)
     input_validator = ValidateArgsBySchema(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
     input_validator.validate_input_combination()
 
@@ -1077,6 +1082,7 @@ def extract_assay_expression(parser_obj):
     path_validator = PathValidator(input_dict=parser_dict, project=project_id, entity_describe=entity_describe, error_handler=err_exit)
     path_validator.validate(check_list_assays_invalid_combination=True)
 
+
     # Dataset handling
     record_id = entity_describe["id"]
     dataset_handler = Dataset(record_id = record_id, project_id = project_id)
@@ -1085,6 +1091,62 @@ def extract_assay_expression(parser_obj):
     descriptor = DXDataset(dataset_handler.dataset, project=dataset_handler.datasetRecordProject).get_descriptor()
     dataset_handler.populate_descriptor(descriptor)
     print(dataset_handler.list_assay_names("molecular_expression"))
+
+
+    # Validating input JSON
+    if args.input_json:
+        user_filters_json = json.loads(args.input_json)
+
+    elif args.input_json_file:
+        with open(args.input_json_file) as f:
+            user_filters_json = json.load(f)
+
+    input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
+    input_json_validator.validate(input_json=user_filters_json)
+    
+    if "location" in user_filters_json:
+        if args.sql:
+            EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["filtering_conditions"]["location"]["max_item_limit"] = None
+
+        else:
+            input_json_validator.are_list_items_within_range(input_json=user_filters_json,
+                                                            key="location", 
+                                                            start_subkey="starting_position", 
+                                                            end_subkey="ending_position", 
+                                                            window_width=250_000_000, 
+                                                            check_each_separately=False)
+        
+    input_json_parser = JSONFiltersValidator(input_json=user_filters_json,
+                                             schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS, 
+                                             error_handler=err_exit)
+    vizserver_raw_filters = input_json_parser.parse()
+
+    BASE_SQL = None ### TODO: To be determined by the Dataset class
+    IS_COHORT = False ### TODO: To be determined by the Dataset class
+
+    vizserver_payload = VizPayloadBuilder(
+        project_context=project,
+        ### TODO -- additionally .get("additional") below if args.additional_fields is True
+        output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default"),
+        # limit=100_000_000, ### TODO -- update later
+        base_sql=BASE_SQL,
+        is_cohort=IS_COHORT,
+        error_handler=err_exit
+    )
+
+    ### TODO -- temporary -- to be replaced by DatasetAssay class response
+    DATASET_DESCRIPTOR = DXDataset(entity_describe["id"],project).get_descriptor()
+    ASSAY_NAME = DATASET_DESCRIPTOR.assays[0]["name"]
+    ASSAY_ID = DATASET_DESCRIPTOR.assays[0]["uuid"]
+
+    vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
+    vizserver_full_payload = vizserver_payload.build()
+
+    ### TODO -- remove later -- only for testing
+    #print(vizserver_full_payload)
+    viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
+    print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
+    ### TODO --- remove the above code -- only for testing
 
 
 

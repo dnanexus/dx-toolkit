@@ -9,7 +9,7 @@ EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA = {
     },
     "expression": {
         "type": dict,
-        "properties": {"min_value": {"type": str}, "max_value": {"type": str}},
+        "properties": {"min_value": {"type": (int, float)}, "max_value": {"type": (int, float)}},
     },
     "location": {
         "type": list,
