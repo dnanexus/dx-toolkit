@@ -1081,8 +1081,11 @@ def extract_assay_expression(parser_obj):
     record_id = entity_describe["id"]
     dataset_handler = Dataset(record_id = record_id, project_id = project_id)
 
+    # assay names listing
+    descriptor = DXDataset(dataset_handler.dataset, project=dataset_handler.datasetRecordProject).get_descriptor()
+    dataset_handler.populate_descriptor(descriptor)
+    print(dataset_handler.list_assay_names("molecular_expression"))
 
-    
 
 
 class DXDataset(DXRecord):
