@@ -113,7 +113,7 @@ class TestDXExtractExpression(unittest.TestCase):
     #
 
     # 2. Object not of class record
-    def test_bad_dataset_type_unit(self):
+    def test_bad_dataset_type(self):
         test_record = self.wrong_type_path_file
         expected_error_message = "{}: Invalid path. The path must point to a record type of cohort or dataset".format(test_record)
         self.standard_path_validation_test(test_record,expected_error_message)

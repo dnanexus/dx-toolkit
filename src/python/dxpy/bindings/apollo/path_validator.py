@@ -56,16 +56,22 @@ class PathValidator:
 
         # since object is record:
         self.try_populate_record_http_request_info()
-        if not (
-            ("Dataset" in self.record_http_request_info.get("recordTypes",[]))
-            or ("CohortBrowser" in self.record_http_request_info.get("recordTypes",[]))
-            or ("Dataset" in self.record_http_request_info.get("types",[]))
-            or ("CohortBrowser" in self.record_http_request_info.get("types",[]))
-        ):
+        # small helper function that reduces redundancy in checking
+        def get_type(self):
+            # Function cannot be run until after self.try_populate_record_http_request_info()
+            record_info = self.record_http_request_info # <-- we need to rename the field to the shorter version
+            print(record_info)
+            return set(record_info.get("record", []) + record_info.get("recordType", []))
+
+        record_type = get_type(self)
+        print(record_type)
+
+        if not record_type in ["Dataset","CohortBrowser"]:
             # Check recordTypes first, then types, and if neither have data, put TYPENOTFOUND in the type part of the string
             self.throw_error(
-                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(self.record_http_request_info.get("recordTypes") or self.record_http_request_info.get("types") or "TYPENOTFOUND")
+                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(record_type or "TYPENOTFOUND")
             )
+
 
     def assert_dataset_version(self, expected_min_dataset_version=3.0):
         # checking cohort/dataset version
