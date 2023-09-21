@@ -455,7 +455,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # Which is fine but the error message will be for the other error
     def test_exp_matrix_other_args(self):
         # expected_error_message = "--expression-matrix cannot be passed with any argument other than --retrieve-expression"
-        expected_error_message = "“--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matix, or --output”"
+        expected_error_message = "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matrix, or --output"
         input_dict = {
             "path": self.test_record,
             "expression_matrix": True,
