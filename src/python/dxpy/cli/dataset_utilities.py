@@ -1111,8 +1111,12 @@ def validate_cohort_ids(descriptor, project, resp,ids):
     }
 
     # Use the dxpy raw_api_function to send a POST request to the server with our payload
+    print("##############")
+    print("payload:", payload)
+    print("##############")
     try:
         resp_raw = raw_api_call(resp, payload)
+        print("resp_raw:", resp_raw)
     except Exception as exc:
         raise VizserverError(
             "Exception caught while validating cohort ids.  Bad response from Vizserver."
@@ -1190,6 +1194,9 @@ def create_cohort(args):
     # validate and resolve 'from' input
     FROM = args.__dict__.get("from")
     from_project, entity_result, resp, dataset_project = resolve_validate_record_path(FROM)
+    print("*********************")
+    print(from_project, entity_result, resp, dataset_project)
+    print("*********************")
 
     #### Reading input sample ids from file or command line ####
     samples=[]
@@ -1228,7 +1235,9 @@ def create_cohort(args):
         )
     except Exception as e:
         err_exit("{}: {}".format(entity_result["id"], e))
+    print("raw_cohort_query_payload:", raw_cohort_query_payload)
     sql = raw_cohort_query_api_call(resp, raw_cohort_query_payload)
+    print("sql:", sql)
     cohort_payload = cohort_final_payload(
         path_name,
         path_folder,
@@ -1241,7 +1250,7 @@ def create_cohort(args):
         base_sql,
         resp.get("combined"),
     )
-
+    print("cohort_payload:", cohort_payload)
     dx_record = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
     # print record details to stdout
     if args.brief:
