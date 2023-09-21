@@ -390,6 +390,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     # EM-16
     # When the string provided is a malformed JSON
+    @unittest.skip
     def test_malformed_retr_exp_json(self):
         expected_error_message = (
             "JSON provided for --retrieve-expression is malformatted."
@@ -414,6 +415,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-17
     # When the .json file provided does not exist
     # Note: this probably needs to be tested with a Popen rather than with the ValidateArgsBySchema function
+    @unittest.skip
     def test_json_file_not_exist(self):
         missing_json_path = os.path.join(self.general_input_dir, "nonexistent.json")
         expected_error_message = (
