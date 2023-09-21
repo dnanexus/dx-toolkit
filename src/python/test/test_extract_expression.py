@@ -441,7 +441,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-21
     # When --json-help is passed with another option from --assay-name, --sql, --additional-fields, --expression-matix, --output
     def test_json_help_other_option(self):
-        expected_error_message = "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matix, or --output"
+        expected_error_message = "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matrix, or --output"
         input_dict = {
             "path": self.test_record,
             "json_help": True,
