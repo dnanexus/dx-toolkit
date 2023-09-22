@@ -1092,18 +1092,13 @@ def extract_assay_expression(args):
     dataset_handler.populate_dx_dataset_descriptor(dataset_descriptor)
     assay_names_list = dataset_handler.get_assay_names("molecular_expression")
 
-    if parser_dict.get("list_assays"):
-        print(assay_names_list)
+    if args.list_assays:
+        print(*assay_names_list, sep="\n")
         sys.exit(0)
 
     # possible assay picking
-    if parser_dict.get("assay_name"):
-        assay_name = parser_dict.get("assay_name")
-        # print(assay_name)
-        assay_index = dataset_handler.get_assay_indice_in_list(assay_names_list, assay_name)
-    else:
-        assay_index = 0
-
+    assay_index = dataset_handler.get_assay_indice_in_list(assay_names_list, args.assay_name) if args.assay_name else 0
+    
     print(dataset_handler.get_assay_uuid(assay_index))
     print(dataset_handler.get_assay_name(assay_index))
     print(dataset_handler.get_assay_reference(assay_index))
