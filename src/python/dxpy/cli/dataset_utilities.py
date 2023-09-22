@@ -1069,13 +1069,12 @@ def extract_assay_expression(args):
     input_validator.validate_input_combination()
 
     # Validating Assay Path
-    assay_path = parser_dict.get("path")
     project, folder_path, entity_result = resolve_existing_path(
-                assay_path
+                args.path
             )
     if entity_result is None:
         err_exit('Unable to resolve "{}" to a data object in {}.'.format(
-                    assay_path, project))
+                    args.path, project))
     else:
         entity_describe = entity_result.get("describe")
 
