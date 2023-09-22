@@ -29,7 +29,9 @@ class PathValidator:
                 "/" + self.entity_describe["id"] + "/visualize",
                 {"project": self.project, "cohortBrowser": False},
             )
-        except (InvalidInput, InvalidState):
+        except (InvalidInput, InvalidState) as details:
+            # TODO: invalid input type is actually caught here
+            print(details)
             self.throw_error(
                 "Invalid cohort or dataset: {}".format(self.entity_describe["id"]),
             )
@@ -61,15 +63,14 @@ class PathValidator:
             # Function cannot be run until after self.try_populate_record_http_request_info()
             record_info = self.record_http_request_info # <-- we need to rename the field to the shorter version
             print(record_info)
-            return set(record_info.get("record", []) + record_info.get("recordType", []))
+            return set(record_info.get("record", []) + record_info.get("recordTypes", []))
 
-        record_type = get_type(self)
-        print(record_type)
+        record_types = get_type(self)
 
-        if not record_type in ["Dataset","CohortBrowser"]:
+        if not ("Dataset" in record_types or "CohortBrowser" in record_types):
             # Check recordTypes first, then types, and if neither have data, put TYPENOTFOUND in the type part of the string
             self.throw_error(
-                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(record_type or "TYPENOTFOUND")
+                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(record_types or "TYPENOTFOUND")
             )
 
 

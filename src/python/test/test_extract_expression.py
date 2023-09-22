@@ -77,9 +77,11 @@ class TestDXExtractExpression(unittest.TestCase):
     # Helper functions used by different types of tests
     #
 
-    def standard_path_validation_test(self,test_record,expected_error_message):
+    
+    def standard_path_validation_test(self,test_record,expected_error_message,proj_id = "project-G9j1pX00vGPzF2XQ7843k2Jq"):
         project, folder_path, entity_result = resolve_existing_path(test_record)
-        validator = PathValidator(self.input_args_schema,self.proj_id,entity_result["describe"],error_handler=self.path_validation_error_handler)
+        print(entity_result)
+        validator = PathValidator(self.input_args_schema,proj_id,entity_result["describe"],error_handler=self.path_validation_error_handler)
 
         with self.assertRaises(ValueError) as cm:
             validator.validate()
@@ -104,27 +106,36 @@ class TestDXExtractExpression(unittest.TestCase):
 
     #
     # Path Validation tests
-    # There are # ways this function can fail.  Each of the following assumes the previous conditions have been met:
-    # 1. Object in wrong project
-    # 2. Object not of class record
-    # 3. Object not of recordType "Dataset" or "CohortBrowser"
-    # 4. Object is not of correct version (3.0 at the time of this writing)
-    # 5. Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
+    # There are 5 ways this function can detect a bad dataset/path.  Checked in the following order:
+    # 1. (EM-1?) Object in wrong project
+    # 2. (EM-1?) Object not of class record
+    # 3. (EM-3) Object not of recordType "Dataset" or "CohortBrowser"
+    # 4. (EM-5) Object is not of correct version (3.0 at the time of this writing)
+    # 5. (EM-6) Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
     #
 
-    # 2. Object not of class record
+    # 3. Object not of recordType "Dataset" or "CohortBrowser"
     def test_bad_dataset_type(self):
         test_record = self.wrong_type_path_file
+        #test_record = "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
         expected_error_message = "{}: Invalid path. The path must point to a record type of cohort or dataset".format(test_record)
-        self.standard_path_validation_test(test_record,expected_error_message)
+        # Note: this is currently being caught during the visualize call, it returns an input error if anything other than
+        # "Dataset", "DatabaseQuery", or "DashboardView" are returned in the type
+        self.standard_path_validation_test(test_record,expected_error_message,)
 
 
-    # 3. Object not of recordType "Dataset" or "CohortBrowser"
+    # 4. Object is not of correct version (3.0 at the time of this writing)
     def test_bad_dataset_version(self):
         test_record = self.bad_version_dataset
         expected_error_message = "{}: Version of the cohort or dataset is too old. Version must be 3.0".format(self.bad_version_dataset)
         self.standard_path_validation_test(test_record,expected_error_message)
 
+    def test_positive_path_validation(self):
+        test_record = "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
+        proj_id = "project-G5Bzk5806j8V7PXB678707bv"
+        project, folder_path, entity_result = resolve_existing_path(test_record)
+        validator = PathValidator(self.input_args_schema,proj_id,entity_result["describe"],error_handler=self.path_validation_error_handler)
+        validator.validate()
 
     #
     # Malformed input json tests
