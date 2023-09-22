@@ -1069,17 +1069,18 @@ def extract_assay_expression(args):
     input_validator.validate_input_combination()
 
     # Validating Assay Path
-    project, folder_path, entity_result = resolve_existing_path(
-                args.path
-            )
-    if entity_result is None:
-        err_exit('Unable to resolve "{}" to a data object in {}.'.format(
-                    args.path, project))
-    else:
-        entity_describe = entity_result.get("describe")
+    if args.path:
+        project, folder_path, entity_result = resolve_existing_path(
+                    args.path
+                )
+        if entity_result is None:
+            err_exit('Unable to resolve "{}" to a data object in {}.'.format(
+                        args.path, project))
+        else:
+            entity_describe = entity_result.get("describe")
 
-    path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
-    path_validator.validate(check_list_assays_invalid_combination=True)
+        path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
+        path_validator.validate(check_list_assays_invalid_combination=True)
 
     if args.json_help:
         print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
