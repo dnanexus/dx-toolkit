@@ -56,6 +56,7 @@ from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSIO
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 
+from ..bindings.apollo.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -1080,6 +1081,10 @@ def extract_assay_expression(args):
 
     path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
     path_validator.validate(check_list_assays_invalid_combination=True)
+
+    if args.json_help:
+        print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
+        sys.exit(0)
 
     # Validating input JSON
     if args.input_json:
