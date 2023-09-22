@@ -1,0 +1,31 @@
+{
+    "dataset": "record-GYK40bj06Yy4KPpB4zqX8kGb",
+    "schema": "create_cohort_schema",
+    "version": "3.0",
+    "datasetVersion": "3.0",
+    "url": "https://vizserver.us-east-1-stg.apollo.dnanexus.com",
+    "datasetLoaded": false,
+    "datasetUpdated": true,
+    "name": "create_cohort_geno_dataset",
+    "description": "Dataset: create_cohort_geno_dataset",
+    "recordName": "create_cohort_geno_dataset",
+    "recordState": "closed",
+    "recordTypes": [
+        "Dataset"
+    ],
+    "recordProject": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "datasetName": "create_cohort_geno_dataset",
+    "datasetDescription": "Dataset: create_cohort_geno_dataset",
+    "datasetRecordName": "create_cohort_geno_dataset",
+    "datasetRecordState": "closed",
+    "datasetRecordProject": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "databases": [
+        "database-GYK3JJj0vGPQ2Y1y98pj8pGg",
+        "database-FkypXj80bgYvQqyqBx1FJG6y"
+    ],
+    "dashboardViews": [],
+    "downloadRestricted": false,
+    "containsPHI": false,
+    "restrictedProjects": [],
+    "clipboardRestricted": false
+}

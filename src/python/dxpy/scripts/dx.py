@@ -40,7 +40,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic
+from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic, create_cohort
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -6611,6 +6611,25 @@ parser_extract_assay_somatic.add_argument(
 
 parser_extract_assay_somatic.set_defaults(func=extract_assay_somatic)
 register_parser(parser_extract_assay_somatic)
+
+#####################################
+# create_cohort
+#####################################
+parser_create_cohort = subparsers.add_parser('create_cohort', help='Generates a new Cohort object on the platform from an existing Dataset or Cohort object and using list of IDs.',
+                                   description='Generates a new Cohort object on the platform from an existing Dataset or Cohort object and using list of IDs.',
+                                   prog="dx create_cohort",
+                                   parents=[stdout_args],
+                                   add_help=False)
+
+parser_create_cohort.add_argument('PATH', nargs='?', type=str, help='DNAnexus path for the new data object. If not provided, default behavior uses current project and folder, and will name the object identical to the assigned record-id.')
+parser_create_cohort.add_argument('--from', required=True, type=str, help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name')
+parser_create_c_mutex_group = parser_create_cohort.add_mutually_exclusive_group(required=True)
+parser_create_c_mutex_group.add_argument('--cohort-ids', type=str, help='A set of IDs used to subset the Dataset or Cohort object as a comma-separated string. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
+parser_create_c_mutex_group.add_argument('--cohort-ids-file', type=str, help='A set of IDs used to subset the Dataset or Cohort object in a file with one ID per line and no header. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
+parser_create_cohort.add_argument('-h','--help', help='Return the docstring and exit', action='help')
+
+parser_create_cohort.set_defaults(func=create_cohort)
+register_parser(parser_create_cohort)
 
 
 #####################################
