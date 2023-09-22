@@ -1105,21 +1105,10 @@ def extract_assay_expression(args):
     else:
         assay_index = 0
 
-    dataset_handler.get_assay_reference(assay_index)
-
-    # print(dataset_handler.list_assay_names("molecular_expression"))
-    # print(dataset_handler.descriptor.get("reference"))
-    # if "reference" in dataset_handler.descriptor.keys():
-    #     print("it is")
-    # print(dataset_handler.descriptor.get("assays").get("entities"))
-    # print(dataset_handler.get_assay_names("molecular_expression"))
-    # print(dataset_handler.get_assay_indice_in_list("assay_automated_test"))
-
-    assay_index = dataset_handler.get_assay_indice_in_list(assay_names_list, "assay_automated_test")
+    print(dataset_handler.get_assay_uuid(assay_index))
+    print(dataset_handler.get_assay_name(assay_index))
     print(dataset_handler.get_assay_reference(assay_index))
-
-
-
+    print(dataset_handler.get_assay_generalized_assay_model(assay_index))
 
     # Validating input JSON
     if args.input_json:

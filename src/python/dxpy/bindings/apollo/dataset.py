@@ -58,8 +58,22 @@ class Dataset(DXRecord):
         index = self.assay_names_list.index(assay_name)
         return index
 
+    def get_assay_uuid(self, assay_index):
+        uuid = self.descriptor.get("assays")[assay_index].get("uuid")
+        return uuid
+
+    def get_assay_name(self, assay_index):
+        name = self.descriptor.get("assays")[assay_index].get("name")
+        return name
+
     def get_assay_reference(self, assay_index):
         reference = (
             self.descriptor.get("assays")[assay_index].get("reference").get("name")
         )
         return reference
+
+    def get_assay_generalized_assay_model(self, assay_index):
+        generalized_assay_model = self.descriptor.get("assays")[assay_index].get(
+            "generalized_assay_model"
+        )
+        return generalized_assay_model
