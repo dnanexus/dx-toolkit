@@ -1,4 +1,4 @@
-from .dataset_utilities import comment_fill
+from ...cli.dataset_utilities import comment_fill
 
 
 EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE = """
