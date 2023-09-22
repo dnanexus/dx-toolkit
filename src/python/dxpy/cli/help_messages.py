@@ -1,4 +1,4 @@
-from .dataset_utilities import comment_fill
+from .dataset_utilities import comment_fill as cf
 
 
 EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE = """
@@ -28,7 +28,7 @@ EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE = """
 """
 
 EXTRACT_ASSAY_EXPRESSION_JSON_HELP = (
-    comment_fill(
+    cf(
         "Additional descriptions of filtering keys and permissible values",
         comment_string="# ",
     )
