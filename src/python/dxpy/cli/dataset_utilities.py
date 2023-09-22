@@ -1082,15 +1082,14 @@ def extract_assay_expression(args):
     path_validator = PathValidator(input_dict=parser_dict, project=project_id, entity_describe=entity_describe, error_handler=err_exit)
     path_validator.validate(check_list_assays_invalid_combination=True)
 
-
     # Dataset handling
     record_id = entity_describe["id"]
     dataset_handler = Dataset(record_id = record_id, project_id = project_id)
 
+
     # assay names listing
-    descriptor = DXDataset(dataset_handler.dataset, project=dataset_handler.datasetRecordProject).get_descriptor()
-    dataset_handler.populate_descriptor(descriptor)
-    
+    dataset_descriptor = DXDataset(dataset_handler.dataset_id, project=dataset_handler.dataset_project_id).get_descriptor()
+    dataset_handler.populate_dx_dataset_descriptor(dataset_descriptor)
     assay_names_list = dataset_handler.get_assay_names("molecular_expression")
 
     if parser_dict.get("list_assays"):
