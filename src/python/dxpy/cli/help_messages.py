@@ -29,8 +29,8 @@ EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE = """
 
 EXTRACT_ASSAY_EXPRESSION_JSON_HELP = (
     cf(
-        "Additional descriptions of filtering keys and permissible values",
-        comment_string="# ",
+        "# Additional descriptions of filtering keys and permissible values",
+        # comment_string="# ",
     )
     + EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 )
