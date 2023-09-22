@@ -56,7 +56,7 @@ from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSIO
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 
-from ..bindings.apollo.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
+from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
