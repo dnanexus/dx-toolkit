@@ -56,6 +56,7 @@ from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSIO
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 
+from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -1068,18 +1069,22 @@ def extract_assay_expression(args):
     input_validator.validate_input_combination()
 
     # Validating Assay Path
-    assay_path = parser_dict.get("path")
-    project, folder_path, entity_result = resolve_existing_path(
-                assay_path
-            )
-    if entity_result is None:
-        err_exit('Unable to resolve "{}" to a data object in {}.'.format(
-                    assay_path, project))
-    else:
-        entity_describe = entity_result.get("describe")
+    if args.path:
+        project, folder_path, entity_result = resolve_existing_path(
+                    args.path
+                )
+        if entity_result is None:
+            err_exit('Unable to resolve "{}" to a data object in {}.'.format(
+                        args.path, project))
+        else:
+            entity_describe = entity_result.get("describe")
 
-    path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
-    path_validator.validate(check_list_assays_invalid_combination=True)
+        path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
+        path_validator.validate(check_list_assays_invalid_combination=True)
+
+    if args.json_help:
+        print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
+        sys.exit(0)
 
     # Validating input JSON
     if args.input_json:
