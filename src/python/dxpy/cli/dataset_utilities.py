@@ -1204,10 +1204,10 @@ def create_cohort(args):
     
     #### Validate the input cohort IDs ####
     # Get the table/entity and field/column of the dataset from the descriptor
-    rec_descriptor = DXDataset(resp["dataset"], project=resp["datasetRecordProject"]).get_descriptor()
+    rec_descriptor = DXDataset(resp["dataset"], project=dataset_project).get_descriptor()
 
     try:
-        validate_cohort_ids(rec_descriptor, dataset_project, resp,samples)
+        validate_cohort_ids(rec_descriptor, dataset_project, resp, samples)
     except ValueError as err:
         err_exit(str(err))
     except VizserverError as err:
@@ -1223,7 +1223,7 @@ def create_cohort(args):
             rec_descriptor.model["global_primary_key"]["entity"],
             rec_descriptor.model["global_primary_key"]["field"],
             resp.get("filters", {}),
-            path_project,
+            from_project,
             base_sql,
         )
     except Exception as e:
