@@ -1106,7 +1106,7 @@ def extract_assay_expression(args):
                                                             key="location", 
                                                             start_subkey="starting_position", 
                                                             end_subkey="ending_position", 
-                                                            window_width=250_000_000, 
+                                                            window_width=250000000, 
                                                             check_each_separately=False)
         
     input_json_parser = JSONFiltersValidator(input_json=user_filters_json,
