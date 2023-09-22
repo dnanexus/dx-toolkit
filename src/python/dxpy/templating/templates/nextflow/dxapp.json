@@ -59,6 +59,24 @@
       "class": "boolean",
       "group": "Advanced Executable Development Options",
       "default": false
+    },
+    {
+      "name": "nextflow_soft_confs",
+      "label": "Soft Configuration File",
+      "help": "(Optional) One or more nextflow configuration files to be appended to the Nextflow pipeline configuration set",
+      "class": "array:file",
+      "patterns": ["*.config"],
+      "optional": true,
+      "group": "Nextflow options"
+    },
+    {
+      "name": "nextflow_params_file",
+      "label": "Script Parameters File",
+      "help": "(Optional) A file, in YAML or JSON format, for specifying input parameter values",
+      "class": "file",
+      "patterns": ["*.yml", "*.yaml", "*.json"],
+      "optional": true,
+      "group": "Nextflow options"
     }
   ],
   "outputSpec": [
@@ -84,9 +102,7 @@
   },
   "categories": [],
   "access": {
-    "network": [
-      "*"
-    ],
+    "network": ["*"],
     "project": "UPLOAD",
     "allProjects": "VIEW"
   },
