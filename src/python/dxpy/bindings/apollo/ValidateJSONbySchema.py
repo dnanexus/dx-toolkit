@@ -199,7 +199,7 @@ class JSONValidator(object):
         key,
         start_subkey,
         end_subkey,
-        window_width=250_000_000,
+        window_width=250000000,
         check_each_separately=False,
     ):
         """
