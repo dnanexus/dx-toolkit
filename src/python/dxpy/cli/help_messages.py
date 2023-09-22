@@ -1,17 +1,17 @@
-from ..utils.printing import fill as cf
+from ..utils.printing import fill
 
 
 EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE = """
 {
   "location": [
     {
-      "chromosome":"1",
-      "starting_position":"10000",
+      "chromosome": "1",
+      "starting_position": "10000",
       "ending_position": "20000"
     },
     {
-      "chromosome":"X",
-      "starting_position":"500",
+      "chromosome": "X",
+      "starting_position": "500",
       "ending_position": "1700"
     }
   ],
@@ -28,9 +28,8 @@ EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE = """
 """
 
 EXTRACT_ASSAY_EXPRESSION_JSON_HELP = (
-    cf(
+    fill(
         "# Additional descriptions of filtering keys and permissible values",
-        # comment_string="# ",
     )
     + EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 )
