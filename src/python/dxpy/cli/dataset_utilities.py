@@ -1135,6 +1135,10 @@ def extract_assay_expression(args):
     vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
     vizserver_full_payload = vizserver_payload.build()
 
+    # TODO: create VizClient object here
+    # TODO: get_data() here
+    # TODO: get_raw_sql() here
+
     ### TODO -- remove later -- only for testing
     #print(vizserver_full_payload)
     viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
