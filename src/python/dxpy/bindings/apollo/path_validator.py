@@ -31,6 +31,7 @@ class PathValidator:
             )
         except (InvalidInput, InvalidState) as details:
             # TODO: invalid input type is actually caught here
+            print("visualize request error details")
             print(details)
             self.throw_error(
                 "Invalid cohort or dataset: {}".format(self.entity_describe["id"]),
@@ -62,6 +63,7 @@ class PathValidator:
         def get_type(self):
             # Function cannot be run until after self.try_populate_record_http_request_info()
             record_info = self.record_http_request_info # <-- we need to rename the field to the shorter version
+            print("record_http_request_info (/visualize)")
             print(record_info)
             return set(record_info.get("record", []) + record_info.get("recordTypes", []))
 
