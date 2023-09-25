@@ -3,8 +3,10 @@ from dxpy.bindings import DXRecord
 
 
 class Dataset(DXRecord):
-    def __init__(self, record_id):
-        self.record_id = record_id
+    def __init__(self, dataset_id):
+        super().__init__(dataset_id)
+        self.dataset_id = dataset_id
+        self._detail_describe = None
         # self.project_id = project_id
         self.visualize_info = None
         self._dx_record_obj = None
@@ -26,6 +28,7 @@ class Dataset(DXRecord):
     @staticmethod
     def cohort_object_information(record_id):
         cohort_object_describe = Dataset.cohort_object_describe(record_id)
+
         cohort_information = {}
 
         if "CohortBrowser" in cohort_object_describe.get("types"):
@@ -53,65 +56,30 @@ class Dataset(DXRecord):
 
         return cohort_information
 
-    # def get_visualize_info(self):
-    #     if self.visualize_info is None:
-    #         self.visualize_info = DXHTTPRequest(
-    #             "/" + self.record_id + "/visualize",
-    #             {"project": self.project_id, "cohortBrowser": False},
-    #         )
-    #     return self.visualize_info
-
-    # @property
-    # def vizserver_url(self):
-    #     vis_info = self.get_visualize_info()
-    #     return vis_info.get("url")
-
-    def get_dx_record(self):
-        if self._dx_record_obj is None:
-            self._dx_record_obj = DXRecord(self.record_id)
-        return self._dx_record_obj
+    def get_visualize_info(self):
+        if self.visualize_info is None:
+            self.visualize_info = DXHTTPRequest(
+                "/" + self.dataset_id + "/visualize",
+                {"project": self.project_id, "cohortBrowser": False},
+            )
+        return self.visualize_info
 
     @property
-    def dx_record_obj(self):
-        return self.get_dx_record()
+    def vizserver_url(self):
+        vis_info = self.get_visualize_info()
+        return vis_info.get("url")
 
     @property
-    def record_details(self):
-        return self.dx_record_obj.get_details()
+    def project_id(self):
+        return self.detail_describe.get("project")
 
     @property
-    def record_descriptor(self):
-        return self.dx_record_obj.describe()
-
-    @property
-    def is_cohort(self):
-        if "CohortBrowser" in self.record_descriptor.get("types"):
-            return True
-        else:
-            return False
-
-    @property
-    def dataset_id(self):
-        if self.is_cohort:
-            return self.record_details.get("dataset").get("$dnanexus_link")
-        else:
-            return self.record_descriptor.get("id")
-
-    @property
-    def dataset_project_id(self):
-        if self.is_cohort:
-            dataset_dx_obj = DXRecord(self.dataset_id)
-            return dataset_dx_obj.describe().get("project")
-        else:
-            return self.record_descriptor.get("project")
-
-    @property
-    def base_sql(self):
-        return self.record_details.get("baseSql")
-
-    @property
-    def filters(self):
-        return self.record_details.get("filters")
+    def detail_describe(self):
+        if self._detail_describe is None:
+            self._detail_describe = self.describe(
+                default_fields=True, fields={"properties", "details"}
+            )
+        return self._detail_describe
 
     def populate_dx_dataset_descriptor(self, descriptor):
         self.dx_dataset_descriptor = vars(descriptor)

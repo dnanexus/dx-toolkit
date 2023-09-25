@@ -1080,21 +1080,23 @@ def extract_assay_expression(args):
         else:
             entity_describe = entity_result.get("describe")
 
-    path_validator = PathValidator(input_dict=parser_dict, project=project_id, entity_describe=entity_describe, error_handler=err_exit)
+    path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
     path_validator.validate(check_list_assays_invalid_combination=True)
-
-    cohort_info = Dataset.cohort_object_information(entity_describe["id"])
-    dataset_id = cohort_info.get(("dataset_id"))
 
     if args.json_help:
         print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
         sys.exit(0)
 
+
+    # cohort_describe = Dataset.cohort_object_describe(entity_describe["id"])
+    cohort_info = Dataset.cohort_object_information(entity_describe["id"])
+    dataset_id = cohort_info.get(("dataset_id"))
+
     # Dataset handling
     dataset_handler = Dataset(dataset_id)
 
     # assay names listing
-    dataset_descriptor = DXDataset(dataset_handler.dataset_id, project=dataset_handler.dataset_project_id).get_descriptor()
+    dataset_descriptor = DXDataset(dataset_handler.dataset_id, project=dataset_handler.project_id).get_descriptor()
     dataset_handler.populate_dx_dataset_descriptor(dataset_descriptor)
     assay_names_list = dataset_handler.get_assay_names("molecular_expression")
 
@@ -1109,6 +1111,9 @@ def extract_assay_expression(args):
     # print(dataset_handler.get_assay_name(assay_index))
     # print(dataset_handler.get_assay_reference(assay_index))
     # print(dataset_handler.get_assay_generalized_assay_model(assay_index))
+
+
+
 
     # # Validating input JSON
     # if args.input_json:
