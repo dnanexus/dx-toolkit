@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+
 class PathValidator:
     """
     PathValidator class checks for invalid object inputs and its combination with passed arguments.
@@ -44,7 +45,9 @@ class PathValidator:
 
         if all(x not in _record_types for x in EXPECTED_TYPES):
             self.throw_error(
-                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(_record_types)
+                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
+                    _record_types
+                )
             )
 
     def assert_dataset_version(self, expected_min_dataset_version=3.0):
@@ -59,9 +62,11 @@ class PathValidator:
 
     def get_record_types(self):
         return self.entity_describe.get("types")
-    
+
     def cohort_list_assays_invalid_combination(self):
-        invalid_combination = "CohortBrowser" in self.get_record_types() and (self.input_dict.get("list_assays") or self.input_dict.get("assay_name"))
+        invalid_combination = "CohortBrowser" in self.get_record_types() and (
+            self.input_dict.get("list_assays") or self.input_dict.get("assay_name")
+        )
 
         if invalid_combination:
             self.throw_error(
