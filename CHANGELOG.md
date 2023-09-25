@@ -6,12 +6,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [359.0] - beta
+
 ### Added
 
+* `dx create_cohort`
 * Nextflow pipeline readme file is used as a readme file of Nextflow applet
 * Default optional inputs `nextflow_soft_confs` and `nextflow_params_file` to Nextflow applets to support soft configuration override and custom parameters file in `nextflow run`
 
-## [358.0] - beta
+## [358.0] - 2023.9.22
 
 ### Changed
 
