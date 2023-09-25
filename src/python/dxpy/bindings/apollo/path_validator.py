@@ -1,14 +1,12 @@
 from __future__ import print_function
-from dxpy import DXHTTPRequest
-from dxpy.exceptions import (
-    InvalidState,
-    InvalidInput,
-)
-
 
 class PathValidator:
     """
     PathValidator class checks for invalid object inputs and its combination with passed arguments.
+
+    entity_describe must be a dict from /describe call containing properties and details
+
+    e.g. ```f.describe(default_fields=True, fields={"properties", "details"})``` where f is a DXRecord object
     """
 
     def __init__(self, input_dict, project, entity_describe, error_handler=print):
@@ -17,24 +15,11 @@ class PathValidator:
         self.entity_describe = entity_describe
         self.error_handler = error_handler
 
-        self.record_http_request_info = None
+        assert "path" in input_dict
+        assert "class" in entity_describe
 
     def throw_error(self, message):
         self.error_handler(message)
-
-    def try_populate_record_http_request_info(self):
-        # record_http_request_info contains crucial information for records
-        try:
-            self.record_http_request_info = DXHTTPRequest(
-                "/" + self.entity_describe["id"] + "/visualize",
-                {"project": self.project, "cohortBrowser": False},
-            )
-        except (InvalidInput, InvalidState):
-            self.throw_error(
-                "Invalid cohort or dataset: {}".format(self.entity_describe["id"]),
-            )
-        except Exception as details:
-            self.throw_error(str(details))
 
     def is_object_in_current_project(self):
         # for object in a different project:
@@ -54,19 +39,17 @@ class PathValidator:
                 )
             )
 
-        # since object is record:
-        self.try_populate_record_http_request_info()
-        if not (
-            ("Dataset" in self.record_http_request_info["recordTypes"])
-            or ("CohortBrowser" in self.record_http_request_info["recordTypes"])
-        ):
+        EXPECTED_TYPES = ["Dataset", "CohortBrowser"]
+        _record_types = self.get_record_types()
+
+        if all(x not in _record_types for x in EXPECTED_TYPES):
             self.throw_error(
-                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object."
-            ).format(self.record_http_request_info["recordTypes"])
+                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(_record_types)
+            )
 
     def assert_dataset_version(self, expected_min_dataset_version=3.0):
         # checking cohort/dataset version
-        dataset_version = float(self.record_http_request_info["datasetVersion"])
+        dataset_version = float(self.entity_describe.get("details").get("version"))
         if dataset_version < expected_min_dataset_version:
             self.throw_error(
                 "{}: Version of the cohort or dataset is too old. Version must be at least {}.".format(
@@ -74,10 +57,11 @@ class PathValidator:
                 )
             )
 
+    def get_record_types(self):
+        return self.entity_describe.get("types")
+    
     def cohort_list_assays_invalid_combination(self):
-        invalid_combination = "CohortBrowser" in self.record_http_request_info[
-            "recordTypes"
-        ] and (self.input_dict.get("list_assays") or self.input_dict.get("assay_name"))
+        invalid_combination = "CohortBrowser" in self.get_record_types() and (self.input_dict.get("list_assays") or self.input_dict.get("assay_name"))
 
         if invalid_combination:
             self.throw_error(
