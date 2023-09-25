@@ -1159,6 +1159,8 @@ def extract_assay_expression(args):
     print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
     ### TODO --- remove the above code -- only for testing
 
+
+
 #### CREATE COHORT ####
 def resolve_validate_dx_path(path):
     """
