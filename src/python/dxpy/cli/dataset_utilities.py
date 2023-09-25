@@ -1082,10 +1082,11 @@ def extract_assay_expression(args):
     path_validator = PathValidator(input_dict=parser_dict, project=project_id, entity_describe=entity_describe, error_handler=err_exit)
     path_validator.validate(check_list_assays_invalid_combination=True)
 
-    # Dataset handling
-    record_id = entity_describe["id"]
-    dataset_handler = Dataset(record_id = record_id, project_id = project_id)
+    cohort_info = Dataset.cohort_object_information(entity_describe["id"])
+    dataset_id = cohort_info.get(("dataset_id"))
 
+    # Dataset handling
+    dataset_handler = Dataset(dataset_id)
 
     # assay names listing
     dataset_descriptor = DXDataset(dataset_handler.dataset_id, project=dataset_handler.dataset_project_id).get_descriptor()
@@ -1096,68 +1097,68 @@ def extract_assay_expression(args):
         print(*assay_names_list, sep="\n")
         sys.exit(0)
 
-    # possible assay picking
-    assay_index = dataset_handler.get_assay_indice_in_list(assay_names_list, args.assay_name) if args.assay_name else 0
+    # # possible assay picking
+    # assay_index = dataset_handler.get_assay_indice_in_list(assay_names_list, args.assay_name) if args.assay_name else 0
     
-    print(dataset_handler.get_assay_uuid(assay_index))
-    print(dataset_handler.get_assay_name(assay_index))
-    print(dataset_handler.get_assay_reference(assay_index))
-    print(dataset_handler.get_assay_generalized_assay_model(assay_index))
+    # print(dataset_handler.get_assay_uuid(assay_index))
+    # print(dataset_handler.get_assay_name(assay_index))
+    # print(dataset_handler.get_assay_reference(assay_index))
+    # print(dataset_handler.get_assay_generalized_assay_model(assay_index))
 
-    # Validating input JSON
-    if args.input_json:
-        user_filters_json = json.loads(args.input_json)
+    # # Validating input JSON
+    # if args.input_json:
+    #     user_filters_json = json.loads(args.input_json)
 
-    elif args.input_json_file:
-        with open(args.input_json_file) as f:
-            user_filters_json = json.load(f)
+    # elif args.input_json_file:
+    #     with open(args.input_json_file) as f:
+    #         user_filters_json = json.load(f)
 
-    input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
-    input_json_validator.validate(input_json=user_filters_json)
+    # input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
+    # input_json_validator.validate(input_json=user_filters_json)
     
-    if "location" in user_filters_json:
-        if args.sql:
-            EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["filtering_conditions"]["location"]["max_item_limit"] = None
+    # if "location" in user_filters_json:
+    #     if args.sql:
+    #         EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["filtering_conditions"]["location"]["max_item_limit"] = None
 
-        else:
-            input_json_validator.are_list_items_within_range(input_json=user_filters_json,
-                                                            key="location", 
-                                                            start_subkey="starting_position", 
-                                                            end_subkey="ending_position", 
-                                                            window_width=250_000_000, 
-                                                            check_each_separately=False)
+    #     else:
+    #         input_json_validator.are_list_items_within_range(input_json=user_filters_json,
+    #                                                         key="location", 
+    #                                                         start_subkey="starting_position", 
+    #                                                         end_subkey="ending_position", 
+    #                                                         window_width=250_000_000, 
+    #                                                         check_each_separately=False)
         
-    input_json_parser = JSONFiltersValidator(input_json=user_filters_json,
-                                             schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS, 
-                                             error_handler=err_exit)
-    vizserver_raw_filters = input_json_parser.parse()
+    # input_json_parser = JSONFiltersValidator(input_json=user_filters_json,
+    #                                          schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS, 
+    #                                          error_handler=err_exit)
+    # vizserver_raw_filters = input_json_parser.parse()
 
-    BASE_SQL = None ### TODO: To be determined by the Dataset class
-    IS_COHORT = False ### TODO: To be determined by the Dataset class
+    # BASE_SQL = None ### TODO: To be determined by the Dataset class
+    # IS_COHORT = False ### TODO: To be determined by the Dataset class
 
-    vizserver_payload = VizPayloadBuilder(
-        project_context=project,
-        ### TODO -- additionally .get("additional") below if args.additional_fields is True
-        output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default"),
-        # limit=100_000_000, ### TODO -- update later
-        base_sql=BASE_SQL,
-        is_cohort=IS_COHORT,
-        error_handler=err_exit
-    )
+    # vizserver_payload = VizPayloadBuilder(
+    #     project_context=project,
+    #     ### TODO -- additionally .get("additional") below if args.additional_fields is True
+    #     output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default"),
+    #     # limit=100_000_000, ### TODO -- update later
+    #     base_sql=BASE_SQL,
+    #     is_cohort=IS_COHORT,
+    #     error_handler=err_exit
+    # )
 
-    ### TODO -- temporary -- to be replaced by DatasetAssay class response
-    DATASET_DESCRIPTOR = DXDataset(entity_describe["id"],project).get_descriptor()
-    ASSAY_NAME = DATASET_DESCRIPTOR.assays[0]["name"]
-    ASSAY_ID = DATASET_DESCRIPTOR.assays[0]["uuid"]
+    # ### TODO -- temporary -- to be replaced by DatasetAssay class response
+    # DATASET_DESCRIPTOR = DXDataset(entity_describe["id"],project).get_descriptor()
+    # ASSAY_NAME = DATASET_DESCRIPTOR.assays[0]["name"]
+    # ASSAY_ID = DATASET_DESCRIPTOR.assays[0]["uuid"]
 
-    vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
-    vizserver_full_payload = vizserver_payload.build()
+    # vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
+    # vizserver_full_payload = vizserver_payload.build()
 
-    ### TODO -- remove later -- only for testing
-    #print(vizserver_full_payload)
-    viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
-    print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
-    ### TODO --- remove the above code -- only for testing
+    # ### TODO -- remove later -- only for testing
+    # #print(vizserver_full_payload)
+    # viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
+    # print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
+    # ### TODO --- remove the above code -- only for testing
 
 
 

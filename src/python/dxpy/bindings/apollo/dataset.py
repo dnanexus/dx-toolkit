@@ -3,27 +3,68 @@ from dxpy.bindings import DXRecord
 
 
 class Dataset(DXRecord):
-    def __init__(self, record_id, project_id):
+    def __init__(self, record_id):
         self.record_id = record_id
-        self.project_id = project_id
+        # self.project_id = project_id
         self.visualize_info = None
         self._dx_record_obj = None
         self.dx_dataset_descriptor = None
         self.assays_list = None
         self.assay_names_list = None
 
-    def get_visualize_info(self):
-        if self.visualize_info is None:
-            self.visualize_info = DXHTTPRequest(
-                "/" + self.record_id + "/visualize",
-                {"project": self.project_id, "cohortBrowser": False},
-            )
-        return self.visualize_info
+    @staticmethod
+    def cohort_object(record_id):
+        return DXRecord(record_id)
 
-    @property
-    def vizserver_url(self):
-        vis_info = self.get_visualize_info()
-        return vis_info.get("url")
+    @staticmethod
+    def cohort_object_describe(record_id):
+        record_obj = Dataset.cohort_object(record_id)
+        return record_obj.describe(
+            default_fields=True, fields={"properties", "details"}
+        )
+
+    @staticmethod
+    def cohort_object_information(record_id):
+        cohort_object_describe = Dataset.cohort_object_describe(record_id)
+        cohort_information = {}
+
+        if "CohortBrowser" in cohort_object_describe.get("types"):
+            cohort_information["is_cohort"] = True
+            cohort_information["record_id"] = True
+            cohort_information["is_cohort"] = True
+            # reminder: not all cohorts have base sql
+            cohort_information["base_sql"] = cohort_object_describe.get("details").get(
+                "baseSql"
+            )
+            cohort_information["filters"] = cohort_object_describe.get("details").get(
+                "filters"
+            )
+            cohort_information["dataset_id"] = (
+                cohort_object_describe.get("details")
+                .get("dataset")
+                .get("$dnanexus_link")
+            )
+
+        else:
+            cohort_information["is_cohort"] = False
+            cohort_information["base_sql"] = None
+            cohort_information["filters"] = None
+            cohort_information["dataset_id"] = record_id
+
+        return cohort_information
+
+    # def get_visualize_info(self):
+    #     if self.visualize_info is None:
+    #         self.visualize_info = DXHTTPRequest(
+    #             "/" + self.record_id + "/visualize",
+    #             {"project": self.project_id, "cohortBrowser": False},
+    #         )
+    #     return self.visualize_info
+
+    # @property
+    # def vizserver_url(self):
+    #     vis_info = self.get_visualize_info()
+    #     return vis_info.get("url")
 
     def get_dx_record(self):
         if self._dx_record_obj is None:
