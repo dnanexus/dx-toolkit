@@ -1,0 +1,65 @@
+{
+    "filters": {
+        "pheno_filters": {
+            "compound": [
+                {
+                    "name": "phenotype",
+                    "logic": "and",
+                    "filters": {
+                        "sample$sample_id": [
+                            {
+                                "condition": "in",
+                                "values": [
+                                    "sample_1_1",
+                                    "sample_1_2",
+                                    "sample_1_5"
+                                ]
+                            }
+                        ]
+                    },
+                    "entity": {
+                        "logic": "and",
+                        "name": "sample",
+                        "operator": "exists",
+                        "children": []
+                    }
+                }
+            ],
+            "logic": "and"
+        },
+        "assay_filters": {
+            "compound": [
+                {
+                    "name": "genotype@b07df2d4-a05c-4c6a-9a20-7602695d9e47",
+                    "logic": "and",
+                    "filters": {
+                        "annotation$gene_name": [
+                            {
+                                "condition": "in",
+                                "values": [],
+                                "geno_bins": [
+                                    {
+                                        "chr": "18",
+                                        "start": 47368,
+                                        "end": 47368
+                                    }
+                                ]
+                            }
+                        ],
+                        "genotype$type": [
+                            {
+                                "condition": "in",
+                                "values": [
+                                    "hom"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "logic": "and"
+        },
+        "logic": "and"
+    },
+    "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+}

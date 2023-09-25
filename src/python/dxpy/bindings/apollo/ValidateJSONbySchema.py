@@ -84,8 +84,10 @@ class JSONValidator(object):
         if not isinstance(input_json, dict) or not input_json:
             self.error_handler("Input JSON must be a non-empty dict.")
 
+        self.error_on_invalid_keys(input_json)
+
         self.validate_types(input_json)
-        
+
         for key, value in self.schema.items():
             if key in input_json:
                 self.validate_properties(value.get("properties", {}), input_json[key])
@@ -110,7 +112,7 @@ class JSONValidator(object):
                         key, self.schema.get(key, {}).get("type"), type(value)
                     )
                 )
-    
+
     def validate_properties(self, properties, input_dict):
         for key, value in properties.items():
             if key not in input_dict and value.get("required"):
@@ -181,3 +183,51 @@ class JSONValidator(object):
                             ", ".join(associated_keys)
                         )
                     )
+
+    def error_on_invalid_keys(self, input_json):
+        invalid_keys = []
+        for key in input_json:
+            if key not in self.schema:
+                invalid_keys.append(key)
+
+        if invalid_keys:
+            self.error_handler("Found following invalid filters: {}".format(invalid_keys))
+
+    def are_list_items_within_range(
+        self,
+        input_json,
+        key,
+        start_subkey,
+        end_subkey,
+        window_width=250000000,
+        check_each_separately=False,
+    ):
+        """
+        This won't run by default when calling .validate() on a JSONValidator object. Run it separately when necessary
+        """
+
+        for item in input_json[key]:
+            if int(item[end_subkey]) <= int(item[start_subkey]):
+                self.error_handler(
+                    "{} cannot be less than or equal to the {}".format(
+                        end_subkey, start_subkey
+                    )
+                )
+
+            if check_each_separately:
+                if item[end_subkey] - item[start_subkey] > window_width:
+                    self.error_handler(
+                        "Range of {} and {} cannot be greater than {} for each item in {}".format(
+                            start_subkey, end_subkey, window_width, key
+                        )
+                    )
+        if not check_each_separately:
+            # Check will be done across all items in the list
+            # the entire search would be limited to window_width
+            start_values = [int(item[start_subkey]) for item in input_json[key]]
+            end_values = [int(item[end_subkey]) for item in input_json[key]]
+
+            if max(end_values) - min(start_values) > window_width:
+                self.error_handler(
+                    "Range cannot be greater than {} for {}".format(window_width, key)
+                )

@@ -1,18 +1,18 @@
 EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS = {
     "version": "1.0",
     "output_fields_mapping": {
-        "default": {
-            "feature_id": "expr_annotation$feature_id",
-            "sample_id": "expression$sample_id",
-            "expression": "expression$value",
-        },
-        "additional": {
-            "feature_name": "expr_annotation$gene_name",
-            "chrom": "expr_annotation$chr",
-            "start": "expr_annotation$start",
-            "end": "expr_annotation$end",
-            "strand": "expr_annotation$strand",
-        },
+        "default": [
+            {"feature_id": "expr_annotation$feature_id"},
+            {"sample_id": "expression$sample_id"},
+            {"expression": "expression$value"},
+        ],
+        "additional": [
+            {"feature_name": "expr_annotation$gene_name"},
+            {"chrom": "expr_annotation$chr"},
+            {"start": "expr_annotation$start"},
+            {"end": "expr_annotation$end"},
+            {"strand": "expr_annotation$strand"},
+        ],
     },
     "filtering_conditions": {
         "location": {

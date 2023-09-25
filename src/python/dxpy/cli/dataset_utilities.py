@@ -30,10 +30,11 @@ import codecs
 import subprocess
 from ..utils.printing import fill
 from ..bindings import DXRecord
-from ..bindings.dxdataobject_functions import is_dxlink
+from ..bindings.dxdataobject_functions import is_dxlink, describe
 from ..bindings.dxfile import DXFile
-from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
+from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError, resolve_path, check_folder_exists
 from ..utils.file_handle import as_handle
+from ..utils.describe import print_desc
 from ..exceptions import (
     err_exit,
     PermissionDenied,
@@ -46,6 +47,7 @@ from ..exceptions import (
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
+from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
 
 from ..bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 from ..bindings.apollo.path_validator import PathValidator
@@ -56,12 +58,14 @@ from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSIO
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 
+from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
 
 
-def resolve_validate_path(path):
+def resolve_validate_record_path(path):
+
     project, folder_path, entity_result = resolve_existing_path(path)
 
     if project is None:
@@ -81,8 +85,8 @@ def resolve_validate_path(path):
 
     if entity_result["describe"]["class"] != "record":
         err_exit(
-            "%s : Invalid path. The path must point to a record type of cohort or dataset"
-            % entity_result["describe"]["class"]
+            "{}: Invalid path. The path must point to a record type of cohort or dataset".format(path)
+            
         )
 
     try:
@@ -120,17 +124,25 @@ def resolve_validate_path(path):
     return project, entity_result, resp, dataset_project
 
 
-def raw_query_api_call(resp, payload):
-    resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/raw-query"
+def viz_query_api_call(resp, payload, route):
+    resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/" + route
     try:
-        resp_raw_query = dxpy.DXHTTPRequest(
+        resp_query = dxpy.DXHTTPRequest(
             resource=resource_val, data=payload, prepend_srv=False
         )
 
     except Exception as details:
         err_exit(str(details))
-    sql_results = resp_raw_query["sql"] + ";"
+    sql_results = resp_query["sql"] + ";"
     return sql_results
+
+
+def raw_query_api_call(resp, payload):
+    return viz_query_api_call(resp, payload, 'raw-query')
+
+
+def raw_cohort_query_api_call(resp, payload):
+    return viz_query_api_call(resp, payload, 'raw-cohort-query')
 
 
 def raw_api_call(resp, payload, sql_message=True):
@@ -142,12 +154,12 @@ def raw_api_call(resp, payload, sql_message=True):
         if "error" in resp_raw.keys():
             if resp_raw["error"]["type"] == "InvalidInput":
                 err_message = "Insufficient permissions due to the project policy.\n" + resp_raw["error"]["message"]
-                
             elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
-
                 err_message = "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster.\n" + resp_raw["error"]["message"]        
             elif resp_raw["error"]["type"] == "QueryBuilderError" and resp_raw["error"]["details"] == "rsid exists in request filters without rsid entries in rsid_lookup_table.":
                 err_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
+            elif resp_raw["error"]["type"] == "DxApiError":
+                err_message = resp_raw["error"]["message"]
             else:
                 err_message = resp_raw["error"]
             err_exit(str(err_message))
@@ -158,7 +170,7 @@ def raw_api_call(resp, payload, sql_message=True):
 
 def extract_dataset(args):
     """
-    Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.
+    Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.
     """
     if (
         not args.dump_dataset_dictionary
@@ -209,7 +221,7 @@ def extract_dataset(args):
     else:
         err_exit("Invalid delimiter specified")
 
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
 
     dataset_id = resp["dataset"]
     out_directory = ""
@@ -730,7 +742,7 @@ def extract_assay_germline(args):
             )
 
     ######## Data Processing ########
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
 
     if "CohortBrowser" in resp["recordTypes"] and any(
         [args.list_assays, args.assay_name]
@@ -989,7 +1001,7 @@ def extract_assay_somatic(args):
                 err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
             
     ######## Data Processing ########
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
     if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
         err_exit(
             "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
@@ -1068,45 +1080,271 @@ def extract_assay_expression(args):
     input_validator.validate_input_combination()
 
     # Validating Assay Path
-    assay_path = parser_dict.get("path")
-    project, folder_path, entity_result = resolve_existing_path(
-                assay_path
-            )
-    if entity_result is None:
-        err_exit('Unable to resolve "{}" to a data object in {}.'.format(
-                    assay_path, project))
-    else:
-        entity_describe = entity_result.get("describe")
+    if args.path:
+        project, folder_path, entity_result = resolve_existing_path(
+                    args.path
+                )
+        if entity_result is None:
+            err_exit('Unable to resolve "{}" to a data object in {}.'.format(
+                        args.path, project))
+        else:
+            entity_describe = entity_result.get("describe")
 
-    path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
-    path_validator.validate(check_list_assays_invalid_combination=True)
+        path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
+        path_validator.validate(check_list_assays_invalid_combination=True)
 
-    # # Validating input JSON
-    # if args.input_json:
-    #     user_filters_json = json.loads(args.input_json)
+    if args.json_help:
+        print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
+        sys.exit(0)
 
-    # elif args.input_json_file:
-    #     with open(args.input_json_file) as f:
-    #         user_filters_json = json.load(f)
+    # Validating input JSON
+    if args.input_json:
+        user_filters_json = json.loads(args.input_json)
 
-    # input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
-    # input_json_validator.validate(input_json=user_filters_json)
+    elif args.input_json_file:
+        with open(args.input_json_file) as f:
+            user_filters_json = json.load(f)
 
-    # input_json_parser = JSONFiltersValidator(input_json=user_filters_json, schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS, error_handler=err_exit)
-    # vizserver_raw_filters = input_json_parser.parse()
+    input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
+    input_json_validator.validate(input_json=user_filters_json)
+    
+    if "location" in user_filters_json:
+        if args.sql:
+            EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["filtering_conditions"]["location"]["max_item_limit"] = None
 
-    # vizserver_payload = VizPayloadBuilder(
-    #     project_context=project, 
-    #     output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"],
+        else:
+            input_json_validator.are_list_items_within_range(input_json=user_filters_json,
+                                                            key="location", 
+                                                            start_subkey="starting_position", 
+                                                            end_subkey="ending_position", 
+                                                            window_width=250000000, 
+                                                            check_each_separately=False)
         
-    #     limit=100_000_000,
-    #     base_sql=...,
-    #     is_cohort=...,
-    #     error_handler=err_exit
-    # )
+    input_json_parser = JSONFiltersValidator(input_json=user_filters_json,
+                                             schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS, 
+                                             error_handler=err_exit)
+    vizserver_raw_filters = input_json_parser.parse()
 
-    # vizserver_payload.assemble_assay_raw_filters(assay_name=..., assay_id=..., filters=vizserver_raw_filters)
-    # vizserver_full_payload = vizserver_payload.build()
+    BASE_SQL = None ### TODO: To be determined by the Dataset class
+    IS_COHORT = False ### TODO: To be determined by the Dataset class
+
+    vizserver_payload = VizPayloadBuilder(
+        project_context=project,
+        ### TODO -- additionally .get("additional") below if args.additional_fields is True
+        output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default"),
+        # limit=100_000_000, ### TODO -- update later
+        base_sql=BASE_SQL,
+        is_cohort=IS_COHORT,
+        error_handler=err_exit
+    )
+
+    ### TODO -- temporary -- to be replaced by DatasetAssay class response
+    DATASET_DESCRIPTOR = DXDataset(entity_describe["id"],project).get_descriptor()
+    ASSAY_NAME = DATASET_DESCRIPTOR.assays[0]["name"]
+    ASSAY_ID = DATASET_DESCRIPTOR.assays[0]["uuid"]
+
+    vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
+    vizserver_full_payload = vizserver_payload.build()
+
+    ### TODO -- remove later -- only for testing
+    #print(vizserver_full_payload)
+    viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
+    print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
+    ### TODO --- remove the above code -- only for testing
+
+#### CREATE COHORT ####
+def resolve_validate_dx_path(path):
+    """
+    Resolves dx path into project, folder and name. Fails if non existing folder is provided.
+    """
+    project, folder, name = resolve_path(path)
+    err_msg, folder_exists = None, None
+    if folder != "/":
+        folder_name = os.path.basename(folder)
+        folder_path = os.path.dirname(folder)
+        try:
+            folder_exists = check_folder_exists(project, folder_path, folder_name)
+        except ResolutionError as e:
+            if "folder could not be found" in str(e):
+                folder_exists = False
+            else:
+                raise e
+        if not folder_exists:
+            err_msg = "The folder: {} could not be found in the project: {}".format(
+                folder, project
+            )
+    
+    return project, folder, name, err_msg
+
+class VizserverError(Exception):
+    pass
+
+def validate_cohort_ids(descriptor, project, resp,ids):
+    # Usually the name of the table
+    entity_name = descriptor.model["global_primary_key"]["entity"]
+    # The name of the column or field in the table
+    field_name = descriptor.model["global_primary_key"]["field"] 
+
+    # Prepare a payload to find entries matching the input ids in the dataset
+    entity_field_name = "{}${}".format(entity_name, field_name)
+    fields_list = [{field_name: entity_field_name}]
+
+    # Note that pheno filters do not need name or id fields
+    payload = {
+        "project_context": project,
+        "fields": fields_list,
+        "filters":{
+            "pheno_filters": {
+                "filters": {
+                    entity_field_name: [
+                        {"condition": "in", "values": ids}
+                    ]
+                }
+            }
+        }
+    }
+
+    # Use the dxpy raw_api_function to send a POST request to the server with our payload
+    try:
+        resp_raw = raw_api_call(resp, payload)
+    except Exception as exc:
+        raise VizserverError(
+            "Exception caught while validating cohort ids.  Bad response from Vizserver."
+            "Original Error message:\n{}"
+        ).format(str(exc))
+    # Order of samples doesn't matter so using set here
+    discovered_ids = set()
+    # Parse the results objects for the cohort ids
+    for result in resp_raw["results"]:
+        discovered_ids.add(result[field_name])
+
+    # Compare the discovered cohort ids to the user-provided cohort ids
+    if discovered_ids != set(ids):
+        # Find which given samples are not present in the dataset
+        missing_ids = set(ids).difference(discovered_ids)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = resp["dataset"], ids = missing_ids)
+        raise ValueError(err_msg)
+
+        
+def has_access_level(project, access_level):
+    """
+    Validates that issuing user has required access level.
+    Args:
+        project: str: tasked project_id
+        access_level: str: minimum requested level
+    Retuns: boolean
+    """
+    level_rank = ["VIEW", "UPLOAD", "CONTRIBUTE", "ADMINISTER"]
+    access_level_idx = level_rank.index(access_level)
+    try:
+        project_describe = describe(project)
+    except PermissionDenied:
+        return False
+    if level_rank.index(project_describe["level"]) < access_level_idx:
+        return False
+    return True
+
+
+def validate_project_access(project, access_level="UPLOAD"):
+    """
+    Validates that project has requested access.
+    Args:
+        project: str: tasked project_id
+        access_level: str: minimum requested level Default at least UPLOAD
+    Returns:
+        Error message
+
+    """
+    if not has_access_level(project, access_level):
+        return "At least {} permission is required to create a record in a project".format(
+            access_level
+        )
+
+
+def create_cohort(args):
+    """
+    Create a cohort from dataset/cohort and specified list of samples.
+    """
+    #### Validation ####
+    # Validate and resolve 'PATH' input
+    
+    # default path values
+    path_project = dxpy.WORKSPACE_ID
+    path_folder = dxpy.config.get('DX_CLI_WD', '/')
+    path_name = None
+    if args.PATH:
+        path_project, path_folder, path_name, err_msg = resolve_validate_dx_path(
+            args.PATH
+        )
+        if err_msg:
+            err_exit(err_msg)
+        err_msg = validate_project_access(path_project)
+        if err_msg:
+            err_exit(err_msg)
+    # validate and resolve 'from' input
+    FROM = args.__dict__.get("from")
+    from_project, entity_result, resp, dataset_project = resolve_validate_record_path(FROM)
+
+    #### Reading input sample ids from file or command line ####
+    samples=[]
+    # from file
+    if args.cohort_ids_file:
+        with open(args.cohort_ids_file, "r") as infile:
+            for line in infile:
+                samples.append(line.strip("\n"))
+    # from string
+    if args.cohort_ids:
+        samples = [id.strip() for id in args.cohort_ids.split(",")]
+    
+    #### Validate the input cohort IDs ####
+    # Get the table/entity and field/column of the dataset from the descriptor
+    rec_descriptor = DXDataset(resp["dataset"], project=dataset_project).get_descriptor()
+
+    try:
+        validate_cohort_ids(rec_descriptor, dataset_project, resp, samples)
+    except ValueError as err:
+        err_exit(str(err))
+    except VizserverError as err:
+        err_exit(str(err))
+    except Exception as err:
+        err_exit(str(err))
+    # Input cohort IDs have been succesfully validated    
+
+    base_sql = resp.get("baseSql", resp.get("base_sql"))
+    try:
+        raw_cohort_query_payload = cohort_filter_payload(
+            samples,
+            rec_descriptor.model["global_primary_key"]["entity"],
+            rec_descriptor.model["global_primary_key"]["field"],
+            resp.get("filters", {}),
+            from_project,
+            base_sql,
+        )
+    except Exception as e:
+        err_exit("{}: {}".format(entity_result["id"], e))
+    sql = raw_cohort_query_api_call(resp, raw_cohort_query_payload)
+    cohort_payload = cohort_final_payload(
+        path_name,
+        path_folder,
+        path_project,
+        resp["databases"],
+        resp["dataset"],
+        resp["schema"],
+        raw_cohort_query_payload["filters"],
+        sql,
+        base_sql,
+        resp.get("combined"),
+    )
+
+    dx_record = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
+    # print record details to stdout
+    if args.brief:
+        print(dx_record.get_id())
+    else:
+        try:
+            print_desc(dx_record.describe(incl_properties=True, incl_details=True), args.verbose)
+        except Exception as e:
+            err_exit(str(e))
 
 
 class DXDataset(DXRecord):
