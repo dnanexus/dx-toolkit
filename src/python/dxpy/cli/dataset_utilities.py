@@ -1134,7 +1134,9 @@ def extract_assay_expression(args):
     _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default")
     
     if args.additional_fields:
-        _db_columns_list.extend(EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("additional"))
+        all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("additional")
+        user_additional_cols = [i for i in all_additional_cols if i.keys() & args.additional_fields]
+        _db_columns_list.extend(user_additional_cols)
 
     vizserver_payload = VizPayloadBuilder(
         project_context=project,
