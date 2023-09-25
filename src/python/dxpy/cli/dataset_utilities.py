@@ -1131,10 +1131,14 @@ def extract_assay_expression(args):
     BASE_SQL = None ### TODO: To be determined by the Dataset class
     IS_COHORT = False ### TODO: To be determined by the Dataset class
 
+    _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default")
+    
+    if args.additional_fields:
+        _db_columns_list.extend(EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("additional"))
+
     vizserver_payload = VizPayloadBuilder(
         project_context=project,
-        ### TODO -- additionally .get("additional") below if args.additional_fields is True
-        output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default"),
+        output_fields_mapping=_db_columns_list,
         # limit=100_000_000, ### TODO -- update later
         base_sql=BASE_SQL,
         is_cohort=IS_COHORT,
