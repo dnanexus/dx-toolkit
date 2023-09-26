@@ -4,7 +4,7 @@ from dxpy.bindings import DXRecord
 
 class Dataset(DXRecord):
     def __init__(self, dataset_id):
-        super().__init__(dataset_id)
+        super(Dataset, self).__init__(dataset_id)
         self.dataset_id = dataset_id
         self._detail_describe = None
         self._visualize_info = None
