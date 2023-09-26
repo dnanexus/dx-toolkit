@@ -36,7 +36,7 @@ from dxpy.bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
-from expression_test_files.input_dict import CLIEXPRESS_TEST_INPUT
+from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
 
 dirname = os.path.dirname(__file__)
 
