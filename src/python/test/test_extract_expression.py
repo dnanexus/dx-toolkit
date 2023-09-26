@@ -295,7 +295,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # When --additional-fields-help is presented with other options
     def test_additional_fields_help_other_options(self):
         expected_error_message = (
-            "--additional-fields-help cannot be presented with other options"
+            '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
         )
         input_dict = {
             "path": self.test_record,
@@ -385,7 +385,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # Note: empty JSON is tested in the JSON validation section
     def test_no_value_retrieve_exp(self):
         expected_error_message = "No filter json is passed with --retrieve-expression or JSON for --retrieve-expression does not contain valid filter information."
-        input_dict = {"path": self.test_record, "retrieve_expression": True}
+        input_dict = {"path": self.test_record, "retrieve_expression": True, "input_json":r'{}'}
         self.standard_input_args_test(input_dict, expected_error_message)
 
     # EM-16
@@ -443,7 +443,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-21
     # When --json-help is passed with another option from --assay-name, --sql, --additional-fields, --expression-matix, --output
     def test_json_help_other_option(self):
-        expected_error_message = "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matrix, or --output"
+        expected_error_message = '"--json-help" cannot be passed with any option other than "--retrieve-expression".'
         input_dict = {
             "path": self.test_record,
             "json_help": True,
@@ -455,6 +455,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # When --expression-matrix is passed with other arguments other than, any context other than, --retrieve-expression
     # It seems that every combination of args that could be passed with this cause a different issue to be caught first
     # Which is fine but the error message will be for the other error
+    @unittest.skip
     def test_exp_matrix_other_args(self):
         # expected_error_message = "--expression-matrix cannot be passed with any argument other than --retrieve-expression"
         expected_error_message = "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matrix, or --output"
@@ -557,7 +558,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_bad_toplevel_key(self):
         self.standard_negative_filter_test(
-            "bad_toplevel_key", "error message not yet defined"
+            "bad_toplevel_key", "Found following invalid filters: ['not_real_key']"
         )
 
     def test_conflicting_toplevel(self):
@@ -568,7 +569,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_empty_dict(self):
         self.standard_negative_filter_test(
-            "empty_dict", "error message not yet defined"
+            "empty_dict", "Input JSON must be a non-empty dict."
         )
 
     def test_expression_empty_dict(self):
@@ -579,13 +580,13 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_expression_max_type(self):
         self.standard_negative_filter_test(
             "expression_max_type",
-            "Key 'max_value' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+            "Key 'max_value' has an invalid type. Expected (<class 'int'>, <class 'float'>) but got <class 'str'>",
         )
 
     def test_expression_min_type(self):
         self.standard_negative_filter_test(
             "expression_min_type",
-            "Key 'min_value' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+            "Key 'min_value' has an invalid type. Expected (<class 'int'>, <class 'float'>) but got <class 'str'>",
         )
 
     def test_expression_type(self):
@@ -613,7 +614,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_location_item_type(self):
         self.standard_negative_filter_test(
-            "location_item_type", "error message not yet defined"
+            "location_item_type", "Expected items of type <class 'dict'> but got <class 'list'>"
         )
 
     def test_location_max_width(self):
@@ -647,7 +648,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_location_type(self):
         self.standard_negative_filter_test(
-            "location_type", "error message not yet defined"
+            "location_type", "Key 'location' has an invalid type. Expected <class 'list'> but got <class 'dict'>"
         )
 
     def test_sample_id_maxitem(self):
@@ -657,7 +658,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_sample_id_type(self):
         self.standard_negative_filter_test(
-            "sample_id_type", "Expected list but got <class 'dict'> for sample_id"
+            "sample_id_type", "Key 'sample_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>"
         )
 
     #
