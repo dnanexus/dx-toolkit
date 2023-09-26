@@ -1,0 +1,29 @@
+{
+    "filters": {
+        "pheno_filters": {
+            "compound": [
+                {
+                    "name": "phenotype",
+                    "logic": "and",
+                    "filters": {
+                        "sample$sample_id": [
+                            {
+                                "condition": "in",
+                                "values": [
+                                    "sample_1_1",
+                                    "sample_1_2",
+                                    "sample_1_3",
+                                    "sample_1_4",
+                                    "sample_1_5"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "logic": "and"
+        },
+        "logic": "and"
+    },
+    "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+}

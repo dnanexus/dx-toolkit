@@ -1,0 +1,35 @@
+{
+    "filters": {
+        "pheno_filters": {
+            "compound": [
+                {
+                    "name": "phenotype",
+                    "logic": "and",
+                    "filters": {
+                        "patient$patient_id": [
+                            {
+                                "condition": "in",
+                                "values": [
+                                    "patient_3"
+                                ]
+                            }
+                        ]
+                    },
+                    "entity": {
+                        "logic": "and",
+                        "name": "patient",
+                        "operator": "exists",
+                        "children": []
+                    }
+                }
+            ],
+            "logic": "and"
+        },
+        "assay_filters": {
+            "compound": [],
+            "logic": "and"
+        },
+        "logic": "and"
+    },
+    "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+}
