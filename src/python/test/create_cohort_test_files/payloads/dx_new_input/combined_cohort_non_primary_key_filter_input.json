@@ -1,0 +1,114 @@
+{
+    "name": "combined_cohort_non_primary_key_filter_input",
+    "folder": "/Create_Cohort/manually_created_output_cohorts",
+    "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "types": [
+        "DatabaseQuery",
+        "CohortBrowser",
+        "CombinedDatabaseQuery"
+    ],
+    "details": {
+        "databases": [
+            "database-GYK2yg00vGPpzj7YGY3VJxb9"
+        ],
+        "dataset": {
+            "$dnanexus_link": "record-GYK2zyQ0g1bx86fBp2X8KpjY"
+        },
+        "description": "",
+        "filters": {
+            "pheno_filters": {
+                "compound": [
+                    {
+                        "name": "phenotype",
+                        "logic": "and",
+                        "filters": {
+                            "patient$age": [
+                                {
+                                    "condition": "between",
+                                    "values": [
+                                        20,
+                                        60
+                                    ]
+                                }
+                            ],
+                            "patient$patient_id": [
+                                {
+                                    "condition": "in",
+                                    "values": [
+                                        "patient_1",
+                                        "patient_2"
+                                    ]
+                                }
+                            ]
+                        },
+                        "entity": {
+                            "logic": "and",
+                            "name": "patient",
+                            "operator": "exists",
+                            "children": [
+                                {
+                                    "name": "hospital@e98fe382-3cb5-4c25-a771-09a24ae0f91e",
+                                    "logic": "or",
+                                    "filters": {
+                                        "hospital$min_score_all": [
+                                            {
+                                                "condition": "in",
+                                                "values": [
+                                                    400,
+                                                    500
+                                                ]
+                                            }
+                                        ],
+                                        "hospital$location": [
+                                            {
+                                                "condition": "any",
+                                                "values": [
+                                                    "CA",
+                                                    "BC"
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "entity": {
+                                        "logic": "and",
+                                        "name": "hospital",
+                                        "operator": "exists",
+                                        "children": []
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "logic": "and"
+            },
+            "assay_filters": {
+                "compound": [],
+                "logic": "and"
+            },
+            "logic": "and"
+        },
+        "schema": "create_cohort_schema",
+        "sql": "SELECT `cohort_subquery`.`patient_id` AS `patient_id` FROM (SELECT `patient_1`.`patient_id` AS `patient_id`, `patient_1`.`hid` AS `hid` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`age` BETWEEN 20 AND 60 AND `patient_1`.`patient_id` IN ('patient_1', 'patient_2') AND (EXISTS (SELECT `hospital_1`.`hospital_id` AS `hospital_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`hospital` AS `hospital_1` WHERE (`hospital_1`.`min_score_all` IN (400, 500) OR ARRAY_CONTAINS(`hospital_1`.`location_hierarchy`, 'CA') OR ARRAY_CONTAINS(`hospital_1`.`location_hierarchy`, 'BC')) AND `hospital_1`.`hospital_id` = `patient_1`.`hid`)) AND `patient_1`.`patient_id` IN (SELECT `patient_id` FROM (SELECT `cohort_subquery`.`patient_id` AS `patient_id` FROM (SELECT `patient_1`.`patient_id` AS `patient_id`, `patient_1`.`hid` AS `hid` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE EXISTS (SELECT `hospital_1`.`hospital_id` AS `hospital_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`hospital` AS `hospital_1` WHERE `hospital_1`.`min_score_all` IN (500, 400) AND `hospital_1`.`hospital_id` = `patient_1`.`hid`)) AS `cohort_subquery` INTERSECT SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`name` IN ('Sally', 'Diane', 'Cassy', 'John', 'Rosaleen')))) AS `cohort_subquery`",
+        "version": "3.0",
+        "baseSql": "SELECT `patient_id` FROM (SELECT `cohort_subquery`.`patient_id` AS `patient_id` FROM (SELECT `patient_1`.`patient_id` AS `patient_id`, `patient_1`.`hid` AS `hid` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE EXISTS (SELECT `hospital_1`.`hospital_id` AS `hospital_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`hospital` AS `hospital_1` WHERE `hospital_1`.`min_score_all` IN (500, 400) AND `hospital_1`.`hospital_id` = `patient_1`.`hid`)) AS `cohort_subquery` INTERSECT SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`name` IN ('Sally', 'Diane', 'Cassy', 'John', 'Rosaleen'))",
+        "combined": {
+            "logic": "INTERSECT",
+            "source": [
+                {
+                    "$dnanexus_link": {
+                        "id": "record-GYXGv700vGPpz41VkQXZpX47",
+                        "project": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+                    }
+                },
+                {
+                    "$dnanexus_link": {
+                        "id": "record-GYXGPGQ0vGPZbJF6yZ17kxpx",
+                        "project": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+                    }
+                }
+            ]
+        }
+    },
+    "close": true
+}
