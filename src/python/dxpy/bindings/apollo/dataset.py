@@ -7,12 +7,9 @@ class Dataset(DXRecord):
         super().__init__(dataset_id)
         self.dataset_id = dataset_id
         self._detail_describe = None
-        # self.project_id = project_id
-        self.visualize_info = None
+        self._visualize_info = None
         self._dx_record_obj = None
         self.dx_dataset_descriptor = None
-        self.assays_list = None
-        self.assay_names_list = None
 
     @staticmethod
     def cohort_object(record_id):
@@ -56,17 +53,18 @@ class Dataset(DXRecord):
 
         return cohort_information
 
-    def get_visualize_info(self):
-        if self.visualize_info is None:
-            self.visualize_info = DXHTTPRequest(
+    @property
+    def visualize_info(self):
+        if self._visualize_info is None:
+            self._visualize_info = DXHTTPRequest(
                 "/" + self.dataset_id + "/visualize",
                 {"project": self.project_id, "cohortBrowser": False},
             )
-        return self.visualize_info
+        return self._visualize_info
 
     @property
     def vizserver_url(self):
-        vis_info = self.get_visualize_info()
+        vis_info = self.visualize_info
         return vis_info.get("url")
 
     @property
@@ -84,46 +82,39 @@ class Dataset(DXRecord):
     def populate_dx_dataset_descriptor(self, descriptor):
         self.dx_dataset_descriptor = vars(descriptor)
 
-    def get_assay_list(self, assay_type):
-        if self.assays_list is None:
-            selected_type_assays = []
-            for a in self.dx_dataset_descriptor.get("assays"):
-                if a["generalized_assay_model"] == assay_type:
-                    selected_type_assays.append(a)
-            self.assays_list = selected_type_assays
-        return self.assays_list
+    @property
+    def assays_info_dict(self):
+        assays = self.dx_dataset_descriptor.get("assays")
+        assays_info_dict = {}
 
-    def get_assay_names(self, assay_type):
-        if self.assay_names_list is None:
-            list_assay = self.get_assay_list(assay_type)
-            list_assay_names = []
-            for a in list_assay:
-                list_assay_names.append(a.get("name"))
-            self.assay_names_list = list_assay_names
-        return self.assay_names_list
+        for index in range(len(assays)):
+            model = assays[index]["generalized_assay_model"]
+            assay_dict = {
+                "name": assays[index]["name"],
+                "index": index,
+                "uuid": assays[index]["uuid"],
+                "referece": assays[index]["reference"]["name"],
+            }
 
-    def get_assay_indice_in_list(self, assay_names_list, assay_name):
-        index = self.assay_names_list.index(assay_name)
-        return index
+            if model not in assays_info_dict.keys():
+                assays_info_dict[model] = []
 
-    def get_assay_uuid(self, assay_index):
-        uuid = self.dx_dataset_descriptor.get("assays")[assay_index].get("uuid")
-        return uuid
+            assays_info_dict[model].append(assay_dict)
 
-    def get_assay_name(self, assay_index):
-        name = self.dx_dataset_descriptor.get("assays")[assay_index].get("name")
-        return name
+        return assays_info_dict
 
-    def get_assay_reference(self, assay_index):
-        reference = (
-            self.dx_dataset_descriptor.get("assays")[assay_index]
-            .get("reference")
-            .get("name")
-        )
-        return reference
+    def assay_names_list(self, assay_type):
+        assay_names_list = []
+        for assay in self.assays_info_dict[assay_type]:
+            assay_names_list.append(assay["name"])
+        return assay_names_list
 
-    def get_assay_generalized_assay_model(self, assay_index):
-        generalized_assay_model = self.dx_dataset_descriptor.get("assays")[
-            assay_index
-        ].get("generalized_assay_model")
-        return generalized_assay_model
+    def is_assay_name_valid(self, assay_name, assay_type):
+        return True if assay_name in self.assay_names_list(assay_type) else False
+
+    def assay_index(self, assay_name):
+        assay_lists_per_model = self.assays_info_dict.values()
+        for model_assays in assay_lists_per_model:
+            for assay in model_assays:
+                if assay["name"] == assay_name:
+                    return assay["index"]

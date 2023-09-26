@@ -1097,22 +1097,19 @@ def extract_assay_expression(args):
 
     # assay names listing
     dataset_descriptor = DXDataset(dataset_handler.dataset_id, project=dataset_handler.project_id).get_descriptor()
+    # TODO remove DXDataset dependency
     dataset_handler.populate_dx_dataset_descriptor(dataset_descriptor)
-    assay_names_list = dataset_handler.get_assay_names("molecular_expression")
 
     if args.list_assays:
-        print(*assay_names_list, sep="\n")
+        print(*dataset_handler.assay_names_list("molecular_expression"), sep="\n")
         sys.exit(0)
 
-    # # possible assay picking
-    # assay_index = dataset_handler.get_assay_indice_in_list(assay_names_list, args.assay_name) if args.assay_name else 0
-    
-    # print(dataset_handler.get_assay_uuid(assay_index))
-    # print(dataset_handler.get_assay_name(assay_index))
-    # print(dataset_handler.get_assay_reference(assay_index))
-    # print(dataset_handler.get_assay_generalized_assay_model(assay_index))
+    # possible assay picking
+    if args.assay_name and not dataset_handler.is_assay_name_valid(args.assay_name, "molecular_expression"):
+        print("assay is not present in dataset")
+        sys.exit(0)
 
-
+    assay_index = dataset_handler.assay_index(args.assay_name) if args.assay_name else 0
 
 
     # # Validating input JSON
