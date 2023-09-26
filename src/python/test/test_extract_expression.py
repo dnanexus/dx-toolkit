@@ -26,6 +26,8 @@ import sys
 import os
 import dxpy
 import json
+import tempfile
+
 import shutil
 from dxpy_testutil import cd, chdir
 from dxpy.bindings.apollo.ValidateJSONbySchema import JSONValidator
@@ -54,7 +56,8 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.general_input_dir = os.path.join(dirname, "expression_test_files/input/")
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
         cls.schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
-        cls.test_record = cls.proj_id + ":/Extract_Expression/standin_test_record"
+        #cls.test_record = cls.proj_id + ":/Extract_Expression/standin_test_record"
+        cls.test_record = "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
@@ -356,29 +359,34 @@ class TestDXExtractExpression(unittest.TestCase):
     # When file already exist
     @unittest.skip("not yet implemented")
     def test_output_already_exist(self):
-        # TODO replace this with a tempfile
-        output_path = os.path.join(
-            self.general_output_dir, "already_existing_output_file.tsv"
-        )
-        expected_error_message = (
-            "{} already exists. Please specify a new file path".format(output_path)
-        )
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.test_record,
-            "--output",
-            output_path,
-        ]
+        with tempfile.NamedTemporaryFile() as tmp:
+            output_path = tmp.name
+            output_path = os.path.join(
+                self.general_output_dir, "already_existing_output_file.tsv"
+            )
+            expected_error_message = (
+                "{} already exists. Please specify a new file path".format(output_path)
+            )
+            command = [
+                "dx",
+                "extract_assay",
+                "expression",
+                self.test_record,
+                "--retrieve-expression",
+                "--input-json",
+                r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
+                "--output",
+                output_path,
+            ]
 
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
+            process = subprocess.Popen(
+                command, stderr=subprocess.PIPE, universal_newlines=True
+            )
+            actual_err_msg = process.communicate()[1]
+            print("actual_err_msg:")
+            print(actual_err_msg)
 
-        self.assertTrue(expected_error_message in actual_err_msg)
+            self.assertTrue(expected_error_message in actual_err_msg)
 
     # EM-15
     # When a --retrieve-expression flag is passed without any value or when an empty JSON (an empty file or just {}) is passed with --retrieve-expression flag
