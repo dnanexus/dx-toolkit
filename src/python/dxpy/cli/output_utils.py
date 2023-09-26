@@ -14,16 +14,24 @@ def write_expression_output(
 ):
     """
     arg_output: str
-    This is is expected to be args.output from argparse
+    A string representing the output file path.
+    When it's "-", output is written to stdout.
+    This can be directly set as args.output from argparse when calling the function (e.g within dataset_utilities)
 
     arg_delim: str
-    This is expected to be args.delimiter from argparse
+    A string representing the delimiter. Defaults to "," when not specified.
+    It also determines the file suffix when writing to file.
+    This can be set to args.delimiter from argparse when the method is called
 
     arg_sql: bool
-    This is expected to be args.sql from argparse
+    A boolean representing whether the output_listdict_or_string is a SQL query (string) or not.
+    This can be args.sql from argparse
 
     output_listdict_or_string: 'list of dicts' or 'str' depending on whether arg_sql is False or True, respectively
     This is expected to be the response from vizserver
+    if arg_sql is True, this is expected to be a string representing the SQL query
+    if arg_sql is False, this is expected to be a list of dicts representing the output of a SQL query
+    if output_listdict_or_string is a list of dicts, all dicts must have the same keys which will be used as column names
 
     save_uncommon_delim_to_txt: bool
     Set this to False if you want to error out when any delimiter other than "," or "\t" is specified
@@ -31,6 +39,7 @@ def write_expression_output(
     output_file_name: str
     This is expected to be a record_name which will be used when arg_output is not specified
     Do not append a suffix to this string
+    output_file_name is mandatory when arg_output is not specified
 
     By default delimiter is set "," and file suffix is csv (when writing to file)
 
