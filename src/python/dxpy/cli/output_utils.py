@@ -3,11 +3,6 @@ import csv
 import os
 from ..exceptions import err_exit
 
-IS_OS_WINDOWS = os.name == "nt"
-OS_SPECIFIC_LINE_SEPARATOR = os.linesep
-IS_PYTHON_2 = sys.version_info.major == 2
-IS_PYTHON_3 = sys.version_info.major == 3
-
 
 def write_expression_output(
     arg_output,
@@ -17,6 +12,37 @@ def write_expression_output(
     save_uncommon_delim_to_txt=True,
     output_file_name=None,
 ):
+    """
+    arg_output: str
+    This is is expected to be args.output from argparse
+
+    arg_delim: str
+    This is expected to be args.delimiter from argparse
+
+    arg_sql: bool
+    This is expected to be args.sql from argparse
+
+    output_listdict_or_string: 'list of dicts' or 'str' depending on whether arg_sql is False or True, respectively
+    This is expected to be the response from vizserver
+
+    save_uncommon_delim_to_txt: bool
+    Set this to False if you want to error out when any delimiter other than "," or "\t" is specified
+
+    output_file_name: str
+    This is expected to be a record_name which will be used when arg_output is not specified
+    Do not append a suffix to this string
+
+    By default delimiter is set "," and file suffix is csv (when writing to file)
+
+    None values are written as empty strings by default (csv.DictWriter behavior)
+
+    """
+
+    IS_OS_WINDOWS = os.name == "nt"
+    OS_SPECIFIC_LINE_SEPARATOR = os.linesep
+    IS_PYTHON_2 = sys.version_info.major == 2
+    IS_PYTHON_3 = sys.version_info.major == 3
+
     if arg_sql:
         SUFFIX = ".sql"
         if not isinstance(output_listdict_or_string, str):
