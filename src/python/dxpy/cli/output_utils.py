@@ -1,12 +1,7 @@
 import sys
 import csv
 import os
-
-# from dxpy.exceptions import err_exit
-
-
-def err_exit(msg):
-    print(msg)
+from ..exceptions import err_exit
 
 
 def write_expression_output(
@@ -111,6 +106,12 @@ def write_expression_output(
 
     else:
         COLUMN_NAMES = output_listdict_or_string[0].keys()
+
+        if not all(
+            set(i.keys()) == set(COLUMN_NAMES) for i in output_listdict_or_string
+        ):
+            err_exit("All rows must have the same column names")
+
         WRITE_MODE = "wb" if IS_PYTHON_2 or IS_OS_WINDOWS else "w"
         NEWLINE = "" if IS_PYTHON_3 else None
         DELIMITER = str(arg_delim) if arg_delim else ","
