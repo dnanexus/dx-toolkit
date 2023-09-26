@@ -1092,7 +1092,7 @@ def extract_assay_expression(args):
             entity_describe = entity_result.get("describe")
 
         # TODO: This is temporary and will be replaced by the appropriate attribut from Dataset class once implemented
-        entity_describe_details = describe(args.path, default_fields=True, fields={"properties", "details"})
+        entity_describe_details = describe(entity_describe["id"], default_fields=True, fields={"properties", "details"})
         
         path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe_details, error_handler=err_exit)
         path_validator.validate(check_list_assays_invalid_combination=True)
