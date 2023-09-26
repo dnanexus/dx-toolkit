@@ -52,6 +52,7 @@ from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, coho
 from ..bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
 from ..bindings.apollo.path_validator import PathValidator
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
+from ..bindings.apollo.dataset import Dataset
 from ..bindings.apollo.ValidateJSONbySchema import JSONValidator
 from ..bindings.apollo.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
 from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
@@ -1095,6 +1096,31 @@ def extract_assay_expression(args):
         
         path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe_details, error_handler=err_exit)
         path_validator.validate(check_list_assays_invalid_combination=True)
+
+
+    # Cohort handling
+    cohort_info = Dataset.cohort_object_information(entity_describe["id"])
+    dataset_id = cohort_info.get(("dataset_id"))
+
+    # Dataset handling
+    dataset_handler = Dataset(dataset_id)
+
+    # assay names listing
+    dataset_descriptor = DXDataset(dataset_handler.dataset_id, project=dataset_handler.project_id).get_descriptor()
+    # TODO remove DXDataset dependency
+    dataset_handler.populate_dx_dataset_descriptor(dataset_descriptor)
+
+    if args.list_assays:
+        print(*dataset_handler.assay_names_list("molecular_expression"), sep="\n")
+        sys.exit(0)
+
+    # possible assay picking
+    if args.assay_name and not dataset_handler.is_assay_name_valid(args.assay_name, "molecular_expression"):
+        print("assay is not present in dataset")
+        sys.exit(0)
+
+    assay_index = dataset_handler.assay_index(args.assay_name) if args.assay_name else 0
+
 
     if args.json_help:
         print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
