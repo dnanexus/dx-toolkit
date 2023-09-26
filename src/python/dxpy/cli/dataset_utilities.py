@@ -565,7 +565,7 @@ def get_assay_name_info(
             rec_descriptor, assay_type=assay_type
         )
         if not target_assays:
-            err_exit("There's no {} assay in the dataset provided.").format(assay_type)
+            err_exit("There's no {} assay in the dataset provided.".format(friendly_assay_type))
         else:
             for a in target_assays:
                 print(a["name"])
@@ -585,9 +585,7 @@ def get_assay_name_info(
         selected_assay_name = target_assay_names[0]
         selected_assay_id = target_assay_ids[0]
     else:
-        err_exit("There's no {} assay in the dataset provided.").format(
-            friendly_assay_type
-        )
+        err_exit("There's no {} assay in the dataset provided.".format(friendly_assay_type))
     if assay_name:
         if assay_name not in list(target_assay_names):
             if assay_name in list(other_assay_names):
