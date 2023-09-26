@@ -1,7 +1,12 @@
 import sys
 import csv
 import os
-from ..exceptions import err_exit
+
+# from dxpy.exceptions import err_exit
+
+
+def err_exit(msg):
+    print(msg)
 
 
 def write_expression_output(
@@ -112,8 +117,15 @@ def write_expression_output(
         QUOTING = csv.QUOTE_MINIMAL
         QUOTE_CHAR = '"'
 
+        write_args = {
+            "mode": WRITE_MODE,
+        }
+
+        if IS_PYTHON_3:
+            write_args["newline"] = NEWLINE
+
         if WRITE_METHOD == "FILE":
-            with open(output_file_name, WRITE_MODE, newline=NEWLINE) as f:
+            with open(output_file_name, **write_args) as f:
                 w = csv.DictWriter(
                     f,
                     COLUMN_NAMES,
