@@ -61,6 +61,12 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
+
+        # In python3, str(type(object)) looks like <{0} 'obj_class'> but in python 2, it would be <type 'obj_class'>
+        # This impacts our expected error messages
+        cls.type_representation = "class"
+        if python_version == 2:
+            cls.type_representation = "type"
         # Note: there would usually be a "func" key with a function object as its value
         cls.default_parser_dict = {
             "apiserver_host": None,
@@ -88,6 +94,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "output": None,
         }
 
+        # Make an output directory if it doesn't already exists
         if not os.path.exists(cls.general_output_dir):
             os.makedirs(cls.general_output_dir)
 
@@ -537,25 +544,25 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_annotation_id_type(self):
         self.standard_negative_filter_test(
             "annotation_id_type",
-            "Key 'feature_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>",
+            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation).format(self.type_representation),
         )
 
     def test_annotation_name_maxitem(self):
         self.standard_negative_filter_test(
             "annotation_name_maxitem",
-            "Key 'feature_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>",
+            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation),
         )
 
     def test_annotation_name_type(self):
         self.standard_negative_filter_test(
             "annotation_name_type",
-            "Key 'feature_name' has an invalid type. Expected <class 'list'> but got <class 'dict'>",
+            "Key 'feature_name' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation),
         )
 
     def test_annotation_type(self):
         self.standard_negative_filter_test(
             "annotation_type",
-            "Key 'annotation' has an invalid type. Expected <class 'dict'> but got <class 'list'>",
+            "Key 'annotation' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation),
         )
 
     def test_bad_dependent_conditional(self):
@@ -588,25 +595,25 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_expression_max_type(self):
         self.standard_negative_filter_test(
             "expression_max_type",
-            "Key 'max_value' has an invalid type. Expected (<class 'int'>, <class 'float'>) but got <class 'str'>",
+            "Key 'max_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(self.type_representation),
         )
 
     def test_expression_min_type(self):
         self.standard_negative_filter_test(
             "expression_min_type",
-            "Key 'min_value' has an invalid type. Expected (<class 'int'>, <class 'float'>) but got <class 'str'>",
+            "Key 'min_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(self.type_representation),
         )
 
     def test_expression_type(self):
         self.standard_negative_filter_test(
             "expression_type",
-            "Key 'expression' has an invalid type. Expected <class 'dict'> but got <class 'list'>",
+            "Key 'expression' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation),
         )
 
     def test_location_chrom_type(self):
         self.standard_negative_filter_test(
             "location_chrom_type",
-            "Key 'chromosome' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+            "Key 'chromosome' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
         )
 
     def test_location_end_before_start(self):
@@ -617,12 +624,12 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_end_type(self):
         self.standard_negative_filter_test(
             "location_end_type",
-            "Key 'ending_position' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+            "Key 'ending_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
         )
 
     def test_location_item_type(self):
         self.standard_negative_filter_test(
-            "location_item_type", "Expected items of type <class 'dict'> but got <class 'list'>"
+            "location_item_type", "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation)
         )
 
     def test_location_max_width(self):
@@ -651,12 +658,12 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_start_type(self):
         self.standard_negative_filter_test(
             "location_start_type",
-            "Key 'starting_position' has an invalid type. Expected <class 'str'> but got <class 'int'>",
+            "Key 'starting_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
         )
 
     def test_location_type(self):
         self.standard_negative_filter_test(
-            "location_type", "Key 'location' has an invalid type. Expected <class 'list'> but got <class 'dict'>"
+            "location_type", "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
         )
 
     def test_sample_id_maxitem(self):
@@ -666,7 +673,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_sample_id_type(self):
         self.standard_negative_filter_test(
-            "sample_id_type", "Key 'sample_id' has an invalid type. Expected <class 'list'> but got <class 'dict'>"
+            "sample_id_type", "Key 'sample_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
         )
 
     #
