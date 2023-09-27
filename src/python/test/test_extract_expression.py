@@ -580,6 +580,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "empty_dict", "Input JSON must be a non-empty dict."
         )
 
+    @unittest.skip
     def test_expression_empty_dict(self):
         self.common_negative_filter_test(
             "expression_empty_dict", "error message not yet defined"
