@@ -2,7 +2,7 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS = {
     "version": "1.0",
     "output_fields_mapping": {
         "default": [
-            {"feature_id": "expr_annotation$feature_id"},
+            {"feature_id": "expression$feature_id"},
             {"sample_id": "expression$sample_id"},
             {"expression": "expression$value"},
         ],
