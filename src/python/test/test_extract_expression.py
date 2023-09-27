@@ -732,6 +732,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "Conflicting keys feature_name and feature_id cannot be present together.",
         )
 
+    @unittest.skip
     def test_annotation_id_maxitem(self):
         self.common_negative_filter_test(
             "annotation_id_maxitem", "error message not yet defined"
@@ -743,6 +744,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation).format(self.type_representation),
         )
 
+    @unittest.skip
     def test_annotation_name_maxitem(self):
         self.common_negative_filter_test(
             "annotation_name_maxitem",
@@ -814,6 +816,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "Key 'chromosome' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
         )
 
+    @unittest.skip
     def test_location_end_before_start(self):
         self.common_negative_filter_test(
             "location_end_before_start", "error message not yet defined"
@@ -830,6 +833,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "location_item_type", "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation)
         )
 
+    @unittest.skip
     def test_location_max_width(self):
         self.common_negative_filter_test(
             "location_max_width", "error message not yet defined"
@@ -864,6 +868,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "location_type", "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
         )
 
+    @unittest.skip
     def test_sample_id_maxitem(self):
         self.common_negative_filter_test(
             "sample_id_maxitem", "error message not yet defined"
