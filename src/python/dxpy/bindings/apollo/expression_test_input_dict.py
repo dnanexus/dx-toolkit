@@ -22,7 +22,7 @@ CLIEXPRESS_TEST_INPUT = {
                     "ending_position": "1700",
                 },
             ],
-            "expression": {"min_value": "10.2", "max_value": "10000"},
+            "expression": {"min_value": 10.2, "max_value": 10000},
         },
         "bad_toplevel_key": {"not_real_key": "1", "sample_id": ["sample1"]},
         "location_missing_end": {
@@ -42,7 +42,7 @@ CLIEXPRESS_TEST_INPUT = {
                     "ending_position": "1700",
                 },
             ],
-            "expression": {"min_value": "10.2", "max_value": "10000"},
+            "expression": {"min_value": 10.2, "max_value": 10000},
             "annotation": {
                 "feature_name": ["BRCA2"],
                 "feature_id": ["ENSG0000001", "ENSG00000002"],
@@ -53,8 +53,8 @@ CLIEXPRESS_TEST_INPUT = {
                 {"chromosome": 1, "starting_position": "1", "ending_position": "200"}
             ]
         },
-        "expression_max_type": {"expression": {"max_value": 200}},
-        "expression_empty_dict": {"expression": {}},
+        "expression_max_type": {"expression": {"max_value": "200"},"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}},
+        "expression_empty_dict": {"expression": {},"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}},
         "annotation_name_type": {
             "annotation": {"feature_name": {"shouldnot": "bedict"}}
         },
@@ -74,7 +74,7 @@ CLIEXPRESS_TEST_INPUT = {
             }
         },
         "sample_id_maxitem": {"sample_id": ["item"] * 101},
-        "expression_min_type": {"expression": {"min_value": 1}},
+        "expression_min_type": {"expression": {"min_value": "1"},"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}},
         "location_type": {"location": {"shouldbe": "alist"}},
         "annotation_id_maxitem": {"annotation": {"feature_id": ["item"] * 101}},
         "empty_dict": {},
@@ -82,7 +82,7 @@ CLIEXPRESS_TEST_INPUT = {
             "location": [{"starting_position": "1", "ending_position": "200"}]
         },
         "bad_dependent_conditional": {
-            "expression": {"min_value": "10.2", "max_value": "10000"}
+            "expression": {"min_value": 10.2, "max_value": 10000}
         },
         "sample_id_type": {"sample_id": {"shouldbe": "alist"}},
         "annotation_id_type": {"annotation": {"feature_id": {"shouldnot": "bedict"}}},
@@ -109,11 +109,11 @@ CLIEXPRESS_TEST_INPUT = {
             "annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}
         },
         "expression_min_only": {
-            "expression": {"min_value": "1"},
+            "expression": {"min_value": 1},
             "annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]},
         },
         "expression_min_and_max": {
-            "expression": {"min_value": "1", "max_value": "200"},
+            "expression": {"min_value": 1, "max_value": 200},
             "annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]},
         },
         "single_location": {
@@ -123,7 +123,7 @@ CLIEXPRESS_TEST_INPUT = {
         },
         "annotation_feature_name": {"annotation": {"feature_name": ["BRCA2"]}},
         "dependent_conditional_annotation": {
-            "expression": {"min_value": "10.2", "max_value": "10000"},
+            "expression": {"min_value": 10.2, "max_value": 10000},
             "annotation": {"feature_name": ["BRCA2"]},
         },
         "dependent_conditional_location": {
@@ -139,10 +139,10 @@ CLIEXPRESS_TEST_INPUT = {
                     "ending_position": "1700",
                 },
             ],
-            "expression": {"min_value": "10.2", "max_value": "10000"},
+            "expression": {"min_value": 10.2, "max_value": 10000},
         },
         "expression_max_only": {
-            "expression": {"max_value": "200"},
+            "expression": {"max_value": 200},
             "annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]},
         },
     },
