@@ -1098,28 +1098,27 @@ def extract_assay_expression(args):
         path_validator.validate(check_list_assays_invalid_combination=True)
 
 
-    # Cohort handling
-    cohort_info = Dataset.cohort_object_information(entity_describe["id"])
-    dataset_id = cohort_info.get(("dataset_id"))
+    # Cohort/Dataset handling
+    record_obj = Dataset(entity_describe["id"])
 
-    # Dataset handling
-    dataset_handler = Dataset(dataset_id)
-
-    # assay names listing
-    dataset_descriptor = DXDataset(dataset_handler.dataset_id, project=dataset_handler.project_id).get_descriptor()
-    # TODO remove DXDataset dependency
-    dataset_handler.populate_dx_dataset_descriptor(dataset_descriptor)
+    if record_obj.is_cohort:
+        # storing details for baseSql and filters
+        cohort_describe = record_obj.detail_describe
+        dataset_id = record_obj.resolve_cohort_to_dataset()
+        dataset_obj = Dataset(dataset_id)
+    else:
+        dataset_obj = record_obj
 
     if args.list_assays:
-        print(*dataset_handler.assay_names_list("molecular_expression"), sep="\n")
+        print(*dataset_obj.assay_names_list("molecular_expression"), sep="\n")
         sys.exit(0)
 
     # possible assay picking
-    if args.assay_name and not dataset_handler.is_assay_name_valid(args.assay_name, "molecular_expression"):
+    if args.assay_name and not dataset_obj.is_assay_name_valid(args.assay_name, "molecular_expression"):
         print("assay is not present in dataset")
         sys.exit(0)
 
-    assay_index = dataset_handler.assay_index(args.assay_name) if args.assay_name else 0
+    assay_index = dataset_obj.assay_index(args.assay_name) if args.assay_name else 0
 
 
     if args.json_help:

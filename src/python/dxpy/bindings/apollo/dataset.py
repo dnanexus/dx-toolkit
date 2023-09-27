@@ -1,5 +1,7 @@
 from dxpy import DXHTTPRequest
-from dxpy.bindings import DXRecord
+from dxpy.bindings import DXRecord, DXFile
+from gzip import decompress
+import json
 
 
 class Dataset(DXRecord):
@@ -11,47 +13,26 @@ class Dataset(DXRecord):
         self._dx_record_obj = None
         self.dx_dataset_descriptor = None
 
-    @staticmethod
-    def cohort_object(record_id):
-        return DXRecord(record_id)
+    @property
+    def is_cohort(self):
+        return True if "CohortBrowser" in self.detail_describe["types"] else False
 
-    @staticmethod
-    def cohort_object_describe(record_id):
-        record_obj = Dataset.cohort_object(record_id)
-        return record_obj.describe(
-            default_fields=True, fields={"properties", "details"}
-        )
+    def resolve_cohort_to_dataset(self):
+        return self.detail_describe["details"]["dataset"]["$dnanexus_link"]
 
-    @staticmethod
-    def cohort_object_information(record_id):
-        cohort_object_describe = Dataset.cohort_object_describe(record_id)
+    @property
+    def descriptor_file(self):
+        return self.detail_describe["details"]["descriptor"]["$dnanexus_link"]
 
-        cohort_information = {}
+    @property
+    def descriptor_file_dict(self):
+        file = DXFile(self.descriptor_file, mode="rb", project=self.project_id)
+        content = file.read()
 
-        if "CohortBrowser" in cohort_object_describe.get("types"):
-            cohort_information["is_cohort"] = True
-            cohort_information["record_id"] = True
-            cohort_information["is_cohort"] = True
-            # reminder: not all cohorts have base sql
-            cohort_information["base_sql"] = cohort_object_describe.get("details").get(
-                "baseSql"
-            )
-            cohort_information["filters"] = cohort_object_describe.get("details").get(
-                "filters"
-            )
-            cohort_information["dataset_id"] = (
-                cohort_object_describe.get("details")
-                .get("dataset")
-                .get("$dnanexus_link")
-            )
+        if content[:2] == b"\x1f\x8b":
+            content = decompress(content)
 
-        else:
-            cohort_information["is_cohort"] = False
-            cohort_information["base_sql"] = None
-            cohort_information["filters"] = None
-            cohort_information["dataset_id"] = record_id
-
-        return cohort_information
+        return json.loads(content)
 
     @property
     def visualize_info(self):
@@ -79,12 +60,9 @@ class Dataset(DXRecord):
             )
         return self._detail_describe
 
-    def populate_dx_dataset_descriptor(self, descriptor):
-        self.dx_dataset_descriptor = vars(descriptor)
-
     @property
     def assays_info_dict(self):
-        assays = self.dx_dataset_descriptor.get("assays")
+        assays = self.descriptor_file_dict["assays"]
         assays_info_dict = {}
 
         for index in range(len(assays)):
