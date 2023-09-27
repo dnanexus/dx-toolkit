@@ -18,7 +18,7 @@
 #   under the License.
 
 
-# Run manually with python3 src/python/test/test_extract_expression.py
+# Run manually with python3 src/python/test/test_extract_expression.py TestDXExtractExpression
 
 import unittest
 import subprocess
@@ -395,14 +395,6 @@ class TestDXExtractExpression(unittest.TestCase):
 
             self.assertTrue(expected_error_message in actual_err_msg)
 
-    # EM-15
-    # When a --retrieve-expression flag is passed without any value or when an empty JSON (an empty file or just {}) is passed with --retrieve-expression flag
-    # Note: empty JSON is tested in the JSON validation section
-    def test_no_value_retrieve_exp(self):
-        expected_error_message = "No filter json is passed with --retrieve-expression or JSON for --retrieve-expression does not contain valid filter information."
-        input_dict = {"path": self.test_record, "retrieve_expression": True, "input_json":r'{}'}
-        self.standard_input_args_test(input_dict, expected_error_message)
-
     # EM-16
     # When the string provided is a malformed JSON
     @unittest.skip
@@ -582,6 +574,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "Conflicting keys feature_name and feature_id cannot be present together.",
         )
 
+    # EM-15
     def test_empty_dict(self):
         self.standard_negative_filter_test(
             "empty_dict", "Input JSON must be a non-empty dict."
