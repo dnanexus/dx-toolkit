@@ -6,20 +6,37 @@ import json
 
 
 class Dataset(DXRecord):
-    def __init__(self, dataset_id):
+    def __init__(self, dataset_id, detail_describe_dict=None):
         super(DXRecord, self).__init__(dataset_id)
         self.dataset_id = dataset_id
-        self._detail_describe = None
+        self._detail_describe = detail_describe_dict
         self._visualize_info = None
         self._dx_record_obj = None
         self.dx_dataset_descriptor = None
 
-    @property
-    def is_cohort(self):
-        return "CohortBrowser" in self.detail_describe["types"]
+        if "details" not in detail_describe_dict:
+            raise ValueError("detail is expected key in detail_describe_dict")
 
-    def resolve_cohort_to_dataset(self):
-        return self.detail_describe["details"]["dataset"]["$dnanexus_link"]
+    # @property
+    # def is_cohort(self):
+    #     return "CohortBrowser" in self.detail_describe["types"]
+
+    @staticmethod
+    def resolve_cohort_to_dataset(record_obj):
+        record_obj_desc = record_obj.describe(
+            default_fields=True, fields={"properties", "details"}
+        )
+        cohort_info = None
+        is_cohort = "CohortBrowser" in record_obj_desc["types"]
+
+        if is_cohort:
+            cohort_info = record_obj_desc
+            dataset_id = record_obj_desc["details"]["dataset"]["$dnanexus_link"]
+            dataset_obj = Dataset(dataset_id)
+        else:
+            dataset_obj = Dataset(record_obj.id, record_obj_desc)
+
+        return dataset_obj, cohort_info
 
     @property
     def descriptor_file(self):
@@ -28,10 +45,13 @@ class Dataset(DXRecord):
     @property
     def descriptor_file_dict(self):
         is_python2 = sys.version_info.major == 2
-        content = DXFile(self.descriptor_file, mode="rb", project=self.project_id).read()
+        content = DXFile(
+            self.descriptor_file, mode="rb", project=self.project_id
+        ).read()
 
         if is_python2:
             import StringIO
+
             x = StringIO.StringIO(content)
             file_obj = gzip.GzipFile(fileobj=x)
             content = file_obj.read()
@@ -95,7 +115,7 @@ class Dataset(DXRecord):
         return assay_names_list
 
     def is_assay_name_valid(self, assay_name, assay_type):
-        return True if assay_name in self.assay_names_list(assay_type) else False
+        return assay_name in self.assay_names_list(assay_type)
 
     def assay_index(self, assay_name):
         assay_lists_per_model = self.assays_info_dict.values()

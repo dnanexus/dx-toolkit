@@ -1097,17 +1097,9 @@ def extract_assay_expression(args):
         path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe_details, error_handler=err_exit)
         path_validator.validate(check_list_assays_invalid_combination=True)
 
-
-    # Cohort/Dataset handling
-    record_obj = Dataset(entity_describe["id"])
-
-    if record_obj.is_cohort:
-        # storing details for baseSql and filters
-        cohort_describe = record_obj.detail_describe
-        dataset_id = record_obj.resolve_cohort_to_dataset()
-        dataset_obj = Dataset(dataset_id)
-    else:
-        dataset_obj = record_obj
+     # Cohort/Dataset handling
+    record_obj = DXRecord(entity_describe["id"])
+    dataset_obj, cohort_info = Dataset.resolve_cohort_to_dataset(record_obj)
 
     if args.list_assays:
         print(*dataset_obj.assay_names_list("molecular_expression"), sep="\n")
