@@ -1,15 +1,15 @@
 import dxpy
 
 class VizClient(object):
-    def __init__(self, record_id, project, error_handler=print) -> None:
-        self.visualize_response = dxpy.DXHTTPRequest(
-                "/" + record_id + "/visualize",
-                {"project": project, "cohortBrowser": False},
-            )
+    def __init__(self, url,project_id,record_id, error_handler=print) -> None:
+        self.url = url
+        self.project_id = project_id
+        self.record_id = record_id
         self.error_handler = error_handler
 
     def get_data(self,payload):
-        resource_val = self.visualize_response["url"] + "/data/3.0/" + self.visualize_response["dataset"] + "/raw"
+        #resource_val = "{}/data/3.0/{}:{}/raw".format(self.url,self.project_id,self.record_id)
+        resource_val = "{}/data/3.0/{}/raw".format(self.url,self.record_id)
         try:    
             raw_response = dxpy.DXHTTPRequest(
                 resource=resource_val, data=payload, prepend_srv=False
@@ -24,9 +24,10 @@ class VizClient(object):
                 self.error_handler(str(err_message))
         except Exception as details:
             self.error_handler(str(details))
+        return(raw_response)
 
     def get_raw_sql(self,payload):
-        resource_val = self.visualize_response["url"] + "/viz-query/3.0/" + self.visualize_response["dataset"] + "/raw-query"
+        resource_val = "{}/viz-query/3.0/{}/raw-query".format(self.url,self.record_id)
         try:    
             raw_query_response = dxpy.DXHTTPRequest(
                 resource=resource_val, data=payload, prepend_srv=False
@@ -41,3 +42,5 @@ class VizClient(object):
                 self.error_handler(str(err_message))
         except Exception as details:
             self.error_handler(str(details))
+        return(raw_query_response)
+
