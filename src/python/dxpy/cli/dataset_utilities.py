@@ -1090,7 +1090,10 @@ def extract_assay_expression(args):
         else:
             entity_describe = entity_result.get("describe")
 
-        path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe, error_handler=err_exit)
+        # TODO: This is temporary and will be replaced by the appropriate attribut from Dataset class once implemented
+        entity_describe_details = describe(args.path, default_fields=True, fields={"properties", "details"})
+        
+        path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe_details, error_handler=err_exit)
         path_validator.validate(check_list_assays_invalid_combination=True)
 
     if args.json_help:
@@ -1128,10 +1131,16 @@ def extract_assay_expression(args):
     BASE_SQL = None ### TODO: To be determined by the Dataset class
     IS_COHORT = False ### TODO: To be determined by the Dataset class
 
+    _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default")
+    
+    if args.additional_fields:
+        all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("additional")
+        user_additional_cols = [i for i in all_additional_cols if set(i.keys()) & set(args.additional_fields)]
+        _db_columns_list.extend(user_additional_cols)
+
     vizserver_payload = VizPayloadBuilder(
         project_context=project,
-        ### TODO -- additionally .get("additional") below if args.additional_fields is True
-        output_fields_mapping=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default"),
+        output_fields_mapping=_db_columns_list,
         # limit=100_000_000, ### TODO -- update later
         base_sql=BASE_SQL,
         is_cohort=IS_COHORT,
@@ -1151,6 +1160,8 @@ def extract_assay_expression(args):
     viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
     print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
     ### TODO --- remove the above code -- only for testing
+
+
 
 #### CREATE COHORT ####
 def resolve_validate_dx_path(path):
