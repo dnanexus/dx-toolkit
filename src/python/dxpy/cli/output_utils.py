@@ -134,28 +134,22 @@ def write_expression_output(
         if IS_PYTHON_3:
             write_args["newline"] = NEWLINE
 
+        dictwriter_params = {
+            "fieldnames": COLUMN_NAMES,
+            "delimiter": DELIMITER,
+            "lineterminator": OS_SPECIFIC_LINE_SEPARATOR,
+            "quoting": QUOTING,
+            "quotechar": QUOTE_CHAR,
+        }
+
         if WRITE_METHOD == "FILE":
             with open(output_file_name, **write_args) as f:
-                w = csv.DictWriter(
-                    f,
-                    COLUMN_NAMES,
-                    delimiter=DELIMITER,
-                    lineterminator=OS_SPECIFIC_LINE_SEPARATOR,
-                    quoting=QUOTING,
-                    quotechar=QUOTE_CHAR,
-                )
+                w = csv.DictWriter(f, **dictwriter_params)
                 w.writeheader()
                 w.writerows(output_listdict_or_string)
 
         elif WRITE_METHOD == "STDOUT":
-            w = csv.DictWriter(
-                sys.stdout,
-                COLUMN_NAMES,
-                delimiter=DELIMITER,
-                lineterminator=OS_SPECIFIC_LINE_SEPARATOR,
-                quoting=QUOTING,
-                quotechar=QUOTE_CHAR,
-            )
+            w = csv.DictWriter(sys.stdout, **dictwriter_params)
             w.writeheader()
             w.writerows(output_listdict_or_string)
 
