@@ -1,12 +1,13 @@
+import sys
+import gzip
 from dxpy import DXHTTPRequest
 from dxpy.bindings import DXRecord, DXFile
-from gzip import decompress
 import json
 
 
 class Dataset(DXRecord):
     def __init__(self, dataset_id):
-        super().__init__(dataset_id)
+        super(DXRecord, self).__init__(dataset_id)
         self.dataset_id = dataset_id
         self._detail_describe = None
         self._visualize_info = None
@@ -15,7 +16,7 @@ class Dataset(DXRecord):
 
     @property
     def is_cohort(self):
-        return True if "CohortBrowser" in self.detail_describe["types"] else False
+        return "CohortBrowser" in self.detail_describe["types"]
 
     def resolve_cohort_to_dataset(self):
         return self.detail_describe["details"]["dataset"]["$dnanexus_link"]
@@ -26,11 +27,17 @@ class Dataset(DXRecord):
 
     @property
     def descriptor_file_dict(self):
-        file = DXFile(self.descriptor_file, mode="rb", project=self.project_id)
-        content = file.read()
+        is_python2 = sys.version_info.major == 2
+        content = DXFile(self.descriptor_file, mode="rb", project=self.project_id).read()
 
-        if content[:2] == b"\x1f\x8b":
-            content = decompress(content)
+        if is_python2:
+            import StringIO
+            x = StringIO.StringIO(content)
+            file_obj = gzip.GzipFile(fileobj=x)
+            content = file_obj.read()
+
+        else:
+            content = gzip.decompress(content)
 
         return json.loads(content)
 
