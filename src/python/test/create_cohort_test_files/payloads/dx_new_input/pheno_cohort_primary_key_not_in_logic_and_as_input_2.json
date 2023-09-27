@@ -1,0 +1,55 @@
+{
+    "name": "pheno_cohort_primary_key_not_in_logic_and_as_input_2",
+    "folder": "/Create_Cohort/manually_created_output_cohorts",
+    "project": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "types": [
+        "DatabaseQuery",
+        "CohortBrowser"
+    ],
+    "details": {
+        "databases": [
+            "database-GYK2yg00vGPpzj7YGY3VJxb9"
+        ],
+        "dataset": {
+            "$dnanexus_link": "record-GYK2zyQ0g1bx86fBp2X8KpjY"
+        },
+        "description": "",
+        "filters": {
+            "pheno_filters": {
+                "compound": [
+                    {
+                        "name": "phenotype",
+                        "logic": "and",
+                        "filters": {
+                            "patient$patient_id": [
+                                {
+                                    "condition": "in",
+                                    "values": [
+                                        "patient_3",
+                                        "patient_4"
+                                    ]
+                                }
+                            ]
+                        },
+                        "entity": {
+                            "logic": "and",
+                            "name": "patient",
+                            "operator": "exists",
+                            "children": []
+                        }
+                    }
+                ],
+                "logic": "and"
+            },
+            "assay_filters": {
+                "compound": [],
+                "logic": "and"
+            },
+            "logic": "and"
+        },
+        "schema": "create_cohort_schema",
+        "sql": "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_3', 'patient_4')",
+        "version": "3.0"
+    },
+    "close": true
+}

@@ -1,0 +1,77 @@
+{
+    "filters": {
+        "pheno_filters": {
+            "compound": [
+                {
+                    "name": "phenotype",
+                    "logic": "and",
+                    "filters": {
+                        "patient$age": [
+                            {
+                                "condition": "between",
+                                "values": [
+                                    20,
+                                    60
+                                ]
+                            }
+                        ],
+                        "patient$patient_id": [
+                            {
+                                "condition": "in",
+                                "values": [
+                                    "patient_1",
+                                    "patient_2"
+                                ]
+                            }
+                        ]
+                    },
+                    "entity": {
+                        "logic": "and",
+                        "name": "patient",
+                        "operator": "exists",
+                        "children": [
+                            {
+                                "name": "hospital@e98fe382-3cb5-4c25-a771-09a24ae0f91e",
+                                "logic": "or",
+                                "filters": {
+                                    "hospital$min_score_all": [
+                                        {
+                                            "condition": "in",
+                                            "values": [
+                                                400,
+                                                500
+                                            ]
+                                        }
+                                    ],
+                                    "hospital$location": [
+                                        {
+                                            "condition": "any",
+                                            "values": [
+                                                "CA",
+                                                "BC"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "entity": {
+                                    "logic": "and",
+                                    "name": "hospital",
+                                    "operator": "exists",
+                                    "children": []
+                                }
+                            }
+                        ]
+                    }
+                }
+            ],
+            "logic": "and"
+        },
+        "assay_filters": {
+            "compound": [],
+            "logic": "and"
+        },
+        "logic": "and"
+    },
+    "base_sql": "SELECT `patient_id` FROM (SELECT `cohort_subquery`.`patient_id` AS `patient_id` FROM (SELECT `patient_1`.`patient_id` AS `patient_id`, `patient_1`.`hid` AS `hid` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE EXISTS (SELECT `hospital_1`.`hospital_id` AS `hospital_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`hospital` AS `hospital_1` WHERE `hospital_1`.`min_score_all` IN (500, 400) AND `hospital_1`.`hospital_id` = `patient_1`.`hid`)) AS `cohort_subquery` INTERSECT SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`name` IN ('Sally', 'Diane', 'Cassy', 'John', 'Rosaleen'))",
+    "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+}

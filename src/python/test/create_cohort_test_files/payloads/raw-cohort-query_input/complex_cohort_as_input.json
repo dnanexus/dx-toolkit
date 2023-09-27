@@ -1,0 +1,27 @@
+{
+    "filters": {
+        "pheno_filters": {
+            "compound": [
+                {
+                    "name": "phenotype",
+                    "logic": "and",
+                    "filters": {
+                        "patient$patient_id": [
+                            {
+                                "condition": "in",
+                                "values": [
+                                    "patient_1",
+                                    "patient_2"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "logic": "and"
+        },
+        "logic": "and"
+    },
+    "base_sql": "SELECT `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` WHERE `patient_id` in ('patient_1', 'patient_2', 'patient_3')",
+    "project_context": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+}
