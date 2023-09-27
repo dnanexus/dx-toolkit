@@ -110,7 +110,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def json_error_handler(cls, message):
         raise ValueError(message)
 
-    def standard_negative_filter_test(self, json_name, expected_error_message):
+    def common_negative_filter_test(self, json_name, expected_error_message):
         input_json = CLIEXPRESS_TEST_INPUT["malformed"][json_name]
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
 
@@ -119,14 +119,14 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertEqual(expected_error_message, str(cm.exception).strip())
 
-    def standard_positive_filter_test(self, json_name):
+    def common_positive_filter_test(self, json_name):
         input_json = CLIEXPRESS_TEST_INPUT["valid"][json_name]
 
         validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
 
         validator.validate(input_json)
 
-    def standard_input_args_test(self, input_argument_dict, expected_error_message):
+    def common_input_args_test(self, input_argument_dict, expected_error_message):
         # Deep copy the default parser dictionary
         parser_dict = {key: value for key, value in self.default_parser_dict.items()}
         for input_argument in input_argument_dict:
@@ -153,7 +153,7 @@ class TestDXExtractExpression(unittest.TestCase):
         expected_error_message = (
             'At least one of the following arguments is required: "Path", "--json-help"'
         )
-        self.standard_input_args_test(input_dict, expected_error_message)
+        self.common_input_args_test(input_dict, expected_error_message)
 
     # EM-1
     # The structure of "Path" is invalid
@@ -312,7 +312,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "assay_name": "test_assay",
             "additional_fields_help": True,
         }
-        self.standard_input_args_test(input_dict, expected_error_message)
+        self.common_input_args_test(input_dict, expected_error_message)
 
     # EM-11
     # When invalid additional fields are passed
@@ -324,7 +324,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "input_json": r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
             "additional_fields": "feature_name,bad_field",
         }
-        self.standard_input_args_test(input_dict, expected_error_message)
+        self.common_input_args_test(input_dict, expected_error_message)
 
     # EM-12
     # When –list-assays is presented with other options
@@ -337,7 +337,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "list_assays": True,
             "assay_name": "fake_assay",
         }
-        self.standard_input_args_test(input_dict, expected_error_message)
+        self.common_input_args_test(input_dict, expected_error_message)
 
     # EM-13
     # When –list-assays is passed but there is no “Molecular Expression” Assay
@@ -456,7 +456,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "json_help": True,
             "assay_name": "test_assay",
         }
-        self.standard_input_args_test(input_dict, expected_error_message)
+        self.common_input_args_test(input_dict, expected_error_message)
 
     # EM-22
     # When --expression-matrix is passed with other arguments other than, any context other than, --retrieve-expression
@@ -472,7 +472,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "additional_fields": "feature_name",
             "json_help": True,
         }
-        self.standard_input_args_test(input_dict, expected_error_message)
+        self.common_input_args_test(input_dict, expected_error_message)
 
     # EM-23
     # --expression-matrix/-em cannot be used with --sql
@@ -487,7 +487,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "input_json": r'{"annotation": {"feature_name": ["BRCA2"]}}',
             "sql": True,
         }
-        self.standard_input_args_test(input_dict, expected_error_message)
+        self.common_input_args_test(input_dict, expected_error_message)
 
     # EM-24
     # Query times out
@@ -523,149 +523,149 @@ class TestDXExtractExpression(unittest.TestCase):
     #
 
     def test_annotation_conflicting_keys(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "annotation_conflicting_keys",
             "Conflicting keys feature_name and feature_id cannot be present together.",
         )
 
     def test_annotation_id_maxitem(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "annotation_id_maxitem", "error message not yet defined"
         )
 
     def test_annotation_id_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "annotation_id_type",
             "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation).format(self.type_representation),
         )
 
     def test_annotation_name_maxitem(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "annotation_name_maxitem",
             "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation),
         )
 
     def test_annotation_name_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "annotation_name_type",
             "Key 'feature_name' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation),
         )
 
     def test_annotation_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "annotation_type",
             "Key 'annotation' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation),
         )
 
     def test_bad_dependent_conditional(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "bad_dependent_conditional",
             "When expression is present, one of the following keys must be also present: annotation, location.",
         )
 
     def test_bad_toplevel_key(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "bad_toplevel_key", "Found following invalid filters: ['not_real_key']"
         )
 
     def test_conflicting_toplevel(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "conflicting_toplevel",
             "Conflicting keys feature_name and feature_id cannot be present together.",
         )
 
     # EM-15
     def test_empty_dict(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "empty_dict", "Input JSON must be a non-empty dict."
         )
 
     def test_expression_empty_dict(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "expression_empty_dict", "error message not yet defined"
         )
 
     def test_expression_max_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "expression_max_type",
             "Key 'max_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(self.type_representation),
         )
 
     def test_expression_min_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "expression_min_type",
             "Key 'min_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(self.type_representation),
         )
 
     def test_expression_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "expression_type",
             "Key 'expression' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation),
         )
 
     def test_location_chrom_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_chrom_type",
             "Key 'chromosome' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
         )
 
     def test_location_end_before_start(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_end_before_start", "error message not yet defined"
         )
 
     def test_location_end_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_end_type",
             "Key 'ending_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
         )
 
     def test_location_item_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_item_type", "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation)
         )
 
     def test_location_max_width(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_max_width", "error message not yet defined"
         )
 
     def test_location_missing_chr(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_missing_chr",
             "Required key 'chromosome' was not found in the input JSON.",
         )
 
     def test_location_missing_end(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_missing_end",
             "Required key 'ending_position' was not found in the input JSON.",
         )
 
     def test_location_missing_start(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_missing_start",
             "Required key 'starting_position' was not found in the input JSON.",
         )
 
     def test_location_start_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_start_type",
             "Key 'starting_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
         )
 
     def test_location_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "location_type", "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
         )
 
     def test_sample_id_maxitem(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "sample_id_maxitem", "error message not yet defined"
         )
 
     def test_sample_id_type(self):
-        self.standard_negative_filter_test(
+        self.common_negative_filter_test(
             "sample_id_type", "Key 'sample_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
         )
 
@@ -674,31 +674,31 @@ class TestDXExtractExpression(unittest.TestCase):
     #
 
     def test_annotation_feature_id(self):
-        self.standard_positive_filter_test("annotation_feature_id")
+        self.common_positive_filter_test("annotation_feature_id")
 
     def test_annotation_feature_name(self):
-        self.standard_positive_filter_test("annotation_feature_name")
+        self.common_positive_filter_test("annotation_feature_name")
 
     def test_dependent_conditional_annotation(self):
-        self.standard_positive_filter_test("dependent_conditional_annotation")
+        self.common_positive_filter_test("dependent_conditional_annotation")
 
     def test_dependent_conditional_location(self):
-        self.standard_positive_filter_test("dependent_conditional_location")
+        self.common_positive_filter_test("dependent_conditional_location")
 
     def test_expression_max_only(self):
-        self.standard_positive_filter_test("expression_max_only")
+        self.common_positive_filter_test("expression_max_only")
 
     def test_expression_min_and_max(self):
-        self.standard_positive_filter_test("expression_min_and_max")
+        self.common_positive_filter_test("expression_min_and_max")
 
     def test_expression_min_only(self):
-        self.standard_positive_filter_test("expression_min_only")
+        self.common_positive_filter_test("expression_min_only")
 
     def test_multi_location(self):
-        self.standard_positive_filter_test("multi_location")
+        self.common_positive_filter_test("multi_location")
 
     def test_single_location(self):
-        self.standard_positive_filter_test("single_location")
+        self.common_positive_filter_test("single_location")
 
 
 # Start the test
