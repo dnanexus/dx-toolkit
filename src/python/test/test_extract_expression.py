@@ -58,8 +58,10 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.general_input_dir = os.path.join(dirname, "expression_test_files/input/")
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
         cls.schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
-        #cls.test_record = cls.proj_id + ":/Extract_Expression/standin_test_record"
-        cls.test_record = "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
+        # cls.test_record = cls.proj_id + ":/Extract_Expression/standin_test_record"
+        cls.test_record = (
+            "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
+        )
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
@@ -111,9 +113,9 @@ class TestDXExtractExpression(unittest.TestCase):
     @classmethod
     def json_error_handler(cls, message):
         raise ValueError(message)
-    
+
     @classmethod
-    def common_value_error_handler(cls,message):
+    def common_value_error_handler(cls, message):
         raise ValueError(message)
 
     def common_negative_filter_test(self, json_name, expected_error_message):
@@ -143,7 +145,7 @@ class TestDXExtractExpression(unittest.TestCase):
                 return False
 
         input_arg_validator = ValidateArgsBySchema(
-            parser_dict,    
+            parser_dict,
             EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
             error_handler=self.input_arg_error_handler,
         )
@@ -152,18 +154,40 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertEqual(expected_error_message, str(cm.exception).strip())
 
-
     #
     # Output tests
     #
 
     def test_data_output_format(self):
-        pass
+        data_mock_response = {
+            "results": [
+                {
+                    "feature_id": "ENST00000450305",
+                    "sample_id": "sample_2",
+                    "expression": 50,
+                    "strand": "+",
+                },
+                {
+                    "feature_id": "ENST00000456328",
+                    "sample_id": "sample_2",
+                    "expression": 90,
+                    "strand": "+",
+                },
+                {
+                    "feature_id": "ENST00000488147",
+                    "sample_id": "sample_2",
+                    "expression": 90,
+                    "strand": "-",
+                },
+            ]
+        }
+        
 
     def test_sql_output_format(self):
-        pass
-
-
+        sql_mock_response = {
+            "sql": "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`strand` AS `strand` FROM `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`value` >= 1 AND `expr_annotation_1`.`chr` = '1' AND (`expr_annotation_1`.`end` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`start` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`end` >= 250000000 AND `expr_annotation_1`.`start` <= 7)"
+        }
+        
 
     # EM-1
     # Test PATH argument not provided
@@ -323,9 +347,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-10
     # When --additional-fields-help is presented with other options
     def test_additional_fields_help_other_options(self):
-        expected_error_message = (
-            '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
-        )
+        expected_error_message = '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
         input_dict = {
             "path": self.test_record,
             "assay_name": "test_assay",
@@ -533,9 +555,6 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertTrue(expected_error_message in actual_err_msg)
 
-
-    
-
     #
     # Malformed input json tests
     # EM-18, EM-19, EM-20
@@ -555,25 +574,35 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_annotation_id_type(self):
         self.common_negative_filter_test(
             "annotation_id_type",
-            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation).format(self.type_representation),
+            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ).format(
+                self.type_representation
+            ),
         )
 
     def test_annotation_name_maxitem(self):
         self.common_negative_filter_test(
             "annotation_name_maxitem",
-            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation),
+            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ),
         )
 
     def test_annotation_name_type(self):
         self.common_negative_filter_test(
             "annotation_name_type",
-            "Key 'feature_name' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation),
+            "Key 'feature_name' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ),
         )
 
     def test_annotation_type(self):
         self.common_negative_filter_test(
             "annotation_type",
-            "Key 'annotation' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation),
+            "Key 'annotation' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(
+                self.type_representation
+            ),
         )
 
     def test_bad_dependent_conditional(self):
@@ -608,25 +637,33 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_expression_max_type(self):
         self.common_negative_filter_test(
             "expression_max_type",
-            "Key 'max_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(self.type_representation),
+            "Key 'max_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(
+                self.type_representation
+            ),
         )
 
     def test_expression_min_type(self):
         self.common_negative_filter_test(
             "expression_min_type",
-            "Key 'min_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(self.type_representation),
+            "Key 'min_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(
+                self.type_representation
+            ),
         )
 
     def test_expression_type(self):
         self.common_negative_filter_test(
             "expression_type",
-            "Key 'expression' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation),
+            "Key 'expression' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(
+                self.type_representation
+            ),
         )
 
     def test_location_chrom_type(self):
         self.common_negative_filter_test(
             "location_chrom_type",
-            "Key 'chromosome' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
+            "Key 'chromosome' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(
+                self.type_representation
+            ),
         )
 
     def test_location_end_before_start(self):
@@ -637,12 +674,17 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_end_type(self):
         self.common_negative_filter_test(
             "location_end_type",
-            "Key 'ending_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
+            "Key 'ending_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(
+                self.type_representation
+            ),
         )
 
     def test_location_item_type(self):
         self.common_negative_filter_test(
-            "location_item_type", "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation)
+            "location_item_type",
+            "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(
+                self.type_representation
+            ),
         )
 
     def test_location_max_width(self):
@@ -671,12 +713,17 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_start_type(self):
         self.common_negative_filter_test(
             "location_start_type",
-            "Key 'starting_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
+            "Key 'starting_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(
+                self.type_representation
+            ),
         )
 
     def test_location_type(self):
         self.common_negative_filter_test(
-            "location_type", "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
+            "location_type",
+            "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ),
         )
 
     def test_sample_id_maxitem(self):
@@ -686,7 +733,10 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_sample_id_type(self):
         self.common_negative_filter_test(
-            "sample_id_type", "Key 'sample_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
+            "sample_id_type",
+            "Key 'sample_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ),
         )
 
     #
