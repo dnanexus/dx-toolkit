@@ -963,7 +963,7 @@ def extract_assay_somatic(args):
                                  ['FILTER', 'FILTER', 'Comma separated list of filters for locus from the original VCF'], 
                                  ['reference_source', 'Reference Source', 'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample'], 
                                  ['variant_type', 'Variant Type', 'The type of allele, with respect to reference'], 
-                                 ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise'], 
+                                 ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise"'], 
                                  ['file_id', 'Source File ID', 'DNAnexus platform file-id of original source file'], 
                                  ['INFO', 'INFO', 'INFO section, verbatim from original VCF'], 
                                  ['FORMAT', 'FORMAT', 'FORMAT section, verbatim from original VCF'], 
@@ -975,14 +975,16 @@ def extract_assay_somatic(args):
                                  ['Feature', 'Feature ID', 'A list of feature IDs, associated with the variant'], 
                                  ['HGVSc', 'HGVSc', 'A list of sequence variants in HGVS nomenclature, for DNA'], 
                                  ['HGVSp', 'HGVSp', 'A list of sequence variants in HGVS nomenclature, for protein'], 
-                                 ['CLIN_SIG', 'Clinical Significance', 'A list of allele specific clinical significance terms']]
+                                 ['CLIN_SIG', 'Clinical Significance', 'A list of allele specific clinical significance terms'],
+                                 ['ALT', 'ALT', 'Alternate allele(s) at locus, comma separated if more than one, verbatim from original VCF'],
+                                 ['alt_index', 'ALT allele_index', 'Order of the allele, as represented in the ALT field. If the allele is missing (i.e, "./0",  "0/." or "./.") then the alt_index will be empty']]
             print_fields(additional_fields)
             sys.exit(0)
 
     # Validate additional fields
     if args.additional_fields:
         additional_fields_input = "".join(args.additional_fields).split(",")
-        accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG']
+        accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG', 'ALT', 'alt_index']
         for field in additional_fields_input:
             if field not in accepted_additional_fields:
                 err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
