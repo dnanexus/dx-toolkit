@@ -39,6 +39,8 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
+from dxpy.bindings.apollo.vizserver_client import VizClient
+from dxpy.bindings.apollo.assay_filtering_conditions import write_expression_output
 
 dirname = os.path.dirname(__file__)
 
@@ -109,6 +111,10 @@ class TestDXExtractExpression(unittest.TestCase):
     @classmethod
     def json_error_handler(cls, message):
         raise ValueError(message)
+    
+    @classmethod
+    def common_value_error_handler(cls,message):
+        raise ValueError(message)
 
     def common_negative_filter_test(self, json_name, expected_error_message):
         input_json = CLIEXPRESS_TEST_INPUT["malformed"][json_name]
@@ -137,7 +143,7 @@ class TestDXExtractExpression(unittest.TestCase):
                 return False
 
         input_arg_validator = ValidateArgsBySchema(
-            parser_dict,
+            parser_dict,    
             EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
             error_handler=self.input_arg_error_handler,
         )
@@ -145,6 +151,19 @@ class TestDXExtractExpression(unittest.TestCase):
             input_arg_validator.validate_input_combination()
 
         self.assertEqual(expected_error_message, str(cm.exception).strip())
+
+
+    #
+    # Output tests
+    #
+
+    def test_data_output_format(self):
+        pass
+
+    def test_sql_output_format(self):
+        pass
+
+
 
     # EM-1
     # Test PATH argument not provided
