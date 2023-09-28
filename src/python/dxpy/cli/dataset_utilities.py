@@ -1177,16 +1177,9 @@ def extract_assay_expression(args):
         print("raw_data")
         print(raw_data)
 
-    
-
-
 
     ### TODO -- remove later -- only for testing
     #print(vizserver_full_payload)
-    #print("entity_describe:")
-    #print(entity_describe)
-    #print("descriptor.assays[0]:")
-    #print(DATASET_DESCRIPTOR.assays[0])
     viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
     #print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
     ### TODO --- remove the above code -- only for testing
