@@ -8,7 +8,6 @@ class VizClient(object):
         self.error_handler = error_handler
 
     def get_data(self,payload):
-        #resource_val = "{}/data/3.0/{}:{}/raw".format(self.url,self.project_id,self.record_id)
         resource_val = "{}/data/3.0/{}/raw".format(self.url,self.record_id)
         try:    
             raw_response = dxpy.DXHTTPRequest(
