@@ -441,22 +441,6 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertTrue(expected_error_message in actual_err_msg)
 
-    # EM-2
-    # The user does not have access to the object
-    # expected_error_message = "dxpy.exceptions.PermissionDenied: VIEW permission required in project-xxxx to perform this action, code 401"
-
-    # EM-3
-    # The record id or path is not a cohort or dataset
-    # TODO: This is tested on another branch
-
-    # EM-4
-    # The record id or path is a cohort or dataset but is invalid (maybe corrupted, descriptor not accessible...etc)
-    # expected_error_message = "..... : Invalid cohort or dataset"
-
-    # EM-5
-    # The record id or path is a cohort or dataset but the version is less than 3.0.
-    # TODO: This is tested on another branch
-
     # EM-6
     # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
     @unittest.skip("test record not yet created")
