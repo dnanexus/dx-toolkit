@@ -918,7 +918,11 @@ class TestDXExtractExpression(unittest.TestCase):
             lines = f.readlines()
         process = subprocess.check_output("dx extract_assay expression -h", shell=True)
         help_output = process.decode()
-        self.assertTrue(all(l in help_output for l in lines))
+        self.assertTrue(
+            all(
+                l.strip("\n").strip("\\").strip("'") in help_output for l in lines
+            )
+        )
 
         
 
