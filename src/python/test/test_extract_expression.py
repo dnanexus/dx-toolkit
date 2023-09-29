@@ -62,6 +62,9 @@ class TestDXExtractExpression(unittest.TestCase):
         cd(cls.proj_id + ":/")
         cls.general_input_dir = os.path.join(dirname, "expression_test_files/input/")
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
+        # Make an output directory if it doesn't already exists
+        if not os.path.exists(cls.general_output_dir):
+            os.makedirs(cls.general_output_dir)
         cls.json_schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
         cls.input_args_schema = EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
         cls.test_record = (
@@ -103,9 +106,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "output": None,
         }
 
-        # Make an output directory if it doesn't already exists
-        if not os.path.exists(cls.general_output_dir):
-            os.makedirs(cls.general_output_dir)
+        
 
         cls.default_entity_describe = {
             "id": cls.test_record,
@@ -305,7 +306,7 @@ class TestDXExtractExpression(unittest.TestCase):
         write_expression_output(
             arg_output=output_path,
             arg_delim=",",
-            arg_delim=True,
+            arg_sql=True,
             output_file_name=sql_mock_response["sql"],
         )
         # Read the output file back in and compare to expected result
@@ -334,19 +335,77 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_output_bad_delimiter(self):
         bad_delim = "|"
-        expected_error_message =  "Unsupported delimiter: ".format(bad_delim)
+        expected_error_message =  "Unsupported delimiter: {}".format(bad_delim)
         with self.assertRaises(ValueError) as cm:
-                write_expression_output(
-                    "-",
-                    bad_delim,
-                    False,
-                    self.vizserver_data_mock_response,
-                    save_uncommon_delim_to_txt = False,
-                    error_handler=self.common_value_error_handler
-                )
+            write_expression_output(
+                arg_output= "-",
+                arg_delim=bad_delim,
+                arg_sql=False,
+                output_listdict_or_string=self.vizserver_data_mock_response["results"],
+                save_uncommon_delim_to_txt = False,
+                error_handler=self.common_value_error_handler
+            )
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+    
+    # EM-14
+    def test_output_already_exist(self):
+        output_path = os.path.join(
+            self.general_output_dir, "already_existing_output.csv"
+        )
+        expected_error_message = "{} already exists. Please specify a new file path".format(output_path)
+
+        with open(output_path,"w") as outfile:
+            outfile.write("this output file already created")
+
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output= output_path,
+                arg_delim=",",
+                arg_sql=False,
+                output_listdict_or_string=self.vizserver_data_mock_response["results"],
+                save_uncommon_delim_to_txt = False,
+                error_handler=self.common_value_error_handler
+            )
+
         err_msg = str(cm.exception).strip()
         self.assertEqual(expected_error_message, err_msg)
 
+    def test_output_is_directory(self):
+        output_path = os.path.join(
+            self.general_output_dir, "directory"
+        )
+        expected_error_message = "{} is a directory. Please specify a new file path".format(output_path)
+        os.mkdir(output_path)
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output= output_path,
+                arg_delim=",",
+                arg_sql=False,
+                output_listdict_or_string=self.vizserver_data_mock_response["results"],
+                save_uncommon_delim_to_txt = False,
+                error_handler=self.common_value_error_handler
+            )
+
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+
+    def test_incorrect_file_extension(self):
+        expected_error_message = 'File extension ".tsv" does not match delimiter ","'
+        output_path = os.path.join(
+            self.general_output_dir, "wrong_extension.tsv"
+        )
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output= output_path,
+                arg_delim=",",
+                arg_sql=False,
+                output_listdict_or_string=self.vizserver_data_mock_response["results"],
+                save_uncommon_delim_to_txt = False,
+                error_handler=self.common_value_error_handler
+            )
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
 
     # EM-1
     # Test PATH argument not provided
@@ -561,39 +620,6 @@ class TestDXExtractExpression(unittest.TestCase):
         # print(actual_err_msg)
 
         self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-14
-    # When file already exist
-    @unittest.skip("not yet implemented")
-    def test_output_already_exist(self):
-        with tempfile.NamedTemporaryFile() as tmp:
-            output_path = tmp.name
-            output_path = os.path.join(
-                self.general_output_dir, "already_existing_output_file.tsv"
-            )
-            expected_error_message = (
-                "{} already exists. Please specify a new file path".format(output_path)
-            )
-            command = [
-                "dx",
-                "extract_assay",
-                "expression",
-                self.test_record,
-                "--retrieve-expression",
-                "--input-json",
-                r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
-                "--output",
-                output_path,
-            ]
-
-            process = subprocess.Popen(
-                command, stderr=subprocess.PIPE, universal_newlines=True
-            )
-            actual_err_msg = process.communicate()[1]
-            print("actual_err_msg:")
-            print(actual_err_msg)
-
-            self.assertTrue(expected_error_message in actual_err_msg)
 
     # EM-16
     # When the string provided is a malformed JSON
