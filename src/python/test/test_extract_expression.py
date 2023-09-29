@@ -159,6 +159,8 @@ class TestDXExtractExpression(unittest.TestCase):
             "output": None,
         }
 
+        cls.argparse_expression_help_message = os.path.join(dirname, "help_messages/extract_expression_help_message.txt")
+
     @classmethod
     def path_validation_error_handler(cls, message):
         raise ValueError(message)
@@ -911,9 +913,14 @@ class TestDXExtractExpression(unittest.TestCase):
         self.common_positive_filter_test("single_location")
 
     def test_argparse_help_txt(self):
-        expected_result = ...
+        expected_result = self.argparse_expression_help_message
+        with open(expected_result) as f:
+            lines = f.readlines()
         process = subprocess.check_output("dx extract_assay expression -h", shell=True)
-        self.assertEqual(expected_result, process.decode())
+        help_output = process.decode()
+        self.assertTrue(all(l in help_output for l in lines))
+
+        
 
 # Start the test
 if __name__ == "__main__":
