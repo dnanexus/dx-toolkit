@@ -16,10 +16,6 @@ class Dataset(DXRecord):
             if "details" not in detail_describe_dict:
                 raise ValueError("detail is expected key in detail_describe_dict")
 
-    # @property
-    # def is_cohort(self):
-    #     return "CohortBrowser" in self.detail_describe["types"]
-
     @staticmethod
     def resolve_cohort_to_dataset(record_obj):
         record_obj_desc = record_obj.describe(
