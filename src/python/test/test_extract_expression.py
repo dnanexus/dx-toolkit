@@ -28,6 +28,7 @@ import dxpy
 import copy
 import json
 import tempfile
+import csv
 
 import shutil
 from dxpy_testutil import cd, chdir
@@ -44,7 +45,7 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
 )
 from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
 from dxpy.bindings.apollo.vizserver_client import VizClient
-from dxpy.bindings.apollo.assay_filtering_conditions import write_expression_output
+from dxpy.cli.output_handling import write_expression_output
 
 dirname = os.path.dirname(__file__)
 
@@ -63,7 +64,9 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
         cls.json_schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
         cls.input_args_schema = EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
-        cls.test_record = "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
+        cls.test_record = (
+            "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
+        )
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
@@ -161,6 +164,29 @@ class TestDXExtractExpression(unittest.TestCase):
             "output": None,
         }
 
+        cls.vizserver_data_mock_response = {
+                "results": [
+                    {
+                        "feature_id": "ENST00000450305",
+                        "sample_id": "sample_2",
+                        "expression": 50,
+                        "strand": "+",
+                    },
+                    {
+                        "feature_id": "ENST00000456328",
+                        "sample_id": "sample_2",
+                        "expression": 90,
+                        "strand": "+",
+                    },
+                    {
+                        "feature_id": "ENST00000488147",
+                        "sample_id": "sample_2",
+                        "expression": 90,
+                        "strand": "-",
+                    },
+                ]
+            }
+
     @classmethod
     def path_validation_error_handler(cls, message):
         raise ValueError(message)
@@ -241,39 +267,86 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertEqual(expected_error_message, str(cm.exception).strip())
 
     #
-    # Output tests
+    # Positive output tests
     #
 
-    def test_data_output_format(self):
-        data_mock_response = {
-            "results": [
-                {
-                    "feature_id": "ENST00000450305",
-                    "sample_id": "sample_2",
-                    "expression": 50,
-                    "strand": "+",
-                },
-                {
-                    "feature_id": "ENST00000456328",
-                    "sample_id": "sample_2",
-                    "expression": 90,
-                    "strand": "+",
-                },
-                {
-                    "feature_id": "ENST00000488147",
-                    "sample_id": "sample_2",
-                    "expression": 90,
-                    "strand": "-",
-                },
-            ]
-        }
-        
+    def test_output_data_format(self):
+        expected_result = """feature_id,sample_id,expression,strand
+            ENST00000450305,sample_2,50,+
+            ENST00000456328,sample_2,90,+
+            ENST00000488147,sample_2,90,-""".replace(" ","")
+        output_path = os.path.join(
+            self.general_output_dir, "extract_assay_expression_data.csv"
+        )
+        # Generate the formatted output file
+        write_expression_output(
+            output_path,
+            ",",
+            False,
+            self.vizserver_data_mock_response["results"],
+        )
+        # Read the output file back in and compare to expected result
+        # Since the test should fail if the formatting is wrong, not just if the data is wrong, we
+        # can do a simple string comparison
+        with open(output_path, "r") as infile:
+            data = infile.read()
+        self.assertEqual(expected_result.strip(),data.strip())
 
-    def test_sql_output_format(self):
+
+    def test_output_sql_format(self):
         sql_mock_response = {
             "sql": "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`strand` AS `strand` FROM `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`value` >= 1 AND `expr_annotation_1`.`chr` = '1' AND (`expr_annotation_1`.`end` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`start` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`end` >= 250000000 AND `expr_annotation_1`.`start` <= 7)"
         }
-        
+        expected_result = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`strand` AS `strand` FROM `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`value` >= 1 AND `expr_annotation_1`.`chr` = '1' AND (`expr_annotation_1`.`end` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`start` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`end` >= 250000000 AND `expr_annotation_1`.`start` <= 7)"
+        output_path = os.path.join(
+            self.general_output_dir, "extract_assay_expression_sql.csv"
+        )
+        # Generate the formatted output file
+        write_expression_output(
+            arg_output=output_path,
+            arg_delim=",",
+            arg_delim=True,
+            output_file_name=sql_mock_response["sql"],
+        )
+        # Read the output file back in and compare to expected result
+        # Since the test should fail if the formatting is wrong, not just if the data is wrong, we
+        # can do a simple string comparison
+        with open(output_path, "r") as infile:
+            data = infile.read()
+        self.assertEqual(expected_result.strip(),data.strip())
+
+    #
+    # Negative output tests
+    #
+
+    def test_output_sql_not_string(self):
+        expected_error_message = "Expected SQL query to be a string"
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output="-",
+                arg_delim=",",
+                arg_sql=True,
+                output_listdict_or_string=["not a string-formatted SQL query"],
+                error_handler=self.common_value_error_handler
+            )
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+
+    def test_output_bad_delimiter(self):
+        bad_delim = "|"
+        expected_error_message =  "Unsupported delimiter: ".format(bad_delim)
+        with self.assertRaises(ValueError) as cm:
+                write_expression_output(
+                    "-",
+                    bad_delim,
+                    False,
+                    self.vizserver_data_mock_response,
+                    save_uncommon_delim_to_txt = False,
+                    error_handler=self.common_value_error_handler
+                )
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+
 
     # EM-1
     # Test PATH argument not provided
