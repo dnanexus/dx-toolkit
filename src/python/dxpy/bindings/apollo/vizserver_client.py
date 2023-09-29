@@ -16,7 +16,7 @@ class VizClient(object):
             if "error" in raw_response.keys():
                 if raw_response["error"]["type"] == "InvalidInput":
                     err_message = "Insufficient permissions due to the project policy.\n" + raw_response["error"]["message"]
-                elif raw_response["error"]["type"] == "QueryBuilderError" and raw_response["error"]["details"] == "rsid exists in request filters without rsid entries in rsid_lookup_table.":
+                elif raw_response["error"]["type"] == "QueryBuilderError":
                     err_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
                 else:
                     err_message = raw_response["error"]
