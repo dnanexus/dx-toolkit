@@ -66,7 +66,7 @@ def write_expression_output(
             if save_uncommon_delim_to_txt:
                 SUFFIX = ".txt"
             else:
-                error_handler("Unsupported delimiter: ".format(arg_delim))
+                error_handler("Unsupported delimiter: {}".format(arg_delim))
     else:
         SUFFIX = ".csv"
 
