@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 
-class ValidateArgsBySchema:
+class ArgsValidator:
     """
     InputsValidator class. Checks for invalid input combinations set by a JSON schema.
 

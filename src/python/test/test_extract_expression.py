@@ -38,7 +38,7 @@ from dxpy.utils.resolver import resolve_existing_path
 from dxpy.bindings.apollo.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
-from dxpy.bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
+from dxpy.bindings.apollo.cmd_line_options_validator import ArgsValidator
 from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
@@ -224,7 +224,7 @@ class TestDXExtractExpression(unittest.TestCase):
                 print("unrecognized argument in input args")
                 return False
 
-        input_arg_validator = ValidateArgsBySchema(
+        input_arg_validator = ArgsValidator(
             parser_dict,
             EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
             error_handler=self.input_arg_error_handler,
@@ -509,7 +509,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     # EM-17
     # When the .json file provided does not exist
-    # Note: this probably needs to be tested with a Popen rather than with the ValidateArgsBySchema function
+    # Note: this probably needs to be tested with a Popen rather than with the ArgsValidator function
     @unittest.skip
     def test_json_file_not_exist(self):
         missing_json_path = os.path.join(self.general_input_dir, "nonexistent.json")
@@ -910,6 +910,10 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_single_location(self):
         self.common_positive_filter_test("single_location")
 
+    def test_argparse_help_txt(self):
+        expected_result = ...
+        process = subprocess.check_output("dx extract_assay expression -h", shell=True)
+        self.assertEqual(expected_result, process.decode())
 
 # Start the test
 if __name__ == "__main__":
