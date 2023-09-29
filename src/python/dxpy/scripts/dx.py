@@ -6649,7 +6649,6 @@ parser_extract_assay_expression.add_argument(
 parser_extract_assay_expression.add_argument(
     "--assay-name",
     type=str,
-    nargs=1,
     help='Specify a specific molecular expression assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, “--list-assays"',
 )
 
