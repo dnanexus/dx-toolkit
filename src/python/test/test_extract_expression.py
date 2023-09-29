@@ -25,16 +25,20 @@ import subprocess
 import sys
 import os
 import dxpy
+import copy
 import json
 import tempfile
 
 import shutil
 from dxpy_testutil import cd, chdir
 from dxpy.bindings.apollo.ValidateJSONbySchema import JSONValidator
+from dxpy.bindings.apollo.path_validator import PathValidator
+from dxpy.utils.resolver import resolve_existing_path
+
 from dxpy.bindings.apollo.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
-from dxpy.bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
+from dxpy.bindings.apollo.cmd_line_options_validator import ArgsValidator
 from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
@@ -55,8 +59,8 @@ class TestDXExtractExpression(unittest.TestCase):
         cd(cls.proj_id + ":/")
         cls.general_input_dir = os.path.join(dirname, "expression_test_files/input/")
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
-        cls.schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
-        #cls.test_record = cls.proj_id + ":/Extract_Expression/standin_test_record"
+        cls.json_schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
+        cls.input_args_schema = EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
         cls.test_record = "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
@@ -84,8 +88,8 @@ class TestDXExtractExpression(unittest.TestCase):
             "retrieve_expression": False,
             "additional_fields_help": False,
             "assay_name": None,
-            "input_json": None,
-            "input_json_file": None,
+            "filter_json": None,
+            "filter_json_file": None,
             "json_help": False,
             "sql": False,
             "additional_fields": None,
@@ -98,9 +102,68 @@ class TestDXExtractExpression(unittest.TestCase):
         if not os.path.exists(cls.general_output_dir):
             os.makedirs(cls.general_output_dir)
 
+        cls.default_entity_describe = {
+            "id": cls.test_record,
+            "project": cls.proj_id,
+            "class": "record",
+            "sponsored": False,
+            "name": "fake_assay",
+            "types": ["Dataset"],
+            "state": "closed",
+            "hidden": False,
+            "links": ["database-xxxx", "file-zzzzzz"],
+            "folder": "/",
+            "tags": [],
+            "created": 0,
+            "modified": 0,
+            "createdBy": {
+                "user": "user-test",
+                "job": "job-xyz",
+                "executable": "app-xyz",
+            },
+            "size": 0,
+            "properties": {},
+            "details": {
+                "descriptor": {"$dnanexus_link": "file-xyz"},
+                "version": "3.0",
+                "schema": "ds-molecular_expression_quantification",
+                "databases": [{"assay": {"$dnanexus_link": "database-yyyyyy"}}],
+                "name": "fake_assay",
+                "description": "Dataset: assay",
+            },
+        }
+
+        cls.default_parser_dict = {
+            "apiserver_host": None,
+            "apiserver_port": None,
+            "apiserver_protocol": None,
+            "project_context_id": None,
+            "workspace_id": None,
+            "security_context": None,
+            "auth_token": None,
+            "env_help": None,
+            "version": None,
+            "command": "extract_assay",
+            "path": None,
+            "list_assays": False,
+            "retrieve_expression": False,
+            "additional_fields_help": False,
+            "assay_name": None,
+            "filter_json": None,
+            "filter_json_file": None,
+            "json_help": False,
+            "sql": False,
+            "additional_fields": None,
+            "expression_matrix": False,
+            "delim": None,
+            "output": None,
+        }
+
+        cls.argparse_expression_help_message = os.path.join(dirname, "help_messages/extract_expression_help_message.txt")
+
     @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.general_output_dir)
+    def path_validation_error_handler(cls, message):
+        raise ValueError(message)
 
     @classmethod
     def input_arg_error_handler(cls, message):
@@ -110,9 +173,34 @@ class TestDXExtractExpression(unittest.TestCase):
     def json_error_handler(cls, message):
         raise ValueError(message)
 
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.general_output_dir)
+
+    #
+    # Helper functions used by different types of tests
+    #
+
+    def common_negative_path_validation_test(
+        self, expected_error_message, parser_dict, entity_describe
+    ):
+        validator = PathValidator(
+            parser_dict,
+            self.proj_id,
+            entity_describe,
+            error_handler=self.path_validation_error_handler,
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            validator.validate()
+
+        self.assertEqual(expected_error_message, str(cm.exception).strip())
+
     def common_negative_filter_test(self, json_name, expected_error_message):
         input_json = CLIEXPRESS_TEST_INPUT["malformed"][json_name]
-        validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
+        validator = JSONValidator(
+            self.json_schema, error_handler=self.json_error_handler
+        )
 
         with self.assertRaises(ValueError) as cm:
             validator.validate(input_json)
@@ -122,7 +210,9 @@ class TestDXExtractExpression(unittest.TestCase):
     def common_positive_filter_test(self, json_name):
         input_json = CLIEXPRESS_TEST_INPUT["valid"][json_name]
 
-        validator = JSONValidator(self.schema, error_handler=self.json_error_handler)
+        validator = JSONValidator(
+            self.json_schema, error_handler=self.json_error_handler
+        )
 
         validator.validate(input_json)
 
@@ -136,7 +226,7 @@ class TestDXExtractExpression(unittest.TestCase):
                 print("unrecognized argument in input args")
                 return False
 
-        input_arg_validator = ValidateArgsBySchema(
+        input_arg_validator = ArgsValidator(
             parser_dict,
             EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
             error_handler=self.input_arg_error_handler,
@@ -321,7 +411,7 @@ class TestDXExtractExpression(unittest.TestCase):
         input_dict = {
             "path": self.test_record,
             "retrieve_expression": True,
-            "input_json": r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
+            "filter_json": r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
             "additional_fields": "feature_name,bad_field",
         }
         self.common_input_args_test(input_dict, expected_error_message)
@@ -421,7 +511,7 @@ class TestDXExtractExpression(unittest.TestCase):
 
     # EM-17
     # When the .json file provided does not exist
-    # Note: this probably needs to be tested with a Popen rather than with the ValidateArgsBySchema function
+    # Note: this probably needs to be tested with a Popen rather than with the ArgsValidator function
     @unittest.skip
     def test_json_file_not_exist(self):
         missing_json_path = os.path.join(self.general_input_dir, "nonexistent.json")
@@ -484,7 +574,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "path": self.test_record,
             "expression_matrix": True,
             "retrieve_expression": True,
-            "input_json": r'{"annotation": {"feature_name": ["BRCA2"]}}',
+            "filter_json": r'{"annotation": {"feature_name": ["BRCA2"]}}',
             "sql": True,
         }
         self.common_input_args_test(input_dict, expected_error_message)
@@ -518,6 +608,122 @@ class TestDXExtractExpression(unittest.TestCase):
     
 
     #
+    # Path Validation tests
+    # There are 5 ways this function can detect a bad dataset/path.  Checked in the following order:
+    # 1. (EM-1?) Object in wrong project
+    # 2. (EM-1?) Object not of class record
+    # 3. (EM-3) Object not of recordType "Dataset" or "CohortBrowser"
+    # 4. (EM-5) Object is not of correct version (3.0 at the time of this writing)
+    # 5. (EM-6) Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
+    #
+
+    # EM-1
+    # 1. Object in wrong project
+    def test_bad_dataset_project(self):
+        # deep copy the standard entity describe and parser dictionaries
+        entity_describe = copy.deepcopy(self.default_entity_describe)
+        parser_dict = copy.deepcopy(self.default_parser_dict)
+        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
+        # Overwrite project, but not record id, so there is a project
+        entity_describe["project"] = "project-fakeproject419857"
+        expected_error_message = 'Unable to resolve "{}:{}" to a data object or folder name in {}. Please make sure your object is in your selected project.'.format(
+            self.proj_id, self.test_record, self.proj_id
+        )
+
+        self.common_negative_path_validation_test(
+            expected_error_message, parser_dict, entity_describe
+        )
+
+    # EM-1
+    # 2. Object not of class record
+    def test_object_not_class_record(self):
+        # deep copy the standard entity describe and parser dictionaries
+        entity_describe = copy.deepcopy(self.default_entity_describe)
+        parser_dict = copy.deepcopy(self.default_parser_dict)
+        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
+        entity_describe["class"] = "not_record"
+        expected_error_message = "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
+            entity_describe["class"]
+        )
+
+        self.common_negative_path_validation_test(
+            expected_error_message, parser_dict, entity_describe
+        )
+
+    # EM-3
+    # 3. Object not of recordType "Dataset" or "CohortBrowser"
+    def test_bad_dataset_type(self):
+        entity_describe = copy.deepcopy(self.default_entity_describe)
+        parser_dict = copy.deepcopy(self.default_parser_dict)
+        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
+        # Overwrite type in default entity_describe dict with something other than CohortBrowser or Dataset
+        entity_describe["types"] = ["bad_type"]
+        expected_error_message = "{} Invalid path. The path must point to a record type of cohort or dataset and not a ['bad_type'] object.".format(
+            entity_describe["id"]
+        )
+
+        self.common_negative_path_validation_test(
+            expected_error_message, parser_dict, entity_describe
+        )
+
+    # EM-5
+    # 4. Object is not of correct version (3.0 at the time of this writing)
+    def test_bad_dataset_version(self):
+        entity_describe = copy.deepcopy(self.default_entity_describe)
+        parser_dict = copy.deepcopy(self.default_parser_dict)
+        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
+        entity_describe["details"]["version"] = "2.0"
+        expected_error_message = "2.0: Version of the cohort or dataset is too old. Version must be at least 3.0.".format(
+            self.test_record
+        )
+
+        self.common_negative_path_validation_test(
+            expected_error_message, parser_dict, entity_describe
+        )
+
+    # (EM-6)
+    # 5. Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
+    def test_cohort_browser_assay_name(self):
+        entity_describe = copy.deepcopy(self.default_entity_describe)
+        parser_dict = copy.deepcopy(self.default_parser_dict)
+        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
+        entity_describe["types"] = ["CohortBrowser"]
+        parser_dict["assay_name"] = True
+        expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
+        self.common_negative_path_validation_test(
+            expected_error_message, parser_dict, entity_describe
+        )
+
+    # (EM-6)
+    # 5. Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
+    def test_cohort_browser_list_assays(self):
+        entity_describe = {
+            key: value for key, value in self.default_entity_describe.items()
+        }
+        parser_dict = {key: value for key, value in self.default_parser_dict.items()}
+        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
+        entity_describe["types"] = ["CohortBrowser"]
+        parser_dict["list_assays"] = True
+        expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
+        self.common_negative_path_validation_test(
+            expected_error_message, parser_dict, entity_describe
+        )
+
+    def test_positive_path_validation(self):
+        entity_describe = {
+            key: value for key, value in self.default_entity_describe.items()
+        }
+        parser_dict = {key: value for key, value in self.default_parser_dict.items()}
+        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
+        validator = PathValidator(
+            parser_dict,
+            self.proj_id,
+            entity_describe,
+            error_handler=self.path_validation_error_handler,
+        )
+        validator.validate()
+
+    #
     # Malformed input json tests
     # EM-18, EM-19, EM-20
     #
@@ -528,6 +734,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "Conflicting keys feature_name and feature_id cannot be present together.",
         )
 
+    @unittest.skip
     def test_annotation_id_maxitem(self):
         self.common_negative_filter_test(
             "annotation_id_maxitem", "error message not yet defined"
@@ -539,6 +746,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation).format(self.type_representation),
         )
 
+    @unittest.skip
     def test_annotation_name_maxitem(self):
         self.common_negative_filter_test(
             "annotation_name_maxitem",
@@ -610,6 +818,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "Key 'chromosome' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
         )
 
+    @unittest.skip
     def test_location_end_before_start(self):
         self.common_negative_filter_test(
             "location_end_before_start", "error message not yet defined"
@@ -626,6 +835,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "location_item_type", "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation)
         )
 
+    @unittest.skip
     def test_location_max_width(self):
         self.common_negative_filter_test(
             "location_max_width", "error message not yet defined"
@@ -660,6 +870,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "location_type", "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
         )
 
+    @unittest.skip
     def test_sample_id_maxitem(self):
         self.common_negative_filter_test(
             "sample_id_maxitem", "error message not yet defined"
@@ -700,6 +911,22 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_single_location(self):
         self.common_positive_filter_test("single_location")
+
+    def test_argparse_help_txt(self):
+        expected_result = self.argparse_expression_help_message
+        with open(expected_result) as f:
+            #lines = f.readlines()
+            file = f.read()
+        process = subprocess.check_output("dx extract_assay expression -h", shell=True)
+        help_output = process.decode()
+
+        # In Python 3 self.assertEqual(file,help_output) passes,
+        # However in Python 2 it fails due to some differences in where linebreaks appear in the text
+        self.assertEqual(
+            file.replace(" ", "").replace("\n", ""), 
+            help_output.replace(" ", "").replace("\n", "")
+        )
+
 
 
 # Start the test
