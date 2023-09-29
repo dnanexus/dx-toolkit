@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [359.0] - beta
+## [360.0] - beta
+
+### Fixed
+
+* Released Nextaur 1.6.7. It adds DNAnexus docker image support feature and contains errorStrategy bugfixes
+
+## [359.0] - 2023.9.29
 
 ### Added
 
