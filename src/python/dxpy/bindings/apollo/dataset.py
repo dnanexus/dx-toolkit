@@ -11,11 +11,10 @@ class Dataset(DXRecord):
         self.dataset_id = dataset_id
         self._detail_describe = detail_describe_dict
         self._visualize_info = None
-        self._dx_record_obj = None
-        self.dx_dataset_descriptor = None
 
-        if "details" not in detail_describe_dict:
-            raise ValueError("detail is expected key in detail_describe_dict")
+        if detail_describe_dict:
+            if "details" not in detail_describe_dict:
+                raise ValueError("detail is expected key in detail_describe_dict")
 
     # @property
     # def is_cohort(self):
