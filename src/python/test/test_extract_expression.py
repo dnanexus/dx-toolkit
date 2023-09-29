@@ -915,16 +915,18 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_argparse_help_txt(self):
         expected_result = self.argparse_expression_help_message
         with open(expected_result) as f:
-            lines = f.readlines()
+            #lines = f.readlines()
+            file = f.read()
         process = subprocess.check_output("dx extract_assay expression -h", shell=True)
         help_output = process.decode()
-        self.assertTrue(
-            all(
-                l.strip("\n").strip("\\").strip("'") in help_output for l in lines
-            )
-        )
+        #self.assertTrue(
+        #    all(
+         #       l.strip("\n").strip("\\").strip("'") in help_output for l in lines
+         #   )
+        #)
+        self.assertEqual(file, help_output)
 
-        
+
 
 # Start the test
 if __name__ == "__main__":
