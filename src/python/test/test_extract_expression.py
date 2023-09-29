@@ -88,8 +88,8 @@ class TestDXExtractExpression(unittest.TestCase):
             "retrieve_expression": False,
             "additional_fields_help": False,
             "assay_name": None,
-            "input_json": None,
-            "input_json_file": None,
+            "filter_json": None,
+            "filter_json_file": None,
             "json_help": False,
             "sql": False,
             "additional_fields": None,
@@ -149,8 +149,8 @@ class TestDXExtractExpression(unittest.TestCase):
             "retrieve_expression": False,
             "additional_fields_help": False,
             "assay_name": None,
-            "input_json": None,
-            "input_json_file": None,
+            "filter_json": None,
+            "filter_json_file": None,
             "json_help": False,
             "sql": False,
             "additional_fields": None,
@@ -411,7 +411,7 @@ class TestDXExtractExpression(unittest.TestCase):
         input_dict = {
             "path": self.test_record,
             "retrieve_expression": True,
-            "input_json": r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
+            "filter_json": r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
             "additional_fields": "feature_name,bad_field",
         }
         self.common_input_args_test(input_dict, expected_error_message)
@@ -574,7 +574,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "path": self.test_record,
             "expression_matrix": True,
             "retrieve_expression": True,
-            "input_json": r'{"annotation": {"feature_name": ["BRCA2"]}}',
+            "filter_json": r'{"annotation": {"feature_name": ["BRCA2"]}}',
             "sql": True,
         }
         self.common_input_args_test(input_dict, expected_error_message)
