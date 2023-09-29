@@ -11,11 +11,11 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
         "additional_fields",
         "additional_fields_help",
         "delim",
-        "input_json_file",
+        "filter_json_file",
         "sql",
         "expression_matrix",
         "json_help",
-        "input_json",
+        "filter_json",
     ],
     "1_path_or_json_help-at_least_one_required": {
         "properties": {
@@ -55,8 +55,8 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
         "properties": {
             "main_key": "retrieve_expression",
             "items": [
-                "input_json",
-                "input_json_file",
+                "filter_json",
+                "filter_json_file",
                 "json_help",
                 "additional_fields_help",
             ],
@@ -94,7 +94,7 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
     },
     "7_json_inputs-mutually_exclusive": {
         "properties": {
-            "items": ["input_json", "input_json_file"],
+            "items": ["filter_json", "filter_json_file"],
         },
         "condition": "mutually_exclusive_group",
         "error_message": {
