@@ -27,6 +27,7 @@ import re
 import csv
 import dxpy
 import codecs
+import math
 import subprocess
 from ..utils.printing import fill
 from ..bindings import DXRecord
@@ -796,11 +797,18 @@ def extract_assay_germline(args):
                     if r["genotype_type"] == "hom":
                         r["genotype_type"] = "hom-alt"
 
+            def sort_variant(d):
+                chrom, pos = d["allele_id"].split("_")[:2]
+                if chrom.isdigit():
+                    return int(chrom), '', int(pos)
+                return float('inf'), chrom, int(pos)
+            ordered_results = sorted(resp_raw["results"], key=sort_variant)
+
             csv_from_json(
                 out_file_name=out_file,
                 print_to_stdout=print_to_stdout,
                 sep="\t",
-                raw_results=resp_raw["results"],
+                raw_results=ordered_results,
                 column_names=fields_list,
                 quote_char=str("|"),
             )
