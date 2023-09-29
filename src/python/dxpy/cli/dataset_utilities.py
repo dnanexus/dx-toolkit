@@ -1105,13 +1105,11 @@ def extract_assay_expression(args):
         print(*dataset_obj.assay_names_list("molecular_expression"), sep="\n")
         sys.exit(0)
 
-    # possible assay picking
+    # Check whether assay_name is valid
+    # If no assay_name is provided, the first molecular_expression assay in the dataset must be selected
     if args.assay_name and not dataset_obj.is_assay_name_valid(args.assay_name, "molecular_expression"):
         print("assay is not present in dataset")
         sys.exit(0)
-
-    assay_index = dataset_obj.assay_index(args.assay_name) if args.assay_name else 0
-
 
     if args.json_help:
         print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
@@ -1125,6 +1123,13 @@ def extract_assay_expression(args):
         with open(args.input_json_file) as f:
             user_filters_json = json.load(f)
 
+    
+    # Replace 'str' with 'unicode' when checking types in Python 2
+    if sys.version_info.major == 2:
+        EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA["location"]["items"]["properties"]["chromosome"]["type"] = unicode
+        EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA["location"]["items"]["properties"]["starting_position"]["type"] = unicode
+        EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA["location"]["items"]["properties"]["ending_position"]["type"] = unicode
+    
     input_json_validator = JSONValidator(schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit)
     input_json_validator.validate(input_json=user_filters_json)
     
