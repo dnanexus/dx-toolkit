@@ -49,7 +49,7 @@ from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
 
-from ..bindings.apollo.cmd_line_options_validator import ValidateArgsBySchema
+from ..bindings.apollo.cmd_line_options_validator import ArgsValidator
 from ..bindings.apollo.path_validator import PathValidator
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.dataset import Dataset
@@ -1077,7 +1077,7 @@ def extract_assay_expression(args):
 
     # Validating input combinations
     parser_dict = vars(args)
-    input_validator = ValidateArgsBySchema(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
+    input_validator = ArgsValidator(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
     input_validator.validate_input_combination()
 
     # Validating Assay Path
@@ -1116,11 +1116,11 @@ def extract_assay_expression(args):
         sys.exit(0)
 
     # Validating input JSON
-    if args.input_json:
-        user_filters_json = json.loads(args.input_json)
+    if args.filter_json:
+        user_filters_json = json.loads(args.filter_json)
 
-    elif args.input_json_file:
-        with open(args.input_json_file) as f:
+    elif args.filter_json_file:
+        with open(args.filter_json_file) as f:
             user_filters_json = json.load(f)
 
     
