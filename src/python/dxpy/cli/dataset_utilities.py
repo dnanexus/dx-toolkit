@@ -27,7 +27,6 @@ import re
 import csv
 import dxpy
 import codecs
-import math
 import subprocess
 from ..utils.printing import fill
 from ..bindings import DXRecord
