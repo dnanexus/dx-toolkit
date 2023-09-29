@@ -119,9 +119,9 @@ def location_filter(location_list):
         # First, ensure that the geno bins width isn't greater than 250 megabases
         start = int(location["starting_position"])
         end = int(location["ending_position"])
-        if end - start > 250000000:
+        if end - start > 5000000:
             err_exit(
-                "Error in location {}\nLocation filters may not specify regions larger than 250 megabases".format(
+                "Error in location {}\nLocation filters may not specify regions larger than 5 megabases".format(
                     location
                 )
             )
