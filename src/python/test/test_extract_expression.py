@@ -919,12 +919,13 @@ class TestDXExtractExpression(unittest.TestCase):
             file = f.read()
         process = subprocess.check_output("dx extract_assay expression -h", shell=True)
         help_output = process.decode()
-        #self.assertTrue(
-        #    all(
-         #       l.strip("\n").strip("\\").strip("'") in help_output for l in lines
-         #   )
-        #)
-        self.assertEqual(file, help_output)
+
+        # In Python 3 self.assertEqual(file,help_output) passes,
+        # However in Python 2 it fails due to some differences in where linebreaks appear in the text
+        self.assertEqual(
+            file.replace(" ", "").replace("\n", ""), 
+            help_output.replace(" ", "").replace("\n", "")
+        )
 
 
 
