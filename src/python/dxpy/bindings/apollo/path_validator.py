@@ -45,7 +45,8 @@ class PathValidator:
 
         if all(x not in _record_types for x in EXPECTED_TYPES):
             self.throw_error(
-                "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
+                "{} Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
+                    self.entity_describe["id"],
                     _record_types
                 )
             )
