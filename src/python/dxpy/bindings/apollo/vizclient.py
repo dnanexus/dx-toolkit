@@ -2,21 +2,15 @@ import dxpy
 
 
 class VizClient(object):
-    def __init__(self, url, project_id, record_id, error_handler=print) -> None:
+    def __init__(self, url, project_id, error_handler=print) -> None:
         self.url = url
         self.project_id = project_id
-        self.record_id = record_id
         self.error_handler = error_handler
 
-    def get_response(self,payload,sql=False):
-        if sql:
-            resource_val = "{}/viz-query/3.0/{}/raw-query".format(self.url, self.record_id)
-        else:
-            resource_val = "{}/data/3.0/{}/raw".format(self.url, self.record_id)
-
+    def _get_response(self, payload, resource_url):
         try:
             response = dxpy.DXHTTPRequest(
-                resource=resource_val, data=payload, prepend_srv=False
+                resource=resource_url, data=payload, prepend_srv=False
             )
             if "error" in response:
                 if response["error"]["type"] == "InvalidInput":
@@ -30,3 +24,11 @@ class VizClient(object):
         except Exception as details:
             self.error_handler(str(details))
         return response
+
+    def get_data(self, payload, record_id):
+        resource_url = "{}/data/3.0/{}/raw".format(self.url, record_id)
+        return self._get_response(payload, resource_url)
+
+    def get_raw_sql(self, payload, record_id):
+        resource_url = "{}/viz-query/3.0/{}/raw-query".format(self.url, record_id)
+        return self._get_response(payload, resource_url)

@@ -1189,8 +1189,11 @@ def extract_assay_expression(args):
     dataset = visualize_response["dataset"]
 
     # Create VizClient object and get data from vizserver using generated payload
-    client = VizClient(url,project,record_id)
-    vizserver_response = client.get_response(vizserver_full_payload,sql=args.sql)
+    client = VizClient(url,project)
+    if args.sql:
+        vizserver_response = client.get_raw_sql(vizserver_full_payload,record_id)
+    else:
+        vizserver_response = client.get_data(vizserver_full_payload,record_id)
     print(vizserver_response)
 
 
