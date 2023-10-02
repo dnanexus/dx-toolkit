@@ -58,6 +58,7 @@ from ..bindings.apollo.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESS
 from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
+from ..bindings.apollo.vizclient import VizClient
 
 from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
 
@@ -1099,6 +1100,7 @@ def extract_assay_expression(args):
         entity_describe_details = describe(entity_describe["id"], default_fields=True, fields={"properties", "details"})
         
         path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe_details, error_handler=err_exit)
+
         path_validator.validate(check_list_assays_invalid_combination=True)
 
      # Cohort/Dataset handling
@@ -1177,10 +1179,28 @@ def extract_assay_expression(args):
     vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
     vizserver_full_payload = vizserver_payload.build()
 
+    # TODO replace with responses from Dataset class
+    record_id = entity_describe["id"]
+    visualize_response = dxpy.DXHTTPRequest(
+                "/" + record_id + "/visualize",
+                {"project": project, "cohortBrowser": False},
+            )
+    url = visualize_response["url"]
+    dataset = visualize_response["dataset"]
+
+    # Create VizClient object and get data from vizserver using generated payload
+    client = VizClient(url,project)
+    if args.sql:
+        vizserver_response = client.get_raw_sql(vizserver_full_payload,record_id)
+    else:
+        vizserver_response = client.get_data(vizserver_full_payload,record_id)
+    print(vizserver_response)
+
+
     ### TODO -- remove later -- only for testing
     #print(vizserver_full_payload)
     viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
-    print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
+    #print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
     ### TODO --- remove the above code -- only for testing
 
 
