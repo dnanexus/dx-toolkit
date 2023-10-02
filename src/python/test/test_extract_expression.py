@@ -43,6 +43,7 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
+from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 
 dirname = os.path.dirname(__file__)
 
@@ -912,6 +913,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_single_location(self):
         self.common_positive_filter_test("single_location")
 
+    ##### Test argparse's --help output
     def test_argparse_help_txt(self):
         expected_result = self.argparse_expression_help_message
         with open(expected_result) as f:
@@ -926,6 +928,12 @@ class TestDXExtractExpression(unittest.TestCase):
             file.replace(" ", "").replace("\n", ""), 
             help_output.replace(" ", "").replace("\n", "")
         )
+
+    #### Test --json-help
+    def test_json_help_template(self):
+        process = subprocess.check_output("dx extract_assay expression --retrieve-expression fakepath --json-help", shell=True)
+        self.assertIn(EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE, process.decode())
+        self.assertIn("Additional descriptions of filtering keys and permissible values", process.decode())
 
 
 

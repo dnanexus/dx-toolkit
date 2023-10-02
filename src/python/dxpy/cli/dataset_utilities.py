@@ -1080,6 +1080,10 @@ def extract_assay_expression(args):
     input_validator = ArgsValidator(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
     input_validator.validate_input_combination()
 
+    if args.json_help:
+        print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
+        sys.exit(0)
+
     # Validating Assay Path
     if args.path:
         project, folder_path, entity_result = resolve_existing_path(
@@ -1109,10 +1113,6 @@ def extract_assay_expression(args):
     # If no assay_name is provided, the first molecular_expression assay in the dataset must be selected
     if args.assay_name and not dataset_obj.is_assay_name_valid(args.assay_name, "molecular_expression"):
         print("assay is not present in dataset")
-        sys.exit(0)
-
-    if args.json_help:
-        print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
         sys.exit(0)
 
     # Validating input JSON
