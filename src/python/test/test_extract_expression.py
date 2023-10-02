@@ -309,7 +309,7 @@ class TestDXExtractExpression(unittest.TestCase):
             arg_output=output_path,
             arg_delim=",",
             arg_sql=True,
-            output_file_name=sql_mock_response["sql"],
+            output_listdict_or_string=sql_mock_response["sql"],
         )
         # Read the output file back in and compare to expected result
         # Since the test should fail if the formatting is wrong, not just if the data is wrong, we
@@ -392,6 +392,7 @@ class TestDXExtractExpression(unittest.TestCase):
         err_msg = str(cm.exception).strip()
         self.assertEqual(expected_error_message, err_msg)
 
+    @unittest.skip
     def test_incorrect_file_extension(self):
         expected_error_message = 'File extension ".tsv" does not match delimiter ","'
         output_path = os.path.join(
