@@ -6431,7 +6431,7 @@ parser_extract_dataset = subparsers.add_parser('extract_dataset', help="Retrieve
                                    prog='dx extract_dataset')
 parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where "record-id" indicates the record ID in the currently selected project) or name')
 parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the three dictionary files, <record_name>.data_dictionary.csv, <record_name>.entity_dictionary.csv, and <record_name>.codings.csv will be generated. Files will be comma delimited and written to the local working directory, unless otherwise specified using --delimiter and --output arguments. If stdout is specified with the output argument, the data dictionary, entity dictionary, and coding are output in succession, without separators. If any of the three dictionary files does not contain data (i.e. the dictionary is empty), then that particular file will not be created (or be output if the output is stdout).')
-parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separated string where each value is the phenotypic entity name and field name, separated by a dot.  For example: "<entity_name>.<field_name>,<entity_name>.<field_name>". If multiple entities are provided, field values will be automatically inner joined. If only the --fields argument is provided, data will be retrieved and returned. If both --fields and --sql arguments are provided, a SQL statement to retrieve the specified field data will be automatically generated and returned.')
+parser_extract_dataset.add_argument('--fields', type=str, help='A comma-separated string where each value is the phenotypic entity name and field name, separated by a dot.  For example: "<entity_name>.<field_name>,<entity_name>.<field_name>". Internal spaces are permitted.  If multiple entities are provided, field values will be automatically inner joined. If only the --fields argument is provided, data will be retrieved and returned. If both --fields and --sql arguments are provided, a SQL statement to retrieve the specified field data will be automatically generated and returned.')
 parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (string) will be returned to query the set of entity.fields, instead of returning stored values from the set of entity.fields')
 parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const=',', default=',', help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
 parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output). If not supplied, output will create a file with a default name in the current folder')
@@ -6580,9 +6580,9 @@ parser_extract_assay_somatic.add_argument(
 
 parser_extract_assay_somatic.add_argument(
     "--additional-fields",
-    nargs='+',
+    type=str,
     default=None,
-    help='A set of fields to return, in addition to the default set; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", "allele". Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, "fieldA,fieldB,fieldC." Use --additional-fields-help with this option to get detailed information and the full list of output fields available.'
+    help='A set of fields to return, in addition to the default set; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", "allele". Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, "fieldA,fieldB,fieldC."  Internal spaces are permitted.  Use --additional-fields-help with this option to get detailed information and the full list of output fields available.'
 )
 
 parser_extract_assay_somatic.add_argument(

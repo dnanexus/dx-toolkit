@@ -358,7 +358,7 @@ def extract_dataset(args):
 
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
     if args.fields is not None:
-        fields_list = "".join(args.fields).split(",")
+        fields_list = [field.strip() for field in args.fields.split(",")]
         error_list = []
         for entry in fields_list:
             entity_field = entry.split(".")
@@ -982,8 +982,8 @@ def extract_assay_somatic(args):
             sys.exit(0)
 
     # Validate additional fields
-    if args.additional_fields:
-        additional_fields_input = "".join(args.additional_fields).split(",")
+    if args.additional_fields is not None:
+        additional_fields_input = [additional_field.strip() for additional_field in args.additional_fields.split(",")]
         accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG']
         for field in additional_fields_input:
             if field not in accepted_additional_fields:
