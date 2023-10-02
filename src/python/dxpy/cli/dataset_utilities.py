@@ -58,7 +58,7 @@ from ..bindings.apollo.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESS
 from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
-from ..bindings.apollo.vizserver_client import VizClient
+from ..bindings.apollo.vizclient import VizClient
 
 from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
 
@@ -1190,14 +1190,8 @@ def extract_assay_expression(args):
 
     # Create VizClient object and get data from vizserver using generated payload
     client = VizClient(url,project,record_id)
-    if args.sql:
-        raw_sql = client.get_raw_sql(vizserver_full_payload)
-        print("raw_sql")
-        print(raw_sql)
-    else:
-        raw_data = client.get_data(vizserver_full_payload)
-        print("raw_data")
-        print(raw_data)
+    vizserver_response = client.get_response(vizserver_full_payload,sql=args.sql)
+    print(vizserver_response)
 
 
     ### TODO -- remove later -- only for testing
