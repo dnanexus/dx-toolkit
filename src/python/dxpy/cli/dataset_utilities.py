@@ -1177,6 +1177,9 @@ def extract_assay_expression(args):
     _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default")
     
     if args.additional_fields:
+        # TODO: "--additional-fields strand chrom" and "--additional-fields strand,chrom" should both work
+        # However, currently the latter is stored as ['strand,', 'chrom']
+        # TODO use args.additional_fields.split(",")?
         all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("additional")
         incorrect_cols = set(args.additional_fields) - set({k for d in all_additional_cols for k in d.keys()})
         if len(incorrect_cols) != 0:
