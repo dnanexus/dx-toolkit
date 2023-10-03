@@ -1088,6 +1088,10 @@ def extract_assay_expression(args):
         print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
         sys.exit(0)
 
+    if args.additional_fields_help:
+        # TODO
+        raise NotImplementedError
+
     # Resolving `path` argument
     if args.path:
         # entity_result contains `id` and `describe`
@@ -1170,17 +1174,17 @@ def extract_assay_expression(args):
                                              error_handler=err_exit)
     vizserver_raw_filters = input_json_parser.parse()
 
-    # BASE_SQL = None ### TODO: To be determined by the Dataset class
-    # IS_COHORT = False ### TODO: To be determined by the Dataset class
-
     _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default")
     
     if args.additional_fields:
         all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("additional")
+        incorrect_cols = set(args.additional_fields) - set({k for d in all_additional_cols for k in d.keys()})
+        if len(incorrect_cols) != 0:
+            err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
         user_additional_cols = [i for i in all_additional_cols if set(i.keys()) & set(args.additional_fields)]
         _db_columns_list.extend(user_additional_cols)
 
-    vizserver_payload = VizPayloadBuilder(
+    viz = VizPayloadBuilder(
         project_context=project,
         output_fields_mapping=_db_columns_list,
         limit=None,
@@ -1203,8 +1207,8 @@ def extract_assay_expression(args):
     else:
         ASSAY_ID = DATASET_DESCRIPTOR["assays"][0]["uuid"]
     
-    vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
-    vizserver_full_payload = vizserver_payload.build()
+    viz.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
+    vizserver_payload = viz.build()
 
     # TODO replace with responses from Dataset class
     record_id = dataset.detail_describe["id"]
@@ -1214,15 +1218,14 @@ def extract_assay_expression(args):
     # Create VizClient object and get data from vizserver using generated payload
     client = VizClient(url,project)
     if args.sql:
-        vizserver_response = client.get_raw_sql(vizserver_full_payload,record_id)
+        vizserver_response = client.get_raw_sql(vizserver_payload, record_id)
     else:
-        vizserver_response = client.get_data(vizserver_full_payload,record_id)
-    # print(vizserver_response)
+        vizserver_response = client.get_data(vizserver_payload, record_id)
 
     write_expression_output(args.output, 
                             args.delim, 
                             args.sql, 
-                            vizserver_response, 
+                            vizserver_response['results'], 
                             save_uncommon_delim_to_txt=True, 
                             output_file_name=dataset.detail_describe["name"])
 
