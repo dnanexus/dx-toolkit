@@ -59,6 +59,7 @@ from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSIO
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from ..bindings.apollo.vizclient import VizClient
+from .output_handling import write_expression_output
 
 from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
 
@@ -1073,10 +1074,12 @@ def extract_assay_somatic(args):
 
 def extract_assay_expression(args):
     """
+    `dx extract_assay expression`
+
     Retrieve the selected data or generate SQL to retrieve the data from an expression assay in a dataset or cohort based on provided rules.
     """
 
-    # Validating input combinations
+    # Validating input arguments (argparse) combinations
     parser_dict = vars(args)
     input_validator = ArgsValidator(parser_dict=parser_dict, schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA, error_handler=err_exit)
     input_validator.validate_input_combination()
@@ -1085,8 +1088,9 @@ def extract_assay_expression(args):
         print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
         sys.exit(0)
 
-    # Validating Assay Path
+    # Resolving `path` argument
     if args.path:
+        # entity_result contains `id` and `describe`
         project, folder_path, entity_result = resolve_existing_path(
                     args.path
                 )
@@ -1097,23 +1101,37 @@ def extract_assay_expression(args):
             entity_describe = entity_result.get("describe")
 
         # TODO: This is temporary and will be replaced by the appropriate attribut from Dataset class once implemented
-        entity_describe_details = describe(entity_describe["id"], default_fields=True, fields={"properties", "details"})
+        # TODO: PathValidator currently expects a detailed describe response. Consider restructuring PathValidator and add the dataset version validation functionality to Dataset class instead.
+        entity_describe_details = describe(entity_result.get("id"), default_fields=True, fields={"properties", "details"})
         
         path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe_details, error_handler=err_exit)
 
         path_validator.validate(check_list_assays_invalid_combination=True)
 
-     # Cohort/Dataset handling
-    record_obj = DXRecord(entity_describe["id"])
-    dataset_obj, cohort_info = Dataset.resolve_cohort_to_dataset(record_obj)
+        # Cohort/Dataset handling
+        record = DXRecord(entity_describe["id"])
+        dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
+
+        if cohort_info:
+            BASE_SQL = cohort_info.get("details").get("baseSql")
+            COHORT_FILTERS = cohort_info.get("details").get("filters")
+            IS_COHORT = True
+        else:
+            BASE_SQL = None
+            COHORT_FILTERS = None
+            IS_COHORT = False
+
+        
+
+    
 
     if args.list_assays:
-        print(*dataset_obj.assay_names_list("molecular_expression"), sep="\n")
+        print(*dataset.assay_names_list("molecular_expression"), sep="\n")
         sys.exit(0)
 
     # Check whether assay_name is valid
     # If no assay_name is provided, the first molecular_expression assay in the dataset must be selected
-    if args.assay_name and not dataset_obj.is_assay_name_valid(args.assay_name, "molecular_expression"):
+    if args.assay_name and not dataset.is_assay_name_valid(args.assay_name, "molecular_expression"):
         print("assay is not present in dataset")
         sys.exit(0)
 
@@ -1152,8 +1170,8 @@ def extract_assay_expression(args):
                                              error_handler=err_exit)
     vizserver_raw_filters = input_json_parser.parse()
 
-    BASE_SQL = None ### TODO: To be determined by the Dataset class
-    IS_COHORT = False ### TODO: To be determined by the Dataset class
+    # BASE_SQL = None ### TODO: To be determined by the Dataset class
+    # IS_COHORT = False ### TODO: To be determined by the Dataset class
 
     _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default")
     
@@ -1165,28 +1183,33 @@ def extract_assay_expression(args):
     vizserver_payload = VizPayloadBuilder(
         project_context=project,
         output_fields_mapping=_db_columns_list,
-        # limit=100_000_000, ### TODO -- update later
+        limit=None,
         base_sql=BASE_SQL,
         is_cohort=IS_COHORT,
         error_handler=err_exit
     )
 
     ### TODO -- temporary -- to be replaced by DatasetAssay class response
-    DATASET_DESCRIPTOR = DXDataset(entity_describe["id"],project).get_descriptor()
-    ASSAY_NAME = DATASET_DESCRIPTOR.assays[0]["name"]
-    ASSAY_ID = DATASET_DESCRIPTOR.assays[0]["uuid"]
-
+    DATASET_DESCRIPTOR = dataset.descriptor_file_dict
+    ASSAY_NAME = args.assay_name if args.assay_name else DATASET_DESCRIPTOR["assays"][0]["name"]
+    
+    if args.assay_name:
+        # Assumption: assay names are unique in a dataset descriptor
+        # i.e. there are never two assays with the same name in the same dataset
+        for molecular_assay in dataset.assays_info_dict["molecular_expression"]:
+            if molecular_assay["name"] == args.assay_name:
+                ASSAY_ID = molecular_assay["uuid"]
+                break
+    else:
+        ASSAY_ID = DATASET_DESCRIPTOR["assays"][0]["uuid"]
+    
     vizserver_payload.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
     vizserver_full_payload = vizserver_payload.build()
 
     # TODO replace with responses from Dataset class
-    record_id = entity_describe["id"]
-    visualize_response = dxpy.DXHTTPRequest(
-                "/" + record_id + "/visualize",
-                {"project": project, "cohortBrowser": False},
-            )
-    url = visualize_response["url"]
-    dataset = visualize_response["dataset"]
+    record_id = dataset.detail_describe["id"]
+    url = dataset.vizserver_url
+    # dataset = visualize_response["dataset"]
 
     # Create VizClient object and get data from vizserver using generated payload
     client = VizClient(url,project)
@@ -1194,14 +1217,14 @@ def extract_assay_expression(args):
         vizserver_response = client.get_raw_sql(vizserver_full_payload,record_id)
     else:
         vizserver_response = client.get_data(vizserver_full_payload,record_id)
-    print(vizserver_response)
+    # print(vizserver_response)
 
-
-    ### TODO -- remove later -- only for testing
-    #print(vizserver_full_payload)
-    viz_url = dxpy.DXHTTPRequest("/" + entity_describe["id"] + "/visualize",{"project": project})['url']
-    #print(dxpy.DXHTTPRequest("{}/viz-query/3.0/{}/raw-query".format(viz_url, entity_describe["id"]), vizserver_full_payload, prepend_srv=False))
-    ### TODO --- remove the above code -- only for testing
+    write_expression_output(args.output, 
+                            args.delim, 
+                            args.sql, 
+                            vizserver_response, 
+                            save_uncommon_delim_to_txt=True, 
+                            output_file_name=dataset.detail_describe["name"])
 
 
 
