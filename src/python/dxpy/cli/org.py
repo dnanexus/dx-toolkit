@@ -255,7 +255,10 @@ def _get_org_update_args(args):
     if args.detailed_job_metrics_collect_default is not None:
         org_update_inputs["policies"]["detailedJobMetricsCollectDefault"] = args.detailed_job_metrics_collect_default == 'true'
     if args.job_logs_forwarding_json is not None:
-        org_update_inputs["jobLogsForwarding"] = json.loads(args.job_logs_forwarding_json)
+        try: 
+            org_update_inputs["jobLogsForwarding"] = json.loads(args.job_logs_forwarding_json)
+        except:
+            err_exit("Invalid JSON input for --job-logs-forwarding-json")
 
     return org_update_inputs
 
