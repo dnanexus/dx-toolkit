@@ -5294,6 +5294,7 @@ parser_update_org.add_argument('--detailed-job-metrics-collect-default', choices
 update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
 update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
 update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
+parser_update_org.add_argument('--job-logs-forwarding-json', metavar='JLF', help='JLF is a JSON string with url and token enabling forwarding of job logs to Splunk, e.g. \'{"url":"https://http-inputs-acme.splunkcloud.com/event/collector","token":"splunk-hec-token"}\'')
 parser_update_org.set_defaults(func=update_org)
 register_parser(parser_update_org, subparsers_action=subparsers_update, categories='org')
 
