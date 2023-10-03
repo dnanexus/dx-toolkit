@@ -378,7 +378,7 @@ def extract_dataset(args):
                     fields_list.append(line.strip("\n"))
         else:
             err_exit(
-                "Fields file {input_fields_file} provided does not exist".format(
+                "The file, {input_fields_file}, supplied using --fields-file could not be found".format(
                     input_fields_file=args.fields_file
                 )
             )
