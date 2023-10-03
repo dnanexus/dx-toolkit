@@ -11,6 +11,7 @@ def write_expression_output(
     output_listdict_or_string,
     save_uncommon_delim_to_txt=True,
     output_file_name=None,
+    error_handler=err_exit
 ):
     """
     arg_output: str
@@ -55,7 +56,7 @@ def write_expression_output(
     if arg_sql:
         SUFFIX = ".sql"
         if not isinstance(output_listdict_or_string, str):
-            err_exit("Expected SQL query to be a string")
+            error_handler("Expected SQL query to be a string")
     elif arg_delim:
         if arg_delim == ",":
             SUFFIX = ".csv"
@@ -65,7 +66,7 @@ def write_expression_output(
             if save_uncommon_delim_to_txt:
                 SUFFIX = ".txt"
             else:
-                err_exit("Unsupported delimiter: ".format(arg_delim))
+                error_handler("Unsupported delimiter: {}".format(arg_delim))
     else:
         SUFFIX = ".csv"
 
@@ -80,7 +81,7 @@ def write_expression_output(
         OUTPUT_DIR = os.getcwd()
 
         if output_file_name is None:
-            err_exit(
+            error_handler(
                 "No output filename specified"
             )  # Developer expected to provide record_name upstream when calling this function
 
@@ -92,13 +93,13 @@ def write_expression_output(
         # error out if file already exists or output_file_name is a directory
         if os.path.exists(output_file_name):
             if os.path.isfile(output_file_name):
-                err_exit(
+                error_handler(
                     "{} already exists. Please specify a new file path".format(
                         output_file_name
                     )
                 )
             if os.path.isdir(output_file_name):
-                err_exit(
+                error_handler(
                     "{} is a directory. Please specify a new file path".format(
                         output_file_name
                     )
@@ -111,7 +112,7 @@ def write_expression_output(
             with open(output_file_name, "w") as f:
                 f.write(output_listdict_or_string)
         else:
-            err_exit("Unexpected error occurred while writing SQL query output")
+            error_handler("Unexpected error occurred while writing SQL query output")
 
     else:
         COLUMN_NAMES = output_listdict_or_string[0].keys()
@@ -119,7 +120,7 @@ def write_expression_output(
         if not all(
             set(i.keys()) == set(COLUMN_NAMES) for i in output_listdict_or_string
         ):
-            err_exit("All rows must have the same column names")
+            error_handler("All rows must have the same column names")
 
         WRITE_MODE = "wb" if IS_PYTHON_2 or IS_OS_WINDOWS else "w"
         NEWLINE = "" if IS_PYTHON_3 else None
@@ -154,4 +155,4 @@ def write_expression_output(
             w.writerows(output_listdict_or_string)
 
         else:
-            err_exit("Unexpected error occurred while writing output")
+            error_handler("Unexpected error occurred while writing output")

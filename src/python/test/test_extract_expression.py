@@ -28,6 +28,7 @@ import dxpy
 import copy
 import json
 import tempfile
+import csv
 
 import shutil
 from dxpy_testutil import cd, chdir
@@ -43,6 +44,8 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
+from dxpy.bindings.apollo.vizserver_client import VizClient
+from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 
 dirname = os.path.dirname(__file__)
@@ -60,9 +63,14 @@ class TestDXExtractExpression(unittest.TestCase):
         cd(cls.proj_id + ":/")
         cls.general_input_dir = os.path.join(dirname, "expression_test_files/input/")
         cls.general_output_dir = os.path.join(dirname, "expression_test_files/output/")
+        # Make an output directory if it doesn't already exists
+        if not os.path.exists(cls.general_output_dir):
+            os.makedirs(cls.general_output_dir)
         cls.json_schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
         cls.input_args_schema = EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
-        cls.test_record = "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
+        cls.test_record = (
+            "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
+        )
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
@@ -99,9 +107,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "output": None,
         }
 
-        # Make an output directory if it doesn't already exists
-        if not os.path.exists(cls.general_output_dir):
-            os.makedirs(cls.general_output_dir)
+        
 
         cls.default_entity_describe = {
             "id": cls.test_record,
@@ -160,6 +166,28 @@ class TestDXExtractExpression(unittest.TestCase):
             "output": None,
         }
 
+        cls.vizserver_data_mock_response = {
+                "results": [
+                    {
+                        "feature_id": "ENST00000450305",
+                        "sample_id": "sample_2",
+                        "expression": 50,
+                        "strand": "+",
+                    },
+                    {
+                        "feature_id": "ENST00000456328",
+                        "sample_id": "sample_2",
+                        "expression": 90,
+                        "strand": "+",
+                    },
+                    {
+                        "feature_id": "ENST00000488147",
+                        "sample_id": "sample_2",
+                        "expression": 90,
+                        "strand": "-",
+                    },
+                ]
+            }
         cls.argparse_expression_help_message = os.path.join(dirname, "help_messages/extract_expression_help_message.txt")
 
     @classmethod
@@ -172,6 +200,10 @@ class TestDXExtractExpression(unittest.TestCase):
 
     @classmethod
     def json_error_handler(cls, message):
+        raise ValueError(message)
+
+    @classmethod
+    def common_value_error_handler(cls, message):
         raise ValueError(message)
 
     @classmethod
@@ -237,6 +269,147 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertEqual(expected_error_message, str(cm.exception).strip())
 
+    #
+    # Positive output tests
+    #
+
+    def test_output_data_format(self):
+        expected_result = """feature_id,sample_id,expression,strand
+            ENST00000450305,sample_2,50,+
+            ENST00000456328,sample_2,90,+
+            ENST00000488147,sample_2,90,-""".replace(" ","")
+        output_path = os.path.join(
+            self.general_output_dir, "extract_assay_expression_data.csv"
+        )
+        # Generate the formatted output file
+        write_expression_output(
+            output_path,
+            ",",
+            False,
+            self.vizserver_data_mock_response["results"],
+        )
+        # Read the output file back in and compare to expected result
+        # Since the test should fail if the formatting is wrong, not just if the data is wrong, we
+        # can do a simple string comparison
+        with open(output_path, "r") as infile:
+            data = infile.read()
+        self.assertEqual(expected_result.strip(),data.strip())
+
+
+    def test_output_sql_format(self):
+        sql_mock_response = {
+            "sql": "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`strand` AS `strand` FROM `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`value` >= 1 AND `expr_annotation_1`.`chr` = '1' AND (`expr_annotation_1`.`end` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`start` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`end` >= 250000000 AND `expr_annotation_1`.`start` <= 7)"
+        }
+        expected_result = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`strand` AS `strand` FROM `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gypg8qq06j8kzzp2yybfbzfk__enst_short_multiple_assays2`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`value` >= 1 AND `expr_annotation_1`.`chr` = '1' AND (`expr_annotation_1`.`end` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`start` BETWEEN 7 AND 250000000 OR `expr_annotation_1`.`end` >= 250000000 AND `expr_annotation_1`.`start` <= 7)"
+        output_path = os.path.join(
+            self.general_output_dir, "extract_assay_expression_sql.csv"
+        )
+        # Generate the formatted output file
+        write_expression_output(
+            arg_output=output_path,
+            arg_delim=",",
+            arg_sql=True,
+            output_listdict_or_string=sql_mock_response["sql"],
+        )
+        # Read the output file back in and compare to expected result
+        # Since the test should fail if the formatting is wrong, not just if the data is wrong, we
+        # can do a simple string comparison
+        with open(output_path, "r") as infile:
+            data = infile.read()
+        self.assertEqual(expected_result.strip(),data.strip())
+
+    #
+    # Negative output tests
+    #
+
+    def test_output_sql_not_string(self):
+        expected_error_message = "Expected SQL query to be a string"
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output="-",
+                arg_delim=",",
+                arg_sql=True,
+                output_listdict_or_string=["not a string-formatted SQL query"],
+                error_handler=self.common_value_error_handler
+            )
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+
+    def test_output_bad_delimiter(self):
+        bad_delim = "|"
+        expected_error_message =  "Unsupported delimiter: {}".format(bad_delim)
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output= "-",
+                arg_delim=bad_delim,
+                arg_sql=False,
+                output_listdict_or_string=self.vizserver_data_mock_response["results"],
+                save_uncommon_delim_to_txt = False,
+                error_handler=self.common_value_error_handler
+            )
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+    
+    # EM-14
+    def test_output_already_exist(self):
+        output_path = os.path.join(
+            self.general_output_dir, "already_existing_output.csv"
+        )
+        expected_error_message = "{} already exists. Please specify a new file path".format(output_path)
+
+        with open(output_path,"w") as outfile:
+            outfile.write("this output file already created")
+
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output= output_path,
+                arg_delim=",",
+                arg_sql=False,
+                output_listdict_or_string=self.vizserver_data_mock_response["results"],
+                save_uncommon_delim_to_txt = False,
+                error_handler=self.common_value_error_handler
+            )
+
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+
+    def test_output_is_directory(self):
+        output_path = os.path.join(
+            self.general_output_dir, "directory"
+        )
+        expected_error_message = "{} is a directory. Please specify a new file path".format(output_path)
+        os.mkdir(output_path)
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output= output_path,
+                arg_delim=",",
+                arg_sql=False,
+                output_listdict_or_string=self.vizserver_data_mock_response["results"],
+                save_uncommon_delim_to_txt = False,
+                error_handler=self.common_value_error_handler
+            )
+
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+
+    @unittest.skip
+    def test_incorrect_file_extension(self):
+        expected_error_message = 'File extension ".tsv" does not match delimiter ","'
+        output_path = os.path.join(
+            self.general_output_dir, "wrong_extension.tsv"
+        )
+        with self.assertRaises(ValueError) as cm:
+            write_expression_output(
+                arg_output= output_path,
+                arg_delim=",",
+                arg_sql=False,
+                output_listdict_or_string=self.vizserver_data_mock_response["results"],
+                save_uncommon_delim_to_txt = False,
+                error_handler=self.common_value_error_handler
+            )
+        err_msg = str(cm.exception).strip()
+        self.assertEqual(expected_error_message, err_msg)
+
     # EM-1
     # Test PATH argument not provided
     def test_path_missing(self):
@@ -270,22 +443,6 @@ class TestDXExtractExpression(unittest.TestCase):
         # print(actual_err_msg)
 
         self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-2
-    # The user does not have access to the object
-    # expected_error_message = "dxpy.exceptions.PermissionDenied: VIEW permission required in project-xxxx to perform this action, code 401"
-
-    # EM-3
-    # The record id or path is not a cohort or dataset
-    # TODO: This is tested on another branch
-
-    # EM-4
-    # The record id or path is a cohort or dataset but is invalid (maybe corrupted, descriptor not accessible...etc)
-    # expected_error_message = "..... : Invalid cohort or dataset"
-
-    # EM-5
-    # The record id or path is a cohort or dataset but the version is less than 3.0.
-    # TODO: This is tested on another branch
 
     # EM-6
     # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
@@ -395,9 +552,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-10
     # When --additional-fields-help is presented with other options
     def test_additional_fields_help_other_options(self):
-        expected_error_message = (
-            '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
-        )
+        expected_error_message = '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
         input_dict = {
             "path": self.test_record,
             "assay_name": "test_assay",
@@ -452,39 +607,6 @@ class TestDXExtractExpression(unittest.TestCase):
         # print(actual_err_msg)
 
         self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-14
-    # When file already exist
-    @unittest.skip("not yet implemented")
-    def test_output_already_exist(self):
-        with tempfile.NamedTemporaryFile() as tmp:
-            output_path = tmp.name
-            output_path = os.path.join(
-                self.general_output_dir, "already_existing_output_file.tsv"
-            )
-            expected_error_message = (
-                "{} already exists. Please specify a new file path".format(output_path)
-            )
-            command = [
-                "dx",
-                "extract_assay",
-                "expression",
-                self.test_record,
-                "--retrieve-expression",
-                "--input-json",
-                r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
-                "--output",
-                output_path,
-            ]
-
-            process = subprocess.Popen(
-                command, stderr=subprocess.PIPE, universal_newlines=True
-            )
-            actual_err_msg = process.communicate()[1]
-            print("actual_err_msg:")
-            print(actual_err_msg)
-
-            self.assertTrue(expected_error_message in actual_err_msg)
 
     # EM-16
     # When the string provided is a malformed JSON
@@ -604,9 +726,6 @@ class TestDXExtractExpression(unittest.TestCase):
         # print(actual_err_msg)
 
         self.assertTrue(expected_error_message in actual_err_msg)
-
-
-    
 
     #
     # Path Validation tests
@@ -744,26 +863,36 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_annotation_id_type(self):
         self.common_negative_filter_test(
             "annotation_id_type",
-            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation).format(self.type_representation),
+            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ).format(
+                self.type_representation
+            ),
         )
 
     @unittest.skip
     def test_annotation_name_maxitem(self):
         self.common_negative_filter_test(
             "annotation_name_maxitem",
-            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation),
+            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ),
         )
 
     def test_annotation_name_type(self):
         self.common_negative_filter_test(
             "annotation_name_type",
-            "Key 'feature_name' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation),
+            "Key 'feature_name' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ),
         )
 
     def test_annotation_type(self):
         self.common_negative_filter_test(
             "annotation_type",
-            "Key 'annotation' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation),
+            "Key 'annotation' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(
+                self.type_representation
+            ),
         )
 
     def test_bad_dependent_conditional(self):
@@ -798,25 +927,33 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_expression_max_type(self):
         self.common_negative_filter_test(
             "expression_max_type",
-            "Key 'max_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(self.type_representation),
+            "Key 'max_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(
+                self.type_representation
+            ),
         )
 
     def test_expression_min_type(self):
         self.common_negative_filter_test(
             "expression_min_type",
-            "Key 'min_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(self.type_representation),
+            "Key 'min_value' has an invalid type. Expected (<{0} 'int'>, <{0} 'float'>) but got <{0} 'str'>".format(
+                self.type_representation
+            ),
         )
 
     def test_expression_type(self):
         self.common_negative_filter_test(
             "expression_type",
-            "Key 'expression' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation),
+            "Key 'expression' has an invalid type. Expected <{0} 'dict'> but got <{0} 'list'>".format(
+                self.type_representation
+            ),
         )
 
     def test_location_chrom_type(self):
         self.common_negative_filter_test(
             "location_chrom_type",
-            "Key 'chromosome' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
+            "Key 'chromosome' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(
+                self.type_representation
+            ),
         )
 
     @unittest.skip
@@ -828,12 +965,17 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_end_type(self):
         self.common_negative_filter_test(
             "location_end_type",
-            "Key 'ending_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
+            "Key 'ending_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(
+                self.type_representation
+            ),
         )
 
     def test_location_item_type(self):
         self.common_negative_filter_test(
-            "location_item_type", "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(self.type_representation)
+            "location_item_type",
+            "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(
+                self.type_representation
+            ),
         )
 
     @unittest.skip
@@ -863,12 +1005,17 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_start_type(self):
         self.common_negative_filter_test(
             "location_start_type",
-            "Key 'starting_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(self.type_representation),
+            "Key 'starting_position' has an invalid type. Expected <{0} 'str'> but got <{0} 'int'>".format(
+                self.type_representation
+            ),
         )
 
     def test_location_type(self):
         self.common_negative_filter_test(
-            "location_type", "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
+            "location_type",
+            "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ),
         )
 
     @unittest.skip
@@ -879,7 +1026,10 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_sample_id_type(self):
         self.common_negative_filter_test(
-            "sample_id_type", "Key 'sample_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(self.type_representation)
+            "sample_id_type",
+            "Key 'sample_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
+                self.type_representation
+            ),
         )
 
     #
