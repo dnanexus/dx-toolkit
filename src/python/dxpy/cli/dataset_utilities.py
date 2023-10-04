@@ -166,15 +166,25 @@ def extract_dataset(args):
         and not args.list_fields
         and not args.list_entities
         and args.fields is None
+        and args.fields_file is None
     ):
         err_exit(
-            "Must provide at least one of the following options: --fields, --dump-dataset-dictionary, --list-fields, --list-entities"
+            "Must provide at least one of the following options: --fields, --fields-file, --dump-dataset-dictionary, --list-fields, --list-entities"
+        )
+
+    if (
+        args.fields is not None
+        and args.fields_file is not None
+    ):
+        err_exit(
+            "dx extract_dataset: error: only one of the arguments, --fields or --fields-file, may be supplied at a given time"
         )
 
     listing_restricted = {
         "dump_dataset_dictionary": False,
         "sql": False,
         "fields": None,
+        "fields_file": None,
         "output": None,
         "delim": ",",
     }
@@ -315,7 +325,7 @@ def extract_dataset(args):
             )
             files_to_check = [output_file_data, output_file_coding, output_file_entity]
 
-    if args.fields:
+    if args.fields or args.fields_file:
         if args.sql:
             file_name_suffix = ".data.sql"
         else:
@@ -357,8 +367,23 @@ def extract_dataset(args):
         err_exit("Error: path already exists {path}".format(path=file_already_exist))
 
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    
+    fields_list = []
     if args.fields is not None:
         fields_list = [field.strip() for field in args.fields.split(",")]
+    elif args.fields_file is not None:
+        if os.path.isfile(args.fields_file):
+            with open(args.fields_file, "r") as infile:
+                for line in infile:
+                    fields_list.append(line.strip("\n"))
+        else:
+            err_exit(
+                "The file, {input_fields_file}, supplied using --fields-file could not be found".format(
+                    input_fields_file=args.fields_file
+                )
+            )
+
+    if fields_list:
         error_list = []
         for entry in fields_list:
             entity_field = entry.split(".")
@@ -403,7 +428,7 @@ def extract_dataset(args):
             )
 
     elif args.sql:
-        err_exit("`--sql` passed without `--fields`")
+        err_exit("`--sql` passed without `--fields` or `--fields-file")
 
     if args.dump_dataset_dictionary:
         rec_dict = rec_descriptor.get_dictionary()
