@@ -61,7 +61,7 @@ from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from ..bindings.apollo.vizclient import VizClient
 from .output_handling import write_expression_output
 
-from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
+from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP, EXTRACT_ASSAY_EXPRESSION_ADDITIONAL_FIELDS_HELP
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
@@ -1089,8 +1089,8 @@ def extract_assay_expression(args):
         sys.exit(0)
 
     if args.additional_fields_help:
-        # TODO
-        raise NotImplementedError
+        print(EXTRACT_ASSAY_EXPRESSION_ADDITIONAL_FIELDS_HELP)
+        sys.exit(0)
 
     # Resolving `path` argument
     if args.path:
