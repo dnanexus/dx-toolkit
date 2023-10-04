@@ -18,6 +18,8 @@ class VizClient(object):
                         "Insufficient permissions due to the project policy.\n"
                         + response["error"]["message"]
                     )
+                elif response["error"]["type"] == "QueryTimeOut":
+                    err_message = "Please consider using --sql option to generate the SQL query and execute query via a private compute cluster."
                 else:
                     err_message = response["error"]
                 self.error_handler(str(err_message))
