@@ -47,6 +47,7 @@ from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPU
 from dxpy.bindings.apollo.vizserver_client import VizClient
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
+from dxpy.bindings.apollo.dataset import Dataset
 
 dirname = os.path.dirname(__file__)
 
