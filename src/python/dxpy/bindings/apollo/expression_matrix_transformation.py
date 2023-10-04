@@ -21,10 +21,12 @@ def expression_transform(results_list):
         dict_list.append(samp_row)
     
     # Get the column names that the output writer will use to generate the table
-    colnames = set()
+    # Can't use set here because we want the order of the columns to be deterministic
+    colnames = []
     for row in results_list:
-        colnames.add(row["feature_id"])
-    colnames = list(colnames)
+        row_colname = row["feature_id"] 
+        if not row_colname in colnames:
+            colnames.append(row_colname)
     # add sample_id to front
     colnames.insert(0,"sample_id")
 

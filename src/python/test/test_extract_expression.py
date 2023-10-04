@@ -379,6 +379,55 @@ class TestDXExtractExpression(unittest.TestCase):
 
         self.assertEqual(expected_output, transformed_results)
 
+    def test_exp_transform_output_compatibility(self):
+        vizserver_results = [
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_2",
+                "expression": 50,
+            },
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_1",
+                "expression": 77,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_1",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000488147",
+                "sample_id": "sample_2",
+                "expression": 90,
+            },
+        ]
+
+        # The replace statement removes tabs(actually blocks of 4 spaces) that have been inserted
+        # for readability in this python file
+        expected_result = """sample_id,ENST00000450305,ENST00000456328,ENST00000488147
+                             sample_2,50,0,90
+                             sample_1,77,90,0""".replace(
+            " ", ""
+        )
+
+        transformed_results, colnames = expression_transform(vizserver_results)
+        output_path = os.path.join(
+            self.general_output_dir, "exp_transform_compat.csv"
+        )
+        # Generate the formatted output file
+        write_expression_output(
+            output_path,
+            ",",
+            False,
+            transformed_results,
+            colnames=colnames
+        )
+
+        with open(output_path, "r") as infile:
+            data = infile.read()
+        self.assertEqual(expected_result.strip(), data.strip())
+
     #
     # Positive output tests
     #
