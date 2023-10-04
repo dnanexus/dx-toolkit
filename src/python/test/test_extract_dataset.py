@@ -119,7 +119,6 @@ class TestDXExtractDataset(unittest.TestCase):
                "-o", out_directory]
         process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
         stderr = process.communicate()[1]
-        print(stderr)
         self.assertEqual(expected_error, stderr.strip("\n"))
 
     def test_file_already_exists(self):
