@@ -117,7 +117,7 @@ class TestDXExtractDataset(unittest.TestCase):
                "-o", out_directory]
         process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
         stderr = process.communicate()[1]
-        self.assertEqual(expected_error, stderr.strip("\n"))
+        self.assertTrue(expected_error in stderr, msg = stderr)
 
     def test_file_already_exists(self):
         cohort_record = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test"

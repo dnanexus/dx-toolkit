@@ -293,7 +293,8 @@ class TestDXExtractAssay(unittest.TestCase):
 #  rsid: rsID associated with an allele or set of alleles. If multiple values
 #  are provided, the conditional search will be, "OR." For example, ["rs1111",
 #  "rs2222"], will search for alleles which match either "rs1111" or "rs2222".
-#  String match is case sensitive.
+#  String match is case sensitive. Duplicate values are permitted and will be
+#  handled silently.
 #
 #  type: Type of allele. Accepted values are "SNP", "Ins", "Del", "Mixed". If
 #  multiple values are provided, the conditional search will be, "OR." For
