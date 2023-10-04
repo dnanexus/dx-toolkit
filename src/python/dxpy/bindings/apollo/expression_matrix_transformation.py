@@ -19,4 +19,13 @@ def expression_transform(results_list):
         for (feature_id,expression) in transformed_dict[sample].items():
             samp_row[feature_id] = expression
         dict_list.append(samp_row)
-    return dict_list
+    
+    # Get the column names that the output writer will use to generate the table
+    colnames = set()
+    for row in results_list:
+        colnames.add(row["feature_id"])
+    colnames = list(colnames)
+    # add sample_id to front
+    colnames.insert(0,"sample_id")
+
+    return (dict_list,colnames)

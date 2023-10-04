@@ -1225,8 +1225,9 @@ def extract_assay_expression(args):
 
 
     output_data = vizserver_response['results']
+    colnames = None
     if args.expression_matrix:
-        transformed_response = expression_transform(vizserver_response["results"])
+        transformed_response,colnames = expression_transform(vizserver_response["results"])
         output_data = transformed_response
     
 
@@ -1235,7 +1236,9 @@ def extract_assay_expression(args):
                             args.sql, 
                             output_data, 
                             save_uncommon_delim_to_txt=True, 
-                            output_file_name=dataset.detail_describe["name"])
+                            output_file_name=dataset.detail_describe["name"],
+                            colnames=colnames
+    )
 
 
 
