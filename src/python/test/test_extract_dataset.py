@@ -28,9 +28,12 @@ import pandas as pd
 import dxpy
 from dxpy_testutil import cd, chdir
 
+dirname = os.path.dirname(__file__)
+
 class TestDXExtractDataset(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.test_file_dir = os.path.join(dirname, "extract_dataset_test_files")
         proj_name = "dx-toolkit_test_data"
         proj_id = list(dxpy.find_projects(describe=False, level='VIEW', name=proj_name))[0]['id']
         cd(proj_id + ":/")
@@ -87,6 +90,38 @@ class TestDXExtractDataset(unittest.TestCase):
         truth_file = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test.csv"
         self.end_to_end_fields(out_directory=out_directory, rec_name = "Combined_Cohort_Test.csv", truth_file=truth_file)
     
+    def test_e2e_dataset_fields_file(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        out_directory = tempfile.mkdtemp()
+        input_fields = os.path.join(self.test_file_dir , "fields_file.txt")
+        cmd = ["dx", "extract_dataset", dataset_record, "--fields-file", input_fields,
+               "-o", out_directory]
+        subprocess.check_call(cmd)
+        truth_file = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test.csv"
+        self.end_to_end_fields(out_directory=out_directory, rec_name = "extract_dataset_test.csv", truth_file=truth_file)
+
+    def test_e2e_cohortbrowser_fields_file(self):
+        cohort_record = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test"
+        out_directory = tempfile.mkdtemp()
+        input_fields = os.path.join(self.test_file_dir , "fields_file.txt")
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields-file", input_fields, 
+               "-o", out_directory]
+        subprocess.check_call(cmd)
+        truth_file = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test.csv"
+        self.end_to_end_fields(out_directory=out_directory, rec_name = "Combined_Cohort_Test.csv", truth_file=truth_file)
+
+    def test_e2e_fields_file_and_fields_negative(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        out_directory = tempfile.mkdtemp()
+        expected_error = "dx extract_dataset: error: only one of the arguments, --fields or --fields-file, may be supplied at a given time"
+        input_fields = os.path.join(self.test_file_dir , "fields_file.txt")
+        cmd = ["dx", "extract_dataset", dataset_record, "--fields", "patient.patient_id", "--fields-file", input_fields,
+               "-o", out_directory]
+        process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
+        stderr = process.communicate()[1]
+        print(stderr)
+        self.assertEqual(expected_error, stderr.strip("\n"))
+
     def test_file_already_exists(self):
         cohort_record = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test"
         out_directory = tempfile.mkdtemp()
