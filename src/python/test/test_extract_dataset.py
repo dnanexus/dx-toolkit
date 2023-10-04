@@ -28,9 +28,12 @@ import pandas as pd
 import dxpy
 from dxpy_testutil import cd, chdir
 
+dirname = os.path.dirname(__file__)
+
 class TestDXExtractDataset(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.test_file_dir = os.path.join(dirname, "extract_dataset_test_files")
         proj_name = "dx-toolkit_test_data"
         proj_id = list(dxpy.find_projects(describe=False, level='VIEW', name=proj_name))[0]['id']
         cd(proj_id + ":/")
@@ -49,24 +52,20 @@ class TestDXExtractDataset(unittest.TestCase):
         subprocess.check_call(cmd)
         self.end_to_end_ddd(out_directory=out_directory, rec_name = "Combined_Cohort_Test")
 
-    @unittest.skip('Temporarily disabled while failing')
     def test_e2e_dataset_sql(self):
         dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
-        truth_output = "SELECT `patient_0001_1`.`patient_id` AS `patient.patient_id`, `patient_0001_1`.`name` AS `patient.name`, `patient_0002_1`.`weight` AS `patient.weight`, `patient_0001_1`.`date_of_birth` AS `patient.date_of_birth`, `patient_0002_1`.`verified_dtm` AS `patient.verified_dtm`, `test_1`.`test_id` AS `test.test_id`, `trial_visit_0001_1`.`visit_id` AS `trial_visit.visit_id`, `baseline_0001_1`.`baseline_id` AS `baseline.baseline_id`, `hospital_0001_1`.`hospital_id` AS `hospital.hospital_id`, `doctor_0001_1`.`doctor_id` AS `doctor.doctor_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0002` AS `patient_0002_1` ON `patient_0001_1`.`patient_id` = `patient_0002_1`.`patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`trial_visit_0001` AS `trial_visit_0001_1` ON `patient_0001_1`.`patient_id` = `trial_visit_0001_1`.`visit_patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`test` AS `test_1` ON `trial_visit_0001_1`.`visit_id` = `test_1`.`test_visit_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`baseline_0001` AS `baseline_0001_1` ON `patient_0001_1`.`patient_id` = `baseline_0001_1`.`b_patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`hospital_0001` AS `hospital_0001_1` ON `patient_0001_1`.`hid` = `hospital_0001_1`.`hospital_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`doctor_0001` AS `doctor_0001_1` ON `trial_visit_0001_1`.`visit_did` = `doctor_0001_1`.`doctor_id` WHERE `patient_0001_1`.`patient_id` IN \(SELECT DISTINCT `patient_0001_1`.`patient_id` AS `patient_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1`\);"
-        cmd = ["dx", "extract_dataset", dataset_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
-               "patient.date_of_birth", ",", "patient.verified_dtm", ",", "test.test_id", ",", "trial_visit.visit_id", ",", "baseline.baseline_id", 
-               ",", "hospital.hospital_id", ",", "doctor.doctor_id","--sql", "-o", "-"]
+        truth_output = "SELECT `patient_0001_1`.`patient_id` AS `patient.patient_id`, `patient_0001_1`.`name` AS `patient.name`, `patient_0002_1`.`weight` AS `patient.weight`, `patient_0001_1`.`date_of_birth` AS `patient.date_of_birth`, `patient_0002_1`.`verified_dtm` AS `patient.verified_dtm`, `test_1`.`test_id` AS `test.test_id`, `trial_visit_0001_1`.`visit_id` AS `trial_visit.visit_id`, `baseline_0001_1`.`baseline_id` AS `baseline.baseline_id`, `hospital_0001_1`.`hospital_id` AS `hospital.hospital_id`, `doctor_0001_1`.`doctor_id` AS `doctor.doctor_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0002` AS `patient_0002_1` ON `patient_0001_1`.`patient_id` = `patient_0002_1`.`patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`trial_visit_0001` AS `trial_visit_0001_1` ON `patient_0001_1`.`patient_id` = `trial_visit_0001_1`.`visit_patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`test` AS `test_1` ON `trial_visit_0001_1`.`visit_id` = `test_1`.`test_visit_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`baseline_0001` AS `baseline_0001_1` ON `patient_0001_1`.`patient_id` = `baseline_0001_1`.`b_patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`hospital_0001` AS `hospital_0001_1` ON `patient_0001_1`.`hid` = `hospital_0001_1`.`hospital_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`doctor_0001` AS `doctor_0001_1` ON `trial_visit_0001_1`.`visit_did` = `doctor_0001_1`.`doctor_id`;"
+        cmd = ["dx", "extract_dataset", dataset_record, "--fields", "patient.patient_id, patient.name,patient.weight, patient.date_of_birth, patient.verified_dtm, test.test_id, trial_visit.visit_id, baseline.baseline_id, hospital.hospital_id , doctor.doctor_id",
+               "--sql", "-o", "-"]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
         stdout = process.communicate()[0]
         self.assertTrue(re.match(truth_output,stdout.strip()))
 
-    @unittest.skip('Temporarily disabled while failing')
     def test_e2e_cohortbrowser_sql(self):
         cohort_record = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test"
-        truth_output = "SELECT `patient_0001_1`.`patient_id` AS `patient.patient_id`, `patient_0001_1`.`name` AS `patient.name`, `patient_0002_1`.`weight` AS `patient.weight`, `patient_0001_1`.`date_of_birth` AS `patient.date_of_birth`, `patient_0002_1`.`verified_dtm` AS `patient.verified_dtm`, `test_1`.`test_id` AS `test.test_id`, `trial_visit_0001_1`.`visit_id` AS `trial_visit.visit_id`, `baseline_0001_1`.`baseline_id` AS `baseline.baseline_id`, `hospital_0001_1`.`hospital_id` AS `hospital.hospital_id`, `doctor_0001_1`.`doctor_id` AS `doctor.doctor_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0002` AS `patient_0002_1` ON `patient_0001_1`.`patient_id` = `patient_0002_1`.`patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`trial_visit_0001` AS `trial_visit_0001_1` ON `patient_0001_1`.`patient_id` = `trial_visit_0001_1`.`visit_patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`test` AS `test_1` ON `trial_visit_0001_1`.`visit_id` = `test_1`.`test_visit_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`baseline_0001` AS `baseline_0001_1` ON `patient_0001_1`.`patient_id` = `baseline_0001_1`.`b_patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`hospital_0001` AS `hospital_0001_1` ON `patient_0001_1`.`hid` = `hospital_0001_1`.`hospital_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`doctor_0001` AS `doctor_0001_1` ON `trial_visit_0001_1`.`visit_did` = `doctor_0001_1`.`doctor_id` WHERE `patient_0001_1`.`patient_id` IN \(SELECT DISTINCT `patient_0001_1`.`patient_id` AS `patient_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` WHERE `patient_0001_1`.`patient_id` IN \(SELECT `patient_id` FROM \(SELECT DISTINCT `cohort_subquery`.`patient_id` AS `patient_id` FROM \(SELECT DISTINCT `patient_0001_1`.`patient_id` AS `patient_id`, `patient_0001_1`.`hid` AS `hid` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` WHERE EXISTS \(SELECT `hospital_0001_1`.`hospital_id` AS `hospital_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`hospital_0001` AS `hospital_0001_1` WHERE `hospital_0001_1`.`hospital_id` BETWEEN 2 AND 5 AND `hospital_0001_1`.`hospital_id` = `patient_0001_1`.`hid`\)\) AS `cohort_subquery` INTERSECT SELECT DISTINCT `patient_0001_1`.`patient_id` AS `patient_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` WHERE `patient_0001_1`.`patient_id` BETWEEN 2 AND 9\)\)\);"
-        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
-               "patient.date_of_birth", ",", "patient.verified_dtm", ",", "test.test_id", ",", "trial_visit.visit_id", ",", "baseline.baseline_id", 
-               ",", "hospital.hospital_id", ",", "doctor.doctor_id","--sql", "-o", "-"]
+        truth_output = "SELECT `patient_0001_1`.`patient_id` AS `patient.patient_id`, `patient_0001_1`.`name` AS `patient.name`, `patient_0002_1`.`weight` AS `patient.weight`, `patient_0001_1`.`date_of_birth` AS `patient.date_of_birth`, `patient_0002_1`.`verified_dtm` AS `patient.verified_dtm`, `test_1`.`test_id` AS `test.test_id`, `trial_visit_0001_1`.`visit_id` AS `trial_visit.visit_id`, `baseline_0001_1`.`baseline_id` AS `baseline.baseline_id`, `hospital_0001_1`.`hospital_id` AS `hospital.hospital_id`, `doctor_0001_1`.`doctor_id` AS `doctor.doctor_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0002` AS `patient_0002_1` ON `patient_0001_1`.`patient_id` = `patient_0002_1`.`patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`trial_visit_0001` AS `trial_visit_0001_1` ON `patient_0001_1`.`patient_id` = `trial_visit_0001_1`.`visit_patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`test` AS `test_1` ON `trial_visit_0001_1`.`visit_id` = `test_1`.`test_visit_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`baseline_0001` AS `baseline_0001_1` ON `patient_0001_1`.`patient_id` = `baseline_0001_1`.`b_patient_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`hospital_0001` AS `hospital_0001_1` ON `patient_0001_1`.`hid` = `hospital_0001_1`.`hospital_id` LEFT OUTER JOIN `database_[a-z0-9]{24}__extract_dataset_test`.`doctor_0001` AS `doctor_0001_1` ON `trial_visit_0001_1`.`visit_did` = `doctor_0001_1`.`doctor_id` WHERE `patient_0001_1`.`patient_id` IN \(SELECT `cohort_query`.`patient_id` FROM \(SELECT `patient_0001_1`.`patient_id` AS `patient_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` WHERE `patient_0001_1`.`patient_id` IN \(SELECT `patient_id` FROM \(SELECT DISTINCT `cohort_subquery`.`patient_id` AS `patient_id` FROM \(SELECT DISTINCT `patient_0001_1`.`patient_id` AS `patient_id`, `patient_0001_1`.`hid` AS `hid` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` WHERE EXISTS \(SELECT `hospital_0001_1`.`hospital_id` AS `hospital_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`hospital_0001` AS `hospital_0001_1` WHERE `hospital_0001_1`.`hospital_id` BETWEEN 2 AND 5 AND `hospital_0001_1`.`hospital_id` = `patient_0001_1`.`hid`\)\) AS `cohort_subquery` INTERSECT SELECT DISTINCT `patient_0001_1`.`patient_id` AS `patient_id` FROM `database_[a-z0-9]{24}__extract_dataset_test`.`patient_0001` AS `patient_0001_1` WHERE `patient_0001_1`.`patient_id` BETWEEN 2 AND 9\)\)\) AS `cohort_query`\);"
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id, patient.name,patient.weight, patient.date_of_birth, patient.verified_dtm, test.test_id, trial_visit.visit_id, baseline.baseline_id, hospital.hospital_id , doctor.doctor_id",
+               "--sql", "-o", "-"]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True)
         stdout = process.communicate()[0]
         self.assertTrue(re.match(truth_output,stdout.strip()))
@@ -74,9 +73,8 @@ class TestDXExtractDataset(unittest.TestCase):
     def test_e2e_dataset_fields(self):
         dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
         out_directory = tempfile.mkdtemp()
-        cmd = ["dx", "extract_dataset", dataset_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
-               "patient.date_of_birth", ",", "patient.verified_dtm", ",", "test.test_id", ",", "trial_visit.visit_id", ",", "baseline.baseline_id", 
-               ",", "hospital.hospital_id", ",", "doctor.doctor_id", "-o", out_directory]
+        cmd = ["dx", "extract_dataset", dataset_record, "--fields", "patient.patient_id, patient.name,patient.weight, patient.date_of_birth, patient.verified_dtm, test.test_id, trial_visit.visit_id, baseline.baseline_id, hospital.hospital_id , doctor.doctor_id",
+               "-o", out_directory]
         subprocess.check_call(cmd)
         truth_file = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test.csv"
         self.end_to_end_fields(out_directory=out_directory, rec_name = "extract_dataset_test.csv", truth_file=truth_file)
@@ -84,18 +82,48 @@ class TestDXExtractDataset(unittest.TestCase):
     def test_e2e_cohortbrowser_fields(self):
         cohort_record = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test"
         out_directory = tempfile.mkdtemp()
-        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", ",", "patient.weight", ",",
-               "patient.date_of_birth", ",", "patient.verified_dtm", ",", "test.test_id", ",", "trial_visit.visit_id", ",", "baseline.baseline_id", 
-               ",", "hospital.hospital_id", ",", "doctor.doctor_id", "-o", out_directory]
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id, patient.name,patient.weight, patient.date_of_birth, patient.verified_dtm, test.test_id, trial_visit.visit_id, baseline.baseline_id, hospital.hospital_id , doctor.doctor_id", 
+               "-o", out_directory]
         subprocess.check_call(cmd)
         truth_file = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test.csv"
         self.end_to_end_fields(out_directory=out_directory, rec_name = "Combined_Cohort_Test.csv", truth_file=truth_file)
     
+    def test_e2e_dataset_fields_file(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        out_directory = tempfile.mkdtemp()
+        input_fields = os.path.join(self.test_file_dir , "fields_file.txt")
+        cmd = ["dx", "extract_dataset", dataset_record, "--fields-file", input_fields,
+               "-o", out_directory]
+        subprocess.check_call(cmd)
+        truth_file = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test.csv"
+        self.end_to_end_fields(out_directory=out_directory, rec_name = "extract_dataset_test.csv", truth_file=truth_file)
+
+    def test_e2e_cohortbrowser_fields_file(self):
+        cohort_record = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test"
+        out_directory = tempfile.mkdtemp()
+        input_fields = os.path.join(self.test_file_dir , "fields_file.txt")
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields-file", input_fields, 
+               "-o", out_directory]
+        subprocess.check_call(cmd)
+        truth_file = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test.csv"
+        self.end_to_end_fields(out_directory=out_directory, rec_name = "Combined_Cohort_Test.csv", truth_file=truth_file)
+
+    def test_e2e_fields_file_and_fields_negative(self):
+        dataset_record = "dx-toolkit_test_data:Extract_Dataset/extract_dataset_test"
+        out_directory = tempfile.mkdtemp()
+        expected_error = "dx extract_dataset: error: only one of the arguments, --fields or --fields-file, may be supplied at a given time"
+        input_fields = os.path.join(self.test_file_dir , "fields_file.txt")
+        cmd = ["dx", "extract_dataset", dataset_record, "--fields", "patient.patient_id", "--fields-file", input_fields,
+               "-o", out_directory]
+        process = subprocess.Popen(cmd, stderr=subprocess.PIPE, universal_newlines=True)
+        stderr = process.communicate()[1]
+        self.assertEqual(expected_error, stderr.strip("\n"))
+
     def test_file_already_exists(self):
         cohort_record = "dx-toolkit_test_data:Extract_Dataset/Combined_Cohort_Test"
         out_directory = tempfile.mkdtemp()
         open(os.path.join(out_directory, "Combined_Cohort_Test.csv"), 'w').close()
-        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id" , ",", "patient.name", "-o", out_directory]
+        cmd = ["dx", "extract_dataset", cohort_record, "--fields", "patient.patient_id,patient.name", "-o", out_directory]
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
         stdout = process.communicate()[0]
         self.assertTrue("Error: path already exists" in stdout.strip())

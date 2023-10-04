@@ -166,15 +166,25 @@ def extract_dataset(args):
         and not args.list_fields
         and not args.list_entities
         and args.fields is None
+        and args.fields_file is None
     ):
         err_exit(
-            "Must provide at least one of the following options: --fields, --dump-dataset-dictionary, --list-fields, --list-entities"
+            "Must provide at least one of the following options: --fields, --fields-file, --dump-dataset-dictionary, --list-fields, --list-entities"
+        )
+
+    if (
+        args.fields is not None
+        and args.fields_file is not None
+    ):
+        err_exit(
+            "dx extract_dataset: error: only one of the arguments, --fields or --fields-file, may be supplied at a given time"
         )
 
     listing_restricted = {
         "dump_dataset_dictionary": False,
         "sql": False,
         "fields": None,
+        "fields_file": None,
         "output": None,
         "delim": ",",
     }
@@ -315,7 +325,7 @@ def extract_dataset(args):
             )
             files_to_check = [output_file_data, output_file_coding, output_file_entity]
 
-    if args.fields:
+    if args.fields or args.fields_file:
         if args.sql:
             file_name_suffix = ".data.sql"
         else:
@@ -357,8 +367,23 @@ def extract_dataset(args):
         err_exit("Error: path already exists {path}".format(path=file_already_exist))
 
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    
+    fields_list = []
     if args.fields is not None:
-        fields_list = "".join(args.fields).split(",")
+        fields_list = [field.strip() for field in args.fields.split(",")]
+    elif args.fields_file is not None:
+        if os.path.isfile(args.fields_file):
+            with open(args.fields_file, "r") as infile:
+                for line in infile:
+                    fields_list.append(line.strip("\n"))
+        else:
+            err_exit(
+                "The file, {input_fields_file}, supplied using --fields-file could not be found".format(
+                    input_fields_file=args.fields_file
+                )
+            )
+
+    if fields_list:
         error_list = []
         for entry in fields_list:
             entity_field = entry.split(".")
@@ -403,7 +428,7 @@ def extract_dataset(args):
             )
 
     elif args.sql:
-        err_exit("`--sql` passed without `--fields`")
+        err_exit("`--sql` passed without `--fields` or `--fields-file")
 
     if args.dump_dataset_dictionary:
         rec_dict = rec_descriptor.get_dictionary()
@@ -670,7 +695,7 @@ def extract_assay_germline(args):
         if args.json_help:
             print(
                 comment_fill('Filters and respective definitions', comment_string='# ') + '\n#\n' +
-                comment_fill('rsid: rsID associated with an allele or set of alleles. If multiple values are provided, the conditional search will be, "OR." For example, ["rs1111", "rs2222"], will search for alleles which match either "rs1111" or "rs2222". String match is case sensitive.') + '\n#\n' +
+                comment_fill('rsid: rsID associated with an allele or set of alleles. If multiple values are provided, the conditional search will be, "OR." For example, ["rs1111", "rs2222"], will search for alleles which match either "rs1111" or "rs2222". String match is case sensitive. Duplicate values are permitted and will be handled silently.') + '\n#\n' +
                 comment_fill('type: Type of allele. Accepted values are "SNP", "Ins", "Del", "Mixed". If multiple values are provided, the conditional search will be, "OR." For example, ["SNP", "Ins"], will search for variants which match either "SNP" or "Ins". String match is case sensitive.') + '\n#\n' +
                 comment_fill('dataset_alt_af: Dataset alternate allele frequency, a json object with empty content or two sets of key/value pair: {min: 0.1, max:0.5}. Accepted numeric value for each key is between and including 0 and 1.  If a user does not want to apply this filter but still wants this information in the output, an empty json object should be provided.') + '\n#\n' +
                 comment_fill('gnomad_alt_af: gnomAD alternate allele frequency. a json object with empty content or two sets of key/value pair: {min: 0.1, max:0.5}. Accepted value for each key is between 0 and 1. If a user does not want to apply this filter but still wants this information in the output, an empty json object should be provided.') + '\n#\n' +
@@ -989,8 +1014,9 @@ def extract_assay_somatic(args):
             sys.exit(0)
 
     # Validate additional fields
-    if args.additional_fields:
-        additional_fields_input = "".join(args.additional_fields).split(",")
+
+    if args.additional_fields is not None:
+        additional_fields_input = [additional_field.strip() for additional_field in args.additional_fields.split(",")]
         accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG', 'ALT', 'alt_index']
         for field in additional_fields_input:
             if field not in accepted_additional_fields:
