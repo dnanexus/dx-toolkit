@@ -59,6 +59,7 @@ from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSIO
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from ..bindings.apollo.vizclient import VizClient
+from ..bindings.apollo.expression_matrix_transformation import expression_transform
 from .output_handling import write_expression_output
 
 from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP
@@ -1125,10 +1126,6 @@ def extract_assay_expression(args):
             COHORT_FILTERS = None
             IS_COHORT = False
 
-        
-
-    
-
     if args.list_assays:
         print(*dataset.assay_names_list("molecular_expression"), sep="\n")
         sys.exit(0)
@@ -1225,10 +1222,18 @@ def extract_assay_expression(args):
     else:
         vizserver_response = client.get_data(vizserver_payload, record_id)
 
+
+
+    output_data = vizserver_response['results']
+    if args.expression_matrix:
+        transformed_response = expression_transform(vizserver_response["results"])
+        output_data = transformed_response
+    
+
     write_expression_output(args.output, 
                             args.delim, 
                             args.sql, 
-                            vizserver_response['results'], 
+                            output_data, 
                             save_uncommon_delim_to_txt=True, 
                             output_file_name=dataset.detail_describe["name"])
 
