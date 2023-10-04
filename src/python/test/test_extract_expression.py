@@ -44,9 +44,11 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
-from dxpy.bindings.apollo.vizserver_client import VizClient
+
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
+from dxpy.bindings.dxrecord import DXRecord
+from dxpy.bindings.apollo.dataset import Dataset
 
 dirname = os.path.dirname(__file__)
 
@@ -189,6 +191,10 @@ class TestDXExtractExpression(unittest.TestCase):
                 ]
             }
         cls.argparse_expression_help_message = os.path.join(dirname, "help_messages/extract_expression_help_message.txt")
+        cls.expression_dataset_name = "molecular_expression1.dataset"
+        cls.expression_dataset = cls.proj_id + ":/" + cls.expression_dataset_name
+        cls.combined_expression_cohort_name = "Combined_Expression_Cohort"
+        cls.combined_expression_cohort = cls.proj_id + ":/" + cls.combined_expression_cohort_name
 
     @classmethod
     def path_validation_error_handler(cls, message):
@@ -1085,6 +1091,47 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn(EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE, process.decode())
         self.assertIn("Additional descriptions of filtering keys and permissible values", process.decode())
 
+
+    def load_record_via_dataset_class(self, record_path):
+        _, _, entity = resolve_existing_path(record_path)
+        entity_describe = entity["describe"]
+        record = DXRecord(entity_describe["id"], entity_describe["project"])
+        dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
+
+        return dataset, cohort_info, record
+    
+    def test_dataset_class_basic(self):
+        dataset, cohort, record = self.load_record_via_dataset_class(self.expression_dataset)
+
+        record_details = record.describe(default_fields=True, fields={"properties", "details"})
+        
+        self.assertIsNone(cohort)
+        self.assertEqual(dataset.descriptor_file_dict["name"], self.expression_dataset_name)
+        self.assertIn("vizserver", dataset.visualize_info["url"])
+        self.assertEqual("3.0", dataset.visualize_info["version"])
+        self.assertEqual("3.0", dataset.visualize_info["datasetVersion"])
+        self.assertEqual(dataset.descriptor_file, record_details["details"]["descriptor"]["$dnanexus_link"])
+        self.assertIn("molecular_expression1", dataset.assay_names_list("molecular_expression"))
+        self.assertEqual(dataset.detail_describe["types"], record_details["types"])
+
+    def test_dataset_class_cohort_resolution(self):
+        dataset, cohort, record = self.load_record_via_dataset_class(self.combined_expression_cohort)
+
+        record_details = record.describe(default_fields=True, fields={"properties", "details"})
+        expected_dataset_id = record_details["details"]["dataset"]["$dnanexus_link"]
+        expected_dataset_describe = DXRecord(expected_dataset_id).describe(default_fields=True, fields={"properties", "details"})
+        expected_descriptor_id = expected_dataset_describe["details"]["descriptor"]["$dnanexus_link"]
+        
+        self.assertIsNotNone(cohort)
+        self.assertIn("SELECT `sample_id`", cohort["details"]["baseSql"])
+        self.assertIn("pheno_filters", cohort["details"]["filters"])
+        self.assertIn("CohortBrowser", cohort["types"])
+        self.assertEqual(dataset.get_id(), expected_dataset_id)
+        self.assertEqual(dataset.descriptor_file, expected_descriptor_id)
+        self.assertIn("molecular_expression1", dataset.assay_names_list("molecular_expression"))
+        self.assertEqual("molecular_expression", dataset.descriptor_file_dict["assays"][0]["generalized_assay_model"])
+        self.assertIn("Dataset", dataset.detail_describe["types"])
+        self.assertIn("vizserver", dataset.vizserver_url)
 
 
 # Start the test
