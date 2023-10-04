@@ -6696,7 +6696,6 @@ parser_extract_assay_expression.add_argument(
     "--delim",
     "--delimiter",
     type=str,
-    nargs=1,
     help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used. If a file is specified and no --delim argument is passed or is COMMA, the file suffix will be ".csv". If a file is specified and the --delim argument is TAB, the file suffix will be ".tsv". Otherwise, if a file is specified and "--delim" is neither COMMA or TAB file suffix will be ".txt".',
 )
 
