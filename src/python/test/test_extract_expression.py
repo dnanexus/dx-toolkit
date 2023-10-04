@@ -1118,14 +1118,20 @@ class TestDXExtractExpression(unittest.TestCase):
         dataset, cohort, record = self.load_record_via_dataset_class(self.combined_expression_cohort)
 
         record_details = record.describe(default_fields=True, fields={"properties", "details"})
-        expected_descriptor_id = DXRecord(record_details["details"]["dataset"]["$dnanexus_link"]).describe(default_fields=True, fields={"properties", "details"})["details"]["descriptor"]
+        expected_dataset_id = record_details["details"]["dataset"]["$dnanexus_link"]
+        expected_dataset_describe = DXRecord(expected_dataset_id).describe(default_fields=True, fields={"properties", "details"})
+        expected_descriptor_id = expected_dataset_describe["details"]["descriptor"]["$dnanexus_link"]
         
         self.assertIsNotNone(cohort)
         self.assertIn("SELECT `sample_id`", cohort["details"]["baseSql"])
         self.assertIn("pheno_filters", cohort["details"]["filters"])
         self.assertIn("CohortBrowser", cohort["types"])
-        self.assertEqual(dataset.get_id(), record_details["details"]["dataset"]["$dnanexus_link"])
-        self.assertEqual(dataset.descriptor_file, )
+        self.assertEqual(dataset.get_id(), expected_dataset_id)
+        self.assertEqual(dataset.descriptor_file, expected_descriptor_id)
+        self.assertIn("molecular_expression1", dataset.assay_names_list("molecular_expression"))
+        self.assertEqual("molecular_expression", dataset.descriptor_file_dict["assays"][0]["generalized_assay_model"])
+        self.assertIn("Dataset", dataset.detail_describe["types"])
+        self.assertIn("vizserver", dataset.vizserver_url)
 
 
 # Start the test
