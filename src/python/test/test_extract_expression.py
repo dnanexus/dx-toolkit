@@ -290,18 +290,16 @@ class TestDXExtractExpression(unittest.TestCase):
             {
                 "feature_id": "ENST00000488147",
                 "sample_id": "sample_2",
-                "expression": 90,
+                "expression": 20,
             },
         ]
         expected_output = [
-            OrderedDict(
-                [
-                    ("sample_id", "sample_2"),
-                    ("ENST00000450305", 50),
-                    ("ENST00000456328", 90),
-                    ("ENST00000488147", 90),
-                ]
-            )
+            {
+                "ENST00000450305": 50,
+                "ENST00000456328": 90,
+                "ENST00000488147": 20,
+                "sample_id": "sample_2",
+            }
         ]
 
         transformed_results, colnames = expression_transform(vizserver_results)
@@ -322,19 +320,20 @@ class TestDXExtractExpression(unittest.TestCase):
             {
                 "feature_id": "ENST00000488147",
                 "sample_id": "sample_2",
-                "expression": 90,
+                "expression": 20,
             },
         ]
 
         expected_output = [
-            OrderedDict(
-                [
-                    ("sample_id", "sample_2"),
-                    ("ENST00000450305", 50),
-                    ("ENST00000488147", 90),
-                ]
-            ),
-            OrderedDict([("sample_id", "sample_1"), ("ENST00000456328", 90)]),
+            {
+                "ENST00000450305": 50,
+                "ENST00000488147": 20,
+                "sample_id": "sample_2",
+            },
+            {
+                "ENST00000456328": 90,
+                "sample_id": "sample_1",
+            },
         ]
 
         transformed_results, colnames = expression_transform(vizserver_results)
@@ -361,18 +360,20 @@ class TestDXExtractExpression(unittest.TestCase):
             {
                 "feature_id": "ENST00000488147",
                 "sample_id": "sample_2",
-                "expression": 90,
+                "expression": 20,
             },
         ]
         expected_output = [
-            OrderedDict(
-                [
-                    ("sample_id", "sample_2"),
-                    ("ENST00000450305", 50),
-                    ("ENST00000488147", 90),
-                ]
-            ),
-            OrderedDict([("sample_id", "sample_1"), ("ENST00000450305", 77),("ENST00000456328", 90)]),
+            {
+                "ENST00000450305": 50,
+                "ENST00000488147": 20,
+                "sample_id": "sample_2",
+            },
+            {
+                "ENST00000456328": 90,
+                "ENST00000450305": 77,
+                "sample_id": "sample_1",
+            },
         ]
 
         transformed_results, colnames = expression_transform(vizserver_results)
@@ -399,29 +400,23 @@ class TestDXExtractExpression(unittest.TestCase):
             {
                 "feature_id": "ENST00000488147",
                 "sample_id": "sample_2",
-                "expression": 90,
+                "expression": 20,
             },
         ]
 
         # The replace statement removes tabs(actually blocks of 4 spaces) that have been inserted
         # for readability in this python file
         expected_result = """sample_id,ENST00000450305,ENST00000456328,ENST00000488147
-                             sample_2,50,0,90
+                             sample_2,50,0,20
                              sample_1,77,90,0""".replace(
             " ", ""
         )
 
         transformed_results, colnames = expression_transform(vizserver_results)
-        output_path = os.path.join(
-            self.general_output_dir, "exp_transform_compat.csv"
-        )
+        output_path = os.path.join(self.general_output_dir, "exp_transform_compat.csv")
         # Generate the formatted output file
         write_expression_output(
-            output_path,
-            ",",
-            False,
-            transformed_results,
-            colnames=colnames
+            output_path, ",", False, transformed_results, colnames=colnames
         )
 
         with open(output_path, "r") as infile:
