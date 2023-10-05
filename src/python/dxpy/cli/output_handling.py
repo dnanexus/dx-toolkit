@@ -145,7 +145,7 @@ def write_expression_output(
             "lineterminator": OS_SPECIFIC_LINE_SEPARATOR,
             "quoting": QUOTING,
             "quotechar": QUOTE_CHAR,\
-            "restval":0
+            "restval":"None"
         }
 
         if WRITE_METHOD == "FILE":

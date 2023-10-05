@@ -1,4 +1,3 @@
-from copy import deepcopy
 
 def expression_transform(results_list):
     """
@@ -30,34 +29,25 @@ def expression_transform(results_list):
     # create a dict of the form
     # {
     #   <sample_id>:{
+    #       "sample_id":<sample_id>,
     #       <feature_id_1>:<expression_1>,
     #       <feature_id_2>:<expression_2>,
     #        etc.
     #   }
     # 
     # }
+    colnames = set()
     for entry in results_list:
+        # Keep track of all seen feature_ids, they will become the columns of our final table
+        colnames.add(entry["feature_id"])
         if entry["sample_id"] not in transformed_dict:
-            transformed_dict[entry["sample_id"]] = {entry["feature_id"]:entry["expression"]}
+            transformed_dict[entry["sample_id"]] = {"sample_id":entry["sample_id"],entry["feature_id"]:entry["expression"]}
         else:
             transformed_dict[entry["sample_id"]][entry["feature_id"]] = entry["expression"]
-
-    # Modify the above dictionary into a list of dictionaries, essentially moving the key of each
-    # dict into the dict itself
-    dict_list = []
-    for sample in transformed_dict:
-        samp_row = deepcopy(transformed_dict[sample])
-        samp_row["sample_id"] = sample
-        dict_list.append(samp_row)
-    
-    # Get the column names that the output writer will use to generate the table
-    # Can't use set here because we want the order of the columns to be deterministic
-    colnames = []
-    for row in results_list:
-        row_colname = row["feature_id"] 
-        if not row_colname in colnames:
-            colnames.append(row_colname)
-    # add sample_id to front
+    colnames = sorted(list(colnames))
     colnames.insert(0,"sample_id")
+
+    # We want the output to be a list of dictionaries, rather than a single dicitonary keyed on sample_id
+    dict_list = list(transformed_dict.values())
 
     return (dict_list,colnames)

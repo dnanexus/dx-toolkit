@@ -415,8 +415,8 @@ class TestDXExtractExpression(unittest.TestCase):
         # The replace statement removes tabs(actually blocks of 4 spaces) that have been inserted
         # for readability in this python file
         expected_result = """sample_id,ENST00000450305,ENST00000456328,ENST00000488147
-                             sample_2,50,0,20
-                             sample_1,77,90,0""".replace(
+                             sample_2,50,None,20
+                             sample_1,77,90,None""".replace(
             " ", ""
         )
 
