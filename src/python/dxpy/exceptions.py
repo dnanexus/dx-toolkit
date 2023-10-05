@@ -246,7 +246,7 @@ network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
                       urllib3.exceptions.SSLError,
                       ssl.SSLError,
                       HTTPError,
-                      ConnectionError,
+                      ConnectionResetError,
                       socket.error)
 
 try:

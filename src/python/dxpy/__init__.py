@@ -329,7 +329,7 @@ def _is_retryable_exception(e):
     """
     if isinstance(e, urllib3.exceptions.ProtocolError):
         return True
-    if isinstance(e, ConnectionError):
+    if isinstance(e, ConnectionResetError):
         return True
     if isinstance(e, (socket.gaierror, socket.herror)):
         return True
@@ -740,7 +740,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # BadJSONInReply --- server returned JSON that didn't parse properly
                     if (response is None
                        or isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
-                                         urllib3.exceptions.ProtocolError, ConnectionError, exceptions.UrllibInternalError))):
+                                         urllib3.exceptions.ProtocolError, ConnectionResetError, exceptions.UrllibInternalError))):
                         ok_to_retry = is_retryable
                     else:
                         ok_to_retry = 500 <= response.status < 600
