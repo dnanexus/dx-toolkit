@@ -280,6 +280,21 @@ class TestDXExtractAssay(unittest.TestCase):
         expected_error_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
         self.assertTrue(expected_error_message in process.communicate()[1])
 
+    def test_duplicate_rsid(self):
+        table = "allele"
+        friendly_name = "rsid"
+        values = ["rs1342568097", "rs1342568097"]
+        genome_reference = "GRCh38.92"
+
+        expected_output = {
+            "allele$dbsnp151_rsid": [{"condition": "any", "values": ["rs1342568097"]}]
+        }
+
+        self.assertEqual(
+            basic_filter(table, friendly_name, values, self.proj_id, genome_reference),
+            expected_output,
+        )
+
     ##########
     # Normal Command Lines
     ##########
