@@ -328,7 +328,9 @@ def _is_retryable_exception(e):
 
     """
     if isinstance(e, urllib3.exceptions.ProtocolError):
-        e = e.args[1]
+        return True
+    if isinstance(e, ConnectionError):
+        return True
     if isinstance(e, (socket.gaierror, socket.herror)):
         return True
     if isinstance(e, socket.error) and e.errno in _RETRYABLE_SOCKET_ERRORS:
@@ -640,7 +642,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
-
+                raise ConnectionResetError
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
@@ -739,11 +741,19 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             success = False
             exception_msg = _extract_msg_from_last_exception()
             if isinstance(e, _expected_exceptions):
+                # exception
+                print(exception_msg)
+                print(type(e))
+                print(isinstance(e, _expected_exceptions))
                 # Total number of allowed tries is the initial try PLUS
                 # up to (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
                 ok_to_retry = False
                 is_retryable = always_retry or (method == 'GET') or _is_retryable_exception(e)
+                print("is_retryable: %s" % is_retryable)
+                print(response)
+                for excep in exceptions.network_exceptions:
+                    print(excep, isinstance(e, excep))
                 # Because try_index is not incremented until we escape
                 # this iteration of the loop, try_index is equal to the
                 # number of tries that have failed so far, minus one.
@@ -752,8 +762,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # BadJSONInReply --- server returned JSON that didn't parse properly
                     if (response is None
                        or isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
-                                         urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError))):
+                                         urllib3.exceptions.ProtocolError, ConnectionError, exceptions.UrllibInternalError))):
                         ok_to_retry = is_retryable
+                        print("ok_to_retry: %s" % ok_to_retry)
                     else:
                         ok_to_retry = 500 <= response.status < 600
 
@@ -774,7 +785,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # Unprocessable entity, request has semantical errors
                     if response is not None and response.status == 422:
                         ok_to_retry = False
-
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
