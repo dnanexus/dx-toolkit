@@ -471,20 +471,6 @@ def _debug_print_response(debug_level, seq_num, time_started, req_id, response_s
               content_to_print,
               file=sys.stderr)
 
-
-def _test_tls_version():
-    tls12_check_script = os.path.join(os.getenv("DNANEXUS_HOME"), "build", "tls12check.py")
-    if not os.path.exists(tls12_check_script):
-        return
-
-    try:
-        subprocess.check_output(['python', tls12_check_script])
-    except subprocess.CalledProcessError as e:
-        if e.returncode == 1:
-            print (e.output)
-            raise exceptions.InvalidTLSProtocol
-
-
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
                   use_compression=None, jsonify_data=True, want_full_response=False,
@@ -807,12 +793,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 if isinstance(e, exceptions.HTTPErrorWithContent):
                         log_msg += "\n%s" % e.content
                 logger.error(log_msg)
-
-            if isinstance(e, urllib3.exceptions.ProtocolError) and \
-                'Connection reset by peer' in exception_msg:
-                # If the protocol error is 'connection reset by peer', most likely it is an
-                # error in the ssl handshake due to unsupported TLS protocol.
-                _test_tls_version()
 
             # Retries have been exhausted, and we are unable to get a full
             # buffer from the data source. Raise a special exception.
