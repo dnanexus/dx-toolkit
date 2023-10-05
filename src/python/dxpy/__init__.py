@@ -741,19 +741,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             success = False
             exception_msg = _extract_msg_from_last_exception()
             if isinstance(e, _expected_exceptions):
-                # exception
-                print(exception_msg)
-                print(type(e))
-                print(isinstance(e, _expected_exceptions))
                 # Total number of allowed tries is the initial try PLUS
                 # up to (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
                 ok_to_retry = False
                 is_retryable = always_retry or (method == 'GET') or _is_retryable_exception(e)
-                print("is_retryable: %s" % is_retryable)
-                print(response)
-                for excep in exceptions.network_exceptions:
-                    print(excep, isinstance(e, excep))
                 # Because try_index is not incremented until we escape
                 # this iteration of the loop, try_index is equal to the
                 # number of tries that have failed so far, minus one.
@@ -764,7 +756,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                        or isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
                                          urllib3.exceptions.ProtocolError, ConnectionError, exceptions.UrllibInternalError))):
                         ok_to_retry = is_retryable
-                        print("ok_to_retry: %s" % ok_to_retry)
                     else:
                         ok_to_retry = 500 <= response.status < 600
 
