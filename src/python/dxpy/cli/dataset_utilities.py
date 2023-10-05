@@ -1140,7 +1140,7 @@ def extract_assay_expression(args):
             BASE_SQL = None
             COHORT_FILTERS = None
             IS_COHORT = False
-            if float(dataset.detail_describe['details']['version']) < 3.0:
+            if float(dataset.version) < 3.0:
                 err_exit("{}: Version of the dataset is too old. Version must be at least 3.0.".format(dataset.id))
 
         

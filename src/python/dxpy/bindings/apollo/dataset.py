@@ -75,6 +75,10 @@ class Dataset(DXRecord):
         return self.detail_describe.get("project")
 
     @property
+    def version(self):
+        return self.detail_describe.get("details").get("version")
+    
+    @property
     def detail_describe(self):
         if self._detail_describe is None:
             self._detail_describe = self.describe(
