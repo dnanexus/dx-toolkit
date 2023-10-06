@@ -6,6 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `--fields-file` argument in `dx extract_dataset`
+* `ALT` and `alt_index` columns in `--additional-fields` of `dx extract_assay somatic`
+
+### Fixed
+
+* `dx extract_assay` error message when no valid assay is found
+* In `dx extract_assay germline`, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
+* Handled white spaces in `dx extract` command's inputs which are of the type `string` of comma separated values
+
 ## [360.0] - beta
 
 ### Fixed
