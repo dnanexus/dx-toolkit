@@ -29,6 +29,7 @@ import requests
 from requests.exceptions import HTTPError
 
 import dxpy
+from .compat import USING_PYTHON2
 import urllib3
 import ssl
 
@@ -246,8 +247,10 @@ network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
                       urllib3.exceptions.SSLError,
                       ssl.SSLError,
                       HTTPError,
-                      ConnectionResetError,
                       socket.error)
+if not USING_PYTHON2:
+    network_exceptions += (ConnectionResetError,)
+
 
 try:
     json_exceptions = (json.decoder.JSONDecodeError,)
