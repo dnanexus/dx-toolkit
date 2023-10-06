@@ -315,6 +315,10 @@ _RETRYABLE_SOCKET_ERRORS = {
     errno.ECONNREFUSED  # A remote host refused to allow the network connection
 }
 
+_RETRYABLE_WITH_RESPONSE = (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
+                                         urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError)
+if not USING_PYTHON2:
+    _RETRYABLE_WITH_RESPONSE += (ConnectionResetError,)
 
 def _is_retryable_exception(e):
     """Returns True if the exception is always safe to retry.
@@ -329,7 +333,7 @@ def _is_retryable_exception(e):
     """
     if isinstance(e, urllib3.exceptions.ProtocolError):
         return True
-    if isinstance(e, ConnectionResetError):
+    if not USING_PYTHON2 and isinstance(e, ConnectionResetError):
         return True
     if isinstance(e, (socket.gaierror, socket.herror)):
         return True
@@ -739,8 +743,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # BadStatusLine ---  server did not return anything
                     # BadJSONInReply --- server returned JSON that didn't parse properly
                     if (response is None
-                       or isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
-                                         urllib3.exceptions.ProtocolError, ConnectionResetError, exceptions.UrllibInternalError))):
+                       or isinstance(e, _RETRYABLE_WITH_RESPONSE)):
                         ok_to_retry = is_retryable
                     else:
                         ok_to_retry = 500 <= response.status < 600
