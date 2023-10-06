@@ -632,7 +632,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
-                raise ConnectionResetError
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
