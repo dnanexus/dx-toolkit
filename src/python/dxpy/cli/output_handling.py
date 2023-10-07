@@ -12,7 +12,7 @@ def write_expression_output(
     save_uncommon_delim_to_txt=True,
     output_file_name=None,
     error_handler=err_exit,
-    colnames = None
+    colnames=None,
 ):
     """
     arg_output: str
@@ -121,10 +121,10 @@ def write_expression_output(
         else:
             COLUMN_NAMES = output_listdict_or_string[0].keys()
 
-            if not all(
-                set(i.keys()) == set(COLUMN_NAMES) for i in output_listdict_or_string
-            ):
-                error_handler("All rows must have the same column names")
+        if not all(
+            set(i.keys()) == set(COLUMN_NAMES) for i in output_listdict_or_string
+        ):
+            error_handler("All rows must have the same column names")
 
         WRITE_MODE = "wb" if IS_PYTHON_2 or IS_OS_WINDOWS else "w"
         NEWLINE = "" if IS_PYTHON_3 else None
@@ -144,8 +144,7 @@ def write_expression_output(
             "delimiter": DELIMITER,
             "lineterminator": OS_SPECIFIC_LINE_SEPARATOR,
             "quoting": QUOTING,
-            "quotechar": QUOTE_CHAR,\
-            "restval":"None"
+            "quotechar": QUOTE_CHAR,
         }
 
         if WRITE_METHOD == "FILE":
