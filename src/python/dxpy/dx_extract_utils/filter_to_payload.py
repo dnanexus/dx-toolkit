@@ -79,6 +79,9 @@ def basic_filter(
     # Case 2: Some fields need to be changed to upper case
     if friendly_name in ["gene_id", "feature_id", "putative_impact"]:
         values = [x.upper() for x in values]
+    # Case 3: remove duplicate rsid values
+    if table == "allele" and friendly_name == "rsid":
+        values = list(set(values))
 
     # Check if we need to add geno bins as well
     if friendly_name == "gene_id" or friendly_name == "gene_name":
@@ -119,9 +122,9 @@ def location_filter(location_list):
         # First, ensure that the geno bins width isn't greater than 250 megabases
         start = int(location["starting_position"])
         end = int(location["ending_position"])
-        if end - start > 250000000:
+        if end - start > 5000000:
             err_exit(
-                "Error in location {}\nLocation filters may not specify regions larger than 250 megabases".format(
+                "Error in location {}\nLocation filters may not specify regions larger than 5 megabases".format(
                     location
                 )
             )
