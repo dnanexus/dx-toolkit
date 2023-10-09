@@ -50,7 +50,6 @@ from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
 
 from ..bindings.apollo.cmd_line_options_validator import ArgsValidator
-from ..bindings.apollo.path_validator import PathValidator
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.dataset import Dataset
 from ..bindings.apollo.ValidateJSONbySchema import JSONValidator
@@ -1105,19 +1104,36 @@ def extract_assay_expression(args):
         else:
             entity_describe = entity_result.get("describe")
 
-        # TODO: This is temporary and will be replaced by the appropriate attribut from Dataset class once implemented
-        # TODO: PathValidator currently expects a detailed describe response. Consider restructuring PathValidator and add the dataset version validation functionality to Dataset class instead.
-        entity_describe_details = describe(entity_result.get("id"), default_fields=True, fields={"properties", "details"})
-        
-        path_validator = PathValidator(input_dict=parser_dict, project=project, entity_describe=entity_describe_details, error_handler=err_exit)
+        # Is object in current project?
+        if project != entity_result["describe"]["project"]:
+            err_exit(
+                'Unable to resolve "{}" to a data object or folder name in {}. Please make sure the object is in the selected project.'.format(
+                    args.path, project
+                )
+            )
 
-        path_validator.validate(check_list_assays_invalid_combination=True)
+        # Is object a cohort or a dataset?
+        EXPECTED_TYPES = ["Dataset", "CohortBrowser"]
+        _record_types = entity_result["describe"]["types"]
+        if entity_result["describe"]["class"] != "record" or all(x not in _record_types for x in EXPECTED_TYPES):
+            err_exit(
+                "{} Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
+                    entity_result["id"],
+                    _record_types
+                )
+            )
 
         # Cohort/Dataset handling
         record = DXRecord(entity_describe["id"])
         dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
 
         if cohort_info:
+            if args.assay_name or args.list_assays:
+                err_exit(
+                    'Currently "--assay-name" and "--list-assays" may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset object as input.'
+                )
+            if float(cohort_info['details']['version']) < 3.0:
+                err_exit("{}: Version of the cohort is too old. Version must be at least 3.0.".format(cohort_info['id']))
             BASE_SQL = cohort_info.get("details").get("baseSql")
             COHORT_FILTERS = cohort_info.get("details").get("filters")
             IS_COHORT = True
@@ -1125,6 +1141,8 @@ def extract_assay_expression(args):
             BASE_SQL = None
             COHORT_FILTERS = None
             IS_COHORT = False
+            if float(dataset.version) < 3.0:
+                err_exit("{}: Version of the dataset is too old. Version must be at least 3.0.".format(dataset.id))
 
     if args.list_assays:
         print(*dataset.assay_names_list("molecular_expression"), sep="\n")

@@ -64,7 +64,7 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS = {
             },
         },
         "sample_id": {
-            "max_item_limit": 500,  # ? 1000?
+            "max_item_limit": 100,
             "condition": "in",
             "table_column": "expression$sample_id",
         },
