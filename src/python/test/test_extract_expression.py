@@ -50,6 +50,10 @@ from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 from dxpy.bindings.dxrecord import DXRecord
 from dxpy.bindings.apollo.dataset import Dataset
 
+from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
+from dxpy.bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+
+
 dirname = os.path.dirname(__file__)
 
 python_version = sys.version_info.major
@@ -1134,7 +1138,14 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn("vizserver", dataset.vizserver_url)
 
     def test_vizpayloadbuilder_class(self):
-        pass
+        input1 = { "expression": {"min_value": 0.5,},}
+        # 1. Use these dicts to run vizserver_filters_from_json_parser.JSONFiltersValidator using the CLIEXPRESS schema
+        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+        # Use JSONFiltersValidator to build the complete payload
+        c = JSONFiltersValidator(input1, schema)
+        print(c.parse())
+        print("find this message")
+
 
 
 # Start the test
