@@ -52,6 +52,9 @@ from dxpy.bindings.apollo.dataset import Dataset
 
 from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from dxpy.bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+from dxpy.bindings.apollo.vizclient import VizClient
+from dxpy.bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
+
 
 
 dirname = os.path.dirname(__file__)
@@ -1137,14 +1140,63 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn("Dataset", dataset.detail_describe["types"])
         self.assertIn("vizserver", dataset.vizserver_url)
 
-    def test_vizpayloadbuilder_class(self):
+    def test_vizpayloadbuilder_class(self, record_path):
+        # _, _, entity = resolve_existing_path(record_path)
+        # entity_describe = entity["describe"]
+        # record = DXRecord(entity_describe["id"], entity_describe["project"])
+        # dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
+
+        dataset, cohort_info, record = self.load_record_via_dataset_class(record_path)
+        print(dataset)
+
+        if cohort_info:
+            BASE_SQL = cohort_info.get("details").get("baseSql")
+            COHORT_FILTERS = cohort_info.get("details").get("filters")
+            IS_COHORT = True
+        else:
+            BASE_SQL = None
+            COHORT_FILTERS = None
+            IS_COHORT = False
+
+        url = dataset.vizserver_url
+        project = dataset.project_id
+
+        # TODO: inputs as received params (general method)
         input1 = { "expression": {"min_value": 0.5,},}
+
+
         # 1. Use these dicts to run vizserver_filters_from_json_parser.JSONFiltersValidator using the CLIEXPRESS schema
         schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
-        # Use JSONFiltersValidator to build the complete payload
-        c = JSONFiltersValidator(input1, schema)
-        print(c.parse())
+        _db_columns_list = schema["output_fields_mapping"].get("default")
+
+        # 2. Use JSONFiltersValidator to build the complete payload
+        input_json_parser = JSONFiltersValidator(input1, schema)
+        vizserver_raw_filters = input_json_parser.parse()
+
+        print(vizserver_raw_filters)
         print("find this message")
+
+        # 3. VizClient to submit the payload and get a response
+        client = VizClient(url,project)
+
+        viz = VizPayloadBuilder(
+            project_context=project,
+            output_fields_mapping=_db_columns_list,
+            limit=None,
+            base_sql=BASE_SQL,
+            is_cohort=IS_COHORT,
+        )
+        vizserver_payload = viz.build()
+
+        # TODO set up to work with cohort!!!
+        vizserver_response = client.get_data(vizserver_payload, dataset)
+
+        # write_expression_output(args.output, 
+        #                 args.delim, 
+        #                 args.sql, 
+        #                 vizserver_response['results'], 
+        #                 save_uncommon_delim_to_txt=True, 
+        #                 output_file_name=dataset.detail_describe["name"])
 
 
 
