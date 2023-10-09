@@ -1133,6 +1133,9 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn("Dataset", dataset.detail_describe["types"])
         self.assertIn("vizserver", dataset.vizserver_url)
 
+    def test_vizpayloadbuilder_class(self):
+        pass
+
 
 # Start the test
 if __name__ == "__main__":
