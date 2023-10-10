@@ -1146,6 +1146,8 @@ class TestDXExtractExpression(unittest.TestCase):
         # record = DXRecord(entity_describe["id"], entity_describe["project"])
         # dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
 
+        # record_path = self.expression_dataset
+
         dataset, cohort_info, record = self.load_record_via_dataset_class(record_path)
         print(dataset)
 
@@ -1190,6 +1192,8 @@ class TestDXExtractExpression(unittest.TestCase):
 
         # TODO set up to work with cohort!!!
         vizserver_response = client.get_data(vizserver_payload, dataset)
+
+        print(vizserver_response['results'])
 
         # write_expression_output(args.output, 
         #                 args.delim, 
