@@ -1,3 +1,10 @@
+dx-toolkit (0.359.1) trusty; urgency=medium
+
+  * Changed: Retry ConnectionResetError
+  * Fixed: Reduce API calls in DXFile.read()
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 10 Oct 2023 12:22:35 +0000
+
 dx-toolkit (0.359.0) trusty; urgency=medium
 
   * Added: `dx create_cohort`
