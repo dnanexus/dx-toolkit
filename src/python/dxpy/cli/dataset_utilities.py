@@ -810,9 +810,13 @@ def extract_assay_germline(args):
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
             if args.retrieve_genotype:
-                geno_table = re.search(
-                    r"\bgenotype_alt_read_optimized\w+", sql_results
-                ).group()
+                try:
+                    geno_table = re.search(
+                        r"\bgenotype_alt_read_optimized\w+", sql_results
+                    ).group()
+                except AttributeError as e:
+                    print(e)
+                    err_exit("sql_results:", sql_results)
                 substr = "`" + geno_table + "`.`type`"
                 sql_results = sql_results.replace(
                     substr, "REPLACE(`" + geno_table + "`.`type`, 'hom', 'hom-alt')", 1
