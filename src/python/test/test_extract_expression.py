@@ -1246,7 +1246,7 @@ class TestDXExtractExpression(unittest.TestCase):
         )
         vizserver_payload = viz.build()
 
-        # dataset response
+        # data response
         if output_type == "data":
             vizserver_response = client.get_data(vizserver_payload, dataset_id)
         # sql response:
