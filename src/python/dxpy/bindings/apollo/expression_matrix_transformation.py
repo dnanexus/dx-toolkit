@@ -52,6 +52,6 @@ def expression_transform(results_list):
     for dict_row in dict_list:
         for colname in colnames:
             if colname not in dict_row:
-                dict_row[colname] = "None"
+                dict_row[colname] = None
 
     return (dict_list,colnames)

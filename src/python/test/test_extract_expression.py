@@ -337,13 +337,13 @@ class TestDXExtractExpression(unittest.TestCase):
                 "sample_id": "sample_2",
                 "ENST00000450305": 50,
                 "ENST00000488147": 20,
-                "ENST00000456328": "None",
+                "ENST00000456328": None,
             },
             {
                 "sample_id": "sample_1",
                 "ENST00000456328": 90,
-                "ENST00000450305": "None",
-                "ENST00000488147": "None",
+                "ENST00000450305": None,
+                "ENST00000488147": None,
             },
         ]
 
@@ -378,13 +378,13 @@ class TestDXExtractExpression(unittest.TestCase):
                 "sample_id": "sample_2",
                 "ENST00000450305": 50,
                 "ENST00000488147": 20,
-                "ENST00000456328": "None",
+                "ENST00000456328": None,
             },
             {
                 "sample_id": "sample_1",
                 "ENST00000450305": 77,
                 "ENST00000456328": 90,
-                "ENST00000488147": "None",
+                "ENST00000488147": None,
             },
         ]
 
@@ -418,8 +418,8 @@ class TestDXExtractExpression(unittest.TestCase):
         # The replace statement removes tabs(actually blocks of 4 spaces) that have been inserted
         # for readability in this python file
         expected_result = """sample_id,ENST00000450305,ENST00000456328,ENST00000488147
-                             sample_2,50,None,20
-                             sample_1,77,90,None""".replace(
+                             sample_2,50,,20
+                             sample_1,77,90,""".replace(
             " ", ""
         )
 
