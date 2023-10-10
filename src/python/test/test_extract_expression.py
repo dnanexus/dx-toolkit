@@ -1140,13 +1140,13 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn("Dataset", dataset.detail_describe["types"])
         self.assertIn("vizserver", dataset.vizserver_url)
 
-    def test_vizpayloadbuilder_class(self, record_path):
+    def test_vizpayloadbuilder_class(self):
         # _, _, entity = resolve_existing_path(record_path)
         # entity_describe = entity["describe"]
         # record = DXRecord(entity_describe["id"], entity_describe["project"])
         # dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
 
-        # record_path = self.expression_dataset
+        record_path = self.expression_dataset
 
         dataset, cohort_info, record = self.load_record_via_dataset_class(record_path)
         print(dataset)
