@@ -117,8 +117,6 @@ class TestDXExtractExpression(unittest.TestCase):
             "output": None,
         }
 
-        
-
         cls.default_entity_describe = {
             "id": cls.test_record,
             "project": cls.proj_id,
@@ -177,32 +175,36 @@ class TestDXExtractExpression(unittest.TestCase):
         }
 
         cls.vizserver_data_mock_response = {
-                "results": [
-                    {
-                        "feature_id": "ENST00000450305",
-                        "sample_id": "sample_2",
-                        "expression": 50,
-                        "strand": "+",
-                    },
-                    {
-                        "feature_id": "ENST00000456328",
-                        "sample_id": "sample_2",
-                        "expression": 90,
-                        "strand": "+",
-                    },
-                    {
-                        "feature_id": "ENST00000488147",
-                        "sample_id": "sample_2",
-                        "expression": 90,
-                        "strand": "-",
-                    },
-                ]
-            }
-        cls.argparse_expression_help_message = os.path.join(dirname, "help_messages/extract_expression_help_message.txt")
+            "results": [
+                {
+                    "feature_id": "ENST00000450305",
+                    "sample_id": "sample_2",
+                    "expression": 50,
+                    "strand": "+",
+                },
+                {
+                    "feature_id": "ENST00000456328",
+                    "sample_id": "sample_2",
+                    "expression": 90,
+                    "strand": "+",
+                },
+                {
+                    "feature_id": "ENST00000488147",
+                    "sample_id": "sample_2",
+                    "expression": 90,
+                    "strand": "-",
+                },
+            ]
+        }
+        cls.argparse_expression_help_message = os.path.join(
+            dirname, "help_messages/extract_expression_help_message.txt"
+        )
         cls.expression_dataset_name = "molecular_expression1.dataset"
         cls.expression_dataset = cls.proj_id + ":/" + cls.expression_dataset_name
         cls.combined_expression_cohort_name = "Combined_Expression_Cohort"
-        cls.combined_expression_cohort = cls.proj_id + ":/" + cls.combined_expression_cohort_name
+        cls.combined_expression_cohort = (
+            cls.proj_id + ":/" + cls.combined_expression_cohort_name
+        )
 
     @classmethod
     def path_validation_error_handler(cls, message):
@@ -291,7 +293,9 @@ class TestDXExtractExpression(unittest.TestCase):
         expected_result = """feature_id,sample_id,expression,strand
             ENST00000450305,sample_2,50,+
             ENST00000456328,sample_2,90,+
-            ENST00000488147,sample_2,90,-""".replace(" ","")
+            ENST00000488147,sample_2,90,-""".replace(
+            " ", ""
+        )
         output_path = os.path.join(
             self.general_output_dir, "extract_assay_expression_data.csv"
         )
@@ -307,8 +311,7 @@ class TestDXExtractExpression(unittest.TestCase):
         # can do a simple string comparison
         with open(output_path, "r") as infile:
             data = infile.read()
-        self.assertEqual(expected_result.strip(),data.strip())
-
+        self.assertEqual(expected_result.strip(), data.strip())
 
     def test_output_sql_format(self):
         sql_mock_response = {
@@ -330,7 +333,7 @@ class TestDXExtractExpression(unittest.TestCase):
         # can do a simple string comparison
         with open(output_path, "r") as infile:
             data = infile.read()
-        self.assertEqual(expected_result.strip(),data.strip())
+        self.assertEqual(expected_result.strip(), data.strip())
 
     #
     # Negative output tests
@@ -344,63 +347,65 @@ class TestDXExtractExpression(unittest.TestCase):
                 arg_delim=",",
                 arg_sql=True,
                 output_listdict_or_string=["not a string-formatted SQL query"],
-                error_handler=self.common_value_error_handler
+                error_handler=self.common_value_error_handler,
             )
         err_msg = str(cm.exception).strip()
         self.assertEqual(expected_error_message, err_msg)
 
     def test_output_bad_delimiter(self):
         bad_delim = "|"
-        expected_error_message =  "Unsupported delimiter: {}".format(bad_delim)
+        expected_error_message = "Unsupported delimiter: {}".format(bad_delim)
         with self.assertRaises(ValueError) as cm:
             write_expression_output(
-                arg_output= "-",
+                arg_output="-",
                 arg_delim=bad_delim,
                 arg_sql=False,
                 output_listdict_or_string=self.vizserver_data_mock_response["results"],
-                save_uncommon_delim_to_txt = False,
-                error_handler=self.common_value_error_handler
+                save_uncommon_delim_to_txt=False,
+                error_handler=self.common_value_error_handler,
             )
         err_msg = str(cm.exception).strip()
         self.assertEqual(expected_error_message, err_msg)
-    
+
     # EM-14
     def test_output_already_exist(self):
         output_path = os.path.join(
             self.general_output_dir, "already_existing_output.csv"
         )
-        expected_error_message = "{} already exists. Please specify a new file path".format(output_path)
+        expected_error_message = (
+            "{} already exists. Please specify a new file path".format(output_path)
+        )
 
-        with open(output_path,"w") as outfile:
+        with open(output_path, "w") as outfile:
             outfile.write("this output file already created")
 
         with self.assertRaises(ValueError) as cm:
             write_expression_output(
-                arg_output= output_path,
+                arg_output=output_path,
                 arg_delim=",",
                 arg_sql=False,
                 output_listdict_or_string=self.vizserver_data_mock_response["results"],
-                save_uncommon_delim_to_txt = False,
-                error_handler=self.common_value_error_handler
+                save_uncommon_delim_to_txt=False,
+                error_handler=self.common_value_error_handler,
             )
 
         err_msg = str(cm.exception).strip()
         self.assertEqual(expected_error_message, err_msg)
 
     def test_output_is_directory(self):
-        output_path = os.path.join(
-            self.general_output_dir, "directory"
+        output_path = os.path.join(self.general_output_dir, "directory")
+        expected_error_message = (
+            "{} is a directory. Please specify a new file path".format(output_path)
         )
-        expected_error_message = "{} is a directory. Please specify a new file path".format(output_path)
         os.mkdir(output_path)
         with self.assertRaises(ValueError) as cm:
             write_expression_output(
-                arg_output= output_path,
+                arg_output=output_path,
                 arg_delim=",",
                 arg_sql=False,
                 output_listdict_or_string=self.vizserver_data_mock_response["results"],
-                save_uncommon_delim_to_txt = False,
-                error_handler=self.common_value_error_handler
+                save_uncommon_delim_to_txt=False,
+                error_handler=self.common_value_error_handler,
             )
 
         err_msg = str(cm.exception).strip()
@@ -409,17 +414,15 @@ class TestDXExtractExpression(unittest.TestCase):
     @unittest.skip
     def test_incorrect_file_extension(self):
         expected_error_message = 'File extension ".tsv" does not match delimiter ","'
-        output_path = os.path.join(
-            self.general_output_dir, "wrong_extension.tsv"
-        )
+        output_path = os.path.join(self.general_output_dir, "wrong_extension.tsv")
         with self.assertRaises(ValueError) as cm:
             write_expression_output(
-                arg_output= output_path,
+                arg_output=output_path,
                 arg_delim=",",
                 arg_sql=False,
                 output_listdict_or_string=self.vizserver_data_mock_response["results"],
-                save_uncommon_delim_to_txt = False,
-                error_handler=self.common_value_error_handler
+                save_uncommon_delim_to_txt=False,
+                error_handler=self.common_value_error_handler,
             )
         err_msg = str(cm.exception).strip()
         self.assertEqual(expected_error_message, err_msg)
@@ -1081,7 +1084,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_argparse_help_txt(self):
         expected_result = self.argparse_expression_help_message
         with open(expected_result) as f:
-            #lines = f.readlines()
+            # lines = f.readlines()
             file = f.read()
         process = subprocess.check_output("dx extract_assay expression -h", shell=True)
         help_output = process.decode()
@@ -1089,16 +1092,21 @@ class TestDXExtractExpression(unittest.TestCase):
         # In Python 3 self.assertEqual(file,help_output) passes,
         # However in Python 2 it fails due to some differences in where linebreaks appear in the text
         self.assertEqual(
-            file.replace(" ", "").replace("\n", ""), 
-            help_output.replace(" ", "").replace("\n", "")
+            file.replace(" ", "").replace("\n", ""),
+            help_output.replace(" ", "").replace("\n", ""),
         )
 
     #### Test --json-help
     def test_json_help_template(self):
-        process = subprocess.check_output("dx extract_assay expression --retrieve-expression fakepath --json-help", shell=True)
+        process = subprocess.check_output(
+            "dx extract_assay expression --retrieve-expression fakepath --json-help",
+            shell=True,
+        )
         self.assertIn(EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE, process.decode())
-        self.assertIn("Additional descriptions of filtering keys and permissible values", process.decode())
-
+        self.assertIn(
+            "Additional descriptions of filtering keys and permissible values",
+            process.decode(),
+        )
 
     def load_record_via_dataset_class(self, record_path):
         _, _, entity = resolve_existing_path(record_path)
@@ -1107,37 +1115,61 @@ class TestDXExtractExpression(unittest.TestCase):
         dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
 
         return dataset, cohort_info, record
-    
-    def test_dataset_class_basic(self):
-        dataset, cohort, record = self.load_record_via_dataset_class(self.expression_dataset)
 
-        record_details = record.describe(default_fields=True, fields={"properties", "details"})
-        
+    def test_dataset_class_basic(self):
+        dataset, cohort, record = self.load_record_via_dataset_class(
+            self.expression_dataset
+        )
+
+        record_details = record.describe(
+            default_fields=True, fields={"properties", "details"}
+        )
+
         self.assertIsNone(cohort)
-        self.assertEqual(dataset.descriptor_file_dict["name"], self.expression_dataset_name)
+        self.assertEqual(
+            dataset.descriptor_file_dict["name"], self.expression_dataset_name
+        )
         self.assertIn("vizserver", dataset.visualize_info["url"])
         self.assertEqual("3.0", dataset.visualize_info["version"])
         self.assertEqual("3.0", dataset.visualize_info["datasetVersion"])
-        self.assertEqual(dataset.descriptor_file, record_details["details"]["descriptor"]["$dnanexus_link"])
-        self.assertIn("molecular_expression1", dataset.assay_names_list("molecular_expression"))
+        self.assertEqual(
+            dataset.descriptor_file,
+            record_details["details"]["descriptor"]["$dnanexus_link"],
+        )
+        self.assertIn(
+            "molecular_expression1", dataset.assay_names_list("molecular_expression")
+        )
         self.assertEqual(dataset.detail_describe["types"], record_details["types"])
 
     def test_dataset_class_cohort_resolution(self):
-        dataset, cohort, record = self.load_record_via_dataset_class(self.combined_expression_cohort)
+        dataset, cohort, record = self.load_record_via_dataset_class(
+            self.combined_expression_cohort
+        )
 
-        record_details = record.describe(default_fields=True, fields={"properties", "details"})
+        record_details = record.describe(
+            default_fields=True, fields={"properties", "details"}
+        )
         expected_dataset_id = record_details["details"]["dataset"]["$dnanexus_link"]
-        expected_dataset_describe = DXRecord(expected_dataset_id).describe(default_fields=True, fields={"properties", "details"})
-        expected_descriptor_id = expected_dataset_describe["details"]["descriptor"]["$dnanexus_link"]
-        
+        expected_dataset_describe = DXRecord(expected_dataset_id).describe(
+            default_fields=True, fields={"properties", "details"}
+        )
+        expected_descriptor_id = expected_dataset_describe["details"]["descriptor"][
+            "$dnanexus_link"
+        ]
+
         self.assertIsNotNone(cohort)
         self.assertIn("SELECT `sample_id`", cohort["details"]["baseSql"])
         self.assertIn("pheno_filters", cohort["details"]["filters"])
         self.assertIn("CohortBrowser", cohort["types"])
         self.assertEqual(dataset.get_id(), expected_dataset_id)
         self.assertEqual(dataset.descriptor_file, expected_descriptor_id)
-        self.assertIn("molecular_expression1", dataset.assay_names_list("molecular_expression"))
-        self.assertEqual("molecular_expression", dataset.descriptor_file_dict["assays"][0]["generalized_assay_model"])
+        self.assertIn(
+            "molecular_expression1", dataset.assay_names_list("molecular_expression")
+        )
+        self.assertEqual(
+            "molecular_expression",
+            dataset.descriptor_file_dict["assays"][0]["generalized_assay_model"],
+        )
         self.assertIn("Dataset", dataset.detail_describe["types"])
         self.assertIn("vizserver", dataset.vizserver_url)
 
