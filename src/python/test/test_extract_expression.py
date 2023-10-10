@@ -54,6 +54,7 @@ from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersV
 from dxpy.bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
 from dxpy.bindings.apollo.vizclient import VizClient
 from dxpy.bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
+from dxpy.exceptions import err_exit
 
 
 
@@ -1140,16 +1141,38 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn("Dataset", dataset.detail_describe["types"])
         self.assertIn("vizserver", dataset.vizserver_url)
 
-    def test_vizpayloadbuilder_class(self):
-        # _, _, entity = resolve_existing_path(record_path)
-        # entity_describe = entity["describe"]
-        # record = DXRecord(entity_describe["id"], entity_describe["project"])
-        # dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
+    def test_vizpayloadbuilder_class_input_1(self):
+        json_input = {
+            "expression": {
+                "min_value": 0.5,
+            },
+        }
+        output = self.common_vizpayloadbuilder_test(self.test_record, json_input, "data")
+        exp_output = [
+            {
+                "feature_id": "ENST00000488147",
+                "sample_id": "sample_2",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_2",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_2",
+                "expression": 50,
+            },
+        ]
 
-        record_path = self.expression_dataset
+        self.assertEqual(output, exp_output)
 
-        dataset, cohort_info, record = self.load_record_via_dataset_class(record_path)
-        print(dataset)
+    def common_vizpayloadbuilder_test(self, record_link, json_input, output_type):
+        record_id = record_link.split(":", 2)[1]
+        record = DXRecord(record_id)
+        dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
+        dataset_id = dataset.dataset_id
 
         if cohort_info:
             BASE_SQL = cohort_info.get("details").get("baseSql")
@@ -1163,23 +1186,16 @@ class TestDXExtractExpression(unittest.TestCase):
         url = dataset.vizserver_url
         project = dataset.project_id
 
-        # TODO: inputs as received params (general method)
-        input1 = { "expression": {"min_value": 0.5,},}
-
-
-        # 1. Use these dicts to run vizserver_filters_from_json_parser.JSONFiltersValidator using the CLIEXPRESS schema
+        # vizserver_filters_from_json_parser.JSONFiltersValidator using the CLIEXPRESS schema
         schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
         _db_columns_list = schema["output_fields_mapping"].get("default")
 
-        # 2. Use JSONFiltersValidator to build the complete payload
-        input_json_parser = JSONFiltersValidator(input1, schema)
+        # JSONFiltersValidator to build the complete payload
+        input_json_parser = JSONFiltersValidator(json_input, schema)
         vizserver_raw_filters = input_json_parser.parse()
 
-        print(vizserver_raw_filters)
-        print("find this message")
-
-        # 3. VizClient to submit the payload and get a response
-        client = VizClient(url,project)
+        # VizClient to submit the payload and get a response
+        client = VizClient(url, project)
 
         viz = VizPayloadBuilder(
             project_context=project,
@@ -1187,21 +1203,25 @@ class TestDXExtractExpression(unittest.TestCase):
             limit=None,
             base_sql=BASE_SQL,
             is_cohort=IS_COHORT,
+            error_handler=err_exit,
+        )
+
+        assay_1_name = dataset.descriptor_file_dict["assays"][0]["name"]
+        assay_1_id = dataset.descriptor_file_dict["assays"][0]["uuid"]
+
+        viz.assemble_assay_raw_filters(
+            assay_name=assay_1_name, assay_id=assay_1_id, filters=vizserver_raw_filters
         )
         vizserver_payload = viz.build()
 
-        # TODO set up to work with cohort!!!
-        vizserver_response = client.get_data(vizserver_payload, dataset)
+        # dataset response
+        if output_type == "data":
+            vizserver_response = client.get_data(vizserver_payload, dataset_id)
+        # sql response:
+        if output_type == "sql":
+            vizserver_response = client.get_raw_sql(vizserver_payload, record_id)
 
-        print(vizserver_response['results'])
-
-        # write_expression_output(args.output, 
-        #                 args.delim, 
-        #                 args.sql, 
-        #                 vizserver_response['results'], 
-        #                 save_uncommon_delim_to_txt=True, 
-        #                 output_file_name=dataset.detail_describe["name"])
-
+        return vizserver_response["results"]
 
 
 # Start the test
