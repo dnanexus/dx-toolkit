@@ -1,3 +1,10 @@
+dx-toolkit (0.360.1) trusty; urgency=medium
+
+  * Changed: Retry ConnectionResetError
+  * Fixed: Reduce API calls in DXFile.read()
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Tue, 10 Oct 2023 12:21:54 +0000
+
 dx-toolkit (0.360.0) trusty; urgency=medium
 
   * Fixed: Released Nextaur 1.6.7. It adds DNAnexus docker image support feature and contains errorStrategy bugfixes
