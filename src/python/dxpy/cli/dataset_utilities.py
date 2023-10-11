@@ -1141,11 +1141,7 @@ def extract_assay_expression(args):
             COHORT_FILTERS = None
             IS_COHORT = False
             if float(dataset.version) < 3.0:
-                err_exit("{}: Version of the dataset is too old. Version must be at least 3.0.".format(dataset.id))
-
-        
-
-    
+                err_exit("{}: Version of the dataset is too old. Version must be at least 3.0.".format(dataset.id))    
 
     if args.list_assays:
         print(*dataset.assay_names_list("molecular_expression"), sep="\n")
