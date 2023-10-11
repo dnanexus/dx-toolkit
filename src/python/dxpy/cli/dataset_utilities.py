@@ -1240,13 +1240,16 @@ def extract_assay_expression(args):
     else:
         vizserver_response = client.get_data(vizserver_payload, record_id)
 
-
-
-    output_data = vizserver_response['results']
     colnames = None
-    if args.expression_matrix:
-        transformed_response,colnames = expression_transform(vizserver_response["results"])
-        output_data = transformed_response
+    # Output is on the "sql" key rather than the "results" key when sql is requested
+    if args.sql:
+        output_data = vizserver_response["sql"]
+    else:
+        output_data = vizserver_response['results']
+
+        if args.expression_matrix:
+            transformed_response,colnames = expression_transform(vizserver_response["results"])
+            output_data = transformed_response
     
 
     write_expression_output(args.output, 
