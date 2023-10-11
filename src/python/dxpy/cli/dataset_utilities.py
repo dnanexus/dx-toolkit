@@ -1149,18 +1149,46 @@ def extract_assay_expression(args):
 
     # Check whether assay_name is valid
     # If no assay_name is provided, the first molecular_expression assay in the dataset must be selected
-    if args.assay_name and not dataset.is_assay_name_valid(args.assay_name, "molecular_expression"):
-        print("assay is not present in dataset")
-        sys.exit(0)
+    if args.assay_name:
+        if not dataset.is_assay_name_valid(args.assay_name, "molecular_expression"):
+            err_exit("Assay {} does not exist in {}, or the assay name provided cannot be recognized as a molecular expression assay. For valid assays accepted by the function, `extract_assay expression`, please use the --list-assays flag.".format(args.assay_name, dataset.id))
+    elif not args.assay_name:
+        if len(dataset.assays_info_dict["molecular_expression"]) == 0:
+            err_exit("No molecular expression assays found in the dataset")
 
-    # Validating input JSON
+
+    # Load args.filter_json or args.filter_json_file into a dict
     if args.filter_json:
-        user_filters_json = json.loads(args.filter_json)
+        try:
+            user_filters_json = json.loads(args.filter_json)
+        except json.JSONDecodeError as e:
+            json_reading_error = "JSON provided for --retrieve-expression is malformatted." + "\n" + str(e)
+            err_exit(json_reading_error)
+        except OSError as e:
+            if "No such file or directory" in str(e):
+                err_exit("JSON file {} provided to --retrieve-expression does not exist".format(e.filename))
+            else:
+                err_exit(str(e))
+        except Exception as e:
+            err_exit(str(e))
 
     elif args.filter_json_file:
-        with open(args.filter_json_file) as f:
-            user_filters_json = json.load(f)
+        try:
+            with open(args.filter_json_file) as f:
+                user_filters_json = json.load(f)
+        except json.JSONDecodeError as e:
+            json_reading_error = "JSON provided for --retrieve-expression is malformatted." + "\n" + str(e)
+            err_exit(json_reading_error)
+        except OSError as e:
+            if "No such file or directory" in str(e):
+                err_exit("JSON file {} provided to --retrieve-expression does not exist".format(e.filename))
+            else:
+                err_exit(str(e))
+        except Exception as e:
+            err_exit(str(e))
 
+    if user_filters_json == {}:
+        err_exit("No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information.")
     
     # Replace 'str' with 'unicode' when checking types in Python 2
     if sys.version_info.major == 2:
@@ -1204,6 +1232,7 @@ def extract_assay_expression(args):
     viz = VizPayloadBuilder(
         project_context=project,
         output_fields_mapping=_db_columns_list,
+        filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
         limit=None,
         base_sql=BASE_SQL,
         is_cohort=IS_COHORT,
