@@ -16,6 +16,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx extract_assay` error message when no valid assay is found
 * In `dx extract_assay germline`, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
 * Handled white spaces in `dx extract` command's inputs which are of the type `string` of comma separated values
+* Potentially missing jobs in `dx find jobs/executions --tree` output
 
 ## [360.1] - beta
 

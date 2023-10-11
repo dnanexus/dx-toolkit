@@ -2297,6 +2297,7 @@ def find_executions(args):
 
     try:
         num_processed_results = 0
+        true_roots = []
         roots = collections.OrderedDict()
         execution_retries = collections.defaultdict(set)
         executions_cache = []
@@ -2307,10 +2308,14 @@ def find_executions(args):
             if args.trees:
                 if args.classname == 'job':
                     root = execution_result['describe']['originJob']
+                    if execution_result['id'] == execution_result['describe']['originJob'] and root not in true_roots:
+                        true_roots.append(root)
+                        num_processed_results += 1
                 else:
                     root = execution_result['describe']['rootExecution']
-                if root not in roots:
-                    num_processed_results += 1
+                    if root not in true_roots:
+                        true_roots.append(root)
+                        num_processed_results += 1
             else:
                 num_processed_results += 1
                 executions_cache.append(execution_result)
@@ -2414,7 +2419,12 @@ def find_executions(args):
                     key=lambda root: -descriptions[ExecutionId(roots[root], execution_retries[roots[root]][-1])]['created']
                 )
 
-                for root in sorted_roots:
+                # PTFM-36293 In case we include tree only based on child matching the criteria, we can incorrectly report
+                #            that there are no more results.
+                if len(sorted_roots) > args.num_results:
+                    more_results = True
+
+                for root in sorted_roots[:args.num_results]:
                     process_tree(roots[root], executions_by_parent, descriptions, execution_retries)
         if args.json:
             print(json.dumps(json_output, indent=4))
