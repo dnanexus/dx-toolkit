@@ -49,5 +49,9 @@ def expression_transform(results_list):
 
     # We want the output to be a list of dictionaries, rather than a single dicitonary keyed on sample_id
     dict_list = list(transformed_dict.values())
+    for dict_row in dict_list:
+        for colname in colnames:
+            if colname not in dict_row:
+                dict_row[colname] = None
 
     return (dict_list,colnames)

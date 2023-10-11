@@ -334,18 +334,20 @@ class TestDXExtractExpression(unittest.TestCase):
 
         expected_output = [
             {
+                "sample_id": "sample_2",
                 "ENST00000450305": 50,
                 "ENST00000488147": 20,
-                "sample_id": "sample_2",
+                "ENST00000456328": None,
             },
             {
-                "ENST00000456328": 90,
                 "sample_id": "sample_1",
+                "ENST00000456328": 90,
+                "ENST00000450305": None,
+                "ENST00000488147": None,
             },
         ]
 
         transformed_results, colnames = expression_transform(vizserver_results)
-
         self.assertEqual(expected_output, transformed_results)
 
     def test_two_sample_feat_id_overlap_exp_trans(self):
@@ -373,19 +375,20 @@ class TestDXExtractExpression(unittest.TestCase):
         ]
         expected_output = [
             {
+                "sample_id": "sample_2",
                 "ENST00000450305": 50,
                 "ENST00000488147": 20,
-                "sample_id": "sample_2",
+                "ENST00000456328": None,
             },
             {
-                "ENST00000456328": 90,
-                "ENST00000450305": 77,
                 "sample_id": "sample_1",
+                "ENST00000450305": 77,
+                "ENST00000456328": 90,
+                "ENST00000488147": None,
             },
         ]
 
         transformed_results, colnames = expression_transform(vizserver_results)
-
         self.assertEqual(expected_output, transformed_results)
 
     def test_exp_transform_output_compatibility(self):
@@ -415,8 +418,8 @@ class TestDXExtractExpression(unittest.TestCase):
         # The replace statement removes tabs(actually blocks of 4 spaces) that have been inserted
         # for readability in this python file
         expected_result = """sample_id,ENST00000450305,ENST00000456328,ENST00000488147
-                             sample_2,50,None,20
-                             sample_1,77,90,None""".replace(
+                             sample_2,50,,20
+                             sample_1,77,90,""".replace(
             " ", ""
         )
 
