@@ -1,0 +1,1 @@
+SELECT `sample_1`.`sample_id` AS `sample_id` FROM `database_gyk3jjj0vgpq2y1y98pj8pgg__create_cohort_geno_database`.`sample` AS `sample_1` WHERE `sample_1`.`sample_id` IN ('sample_1_1', 'sample_1_2', 'sample_1_3', 'sample_1_4', 'sample_1_5')

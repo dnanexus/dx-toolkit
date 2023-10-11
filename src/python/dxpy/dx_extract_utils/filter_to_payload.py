@@ -5,6 +5,7 @@ from .input_validation import validate_filter
 import os
 import dxpy
 import subprocess
+from .retrieve_bins import retrieve_bins
 
 extract_utils_basepath = os.path.join(
     os.path.dirname(dxpy.__file__), "dx_extract_utils"
@@ -30,43 +31,12 @@ def retrieve_geno_bins(list_of_genes, project, genome_reference):
     A function for determining appropriate geno bins to attach to a given annotation$gene_name
     or annotation$gene_id
     """
-    project_desc = dxpy.describe(project)
-    geno_positions = []
-
-    try:
-        with open(
-            os.path.join(extract_utils_basepath, "Homo_sapiens_genes_manifest.json"),
-            "r",
-        ) as geno_bin_manifest:
-            r = json.load(geno_bin_manifest)
-        dxpy.describe(r[genome_reference][project_desc["region"]])
-    except ResourceNotFound:
-        with open(
-            os.path.join(
-                extract_utils_basepath, "Homo_sapiens_genes_manifest_staging.json"
-            ),
-            "r",
-        ) as geno_bin_manifest:
-            r = json.load(geno_bin_manifest)
-
-    geno_bins = subprocess.check_output(
-        ["dx", "cat", r[genome_reference][project_desc["region"]]]
-    )
-    geno_bins_json = json.loads(geno_bins)
-    invalid_genes = []
-
-    for gene in list_of_genes:
-        bin = geno_bins_json.get(gene)
-        if bin is None:
-            invalid_genes.append(gene)
-        else:
-            bin.pop("strand")
-            geno_positions.append(bin)
-
-    if invalid_genes:
-        err_exit("Following gene names or IDs are invalid: %r" % invalid_genes)
-
-    return geno_positions
+    stage_file = "Homo_sapiens_genes_manifest_staging.json"
+    platform_file = "Homo_sapiens_genes_manifest.json"
+    error_message = "Following gene names or IDs are invalid"
+    geno_bins = retrieve_bins(list_of_genes, project, genome_reference, extract_utils_basepath,
+                  stage_file,platform_file,error_message)
+    return geno_bins
 
 
 def basic_filter(
@@ -109,10 +79,12 @@ def basic_filter(
     # Case 2: Some fields need to be changed to upper case
     if friendly_name in ["gene_id", "feature_id", "putative_impact"]:
         values = [x.upper() for x in values]
+    # Case 3: remove duplicate rsid values
+    if table == "allele" and friendly_name == "rsid":
+        values = list(set(values))
 
     # Check if we need to add geno bins as well
     if friendly_name == "gene_id" or friendly_name == "gene_name":
-        genome_reference = "GRCh38.92"
         listed_filter = {
             filter_key: [
                 {
@@ -150,9 +122,9 @@ def location_filter(location_list):
         # First, ensure that the geno bins width isn't greater than 250 megabases
         start = int(location["starting_position"])
         end = int(location["ending_position"])
-        if end - start > 250000000:
+        if end - start > 5000000:
             err_exit(
-                "Error in location {}\nLocation filters may not specify regions larger than 250 megabases".format(
+                "Error in location {}\nLocation filters may not specify regions larger than 5 megabases".format(
                     location
                 )
             )

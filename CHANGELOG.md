@@ -6,11 +6,60 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `--fields-file` argument in `dx extract_dataset`
+* `ALT` and `alt_index` columns in `--additional-fields` of `dx extract_assay somatic`
+
 ### Fixed
 
+* `dx extract_assay` error message when no valid assay is found
+* In `dx extract_assay germline`, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
+* Handled white spaces in `dx extract` command's inputs which are of the type `string` of comma separated values
 * Potentially missing jobs in `dx find jobs/executions --tree` output
 
-## [356.0] - beta
+## [360.1] - beta
+
+### Fixed
+
+* Released Nextaur 1.6.7. It adds DNAnexus docker image support feature and contains errorStrategy bugfixes
+
+## [359.1] - 2023.10.10
+
+### Changed
+
+* Retry `ConnectionResetError` in dxpy
+
+### Fixed
+
+* Reduce API calls in `DXFile.read()` after download URL is cached
+
+## [359.0] - 2023.9.29
+
+### Added
+
+* `dx create_cohort`
+* Nextflow pipeline readme file is used as a readme file of Nextflow applet
+* Default optional inputs `nextflow_soft_confs` and `nextflow_params_file` to Nextflow applets to support soft configuration override and custom parameters file in `nextflow run`
+
+## [358.0] - 2023.9.22
+
+### Changed
+
+* `dx find org projects --property` in Python 3
+
+## [357.0] - 2023.9.15
+
+### Changed
+
+* Remove optional output param `nextflow_log` from Nextflow pipeline applets; instead, always upload Nextflow log file to head job destination when execution completes
+
+### Fixed
+
+* Nextflow applets passes schema input params explicitly in `nextflow run` command, as parameters assigned in runtime config are not handled properly by nextflow-io
+* Unexpected splitting at whitespaces inside quotes when parsing string-type input parameters of Nextflow applets
+
+## [356.0] - 2023.9.1
 
 ### Fixed
 

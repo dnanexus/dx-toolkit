@@ -1,3 +1,31 @@
+dx-toolkit (0.360.0) trusty; urgency=medium
+
+  * Fixed: Released Nextaur 1.6.7. It adds DNAnexus docker image support feature and contains errorStrategy bugfixes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 29 Sep 2023 15:23:46 +0000
+
+dx-toolkit (0.359.0) trusty; urgency=medium
+
+  * Added: `dx create_cohort`
+  * Added: Nextflow pipeline readme file is used as a readme file of Nextflow applet
+  * Added: Default optional inputs nextflow_soft_confs and nextflow_params_file to Nextflow applets to support soft configuration override and custom parameters file in nextflow run
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 22 Sep 2023 19:33:04 +0000
+
+dx-toolkit (0.358.0) trusty; urgency=medium
+
+  * Fixed: `dx find org projects --property` in Python 3
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 15 Sep 2023 18:48:21 +0000
+
+dx-toolkit (0.357.0) trusty; urgency=medium
+
+  * Fixed: Nextflow applets passes schema input params explicitly in nextflow run command, as parameters assigned in runtime config are not handled properly by nextflow-io
+  * Fixed: Unexpected splitting at whitespaces inside quotes when parsing string-type input parameters of Nextflow applets
+  * Changed: Remove optional output param nextflow_log from Nextflow pipeline applets; instead, always upload Nextflow log file to head job destination when execution completes
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Fri, 01 Sep 2023 17:02:49 +0000
+
 dx-toolkit (0.356.0) trusty; urgency=medium
 
   * Fixed: dx describe analysis-xxxx --json --verbose
