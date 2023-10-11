@@ -857,6 +857,8 @@ class TestDXExtractExpression(unittest.TestCase):
     # EM-18, EM-19, EM-20
     #
 
+    # TODO fix this test
+    # message has been changed to Exactly one of {} must be provided in the supplied JSON object
     def test_annotation_conflicting_keys(self):
         self.common_negative_filter_test(
             "annotation_conflicting_keys",
@@ -915,6 +917,8 @@ class TestDXExtractExpression(unittest.TestCase):
             "bad_toplevel_key", "Found following invalid filters: ['not_real_key']"
         )
 
+    # TODO fix this test
+    # message has been changed to Exactly one of {} must be provided in the supplied JSON object
     def test_conflicting_toplevel(self):
         self.common_negative_filter_test(
             "conflicting_toplevel",

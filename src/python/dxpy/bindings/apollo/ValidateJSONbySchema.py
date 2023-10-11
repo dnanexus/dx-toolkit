@@ -148,8 +148,8 @@ class JSONValidator(object):
         for keys in self.schema.get(current_key, {}).get("conflicting_keys", []):
             if all(k in input_json for k in keys):
                 self.error_handler(
-                    "Conflicting keys {} cannot be present together.".format(
-                        " and ".join(keys)
+                    "For {}, exactly one of {} must be provided in the supplied JSON object.".format(
+                        current_key, " or ".join(keys)
                     )
                 )
 
@@ -157,8 +157,8 @@ class JSONValidator(object):
         for keys in self.schema.get("conflicting_keys", []):
             if all(key in input_json for key in keys):
                 self.error_handler(
-                    "Conflicting keys {} cannot be present together.".format(
-                        " and ".join(keys)
+                    "Exactly one of {} must be provided in the supplied JSON object.".format(
+                        " or ".join(keys)
                     )
                 )
 
