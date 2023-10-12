@@ -11,7 +11,8 @@ def write_expression_output(
     output_listdict_or_string,
     save_uncommon_delim_to_txt=True,
     output_file_name=None,
-    error_handler=err_exit
+    error_handler=err_exit,
+    colnames=None,
 ):
     """
     arg_output: str
@@ -115,7 +116,10 @@ def write_expression_output(
             error_handler("Unexpected error occurred while writing SQL query output")
 
     else:
-        COLUMN_NAMES = output_listdict_or_string[0].keys()
+        if colnames:
+            COLUMN_NAMES = colnames
+        else:
+            COLUMN_NAMES = output_listdict_or_string[0].keys()
 
         if not all(
             set(i.keys()) == set(COLUMN_NAMES) for i in output_listdict_or_string

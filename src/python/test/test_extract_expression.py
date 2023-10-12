@@ -29,6 +29,7 @@ import copy
 import json
 import tempfile
 import csv
+from collections import OrderedDict
 
 import shutil
 from dxpy_testutil import cd, chdir
@@ -44,7 +45,8 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
-
+from dxpy.bindings.apollo.vizserver_client import VizClient
+from dxpy.bindings.apollo.expression_matrix_transformation import expression_transform
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 from dxpy.bindings.dxrecord import DXRecord
@@ -193,7 +195,7 @@ class TestDXExtractExpression(unittest.TestCase):
                 {
                     "feature_id": "ENST00000488147",
                     "sample_id": "sample_2",
-                    "expression": 90,
+                    "expression": 20,
                     "strand": "-",
                 },
             ]
@@ -288,6 +290,161 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertEqual(expected_error_message, str(cm.exception).strip())
 
     #
+    # Expression matrix tests
+    #
+
+    def test_basic_exp_matrix_transform(self):
+        vizserver_results = [
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_2",
+                "expression": 50,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_2",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000488147",
+                "sample_id": "sample_2",
+                "expression": 20,
+            },
+        ]
+        expected_output = [
+            {
+                "ENST00000450305": 50,
+                "ENST00000456328": 90,
+                "ENST00000488147": 20,
+                "sample_id": "sample_2",
+            }
+        ]
+
+        transformed_results, colnames = expression_transform(vizserver_results)
+        self.assertEqual(expected_output, transformed_results)
+
+    def test_two_sample_exp_transform(self):
+        vizserver_results = [
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_2",
+                "expression": 50,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_1",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000488147",
+                "sample_id": "sample_2",
+                "expression": 20,
+            },
+        ]
+
+        expected_output = [
+            {
+                "sample_id": "sample_2",
+                "ENST00000450305": 50,
+                "ENST00000488147": 20,
+                "ENST00000456328": None,
+            },
+            {
+                "sample_id": "sample_1",
+                "ENST00000456328": 90,
+                "ENST00000450305": None,
+                "ENST00000488147": None,
+            },
+        ]
+
+        transformed_results, colnames = expression_transform(vizserver_results)
+        self.assertEqual(expected_output, transformed_results)
+
+    def test_two_sample_feat_id_overlap_exp_trans(self):
+        vizserver_results = [
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_2",
+                "expression": 50,
+            },
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_1",
+                "expression": 77,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_1",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000488147",
+                "sample_id": "sample_2",
+                "expression": 20,
+            },
+        ]
+        expected_output = [
+            {
+                "sample_id": "sample_2",
+                "ENST00000450305": 50,
+                "ENST00000488147": 20,
+                "ENST00000456328": None,
+            },
+            {
+                "sample_id": "sample_1",
+                "ENST00000450305": 77,
+                "ENST00000456328": 90,
+                "ENST00000488147": None,
+            },
+        ]
+
+        transformed_results, colnames = expression_transform(vizserver_results)
+        self.assertEqual(expected_output, transformed_results)
+
+    def test_exp_transform_output_compatibility(self):
+        vizserver_results = [
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_2",
+                "expression": 50,
+            },
+            {
+                "feature_id": "ENST00000450305",
+                "sample_id": "sample_1",
+                "expression": 77,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_1",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000488147",
+                "sample_id": "sample_2",
+                "expression": 20,
+            },
+        ]
+
+        # The replace statement removes tabs(actually blocks of 4 spaces) that have been inserted
+        # for readability in this python file
+        expected_result = """sample_id,ENST00000450305,ENST00000456328,ENST00000488147
+                             sample_2,50,,20
+                             sample_1,77,90,""".replace(
+            " ", ""
+        )
+
+        transformed_results, colnames = expression_transform(vizserver_results)
+        output_path = os.path.join(self.general_output_dir, "exp_transform_compat.csv")
+        # Generate the formatted output file
+        write_expression_output(
+            output_path, ",", False, transformed_results, colnames=colnames
+        )
+
+        with open(output_path, "r") as infile:
+            data = infile.read()
+        self.assertEqual(expected_result.strip(), data.strip())
+
+    #
     # Positive output tests
     #
 
@@ -295,7 +452,7 @@ class TestDXExtractExpression(unittest.TestCase):
         expected_result = """feature_id,sample_id,expression,strand
             ENST00000450305,sample_2,50,+
             ENST00000456328,sample_2,90,+
-            ENST00000488147,sample_2,90,-""".replace(
+            ENST00000488147,sample_2,20,-""".replace(
             " ", ""
         )
         output_path = os.path.join(
