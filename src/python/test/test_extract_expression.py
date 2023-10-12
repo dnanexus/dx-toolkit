@@ -540,22 +540,6 @@ class TestDXExtractExpression(unittest.TestCase):
         err_msg = str(cm.exception).strip()
         self.assertEqual(expected_error_message, err_msg)
 
-    @unittest.skip
-    def test_incorrect_file_extension(self):
-        expected_error_message = 'File extension ".tsv" does not match delimiter ","'
-        output_path = os.path.join(self.general_output_dir, "wrong_extension.tsv")
-        with self.assertRaises(ValueError) as cm:
-            write_expression_output(
-                arg_output=output_path,
-                arg_delim=",",
-                arg_sql=False,
-                output_listdict_or_string=self.vizserver_data_mock_response["results"],
-                save_uncommon_delim_to_txt=False,
-                error_handler=self.common_value_error_handler,
-            )
-        err_msg = str(cm.exception).strip()
-        self.assertEqual(expected_error_message, err_msg)
-
     # EM-1
     # Test PATH argument not provided
     def test_path_missing(self):
@@ -564,136 +548,6 @@ class TestDXExtractExpression(unittest.TestCase):
             'At least one of the following arguments is required: "Path", "--json-help"'
         )
         self.common_input_args_test(input_dict, expected_error_message)
-
-    # EM-1
-    # The structure of "Path" is invalid
-    @unittest.skip("test record not yet created")
-    def test_missing_dataset(self):
-        missing_dataset = self.proj_id + ":/Extract_Expression/missing_dataset"
-        expected_error_message = (
-            "dxpy.utils.resolver.ResolutionError: Could not find a {}".format(
-                missing_dataset
-            )
-        )
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            missing_dataset,
-            "--list-assays",
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-6
-    # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
-    @unittest.skip("test record not yet created")
-    def test_list_assay_cohort_browser(self):
-        # TODO: add cohort browser object to test project
-        expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.cohort_browser_record,
-            "--list-assays",
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-6-2
-    # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
-    @unittest.skip("test record not yet created")
-    def test_assay_name_cohort_browser(self):
-        expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.cohort_browser_record,
-            "--assay-name",
-            "test_assay",
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-7
-    # Value specified for this option specified is not a valid assay
-    @unittest.skip("test record not yet created")
-    def test_invalid_assay_name(self):
-        assay_name = "invalid_assay"
-        expected_error_message = "Assay {} does not exist in the [PATH]".assay_name
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.test_record,
-            "--assay-name",
-            assay_name,
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-8
-    # When –assay-name is not provided and the dataset has no assays
-    @unittest.skip("test record not yet created")
-    def test_no_assay_dataset(self):
-        # TODO: create dataset with no assays in test project
-        no_assay_dataset = self.proj_id + ":/Extract_Expression/no_assay_dataset"
-        expected_error_message = (
-            "When --assay-name is not provided and the dataset has no assays"
-        )
-        command = ["dx", "extract_assay", "expression", no_assay_dataset]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-9
-    # When the provided assay name is not a molecular expression assay
-    @unittest.skip("test record not yet created")
-    def test_wrong_assay_type(self):
-        # TODO: Add dataset with somatic or other non CLIEXPRESS assay to test project
-        somatic_assay_name = "somatic_assay"
-        expected_error_message = "The assay name provided cannot be recognized as a molecular expression assay. For valid assays accepted by the function, `extract_assay expression` ,please use the --list-assays flag"
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.test_record,
-            "--assay-name",
-            somatic_assay_name,
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
 
     # EM-10
     # When --additional-fields-help is presented with other options
@@ -731,61 +585,12 @@ class TestDXExtractExpression(unittest.TestCase):
         }
         self.common_input_args_test(input_dict, expected_error_message)
 
-    # EM-13
-    # When –list-assays is passed but there is no “Molecular Expression” Assay
-    @unittest.skip("test record not yet created")
-    def test_no_molec_exp_assay(self):
-        # This is meant to return empty with no error message
-        expected_error_message = ""
-        no_molec_exp_assay = self.proj_id + ":/Extract_Expression/no_molec_exp_assay"
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            no_molec_exp_assay,
-            "--list_assays",
-        ]
-
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-16
-    # When the string provided is a malformed JSON
-    @unittest.skip
-    def test_malformed_retr_exp_json(self):
-        expected_error_message = (
-            "JSON provided for --retrieve-expression is malformatted."
-        )
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.test_record,
-            "--retrieve-expression",
-            r"{thisisbadjson",
-        ]
-
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
     # EM-17
     # When the .json file provided does not exist
-    # Note: this probably needs to be tested with a Popen rather than with the ArgsValidator function
-    @unittest.skip
     def test_json_file_not_exist(self):
         missing_json_path = os.path.join(self.general_input_dir, "nonexistent.json")
         expected_error_message = (
-            "JSON file provided to --retrieve-expression does not exist".format(
+            "JSON file {} provided to --retrieve-expression does not exist".format(
                 missing_json_path
             )
         )
@@ -821,7 +626,6 @@ class TestDXExtractExpression(unittest.TestCase):
     # When --expression-matrix is passed with other arguments other than, any context other than, --retrieve-expression
     # It seems that every combination of args that could be passed with this cause a different issue to be caught first
     # Which is fine but the error message will be for the other error
-    @unittest.skip
     def test_exp_matrix_other_args(self):
         # expected_error_message = "--expression-matrix cannot be passed with any argument other than --retrieve-expression"
         expected_error_message = "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matrix, or --output"
@@ -848,47 +652,14 @@ class TestDXExtractExpression(unittest.TestCase):
         }
         self.common_input_args_test(input_dict, expected_error_message)
 
-    # EM-24
-    # Query times out
-    @unittest.skip("test record not yet created")
-    def test_timeout(self):
-        # TODO: find a large dataset that this will always time out on
-        expected_error_message = "Please consider using ‘--sql’ option to generate the SQL query and execute query via a private compute cluster"
-        large_dataset = self.proj_id + ":/Extract_Expression/large_dataset"
-
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            large_dataset,
-            "--retrieve-expression",
-            r'{"location": [{"chromosome": "1","starting_position": "1","ending_position": "240000000"}]}',
-        ]
-
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
     # Malformed input json tests
     # EM-18, EM-19, EM-20
     #
 
-    # TODO fix this test
-    # message has been changed to Exactly one of {} must be provided in the supplied JSON object
     def test_annotation_conflicting_keys(self):
         self.common_negative_filter_test(
             "annotation_conflicting_keys",
             "For annotation, exactly one of feature_name or feature_id must be provided in the supplied JSON object.",
-        )
-
-    @unittest.skip
-    def test_annotation_id_maxitem(self):
-        self.common_negative_filter_test(
-            "annotation_id_maxitem", "error message not yet defined"
         )
 
     def test_annotation_id_type(self):
@@ -897,15 +668,6 @@ class TestDXExtractExpression(unittest.TestCase):
             "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
                 self.type_representation
             ).format(
-                self.type_representation
-            ),
-        )
-
-    @unittest.skip
-    def test_annotation_name_maxitem(self):
-        self.common_negative_filter_test(
-            "annotation_name_maxitem",
-            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
                 self.type_representation
             ),
         )
@@ -937,8 +699,6 @@ class TestDXExtractExpression(unittest.TestCase):
             "bad_toplevel_key", "Found following invalid filters: ['not_real_key']"
         )
 
-    # TODO fix this test
-    # message has been changed to Exactly one of {} must be provided in the supplied JSON object
     def test_conflicting_toplevel(self):
         self.common_negative_filter_test(
             "conflicting_toplevel",
@@ -949,12 +709,6 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_empty_dict(self):
         self.common_negative_filter_test(
             "empty_dict", "Input JSON must be a non-empty dict."
-        )
-
-    @unittest.skip
-    def test_expression_empty_dict(self):
-        self.common_negative_filter_test(
-            "expression_empty_dict", "error message not yet defined"
         )
 
     def test_expression_max_type(self):
@@ -989,12 +743,6 @@ class TestDXExtractExpression(unittest.TestCase):
             ),
         )
 
-    @unittest.skip
-    def test_location_end_before_start(self):
-        self.common_negative_filter_test(
-            "location_end_before_start", "error message not yet defined"
-        )
-
     def test_location_end_type(self):
         self.common_negative_filter_test(
             "location_end_type",
@@ -1009,12 +757,6 @@ class TestDXExtractExpression(unittest.TestCase):
             "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(
                 self.type_representation
             ),
-        )
-
-    @unittest.skip
-    def test_location_max_width(self):
-        self.common_negative_filter_test(
-            "location_max_width", "error message not yet defined"
         )
 
     def test_location_missing_chr(self):
@@ -1049,12 +791,6 @@ class TestDXExtractExpression(unittest.TestCase):
             "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
                 self.type_representation
             ),
-        )
-
-    @unittest.skip
-    def test_sample_id_maxitem(self):
-        self.common_negative_filter_test(
-            "sample_id_maxitem", "error message not yet defined"
         )
 
     def test_sample_id_type(self):

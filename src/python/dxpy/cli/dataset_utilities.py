@@ -1165,11 +1165,6 @@ def extract_assay_expression(args):
         except json.JSONDecodeError as e:
             json_reading_error = "JSON provided for --retrieve-expression is malformatted." + "\n" + str(e)
             err_exit(json_reading_error)
-        except OSError as e:
-            if "No such file or directory" in str(e):
-                err_exit("JSON file {} provided to --retrieve-expression does not exist".format(e.filename))
-            else:
-                err_exit(str(e))
         except Exception as e:
             err_exit(str(e))
 
