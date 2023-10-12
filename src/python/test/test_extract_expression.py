@@ -44,13 +44,29 @@ from dxpy.bindings.apollo.cmd_line_options_validator import ArgsValidator
 from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
-from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
+from dxpy.bindings.apollo.expression_test_input_dict import (
+    CLIEXPRESS_TEST_INPUT,
+    VIZPAYLOADERBUILDER_TEST_INPUT,
+)
+from dxpy.bindings.apollo.expression_test_expected_output_dict import (
+    VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
+)
 from dxpy.bindings.apollo.vizserver_client import VizClient
 from dxpy.bindings.apollo.expression_matrix_transformation import expression_transform
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 from dxpy.bindings.dxrecord import DXRecord
 from dxpy.bindings.apollo.dataset import Dataset
+
+from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
+from dxpy.bindings.apollo.assay_filtering_conditions import (
+    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
+)
+from dxpy.bindings.apollo.vizclient import VizClient
+from dxpy.bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
+from dxpy.exceptions import err_exit
+from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
+
 
 dirname = os.path.dirname(__file__)
 
@@ -1321,6 +1337,145 @@ class TestDXExtractExpression(unittest.TestCase):
         )
         self.assertIn("Dataset", dataset.detail_describe["types"])
         self.assertIn("vizserver", dataset.vizserver_url)
+
+    ### Test VizPayloadBuilder Class
+
+    # Genomic location filters
+    # genomic + cohort
+    def test_vizpayloadbuilder_location_cohort(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.combined_expression_cohort, "test_vizpayloadbuilder_location_cohort"
+        )
+
+    def test_vizpayloadbuilder_location_multiple(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset, "test_vizpayloadbuilder_location_multiple"
+        )
+
+    # Annotation filters
+    def test_vizpayloadbuilder_annotation_feature_name(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset, "test_vizpayloadbuilder_annotation_feature_name"
+        )
+
+    def test_vizpayloadbuilder_annotation_feature_id(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset, "test_vizpayloadbuilder_annotation_feature_id"
+        )
+
+    # Expression filters (with location or annotation)
+    # expression + annotation - ID
+    def test_vizpayloadbuilder_expression_min(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset, "test_vizpayloadbuilder_expression_min"
+        )
+
+    # expression + annotation - name
+    def test_vizpayloadbuilder_expression_max(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset, "test_vizpayloadbuilder_expression_max"
+        )
+
+    # expression + location
+    def test_vizpayloadbuilder_expression_mixed(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset, "test_vizpayloadbuilder_expression_mixed"
+        )
+
+    # Sample filter
+    def test_vizpayloadbuilder_sample(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset, "test_vizpayloadbuilder_sample", data_test=False
+        )
+
+    # General (mixed) filters
+    def test_vizpayloadbuilder_location_sample_expression(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset,
+            "test_vizpayloadbuilder_location_sample_expression",
+            data_test=False,
+        )
+
+    def test_vizpayloadbuilder_annotation_sample_expression(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset,
+            "test_vizpayloadbuilder_annotation_sample_expression",
+            data_test=False,
+        )
+
+    def common_vizpayloadbuilder_test_helper_method(
+        self, record_path, test_name, data_test=True
+    ):
+        _, _, entity = resolve_existing_path(record_path)
+        entity_describe = entity["describe"]
+        record_id = entity_describe["id"]
+
+        record = DXRecord(record_id)
+        dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
+        dataset_id = dataset.dataset_id
+
+        if cohort_info:
+            BASE_SQL = cohort_info.get("details").get("baseSql")
+            COHORT_FILTERS = cohort_info.get("details").get("filters")
+            IS_COHORT = True
+        else:
+            BASE_SQL = None
+            COHORT_FILTERS = None
+            IS_COHORT = False
+
+        url = dataset.vizserver_url
+        project = dataset.project_id
+
+        # vizserver_filters_from_json_parser.JSONFiltersValidator using the CLIEXPRESS schema
+        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+        _db_columns_list = schema["output_fields_mapping"].get("default")
+
+        # JSONFiltersValidator to build the complete payload
+        json_input = VIZPAYLOADERBUILDER_TEST_INPUT[test_name]
+        input_json_parser = JSONFiltersValidator(json_input, schema)
+        vizserver_raw_filters = input_json_parser.parse()
+
+        # VizClient to submit the payload and get a response
+        client = VizClient(url, project)
+
+        viz = VizPayloadBuilder(
+            project_context=project,
+            output_fields_mapping=_db_columns_list,
+            filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
+            limit=None,
+            base_sql=BASE_SQL,
+            is_cohort=IS_COHORT,
+            error_handler=err_exit,
+        )
+
+        assay_1_name = dataset.descriptor_file_dict["assays"][0]["name"]
+        assay_1_id = dataset.descriptor_file_dict["assays"][0]["uuid"]
+
+        viz.assemble_assay_raw_filters(
+            assay_name=assay_1_name, assay_id=assay_1_id, filters=vizserver_raw_filters
+        )
+        vizserver_payload = viz.build()
+
+        vizserver_response_data = client.get_data(vizserver_payload, dataset_id)[
+            "results"
+        ]
+        vizserver_response_sql = client.get_raw_sql(vizserver_payload, dataset_id)[
+            "sql"
+        ]
+
+        data_output = vizserver_response_data
+        sql_output = vizserver_response_sql
+
+        if data_test:
+            exp_data_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
+                "expected_data_output"
+            ]
+            self.assertEqual(data_output, exp_data_output)
+
+        exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
+            "expected_sql_output"
+        ]
+        self.assertEqual(sql_output, exp_sql_output)
 
 
 # Start the test
