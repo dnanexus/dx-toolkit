@@ -45,7 +45,7 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
-from dxpy.bindings.apollo.vizserver_client import VizClient
+from dxpy.bindings.apollo.vizclient import VizClient
 from dxpy.bindings.apollo.expression_matrix_transformation import expression_transform
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE

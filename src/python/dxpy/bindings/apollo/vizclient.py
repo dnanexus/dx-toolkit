@@ -1,5 +1,5 @@
 import dxpy
-
+from __future__ import print_function
 
 class VizClient(object):
     def __init__(self, url, project_id, error_handler=print) -> None:

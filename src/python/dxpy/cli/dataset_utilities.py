@@ -1191,6 +1191,13 @@ def extract_assay_expression(args):
     if user_filters_json == {}:
         err_exit("No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information.")
     
+    if args.expression_matrix:
+        if "expression" in user_filters_json:
+            err_exit('Expression filters are not compatible with --expression-matrix argument. Please remove "expression" from filters JSON.')
+        
+        if args.additional_fields:
+            err_exit('--additional-fields cannot be used with --expression-matrix argument.')
+    
     # Replace 'str' with 'unicode' when checking types in Python 2
     if sys.version_info.major == 2:
         EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA["location"]["items"]["properties"]["chromosome"]["type"] = unicode
