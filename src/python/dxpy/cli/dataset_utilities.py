@@ -1227,10 +1227,13 @@ def extract_assay_expression(args):
     _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default")
     
     if args.additional_fields:
-        # Both --additional_fields field1 field2 and --additional_fields field1,field2 should work
-        # In the first case, the arg will look like ["field1","field2"]
-        # In the second case, the arg will look like ["field1,field2"]
-        # We need to split the second case to look like the first
+        # All three of the following should work: 
+        # --additional_fields field1 field2 
+        # --additional_fields field1,field2
+        # --additional_fields field1, field2 (note the space char)
+        # In the first case, the arg will look like ["field1", "field2"]
+        # In the second case: ["field1,field2"]
+        # In the third case: ["field1,", "field2"]
         additional_fields = args.additional_fields
         if len(additional_fields) == 1 and "," in additional_fields[0]:
             additional_fields = additional_fields[0].split(",")
@@ -1280,35 +1283,24 @@ def extract_assay_expression(args):
         vizserver_response = client.get_data(vizserver_payload, record_id)
 
     colnames = None
-
-    #########################
-    if args.expression_matrix:
-        # First, ensure that the input filter, if present, doesn't contain an expression filter
-        if args.filter_json:
-            if "expression" in user_filters_json:
-                err_exit("Expression filters cannot be used with --expression-matrix argument.  Please remove \"expression\" section from filter JSON")
-
-        transformed_response,colnames = expression_transform(vizserver_response["results"])
-        output_data = transformed_response
-    #########################
-    
     
     # Output is on the "sql" key rather than the "results" key when sql is requested
-    if args.sql:
-        output_data = vizserver_response["sql"]
-    else:
-        output_data = vizserver_response['results']
+    output_data = vizserver_response["sql"] if args.sql else vizserver_response["results"]
 
-        if args.expression_matrix:
-            transformed_response,colnames = expression_transform(vizserver_response["results"])
-            output_data = transformed_response
+    # Output data (from vizserver_response["results"]) will be an empty list if no data is returned for the given filters
+    if args.expression_matrix and output_data:
+        transformed_response, colnames = expression_transform(vizserver_response["results"])
+        output_data = transformed_response
     
+    if not output_data:
+        # write_expression_output expects a list of dicts
+        output_data = [{}]
 
     write_expression_output(args.output, 
                             args.delim, 
                             args.sql, 
                             output_data, 
-                            save_uncommon_delim_to_txt=True, 
+                            save_uncommon_delim_to_txt=True,
                             output_file_name=dataset.detail_describe["name"],
                             colnames=colnames
     )
