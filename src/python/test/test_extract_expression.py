@@ -1332,17 +1332,7 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn("Dataset", dataset.detail_describe["types"])
         self.assertIn("vizserver", dataset.vizserver_url)
 
-    # def test_vizpayloadbuilder_class_input_1(self):
-    #     json_input = {
-    #         "expression": {
-    #             "min_value": 99,
-    #         },
-    #     }
-    #     data_output, sql_output = self.common_vizpayloadbuilder_test(
-    #         self.expression_dataset, json_input
-    #     )
-    #     exp_sql_output = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` WHERE `expression_1`.`value` >= 99"
-    #     self.assertEqual(sql_output, exp_sql_output)
+    ### Test VizPayloadBuilder Class
 
     # Cohort test
     def test_vizpayloadbuilder_class_cohort(self):
@@ -1570,7 +1560,7 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertEqual(data_output, exp_data_output)
         self.assertEqual(sql_output, exp_sql_output)
 
-    # 3.c. Expression filters (with location or annotation)
+    # Expression filters (with location or annotation)
     # expression + annotation - ID
     def test_vizpayloadbuilder_expression_min(self):
         json_input = {
