@@ -369,7 +369,7 @@ class JSONFiltersValidator(object):
         return len(self.input_json)
 
     def convert_to_between_operator(self, operators_list):
-        if len(operators_list) == 2:
+        if len(operators_list) != 2:
             self.error_handler("Expected exactly two operators")
 
         if set(operators_list) == {"greater-than-eq", "less-than-eq"}:
