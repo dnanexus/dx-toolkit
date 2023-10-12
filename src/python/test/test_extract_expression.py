@@ -1725,6 +1725,7 @@ class TestDXExtractExpression(unittest.TestCase):
         viz = VizPayloadBuilder(
             project_context=project,
             output_fields_mapping=_db_columns_list,
+            filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
             limit=None,
             base_sql=BASE_SQL,
             is_cohort=IS_COHORT,
