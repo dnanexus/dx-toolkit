@@ -609,7 +609,7 @@ class TestDXExtractExpression(unittest.TestCase):
         actual_err_msg = process.communicate()[1]
         # print(actual_err_msg)
 
-        self.assertTrue(expected_error_message in actual_err_msg)
+        self.assertEqual(expected_error_message, actual_err_msg)
 
     # EM-21
     # When --json-help is passed with another option from --assay-name, --sql, --additional-fields, --expression-matix, --output
@@ -619,21 +619,6 @@ class TestDXExtractExpression(unittest.TestCase):
             "path": self.test_record,
             "json_help": True,
             "assay_name": "test_assay",
-        }
-        self.common_input_args_test(input_dict, expected_error_message)
-
-    # EM-22
-    # When --expression-matrix is passed with other arguments other than, any context other than, --retrieve-expression
-    # It seems that every combination of args that could be passed with this cause a different issue to be caught first
-    # Which is fine but the error message will be for the other error
-    def test_exp_matrix_other_args(self):
-        # expected_error_message = "--expression-matrix cannot be passed with any argument other than --retrieve-expression"
-        expected_error_message = "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matrix, or --output"
-        input_dict = {
-            "path": self.test_record,
-            "expression_matrix": True,
-            "additional_fields": "feature_name",
-            "json_help": True,
         }
         self.common_input_args_test(input_dict, expected_error_message)
 
