@@ -58,6 +58,7 @@ from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSIO
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from ..bindings.apollo.vizclient import VizClient
+from ..bindings.apollo.expression_matrix_transformation import expression_transform
 from .output_handling import write_expression_output
 
 from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP, EXTRACT_ASSAY_EXPRESSION_ADDITIONAL_FIELDS_HELP
@@ -1219,14 +1220,19 @@ def extract_assay_expression(args):
     _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("default")
     
     if args.additional_fields:
-        # TODO: "--additional-fields strand chrom" and "--additional-fields strand,chrom" should both work
-        # However, currently the latter is stored as ['strand,', 'chrom']
-        # TODO use args.additional_fields.split(",")?
+        # Both --additional_fields field1 field2 and --additional_fields field1,field2 should work
+        # In the first case, the arg will look like ["field1","field2"]
+        # In the second case, the arg will look like ["field1,field2"]
+        # We need to split the second case to look like the first
+        additional_fields = args.additional_fields
+        if len(additional_fields) == 1 and "," in additional_fields[0]:
+            additional_fields = additional_fields[0].split(",")
+
         all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("additional")
-        incorrect_cols = set(args.additional_fields) - set({k for d in all_additional_cols for k in d.keys()})
+        incorrect_cols = set(additional_fields) - set({k for d in all_additional_cols for k in d.keys()})
         if len(incorrect_cols) != 0:
             err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
-        user_additional_cols = [i for i in all_additional_cols if set(i.keys()) & set(args.additional_fields)]
+        user_additional_cols = [i for i in all_additional_cols if set(i.keys()) & set(additional_fields)]
         _db_columns_list.extend(user_additional_cols)
 
     viz = VizPayloadBuilder(
@@ -1239,7 +1245,6 @@ def extract_assay_expression(args):
         error_handler=err_exit
     )
 
-    ### TODO -- temporary -- to be replaced by DatasetAssay class response
     DATASET_DESCRIPTOR = dataset.descriptor_file_dict
     ASSAY_NAME = args.assay_name if args.assay_name else DATASET_DESCRIPTOR["assays"][0]["name"]
     
@@ -1256,10 +1261,9 @@ def extract_assay_expression(args):
     viz.assemble_assay_raw_filters(assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters)
     vizserver_payload = viz.build()
 
-    # TODO replace with responses from Dataset class
+    # Get the record ID and vizserver URL from the Dataset object
     record_id = dataset.detail_describe["id"]
     url = dataset.vizserver_url
-    # dataset = visualize_response["dataset"]
 
     # Create VizClient object and get data from vizserver using generated payload
     client = VizClient(url,project)
@@ -1268,12 +1272,39 @@ def extract_assay_expression(args):
     else:
         vizserver_response = client.get_data(vizserver_payload, record_id)
 
+    colnames = None
+
+    #########################
+    if args.expression_matrix:
+        # First, ensure that the input filter, if present, doesn't contain an expression filter
+        if args.filter_json:
+            if "expression" in user_filters_json:
+                err_exit("Expression filters cannot be used with --expression-matrix argument.  Please remove \"expression\" section from filter JSON")
+
+        transformed_response,colnames = expression_transform(vizserver_response["results"])
+        output_data = transformed_response
+    #########################
+    
+    
+    # Output is on the "sql" key rather than the "results" key when sql is requested
+    if args.sql:
+        output_data = vizserver_response["sql"]
+    else:
+        output_data = vizserver_response['results']
+
+        if args.expression_matrix:
+            transformed_response,colnames = expression_transform(vizserver_response["results"])
+            output_data = transformed_response
+    
+
     write_expression_output(args.output, 
                             args.delim, 
                             args.sql, 
-                            vizserver_response['results'], 
+                            output_data, 
                             save_uncommon_delim_to_txt=True, 
-                            output_file_name=dataset.detail_describe["name"])
+                            output_file_name=dataset.detail_describe["name"],
+                            colnames=colnames
+    )
 
 
 
