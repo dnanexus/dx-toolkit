@@ -1684,7 +1684,6 @@ class TestDXExtractExpression(unittest.TestCase):
 
         # JSONFiltersValidator to build the complete payload
         input_json_parser = JSONFiltersValidator(json_input, schema)
-        # input_json_parser = JSONFiltersValidator(json_input2, schema)
         vizserver_raw_filters = input_json_parser.parse()
 
         # VizClient to submit the payload and get a response
