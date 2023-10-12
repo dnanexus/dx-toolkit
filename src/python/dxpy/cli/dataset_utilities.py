@@ -1244,6 +1244,8 @@ def extract_assay_expression(args):
         vizserver_response = client.get_data(vizserver_payload, record_id)
 
     colnames = None
+
+    #########################
     if args.expression_matrix:
         # First, ensure that the input filter, if present, doesn't contain an expression filter
         if args.filter_json:
@@ -1252,6 +1254,9 @@ def extract_assay_expression(args):
 
         transformed_response,colnames = expression_transform(vizserver_response["results"])
         output_data = transformed_response
+    #########################
+    
+    
     # Output is on the "sql" key rather than the "results" key when sql is requested
     if args.sql:
         output_data = vizserver_response["sql"]
