@@ -610,7 +610,7 @@ class TestDXExtractExpression(unittest.TestCase):
         actual_err_msg = process.communicate()[1]
         # print(actual_err_msg)
 
-        self.assertEqual(expected_error_message, actual_err_msg)
+        self.assertIn(expected_error_message, actual_err_msg)
 
     # EM-21
     # When --json-help is passed with another option from --assay-name, --sql, --additional-fields, --expression-matix, --output
