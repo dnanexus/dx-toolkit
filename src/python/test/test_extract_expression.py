@@ -942,7 +942,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_conflicting_toplevel(self):
         self.common_negative_filter_test(
             "conflicting_toplevel",
-            "For annotation, exactly one of feature_name or feature_id must be provided in the supplied JSON object.",
+            "Exactly one of location or annotation must be provided in the supplied JSON object.",
         )
 
     # EM-15
