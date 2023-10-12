@@ -40,7 +40,6 @@ from ..exceptions import (
     PermissionDenied,
     InvalidInput,
     InvalidState,
-    UrllibInternalError,
     ResourceNotFound,
     default_expected_exceptions,
 )
