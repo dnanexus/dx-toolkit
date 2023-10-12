@@ -53,8 +53,14 @@ CLIEXPRESS_TEST_INPUT = {
                 {"chromosome": 1, "starting_position": "1", "ending_position": "200"}
             ]
         },
-        "expression_max_type": {"expression": {"max_value": "200"},"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}},
-        "expression_empty_dict": {"expression": {},"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}},
+        "expression_max_type": {
+            "expression": {"max_value": "200"},
+            "annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]},
+        },
+        "expression_empty_dict": {
+            "expression": {},
+            "annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]},
+        },
         "annotation_name_type": {
             "annotation": {"feature_name": {"shouldnot": "bedict"}}
         },
@@ -74,7 +80,10 @@ CLIEXPRESS_TEST_INPUT = {
             }
         },
         "sample_id_maxitem": {"sample_id": ["item"] * 101},
-        "expression_min_type": {"expression": {"min_value": "1"},"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}},
+        "expression_min_type": {
+            "expression": {"min_value": "1"},
+            "annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]},
+        },
         "location_type": {"location": {"shouldbe": "alist"}},
         "annotation_id_maxitem": {"annotation": {"feature_id": ["item"] * 101}},
         "empty_dict": {},
@@ -145,5 +154,74 @@ CLIEXPRESS_TEST_INPUT = {
             "expression": {"max_value": 200},
             "annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]},
         },
+    },
+}
+
+VIZPAYLOADERBUILDER_TEST_INPUT = {
+    "test_vizpayloadbuilder_location_cohort": {
+        "location": [
+            {
+                "chromosome": "1",
+                "starting_position": "10000",
+                "ending_position": "12000",
+            },
+        ],
+    },
+    "test_vizpayloadbuilder_location_multiple": {
+        "location": [
+            {
+                "chromosome": "1",
+                "starting_position": "10000",
+                "ending_position": "12000",
+            },
+            {
+                "chromosome": "2",
+                "starting_position": "30000",
+                "ending_position": "40000",
+            },
+        ],
+    },
+    "test_vizpayloadbuilder_annotation_feature_name": {
+        "annotation": {"feature_name": ["ABL1"]}
+    },
+    "test_vizpayloadbuilder_annotation_feature_id": {
+        "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]}
+    },
+    "test_vizpayloadbuilder_expression_min": {
+        "expression": {"min_value": 70},
+        "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+    },
+    "test_vizpayloadbuilder_expression_max": {
+        "expression": {"max_value": 10},
+        "annotation": {"feature_name": ["BRCA2"]},
+    },
+    "test_vizpayloadbuilder_expression_mixed": {
+        "expression": {"min_value": 30, "max_value": 60},
+        "location": [
+            {
+                "chromosome": "1",
+                "starting_position": "10000",
+                "ending_position": "12000",
+            },
+        ],
+    },
+    "test_vizpayloadbuilder_sample": {
+        "sample_id": ["sample_1"],
+    },
+    "test_vizpayloadbuilder_location_sample_expression": {
+        "location": [
+            {
+                "chromosome": "1",
+                "starting_position": "10000",
+                "ending_position": "20000",
+            },
+        ],
+        "sample_id": ["sample_1"],
+        "expression": {"min_value": 25, "max_value": 80},
+    },
+    "test_vizpayloadbuilder_annotation_sample_expression": {
+        "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+        "expression": {"max_value": 20},
+        "sample_id": ["sample_1"],
     },
 }
