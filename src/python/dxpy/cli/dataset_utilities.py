@@ -1234,9 +1234,10 @@ def extract_assay_expression(args):
         # In the first case, the arg will look like ["field1", "field2"]
         # In the second case: ["field1,field2"]
         # In the third case: ["field1,", "field2"]
-        additional_fields = args.additional_fields
-        if len(additional_fields) == 1 and "," in additional_fields[0]:
-            additional_fields = additional_fields[0].split(",")
+        additional_fields = []
+        for item in args.additional_fields:
+            field = [x.strip() for x in item.split(',') if x.strip()]
+            additional_fields.extend(field)
 
         all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["output_fields_mapping"].get("additional")
         incorrect_cols = set(additional_fields) - set({k for d in all_additional_cols for k in d.keys()})
