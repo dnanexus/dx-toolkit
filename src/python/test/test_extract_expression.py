@@ -46,11 +46,11 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.vizclient import VizClient
-from .expression_test_assets.expression_test_input_dict import (
+from expression_test_assets.expression_test_input_dict import (
     CLIEXPRESS_TEST_INPUT,
     VIZPAYLOADERBUILDER_TEST_INPUT,
 )
-from .expression_test_assets.expression_test_expected_output_dict import (
+from expression_test_assets.expression_test_expected_output_dict import (
     VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
 )
 from dxpy.bindings.apollo.expression_matrix_transformation import expression_transform
