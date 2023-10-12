@@ -1201,9 +1201,7 @@ class TestDXExtractExpression(unittest.TestCase):
         data_output, sql_output = self.common_vizpayloadbuilder_test(
             self.combined_expression_cohort, json_input
         )
-        print(data_output)
-        print(sql_output)
-        data_output = [
+        exp_data_output = [
             {
                 "feature_id": "ENST00000456328",
                 "sample_id": "sample_1",
@@ -1221,7 +1219,7 @@ class TestDXExtractExpression(unittest.TestCase):
             },
         ]
         exp_sql_output = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`sample` AS `sample_1` ON `expression_1`.`sample_id` = `sample_1`.`sample_id` WHERE `expr_annotation_1`.`chr` = '1' AND (`expr_annotation_1`.`start` BETWEEN 10000 AND 12000 OR `expr_annotation_1`.`end` BETWEEN 10000 AND 12000 OR `expr_annotation_1`.`start` <= 10000 AND `expr_annotation_1`.`end` >= 12000) AND `sample_1`.`sample_id` IN (SELECT `cohort_query`.`sample_id` FROM (SELECT `sample_1`.`sample_id` AS `sample_id` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`sample` AS `sample_1` WHERE `sample_1`.`sample_id` IN (SELECT `sample_id` FROM (SELECT `sample_1`.`sample_id` AS `sample_id` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`sample` AS `sample_1` UNION SELECT `sample_1`.`sample_id` AS `sample_id` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`sample` AS `sample_1`))) AS `cohort_query`)"
-        self.assertEqual(sql_output, exp_sql_output)
+        self.assertEqual(data_output, exp_data_output)
 
     # Genomic location filters
     def test_vizpayloadbuilder_location(self):
@@ -1314,51 +1312,226 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertEqual(sql_output, exp_sql_output)
 
     # Annotation filters
-    def test_vizpayloadbuilder_class_annotation_feature_name(self):
-        pass
-
-    def test_vizpayloadbuilder_class_annotation_feature_id(self):
-        json_input = ({"annotation": {"feature_id": ["ENST0000"]}},)
+    def test_vizpayloadbuilder_annotation_feature_name(self):
+        json_input = {"annotation": {"feature_name": ["ABL1"]}}
         data_output, sql_output = self.common_vizpayloadbuilder_test(
             self.expression_dataset, json_input
         )
-        print(data_output)
-        print(sql_output)
+        exp_data_output = [
+            {
+                "feature_id": "ENST00000318560",
+                "sample_id": "sample_3",
+                "expression": 56,
+            },
+            {
+                "feature_id": "ENST00000318560",
+                "sample_id": "sample_2",
+                "expression": 24,
+            },
+            {
+                "feature_id": "ENST00000318560",
+                "sample_id": "sample_1",
+                "expression": 39,
+            },
+            {
+                "feature_id": "ENST00000372348",
+                "sample_id": "sample_3",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000372348",
+                "sample_id": "sample_2",
+                "expression": 40,
+            },
+            {
+                "feature_id": "ENST00000372348",
+                "sample_id": "sample_1",
+                "expression": 87,
+            },
+            {
+                "feature_id": "ENST00000393293",
+                "sample_id": "sample_2",
+                "expression": 11,
+            },
+            {
+                "feature_id": "ENST00000393293",
+                "sample_id": "sample_3",
+                "expression": 40,
+            },
+            {
+                "feature_id": "ENST00000393293",
+                "sample_id": "sample_1",
+                "expression": 17,
+            },
+        ]
+        exp_sql_output = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expr_annotation_1`.`gene_name` IN ('ABL1')"
 
-    def test_vizpayloadbuilder_class_annotation_mixed_features_neg(self):
-        pass
+        self.assertEqual(data_output, exp_data_output)
+        self.assertEqual(sql_output, exp_sql_output)
+
+    def test_vizpayloadbuilder_annotation_feature_id(self):
+        json_input = {
+            "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]}
+        }
+        data_output, sql_output = self.common_vizpayloadbuilder_test(
+            self.expression_dataset, json_input
+        )
+        exp_data_output = [
+            {
+                "feature_id": "ENST00000327669",
+                "sample_id": "sample_1",
+                "expression": 11,
+            },
+            {
+                "feature_id": "ENST00000327669",
+                "sample_id": "sample_2",
+                "expression": 78,
+            },
+            {
+                "feature_id": "ENST00000327669",
+                "sample_id": "sample_3",
+                "expression": 23,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_3",
+                "expression": 58,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_2",
+                "expression": 90,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_1",
+                "expression": 23,
+            },
+        ]
+        exp_sql_output = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expr_annotation_1`.`feature_id` IN ('ENST00000327669', 'ENST00000456328')"
+
+        self.assertEqual(data_output, exp_data_output)
+        self.assertEqual(sql_output, exp_sql_output)
 
     # 3.c. Expression filters (TODO add location or annotation)
-    def test_vizpayloadbuilder_class_expression_min(self):
-        pass
+    def test_vizpayloadbuilder_expression_min(self):
+        json_input = {
+            "expression": {"min_value": 70},
+            "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+        }
+        data_output, sql_output = self.common_vizpayloadbuilder_test(
+            self.expression_dataset, json_input
+        )
+        exp_data_output = [
+            {
+                "feature_id": "ENST00000327669",
+                "sample_id": "sample_2",
+                "expression": 78,
+            },
+            {
+                "feature_id": "ENST00000456328",
+                "sample_id": "sample_2",
+                "expression": 90,
+            },
+        ]
+        exp_sql_output = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`value` >= 70 AND `expr_annotation_1`.`feature_id` IN ('ENST00000327669', 'ENST00000456328')"
 
-    def test_vizpayloadbuilder_class_expression_max(self):
-        pass
+        self.assertEqual(data_output, exp_data_output)
+        self.assertEqual(sql_output, exp_sql_output)
 
-    def test_vizpayloadbuilder_class_expression_mixed(self):
-        pass
+    def test_vizpayloadbuilder_expression_max(self):
+        json_input = {
+            "expression": {"max_value": 20},
+            "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+        }
+        data_output, sql_output = self.common_vizpayloadbuilder_test(
+            self.expression_dataset, json_input
+        )
+        exp_data_output = [
+            {"feature_id": "ENST00000327669", "sample_id": "sample_1", "expression": 11}
+        ]
+        exp_sql_output = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`value` <= 20 AND `expr_annotation_1`.`feature_id` IN ('ENST00000327669', 'ENST00000456328')"
 
-    def test_vizpayloadbuilder_class_expression_empty_neg(self):
-        pass
+        self.assertEqual(data_output, exp_data_output)
+        self.assertEqual(sql_output, exp_sql_output)
 
-    # 3.e. General (mixed) filters
-    def test_vizpayloadbuilder_location_expression(self):
-        pass
+    # def test_vizpayloadbuilder_expression_mixed(self):
+    # json_input = {
+    #     "expression": {"min_value": 30, "max_value": 60},
+    #     "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+    # }
+    # data_output, sql_output = self.common_vizpayloadbuilder_test(
+    #     self.expression_dataset, json_input
+    # )
+    # exp_data_output = 1
+    # exp_sql_output = 1
 
-    def test_vizpayloadbuilder_location_sample_neg(self):
-        pass
+    # # self.assertEqual(data_output, exp_data_output)
+    # # self.assertEqual(sql_output, exp_sql_output)
+    # print(data_output)
+    # print(sql_output)
 
-    def test_vizpayloadbuilder_annotation_expression_neg(self):
-        # CLIEXPRESS_TEST_INPUT["malformed"]["expression_type"]
-        pass
+    # # 3.e. General (mixed) filters
+    # def test_vizpayloadbuilder_location_expression(self):
+    #     json_input = {
+    #         "expression": {"max_value": 20},
+    #         "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+    #     }
+    #     data_output, sql_output = self.common_vizpayloadbuilder_test(
+    #         self.expression_dataset, json_input
+    #     )
+    #     exp_data_output = 1
+    #     exp_sql_output = 1
 
-    def test_vizpayloadbuilder_annotation_sample(self):
-        pass
+    #     # self.assertEqual(data_output, exp_data_output)
+    #     # self.assertEqual(sql_output, exp_sql_output)
+    #     print(data_output)
+    #     print(sql_output)
 
-    # extras from joe
-    def test_vizpayloadbuilder_bad_toplevel_key(self):
-        # CLIEXPRESS_TEST_INPUT["malformed"]["bad_toplevel_key"]
-        pass
+    # def test_vizpayloadbuilder_location_sample(self):
+    #     json_input = {
+    #         "expression": {"max_value": 20},
+    #         "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+    #     }
+    #     data_output, sql_output = self.common_vizpayloadbuilder_test(
+    #         self.expression_dataset, json_input
+    #     )
+    #     exp_data_output = 1
+    #     exp_sql_output = 1
+
+    #     # self.assertEqual(data_output, exp_data_output)
+    #     # self.assertEqual(sql_output, exp_sql_output)
+    #     print(data_output)
+    #     print(sql_output)
+
+    # def test_vizpayloadbuilder_annotation_expression(self):
+    #     json_input = {"expression": {"max_value": 20},"annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},}
+    #     data_output, sql_output = self.common_vizpayloadbuilder_test(
+    #         self.expression_dataset, json_input
+    #     )
+    #     exp_data_output = 1
+    #     exp_sql_output = 1
+
+    #     # self.assertEqual(data_output, exp_data_output)
+    #     # self.assertEqual(sql_output, exp_sql_output)
+    #     print(data_output)
+    #     print(sql_output)
+
+    # def test_vizpayloadbuilder_annotation_sample(self):
+    #     json_input = {
+    #         "expression": {"max_value": 20},
+    #         "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+    #     }
+    #     data_output, sql_output = self.common_vizpayloadbuilder_test(
+    #         self.expression_dataset, json_input
+    #     )
+    #     exp_data_output = 1
+    #     exp_sql_output = 1
+
+    #     # self.assertEqual(data_output, exp_data_output)
+    #     # self.assertEqual(sql_output, exp_sql_output)
+    #     print(data_output)
+    #     print(sql_output)
 
     def common_vizpayloadbuilder_test(self, record_path, json_input):
         _, _, entity = resolve_existing_path(record_path)
@@ -1386,10 +1559,7 @@ class TestDXExtractExpression(unittest.TestCase):
         _db_columns_list = schema["output_fields_mapping"].get("default")
 
         # JSONFiltersValidator to build the complete payload
-        # print(json_input)
         input_json_parser = JSONFiltersValidator(json_input, schema)
-        # json_input2 = {"annotation": {"feature_id": ["ENST0000"]}}
-        # print(json_input2)
         # input_json_parser = JSONFiltersValidator(json_input2, schema)
         vizserver_raw_filters = input_json_parser.parse()
 
