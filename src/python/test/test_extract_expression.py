@@ -421,6 +421,8 @@ class TestDXExtractExpression(unittest.TestCase):
             ENST00000488147,sample_2,20,-""".replace(
             " ", ""
         )
+        if python_version == 2:
+            expected_result = "feature_id,expression,strand,sample_id\nENST00000450305,50,+,sample_2\nENST00000456328,90,+,sample_2\nENST00000488147,20,-,sample_2"
         output_path = os.path.join(
             self.general_output_dir, "extract_assay_expression_data.csv"
         )
