@@ -165,7 +165,7 @@ class ArgsValidator:
         present_args_count = 0
 
         for arg in args_to_check_values:
-            if arg is not None and not self.parser_dict.get(arg):
+            if arg:
                 present_args_count += 1
 
         if present_args_count > 1:
