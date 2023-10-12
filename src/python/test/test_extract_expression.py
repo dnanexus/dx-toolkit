@@ -71,9 +71,6 @@ class TestDXExtractExpression(unittest.TestCase):
             os.makedirs(cls.general_output_dir)
         cls.json_schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
         cls.input_args_schema = EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
-        cls.test_record = (
-            "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
-        )
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
@@ -111,7 +108,7 @@ class TestDXExtractExpression(unittest.TestCase):
         }
 
         cls.default_entity_describe = {
-            "id": cls.test_record,
+            "id": cls.expression_dataset,
             "project": cls.proj_id,
             "class": "record",
             "sponsored": False,
@@ -554,7 +551,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_additional_fields_help_other_options(self):
         expected_error_message = '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "assay_name": "test_assay",
             "additional_fields_help": True,
         }
@@ -565,7 +562,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def invalid_additional_fields(self):
         expected_error_message = "One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields"
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "retrieve_expression": True,
             "filter_json": r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
             "additional_fields": "feature_name,bad_field",
@@ -579,7 +576,7 @@ class TestDXExtractExpression(unittest.TestCase):
             '"--list-assays" cannot be presented with other options'
         )
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "list_assays": True,
             "assay_name": "fake_assay",
         }
@@ -598,7 +595,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "dx",
             "extract_assay",
             "expression",
-            self.test_record,
+            self.expression_dataset,
             "--retrieve-expression",
             "--filter-json-file",
             missing_json_path,
@@ -617,7 +614,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_json_help_other_option(self):
         expected_error_message = '"--json-help" cannot be passed with any option other than "--retrieve-expression".'
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "json_help": True,
             "assay_name": "test_assay",
         }
@@ -630,7 +627,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "--expression-matrix/-em cannot be passed with the flag, --sql"
         )
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "expression_matrix": True,
             "retrieve_expression": True,
             "filter_json": r'{"annotation": {"feature_name": ["BRCA2"]}}',
