@@ -46,13 +46,7 @@ from dxpy.bindings.apollo.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.vizclient import VizClient
-from expression_test_assets.expression_test_input_dict import (
-    CLIEXPRESS_TEST_INPUT,
-    VIZPAYLOADERBUILDER_TEST_INPUT,
-)
-from expression_test_assets.expression_test_expected_output_dict import (
-    VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
-)
+
 from dxpy.bindings.apollo.expression_matrix_transformation import expression_transform
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
@@ -70,6 +64,23 @@ from dxpy.exceptions import err_exit
 dirname = os.path.dirname(__file__)
 
 python_version = sys.version_info.major
+
+if python_version == 2:
+    sys.path.append("./expression_test_assets")
+    from expression_test_input_dict import (
+        CLIEXPRESS_TEST_INPUT,
+        VIZPAYLOADERBUILDER_TEST_INPUT,
+    )
+    from expression_test_expected_output_dict import VIZPAYLOADERBUILDER_EXPECTED_OUTPUT
+
+else:
+    from expression_test_assets.expression_test_input_dict import (
+        CLIEXPRESS_TEST_INPUT,
+        VIZPAYLOADERBUILDER_TEST_INPUT,
+    )
+    from expression_test_assets.expression_test_expected_output_dict import (
+        VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
+    )
 
 
 class TestDXExtractExpression(unittest.TestCase):
