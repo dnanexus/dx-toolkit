@@ -1159,6 +1159,10 @@ def extract_assay_expression(args):
 
 
     # Load args.filter_json or args.filter_json_file into a dict
+    if sys.version_info.major == 2:
+            # In Python 2 JSONDecodeError does not exist
+            json.JSONDecodeError = ValueError
+
     if args.filter_json:
         try:
             user_filters_json = json.loads(args.filter_json)
