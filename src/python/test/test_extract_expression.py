@@ -1334,8 +1334,9 @@ class TestDXExtractExpression(unittest.TestCase):
 
     ### Test VizPayloadBuilder Class
 
-    # Cohort test
-    def test_vizpayloadbuilder_class_cohort(self):
+    # Genomic location filters
+    # genomic + cohort
+    def test_vizpayloadbuilder_location_cohort(self):
         json_input = {
             "location": [
                 {
@@ -1366,40 +1367,7 @@ class TestDXExtractExpression(unittest.TestCase):
             },
         ]
         exp_sql_output = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`sample` AS `sample_1` ON `expression_1`.`sample_id` = `sample_1`.`sample_id` WHERE `expr_annotation_1`.`chr` = '1' AND (`expr_annotation_1`.`start` BETWEEN 10000 AND 12000 OR `expr_annotation_1`.`end` BETWEEN 10000 AND 12000 OR `expr_annotation_1`.`start` <= 10000 AND `expr_annotation_1`.`end` >= 12000) AND `sample_1`.`sample_id` IN (SELECT `cohort_query`.`sample_id` FROM (SELECT `sample_1`.`sample_id` AS `sample_id` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`sample` AS `sample_1` WHERE `sample_1`.`sample_id` IN (SELECT `sample_id` FROM (SELECT `sample_1`.`sample_id` AS `sample_id` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`sample` AS `sample_1` UNION SELECT `sample_1`.`sample_id` AS `sample_id` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`sample` AS `sample_1`))) AS `cohort_query`)"
-        self.assertEqual(data_output, exp_data_output)
-
-    # Genomic location filters
-    def test_vizpayloadbuilder_location(self):
-        json_input = {
-            "location": [
-                {
-                    "chromosome": "1",
-                    "starting_position": "10000",
-                    "ending_position": "12000",
-                },
-            ],
-        }
-        data_output, sql_output = self.common_vizpayloadbuilder_test(
-            self.expression_dataset, json_input
-        )
-        exp_data_output = [
-            {
-                "feature_id": "ENST00000456328",
-                "sample_id": "sample_3",
-                "expression": 58,
-            },
-            {
-                "feature_id": "ENST00000456328",
-                "sample_id": "sample_2",
-                "expression": 90,
-            },
-            {
-                "feature_id": "ENST00000456328",
-                "sample_id": "sample_1",
-                "expression": 23,
-            },
-        ]
-        exp_sql_output = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expr_annotation_1`.`chr` = '1' AND (`expr_annotation_1`.`start` BETWEEN 10000 AND 12000 OR `expr_annotation_1`.`end` BETWEEN 10000 AND 12000 OR `expr_annotation_1`.`start` <= 10000 AND `expr_annotation_1`.`end` >= 12000)"
+        
         self.assertEqual(data_output, exp_data_output)
         self.assertEqual(sql_output, exp_sql_output)
 
