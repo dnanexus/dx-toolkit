@@ -52,7 +52,7 @@ from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, coho
 from ..bindings.apollo.cmd_line_options_validator import ArgsValidator
 from ..bindings.apollo.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.dataset import Dataset
-from ..bindings.apollo.ValidateJSONbySchema import JSONValidator
+from ..bindings.apollo.json_validation_by_schema import JSONValidator
 from ..bindings.apollo.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
 from ..bindings.apollo.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator

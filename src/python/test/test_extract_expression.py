@@ -33,7 +33,7 @@ from collections import OrderedDict
 
 import shutil
 from dxpy_testutil import cd, chdir
-from dxpy.bindings.apollo.ValidateJSONbySchema import JSONValidator
+from dxpy.bindings.apollo.json_validation_by_schema import JSONValidator
 from dxpy.utils.resolver import resolve_existing_path
 
 from dxpy.bindings.apollo.assay_filtering_json_schemas import (
