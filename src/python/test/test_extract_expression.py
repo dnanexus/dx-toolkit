@@ -74,7 +74,12 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
-
+        cls.expression_dataset_name = "molecular_expression1.dataset"
+        cls.expression_dataset = cls.proj_id + ":/" + cls.expression_dataset_name
+        cls.combined_expression_cohort_name = "Combined_Expression_Cohort"
+        cls.combined_expression_cohort = (
+            cls.proj_id + ":/" + cls.combined_expression_cohort_name
+        )
         # In python3, str(type(object)) looks like <{0} 'obj_class'> but in python 2, it would be <type 'obj_class'>
         # This impacts our expected error messages
         cls.type_representation = "class"
@@ -188,12 +193,6 @@ class TestDXExtractExpression(unittest.TestCase):
         }
         cls.argparse_expression_help_message = os.path.join(
             dirname, "help_messages/extract_expression_help_message.txt"
-        )
-        cls.expression_dataset_name = "molecular_expression1.dataset"
-        cls.expression_dataset = cls.proj_id + ":/" + cls.expression_dataset_name
-        cls.combined_expression_cohort_name = "Combined_Expression_Cohort"
-        cls.combined_expression_cohort = (
-            cls.proj_id + ":/" + cls.combined_expression_cohort_name
         )
 
     @classmethod
