@@ -738,7 +738,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_item_type(self):
         self.common_negative_filter_test(
             "location_item_type",
-            "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(
+            "Expected list items within 'location' to be of type <{0} 'dict'> but got <{0} 'list'> instead.".format(
                 self.type_representation
             ),
         )
