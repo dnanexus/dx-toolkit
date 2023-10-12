@@ -45,7 +45,6 @@ CLIEXPRESS_TEST_INPUT = {
             "expression": {"min_value": 10.2, "max_value": 10000},
             "annotation": {
                 "feature_name": ["BRCA2"],
-                "feature_id": ["ENSG0000001", "ENSG00000002"],
             },
         },
         "location_chrom_type": {
