@@ -63,7 +63,7 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
         },
         "condition": "with_at_least_one_required",
         "error_message": {
-            "message": 'The flag "--retrieve_expression" must be followed by "--input-json", "--input-json-file", "--json-help", or "--additional-fields-help".'
+            "message": 'The flag "--retrieve_expression" must be followed by "--filter-json", "--filter-json-file", "--json-help", or "--additional-fields-help".'
         },
     },
     "5_json_help_exclusive_with_exceptions": {
@@ -98,7 +98,7 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
         },
         "condition": "mutually_exclusive_group",
         "error_message": {
-            "message": 'The arguments "--input-json" and "--input-json-file" are not allowed together.'
+            "message": 'The arguments "--filter-json" and "--filter-json-file" are not allowed together.'
         },
     },
     "8_expression_matrix-with_at_least_one_required": {
@@ -109,6 +109,15 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
         "condition": "with_at_least_one_required",
         "error_message": {
             "message": '"--expression-matrix" cannot be passed with any argument other than "--retrieve-expression".'
+        },
+    },
+    "9_em_sql-mutually_exclusive": {
+        "properties": {
+            "items": ["expression_matrix", "sql"],
+        },
+        "condition": "mutually_exclusive_group",
+        "error_message": {
+            "message": '"--expression-matrix"/"-em" cannot be passed with the flag "--sql".'
         },
     },
 }
