@@ -644,7 +644,7 @@ class TestDXExtractExpression(unittest.TestCase):
     # --expression-matrix/-em cannot be used with --sql
     def test_exp_matrix_sql(self):
         expected_error_message = (
-            "--expression-matrix/-em cannot be passed with the flag, --sql"
+            '"--expression-matrix"/"-em" cannot be passed with the flag, "--sql".'
         )
         input_dict = {
             "path": self.expression_dataset,
