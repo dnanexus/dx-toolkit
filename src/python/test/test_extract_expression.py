@@ -600,6 +600,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "expression",
             self.test_record,
             "--retrieve-expression",
+            "--filter-json-file",
             missing_json_path,
         ]
 
