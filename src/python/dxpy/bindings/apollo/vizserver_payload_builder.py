@@ -1,3 +1,6 @@
+import sys
+
+
 class VizPayloadBuilder(object):
     """
 
@@ -131,7 +134,15 @@ class VizPayloadBuilder(object):
         }
 
     def validate_base_sql(self):
-        if not isinstance(self.base_sql, str) or "".__eq__(self.base_sql):
+        THROW_ERROR = False
+        if sys.version_info.major == 2:
+            if not isinstance(self.base_sql, (str, unicode)) or self.base_sql == "":
+                THROW_ERROR = True
+        else:
+            if not isinstance(self.base_sql, str) or "".__eq__(self.base_sql):
+                THROW_ERROR = True
+
+        if THROW_ERROR:
             self.error_handler("base_sql is either not a string or is empty")
 
     def validate_returned_records_limit(self):
