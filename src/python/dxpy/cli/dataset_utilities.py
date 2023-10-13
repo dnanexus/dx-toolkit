@@ -1144,6 +1144,7 @@ def extract_assay_expression(args):
                         cohort_info["id"]
                     )
                 )
+            
             BASE_SQL = cohort_info.get("details").get("baseSql")
             COHORT_FILTERS = cohort_info.get("details").get("filters")
             IS_COHORT = True
@@ -1244,6 +1245,7 @@ def extract_assay_expression(args):
             "ending_position"
         ]["type"] = unicode
 
+    # Validate filters JSON provided by the user according to a predefined schema
     input_json_validator = JSONValidator(
         schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit
     )
@@ -1256,6 +1258,7 @@ def extract_assay_expression(args):
             ]["max_item_limit"] = None
 
         else:
+            # Genomic range adding together across multiple contigs should be smaller than 250 Mbps
             input_json_validator.are_list_items_within_range(
                 input_json=user_filters_json,
                 key="location",
@@ -1321,7 +1324,7 @@ def extract_assay_expression(args):
 
     if args.assay_name:
         # Assumption: assay names are unique in a dataset descriptor
-        # i.e. there are never two assays with the same name in the same dataset
+        # i.e. there are never two assays of the same type with the same name in the same dataset
         for molecular_assay in dataset.assays_info_dict["molecular_expression"]:
             if molecular_assay["name"] == args.assay_name:
                 ASSAY_ID = molecular_assay["uuid"]
