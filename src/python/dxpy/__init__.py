@@ -315,6 +315,10 @@ _RETRYABLE_SOCKET_ERRORS = {
     errno.ECONNREFUSED  # A remote host refused to allow the network connection
 }
 
+_RETRYABLE_WITH_RESPONSE = (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
+                                         urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError)
+if not USING_PYTHON2:
+    _RETRYABLE_WITH_RESPONSE += (ConnectionResetError,)
 
 def _is_retryable_exception(e):
     """Returns True if the exception is always safe to retry.
@@ -328,7 +332,9 @@ def _is_retryable_exception(e):
 
     """
     if isinstance(e, urllib3.exceptions.ProtocolError):
-        e = e.args[1]
+        return True
+    if not USING_PYTHON2 and isinstance(e, ConnectionResetError):
+        return True
     if isinstance(e, (socket.gaierror, socket.herror)):
         return True
     if isinstance(e, socket.error) and e.errno in _RETRYABLE_SOCKET_ERRORS:
@@ -468,20 +474,6 @@ def _debug_print_response(debug_level, seq_num, time_started, req_id, response_s
               WHITE(BOLD("(%dms)" % t)),
               content_to_print,
               file=sys.stderr)
-
-
-def _test_tls_version():
-    tls12_check_script = os.path.join(os.getenv("DNANEXUS_HOME"), "build", "tls12check.py")
-    if not os.path.exists(tls12_check_script):
-        return
-
-    try:
-        subprocess.check_output(['python', tls12_check_script])
-    except subprocess.CalledProcessError as e:
-        if e.returncode == 1:
-            print (e.output)
-            raise exceptions.InvalidTLSProtocol
-
 
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
@@ -640,7 +632,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
-
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
@@ -751,8 +742,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # BadStatusLine ---  server did not return anything
                     # BadJSONInReply --- server returned JSON that didn't parse properly
                     if (response is None
-                       or isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
-                                         urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError))):
+                       or isinstance(e, _RETRYABLE_WITH_RESPONSE)):
                         ok_to_retry = is_retryable
                     else:
                         ok_to_retry = 500 <= response.status < 600
@@ -774,7 +764,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # Unprocessable entity, request has semantical errors
                     if response is not None and response.status == 422:
                         ok_to_retry = False
-
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
@@ -806,12 +795,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 if isinstance(e, exceptions.HTTPErrorWithContent):
                         log_msg += "\n%s" % e.content
                 logger.error(log_msg)
-
-            if isinstance(e, urllib3.exceptions.ProtocolError) and \
-                'Connection reset by peer' in exception_msg:
-                # If the protocol error is 'connection reset by peer', most likely it is an
-                # error in the ssl handshake due to unsupported TLS protocol.
-                _test_tls_version()
 
             # Retries have been exhausted, and we are unable to get a full
             # buffer from the data source. Raise a special exception.

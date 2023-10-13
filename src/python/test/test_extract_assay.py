@@ -280,6 +280,21 @@ class TestDXExtractAssay(unittest.TestCase):
         expected_error_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
         self.assertTrue(expected_error_message in process.communicate()[1])
 
+    def test_duplicate_rsid(self):
+        table = "allele"
+        friendly_name = "rsid"
+        values = ["rs1342568097", "rs1342568097"]
+        genome_reference = "GRCh38.92"
+
+        expected_output = {
+            "allele$dbsnp151_rsid": [{"condition": "any", "values": ["rs1342568097"]}]
+        }
+
+        self.assertEqual(
+            basic_filter(table, friendly_name, values, self.proj_id, genome_reference),
+            expected_output,
+        )
+
     ##########
     # Normal Command Lines
     ##########
@@ -293,7 +308,8 @@ class TestDXExtractAssay(unittest.TestCase):
 #  rsid: rsID associated with an allele or set of alleles. If multiple values
 #  are provided, the conditional search will be, "OR." For example, ["rs1111",
 #  "rs2222"], will search for alleles which match either "rs1111" or "rs2222".
-#  String match is case sensitive.
+#  String match is case sensitive. Duplicate values are permitted and will be
+#  handled silently.
 #
 #  type: Type of allele. Accepted values are "SNP", "Ins", "Del", "Mixed". If
 #  multiple values are provided, the conditional search will be, "OR." For
