@@ -97,7 +97,7 @@ class Dataset(DXRecord):
                 "name": assays[index]["name"],
                 "index": index,
                 "uuid": assays[index]["uuid"],
-                "reference": assays[index]["reference"]["name"],
+                "reference": assays[index].get("reference"),
             }
 
             if model not in assays_info_dict.keys():
