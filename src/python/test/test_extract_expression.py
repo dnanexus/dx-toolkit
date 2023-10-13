@@ -1092,6 +1092,30 @@ class TestDXExtractExpression(unittest.TestCase):
         ]
         self.assertEqual(sql_output, exp_sql_output)
 
+    def run_dx_extract_assay_expression_cmd(self, dataset_or_cohort, filters_json, additional_fields, sql, output):
+        command = [
+            "dx",
+            "extract_assay",
+            "expression",
+            dataset_or_cohort,
+            "--retrieve-expression",
+            "--filter-json",
+            filters_json,
+            "-o",
+            output,
+        ]
+
+        if sql:
+            command.append("--sql")
+
+        if additional_fields:
+            command.extend(["--additional-fields", additional_fields])
+
+        process = subprocess.check_output(
+            command, shell=True, universal_newlines=True,
+        )
+        return process
+
 
 # Start the test
 if __name__ == "__main__":
