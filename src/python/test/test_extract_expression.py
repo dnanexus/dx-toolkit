@@ -47,7 +47,7 @@ from dxpy.bindings.apollo.schemas.input_arguments_validation_schemas import (
 )
 from dxpy.bindings.apollo.vizclient import VizClient
 
-from python.dxpy.bindings.apollo.data_transformations import transform_to_expression_matrix
+from dxpy.bindings.apollo.data_transformations import transform_to_expression_matrix
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 from dxpy.bindings.dxrecord import DXRecord
