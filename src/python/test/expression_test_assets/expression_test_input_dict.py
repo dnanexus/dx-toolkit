@@ -224,3 +224,46 @@ VIZPAYLOADERBUILDER_TEST_INPUT = {
         "sample_id": ["sample_1"],
     },
 }
+
+EXPRESSION_CLI_JSON_FILTERS = {
+    "positive_test": {
+        "location_expression_sample": {
+            "location": [
+                {
+                    "chromosome": "11",
+                    "starting_position": "8693350",
+                    "ending_position": "67440200",
+                },
+                {
+                    "chromosome": "X",
+                    "starting_position": "148500700",
+                    "ending_position": "148994424",
+                },
+                {
+                    "chromosome": "17",
+                    "starting_position": "75228160",
+                    "ending_position": "75235759",
+                },
+            ],
+            "expression": {"min_value": 25.63},
+            "sample_id": ["sample_1", "sample_2"],
+        },
+        "sample_id_with_additional_fields": {"sample_id": ["sample_1"]},
+    },
+    "negative_test": {
+        "empty_json": {},
+        "large_location_range": {
+            "location": [
+                {
+                    "chromosome": "1",
+                    "starting_position": "1",
+                    "ending_position": "950000000",
+                }
+            ],
+            "expression": {"min_value": 9.1, "max_value": 50},
+        },
+        "sample_id_maxitem_limit": {
+            "sample_id": ["sample_" + str(i) for i in range(1, 200)]
+        },
+    },
+}
