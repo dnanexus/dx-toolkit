@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Released Nextaur 1.6.8. It contains minor bugfixes and optimizations.
+
 ## [359.0] - beta
 
 ### Added
