@@ -38,23 +38,23 @@ from dxpy_testutil import cd, chdir
 from dxpy.bindings.apollo.json_validation_by_schema import JSONValidator
 from dxpy.utils.resolver import resolve_existing_path
 
-from dxpy.bindings.apollo.assay_filtering_json_schemas import (
+from dxpy.bindings.apollo.schemas.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
 from dxpy.bindings.apollo.cmd_line_options_validator import ArgsValidator
-from dxpy.bindings.apollo.input_arguments_validation_schemas import (
+from dxpy.bindings.apollo.schemas.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
 from dxpy.bindings.apollo.vizclient import VizClient
 
-from dxpy.bindings.apollo.expression_matrix_transformation import expression_transform
+from python.dxpy.bindings.apollo.data_transformations import transform_to_expression_matrix
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 from dxpy.bindings.dxrecord import DXRecord
 from dxpy.bindings.apollo.dataset import Dataset
 
 from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
-from dxpy.bindings.apollo.assay_filtering_conditions import (
+from dxpy.bindings.apollo.schemas.assay_filtering_conditions import (
     EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
 )
 from dxpy.bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
@@ -313,7 +313,7 @@ class TestDXExtractExpression(unittest.TestCase):
             }
         ]
 
-        transformed_results, colnames = expression_transform(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
         self.assertEqual(expected_output, transformed_results)
 
     def test_two_sample_exp_transform(self):
@@ -350,7 +350,7 @@ class TestDXExtractExpression(unittest.TestCase):
             },
         ]
 
-        transformed_results, colnames = expression_transform(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
         self.assertEqual(expected_output, transformed_results)
 
     def test_two_sample_feat_id_overlap_exp_trans(self):
@@ -391,7 +391,7 @@ class TestDXExtractExpression(unittest.TestCase):
             },
         ]
 
-        transformed_results, colnames = expression_transform(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
         self.assertEqual(expected_output, transformed_results)
 
     def test_exp_transform_output_compatibility(self):
@@ -426,7 +426,7 @@ class TestDXExtractExpression(unittest.TestCase):
             " ", ""
         )
 
-        transformed_results, colnames = expression_transform(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
         output_path = os.path.join(self.general_output_dir, "exp_transform_compat.csv")
         # Generate the formatted output file
         write_expression_output(
