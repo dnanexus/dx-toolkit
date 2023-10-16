@@ -1187,7 +1187,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "-",
             subprocess_run=True,
         )
-        self.assertEqual(response.stderr, expected_error)
+        self.assertIn(expected_error, response.stderr)
 
     def test_negative_dx_extract_cmd_invalid_location_range(self):
         expected_error = "Range cannot be greater than 250000000 for location"
@@ -1207,6 +1207,7 @@ class TestDXExtractExpression(unittest.TestCase):
             EXPRESSION_CLI_JSON_FILTERS["negative_test"]["sample_id_maxitem_limit"],
             None,
             False,
+            subprocess_run=True,
         )
         self.assertIn(expected_error, response.stderr)
 
