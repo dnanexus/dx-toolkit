@@ -1178,6 +1178,7 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertEqual(response, ".")
 
     def test_negative_dx_extract_cmd_empty_json(self):
+        expected_error = "No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information."
         response = self.run_dx_extract_assay_expression_cmd(
             self.expression_dataset,
             EXPRESSION_CLI_JSON_FILTERS["negative_test"]["empty_json"],
@@ -1186,26 +1187,28 @@ class TestDXExtractExpression(unittest.TestCase):
             "-",
             subprocess_run=True,
         )
-        self.assertEqual(response.stderr, ".")
+        self.assertEqual(response.stderr, expected_error)
 
     def test_negative_dx_extract_cmd_invalid_location_range(self):
+        expected_error = "Range cannot be greater than 250000000 for location"
         response = self.run_dx_extract_assay_expression_cmd(
             self.expression_dataset,
             EXPRESSION_CLI_JSON_FILTERS["negative_test"]["large_location_range"],
             None,
-            True,
+            False,
             subprocess_run=True,
         )
-        self.assertEqual(response.stderr, ".")
+        self.assertIn(expected_error, response.stderr)
 
     def test_negative_dx_extract_cmd_too_many_sample_ids(self):
+        expected_error = "Too many items given in field sample_id, maximum is 100"
         response = self.run_dx_extract_assay_expression_cmd(
             self.expression_dataset,
             EXPRESSION_CLI_JSON_FILTERS["negative_test"]["sample_id_maxitem_limit"],
             None,
-            True,
+            False,
         )
-        self.assertEqual(response.stderr, ".")
+        self.assertIn(expected_error, response.stderr)
 
 
 # Start the test
