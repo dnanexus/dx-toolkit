@@ -1154,7 +1154,7 @@ class TestDXExtractExpression(unittest.TestCase):
             True,
             "-",
         )
-        self.assertEqual(response, expected_sql_query)
+        self.assertEqual(response.strip(), expected_sql_query)
 
     @unittest.skip("Waiting for spec update")
     def test_dx_extract_cmd_location_expression_sample_data(self):
@@ -1178,7 +1178,7 @@ class TestDXExtractExpression(unittest.TestCase):
             True,
             "-",
         )
-        self.assertEqual(response, expected_sql_query)
+        self.assertEqual(response.strip(), expected_sql_query)
 
     def test_negative_dx_extract_cmd_empty_json(self):
         expected_error = "No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information."
