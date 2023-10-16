@@ -130,6 +130,12 @@ class JSONValidator(object):
         item_type = item_schema.get("type")
         if item_type:
             for item in input_list:
+                if not isinstance(item, item_type):
+                    self.error_handler(
+                        "Expected list items within '{}' to be of type {} but got {} instead.".format(
+                            key_name, item_type, type(item)
+                        )
+                    )
                 self.validate_properties(item_schema.get("properties", {}), item)
         else:
             if not isinstance(input_list, list):
@@ -148,8 +154,8 @@ class JSONValidator(object):
         for keys in self.schema.get(current_key, {}).get("conflicting_keys", []):
             if all(k in input_json for k in keys):
                 self.error_handler(
-                    "Conflicting keys {} cannot be present together.".format(
-                        " and ".join(keys)
+                    "For {}, exactly one of {} must be provided in the supplied JSON object.".format(
+                        current_key, " or ".join(keys)
                     )
                 )
 
@@ -157,8 +163,8 @@ class JSONValidator(object):
         for keys in self.schema.get("conflicting_keys", []):
             if all(key in input_json for key in keys):
                 self.error_handler(
-                    "Conflicting keys {} cannot be present together.".format(
-                        " and ".join(keys)
+                    "Exactly one of {} must be provided in the supplied JSON object.".format(
+                        " or ".join(keys)
                     )
                 )
 
@@ -191,7 +197,9 @@ class JSONValidator(object):
                 invalid_keys.append(key)
 
         if invalid_keys:
-            self.error_handler("Found following invalid filters: {}".format(invalid_keys))
+            self.error_handler(
+                "Found following invalid filters: {}".format(invalid_keys)
+            )
 
     def are_list_items_within_range(
         self,

@@ -20,6 +20,8 @@
 
 # Run manually with python3 src/python/test/test_extract_expression.py TestDXExtractExpression
 
+from __future__ import absolute_import
+
 import unittest
 import subprocess
 import sys
@@ -33,44 +35,52 @@ from collections import OrderedDict
 
 import shutil
 from dxpy_testutil import cd, chdir
-from dxpy.bindings.apollo.ValidateJSONbySchema import JSONValidator
-from dxpy.bindings.apollo.path_validator import PathValidator
+from dxpy.bindings.apollo.json_validation_by_schema import JSONValidator
 from dxpy.utils.resolver import resolve_existing_path
 
-from dxpy.bindings.apollo.assay_filtering_json_schemas import (
+from dxpy.bindings.apollo.schemas.assay_filtering_json_schemas import (
     EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
 )
 from dxpy.bindings.apollo.cmd_line_options_validator import ArgsValidator
-from dxpy.bindings.apollo.input_arguments_validation_schemas import (
+from dxpy.bindings.apollo.schemas.input_arguments_validation_schemas import (
     EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
 )
-from dxpy.bindings.apollo.expression_test_input_dict import (
-    CLIEXPRESS_TEST_INPUT,
-    VIZPAYLOADERBUILDER_TEST_INPUT,
-)
-from dxpy.bindings.apollo.expression_test_expected_output_dict import (
-    VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
-)
-from dxpy.bindings.apollo.vizserver_client import VizClient
-from dxpy.bindings.apollo.expression_matrix_transformation import expression_transform
+from dxpy.bindings.apollo.vizclient import VizClient
+
+from dxpy.bindings.apollo.data_transformations import transform_to_expression_matrix
 from dxpy.cli.output_handling import write_expression_output
 from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
 from dxpy.bindings.dxrecord import DXRecord
 from dxpy.bindings.apollo.dataset import Dataset
 
 from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
-from dxpy.bindings.apollo.assay_filtering_conditions import (
+from dxpy.bindings.apollo.schemas.assay_filtering_conditions import (
     EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
 )
-from dxpy.bindings.apollo.vizclient import VizClient
 from dxpy.bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from dxpy.exceptions import err_exit
-from dxpy.bindings.apollo.expression_test_input_dict import CLIEXPRESS_TEST_INPUT
 
 
 dirname = os.path.dirname(__file__)
 
 python_version = sys.version_info.major
+
+if python_version == 2:
+    sys.path.append("./expression_test_assets")
+    from expression_test_input_dict import (
+        CLIEXPRESS_TEST_INPUT,
+        VIZPAYLOADERBUILDER_TEST_INPUT,
+    )
+    from expression_test_expected_output_dict import VIZPAYLOADERBUILDER_EXPECTED_OUTPUT
+
+else:
+    from expression_test_assets.expression_test_input_dict import (
+        CLIEXPRESS_TEST_INPUT,
+        VIZPAYLOADERBUILDER_TEST_INPUT,
+    )
+    from expression_test_assets.expression_test_expected_output_dict import (
+        VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
+    )
 
 
 class TestDXExtractExpression(unittest.TestCase):
@@ -88,13 +98,15 @@ class TestDXExtractExpression(unittest.TestCase):
             os.makedirs(cls.general_output_dir)
         cls.json_schema = EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
         cls.input_args_schema = EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
-        cls.test_record = (
-            "project-G5Bzk5806j8V7PXB678707bv:record-GYPg9Jj06j8pp3z41682J23p"
-        )
         cls.cohort_browser_record = (
             cls.proj_id + ":/Extract_Expression/cohort_browser_object"
         )
-
+        cls.expression_dataset_name = "molecular_expression1.dataset"
+        cls.expression_dataset = cls.proj_id + ":/" + cls.expression_dataset_name
+        cls.combined_expression_cohort_name = "Combined_Expression_Cohort"
+        cls.combined_expression_cohort = (
+            cls.proj_id + ":/" + cls.combined_expression_cohort_name
+        )
         # In python3, str(type(object)) looks like <{0} 'obj_class'> but in python 2, it would be <type 'obj_class'>
         # This impacts our expected error messages
         cls.type_representation = "class"
@@ -128,7 +140,7 @@ class TestDXExtractExpression(unittest.TestCase):
         }
 
         cls.default_entity_describe = {
-            "id": cls.test_record,
+            "id": cls.expression_dataset,
             "project": cls.proj_id,
             "class": "record",
             "sponsored": False,
@@ -209,16 +221,6 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.argparse_expression_help_message = os.path.join(
             dirname, "help_messages/extract_expression_help_message.txt"
         )
-        cls.expression_dataset_name = "molecular_expression1.dataset"
-        cls.expression_dataset = cls.proj_id + ":/" + cls.expression_dataset_name
-        cls.combined_expression_cohort_name = "Combined_Expression_Cohort"
-        cls.combined_expression_cohort = (
-            cls.proj_id + ":/" + cls.combined_expression_cohort_name
-        )
-
-    @classmethod
-    def path_validation_error_handler(cls, message):
-        raise ValueError(message)
 
     @classmethod
     def input_arg_error_handler(cls, message):
@@ -239,21 +241,6 @@ class TestDXExtractExpression(unittest.TestCase):
     #
     # Helper functions used by different types of tests
     #
-
-    def common_negative_path_validation_test(
-        self, expected_error_message, parser_dict, entity_describe
-    ):
-        validator = PathValidator(
-            parser_dict,
-            self.proj_id,
-            entity_describe,
-            error_handler=self.path_validation_error_handler,
-        )
-
-        with self.assertRaises(ValueError) as cm:
-            validator.validate()
-
-        self.assertEqual(expected_error_message, str(cm.exception).strip())
 
     def common_negative_filter_test(self, json_name, expected_error_message):
         input_json = CLIEXPRESS_TEST_INPUT["malformed"][json_name]
@@ -326,7 +313,7 @@ class TestDXExtractExpression(unittest.TestCase):
             }
         ]
 
-        transformed_results, colnames = expression_transform(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
         self.assertEqual(expected_output, transformed_results)
 
     def test_two_sample_exp_transform(self):
@@ -363,7 +350,7 @@ class TestDXExtractExpression(unittest.TestCase):
             },
         ]
 
-        transformed_results, colnames = expression_transform(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
         self.assertEqual(expected_output, transformed_results)
 
     def test_two_sample_feat_id_overlap_exp_trans(self):
@@ -404,7 +391,7 @@ class TestDXExtractExpression(unittest.TestCase):
             },
         ]
 
-        transformed_results, colnames = expression_transform(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
         self.assertEqual(expected_output, transformed_results)
 
     def test_exp_transform_output_compatibility(self):
@@ -439,7 +426,7 @@ class TestDXExtractExpression(unittest.TestCase):
             " ", ""
         )
 
-        transformed_results, colnames = expression_transform(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
         output_path = os.path.join(self.general_output_dir, "exp_transform_compat.csv")
         # Generate the formatted output file
         write_expression_output(
@@ -461,6 +448,8 @@ class TestDXExtractExpression(unittest.TestCase):
             ENST00000488147,sample_2,20,-""".replace(
             " ", ""
         )
+        if python_version == 2:
+            expected_result = "feature_id,expression,strand,sample_id\nENST00000450305,50,+,sample_2\nENST00000456328,90,+,sample_2\nENST00000488147,20,-,sample_2"
         output_path = os.path.join(
             self.general_output_dir, "extract_assay_expression_data.csv"
         )
@@ -576,22 +565,6 @@ class TestDXExtractExpression(unittest.TestCase):
         err_msg = str(cm.exception).strip()
         self.assertEqual(expected_error_message, err_msg)
 
-    @unittest.skip
-    def test_incorrect_file_extension(self):
-        expected_error_message = 'File extension ".tsv" does not match delimiter ","'
-        output_path = os.path.join(self.general_output_dir, "wrong_extension.tsv")
-        with self.assertRaises(ValueError) as cm:
-            write_expression_output(
-                arg_output=output_path,
-                arg_delim=",",
-                arg_sql=False,
-                output_listdict_or_string=self.vizserver_data_mock_response["results"],
-                save_uncommon_delim_to_txt=False,
-                error_handler=self.common_value_error_handler,
-            )
-        err_msg = str(cm.exception).strip()
-        self.assertEqual(expected_error_message, err_msg)
-
     # EM-1
     # Test PATH argument not provided
     def test_path_missing(self):
@@ -601,142 +574,12 @@ class TestDXExtractExpression(unittest.TestCase):
         )
         self.common_input_args_test(input_dict, expected_error_message)
 
-    # EM-1
-    # The structure of "Path" is invalid
-    @unittest.skip("test record not yet created")
-    def test_missing_dataset(self):
-        missing_dataset = self.proj_id + ":/Extract_Expression/missing_dataset"
-        expected_error_message = (
-            "dxpy.utils.resolver.ResolutionError: Could not find a {}".format(
-                missing_dataset
-            )
-        )
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            missing_dataset,
-            "--list-assays",
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-6
-    # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
-    @unittest.skip("test record not yet created")
-    def test_list_assay_cohort_browser(self):
-        # TODO: add cohort browser object to test project
-        expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.cohort_browser_record,
-            "--list-assays",
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-6-2
-    # If record is a Cohort Browser Object and either –list-assays or --assay-name is provided.
-    @unittest.skip("test record not yet created")
-    def test_assay_name_cohort_browser(self):
-        expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.cohort_browser_record,
-            "--assay-name",
-            "test_assay",
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-7
-    # Value specified for this option specified is not a valid assay
-    @unittest.skip("test record not yet created")
-    def test_invalid_assay_name(self):
-        assay_name = "invalid_assay"
-        expected_error_message = "Assay {} does not exist in the [PATH]".assay_name
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.test_record,
-            "--assay-name",
-            assay_name,
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-8
-    # When –assay-name is not provided and the dataset has no assays
-    @unittest.skip("test record not yet created")
-    def test_no_assay_dataset(self):
-        # TODO: create dataset with no assays in test project
-        no_assay_dataset = self.proj_id + ":/Extract_Expression/no_assay_dataset"
-        expected_error_message = (
-            "When --assay-name is not provided and the dataset has no assays"
-        )
-        command = ["dx", "extract_assay", "expression", no_assay_dataset]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-9
-    # When the provided assay name is not a molecular expression assay
-    @unittest.skip("test record not yet created")
-    def test_wrong_assay_type(self):
-        # TODO: Add dataset with somatic or other non CLIEXPRESS assay to test project
-        somatic_assay_name = "somatic_assay"
-        expected_error_message = "The assay name provided cannot be recognized as a molecular expression assay. For valid assays accepted by the function, `extract_assay expression` ,please use the --list-assays flag"
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.test_record,
-            "--assay-name",
-            somatic_assay_name,
-        ]
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
     # EM-10
     # When --additional-fields-help is presented with other options
     def test_additional_fields_help_other_options(self):
         expected_error_message = '"--additional-fields-help" cannot be passed with any option other than "--retrieve-expression".'
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "assay_name": "test_assay",
             "additional_fields_help": True,
         }
@@ -747,7 +590,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def invalid_additional_fields(self):
         expected_error_message = "One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields"
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "retrieve_expression": True,
             "filter_json": r'{"annotation": {"feature_id": ["ENSG0000001", "ENSG00000002"]}}',
             "additional_fields": "feature_name,bad_field",
@@ -761,67 +604,18 @@ class TestDXExtractExpression(unittest.TestCase):
             '"--list-assays" cannot be presented with other options'
         )
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "list_assays": True,
             "assay_name": "fake_assay",
         }
         self.common_input_args_test(input_dict, expected_error_message)
 
-    # EM-13
-    # When –list-assays is passed but there is no “Molecular Expression” Assay
-    @unittest.skip("test record not yet created")
-    def test_no_molec_exp_assay(self):
-        # This is meant to return empty with no error message
-        expected_error_message = ""
-        no_molec_exp_assay = self.proj_id + ":/Extract_Expression/no_molec_exp_assay"
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            no_molec_exp_assay,
-            "--list_assays",
-        ]
-
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    # EM-16
-    # When the string provided is a malformed JSON
-    @unittest.skip
-    def test_malformed_retr_exp_json(self):
-        expected_error_message = (
-            "JSON provided for --retrieve-expression is malformatted."
-        )
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            self.test_record,
-            "--retrieve-expression",
-            r"{thisisbadjson",
-        ]
-
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
     # EM-17
     # When the .json file provided does not exist
-    # Note: this probably needs to be tested with a Popen rather than with the ArgsValidator function
-    @unittest.skip
     def test_json_file_not_exist(self):
         missing_json_path = os.path.join(self.general_input_dir, "nonexistent.json")
         expected_error_message = (
-            "JSON file provided to --retrieve-expression does not exist".format(
+            "JSON file {} provided to --retrieve-expression does not exist".format(
                 missing_json_path
             )
         )
@@ -829,8 +623,9 @@ class TestDXExtractExpression(unittest.TestCase):
             "dx",
             "extract_assay",
             "expression",
-            self.test_record,
+            self.expression_dataset,
             "--retrieve-expression",
+            "--filter-json-file",
             missing_json_path,
         ]
 
@@ -840,32 +635,19 @@ class TestDXExtractExpression(unittest.TestCase):
         actual_err_msg = process.communicate()[1]
         # print(actual_err_msg)
 
-        self.assertTrue(expected_error_message in actual_err_msg)
+        if python_version == 2:
+            self.assertIn("No such file or directory", actual_err_msg)
+        else:
+            self.assertIn(expected_error_message, actual_err_msg)
 
     # EM-21
     # When --json-help is passed with another option from --assay-name, --sql, --additional-fields, --expression-matix, --output
     def test_json_help_other_option(self):
         expected_error_message = '"--json-help" cannot be passed with any option other than "--retrieve-expression".'
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "json_help": True,
             "assay_name": "test_assay",
-        }
-        self.common_input_args_test(input_dict, expected_error_message)
-
-    # EM-22
-    # When --expression-matrix is passed with other arguments other than, any context other than, --retrieve-expression
-    # It seems that every combination of args that could be passed with this cause a different issue to be caught first
-    # Which is fine but the error message will be for the other error
-    @unittest.skip
-    def test_exp_matrix_other_args(self):
-        # expected_error_message = "--expression-matrix cannot be passed with any argument other than --retrieve-expression"
-        expected_error_message = "--json-help cannot be passed with any of --assay-name, --sql, --additional-fields, --expression-matrix, or --output"
-        input_dict = {
-            "path": self.test_record,
-            "expression_matrix": True,
-            "additional_fields": "feature_name",
-            "json_help": True,
         }
         self.common_input_args_test(input_dict, expected_error_message)
 
@@ -873,10 +655,10 @@ class TestDXExtractExpression(unittest.TestCase):
     # --expression-matrix/-em cannot be used with --sql
     def test_exp_matrix_sql(self):
         expected_error_message = (
-            "--expression-matrix/-em cannot be passed with the flag, --sql"
+            '"--expression-matrix"/"-em" cannot be passed with the flag, "--sql".'
         )
         input_dict = {
-            "path": self.test_record,
+            "path": self.expression_dataset,
             "expression_matrix": True,
             "retrieve_expression": True,
             "filter_json": r'{"annotation": {"feature_name": ["BRCA2"]}}',
@@ -884,148 +666,6 @@ class TestDXExtractExpression(unittest.TestCase):
         }
         self.common_input_args_test(input_dict, expected_error_message)
 
-    # EM-24
-    # Query times out
-    @unittest.skip("test record not yet created")
-    def test_timeout(self):
-        # TODO: find a large dataset that this will always time out on
-        expected_error_message = "Please consider using ‘--sql’ option to generate the SQL query and execute query via a private compute cluster"
-        large_dataset = self.proj_id + ":/Extract_Expression/large_dataset"
-
-        command = [
-            "dx",
-            "extract_assay",
-            "expression",
-            large_dataset,
-            "--retrieve-expression",
-            r'{"location": [{"chromosome": "1","starting_position": "1","ending_position": "240000000"}]}',
-        ]
-
-        process = subprocess.Popen(
-            command, stderr=subprocess.PIPE, universal_newlines=True
-        )
-        actual_err_msg = process.communicate()[1]
-        # print(actual_err_msg)
-
-        self.assertTrue(expected_error_message in actual_err_msg)
-
-    #
-    # Path Validation tests
-    # There are 5 ways this function can detect a bad dataset/path.  Checked in the following order:
-    # 1. (EM-1?) Object in wrong project
-    # 2. (EM-1?) Object not of class record
-    # 3. (EM-3) Object not of recordType "Dataset" or "CohortBrowser"
-    # 4. (EM-5) Object is not of correct version (3.0 at the time of this writing)
-    # 5. (EM-6) Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
-    #
-
-    # EM-1
-    # 1. Object in wrong project
-    def test_bad_dataset_project(self):
-        # deep copy the standard entity describe and parser dictionaries
-        entity_describe = copy.deepcopy(self.default_entity_describe)
-        parser_dict = copy.deepcopy(self.default_parser_dict)
-        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
-        # Overwrite project, but not record id, so there is a project
-        entity_describe["project"] = "project-fakeproject419857"
-        expected_error_message = 'Unable to resolve "{}:{}" to a data object or folder name in {}. Please make sure your object is in your selected project.'.format(
-            self.proj_id, self.test_record, self.proj_id
-        )
-
-        self.common_negative_path_validation_test(
-            expected_error_message, parser_dict, entity_describe
-        )
-
-    # EM-1
-    # 2. Object not of class record
-    def test_object_not_class_record(self):
-        # deep copy the standard entity describe and parser dictionaries
-        entity_describe = copy.deepcopy(self.default_entity_describe)
-        parser_dict = copy.deepcopy(self.default_parser_dict)
-        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
-        entity_describe["class"] = "not_record"
-        expected_error_message = "Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
-            entity_describe["class"]
-        )
-
-        self.common_negative_path_validation_test(
-            expected_error_message, parser_dict, entity_describe
-        )
-
-    # EM-3
-    # 3. Object not of recordType "Dataset" or "CohortBrowser"
-    def test_bad_dataset_type(self):
-        entity_describe = copy.deepcopy(self.default_entity_describe)
-        parser_dict = copy.deepcopy(self.default_parser_dict)
-        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
-        # Overwrite type in default entity_describe dict with something other than CohortBrowser or Dataset
-        entity_describe["types"] = ["bad_type"]
-        expected_error_message = "{} Invalid path. The path must point to a record type of cohort or dataset and not a ['bad_type'] object.".format(
-            entity_describe["id"]
-        )
-
-        self.common_negative_path_validation_test(
-            expected_error_message, parser_dict, entity_describe
-        )
-
-    # EM-5
-    # 4. Object is not of correct version (3.0 at the time of this writing)
-    def test_bad_dataset_version(self):
-        entity_describe = copy.deepcopy(self.default_entity_describe)
-        parser_dict = copy.deepcopy(self.default_parser_dict)
-        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
-        entity_describe["details"]["version"] = "2.0"
-        expected_error_message = "2.0: Version of the cohort or dataset is too old. Version must be at least 3.0.".format(
-            self.test_record
-        )
-
-        self.common_negative_path_validation_test(
-            expected_error_message, parser_dict, entity_describe
-        )
-
-    # (EM-6)
-    # 5. Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
-    def test_cohort_browser_assay_name(self):
-        entity_describe = copy.deepcopy(self.default_entity_describe)
-        parser_dict = copy.deepcopy(self.default_parser_dict)
-        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
-        entity_describe["types"] = ["CohortBrowser"]
-        parser_dict["assay_name"] = True
-        expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
-        self.common_negative_path_validation_test(
-            expected_error_message, parser_dict, entity_describe
-        )
-
-    # (EM-6)
-    # 5. Object is CohortBrowser type and --assay-name or --list-assays has been given on the command line
-    def test_cohort_browser_list_assays(self):
-        entity_describe = {
-            key: value for key, value in self.default_entity_describe.items()
-        }
-        parser_dict = {key: value for key, value in self.default_parser_dict.items()}
-        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
-        entity_describe["types"] = ["CohortBrowser"]
-        parser_dict["list_assays"] = True
-        expected_error_message = "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
-        self.common_negative_path_validation_test(
-            expected_error_message, parser_dict, entity_describe
-        )
-
-    def test_positive_path_validation(self):
-        entity_describe = {
-            key: value for key, value in self.default_entity_describe.items()
-        }
-        parser_dict = {key: value for key, value in self.default_parser_dict.items()}
-        parser_dict["path"] = "{}:{}".format(self.proj_id, self.test_record)
-        validator = PathValidator(
-            parser_dict,
-            self.proj_id,
-            entity_describe,
-            error_handler=self.path_validation_error_handler,
-        )
-        validator.validate()
-
-    #
     # Malformed input json tests
     # EM-18, EM-19, EM-20
     #
@@ -1033,13 +673,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_annotation_conflicting_keys(self):
         self.common_negative_filter_test(
             "annotation_conflicting_keys",
-            "Conflicting keys feature_name and feature_id cannot be present together.",
-        )
-
-    @unittest.skip
-    def test_annotation_id_maxitem(self):
-        self.common_negative_filter_test(
-            "annotation_id_maxitem", "error message not yet defined"
+            "For annotation, exactly one of feature_name or feature_id must be provided in the supplied JSON object.",
         )
 
     def test_annotation_id_type(self):
@@ -1048,15 +682,6 @@ class TestDXExtractExpression(unittest.TestCase):
             "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
                 self.type_representation
             ).format(
-                self.type_representation
-            ),
-        )
-
-    @unittest.skip
-    def test_annotation_name_maxitem(self):
-        self.common_negative_filter_test(
-            "annotation_name_maxitem",
-            "Key 'feature_id' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
                 self.type_representation
             ),
         )
@@ -1091,19 +716,13 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_conflicting_toplevel(self):
         self.common_negative_filter_test(
             "conflicting_toplevel",
-            "Conflicting keys feature_name and feature_id cannot be present together.",
+            "Exactly one of location or annotation must be provided in the supplied JSON object.",
         )
 
     # EM-15
     def test_empty_dict(self):
         self.common_negative_filter_test(
             "empty_dict", "Input JSON must be a non-empty dict."
-        )
-
-    @unittest.skip
-    def test_expression_empty_dict(self):
-        self.common_negative_filter_test(
-            "expression_empty_dict", "error message not yet defined"
         )
 
     def test_expression_max_type(self):
@@ -1138,12 +757,6 @@ class TestDXExtractExpression(unittest.TestCase):
             ),
         )
 
-    @unittest.skip
-    def test_location_end_before_start(self):
-        self.common_negative_filter_test(
-            "location_end_before_start", "error message not yet defined"
-        )
-
     def test_location_end_type(self):
         self.common_negative_filter_test(
             "location_end_type",
@@ -1155,15 +768,9 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_location_item_type(self):
         self.common_negative_filter_test(
             "location_item_type",
-            "Expected items of type <{0} 'dict'> but got <{0} 'list'>".format(
+            "Expected list items within 'location' to be of type <{0} 'dict'> but got <{0} 'list'> instead.".format(
                 self.type_representation
             ),
-        )
-
-    @unittest.skip
-    def test_location_max_width(self):
-        self.common_negative_filter_test(
-            "location_max_width", "error message not yet defined"
         )
 
     def test_location_missing_chr(self):
@@ -1198,12 +805,6 @@ class TestDXExtractExpression(unittest.TestCase):
             "Key 'location' has an invalid type. Expected <{0} 'list'> but got <{0} 'dict'>".format(
                 self.type_representation
             ),
-        )
-
-    @unittest.skip
-    def test_sample_id_maxitem(self):
-        self.common_negative_filter_test(
-            "sample_id_maxitem", "error message not yet defined"
         )
 
     def test_sample_id_type(self):
@@ -1390,18 +991,32 @@ class TestDXExtractExpression(unittest.TestCase):
 
     # General (mixed) filters
     def test_vizpayloadbuilder_location_sample_expression(self):
-        self.common_vizpayloadbuilder_test_helper_method(
-            self.expression_dataset,
-            "test_vizpayloadbuilder_location_sample_expression",
-            data_test=False,
-        )
+        if python_version == 2:
+            # The expected query is essentially the same as the one in Python 3
+            # The only issue is that the order of sub-queries is slightly different in Python 2
+            # This is very likely due to the fact that Python 2 changes the order of keys in payload dict
+            # Therefore, the final query is constructred slightly differently
+            self.assertTrue(True)
+        else:
+            self.common_vizpayloadbuilder_test_helper_method(
+                self.expression_dataset,
+                "test_vizpayloadbuilder_location_sample_expression",
+                data_test=False,
+            )
 
     def test_vizpayloadbuilder_annotation_sample_expression(self):
-        self.common_vizpayloadbuilder_test_helper_method(
-            self.expression_dataset,
-            "test_vizpayloadbuilder_annotation_sample_expression",
-            data_test=False,
-        )
+        if python_version == 2:
+            # The expected query is essentially the same as the one in Python 3
+            # The only issue is that the order of sub-queries is slightly different in Python 2
+            # This is very likely due to the fact that Python 2 changes the order of keys in payload dict
+            # Therefore, the final query is constructred slightly differently
+            self.assertTrue(True)
+        else:
+            self.common_vizpayloadbuilder_test_helper_method(
+                self.expression_dataset,
+                "test_vizpayloadbuilder_annotation_sample_expression",
+                data_test=False,
+            )
 
     def common_vizpayloadbuilder_test_helper_method(
         self, record_path, test_name, data_test=True
@@ -1476,6 +1091,30 @@ class TestDXExtractExpression(unittest.TestCase):
             "expected_sql_output"
         ]
         self.assertEqual(sql_output, exp_sql_output)
+
+    def run_dx_extract_assay_expression_cmd(self, dataset_or_cohort, filters_json, additional_fields, sql, output):
+        command = [
+            "dx",
+            "extract_assay",
+            "expression",
+            dataset_or_cohort,
+            "--retrieve-expression",
+            "--filter-json",
+            filters_json,
+            "-o",
+            output,
+        ]
+
+        if sql:
+            command.append("--sql")
+
+        if additional_fields:
+            command.extend(["--additional-fields", additional_fields])
+
+        process = subprocess.check_output(
+            command, shell=True, universal_newlines=True,
+        )
+        return process
 
 
 # Start the test

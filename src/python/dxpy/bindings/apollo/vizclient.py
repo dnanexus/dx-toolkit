@@ -1,8 +1,8 @@
+from __future__ import print_function
 import dxpy
 
-
 class VizClient(object):
-    def __init__(self, url, project_id, error_handler=print) -> None:
+    def __init__(self, url, project_id, error_handler=print):
         self.url = url
         self.project_id = project_id
         self.error_handler = error_handler

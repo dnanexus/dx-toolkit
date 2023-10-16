@@ -117,7 +117,7 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
         },
         "condition": "mutually_exclusive_group",
         "error_message": {
-            "message": '"--expression-matrix"/"-em" cannot be passed with the flag "--sql".'
+            "message": '"--expression-matrix"/"-em" cannot be passed with the flag, "--sql".'
         },
     },
 }

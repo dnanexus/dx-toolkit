@@ -1,7 +1,7 @@
 
-def expression_transform(results_list):
+def transform_to_expression_matrix(list_of_dicts):
     """
-    results_list: list of dictionaries, each of the form
+    list_of_dicts: list of dictionaries, each of the form
     {
         "feature_id":<feature_id>,
         "sample_id":<sample_id>,
@@ -37,7 +37,7 @@ def expression_transform(results_list):
     # 
     # }
     colnames = set()
-    for entry in results_list:
+    for entry in list_of_dicts:
         # Keep track of all seen feature_ids, they will become the columns of our final table
         colnames.add(entry["feature_id"])
         if entry["sample_id"] not in transformed_dict:
