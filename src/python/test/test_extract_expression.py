@@ -77,6 +77,7 @@ else:
     from expression_test_assets.expression_test_input_dict import (
         CLIEXPRESS_TEST_INPUT,
         VIZPAYLOADERBUILDER_TEST_INPUT,
+        EXPRESSION_CLI_JSON_FILTERS,
     )
     from expression_test_assets.expression_test_expected_output_dict import (
         VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
@@ -1136,6 +1137,66 @@ class TestDXExtractExpression(unittest.TestCase):
             universal_newlines=True,
         )
         return process
+
+    def test_dx_extract_cmd_location_expression_sample_sql(self):
+        response = self.run_dx_extract_assay_expression_cmd(
+            self.expression_dataset,
+            EXPRESSION_CLI_JSON_FILTERS["positive_test"]["location_expression_sample"],
+            "chrom,start,feature_name",
+            True,
+            "-",
+        )
+        self.assertEqual(response, ".")
+
+    def test_dx_extract_cmd_location_expression_sample_data(self):
+        response = self.run_dx_extract_assay_expression_cmd(
+            self.expression_dataset,
+            EXPRESSION_CLI_JSON_FILTERS["positive_test"]["location_expression_sample"],
+            "chrom,start,feature_name",
+            False,
+            "-",
+        )
+        self.assertEqual(response, ".")
+
+    def test_dx_extract_cmd_sample_ids_with_additional_fields(self):
+        response = self.run_dx_extract_assay_expression_cmd(
+            self.expression_dataset,
+            EXPRESSION_CLI_JSON_FILTERS["positive_test"][
+                "sample_id_with_additional_fields"
+            ],
+            "chrom,start,end,strand,feature_name",
+            True,
+            "-",
+        )
+        self.assertEqual(response, ".")
+
+    def test_negative_dx_extract_cmd_empty_json(self):
+        response = self.run_dx_extract_assay_expression_cmd(
+            self.expression_dataset,
+            EXPRESSION_CLI_JSON_FILTERS["negative_test"]["empty_json"],
+            None,
+            True,
+            "-",
+        )
+        self.assertEqual(response, ".")
+
+    def test_negative_dx_extract_cmd_invalid_location_range(self):
+        response = self.run_dx_extract_assay_expression_cmd(
+            self.expression_dataset,
+            EXPRESSION_CLI_JSON_FILTERS["negative_test"]["large_location_range"],
+            None,
+            True,
+        )
+        self.assertEqual(response, ".")
+
+    def test_negative_dx_extract_cmd_too_many_sample_ids(self):
+        response = self.run_dx_extract_assay_expression_cmd(
+            self.expression_dataset,
+            EXPRESSION_CLI_JSON_FILTERS["negative_test"]["sample_id_maxitem_limit"],
+            None,
+            True,
+        )
+        self.assertEqual(response, ".")
 
 
 # Start the test
