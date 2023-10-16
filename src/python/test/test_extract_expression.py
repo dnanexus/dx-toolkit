@@ -1117,7 +1117,7 @@ class TestDXExtractExpression(unittest.TestCase):
             dataset_or_cohort,
             "--retrieve-expression",
             "--filter-json",
-            str(filters_json),
+            str(filters_json).replace("'", '"'),
             "-o",
             output,
         ]
