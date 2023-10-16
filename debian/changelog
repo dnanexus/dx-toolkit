@@ -1,3 +1,16 @@
+dx-toolkit (0.361.0) trusty; urgency=medium
+
+  * Added: --fields-file argument in dx extract_dataset
+  * Added: ALT and alt_index columns in --additional-fields of dx extract_assay somatic
+  * Fixed: dx extract_assay error message when no valid assay is found
+  * Fixed: In dx extract_assay germline, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
+  * Fixed: Handled white spaces in dx extract command's inputs which are of the type string of comma separated values
+  * Fixed: Released Nextaur 1.6.8. It contains minor bugfixes and optimizations.
+  * Fixed: --retrieve-genotype --sql bug in UKB RAP region
+  * Fixed: Retry API call in object_exists_in_project()
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 16 Oct 2023 14:16:29 +0000
+
 dx-toolkit (0.360.0) trusty; urgency=medium
 
   * Fixed: Released Nextaur 1.6.7. It adds DNAnexus docker image support feature and contains errorStrategy bugfixes
