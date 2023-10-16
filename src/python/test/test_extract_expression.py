@@ -1146,6 +1146,7 @@ class TestDXExtractExpression(unittest.TestCase):
         return process
 
     def test_dx_extract_cmd_location_expression_sample_sql(self):
+        expected_sql_query = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE (`expr_annotation_1`.`chr` = '11' AND (`expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` <= 8693350 AND `expr_annotation_1`.`end` >= 67440200) OR `expr_annotation_1`.`chr` = 'X' AND (`expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` <= 148500700 AND `expr_annotation_1`.`end` >= 148994424) OR `expr_annotation_1`.`chr` = '17' AND (`expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` <= 75228160 AND `expr_annotation_1`.`end` >= 75235759)) AND `expression_1`.`value` >= 25.63 AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2')"
         response = self.run_dx_extract_assay_expression_cmd(
             self.expression_dataset,
             EXPRESSION_CLI_JSON_FILTERS["positive_test"]["location_expression_sample"],
@@ -1153,7 +1154,7 @@ class TestDXExtractExpression(unittest.TestCase):
             True,
             "-",
         )
-        self.assertEqual(response, ".")
+        self.assertEqual(response, expected_sql_query)
 
     def test_dx_extract_cmd_location_expression_sample_data(self):
         response = self.run_dx_extract_assay_expression_cmd(
@@ -1166,6 +1167,7 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertEqual(response, ".")
 
     def test_dx_extract_cmd_sample_ids_with_additional_fields(self):
+        expected_sql_query = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start`, `expr_annotation_1`.`end` AS `end`, `expr_annotation_1`.`strand` AS `strand` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`sample_id` IN ('sample_1')"
         response = self.run_dx_extract_assay_expression_cmd(
             self.expression_dataset,
             EXPRESSION_CLI_JSON_FILTERS["positive_test"][
@@ -1175,7 +1177,7 @@ class TestDXExtractExpression(unittest.TestCase):
             True,
             "-",
         )
-        self.assertEqual(response, ".")
+        self.assertEqual(response, expected_sql_query)
 
     def test_negative_dx_extract_cmd_empty_json(self):
         expected_error = "No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information."
