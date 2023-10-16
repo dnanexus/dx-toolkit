@@ -1109,6 +1109,7 @@ class TestDXExtractExpression(unittest.TestCase):
         sql,
         output="-",
         extra_args=None,
+        subprocess_run=False,
     ):
         command = [
             "dx",
@@ -1131,10 +1132,17 @@ class TestDXExtractExpression(unittest.TestCase):
         if extra_args:
             command.append(extra_args)
 
-        process = subprocess.check_output(
-            command,
-            universal_newlines=True,
-        )
+        if subprocess_run:
+            process = subprocess.run(
+                command, capture_output=True, text=True, check=False
+            )
+
+        else:
+            process = subprocess.check_output(
+                command,
+                universal_newlines=True,
+            )
+
         return process
 
     def test_dx_extract_cmd_location_expression_sample_sql(self):
@@ -1176,8 +1184,9 @@ class TestDXExtractExpression(unittest.TestCase):
             None,
             True,
             "-",
+            subprocess_run=True,
         )
-        self.assertEqual(response, ".")
+        self.assertEqual(response.stderr, ".")
 
     def test_negative_dx_extract_cmd_invalid_location_range(self):
         response = self.run_dx_extract_assay_expression_cmd(
@@ -1185,8 +1194,9 @@ class TestDXExtractExpression(unittest.TestCase):
             EXPRESSION_CLI_JSON_FILTERS["negative_test"]["large_location_range"],
             None,
             True,
+            subprocess_run=True,
         )
-        self.assertEqual(response, ".")
+        self.assertEqual(response.stderr, ".")
 
     def test_negative_dx_extract_cmd_too_many_sample_ids(self):
         response = self.run_dx_extract_assay_expression_cmd(
@@ -1195,7 +1205,7 @@ class TestDXExtractExpression(unittest.TestCase):
             None,
             True,
         )
-        self.assertEqual(response, ".")
+        self.assertEqual(response.stderr, ".")
 
 
 # Start the test
