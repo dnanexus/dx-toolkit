@@ -6,7 +6,35 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [359.0] - beta
+### Added
+
+* `--fields-file` argument in `dx extract_dataset`
+* `ALT` and `alt_index` columns in `--additional-fields` of `dx extract_assay somatic`
+
+### Fixed
+
+* `dx extract_assay` error message when no valid assay is found
+* In `dx extract_assay germline`, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
+* Handled white spaces in `dx extract` command's inputs which are of the type `string` of comma separated values
+* Fixed --retrieve-genotype --sql bug in UKB RAP region
+
+## [360.1] - beta
+
+### Fixed
+
+* Released Nextaur 1.6.7. It adds DNAnexus docker image support feature and contains errorStrategy bugfixes
+
+## [359.1] - 2023.10.10
+
+### Changed
+
+* Retry `ConnectionResetError` in dxpy
+
+### Fixed
+
+* Reduce API calls in `DXFile.read()` after download URL is cached
+
+## [359.0] - 2023.9.29
 
 ### Added
 

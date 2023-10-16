@@ -180,15 +180,25 @@ def extract_dataset(args):
         and not args.list_fields
         and not args.list_entities
         and args.fields is None
+        and args.fields_file is None
     ):
         err_exit(
-            "Must provide at least one of the following options: --fields, --dump-dataset-dictionary, --list-fields, --list-entities"
+            "Must provide at least one of the following options: --fields, --fields-file, --dump-dataset-dictionary, --list-fields, --list-entities"
+        )
+
+    if (
+        args.fields is not None
+        and args.fields_file is not None
+    ):
+        err_exit(
+            "dx extract_dataset: error: only one of the arguments, --fields or --fields-file, may be supplied at a given time"
         )
 
     listing_restricted = {
         "dump_dataset_dictionary": False,
         "sql": False,
         "fields": None,
+        "fields_file": None,
         "output": None,
         "delim": ",",
     }
@@ -329,7 +339,7 @@ def extract_dataset(args):
             )
             files_to_check = [output_file_data, output_file_coding, output_file_entity]
 
-    if args.fields:
+    if args.fields or args.fields_file:
         if args.sql:
             file_name_suffix = ".data.sql"
         else:
@@ -371,8 +381,23 @@ def extract_dataset(args):
         err_exit("Error: path already exists {path}".format(path=file_already_exist))
 
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    
+    fields_list = []
     if args.fields is not None:
-        fields_list = "".join(args.fields).split(",")
+        fields_list = [field.strip() for field in args.fields.split(",")]
+    elif args.fields_file is not None:
+        if os.path.isfile(args.fields_file):
+            with open(args.fields_file, "r") as infile:
+                for line in infile:
+                    fields_list.append(line.strip("\n"))
+        else:
+            err_exit(
+                "The file, {input_fields_file}, supplied using --fields-file could not be found".format(
+                    input_fields_file=args.fields_file
+                )
+            )
+
+    if fields_list:
         error_list = []
         for entry in fields_list:
             entity_field = entry.split(".")
@@ -417,7 +442,7 @@ def extract_dataset(args):
             )
 
     elif args.sql:
-        err_exit("`--sql` passed without `--fields`")
+        err_exit("`--sql` passed without `--fields` or `--fields-file")
 
     if args.dump_dataset_dictionary:
         rec_dict = rec_descriptor.get_dictionary()
@@ -590,7 +615,7 @@ def get_assay_name_info(
             rec_descriptor, assay_type=assay_type
         )
         if not target_assays:
-            err_exit("There's no {} assay in the dataset provided.").format(assay_type)
+            err_exit("There's no {} assay in the dataset provided.".format(friendly_assay_type))
         else:
             for a in target_assays:
                 print(a["name"])
@@ -610,9 +635,7 @@ def get_assay_name_info(
         selected_assay_name = target_assay_names[0]
         selected_assay_id = target_assay_ids[0]
     else:
-        err_exit("There's no {} assay in the dataset provided.").format(
-            friendly_assay_type
-        )
+        err_exit("There's no {} assay in the dataset provided.".format(friendly_assay_type))
     if assay_name:
         if assay_name not in list(target_assay_names):
             if assay_name in list(other_assay_names):
@@ -633,18 +656,22 @@ def get_assay_name_info(
                 if ga["name"] == assay_name:
                     selected_assay_id = ga["uuid"]
     
+    additional_descriptor_info = {}
+
     if friendly_assay_type == "germline":
         selected_ref_genome = "GRCh38.92"
         for a in target_assays:
-            if a["name"] == selected_assay_name and a["reference_genome"]:
-                selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
+            if a["name"] == selected_assay_name:
+                if a["reference_genome"]:
+                    selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
+                additional_descriptor_info["genotype_type_table"] = a["entities"]["genotype"]["fields"]["type"]["mapping"]["table"]
     elif friendly_assay_type == "somatic":
         selected_ref_genome = ""
         for a in target_assays:
             if a["name"] == selected_assay_name and a["reference"]:
                 selected_ref_genome = a["reference"]["name"] + "." + a["reference"]["annotation_source_version"]
 
-    return(selected_assay_name, selected_assay_id, selected_ref_genome)
+    return(selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info)
 
 
 def comment_fill(string, comment_string='#  ', **kwargs):
@@ -686,7 +713,7 @@ def extract_assay_germline(args):
         if args.json_help:
             print(
                 comment_fill('Filters and respective definitions', comment_string='# ') + '\n#\n' +
-                comment_fill('rsid: rsID associated with an allele or set of alleles. If multiple values are provided, the conditional search will be, "OR." For example, ["rs1111", "rs2222"], will search for alleles which match either "rs1111" or "rs2222". String match is case sensitive.') + '\n#\n' +
+                comment_fill('rsid: rsID associated with an allele or set of alleles. If multiple values are provided, the conditional search will be, "OR." For example, ["rs1111", "rs2222"], will search for alleles which match either "rs1111" or "rs2222". String match is case sensitive. Duplicate values are permitted and will be handled silently.') + '\n#\n' +
                 comment_fill('type: Type of allele. Accepted values are "SNP", "Ins", "Del", "Mixed". If multiple values are provided, the conditional search will be, "OR." For example, ["SNP", "Ins"], will search for variants which match either "SNP" or "Ins". String match is case sensitive.') + '\n#\n' +
                 comment_fill('dataset_alt_af: Dataset alternate allele frequency, a json object with empty content or two sets of key/value pair: {min: 0.1, max:0.5}. Accepted numeric value for each key is between and including 0 and 1.  If a user does not want to apply this filter but still wants this information in the output, an empty json object should be provided.') + '\n#\n' +
                 comment_fill('gnomad_alt_af: gnomAD alternate allele frequency. a json object with empty content or two sets of key/value pair: {min: 0.1, max:0.5}. Accepted value for each key is between 0 and 1. If a user does not want to apply this filter but still wants this information in the output, an empty json object should be provided.') + '\n#\n' +
@@ -756,7 +783,7 @@ def extract_assay_germline(args):
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(
+    selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info = get_assay_name_info(
         args.list_assays, args.assay_name, args.path, "germline", rec_descriptor
     )
 
@@ -801,9 +828,14 @@ def extract_assay_germline(args):
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
             if args.retrieve_genotype:
-                geno_table = re.search(
-                    r"\bgenotype_alt_read_optimized\w+", sql_results
-                ).group()
+                try:
+                    geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
+                    geno_table = re.search(
+                        geno_table_regex, sql_results
+                    ).group()
+                except Exception:
+                        err_exit("Failed to find the table, {}, in the generated SQL".format(additional_descriptor_info["genotype_type_table"]), 
+                                 expected_exceptions=(AttributeError,))
                 substr = "`" + geno_table + "`.`type`"
                 sql_results = sql_results.replace(
                     substr, "REPLACE(`" + geno_table + "`.`type`, 'hom', 'hom-alt')", 1
@@ -821,11 +853,18 @@ def extract_assay_germline(args):
                     if r["genotype_type"] == "hom":
                         r["genotype_type"] = "hom-alt"
 
+            def sort_variant(d):
+                chrom, pos = d["allele_id"].split("_")[:2]
+                if chrom.isdigit():
+                    return int(chrom), '', int(pos)
+                return float('inf'), chrom, int(pos)
+            ordered_results = sorted(resp_raw["results"], key=sort_variant)
+
             csv_from_json(
                 out_file_name=out_file,
                 print_to_stdout=print_to_stdout,
                 sep="\t",
-                raw_results=resp_raw["results"],
+                raw_results=ordered_results,
                 column_names=fields_list,
                 quote_char=str("|"),
             )
@@ -979,7 +1018,7 @@ def extract_assay_somatic(args):
                                  ['FILTER', 'FILTER', 'Comma separated list of filters for locus from the original VCF'], 
                                  ['reference_source', 'Reference Source', 'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample'], 
                                  ['variant_type', 'Variant Type', 'The type of allele, with respect to reference'], 
-                                 ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise'], 
+                                 ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise"'], 
                                  ['file_id', 'Source File ID', 'DNAnexus platform file-id of original source file'], 
                                  ['INFO', 'INFO', 'INFO section, verbatim from original VCF'], 
                                  ['FORMAT', 'FORMAT', 'FORMAT section, verbatim from original VCF'], 
@@ -991,14 +1030,17 @@ def extract_assay_somatic(args):
                                  ['Feature', 'Feature ID', 'A list of feature IDs, associated with the variant'], 
                                  ['HGVSc', 'HGVSc', 'A list of sequence variants in HGVS nomenclature, for DNA'], 
                                  ['HGVSp', 'HGVSp', 'A list of sequence variants in HGVS nomenclature, for protein'], 
-                                 ['CLIN_SIG', 'Clinical Significance', 'A list of allele specific clinical significance terms']]
+                                 ['CLIN_SIG', 'Clinical Significance', 'A list of allele specific clinical significance terms'],
+                                 ['ALT', 'ALT', 'Alternate allele(s) at locus, comma separated if more than one, verbatim from original VCF'],
+                                 ['alt_index', 'ALT allele_index', 'Order of the allele, as represented in the ALT field. If the allele is missing (i.e, "./0",  "0/." or "./.") then the alt_index will be empty']]
             print_fields(additional_fields)
             sys.exit(0)
 
     # Validate additional fields
-    if args.additional_fields:
-        additional_fields_input = "".join(args.additional_fields).split(",")
-        accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG']
+
+    if args.additional_fields is not None:
+        additional_fields_input = [additional_field.strip() for additional_field in args.additional_fields.split(",")]
+        accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG', 'ALT', 'alt_index']
         for field in additional_fields_input:
             if field not in accepted_additional_fields:
                 err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
@@ -1012,7 +1054,7 @@ def extract_assay_somatic(args):
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(
+    selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info = get_assay_name_info(
         args.list_assays, args.assay_name, args.path, "somatic", rec_descriptor
     )
 
