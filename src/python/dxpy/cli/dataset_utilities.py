@@ -49,15 +49,19 @@ from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
 
-from ..bindings.apollo.cmd_line_options_validator import ArgsValidator
-from ..bindings.apollo.schemas.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.dataset import Dataset
+
+from ..bindings.apollo.cmd_line_options_validator import ArgsValidator
 from ..bindings.apollo.json_validation_by_schema import JSONValidator
+
+from ..bindings.apollo.schemas.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.schemas.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
 from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from ..bindings.apollo.vizclient import VizClient
+
 from ..bindings.apollo.data_transformations import transform_to_expression_matrix
 from .output_handling import write_expression_output
 
