@@ -1107,7 +1107,7 @@ class TestDXExtractExpression(unittest.TestCase):
         filters_json,
         additional_fields,
         sql,
-        output,
+        output="-",
         extra_args=None,
     ):
         command = [
@@ -1117,7 +1117,7 @@ class TestDXExtractExpression(unittest.TestCase):
             dataset_or_cohort,
             "--retrieve-expression",
             "--filter-json",
-            filters_json,
+            str(filters_json),
             "-o",
             output,
         ]
