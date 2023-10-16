@@ -35,11 +35,9 @@ from parameterized import parameterized
 from dxpy.bindings import DXRecord, DXProject
 
 from dxpy.cli.dataset_utilities import (
-    get_assay_name_info,
     resolve_validate_dx_path,
     validate_project_access,
     resolve_validate_record_path,
-    DXDataset,
     raw_cohort_query_api_call
 )
 from dxpy.dx_extract_utils.cohort_filter_payload import (

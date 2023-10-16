@@ -36,6 +36,11 @@ from dxpy.dx_extract_utils.filter_to_payload import (
     final_payload,
     validate_JSON,
 )
+from dxpy.cli.dataset_utilities import (
+    DXDataset,
+    resolve_validate_record_path,
+    get_assay_name_info,
+)
 
 python_version = sys.version_info.major
 
@@ -61,6 +66,41 @@ class TestDXExtractAssay(unittest.TestCase):
     ############
 
     # Test retrieve_geno_bins
+    def test_get_assay_name_info(self):
+        # Set to true for the list assay utilities response instead of the normal functionality
+        list_assays = False
+        # When assay name is none, function looks for and selects first assay of type somatic that it finds
+        assay_name = None
+        friendly_assay_type = "germline"
+        project, entity_result, resp, dataset_project = resolve_validate_record_path(
+            self.test_record
+        )
+        dataset_id = resp["dataset"]
+        rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+        # Expected Results
+        expected_assay_name = "test01_assay"
+        expected_assay_id = "6a25ebd7-c304-4308-84c8-ca93da19caed"
+        expected_ref_genome = "GRCh38.92"
+        expected_additional_descriptor_info = {"genotype_type_table": "genotype_alt_read_optimized"}
+
+        (
+            selected_assay_name,
+            selected_assay_id,
+            selected_ref_genome,
+            additional_descriptor_info,
+        ) = get_assay_name_info(
+            list_assays=False,
+            assay_name=assay_name,
+            path=self.test_record,
+            friendly_assay_type=friendly_assay_type,
+            rec_descriptor=rec_descriptor,
+        )
+
+        self.assertEqual(expected_assay_name, selected_assay_name)
+        self.assertEqual(expected_assay_id, selected_assay_id)
+        self.assertEqual(expected_ref_genome, selected_ref_genome)
+        self.assertEqual(expected_additional_descriptor_info, additional_descriptor_info)
+
     def test_retrieve_geno_bins(self):
         # list_of_genes, project, genome_reference
         list_of_genes = ["ENSG00000173213"]

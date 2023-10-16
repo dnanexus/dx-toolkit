@@ -642,18 +642,22 @@ def get_assay_name_info(
                 if ga["name"] == assay_name:
                     selected_assay_id = ga["uuid"]
     
+    additional_descriptor_info = {}
+
     if friendly_assay_type == "germline":
         selected_ref_genome = "GRCh38.92"
         for a in target_assays:
-            if a["name"] == selected_assay_name and a["reference_genome"]:
-                selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
+            if a["name"] == selected_assay_name:
+                if a["reference_genome"]:
+                    selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
+                additional_descriptor_info["genotype_type_table"] = a["entities"]["genotype"]["fields"]["type"]["mapping"]["table"]
     elif friendly_assay_type == "somatic":
         selected_ref_genome = ""
         for a in target_assays:
             if a["name"] == selected_assay_name and a["reference"]:
                 selected_ref_genome = a["reference"]["name"] + "." + a["reference"]["annotation_source_version"]
 
-    return(selected_assay_name, selected_assay_id, selected_ref_genome)
+    return(selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info)
 
 
 def comment_fill(string, comment_string='#  ', **kwargs):
@@ -765,7 +769,7 @@ def extract_assay_germline(args):
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(
+    selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info = get_assay_name_info(
         args.list_assays, args.assay_name, args.path, "germline", rec_descriptor
     )
 
@@ -810,9 +814,14 @@ def extract_assay_germline(args):
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
             if args.retrieve_genotype:
-                geno_table = re.search(
-                    r"\bgenotype_alt_read_optimized\w+", sql_results
-                ).group()
+                try:
+                    geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
+                    geno_table = re.search(
+                        geno_table_regex, sql_results
+                    ).group()
+                except Exception:
+                        err_exit("Failed to find the table, {}, in the generated SQL".format(additional_descriptor_info["genotype_type_table"]), 
+                                 expected_exceptions=(AttributeError,))
                 substr = "`" + geno_table + "`.`type`"
                 sql_results = sql_results.replace(
                     substr, "REPLACE(`" + geno_table + "`.`type`, 'hom', 'hom-alt')", 1
@@ -1031,7 +1040,7 @@ def extract_assay_somatic(args):
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(
+    selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info = get_assay_name_info(
         args.list_assays, args.assay_name, args.path, "somatic", rec_descriptor
     )
 
