@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [361.0] - beta
+
 ### Added
 
 * `--fields-file` argument in `dx extract_dataset`
@@ -17,9 +19,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * In `dx extract_assay germline`, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
 * Handled white spaces in `dx extract` command's inputs which are of the type `string` of comma separated values
 * Released Nextaur 1.6.8. It contains minor bugfixes and optimizations.
-* Fixed --retrieve-genotype --sql bug in UKB RAP region
+* --retrieve-genotype --sql bug in UKB RAP region
+* Retry API call in object_exists_in_project()
 
-## [360.1] - beta
+## [360.1] - 2023.10.16
 
 ### Fixed
 
