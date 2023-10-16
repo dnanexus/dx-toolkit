@@ -313,7 +313,9 @@ class TestDXExtractExpression(unittest.TestCase):
             }
         ]
 
-        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(
+            vizserver_results
+        )
         self.assertEqual(expected_output, transformed_results)
 
     def test_two_sample_exp_transform(self):
@@ -350,7 +352,9 @@ class TestDXExtractExpression(unittest.TestCase):
             },
         ]
 
-        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(
+            vizserver_results
+        )
         self.assertEqual(expected_output, transformed_results)
 
     def test_two_sample_feat_id_overlap_exp_trans(self):
@@ -391,7 +395,9 @@ class TestDXExtractExpression(unittest.TestCase):
             },
         ]
 
-        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(
+            vizserver_results
+        )
         self.assertEqual(expected_output, transformed_results)
 
     def test_exp_transform_output_compatibility(self):
@@ -426,7 +432,9 @@ class TestDXExtractExpression(unittest.TestCase):
             " ", ""
         )
 
-        transformed_results, colnames = transform_to_expression_matrix(vizserver_results)
+        transformed_results, colnames = transform_to_expression_matrix(
+            vizserver_results
+        )
         output_path = os.path.join(self.general_output_dir, "exp_transform_compat.csv")
         # Generate the formatted output file
         write_expression_output(
@@ -1092,7 +1100,15 @@ class TestDXExtractExpression(unittest.TestCase):
         ]
         self.assertEqual(sql_output, exp_sql_output)
 
-    def run_dx_extract_assay_expression_cmd(self, dataset_or_cohort, filters_json, additional_fields, sql, output):
+    def run_dx_extract_assay_expression_cmd(
+        self,
+        dataset_or_cohort,
+        filters_json,
+        additional_fields,
+        sql,
+        output,
+        extra_args=None,
+    ):
         command = [
             "dx",
             "extract_assay",
@@ -1111,8 +1127,13 @@ class TestDXExtractExpression(unittest.TestCase):
         if additional_fields:
             command.extend(["--additional-fields", additional_fields])
 
+        if extra_args:
+            command.append(extra_args)
+
         process = subprocess.check_output(
-            command, shell=True, universal_newlines=True,
+            command,
+            shell=True,
+            universal_newlines=True,
         )
         return process
 
