@@ -70,6 +70,7 @@ if python_version == 2:
     from expression_test_input_dict import (
         CLIEXPRESS_TEST_INPUT,
         VIZPAYLOADERBUILDER_TEST_INPUT,
+        EXPRESSION_CLI_JSON_FILTERS,
     )
     from expression_test_expected_output_dict import VIZPAYLOADERBUILDER_EXPECTED_OUTPUT
 
