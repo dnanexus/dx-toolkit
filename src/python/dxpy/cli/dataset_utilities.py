@@ -1138,14 +1138,15 @@ def validate_cohort_ids(descriptor, project, resp, ids):
     gpk_type = descriptor.model["entities"][entity_name]["fields"][field_name]["mapping"]["column_sql_type"]
     # Prepare a payload to find entries matching the input ids in the dataset
     if gpk_type in ["integer", "bigint"]:
-        id_list = reduce(lambda a, b: a+[int(b)], ids, [])
+        lambda_for_list_conv = lambda a, b: a+[int(b)]
     elif gpk_type in ["float", "double"]:
-        id_list = reduce(lambda a, b: a+[float(b)], ids, [])
+        lambda_for_list_conv = lambda a, b: a+[float(b)]
     elif gpk_type in ["string"]:
-        id_list = reduce(lambda a, b: a+[str(b)], ids, [])
+        lambda_for_list_conv = lambda a, b: a+[str(b)]
     else:
         err_msg = "Invalid input record. Cohort ID field in the input dataset or cohortbrowser record is of type, {type}. Support is currently only available for Cohort ID fields having one of the following types; string, integer and float".format(type = gpk_type)
         raise ValueError(err_msg) 
+    id_list = reduce(lambda_for_list_conv, ids, [])
 
     entity_field_name = "{}${}".format(entity_name, field_name)
     fields_list = [{field_name: entity_field_name}]
@@ -1185,6 +1186,8 @@ def validate_cohort_ids(descriptor, project, resp, ids):
         missing_ids = set(id_list).difference(discovered_ids)
         err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = resp["dataset"], ids = missing_ids)
         raise ValueError(err_msg)
+    
+    return id_list, lambda_for_list_conv
 
         
 def has_access_level(project, access_level):
@@ -1262,7 +1265,7 @@ def create_cohort(args):
     rec_descriptor = DXDataset(resp["dataset"], project=dataset_project).get_descriptor()
 
     try:
-        validate_cohort_ids(rec_descriptor, dataset_project, resp, samples)
+        list_of_ids, lambda_for_list_conv = validate_cohort_ids(rec_descriptor, dataset_project, resp, samples)
     except ValueError as err:
         err_exit(str(err), expected_exceptions=(ValueError,))
     except VizserverError as err:
@@ -1272,16 +1275,16 @@ def create_cohort(args):
     # Input cohort IDs have been succesfully validated    
 
     # converting list of IDs to list of string IDs
-    list_of_str_ids = reduce(lambda a, b: a+[str(b)], samples, [])
 
     base_sql = resp.get("baseSql", resp.get("base_sql"))
     try:
         raw_cohort_query_payload = cohort_filter_payload(
-            list_of_str_ids,
+            list_of_ids,
             rec_descriptor.model["global_primary_key"]["entity"],
             rec_descriptor.model["global_primary_key"]["field"],
             resp.get("filters", {}),
             from_project,
+            lambda_for_list_conv,
             base_sql,
         )
     except Exception as e:
