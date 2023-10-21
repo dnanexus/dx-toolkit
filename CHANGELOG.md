@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [361.0] - beta
+## [362.0] - beta
+
+### Added
+
+* archival_state param to `dxpy.bindings.search.find_data_objects()`
+
+## [361.0] - 2023.10.16
 
 ### Added
 
