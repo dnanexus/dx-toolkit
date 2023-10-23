@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Project context added for loading dataset descriptor file when using `dx extract_dataset`
+
 ## [362.0] - beta
 
 ### Added
