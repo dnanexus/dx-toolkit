@@ -6,7 +6,59 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [357.0] - beta
+## [362.0] - beta
+
+### Added
+
+* archival_state param to `dxpy.bindings.search.find_data_objects()`
+
+## [361.0] - 2023.10.16
+
+### Added
+
+* `--fields-file` argument in `dx extract_dataset`
+* `ALT` and `alt_index` columns in `--additional-fields` of `dx extract_assay somatic`
+
+### Fixed
+
+* `dx extract_assay` error message when no valid assay is found
+* In `dx extract_assay germline`, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
+* Handled white spaces in `dx extract` command's inputs which are of the type `string` of comma separated values
+* Released Nextaur 1.6.8. It contains minor bugfixes and optimizations.
+* --retrieve-genotype --sql bug in UKB RAP region
+* Retry API call in object_exists_in_project()
+
+## [360.1] - 2023.10.16
+
+### Fixed
+
+* Released Nextaur 1.6.7. It adds DNAnexus docker image support feature and contains errorStrategy bugfixes
+
+## [359.1] - 2023.10.10
+
+### Changed
+
+* Retry `ConnectionResetError` in dxpy
+
+### Fixed
+
+* Reduce API calls in `DXFile.read()` after download URL is cached
+
+## [359.0] - 2023.9.29
+
+### Added
+
+* `dx create_cohort`
+* Nextflow pipeline readme file is used as a readme file of Nextflow applet
+* Default optional inputs `nextflow_soft_confs` and `nextflow_params_file` to Nextflow applets to support soft configuration override and custom parameters file in `nextflow run`
+
+## [358.0] - 2023.9.22
+
+### Changed
+
+* `dx find org projects --property` in Python 3
+
+## [357.0] - 2023.9.15
 
 ### Changed
 

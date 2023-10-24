@@ -40,7 +40,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
-from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic
+from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic, create_cohort
 from ..cli.download import (download_one_file, download_one_database_file, download)
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
@@ -5294,6 +5294,7 @@ parser_update_org.add_argument('--detailed-job-metrics-collect-default', choices
 update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
 update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
 update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
+parser_update_org.add_argument('--job-logs-forwarding-json', metavar='JLF', help='JLF is a JSON string with url and token enabling forwarding of job logs to Splunk, e.g. \'{"url":"https://http-inputs-acme.splunkcloud.com/event/collector","token":"splunk-hec-token"}\'')
 parser_update_org.set_defaults(func=update_org)
 register_parser(parser_update_org, subparsers_action=subparsers_update, categories='org')
 
@@ -5527,14 +5528,16 @@ parser_run.add_argument('--detailed-job-metrics', action='store_true', default=N
 preserve_outputs = parser_run.add_mutually_exclusive_group()
 preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
                               help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
-                                        "root execution into the \"intermediateJobOutputs\" subfolder under the output "
-                                        "folder for the root execution.",
+                                        "root execution R into the \"intermediateJobOutputs\" subfolder under R's output "
+                                        "folder.  As R's root job or root analysis' stages complete, R's regular outputs "
+                                        "will be moved to R's regular output folder.",
                                         width_adjustment=-24))
 preserve_outputs.add_argument('--preserve-job-outputs-folder', metavar="JOB_OUTPUTS_FOLDER",
-                              help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
-                                        "root execution to a folder in the project. JOB_OUTPUTS_FOLDER starting with '/' "
-                                        "refers to an absolute path within the project, otherwise, it refers to a subfolder "
-                                        "under root execution's output folder.",
+                              help=fill("Similar to --preserve-job-outputs, copy cloneable outputs of every non-reused "
+                                        "job entering \"done\" state in this root execution to the specified folder in "
+                                        "the project.  JOB_OUTPUTS_FOLDER starting with '/' refers to an absolute path "
+                                        "within the project, otherwise, it refers to a subfolder under root execution's "
+                                        "output folder.",
                                         width_adjustment=-24))
 
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
@@ -6428,8 +6431,9 @@ parser_extract_dataset = subparsers.add_parser('extract_dataset', help="Retrieve
                                    description="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data. Provides listing options for entities and fields.",
                                    prog='dx extract_dataset')
 parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where "record-id" indicates the record ID in the currently selected project) or name')
-parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the three dictionary files, <record_name>.data_dictionary.csv, <record_name>.entity_dictionary.csv, and <record_name>.codings.csv will be generated. Files will be comma delimited and written to the local working directory, unless otherwise specified using --delimiter and --output arguments. If any of the three dictionary files does not contain data (i.e. the dictionary is empty), then that particular file will not be created.')
-parser_extract_dataset.add_argument('--fields', nargs='+', help='A comma-separated string where each value is the phenotypic entity name and field name, separated by a dot.  For example: "<entity_name>.<field_name>,<entity_name>.<field_name>". If multiple entities are provided, field values will be automatically inner joined. If only the --fields argument is provided, data will be retrieved and returned. If both --fields and --sql arguments are provided, a SQL statement to retrieve the specified field data will be automatically generated and returned.')
+parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the three dictionary files, <record_name>.data_dictionary.csv, <record_name>.entity_dictionary.csv, and <record_name>.codings.csv will be generated. Files will be comma delimited and written to the local working directory, unless otherwise specified using --delimiter and --output arguments. If stdout is specified with the output argument, the data dictionary, entity dictionary, and coding are output in succession, without separators. If any of the three dictionary files does not contain data (i.e. the dictionary is empty), then that particular file will not be created (or be output if the output is stdout).')
+parser_extract_dataset.add_argument('--fields', type=str, help='A comma-separated string where each value is the phenotypic entity name and field name, separated by a dot. For example: "<entity_name>.<field_name>,<entity_name>.<field_name>". Internal spaces are permitted. If multiple entities are provided, field values will be automatically inner joined. If only the --fields argument is provided, data will be retrieved and returned. If both --fields and --sql arguments are provided, a SQL statement to retrieve the specified field data will be automatically generated and returned. Alternatively, use --fields-file option when the number of fields to be retrieved is large.')
+parser_extract_dataset.add_argument('--fields-file', type=str, help='A file with no header and one entry per line where every entry is the phenotypic entity name and field name, separated by a dot. For example: <entity_name>.<field_name>. If multiple entities are provided, field values will be automatically inner joined. If only the --fields-file argument is provided, data will be retrieved and returned. If both --fields-file and --sql arguments are provided, a SQL statement to retrieve the specified field data will be automatically generated and returned. May not be used in conjunction with the argument --fields.')
 parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (string) will be returned to query the set of entity.fields, instead of returning stored values from the set of entity.fields')
 parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const=',', default=',', help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
 parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output). If not supplied, output will create a file with a default name in the current folder')
@@ -6578,9 +6582,9 @@ parser_extract_assay_somatic.add_argument(
 
 parser_extract_assay_somatic.add_argument(
     "--additional-fields",
-    nargs='+',
+    type=str,
     default=None,
-    help='A set of fields to return, in addition to the default set; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", "allele". Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, "fieldA,fieldB,fieldC." Use --additional-fields-help with this option to get detailed information and the full list of output fields available.'
+    help='A set of fields to return, in addition to the default set; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", "allele". Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, "fieldA,fieldB,fieldC."  Internal spaces are permitted.  Use --additional-fields-help with this option to get detailed information and the full list of output fields available.'
 )
 
 parser_extract_assay_somatic.add_argument(
@@ -6609,6 +6613,25 @@ parser_extract_assay_somatic.add_argument(
 
 parser_extract_assay_somatic.set_defaults(func=extract_assay_somatic)
 register_parser(parser_extract_assay_somatic)
+
+#####################################
+# create_cohort
+#####################################
+parser_create_cohort = subparsers.add_parser('create_cohort', help='Generates a new Cohort object on the platform from an existing Dataset or Cohort object and using list of IDs.',
+                                   description='Generates a new Cohort object on the platform from an existing Dataset or Cohort object and using list of IDs.',
+                                   prog="dx create_cohort",
+                                   parents=[stdout_args],
+                                   add_help=False)
+
+parser_create_cohort.add_argument('PATH', nargs='?', type=str, help='DNAnexus path for the new data object. If not provided, default behavior uses current project and folder, and will name the object identical to the assigned record-id.')
+parser_create_cohort.add_argument('--from', required=True, type=str, help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name')
+parser_create_c_mutex_group = parser_create_cohort.add_mutually_exclusive_group(required=True)
+parser_create_c_mutex_group.add_argument('--cohort-ids', type=str, help='A set of IDs used to subset the Dataset or Cohort object as a comma-separated string. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
+parser_create_c_mutex_group.add_argument('--cohort-ids-file', type=str, help='A set of IDs used to subset the Dataset or Cohort object in a file with one ID per line and no header. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
+parser_create_cohort.add_argument('-h','--help', help='Return the docstring and exit', action='help')
+
+parser_create_cohort.set_defaults(func=create_cohort)
+register_parser(parser_create_cohort)
 
 
 #####################################

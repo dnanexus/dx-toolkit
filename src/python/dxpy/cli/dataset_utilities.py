@@ -30,10 +30,11 @@ import codecs
 import subprocess
 from ..utils.printing import fill
 from ..bindings import DXRecord
-from ..bindings.dxdataobject_functions import is_dxlink
+from ..bindings.dxdataobject_functions import is_dxlink, describe
 from ..bindings.dxfile import DXFile
-from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError
+from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError, resolve_path, check_folder_exists
 from ..utils.file_handle import as_handle
+from ..utils.describe import print_desc
 from ..exceptions import (
     err_exit,
     PermissionDenied,
@@ -46,12 +47,14 @@ from ..exceptions import (
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
+from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
 
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
 
 
-def resolve_validate_path(path):
+def resolve_validate_record_path(path):
+
     project, folder_path, entity_result = resolve_existing_path(path)
 
     if project is None:
@@ -71,8 +74,8 @@ def resolve_validate_path(path):
 
     if entity_result["describe"]["class"] != "record":
         err_exit(
-            "%s : Invalid path. The path must point to a record type of cohort or dataset"
-            % entity_result["describe"]["class"]
+            "{}: Invalid path. The path must point to a record type of cohort or dataset".format(path)
+            
         )
 
     try:
@@ -110,17 +113,25 @@ def resolve_validate_path(path):
     return project, entity_result, resp, dataset_project
 
 
-def raw_query_api_call(resp, payload):
-    resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/raw-query"
+def viz_query_api_call(resp, payload, route):
+    resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/" + route
     try:
-        resp_raw_query = dxpy.DXHTTPRequest(
+        resp_query = dxpy.DXHTTPRequest(
             resource=resource_val, data=payload, prepend_srv=False
         )
 
     except Exception as details:
         err_exit(str(details))
-    sql_results = resp_raw_query["sql"] + ";"
+    sql_results = resp_query["sql"] + ";"
     return sql_results
+
+
+def raw_query_api_call(resp, payload):
+    return viz_query_api_call(resp, payload, 'raw-query')
+
+
+def raw_cohort_query_api_call(resp, payload):
+    return viz_query_api_call(resp, payload, 'raw-cohort-query')
 
 
 def raw_api_call(resp, payload, sql_message=True):
@@ -132,12 +143,12 @@ def raw_api_call(resp, payload, sql_message=True):
         if "error" in resp_raw.keys():
             if resp_raw["error"]["type"] == "InvalidInput":
                 err_message = "Insufficient permissions due to the project policy.\n" + resp_raw["error"]["message"]
-                
             elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
-
                 err_message = "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster.\n" + resp_raw["error"]["message"]        
             elif resp_raw["error"]["type"] == "QueryBuilderError" and resp_raw["error"]["details"] == "rsid exists in request filters without rsid entries in rsid_lookup_table.":
                 err_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
+            elif resp_raw["error"]["type"] == "DxApiError":
+                err_message = resp_raw["error"]["message"]
             else:
                 err_message = resp_raw["error"]
             err_exit(str(err_message))
@@ -148,22 +159,32 @@ def raw_api_call(resp, payload, sql_message=True):
 
 def extract_dataset(args):
     """
-    Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset’s dictionary can be extracted independently or in conjunction with data.
+    Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data.
     """
     if (
         not args.dump_dataset_dictionary
         and not args.list_fields
         and not args.list_entities
         and args.fields is None
+        and args.fields_file is None
     ):
         err_exit(
-            "Must provide at least one of the following options: --fields, --dump-dataset-dictionary, --list-fields, --list-entities"
+            "Must provide at least one of the following options: --fields, --fields-file, --dump-dataset-dictionary, --list-fields, --list-entities"
+        )
+
+    if (
+        args.fields is not None
+        and args.fields_file is not None
+    ):
+        err_exit(
+            "dx extract_dataset: error: only one of the arguments, --fields or --fields-file, may be supplied at a given time"
         )
 
     listing_restricted = {
         "dump_dataset_dictionary": False,
         "sql": False,
         "fields": None,
+        "fields_file": None,
         "output": None,
         "delim": ",",
     }
@@ -199,7 +220,7 @@ def extract_dataset(args):
     else:
         err_exit("Invalid delimiter specified")
 
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
 
     dataset_id = resp["dataset"]
     out_directory = ""
@@ -304,7 +325,7 @@ def extract_dataset(args):
             )
             files_to_check = [output_file_data, output_file_coding, output_file_entity]
 
-    if args.fields:
+    if args.fields or args.fields_file:
         if args.sql:
             file_name_suffix = ".data.sql"
         else:
@@ -346,8 +367,23 @@ def extract_dataset(args):
         err_exit("Error: path already exists {path}".format(path=file_already_exist))
 
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
+    
+    fields_list = []
     if args.fields is not None:
-        fields_list = "".join(args.fields).split(",")
+        fields_list = [field.strip() for field in args.fields.split(",")]
+    elif args.fields_file is not None:
+        if os.path.isfile(args.fields_file):
+            with open(args.fields_file, "r") as infile:
+                for line in infile:
+                    fields_list.append(line.strip("\n"))
+        else:
+            err_exit(
+                "The file, {input_fields_file}, supplied using --fields-file could not be found".format(
+                    input_fields_file=args.fields_file
+                )
+            )
+
+    if fields_list:
         error_list = []
         for entry in fields_list:
             entity_field = entry.split(".")
@@ -392,7 +428,7 @@ def extract_dataset(args):
             )
 
     elif args.sql:
-        err_exit("`--sql` passed without `--fields`")
+        err_exit("`--sql` passed without `--fields` or `--fields-file")
 
     if args.dump_dataset_dictionary:
         rec_dict = rec_descriptor.get_dictionary()
@@ -565,7 +601,7 @@ def get_assay_name_info(
             rec_descriptor, assay_type=assay_type
         )
         if not target_assays:
-            err_exit("There's no {} assay in the dataset provided.").format(assay_type)
+            err_exit("There's no {} assay in the dataset provided.".format(friendly_assay_type))
         else:
             for a in target_assays:
                 print(a["name"])
@@ -585,9 +621,7 @@ def get_assay_name_info(
         selected_assay_name = target_assay_names[0]
         selected_assay_id = target_assay_ids[0]
     else:
-        err_exit("There's no {} assay in the dataset provided.").format(
-            friendly_assay_type
-        )
+        err_exit("There's no {} assay in the dataset provided.".format(friendly_assay_type))
     if assay_name:
         if assay_name not in list(target_assay_names):
             if assay_name in list(other_assay_names):
@@ -608,18 +642,22 @@ def get_assay_name_info(
                 if ga["name"] == assay_name:
                     selected_assay_id = ga["uuid"]
     
+    additional_descriptor_info = {}
+
     if friendly_assay_type == "germline":
         selected_ref_genome = "GRCh38.92"
         for a in target_assays:
-            if a["name"] == selected_assay_name and a["reference_genome"]:
-                selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
+            if a["name"] == selected_assay_name:
+                if a["reference_genome"]:
+                    selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
+                additional_descriptor_info["genotype_type_table"] = a["entities"]["genotype"]["fields"]["type"]["mapping"]["table"]
     elif friendly_assay_type == "somatic":
         selected_ref_genome = ""
         for a in target_assays:
             if a["name"] == selected_assay_name and a["reference"]:
                 selected_ref_genome = a["reference"]["name"] + "." + a["reference"]["annotation_source_version"]
 
-    return(selected_assay_name, selected_assay_id, selected_ref_genome)
+    return(selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info)
 
 
 def comment_fill(string, comment_string='#  ', **kwargs):
@@ -661,7 +699,7 @@ def extract_assay_germline(args):
         if args.json_help:
             print(
                 comment_fill('Filters and respective definitions', comment_string='# ') + '\n#\n' +
-                comment_fill('rsid: rsID associated with an allele or set of alleles. If multiple values are provided, the conditional search will be, "OR." For example, ["rs1111", "rs2222"], will search for alleles which match either "rs1111" or "rs2222". String match is case sensitive.') + '\n#\n' +
+                comment_fill('rsid: rsID associated with an allele or set of alleles. If multiple values are provided, the conditional search will be, "OR." For example, ["rs1111", "rs2222"], will search for alleles which match either "rs1111" or "rs2222". String match is case sensitive. Duplicate values are permitted and will be handled silently.') + '\n#\n' +
                 comment_fill('type: Type of allele. Accepted values are "SNP", "Ins", "Del", "Mixed". If multiple values are provided, the conditional search will be, "OR." For example, ["SNP", "Ins"], will search for variants which match either "SNP" or "Ins". String match is case sensitive.') + '\n#\n' +
                 comment_fill('dataset_alt_af: Dataset alternate allele frequency, a json object with empty content or two sets of key/value pair: {min: 0.1, max:0.5}. Accepted numeric value for each key is between and including 0 and 1.  If a user does not want to apply this filter but still wants this information in the output, an empty json object should be provided.') + '\n#\n' +
                 comment_fill('gnomad_alt_af: gnomAD alternate allele frequency. a json object with empty content or two sets of key/value pair: {min: 0.1, max:0.5}. Accepted value for each key is between 0 and 1. If a user does not want to apply this filter but still wants this information in the output, an empty json object should be provided.') + '\n#\n' +
@@ -720,7 +758,7 @@ def extract_assay_germline(args):
             )
 
     ######## Data Processing ########
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
 
     if "CohortBrowser" in resp["recordTypes"] and any(
         [args.list_assays, args.assay_name]
@@ -731,7 +769,7 @@ def extract_assay_germline(args):
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(
+    selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info = get_assay_name_info(
         args.list_assays, args.assay_name, args.path, "germline", rec_descriptor
     )
 
@@ -776,9 +814,14 @@ def extract_assay_germline(args):
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
             if args.retrieve_genotype:
-                geno_table = re.search(
-                    r"\bgenotype_alt_read_optimized\w+", sql_results
-                ).group()
+                try:
+                    geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
+                    geno_table = re.search(
+                        geno_table_regex, sql_results
+                    ).group()
+                except Exception:
+                        err_exit("Failed to find the table, {}, in the generated SQL".format(additional_descriptor_info["genotype_type_table"]), 
+                                 expected_exceptions=(AttributeError,))
                 substr = "`" + geno_table + "`.`type`"
                 sql_results = sql_results.replace(
                     substr, "REPLACE(`" + geno_table + "`.`type`, 'hom', 'hom-alt')", 1
@@ -796,11 +839,18 @@ def extract_assay_germline(args):
                     if r["genotype_type"] == "hom":
                         r["genotype_type"] = "hom-alt"
 
+            def sort_variant(d):
+                chrom, pos = d["allele_id"].split("_")[:2]
+                if chrom.isdigit():
+                    return int(chrom), '', int(pos)
+                return float('inf'), chrom, int(pos)
+            ordered_results = sorted(resp_raw["results"], key=sort_variant)
+
             csv_from_json(
                 out_file_name=out_file,
                 print_to_stdout=print_to_stdout,
                 sep="\t",
-                raw_results=resp_raw["results"],
+                raw_results=ordered_results,
                 column_names=fields_list,
                 quote_char=str("|"),
             )
@@ -954,7 +1004,7 @@ def extract_assay_somatic(args):
                                  ['FILTER', 'FILTER', 'Comma separated list of filters for locus from the original VCF'], 
                                  ['reference_source', 'Reference Source', 'One of ["GRCh37", "GRCh38"] or the allele_sample_id of the respective normal sample'], 
                                  ['variant_type', 'Variant Type', 'The type of allele, with respect to reference'], 
-                                 ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise'], 
+                                 ['symbolic_type', 'Symbolic Type', 'One of ["precise", "imprecise"]. Non-symbolic alleles are always "precise"'], 
                                  ['file_id', 'Source File ID', 'DNAnexus platform file-id of original source file'], 
                                  ['INFO', 'INFO', 'INFO section, verbatim from original VCF'], 
                                  ['FORMAT', 'FORMAT', 'FORMAT section, verbatim from original VCF'], 
@@ -966,20 +1016,23 @@ def extract_assay_somatic(args):
                                  ['Feature', 'Feature ID', 'A list of feature IDs, associated with the variant'], 
                                  ['HGVSc', 'HGVSc', 'A list of sequence variants in HGVS nomenclature, for DNA'], 
                                  ['HGVSp', 'HGVSp', 'A list of sequence variants in HGVS nomenclature, for protein'], 
-                                 ['CLIN_SIG', 'Clinical Significance', 'A list of allele specific clinical significance terms']]
+                                 ['CLIN_SIG', 'Clinical Significance', 'A list of allele specific clinical significance terms'],
+                                 ['ALT', 'ALT', 'Alternate allele(s) at locus, comma separated if more than one, verbatim from original VCF'],
+                                 ['alt_index', 'ALT allele_index', 'Order of the allele, as represented in the ALT field. If the allele is missing (i.e, "./0",  "0/." or "./.") then the alt_index will be empty']]
             print_fields(additional_fields)
             sys.exit(0)
 
     # Validate additional fields
-    if args.additional_fields:
-        additional_fields_input = "".join(args.additional_fields).split(",")
-        accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG']
+
+    if args.additional_fields is not None:
+        additional_fields_input = [additional_field.strip() for additional_field in args.additional_fields.split(",")]
+        accepted_additional_fields = ['sample_id', 'tumor_normal', 'ID', 'QUAL', 'FILTER', 'reference_source', 'variant_type', 'symbolic_type', 'file_id', 'INFO', 'FORMAT', 'SYMBOL', 'GENOTYPE', 'normal_assay_sample_id', 'normal_allele_ids', 'Gene', 'Feature', 'HGVSc', 'HGVSp', 'CLIN_SIG', 'ALT', 'alt_index']
         for field in additional_fields_input:
             if field not in accepted_additional_fields:
                 err_exit("One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields")
             
     ######## Data Processing ########
-    project, entity_result, resp, dataset_project = resolve_validate_path(args.path)
+    project, entity_result, resp, dataset_project = resolve_validate_record_path(args.path)
     if "CohortBrowser" in resp["recordTypes"] and any([args.list_assays,args.assay_name]):
         err_exit(
             "Currently --assay-name and --list-assays may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset Object as input."
@@ -987,7 +1040,7 @@ def extract_assay_somatic(args):
     dataset_id = resp["dataset"]
     rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
 
-    selected_assay_name, selected_assay_id, selected_ref_genome = get_assay_name_info(
+    selected_assay_name, selected_assay_id, selected_ref_genome, additional_descriptor_info = get_assay_name_info(
         args.list_assays, args.assay_name, args.path, "somatic", rec_descriptor
     )
 
@@ -1046,6 +1099,200 @@ def extract_assay_somatic(args):
                 quote_char=str("\t"),
                 quoting=csv.QUOTE_NONE,
             )
+
+#### CREATE COHORT ####
+def resolve_validate_dx_path(path):
+    """
+    Resolves dx path into project, folder and name. Fails if non existing folder is provided.
+    """
+    project, folder, name = resolve_path(path)
+    err_msg, folder_exists = None, None
+    if folder != "/":
+        folder_name = os.path.basename(folder)
+        folder_path = os.path.dirname(folder)
+        try:
+            folder_exists = check_folder_exists(project, folder_path, folder_name)
+        except ResolutionError as e:
+            if "folder could not be found" in str(e):
+                folder_exists = False
+            else:
+                raise e
+        if not folder_exists:
+            err_msg = "The folder: {} could not be found in the project: {}".format(
+                folder, project
+            )
+    
+    return project, folder, name, err_msg
+
+class VizserverError(Exception):
+    pass
+
+def validate_cohort_ids(descriptor, project, resp,ids):
+    # Usually the name of the table
+    entity_name = descriptor.model["global_primary_key"]["entity"]
+    # The name of the column or field in the table
+    field_name = descriptor.model["global_primary_key"]["field"] 
+
+    # Prepare a payload to find entries matching the input ids in the dataset
+    entity_field_name = "{}${}".format(entity_name, field_name)
+    fields_list = [{field_name: entity_field_name}]
+
+    # Note that pheno filters do not need name or id fields
+    payload = {
+        "project_context": project,
+        "fields": fields_list,
+        "filters":{
+            "pheno_filters": {
+                "filters": {
+                    entity_field_name: [
+                        {"condition": "in", "values": ids}
+                    ]
+                }
+            }
+        }
+    }
+
+    # Use the dxpy raw_api_function to send a POST request to the server with our payload
+    try:
+        resp_raw = raw_api_call(resp, payload)
+    except Exception as exc:
+        raise VizserverError(
+            "Exception caught while validating cohort ids.  Bad response from Vizserver."
+            "Original Error message:\n{}"
+        ).format(str(exc))
+    # Order of samples doesn't matter so using set here
+    discovered_ids = set()
+    # Parse the results objects for the cohort ids
+    for result in resp_raw["results"]:
+        discovered_ids.add(result[field_name])
+
+    # Compare the discovered cohort ids to the user-provided cohort ids
+    if discovered_ids != set(ids):
+        # Find which given samples are not present in the dataset
+        missing_ids = set(ids).difference(discovered_ids)
+        err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = resp["dataset"], ids = missing_ids)
+        raise ValueError(err_msg)
+
+        
+def has_access_level(project, access_level):
+    """
+    Validates that issuing user has required access level.
+    Args:
+        project: str: tasked project_id
+        access_level: str: minimum requested level
+    Retuns: boolean
+    """
+    level_rank = ["VIEW", "UPLOAD", "CONTRIBUTE", "ADMINISTER"]
+    access_level_idx = level_rank.index(access_level)
+    try:
+        project_describe = describe(project)
+    except PermissionDenied:
+        return False
+    if level_rank.index(project_describe["level"]) < access_level_idx:
+        return False
+    return True
+
+
+def validate_project_access(project, access_level="UPLOAD"):
+    """
+    Validates that project has requested access.
+    Args:
+        project: str: tasked project_id
+        access_level: str: minimum requested level Default at least UPLOAD
+    Returns:
+        Error message
+
+    """
+    if not has_access_level(project, access_level):
+        return "At least {} permission is required to create a record in a project".format(
+            access_level
+        )
+
+
+def create_cohort(args):
+    """
+    Create a cohort from dataset/cohort and specified list of samples.
+    """
+    #### Validation ####
+    # Validate and resolve 'PATH' input
+    
+    # default path values
+    path_project = dxpy.WORKSPACE_ID
+    path_folder = dxpy.config.get('DX_CLI_WD', '/')
+    path_name = None
+    if args.PATH:
+        path_project, path_folder, path_name, err_msg = resolve_validate_dx_path(
+            args.PATH
+        )
+        if err_msg:
+            err_exit(err_msg)
+        err_msg = validate_project_access(path_project)
+        if err_msg:
+            err_exit(err_msg)
+    # validate and resolve 'from' input
+    FROM = args.__dict__.get("from")
+    from_project, entity_result, resp, dataset_project = resolve_validate_record_path(FROM)
+
+    #### Reading input sample ids from file or command line ####
+    samples=[]
+    # from file
+    if args.cohort_ids_file:
+        with open(args.cohort_ids_file, "r") as infile:
+            for line in infile:
+                samples.append(line.strip("\n"))
+    # from string
+    if args.cohort_ids:
+        samples = [id.strip() for id in args.cohort_ids.split(",")]
+    
+    #### Validate the input cohort IDs ####
+    # Get the table/entity and field/column of the dataset from the descriptor
+    rec_descriptor = DXDataset(resp["dataset"], project=dataset_project).get_descriptor()
+
+    try:
+        validate_cohort_ids(rec_descriptor, dataset_project, resp, samples)
+    except ValueError as err:
+        err_exit(str(err))
+    except VizserverError as err:
+        err_exit(str(err))
+    except Exception as err:
+        err_exit(str(err))
+    # Input cohort IDs have been succesfully validated    
+
+    base_sql = resp.get("baseSql", resp.get("base_sql"))
+    try:
+        raw_cohort_query_payload = cohort_filter_payload(
+            samples,
+            rec_descriptor.model["global_primary_key"]["entity"],
+            rec_descriptor.model["global_primary_key"]["field"],
+            resp.get("filters", {}),
+            from_project,
+            base_sql,
+        )
+    except Exception as e:
+        err_exit("{}: {}".format(entity_result["id"], e))
+    sql = raw_cohort_query_api_call(resp, raw_cohort_query_payload)
+    cohort_payload = cohort_final_payload(
+        path_name,
+        path_folder,
+        path_project,
+        resp["databases"],
+        resp["dataset"],
+        resp["schema"],
+        raw_cohort_query_payload["filters"],
+        sql,
+        base_sql,
+        resp.get("combined"),
+    )
+
+    dx_record = dxpy.bindings.dxrecord.new_dxrecord(**cohort_payload)
+    # print record details to stdout
+    if args.brief:
+        print(dx_record.get_id())
+    else:
+        try:
+            print_desc(dx_record.describe(incl_properties=True, incl_details=True), args.verbose)
+        except Exception as e:
+            err_exit(str(e))
 
 
 class DXDataset(DXRecord):

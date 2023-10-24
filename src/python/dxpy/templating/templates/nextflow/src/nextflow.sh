@@ -5,9 +5,6 @@
 
 set -f
 
-DOCKER_CREDS_FOLDER=/docker/credentials/
-DOCKER_CREDS_FILENAME=dx_docker_creds
-CREDENTIALS=${HOME}/credentials
 
 # How long to let a subjob with error keep running for Nextflow to handle it
 # before we end the DX job, in seconds
@@ -27,10 +24,6 @@ WAIT_INTERVAL=15
 #          }
 #      }
 docker_registry_login() {
-  if [ ! -f $CREDENTIALS ]; then
-    dx download "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" -o $CREDENTIALS
-  fi
-
   export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
   export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
   export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
@@ -300,7 +293,7 @@ main() {
 
   # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.6.6
+  NXF_PLUGINS_VERSION=1.6.8
 
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
@@ -312,13 +305,6 @@ main() {
   # Check if limit reached for Nextflow sessions preserved in this project's cache
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage
-  fi
-
-  if [ -n "$docker_creds" ]; then
-    dx mkdir -p $DOCKER_CREDS_FOLDER
-    dx download "$(jq '."$dnanexus_link"' <<<${docker_creds} -r)" -o $CREDENTIALS --no-progress -f
-    dx upload $CREDENTIALS --brief --wait --destination "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}"
-    docker_registry_login
   fi
 
   # set default NXF env constants
@@ -392,6 +378,18 @@ main() {
   setup_workdir
   export NXF_WORK
 
+  # download default applet file type inputs
+  dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
+  RUNTIME_CONFIG_CMD=''
+  RUNTIME_PARAMS_FILE=''
+  [[ -d "$HOME/in/nextflow_soft_confs/" ]] && RUNTIME_CONFIG_CMD=$(find "$HOME"/in/nextflow_soft_confs -name "*.config" -type f -printf "-c %p ")
+  [[ -d "$HOME/in/nextflow_params_file/" ]] && RUNTIME_PARAMS_FILE=$(find "$HOME"/in/nextflow_params_file -type f -printf "-params-file %p ")
+  if [[ -d "$HOME/in/docker_creds" ]]; then
+    CREDENTIALS=$(find "$HOME/in/docker_creds" -type f | head -1)
+    [[ -s $CREDENTIALS ]] && docker_registry_login || echo "no docker credential available"
+    dx upload "$CREDENTIALS" --path "$DX_WORKSPACE_ID:/dx_docker_creds" --brief --wait --no-progress || true
+  fi
+
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
@@ -399,12 +397,14 @@ main() {
   declare -a NEXTFLOW_CMD="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
+    ${RUNTIME_CONFIG_CMD} \
     -log ${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
     -name $DX_JOB_ID \
     $RESUME_CMD \
     $nextflow_run_opts \
+    $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
 
   NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
@@ -491,10 +491,10 @@ nf_task_exit() {
 
 # Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
-  docker_credentials=$(dx find data --path "$DX_WORKSPACE_ID:$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
-  if [ -n "$docker_credentials" ]; then
-    docker_registry_login
-  fi
+  CREDENTIALS="$HOME/docker_creds"
+  dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
+  [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
+
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on

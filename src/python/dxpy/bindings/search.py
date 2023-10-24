@@ -114,7 +114,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
                       describe=False, limit=None, level=None, region=None,
-                      return_handler=False, first_page_size=100,
+                      archival_state=None, return_handler=False, first_page_size=100,
                       **kwargs):
     """
     :param classname:
@@ -160,9 +160,11 @@ def find_data_objects(classname=None, state=None, visibility=None,
         things, be used to customize the set of fields that is returned)
     :type describe: bool or dict
     :param level: The minimum permissions level for which results should be returned (one of "VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINISTER")
+    :type level: string
     :param region: Filter on result set by the given region(s).
     :type region: string or list of strings
-    :type level: string
+    :param archival_state: Filter by the given archival state (one of "archived", "live", "archival", “unarchiving”, or "any"). Requires classname="file", project, and folder arguments to be provided.
+    :type archival_state: string 
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
     :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
@@ -260,6 +262,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
         query['level'] = level
     if region is not None:
         query['region'] = region
+    if archival_state is not None:
+        query['archivalState'] = archival_state
     if limit is not None:
         query["limit"] = limit
 
@@ -858,7 +862,7 @@ def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, prope
         if len(properties.keys()) == 1:
             query["properties"] = properties
         else:
-            query["properties"] = {"$and": [{k: v} for (k, v) in properties.iteritems()]}
+            query["properties"] = {"$and": [{k: v} for (k, v) in properties.items()]}
     if tags is not None:
         if len(tags) == 1:
             query["tags"] = tags[0]

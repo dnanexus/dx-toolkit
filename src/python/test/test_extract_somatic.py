@@ -34,7 +34,7 @@ import shutil
 from dxpy_testutil import cd
 from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
-    resolve_validate_path,
+    resolve_validate_record_path,
     DXDataset,
 )
 from dxpy.dx_extract_utils.somatic_filter_payload import (
@@ -100,7 +100,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         # When assay name is none, function looks for and selects first assay of type somatic that it finds
         assay_name = None
         friendly_assay_type = "somatic"
-        project, entity_result, resp, dataset_project = resolve_validate_path(
+        project, entity_result, resp, dataset_project = resolve_validate_record_path(
             self.test_record
         )
         dataset_id = resp["dataset"]
@@ -109,11 +109,13 @@ class TestDXExtractSomatic(unittest.TestCase):
         expected_assay_name = "test_single_assay_202306231200"
         expected_assay_id = "5c359e55-0639-46bc-bbf3-5eb22d5a5780"
         expected_ref_genome = "GRCh38.109"
+        expected_additional_descriptor_info = {}
 
         (
             selected_assay_name,
             selected_assay_id,
             selected_ref_genome,
+            additional_descriptor_info,
         ) = get_assay_name_info(
             list_assays=False,
             assay_name=assay_name,
@@ -125,6 +127,7 @@ class TestDXExtractSomatic(unittest.TestCase):
         self.assertEqual(expected_assay_name, selected_assay_name)
         self.assertEqual(expected_assay_id, selected_assay_id)
         self.assertEqual(expected_ref_genome, selected_ref_genome)
+        self.assertEqual(expected_additional_descriptor_info, additional_descriptor_info)
 
     def test_basic_filter(self):
         print("testing basic filter")
