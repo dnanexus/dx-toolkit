@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Support dataset and CB records with Integer and Float type global primary keys as input in `create_cohort`
+
 ## [362.0] - beta
 
 ### Added
