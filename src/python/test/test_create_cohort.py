@@ -419,8 +419,9 @@ class TestCreateCohort(unittest.TestCase):
             "logic": "and",
         }
         expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2');"
+        lambda_for_list_conv = lambda a, b: a+[str(b)]
         
-        generated_filter = generate_pheno_filter(values, entity, field, filters)
+        generated_filter = generate_pheno_filter(values, entity, field, filters, lambda_for_list_conv)
         self.assertEqual(expected_filter, generated_filter)
 
         # Testing raw cohort query api
@@ -471,8 +472,9 @@ class TestCreateCohort(unittest.TestCase):
             visualize_response = json.load(f)
         filters = visualize_response.get("filters", {})
         base_sql = visualize_response.get("baseSql", visualize_response.get("base_sql"))
+        lambda_for_list_conv = lambda a, b: a+[str(b)]
 
-        test_payload = cohort_filter_payload(values, entity, field, filters, project_context, base_sql)
+        test_payload = cohort_filter_payload(values, entity, field, filters, project_context, lambda_for_list_conv, base_sql)
 
         with open(os.path.join(self.payloads_dir, "raw-cohort-query_input", "{}.json".format(payload_name))) as f:
             valid_payload = json.load(f)

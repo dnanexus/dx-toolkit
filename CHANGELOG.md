@@ -14,6 +14,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Support dataset and CB records with Integer and Float type global primary keys as input in `create_cohort`
+
+## [362.0] - beta
+
+### Added
+
+* archival_state param to `dxpy.bindings.search.find_data_objects()`
+
+## [361.0] - 2023.10.16
+
+### Added
+
 * `--fields-file` argument in `dx extract_dataset`
 * `ALT` and `alt_index` columns in `--additional-fields` of `dx extract_assay somatic`
 
