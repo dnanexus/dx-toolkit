@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* Updated Nextflow to 23.10.0.
+* Updated Nextflow to 23.10.0 (staging only).
 
 ## [361.0] - beta
 
