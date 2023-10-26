@@ -1344,7 +1344,7 @@ class DXDataset(DXRecord):
         assert self._record_type in self.types
         assert "descriptor" in self.details
         if is_dxlink(self.details["descriptor"]):
-            self.descriptor_dxfile = DXFile(self.details["descriptor"], mode="rb")
+            self.descriptor_dxfile = DXFile(self.details["descriptor"], mode="rb", project=project)
         else:
             err_exit("%s : Invalid cohort or dataset" % self.details["descriptor"])
         self.descriptor = None
