@@ -55,7 +55,7 @@ class TestImageRef(DXTestCase):
     def test_ImageRef_cache(self, process, digest, dx_file_id, repository, image_name, tag):
         image_ref = ImageRef(process, digest, dx_file_id, repository, image_name, tag)
         with self.assertRaises(NotImplementedError) as err:
-            _ = image_ref.cache()
+            _ = image_ref.cache("file_name")
             self.assertEqual(
                 err.exception,
                 "Abstract class. Method not implemented. Use the concrete implementations."
@@ -68,7 +68,7 @@ class TestImageRef(DXTestCase):
                      'Skipping Python 3 code')
     def test_DockerImageRef_cache(self, process, digest, dx_file_id, repository, image_name, tag):
         image_ref = DockerImageRef(process, digest, dx_file_id, repository, image_name, tag)
-        bundle_dx_file_id = image_ref.cache()
+        bundle_dx_file_id = image_ref.cache("file_name")
         self.assertFalse("")
 
 
