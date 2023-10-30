@@ -1201,7 +1201,8 @@ def describe(args):
                 json_input['fields'] = {'internetUsageIPs': True,
                                         'runSystemRequirements': True,
                                         'runSystemRequirementsByExecutable': True,
-                                        'mergedSystemRequirementsByExecutable': True}
+                                        'mergedSystemRequirementsByExecutable': True,
+                                        'jobLogsForwardingStatus': True}
 
         if is_analysis_id(args.path):
             if args.verbose:
