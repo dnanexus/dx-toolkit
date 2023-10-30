@@ -13,6 +13,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Support dataset and CB records with Integer and Float type global primary keys as input in `create_cohort`
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
 
 ## [362.0] - beta
 
