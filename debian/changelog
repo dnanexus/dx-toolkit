@@ -1,3 +1,10 @@
+dx-toolkit (0.363.0) trusty; urgency=medium
+
+  * Added: Support dataset and CB records with Integer and Float type global primary keys as input in create_cohort
+  * Fixed: Project context added for loading dataset descriptor file when using dx extract_dataset
+
+ -- Kurt Jensen <kjensen@dnanexus.com>  Mon, 30 Oct 2023 12:12:07 +0000
+
 dx-toolkit (0.362.0) trusty; urgency=medium
 
   * Added: archival_state param to find_data_objects()
