@@ -115,32 +115,6 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.type_representation = "class"
         if python_version == 2:
             cls.type_representation = "type"
-        # Note: there would usually be a "func" key with a function object as its value
-        cls.default_parser_dict = {
-            "apiserver_host": None,
-            "apiserver_port": None,
-            "apiserver_protocol": None,
-            "project_context_id": None,
-            "workspace_id": None,
-            "security_context": None,
-            "auth_token": None,
-            "env_help": None,
-            "version": None,
-            "command": "extract_assay",
-            "path": None,
-            "list_assays": False,
-            "retrieve_expression": False,
-            "additional_fields_help": False,
-            "assay_name": None,
-            "filter_json": None,
-            "filter_json_file": None,
-            "json_help": False,
-            "sql": False,
-            "additional_fields": None,
-            "expression_matrix": False,
-            "delim": None,
-            "output": None,
-        }
 
         cls.default_entity_describe = {
             "id": cls.expression_dataset,
