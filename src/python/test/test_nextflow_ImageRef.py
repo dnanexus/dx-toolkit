@@ -36,40 +36,41 @@ else:
 
 class TestImageRef(DXTestCase):
 
-    @parameterized.expand([
-        ["proc1", "sha256aasdfadfadfafddasfdsfa", "file-xxxx", "my/docker/repo", "image_name", "v2.0.10"]
-    ])
-    @unittest.skipIf(USING_PYTHON2,
-        'Skipping Python 3 code')
-    def test_ImageRef_bundled_depends(self, process, digest, dx_file_id, repository, image_name, tag):
-        image_ref = ImageRef(process, digest, dx_file_id, repository, image_name, tag)
-        bundled_depends = image_ref.bundled_depends
-        bundle_fixture = {"name": "image_name", "id": {"$dnanexus_link": "file-xxxx"}}
-        self.assertEqual(bundled_depends, bundle_fixture)
+    def setUp(self):
+        super(TestImageRef, self).setUp()
+        self.local_image = os.path.join(os.path.dirname(__file__), "nextflow/container_fixtures/busybox_1.36")
+
 
     @parameterized.expand([
-        ["proc1", "sha256aasdfadfadfafddasfdsfa", "file-xxxx", "my/docker/repo", "image_name", "v2.0.10"]
+        ["proc1", "sha256aasdfadfadfafddasfdsfa"]
     ])
     @unittest.skipIf(USING_PYTHON2,
                      'Skipping Python 3 code')
-    def test_ImageRef_cache(self, process, digest, dx_file_id, repository, image_name, tag):
-        image_ref = ImageRef(process, digest, dx_file_id, repository, image_name, tag)
+    def test_ImageRef_cache(self, process, digest):
+        image_ref = ImageRef(process, digest)
         with self.assertRaises(NotImplementedError) as err:
-            _ = image_ref.cache("file_name")
+            _ = image_ref._cache("file_name")
             self.assertEqual(
                 err.exception,
                 "Abstract class. Method not implemented. Use the concrete implementations."
             )
 
+
     @parameterized.expand([
-        ["proc1", "sha256aasdfadfadfafddasfdsfa", "file-xxxx", "my/docker/repo", "image_name", "v2.0.10"]
+        ["proc1", "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824", "busybox", "1.36"]
     ])
     @unittest.skipIf(USING_PYTHON2,
                      'Skipping Python 3 code')
-    def test_DockerImageRef_cache(self, process, digest, dx_file_id, repository, image_name, tag):
-        image_ref = DockerImageRef(process, digest, dx_file_id, repository, image_name, tag)
-        bundle_dx_file_id = image_ref.cache("file_name")
-        self.assertFalse("")
+    def test_DockerImageRef_cache(self, process, digest, image_name, tag):
+        image_ref = DockerImageRef(process=process, digest=digest, image_name=image_name, tag=tag)
+        bundle_dx_file_id = image_ref.bundled_depends
+        self.assertEqual(
+            bundle_dx_file_id,
+            {
+                "name": "busybox_1.36",
+                "id": {"$dnanexus_link": image_ref._dx_file_id}
+            }
+        )
 
 
 if __name__ == '__main__':

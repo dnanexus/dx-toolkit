@@ -3,7 +3,7 @@
 import os
 import subprocess
 
-from dxpy import DXFile, PROJECT_CONTEXT_ID, upload_local_file
+from dxpy import DXFile, config, upload_local_file
 from dxpy.exceptions import err_exit
 
 
@@ -32,7 +32,7 @@ class ImageRef(object):
         :param tag: A version tag
         :type tag: Optional[String]
         """
-        self._caching_dir = os.path.join("/.cached_docker_images/", image_name)
+        self._caching_dir = os.path.join("/.cached_docker_images/", image_name or "")
         self._dx_file_id = dx_file_id
         self._bundled_depends = None
         self._repository = repository
@@ -67,7 +67,7 @@ class ImageRef(object):
         return delimiter.join([x for x in parts if x])
 
     def _dx_file_get_name(self):
-        dx_file_handle = DXFile(self._dx_file_id, PROJECT_CONTEXT_ID)
+        dx_file_handle = DXFile(self._dx_file_id, config["DX_PROJECT_CONTEXT_ID"])
         return dx_file_handle.describe().get("name")
 
     def _package_bundle(self):
@@ -110,12 +110,13 @@ class DockerImageRef(ImageRef):
         docker_save_cmd = "docker save {} | gzip > {}".format(full_image_ref, file_name)
         for cmd in [docker_pull_cmd, docker_save_cmd]:
             try:
-                subprocess.check_output(cmd)
+                _ = subprocess.check_output(cmd, shell=True)
             except subprocess.CalledProcessError:
                 err_exit("Failed to run a subprocess command: {}".format(cmd))
+        # may need wait_on_close = True??
         uploaded_dx_file = upload_local_file(
             filename=file_name,
-            project=PROJECT_CONTEXT_ID,
+            project=config["DX_PROJECT_CONTEXT_ID"],
             folder=self._caching_dir,
             name=file_name,
             parents=True,

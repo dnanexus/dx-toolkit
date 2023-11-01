@@ -23,7 +23,7 @@ import sys
 import unittest
 
 from parameterized import parameterized
-from .dxpy_testutil import DXTestCase
+from dxpy_testutil import DXTestCase
 from dxpy.compat import USING_PYTHON2
 from dxpy.nextflow.ImageRefFactory import ImageRefFactory, ImageRefFactoryError
 from dxpy.nextflow.ImageRef import DockerImageRef
