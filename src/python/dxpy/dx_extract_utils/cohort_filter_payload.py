@@ -1,7 +1,8 @@
 import copy
+from functools import reduce
 
 
-def generate_pheno_filter(values, entity, field, filters):
+def generate_pheno_filter(values, entity, field, filters, lambda_for_list_conv):
 
     if "pheno_filters" not in filters:
         # Create a pheno_filter if none exists. This will be a compound filter
@@ -33,9 +34,9 @@ def generate_pheno_filter(values, entity, field, filters):
             if primary_filter["condition"] == "exists":
                 pass
             elif primary_filter["condition"] == "in":
-                values = sorted(set(values).intersection(set(primary_filter["values"])))
+                values = sorted(set(values).intersection(set(reduce(lambda_for_list_conv, primary_filter["values"], []))))
             elif primary_filter["condition"] == "not-in":
-                values = sorted(set(values) - set(primary_filter["values"]))
+                values = sorted(set(values) - set(reduce(lambda_for_list_conv, primary_filter["values"], [])))
             else:
                 raise ValueError("Invalid input cohort."
                                  " Cohorts cannot have conditions other than \"in\", \"not-in\", or \"exists\" on the primary entity and field.")
@@ -82,11 +83,11 @@ def generate_pheno_filter(values, entity, field, filters):
     return filters
 
 
-def cohort_filter_payload(values, entity, field, filters, project_context, base_sql=None):
+def cohort_filter_payload(values, entity, field, filters, project_context, lambda_for_list_conv, base_sql=None):
     if "logic" in filters and filters["logic"] != "and":
         raise ValueError("Invalid input cohort. Cohorts must have 'and' logic on the primary entity and field.")
     filter_payload = {}
-    filter_payload["filters"] = generate_pheno_filter(values, entity, field, filters)
+    filter_payload["filters"] = generate_pheno_filter(values, entity, field, filters, lambda_for_list_conv)
     if "logic" not in filter_payload["filters"]:
         filter_payload["filters"]["logic"] = "and"
     filter_payload["project_context"] = project_context

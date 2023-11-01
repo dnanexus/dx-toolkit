@@ -6,7 +6,22 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [362.0] - beta
+### Added
+
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+
+## [363.0] - beta
+
+### Fixed
+
+* Project context added for loading dataset descriptor file when using `dx extract_dataset`
+
+### Added
+
+* Support dataset and CB records with Integer and Float type global primary keys as input in `create_cohort`
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+
+## [362.0] - 2023.10.30
 
 ### Added
 
