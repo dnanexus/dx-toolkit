@@ -8,6 +8,29 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+
+## [363.0] - beta
+
+### Fixed
+
+* Project context added for loading dataset descriptor file when using `dx extract_dataset`
+
+### Added
+
+* Support dataset and CB records with Integer and Float type global primary keys as input in `create_cohort`
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+
+## [362.0] - 2023.10.30
+
+### Added
+
+* archival_state param to `dxpy.bindings.search.find_data_objects()`
+
+## [361.0] - 2023.10.16
+
+### Added
+
 * `--fields-file` argument in `dx extract_dataset`
 * `ALT` and `alt_index` columns in `--additional-fields` of `dx extract_assay somatic`
 
@@ -16,9 +39,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx extract_assay` error message when no valid assay is found
 * In `dx extract_assay germline`, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
 * Handled white spaces in `dx extract` command's inputs which are of the type `string` of comma separated values
-* Fixed --retrieve-genotype --sql bug in UKB RAP region
+* Released Nextaur 1.6.8. It contains minor bugfixes and optimizations.
+* --retrieve-genotype --sql bug in UKB RAP region
+* Retry API call in object_exists_in_project()
 
-## [360.1] - beta
+## [360.1] - 2023.10.16
 
 ### Fixed
 

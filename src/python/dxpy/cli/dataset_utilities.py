@@ -28,6 +28,7 @@ import csv
 import dxpy
 import codecs
 import subprocess
+from functools import reduce
 from ..utils.printing import fill
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink, describe
@@ -35,6 +36,7 @@ from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError, resolve_path, check_folder_exists
 from ..utils.file_handle import as_handle
 from ..utils.describe import print_desc
+from ..compat import USING_PYTHON2
 from ..exceptions import (
     err_exit,
     PermissionDenied,
@@ -1137,13 +1139,29 @@ def resolve_validate_dx_path(path):
 class VizserverError(Exception):
     pass
 
-def validate_cohort_ids(descriptor, project, resp,ids):
+def validate_cohort_ids(descriptor, project, resp, ids):
     # Usually the name of the table
     entity_name = descriptor.model["global_primary_key"]["entity"]
     # The name of the column or field in the table
     field_name = descriptor.model["global_primary_key"]["field"] 
 
+    # Get data type of global primay key field
+    gpk_type = descriptor.model["entities"][entity_name]["fields"][field_name]["mapping"]["column_sql_type"]
     # Prepare a payload to find entries matching the input ids in the dataset
+    if gpk_type in ["integer", "bigint"]:
+        if USING_PYTHON2:
+            lambda_for_list_conv = lambda a, b: a+[long(b)]
+        else:
+            lambda_for_list_conv = lambda a, b: a+[int(b)]
+    elif gpk_type in ["float", "double"]:
+        lambda_for_list_conv = lambda a, b: a+[float(b)]
+    elif gpk_type in ["string"]:
+        lambda_for_list_conv = lambda a, b: a+[str(b)]
+    else:
+        err_msg = "Invalid input record. Cohort ID field in the input dataset or cohortbrowser record is of type, {type}. Support is currently only available for Cohort ID fields having one of the following types; string, integer and float".format(type = gpk_type)
+        raise ValueError(err_msg) 
+    id_list = reduce(lambda_for_list_conv, ids, [])
+
     entity_field_name = "{}${}".format(entity_name, field_name)
     fields_list = [{field_name: entity_field_name}]
 
@@ -1155,7 +1173,7 @@ def validate_cohort_ids(descriptor, project, resp,ids):
             "pheno_filters": {
                 "filters": {
                     entity_field_name: [
-                        {"condition": "in", "values": ids}
+                        {"condition": "in", "values": id_list}
                     ]
                 }
             }
@@ -1177,11 +1195,13 @@ def validate_cohort_ids(descriptor, project, resp,ids):
         discovered_ids.add(result[field_name])
 
     # Compare the discovered cohort ids to the user-provided cohort ids
-    if discovered_ids != set(ids):
+    if discovered_ids != set(id_list):
         # Find which given samples are not present in the dataset
-        missing_ids = set(ids).difference(discovered_ids)
+        missing_ids = set(id_list).difference(discovered_ids)
         err_msg = "The following supplied IDs do not match IDs in the main entity of dataset, {dataset_name}: {ids}".format(dataset_name = resp["dataset"], ids = missing_ids)
         raise ValueError(err_msg)
+    
+    return id_list, lambda_for_list_conv
 
         
 def has_access_level(project, access_level):
@@ -1259,23 +1279,26 @@ def create_cohort(args):
     rec_descriptor = DXDataset(resp["dataset"], project=dataset_project).get_descriptor()
 
     try:
-        validate_cohort_ids(rec_descriptor, dataset_project, resp, samples)
+        list_of_ids, lambda_for_list_conv = validate_cohort_ids(rec_descriptor, dataset_project, resp, samples)
     except ValueError as err:
-        err_exit(str(err))
+        err_exit(str(err), expected_exceptions=(ValueError,))
     except VizserverError as err:
-        err_exit(str(err))
+        err_exit(str(err), expected_exceptions=(VizserverError,))
     except Exception as err:
         err_exit(str(err))
     # Input cohort IDs have been succesfully validated    
 
+    # converting list of IDs to list of string IDs
+
     base_sql = resp.get("baseSql", resp.get("base_sql"))
     try:
         raw_cohort_query_payload = cohort_filter_payload(
-            samples,
+            list_of_ids,
             rec_descriptor.model["global_primary_key"]["entity"],
             rec_descriptor.model["global_primary_key"]["field"],
             resp.get("filters", {}),
             from_project,
+            lambda_for_list_conv,
             base_sql,
         )
     except Exception as e:
@@ -1331,7 +1354,7 @@ class DXDataset(DXRecord):
         assert self._record_type in self.types
         assert "descriptor" in self.details
         if is_dxlink(self.details["descriptor"]):
-            self.descriptor_dxfile = DXFile(self.details["descriptor"], mode="rb")
+            self.descriptor_dxfile = DXFile(self.details["descriptor"], mode="rb", project=project)
         else:
             err_exit("%s : Invalid cohort or dataset" % self.details["descriptor"])
         self.descriptor = None
