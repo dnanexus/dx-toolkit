@@ -250,6 +250,14 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         details = applet.get_details()
         self.assertEqual(details["repository"], "local")
 
+    @unittest.skipIf(USING_PYTHON2,
+                     'Skipping Python 3 code')
+    @parameterized.expand([
+        ["proc1", "sha256aasdfadfadfafddasfdsfa"]
+    ])
+    def test_bundle_docker_images(self):
+        local_image = os.path.join(os.path.dirname(__file__), "nextflow/container_fixtures/busybox_1.36")
+        self.assertTrue(False)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
