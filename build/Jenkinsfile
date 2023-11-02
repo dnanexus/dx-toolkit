@@ -20,22 +20,6 @@ node('22.04-agent'){
 
 stage 'Build'
     parallel (
-        "xenial-deb" : { 
-            node('22.04-agent'){
-                deleteDir()
-                sh  """
-                    commit_hash=\"${env.commit_hash}\"
-                    working_dir=\$(pwd)
-                    mkdir -p \$working_dir/\$commit_hash/xenial
-                    docker run -v \$working_dir/\$commit_hash/xenial:/\$commit_hash/xenial --rm dnanexus/dx-toolkit:16.04 \\
-                        /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
-                        cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh; \\
-                        mv /*.{changes,deb,dsc,tar.xz} /\$commit_hash/xenial\"
-                    """
-                archive "${env.commit_hash}/xenial/dx*"
-                deleteDir()
-            }
-        },
         "focal-deb" : { 
             node('22.04-agent'){
                 deleteDir()
