@@ -36,11 +36,6 @@ else:
 
 class TestImageRef(DXTestCase):
 
-    def setUp(self):
-        super(TestImageRef, self).setUp()
-        self.local_image = os.path.join(os.path.dirname(__file__), "nextflow/container_fixtures/busybox_1.36")
-
-
     @parameterized.expand([
         ["proc1", "sha256aasdfadfadfafddasfdsfa"]
     ])
