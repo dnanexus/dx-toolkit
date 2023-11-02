@@ -104,6 +104,7 @@ setup(
     entry_points = {
         "console_scripts": scripts,
     },
+    python_requires = '>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*'
     install_requires = dependencies,
     extras_require={
         'pandas': ["pandas==1.3.5; python_version>='3.7'", "pandas>=0.23.3,<=0.25.3; python_version>='3.5.3' and python_version<'3.7'", "pandas>=0.23.3,< 0.25.0; python_version<'3.5.3'"],
