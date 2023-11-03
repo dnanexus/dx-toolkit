@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+* Docker image can be cached on the platform
 
 ## [363.0] - beta
 
