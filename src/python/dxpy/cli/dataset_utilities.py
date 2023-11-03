@@ -78,9 +78,10 @@ def resolve_validate_record_path(path):
     try:
         project, folder_path, entity_result = resolve_existing_path(path)
 
+    except ResolutionError as details:
+        err_exit(expected_exceptions=(ResolutionError,))
     except Exception as details:
-        sys.tracebacklimit = 0
-        err_exit()
+        err_exit(str(details))
 
     if project is None:
         raise ResolutionError(
