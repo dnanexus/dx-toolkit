@@ -8,6 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* `dx extract_assay expression`
 * Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
 
 ## [363.0] - beta
