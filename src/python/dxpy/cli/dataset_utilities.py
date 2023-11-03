@@ -75,7 +75,13 @@ database_id_regex = re.compile("^database-\\w{24}$")
 
 def resolve_validate_record_path(path):
 
-    project, folder_path, entity_result = resolve_existing_path(path)
+    try:
+        project, folder_path, entity_result = resolve_existing_path(path)
+
+    except ResolutionError as details:
+        err_exit(expected_exceptions=(ResolutionError,))
+    except Exception as details:
+        err_exit(str(details))
 
     if project is None:
         raise ResolutionError(
@@ -271,24 +277,24 @@ def extract_dataset(args):
         # python_range = 1; python_version>="3.5.3" and python_version<"3.7"; Valid pandas version: pandas>=0.23.3,<=0.25.3
         # python_range = 2; python_version<"3.5.3"; Valid pandas version: pandas>=0.23.3,< 0.25.0
         system_pandas_version = tuple(map(int, current_pandas_version.split(".")))
-        if (
-            (python_range == "0" and system_pandas_version == (1, 3, 5))
-            or (
-                python_range == "1"
-                and ((0, 25, 3) >= system_pandas_version >= (0, 23, 3))
-            )
-            or (
-                python_range == "2"
-                and ((0, 25, 0) > system_pandas_version >= (0, 23, 3))
-            )
-        ):
-            pass
-        else:
-            print(
-                "Warning: For '-ddd' usage, the recommended pandas version is {}. The installed version of pandas is {}. It is recommended to update pandas. For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is {}.".format(
-                    pandas_version_range, current_pandas_version, pandas_version_range
-                )
-            )
+        message = ("Warning: For '-ddd' usage, the recommended pandas version is {}."
+                        "  The installed version of pandas is {}.  It is recommended to {} pandas."
+                        "  For example, 'pip install -I pandas=={}'")
+        if python_range == "0":
+            if system_pandas_version < (1,3,5):
+                print(message.format(pandas_version_range,current_pandas_version,"update","1.3.5"))
+            elif system_pandas_version > (1,3,5):
+                print(message.format(pandas_version_range,current_pandas_version,"downgrade","1.3.5"))
+        elif python_range == "1":
+            if system_pandas_version < (0,23,3):
+                print(message.format(pandas_version_range,current_pandas_version,"update","0.25.3"))
+            elif system_pandas_version > (0,25,3):
+                print(message.format(pandas_version_range,current_pandas_version,"downgrade","0.25.3"))
+        elif python_range == "2":
+            if system_pandas_version < (0,23,3):
+                print(message.format(pandas_version_range,current_pandas_version,"update","0.25.0"))
+            elif system_pandas_version > (0,25,0):
+                print(message.format(pandas_version_range,current_pandas_version,"downgrade","0.25.0"))
 
     if args.dump_dataset_dictionary:
         global pd
@@ -296,6 +302,11 @@ def extract_dataset(args):
             "0": "'1.3.5'",
             "1": ">= '0.23.3' and <= '0.25.3'",
             "2": ">= '0.23.3' and < '0.25.0'",
+        }
+        pandas_example_version = {
+            "0":"1.3.5",
+            "1":"0.25.3",
+            "2":"0.25.0"
         }
         python_range = _check_system_python_version()
         try:
@@ -309,9 +320,9 @@ def extract_dataset(args):
             )
         except ImportError as e:
             err_exit(
-                "'-ddd' requires the use of pandas, which is not currently installed. Please install pandas to a version {}. For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is {}.".format(
+                "'-ddd' requires the use of pandas, which is not currently installed. Please install pandas to a version {}. For example, 'pip install -I pandas=={}".format(
                     pandas_version_dictionary[python_range],
-                    pandas_version_dictionary[python_range],
+                    pandas_example_version[python_range],
                 )
             )
 
