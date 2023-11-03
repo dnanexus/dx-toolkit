@@ -51,6 +51,24 @@ from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
 
+from ..bindings.apollo.dataset import Dataset
+
+from ..bindings.apollo.cmd_line_options_validator import ArgsValidator
+from ..bindings.apollo.json_validation_by_schema import JSONValidator
+
+from ..bindings.apollo.schemas.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
+from ..bindings.apollo.schemas.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
+from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+
+from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
+from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
+from ..bindings.apollo.vizclient import VizClient
+
+from ..bindings.apollo.data_transformations import transform_to_expression_matrix
+from .output_handling import write_expression_output
+
+from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP, EXTRACT_ASSAY_EXPRESSION_ADDITIONAL_FIELDS_HELP
+
 database_unique_name_regex = re.compile("^database_\w{24}__\w+$")
 database_id_regex = re.compile("^database-\\w{24}$")
 
@@ -1111,6 +1129,313 @@ def extract_assay_somatic(args):
                 quote_char=str("\t"),
                 quoting=csv.QUOTE_NONE,
             )
+
+def extract_assay_expression(args):
+    """
+    `dx extract_assay expression`
+
+    Retrieve the selected data or generate SQL to retrieve the data from an expression assay in a dataset or cohort based on provided rules.
+    """
+
+    # Validating input arguments (argparse) combinations
+    parser_dict = vars(args)
+    input_validator = ArgsValidator(
+        parser_dict=parser_dict,
+        schema=EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
+        error_handler=err_exit,
+    )
+    input_validator.validate_input_combination()
+
+    if args.json_help:
+        print(EXTRACT_ASSAY_EXPRESSION_JSON_HELP)
+        sys.exit(0)
+
+    if args.additional_fields_help:
+        print(EXTRACT_ASSAY_EXPRESSION_ADDITIONAL_FIELDS_HELP)
+        sys.exit(0)
+
+    # Resolving `path` argument
+    if args.path:
+        # entity_result contains `id` and `describe`
+        project, folder_path, entity_result = resolve_existing_path(args.path)
+        if entity_result is None:
+            err_exit(
+                'Unable to resolve "{}" to a data object in {}.'.format(
+                    args.path, project
+                )
+            )
+        else:
+            entity_describe = entity_result.get("describe")
+
+        # Is object in current project?
+        if project != entity_result["describe"]["project"]:
+            err_exit(
+                'Unable to resolve "{}" to a data object or folder name in {}. Please make sure the object is in the selected project.'.format(
+                    args.path, project
+                )
+            )
+
+        # Is object a cohort or a dataset?
+        EXPECTED_TYPES = ["Dataset", "CohortBrowser"]
+        _record_types = entity_result["describe"]["types"]
+        if entity_result["describe"]["class"] != "record" or all(
+            x not in _record_types for x in EXPECTED_TYPES
+        ):
+            err_exit(
+                "{} Invalid path. The path must point to a record type of cohort or dataset and not a {} object.".format(
+                    entity_result["id"], _record_types
+                )
+            )
+
+        # Cohort/Dataset handling
+        record = DXRecord(entity_describe["id"])
+        dataset, cohort_info = Dataset.resolve_cohort_to_dataset(record)
+
+        if cohort_info:
+            if args.assay_name or args.list_assays:
+                err_exit(
+                    'Currently "--assay-name" and "--list-assays" may not be used with a CohortBrowser record (Cohort Object) as input. To select a specific assay or to list assays, please use a Dataset object as input.'
+                )
+            if float(cohort_info["details"]["version"]) < 3.0:
+                err_exit(
+                    "{}: Version of the cohort is too old. Version must be at least 3.0.".format(
+                        cohort_info["id"]
+                    )
+                )
+            
+            BASE_SQL = cohort_info.get("details").get("baseSql")
+            COHORT_FILTERS = cohort_info.get("details").get("filters")
+            IS_COHORT = True
+        else:
+            BASE_SQL = None
+            COHORT_FILTERS = None
+            IS_COHORT = False
+            if float(dataset.version) < 3.0:
+                err_exit(
+                    "{}: Version of the dataset is too old. Version must be at least 3.0.".format(
+                        dataset.id
+                    )
+                )
+
+    if args.list_assays:
+        print(*dataset.assay_names_list("molecular_expression"), sep="\n")
+        sys.exit(0)
+
+    # Check whether assay_name is valid
+    # If no assay_name is provided, the first molecular_expression assay in the dataset must be selected
+    if args.assay_name:
+        if not dataset.is_assay_name_valid(args.assay_name, "molecular_expression"):
+            err_exit(
+                "Assay {} does not exist in {}, or the assay name provided cannot be recognized as a molecular expression assay. For valid assays accepted by the function, `extract_assay expression`, please use the --list-assays flag.".format(
+                    args.assay_name, dataset.id
+                )
+            )
+    elif not args.assay_name:
+        if len(dataset.assays_info_dict["molecular_expression"]) == 0:
+            err_exit("No molecular expression assays found in the dataset")
+
+    # Load args.filter_json or args.filter_json_file into a dict
+    if sys.version_info.major == 2:
+        # In Python 2 JSONDecodeError does not exist
+        json.JSONDecodeError = ValueError
+
+    if args.filter_json:
+        try:
+            user_filters_json = json.loads(args.filter_json)
+        except json.JSONDecodeError as e:
+            json_reading_error = (
+                "JSON provided for --retrieve-expression is malformatted."
+                + "\n"
+                + str(e)
+            )
+            err_exit(json_reading_error)
+        except Exception as e:
+            err_exit(str(e))
+
+    elif args.filter_json_file:
+        try:
+            with open(args.filter_json_file) as f:
+                user_filters_json = json.load(f)
+        except json.JSONDecodeError as e:
+            json_reading_error = (
+                "JSON provided for --retrieve-expression is malformatted."
+                + "\n"
+                + str(e)
+            )
+            err_exit(json_reading_error)
+        except OSError as e:
+            if "No such file or directory" in str(e):
+                err_exit(
+                    "JSON file {} provided to --retrieve-expression does not exist".format(
+                        e.filename
+                    )
+                )
+            else:
+                err_exit(str(e))
+        except Exception as e:
+            err_exit(str(e))
+
+    if user_filters_json == {}:
+        err_exit(
+            "No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information."
+        )
+
+    if args.expression_matrix:
+        if "expression" in user_filters_json:
+            err_exit(
+                'Expression filters are not compatible with --expression-matrix argument. Please remove "expression" from filters JSON.'
+            )
+
+        if args.additional_fields:
+            err_exit(
+                "--additional-fields cannot be used with --expression-matrix argument."
+            )
+
+    # Replace 'str' with 'unicode' when checking types in Python 2
+    if sys.version_info.major == 2:
+        EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA["location"]["items"]["properties"][
+            "chromosome"
+        ]["type"] = unicode
+        EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA["location"]["items"]["properties"][
+            "starting_position"
+        ]["type"] = unicode
+        EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA["location"]["items"]["properties"][
+            "ending_position"
+        ]["type"] = unicode
+
+    # Validate filters JSON provided by the user according to a predefined schema
+    input_json_validator = JSONValidator(
+        schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit
+    )
+    input_json_validator.validate(input_json=user_filters_json)
+
+    if "location" in user_filters_json:
+        if args.sql:
+            EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["filtering_conditions"][
+                "location"
+            ]["max_item_limit"] = None
+
+        else:
+            # Genomic range adding together across multiple contigs should be smaller than 250 Mbps
+            input_json_validator.are_list_items_within_range(
+                input_json=user_filters_json,
+                key="location",
+                start_subkey="starting_position",
+                end_subkey="ending_position",
+                window_width=250000000,
+                check_each_separately=False,
+            )
+
+    input_json_parser = JSONFiltersValidator(
+        input_json=user_filters_json,
+        schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
+        error_handler=err_exit,
+    )
+    vizserver_raw_filters = input_json_parser.parse()
+
+    _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS[
+        "output_fields_mapping"
+    ].get("default")
+
+    if args.additional_fields:
+        # All three of the following should work:
+        # --additional_fields field1 field2
+        # --additional_fields field1,field2
+        # --additional_fields field1, field2 (note the space char)
+        # In the first case, the arg will look like ["field1", "field2"]
+        # In the second case: ["field1,field2"]
+        # In the third case: ["field1,", "field2"]
+        additional_fields = []
+        for item in args.additional_fields:
+            field = [x.strip() for x in item.split(",") if x.strip()]
+            additional_fields.extend(field)
+
+        all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS[
+            "output_fields_mapping"
+        ].get("additional")
+        incorrect_cols = set(additional_fields) - set(
+            {k for d in all_additional_cols for k in d.keys()}
+        )
+        if len(incorrect_cols) != 0:
+            err_exit(
+                "One or more of the supplied fields using --additional-fields are invalid. Please run --additional-fields-help for a list of valid fields"
+            )
+        user_additional_cols = [
+            i for i in all_additional_cols if set(i.keys()) & set(additional_fields)
+        ]
+        _db_columns_list.extend(user_additional_cols)
+
+    viz = VizPayloadBuilder(
+        project_context=project,
+        output_fields_mapping=_db_columns_list,
+        filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
+        order_by=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["order_by"],
+        limit=None,
+        base_sql=BASE_SQL,
+        is_cohort=IS_COHORT,
+        error_handler=err_exit,
+    )
+
+    DATASET_DESCRIPTOR = dataset.descriptor_file_dict
+    ASSAY_NAME = (
+        args.assay_name if args.assay_name else DATASET_DESCRIPTOR["assays"][0]["name"]
+    )
+
+    if args.assay_name:
+        # Assumption: assay names are unique in a dataset descriptor
+        # i.e. there are never two assays of the same type with the same name in the same dataset
+        for molecular_assay in dataset.assays_info_dict["molecular_expression"]:
+            if molecular_assay["name"] == args.assay_name:
+                ASSAY_ID = molecular_assay["uuid"]
+                break
+    else:
+        ASSAY_ID = DATASET_DESCRIPTOR["assays"][0]["uuid"]
+
+    viz.assemble_assay_raw_filters(
+        assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters
+    )
+    vizserver_payload = viz.build()
+
+    # Get the record ID and vizserver URL from the Dataset object
+    record_id = dataset.detail_describe["id"]
+    url = dataset.vizserver_url
+
+    # Create VizClient object and get data from vizserver using generated payload
+    client = VizClient(url, project)
+    if args.sql:
+        vizserver_response = client.get_raw_sql(vizserver_payload, record_id)
+    else:
+        vizserver_response = client.get_data(vizserver_payload, record_id)
+
+    colnames = None
+
+    # Output is on the "sql" key rather than the "results" key when sql is requested
+    output_data = (
+        vizserver_response["sql"] if args.sql else vizserver_response["results"]
+    )
+
+    # Output data (from vizserver_response["results"]) will be an empty list if no data is returned for the given filters
+    if args.expression_matrix and output_data:
+        transformed_response, colnames = transform_to_expression_matrix(
+            vizserver_response["results"]
+        )
+        output_data = transformed_response
+
+    if not output_data:
+        # write_expression_output expects a list of dicts
+        output_data = [{}]
+
+    write_expression_output(
+        args.output,
+        args.delim,
+        args.sql,
+        output_data,
+        save_uncommon_delim_to_txt=True,
+        output_file_name=dataset.detail_describe["name"],
+        colnames=colnames,
+    )
+
+
 
 #### CREATE COHORT ####
 def resolve_validate_dx_path(path):

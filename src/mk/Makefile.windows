@@ -72,17 +72,6 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 	mv "$(DNANEXUS_HOME)"/src/$(WHEEL_TEMPDIR)/Scripts/* "$(DNANEXUS_HOME)"/bin
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 
-
-# Bundled utilities
-# =================
-
-jq: git_submodules ../bin/jq
-
-../bin/jq: jq/
-	(cd jq; autoreconf --install; ./configure)
-	$(MAKE) -C jq -j 1
-	cp -f jq/jq ../bin/
-
 # System dependencies
 # ===================
 
