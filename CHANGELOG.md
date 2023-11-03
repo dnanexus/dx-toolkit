@@ -11,6 +11,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx extract_assay expression`
 * Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
 
+### Fixed
+
+* Released Nextaur 1.6.9. It contains fixes for exception types so they are interpreted correctly by Nextflow when caching task runs.
+
 ## [363.0] - beta
 
 ### Fixed
