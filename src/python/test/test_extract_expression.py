@@ -1072,11 +1072,13 @@ class TestDXExtractExpression(unittest.TestCase):
             exp_data_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
                 "expected_data_output"
             ]
+            # assertCountEqual asserts that two iterables have the same elements, ignoring order
             self.assertCountEqual(data_output, exp_data_output)
 
         exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
             "expected_sql_output"
         ]
+        self.assertEqual(vizserver_payload, "TEST")
         self.assertEqual(sql_output, exp_sql_output)
 
     def run_dx_extract_assay_expression_cmd(
