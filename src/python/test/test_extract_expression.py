@@ -1078,7 +1078,13 @@ class TestDXExtractExpression(unittest.TestCase):
         exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
             "expected_sql_output"
         ]
-        self.assertEqual(sql_output, exp_sql_output)
+        if isinstance(exp_sql_output, list):
+            # Some of the sub-queries may have slightly different order due to the way the keys are ordered in the payload dict
+            # In other words, the queries are still correct, but the order of sub-queries may be different
+            # This usually happens in Python 2
+            self.assertIn(sql_output, exp_sql_output)
+        else:
+            self.assertEqual(sql_output, exp_sql_output)
 
     def run_dx_extract_assay_expression_cmd(
         self,
@@ -1125,7 +1131,7 @@ class TestDXExtractExpression(unittest.TestCase):
         return process
 
     def test_dx_extract_cmd_location_expression_sample_sql(self):
-        expected_sql_query = "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE (`expr_annotation_1`.`chr` = '11' AND (`expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` <= 8693350 AND `expr_annotation_1`.`end` >= 67440200) OR `expr_annotation_1`.`chr` = 'X' AND (`expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` <= 148500700 AND `expr_annotation_1`.`end` >= 148994424) OR `expr_annotation_1`.`chr` = '17' AND (`expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` <= 75228160 AND `expr_annotation_1`.`end` >= 75235759)) AND `expression_1`.`value` >= 25.63 AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2')"
+        expected_sql_query = ["SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE (`expr_annotation_1`.`chr` = '11' AND (`expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` <= 8693350 AND `expr_annotation_1`.`end` >= 67440200) OR `expr_annotation_1`.`chr` = 'X' AND (`expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` <= 148500700 AND `expr_annotation_1`.`end` >= 148994424) OR `expr_annotation_1`.`chr` = '17' AND (`expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` <= 75228160 AND `expr_annotation_1`.`end` >= 75235759)) AND `expression_1`.`value` >= 25.63 AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2')", "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE (`expr_annotation_1`.`chr` = '11' AND (`expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`end` >= 67440200 AND `expr_annotation_1`.`start` <= 8693350) OR `expr_annotation_1`.`chr` = 'X' AND (`expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`end` >= 148994424 AND `expr_annotation_1`.`start` <= 148500700) OR `expr_annotation_1`.`chr` = '17' AND (`expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`end` >= 75235759 AND `expr_annotation_1`.`start` <= 75228160)) AND `expression_1`.`value` >= 25.63 AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2')"]
         response = self.run_dx_extract_assay_expression_cmd(
             self.expression_dataset,
             EXPRESSION_CLI_JSON_FILTERS["positive_test"]["location_expression_sample"],
@@ -1133,7 +1139,7 @@ class TestDXExtractExpression(unittest.TestCase):
             True,
             "-",
         )
-        self.assertEqual(response.strip(), expected_sql_query)
+        self.assertIn(response.strip(), expected_sql_query)
 
     def test_dx_extract_cmd_location_expression_sample_data(self):
         response = self.run_dx_extract_assay_expression_cmd(
