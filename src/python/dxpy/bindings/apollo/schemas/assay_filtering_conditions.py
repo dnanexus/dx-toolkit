@@ -70,8 +70,8 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS = {
         },
     },
     "filters_combination_operator": "and",
-    "order_by": {
-        "feature_id": "asc",
-        "sample_id": "asc",
-    },
+    "order_by": [
+        {"feature_id": "asc"},
+        {"sample_id": "asc"},
+    ],
 }

@@ -1359,6 +1359,7 @@ def extract_assay_expression(args):
         project_context=project,
         output_fields_mapping=_db_columns_list,
         filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
+        order_by=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["order_by"],
         limit=None,
         base_sql=BASE_SQL,
         is_cohort=IS_COHORT,

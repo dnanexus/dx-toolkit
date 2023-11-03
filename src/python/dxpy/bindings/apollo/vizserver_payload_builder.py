@@ -48,6 +48,7 @@ class VizPayloadBuilder(object):
         output_fields_mapping,
         raw_filters=None,
         filters=None,
+        order_by=None,
         limit=None,
         base_sql=None,
         is_cohort=False,
@@ -58,6 +59,7 @@ class VizPayloadBuilder(object):
         self.output_fields_mapping = output_fields_mapping
         self.raw_filters = raw_filters
         self.filters = filters
+        self.order_by = order_by
         self.limit = limit
         self.base_sql = base_sql
         self.is_cohort = is_cohort
@@ -88,6 +90,9 @@ class VizPayloadBuilder(object):
 
         if self.filters:
             payload.update(self.filters)
+
+        if self.order_by:
+            payload.update({"order_by": self.order_by})
 
         return payload
 
