@@ -47,6 +47,10 @@ class ImageRef(object):
             self._bundled_depends = self._package_bundle()
         return self._bundled_depends
 
+    @property
+    def identifier(self):
+        return self._join_if_exists("_", [self._repository, self._image_name, self._tag, self._digest])
+
     def _cache(self, file_name):
         """
         Function to store an image on the platform as a dx file object. Should be implemented in subclasses.

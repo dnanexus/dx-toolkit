@@ -33,7 +33,14 @@ def bundle_docker_images(image_refs):
     """
     image_factories = [ImageRefFactory(x) for x in image_refs]
     images = [x.get_image() for x in image_factories]
-    bundled_depends = [x.bundled_depends for x in images]
+    seen_images = set()
+    bundled_depends = []
+    for image in images:
+        if image.identifier in seen_images:
+            continue
+        else:
+            bundled_depends.append(image.bundled_depends.copy())
+            seen_images.add(image.identifier)
     return bundled_depends
 
 
@@ -52,7 +59,7 @@ def run_nextaur_collect(resources_dir):
         Runs nextaur:collect
         """
     collect_cmd = "nextflow plugin nextaur:collect docker {}".format(resources_dir)
-    _ = subprocess.check_output(collect_cmd)
+    _ = subprocess.check_output(collect_cmd, shell=True)
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
         if not image_refs:

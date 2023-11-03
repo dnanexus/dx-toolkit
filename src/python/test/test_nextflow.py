@@ -27,6 +27,7 @@ import unittest
 import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
 from dxpy.nextflow.nextflow_utils import get_template_dir
+from dxpy.nextflow.collect_images import bundle_docker_images
 
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
@@ -252,12 +253,25 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
     @unittest.skipIf(USING_PYTHON2,
                      'Skipping Python 3 code')
-    @parameterized.expand([
-        ["proc1", "sha256aasdfadfadfafddasfdsfa"]
-    ])
     def test_bundle_docker_images(self):
-        local_image = os.path.join(os.path.dirname(__file__), "nextflow/container_fixtures/busybox_1.36")
-        self.assertTrue(False)
+        image_refs = [
+            {
+                "engine": "docker",
+                "process": "proc1",
+                "digest": "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824",
+                "image_name": "busybox",
+                "tag": "1.36"
+            },
+            {
+                "engine": "docker",
+                "process": "proc2",
+                "digest": "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824",
+                "image_name": "busybox",
+                "tag": "1.36"
+            }
+        ]
+        bundled_images = bundle_docker_images(image_refs)
+        self.assertEqual(len(bundled_images), 1)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
