@@ -18,7 +18,7 @@
 include mk/config.mk
 include mk/Makefile.${PLATFORM}
 
-all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker
+all: api_wrappers cpp src_libs python dx-verify-file dx-docker
 
 python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
@@ -328,18 +328,14 @@ git_submodules:
 	fi)
 
 
-jq: git_submodules ../bin/jq
-
-
 # Clean
 # =====
 
 distclean: clean
 
-clean: clean_jq
+clean:
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
-	-rm -f ../bin/jq
 	-find ../bin -type f \( -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -not -name 'dx-su-*' -delete
 	-rm -f ../bin/docker2aci ../bin/proot
 	-rm -rf python/{build,*.{egg,egg-info}}
@@ -349,13 +345,5 @@ clean: clean_jq
 	-rm -f ../build/info/version
 	-rm -rf "$(DX_PY_ENV)"
 	-rm -rf boost c-ares curl file openssl
-
-# Check that the 'jq' makefile exists, before trying to clean up.
-# We checkout and build the 'jq' package, it is an external
-# package.
-clean_jq:
-	(if [ -e jq/Makefile ]; then \
-		$(MAKE) -C jq clean; \
-	fi)
 
 .PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps
