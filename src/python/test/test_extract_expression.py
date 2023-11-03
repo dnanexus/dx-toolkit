@@ -1078,7 +1078,7 @@ class TestDXExtractExpression(unittest.TestCase):
         exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
             "expected_sql_output"
         ]
-        self.assertEqual(vizserver_payload, f"TEST{vizserver_payload}")
+        self.assertEqual(vizserver_payload, "TEST" * 1000)
         self.assertEqual(sql_output, exp_sql_output)
 
     def run_dx_extract_assay_expression_cmd(
