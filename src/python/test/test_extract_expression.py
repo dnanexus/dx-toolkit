@@ -89,6 +89,7 @@ else:
 class TestDXExtractExpression(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.maxDiff = None
         test_project_name = "dx-toolkit_test_data"
         cls.proj_id = list(
             dxpy.find_projects(describe=False, level="VIEW", name=test_project_name)
