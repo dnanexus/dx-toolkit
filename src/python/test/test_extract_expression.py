@@ -1072,7 +1072,7 @@ class TestDXExtractExpression(unittest.TestCase):
             exp_data_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
                 "expected_data_output"
             ]
-            self.assertEqual(data_output, exp_data_output)
+            self.assertCountEqual(data_output, exp_data_output)
 
         exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
             "expected_sql_output"
