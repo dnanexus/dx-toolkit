@@ -709,9 +709,9 @@ def _check_resolution_needed(path, project, folderpath, entity_name, expected_cl
                 try:
                     desc = dxpy.DXHTTPRequest('/' + entity_name + '/describe', describe)
                 except Exception as details2:
-                    raise ResolutionError(str(details2)) from None
+                    raise ResolutionError(str(details2))
             else:
-                raise ResolutionError(str(details)) from None
+                raise ResolutionError(str(details))
         result = {"id": entity_name, "describe": desc}
         if enclose_in_list:
             return False, project, folderpath, [result]
@@ -1061,8 +1061,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     of the hash ID, it will return None for all fields.
     '''
     project, folderpath, entity_name = resolve_path(path, expected=expected, allow_empty_string=allow_empty_string)
-    try:
-        must_resolve, project, folderpath, entity_name = _check_resolution_needed(path,
+    must_resolve, project, folderpath, entity_name = _check_resolution_needed(path,
                                                                               project,
                                                                               folderpath,
                                                                               entity_name,
@@ -1070,8 +1069,6 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                                                                               describe=describe,
                                                                               enclose_in_list=(not ask_to_resolve or
                                                                                                allow_mult))
-    except Exception as details:
-        raise ResolutionError(str(details)) from None
 
     if must_resolve:
         results = _resolve_global_entity(project, folderpath, entity_name, describe=describe, visibility=visibility)
