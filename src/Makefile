@@ -346,4 +346,4 @@ clean:
 	-rm -rf "$(DX_PY_ENV)"
 	-rm -rf boost c-ares curl file openssl
 
-.PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps
+.PHONY: all toolkit_version api_wrappers src_libs python java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps
