@@ -21,7 +21,7 @@ GIT_TOOLKIT_VERSION_SHORT := $(shell git describe --abbrev=0)
 # e.g. `make DLL_DEPS_FOLDER=C:\\toolkit-deps\\ pynsist_installer`
 DLL_DEPS_FOLDER = '../../src/ua/dist/'
 
-pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file jq
+pynsist_installer: toolkit_version $(DNANEXUS_HOME)/bin/dx dx-verify-file
 
 	# Create installer.cfg and insert the toolkit version string
 	export GIT_TOOLKIT_VERSION_SHORT=$(GIT_TOOLKIT_VERSION_SHORT) ; \
