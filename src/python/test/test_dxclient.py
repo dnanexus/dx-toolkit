@@ -11392,12 +11392,12 @@ class TestDXArchive(DXTestCase):
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,fid1))
-        time.sleep(10)
+        time.sleep(15)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"unarchiving")
 
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,self.rootdir))
-        time.sleep(10)
+        time.sleep(15)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"unarchiving")
         
