@@ -14,7 +14,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Released Nextaur 1.6.9. It contains fixes for exception types so they are interpreted correctly by Nextflow when caching task runs.
-* Updated warning messages when user has a non-recommended version of pandas installed.  Suppressing traceback when resolve_existing_path fails
 
 ## [363.0] - beta
 
