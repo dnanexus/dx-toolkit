@@ -1,17 +1,9 @@
 Source: dx-toolkit
-Maintainer: Phil Sung <psung@dnanexus.com>
+Maintainer: support@dnanexus.com
 Section: science
 Priority: optional
 Standards-Version: 3.9.3
-Build-Depends: debhelper (>= 8), python-virtualenv | python3-virtualenv, libboost1.58-all-dev | libboost-all-dev | libboost1.55-all-dev | libboost1.48-all-dev, openjdk-7-jdk | openjdk-8-jdk-headless | openjdk-11-jdk-headless | openjdk-8-jdk, maven2 | maven
-
-Package: dx-toolkit
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
-Conflicts: jq, python-argcomplete
-Description: DNAnexus client libraries and tools
- Bindings for interacting with the DNAnexus platform and common tools for
- developer use (inside or outside of the DNAnexus execution environment).
+Build-Depends: openjdk-7-jdk | openjdk-8-jdk-headless | openjdk-11-jdk-headless | openjdk-8-jdk, maven2 | maven
 
 Package: dx-java-bindings
 Architecture: any

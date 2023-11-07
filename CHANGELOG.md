@@ -6,12 +6,23 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [364.0] - beta
+
 ### Added
 
+* `dx extract_assay expression`
 * Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
 * Docker image can be cached on the platform
 
-## [363.0] - beta
+### Changed
+
+* Disallow Python versions <2.7 or <3.5 in setup.py for dxpy, the next release will only support Python >=3.5
+
+### Fixed
+
+* Released Nextaur 1.6.9. It contains fixes for exception types so they are interpreted correctly by Nextflow when caching task runs.
+
+## [363.0] - 2023.11.6
 
 ### Fixed
 
