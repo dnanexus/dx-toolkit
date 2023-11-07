@@ -6,17 +6,35 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Fixed
-
 * Updated Nextflow to 23.10.0 (staging only).
 
-## [361.0] - beta
+## [364.0] - beta
+
+### Added
+
+* `dx extract_assay expression`
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+
+### Changed
+
+* Disallow Python versions <2.7 or <3.5 in setup.py for dxpy, the next release will only support Python >=3.5
+
+### Fixed
+
+* Released Nextaur 1.6.9. It contains fixes for exception types so they are interpreted correctly by Nextflow when caching task runs.
+
+## [363.0] - 2023.11.6
+
+### Fixed
+
+* Project context added for loading dataset descriptor file when using `dx extract_dataset`
 
 ### Added
 
 * Support dataset and CB records with Integer and Float type global primary keys as input in `create_cohort`
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
 
-## [362.0] - beta
+## [362.0] - 2023.10.30
 
 ### Added
 

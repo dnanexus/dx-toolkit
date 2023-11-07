@@ -163,7 +163,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
     :type level: string
     :param region: Filter on result set by the given region(s).
     :type region: string or list of strings
-    :param archival_state: Filter by the given archival state (one of "archived", "live", "archival", “unarchiving”, or "any"). Requires classname="file", project, and folder arguments to be provided.
+    :param archival_state: Filter by the given archival state (one of "archived", "live", "archival", "unarchiving", or "any"). Requires classname="file", project, and folder arguments to be provided.
     :type archival_state: string 
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int

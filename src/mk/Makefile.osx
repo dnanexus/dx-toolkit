@@ -28,19 +28,6 @@ $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*}
 	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "${PYTHON_LIBDIR}"
 	rm -f "$(DNANEXUS_HOME)/bin/xattr"
 
-
-# Bundled utilities
-# =================
-
-jq: git_submodules ../bin/jq
-
-../bin/jq: jq/
-	(cd jq; autoreconf --install; ./configure)
-	(if [[ ! "$(CC)" == clang ]] && ! (gcc --version | grep -q LLVM); then export LDFLAGS="$$LDFLAGS -lgcc_eh"; fi; \
-	 cd jq; ./configure --disable-docs)
-	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
-	cp -f jq/jq ../bin/
-
 # System dependencies
 # ===================
 
