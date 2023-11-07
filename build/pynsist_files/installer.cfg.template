@@ -54,7 +54,6 @@ files = dnanexus-shell.ps1
     TEMPLATE_STRING_DXPY_WHEEL_FILENAME > $INSTDIR\\wheelfiles
     wheelfile_depends
     ../../bin/dx-verify-file.exe > $INSTDIR\\bin
-    ../../bin/jq.exe > $INSTDIR\\bin
     DLL_DEPS_FOLDERlibboost_atomic-mt.dll > $INSTDIR\\bin
     DLL_DEPS_FOLDERlibboost_chrono-mt.dll > $INSTDIR\\bin
     DLL_DEPS_FOLDERlibboost_date_time-mt.dll > $INSTDIR\\bin
