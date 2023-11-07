@@ -14,7 +14,7 @@ documentation.
 Installing the toolkit from source
 ----------------------------------
 
-The recommended way to install the Python SDK and `dx` CLI of `dx-toolkit` locally is with `python3 -m pip install -e dx-tookit/src/python`. 
+The recommended way to install the Python SDK and `dx` CLI of `dx-toolkit` locally is with `python3 -m pip install -e dx-toolkit/src/python`. 
 Any changes made within this checkout will be reflected in the pip installed version. 
 
 ### Building inside docker 
@@ -23,7 +23,7 @@ To avoid lengthy installation of dependencies on your platform and simultaneous 
 1. Start `python:3.9-bullseye` in the interactive mode, mounting the repo you are working on (`<local_path_to_repo>/dx-toolkit`):
 
     ```
-    # from root folder of dx-tollkit
+    # from root folder of dx-toolkit
     docker run -v `pwd`:/dx-toolkit -w /dx-toolkit -it --rm --entrypoint=/bin/bash python:3.9-bullseye
     ```
 2. From the interactive shell install `dx-toolkit`.
