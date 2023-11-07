@@ -352,11 +352,11 @@ class TestDXFileFunctions(unittest.TestCase):
         else:
             env = dict(os.environ, DX_JOB_ID=b'job-00000000000000000000')
         buffer_size = subprocess.check_output(
-            'python -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
+            'python3 -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
         self.assertEqual(int(buffer_size), 96 * 1024 * 1024)
         del env['DX_JOB_ID']
         buffer_size = subprocess.check_output(
-            'python -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
+            'python3 -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
         self.assertEqual(int(buffer_size), 16 * 1024 * 1024)
 
     def test_generate_read_requests(self):
