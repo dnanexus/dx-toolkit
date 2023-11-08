@@ -5074,6 +5074,15 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
                                                         " at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 
+
+nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project"
+                                                          "in /.cached_dockerImages. Currently only docker engine is supported.",
+                                                   width_adjustment=-24), action="store_true")
+
+nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id or a local path to the file with credential for a private "
+                                                            "docker repository.",
+                                                   width_adjustment=-24), dest="docker_secrets")
+
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
 
