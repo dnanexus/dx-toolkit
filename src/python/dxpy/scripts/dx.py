@@ -2829,6 +2829,9 @@ def build(args):
         if args.repository and args.remote:
             build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
 
+        if args.cache_docker and args.remote:
+            build_parser.error("Nextflow pipeline built with an option to cache the docker images is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
+
         if args.git_credentials and not args.repository:
             build_parser.error("Git credentials can be supplied only when building Nextflow pipeline from a Git repository.")
 
@@ -5076,8 +5079,8 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
 
 
 nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project"
-                                                          "in /.cached_dockerImages. Currently only docker engine is supported.",
-                                                   width_adjustment=-24), action="store_true")
+                                                          "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote.",
+                                                   width_adjustment=-24), action="store_true", dest="cache_docker")
 
 nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id or a local path to the file with credential for a private "
                                                             "docker repository.",

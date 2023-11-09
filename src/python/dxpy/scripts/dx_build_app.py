@@ -37,7 +37,7 @@ import dxpy.workflow_builder
 import dxpy.executable_builder
 from .. import logger
 
-from dxpy.nextflow.nextflow_builder import build_pipeline_from_repository, prepare_nextflow
+from dxpy.nextflow.nextflow_builder import build_pipeline_with_npi, prepare_nextflow
 from dxpy.nextflow.nextflow_utils import get_resources_subpath
 
 from ..utils import json_load_raise_on_duplicates
@@ -1050,7 +1050,9 @@ def _build_app(args, extra_args):
     if args.nextflow:
         verify_nf_license(args.destination, extra_args)
 
-    if args.nextflow and not args.repository:
+    # determine if a nextflow applet ot be built with Nextflow Pipeline Importer (NPI) app
+    build_nf_with_npi = any([x is not None for x in [args.repository, args.cache_docker]])
+    if args.nextflow and not build_nf_with_npi:
         source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
@@ -1144,9 +1146,19 @@ def _build_app(args, extra_args):
             more_kwargs['do_parallel_build'] = False
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
-        if args.nextflow and args.repository is not None:
-            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.git_credentials,
-                                                  args.brief, args.destination, extra_args)
+
+        if args.nextflow and build_nf_with_npi:
+            return build_pipeline_with_npi(
+                args.repository,
+                args.tag,
+                args.cache_docker,
+                args.docker_secrets,
+                args.profile,
+                args.git_credentials,
+                args.brief,
+                args.destination,
+                extra_args
+            )
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)
         _verify_app_source_dir(source_dir, args.mode)

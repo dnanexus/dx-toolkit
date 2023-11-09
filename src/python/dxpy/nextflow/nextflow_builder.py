@@ -18,7 +18,17 @@ from distutils.dir_util import copy_tree
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 
-def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, brief=False, destination=None, extra_args={}):
+def build_pipeline_with_npi(
+        repository=None,
+        tag=None,
+        cache_docker=False,
+        docker_secrets=None,
+        profile="",
+        git_creds=None,
+        brief=False,
+        destination=None,
+        extra_args=None
+):
     """
     :param repository: URL to a Git repository
     :type repository: string
@@ -47,6 +57,7 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
             dx_input["whats_new"] = extra_args.get("details", {}).get("whatsNew")
         return dx_input
 
+    extra_args = extra_args or {}
     build_project_id = dxpy.WORKSPACE_ID
     build_folder = None
     input_hash = parse_extra_args(extra_args)
@@ -59,6 +70,10 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
         input_hash["github_credentials"] = parse_obj(git_creds, "file")
     if destination:
         build_project_id, build_folder, _ = try_call(resolve_existing_path, destination, expected='folder')
+    if docker_secrets:
+        input_hash["docker_secrets"] = parse_obj(git_creds, "file")
+    if cache_docker:
+        input_hash["cache_docker"] = cache_docker
 
     if build_project_id is None:
         parser.error(
