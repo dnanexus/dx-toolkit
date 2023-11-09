@@ -133,5 +133,8 @@ class DockerImageRef(ImageRef):
         Docker image reference has the form of <REPOSITORY_NAME>/<IMAGE_NAME>:<VERSION_TAG>
         """
         repo_and_image_name = self._join_if_exists("/", [self._repository, self._image_name])
-        full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
+        if self._digest:
+            full_ref = self._join_if_exists("@", [repo_and_image_name, self._digest])
+        else:
+            full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
         return full_ref
