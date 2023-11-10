@@ -1415,7 +1415,7 @@ def main(number):
                                 {"name": "othernumber", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
                      runSpec={"code": self.codeSpec,
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "distribution": "Ubuntu", "release": "20.04",
                               "version": "0", "interpreter": "python3"})
         stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
                                                {"editVersion": 0,
