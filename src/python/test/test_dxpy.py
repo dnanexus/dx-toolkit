@@ -1316,8 +1316,9 @@ class TestDXAppletJob(unittest.TestCase):
 def main():
     pass
 ''',
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3",
+                              "distribution": "Ubuntu", "release": "20.04",
+                              "version": "0",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -1415,7 +1416,7 @@ def main(number):
                      outputSpec=[{"name": "number", "class": "int"}],
                      runSpec={"code": self.codeSpec,
                               "distribution": "Ubuntu", "release": "14.04",
-                              "interpreter": "python2.7"})
+                              "version": "0", "interpreter": "python3"})
         stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
                                                {"editVersion": 0,
                                                 "name": "stagename",
@@ -1453,8 +1454,8 @@ def main(number):
                      dxapi="1.04",
                      inputSpec=[{"name": "number", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
-                     runSpec={"code": self.codeSpec, "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04"})
+                     runSpec={"code": self.codeSpec, "interpreter": "python3",
+                              "distribution": "Ubuntu", "release": "20.04", "version": "0"})
 
         stage0 = {'id': 'stage_0', 'executable': dxapplet.get_id(),
                   'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}
@@ -1578,8 +1579,8 @@ def main(number):
                      inputSpec=[{"name": "number", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
                      runSpec={"code": self.codeSpec,
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04"})
+                              "interpreter": "python3", "version":"0",
+                              "distribution": "Ubuntu", "release": "20.04"})
         dxworkflow.add_stage(dxapplet, name='stagename')
 
         # Can't specify the same input more than once (with a
@@ -1957,8 +1958,8 @@ class TestDXApp(unittest.TestCase):
                             ],
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3", "version":"0",
+                              "distribution": "Ubuntu", "release": "20.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         my_userid = dxpy.whoami()
@@ -2003,8 +2004,8 @@ class TestDXApp(unittest.TestCase):
                             ],
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3", "version": "0",
+                              "distribution": "Ubuntu", "release": "20.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         my_userid = dxpy.whoami()
@@ -2334,8 +2335,8 @@ class TestDXSearch(testutil.DXTestCaseCompat):
                                 ],
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3", "version": "0",
+                              "distribution": "Ubuntu", "release": "20.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -2980,7 +2981,7 @@ class TestIdempotentRequests(unittest.TestCase):
         self.assertEqual(sorted(a), sorted(b))
 
     code = '''@dxpy.entry_point('main')\ndef main():\n    pass'''
-    run_spec = {"code": code, "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"}
+    run_spec = {"code": code, "interpreter": "python3", "distribution": "Ubuntu", "release": "20.04", "version": "0"}
 
     # Create an applet using DXApplet.new
     def create_applet(self, name="app_name"):

@@ -23,9 +23,6 @@ import re
 from setuptools import setup, find_packages
 import sys
 
-if sys.version_info < (2, 7):
-    raise Exception("dxpy requires Python >= 2.7")
-
 # Pypi is the repository for python packages.
 # It requires that version numbers look like this: X.Y.Z,
 # where X, Y, and Z are numbers. It is more complicated than that, but that's
@@ -66,10 +63,6 @@ for module in os.listdir(os.path.join(os.path.dirname(__file__), 'dxpy', 'script
 
 dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements.txt"))]
 test_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_test.txt"))]
-backports_dependencies = [line.rstrip() for line in open(os.path.join(os.path.dirname(__file__), "requirements_backports.txt"))]
-
-if sys.version_info[0] < 3:
-    dependencies.extend(backports_dependencies)
 
 if 'DNANEXUS_INSTALL_PYTHON_TEST_DEPS' in os.environ:
     dependencies.extend(test_dependencies)

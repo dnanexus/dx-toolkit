@@ -75,10 +75,11 @@ class TestDXRunBatch(DXTestCase):
             "outputSpec": [ { "name": "thresholds", "class": "array:int" },
                             { "name": "pie", "class": "float" },
                             { "name": "misc", "class": "hash" } ],
-            "runSpec": { "interpreter": "python2.7",
+            "runSpec": { "interpreter": "python3",
                          "code": code,
                          "distribution": "Ubuntu",
-                         "release": "14.04" }
+                         "release": "20.04",
+                         "version": "0" }
         })
 
         # run in batch mode
@@ -135,10 +136,11 @@ class TestDXRunBatch(DXTestCase):
             "dxapi": "1.0.0",
             "inputSpec": [ { "name": "plant", "class": "file" } ],
             "outputSpec": [ { "name": "plant", "class": "file" } ],
-            "runSpec": { "interpreter": "python2.7",
+            "runSpec": { "interpreter": "python3",
                          "code": code,
                          "distribution": "Ubuntu",
-                         "release": "14.04" }
+                         "release": "20.04",
+                         "version": "0" }
         })
         job_id = run("dx run {} --batch-tsv={} --yes --brief"
                      .format(applet["id"], arg_table)).strip()
@@ -182,10 +184,11 @@ class TestDXRunBatch(DXTestCase):
             "dxapi": "1.0.0",
             "inputSpec": [ { "name": "plant", "class": "array:file" } ],
             "outputSpec": [ { "name": "plant", "class": "array:file" } ],
-            "runSpec": { "interpreter": "python2.7",
+            "runSpec": { "interpreter": "python3",
                          "code": code,
                          "distribution": "Ubuntu",
-                         "release": "14.04" }
+                         "release": "20.04",
+                         "version": "0" }
         })
         job_id = run("dx run {} --batch-tsv={} --yes --brief"
                      .format(applet["id"], arg_table)).strip()

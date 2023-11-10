@@ -15,7 +15,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* Disallow Python versions <2.7 or <3.5 in setup.py for dxpy, the next release will only support Python >=3.5
+* Disallow Python versions <2.7 or <3.5 in setup.py for dxpy, the next release will only support Python >=3.6
 
 ### Fixed
 
