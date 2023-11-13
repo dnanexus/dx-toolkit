@@ -411,7 +411,7 @@ class TestDXBashHelpers(DXTestCase):
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_BENCHMARKS,
                      'skipping tests that would run jobs, or, run benchmarks')
-@unittest.skip()'Temporarily disabled')
+@unittest.skip('Temporarily disabled')
 class TestDXBashHelpersBenchmark(DXTestCase):
 
     def create_file_of_size(self, fname, size_bytes):
