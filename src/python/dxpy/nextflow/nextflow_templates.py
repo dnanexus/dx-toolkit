@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from .nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
                                           get_importer_name, get_regional_options)
