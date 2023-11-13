@@ -24,8 +24,7 @@ import unittest
 import tempfile
 import shutil
 import subprocess
-from dxpy_testutil import (DXTestCase)
-from dxpy_testutil import chdir
+from .dxpy_testutil import (DXTestCase,  chdir)
 
 
 class TestDXUnpack(DXTestCase):

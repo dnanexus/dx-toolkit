@@ -25,8 +25,8 @@ import shutil
 import random
 import time
 import dxpy
-from dxpy_testutil import (DXTestCase, temporary_project, run)
-import dxpy_testutil as testutil
+from .dxpy_testutil import (DXTestCase, temporary_project, run)
+from . import dxpy_testutil as testutil
 import pytest
 
 CACHE_DIR = '/tmp/dx-docker-cache'

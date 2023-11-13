@@ -26,7 +26,7 @@ import re
 import subprocess
 import pandas as pd
 import dxpy
-from dxpy_testutil import cd, chdir
+from .dxpy_testutil import cd, chdir
 
 dirname = os.path.dirname(__file__)
 

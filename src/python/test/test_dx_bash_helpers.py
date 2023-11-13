@@ -20,7 +20,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import dxpy
-import dxpy_testutil as testutil
+from . import dxpy_testutil as testutil
 import json
 import os
 import pipes
@@ -29,7 +29,7 @@ import shutil
 import tempfile
 import unittest
 from dxpy.utils.completer import InstanceTypesCompleter
-from dxpy_testutil import DXTestCase, check_output, temporary_project, override_environment
+from .dxpy_testutil import DXTestCase, check_output, temporary_project, override_environment
 from dxpy.exceptions import DXJobFailureError
 from dxpy.bindings.download_all_inputs import _get_num_parallel_threads
 

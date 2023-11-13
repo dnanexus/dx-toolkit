@@ -29,7 +29,7 @@ import unittest
 import dxpy
 from dxpy.exceptions import err_exit
 from dxpy.utils import describe
-from dxpy_testutil import (chdir, run, TEST_ISOLATED_ENV)
+from .dxpy_testutil import (chdir, run, TEST_ISOLATED_ENV)
 from dxpy.compat import USING_PYTHON2
 
 def setUpTempProject(thing):

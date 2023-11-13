@@ -29,8 +29,8 @@ from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxap
 from dxpy.nextflow.nextflow_utils import get_template_dir
 
 import uuid
-from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
-import dxpy_testutil as testutil
+from .dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
+from . import dxpy_testutil as testutil
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError
 import dxpy
