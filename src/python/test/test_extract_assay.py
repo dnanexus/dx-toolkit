@@ -27,7 +27,7 @@ import subprocess
 import json
 import sys
 
-from .dxpy_testutil import cd
+from dxpy_testutil import cd
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
     basic_filter,

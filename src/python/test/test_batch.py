@@ -22,10 +22,10 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, sys, unittest, json, tempfile, subprocess, csv, shutil, re
 
 import dxpy
-from .dxpy_testutil import (DXTestCase, check_output, temporary_project,
+from dxpy_testutil import (DXTestCase, check_output, temporary_project,
                            select_project,
                            run, DXCalledProcessError)
-from . import dxpy_testutil as testutil
+import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 # from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution

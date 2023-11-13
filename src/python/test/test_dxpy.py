@@ -31,7 +31,7 @@ import requests
 from requests.packages.urllib3.exceptions import SSLError
 
 import dxpy
-from . import dxpy_testutil as testutil
+import dxpy_testutil as testutil
 from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError, ResourceNotFound)
 from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit

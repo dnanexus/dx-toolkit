@@ -29,8 +29,8 @@ import subprocess
 import pytest
 
 import dxpy
-from . import dxpy_testutil as testutil
-from .dxpy_testutil import (DXTestCase, check_output, override_environment, chdir)
+import dxpy_testutil as testutil
+from dxpy_testutil import (DXTestCase, check_output, override_environment, chdir)
 
 
 def run(command, **kwargs):

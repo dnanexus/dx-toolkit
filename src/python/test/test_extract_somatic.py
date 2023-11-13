@@ -31,7 +31,7 @@ import sys
 import subprocess
 import shutil
 
-from .dxpy_testutil import cd
+from dxpy_testutil import cd
 from dxpy.cli.dataset_utilities import (
     get_assay_name_info,
     resolve_validate_record_path,

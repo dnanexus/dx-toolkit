@@ -21,7 +21,7 @@ from tempfile import NamedTemporaryFile, mkdtemp
 import pytest
 
 import dxpy
-from . import dxpy_testutil as testutil
+import dxpy_testutil as testutil
 from dxpy.exceptions import DXError
 from dxpy.compat import USING_PYTHON2
 
