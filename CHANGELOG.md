@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* dxpy supports Python >= 3.6 
+
+### Removed
+
+* Python 2.7 support
+
 ## [364.0] - beta
 
 ### Added
