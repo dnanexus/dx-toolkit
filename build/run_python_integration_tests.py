@@ -1,7 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 '''
 Runs Python integration tests
+
+Assumes  `make python src_libs && source build/py_env/bin/activate`
 
 If no arguments are given, all tests in src/python/test/ are run.
 
@@ -41,17 +43,9 @@ PYTHON_TEST_DIR = os.path.join(PYTHON_DIR, 'test')
 os.environ['DNANEXUS_INSTALL_PYTHON_TEST_DEPS'] = 'yes'
 
 def run():
-    # src_libs is to ensure that dx-unpack is runnable. If we had "bash unit
-    # tests" that were broken out separately, that would obviate this though.
-    #
-    # Note that Macs must run the make command before running this script,
-    # as of b9d8487 (when virtualenv was added to the Mac dx-toolkit release).
-    if sys.platform != "darwin":
-        subprocess.check_call(["make", "python", "src_libs"], cwd=TOOLKIT_ROOT_DIR)
+    # Assumes `make python src_libs` has been run
 
-    python_version = "python{}.{}".format(sys.version_info.major, sys.version_info.minor)
-
-    cmd = ['python', '-m', 'unittest']
+    cmd = ['python3', '-m', 'unittest']
     if args.tests:
         cmd += ['-v'] + args.tests
     else:
