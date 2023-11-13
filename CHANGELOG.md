@@ -8,7 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* dxpy supports Python >= 3.6 
+* Python >= 3.6 dxpy
+* Updated Nextflow to 23.10.0 (staging only).
 
 ### Removed
 
