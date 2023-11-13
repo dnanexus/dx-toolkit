@@ -341,7 +341,8 @@ class DXTestCaseCompat(unittest.TestCase):
         assertNotRegex = unittest.TestCase.assertNotRegex
 
 class DXTestCase(DXTestCaseCompat):
-    def setUp(self):
+    @classmethod
+    def setUpClass(self):
         proj_name = u"dxclient_test_pröject"
         self.project = dxpy.api.project_new({"name": proj_name})['id']
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
@@ -349,8 +350,8 @@ class DXTestCase(DXTestCaseCompat):
         dxpy.config.__init__(suppress_warning=True)
         if 'DX_CLI_WD' in dxpy.config:
             del dxpy.config['DX_CLI_WD']
-
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(self):
         if "DX_USER_CONF_DIR" in os.environ:
             os.environ.pop("DX_USER_CONF_DIR")
         try:
