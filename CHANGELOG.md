@@ -6,16 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [365.0] - beta
+
 ### Changed
 
 * Python >= 3.6 dxpy
-* Updated Nextflow to 23.10.0 (staging only).
+* Updated Nextflow to 23.10.0 (staging only)
 
 ### Removed
 
 * Python 2.7 support
 
-## [364.0] - beta
+## [364.0] - 2023.11.13
 
 ### Added
 
