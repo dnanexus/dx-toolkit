@@ -120,7 +120,7 @@ def update_environ(**kwargs):
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
-@unitttest.skipIf(True, 'Temporarily disabled')
+@unittest.skipIf(True, 'Temporarily disabled')
 class TestDXBashHelpers(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_PROVIDE_BASH_HELPER_COMMANDS"])
@@ -411,7 +411,7 @@ class TestDXBashHelpers(DXTestCase):
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_BENCHMARKS,
                      'skipping tests that would run jobs, or, run benchmarks')
-@unitttest.skipIf(True, 'Temporarily disabled')
+@unittest.skipIf(True, 'Temporarily disabled')
 class TestDXBashHelpersBenchmark(DXTestCase):
 
     def create_file_of_size(self, fname, size_bytes):

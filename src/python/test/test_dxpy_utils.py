@@ -28,6 +28,8 @@ from dxpy.utils import (exec_utils, genomic_utils, response_iterator, get_future
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.utils.pretty_print import flatten_json_array
 from dxpy.compat import USING_PYTHON2
+# fix this import
+
 import dxpy_testutil as testutil
 from dxpy.system_requirements import SystemRequirementsDict
 
