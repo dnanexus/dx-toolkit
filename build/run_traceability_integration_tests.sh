@@ -10,7 +10,7 @@ export DX_USER_CONF_DIR="${TOOLKIT_ROOT_DIR}/dnanexus_config_relocated"
 cd $TOOLKIT_ROOT_DIR
 make src_libs python
 
-source build/py_env7/bin/activate
+source build/py_env/bin/activate
 
 #py.test -m TRACEABILITY_MATRIX src/python/test/test_dx_bash_helpers.py::TestDXBashHelpers::test_basic -sv
 py.test -vv -s -m TRACEABILITY_MATRIX ${TOOLKIT_ROOT_DIR}/src/python/test/
