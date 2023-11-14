@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import dxpy
 import json
@@ -7,8 +7,7 @@ from glob import glob
 import tempfile
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
-from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
-                                          get_resources_dir_name, create_readme)
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, create_readme)
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
@@ -114,7 +113,7 @@ def prepare_nextflow(resources_dir, profile, region):
     dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
 
     custom_inputs = prepare_custom_inputs(schema_file=os.path.join(resources_dir, "nextflow_schema.json"))
-    dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, name=get_resources_dir_name(resources_dir),
+    dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, resources_dir=resources_dir,
                                        region=region)
     exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
     copy_tree(get_template_dir(), dxapp_dir)

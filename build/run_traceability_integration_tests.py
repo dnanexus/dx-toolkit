@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 '''
 Runs Python integration tests tagged for inclusion in the traceability matrix.
@@ -19,13 +19,6 @@ os.environ['DNANEXUS_INSTALL_PYTHON_TEST_DEPS'] = 'yes'
 os.environ['DX_USER_CONF_DIR'] = TOOLKIT_ROOT_DIR + "/dnanexus_config_relocated"
 
 def run():
-    # src_libs is to ensure that dx-unpack is runnable. If we had "bash unit
-    # tests" that were broken out separately, that would obviate this though.
-    #
-    # Note that Macs must run the make command before running this script,
-    # as of b9d8487 (when virtualenv was added to the Mac dx-toolkit release).
-    if sys.platform != "darwin":
-        subprocess.check_call(["make", "python", "src_libs"], cwd=TOOLKIT_ROOT_DIR)
 
     cmd = ['py.test', '-vv', '-s', '-m', 'TRACEABILITY_MATRIX', 'src/python/test/']
 
