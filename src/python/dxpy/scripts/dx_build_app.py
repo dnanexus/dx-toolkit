@@ -1050,8 +1050,16 @@ def _build_app(args, extra_args):
     if args.nextflow:
         verify_nf_license(args.destination, extra_args)
 
-    # determine if a nextflow applet ot be built with Nextflow Pipeline Importer (NPI) app
+    # determine if a nextflow applet ought to be built with Nextflow Pipeline Importer (NPI) app
     build_nf_with_npi = any([x is not None for x in [args.repository, args.cache_docker]])
+
+    # this is to ensure to not call any more NPI executions if already inside an NPI job. Move this into NPI resources and
+    # remove from dx-toolkit
+    if dxpy.JOB_ID is not None:
+        exec_name = dxpy.api.job_describe(dxpy.JOB_ID).get("executableName")
+        already_in_npi = (exec_name == "nextflow_pipeline_importer")
+        build_nf_with_npi = False if already_in_npi else build_nf_with_npi
+
     if args.nextflow and not build_nf_with_npi:
         source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
         resources_dir = args.src_dir
