@@ -72,8 +72,6 @@ input4 = {
     "label": "Test4"
 }
 
-CUR_DIR = os.path.dirname(os.path.abspath(__file__))
-
 
 class TestNextflowUtils(DXTestCase):
 
