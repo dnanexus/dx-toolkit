@@ -29,7 +29,9 @@ from contextlib import contextmanager
 
 import dxpy
 from dxpy.compat import str, basestring, USING_PYTHON2
+from pathlib import Path
 
+THIS_DIR = Path(__file__).parent
 _run_all_tests = 'DXTEST_FULL' in os.environ
 TEST_AZURE = ((os.environ.get('DXTEST_AZURE', '').startswith('azure:') and os.environ['DXTEST_AZURE']) or
               (os.environ.get('DXTEST_AZURE') and 'azure:westus'))
@@ -656,7 +658,7 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     app destruction, and extraction of app data as local files.
     """
 
-    base_nextflow_nf = "nextflow/hello/main.nf"
+    base_nextflow_nf = THIS_DIR / "nextflow/hello/main.nf"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()

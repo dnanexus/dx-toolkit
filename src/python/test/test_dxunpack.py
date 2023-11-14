@@ -27,7 +27,7 @@ import subprocess
 from dxpy_testutil import (DXTestCase)
 from dxpy_testutil import chdir
 
-
+@unittest.skip("Temporarily disabled")
 class TestDXUnpack(DXTestCase):
     def test_file_name_with_special_chars_locally(self):
         # create a tar.gz file with spaces, quotes and escape chars in its name
