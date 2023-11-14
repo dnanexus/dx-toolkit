@@ -2906,6 +2906,7 @@ dx-jobutil-add-output outrecord $record_id
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "bundledDepends": [],
                                                      "execDepends": [],
                                                      "code": '''
@@ -3180,6 +3181,7 @@ dx-jobutil-add-output record_array $second_record --array
                                                      "distribution": "Ubuntu",
                                                      "release": "20.04",
                                                      "version": "0",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""},
                                          "access": {"project": "VIEW",
                                                     "allProjects": "VIEW",
@@ -3860,6 +3862,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             "runSpec": {"interpreter": "bash",
                         "distribution": "Ubuntu",
                         "release": "14.04",
+                        "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                         "code": "dx-jobutil-add-output number 32"}
         })["id"]
 
@@ -3945,6 +3948,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "dx-jobutil-add-output number 32"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -3982,6 +3986,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""}
                                          })['id']
 
@@ -4045,6 +4050,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -4095,6 +4101,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 1"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -4149,7 +4156,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash", "code": "",
-                                                     "distribution": "Ubuntu", "release": "14.04"}
+                                                     "distribution": "Ubuntu", "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}}}
                                          })['id']
         run("dx add stage wØrkflØwname " + applet_id)
 
@@ -4203,6 +4211,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         first_stage = run("dx add stage " + workflow_id + " -inumber=10 " + applet_id +
@@ -4224,6 +4233,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         stage_ids = []
@@ -4393,6 +4403,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         stage_id = run("dx add stage " + workflow_id + " " + applet_id + " --brief").strip()
@@ -11066,6 +11077,7 @@ class TestDXRun(DXTestCase):
                 "runSpec": {"interpreter": "bash",
                             "distribution": "Ubuntu",
                             "release": "16.04",
+                            "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                             "code": "dx-jobutil-add-output number 32"}
             })
             run("dx run myapplet -inumber=5 --project %s" % temp_project.name)
@@ -11301,16 +11313,16 @@ class TestDXArchive(DXTestCase):
     def test_archive_invalid_paths(self):
         # mixed file and folder path        
         fname1 = self.gen_uniq_fname()
-        fid1 = create_file_in_project(fname1, self.project,folder=self.rootdir)
+        fid1 = create_file_in_project(fname1, self.proj_archive_id,folder=self.rootdir)
         
         with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
             run("dx archive -y {}:{} {}:{}".format(
-                self.project,fid1,
-                self.project,self.rootdir))
+                self.proj_archive_id,fid1,
+                self.proj_archive_id,self.rootdir))
         
         with self.assertSubprocessFailure(stderr_regexp="is invalid. Please check the inputs or check --help for example inputs.", exit_code=3):
             run("dx archive -y {}:{}:{}".format(
-                self.project,self.rootdir,fid1))
+                self.proj_archive_id,self.rootdir,fid1))
 
         # invalid project name
         with self.assertSubprocessFailure(stderr_regexp="Cannot find project with name {}".format("invalid_project_name"), exit_code=3):
@@ -11322,33 +11334,34 @@ class TestDXArchive(DXTestCase):
             run("dx archive -y {}".format(fid1))
         
         # invalid file name
-        with self.assertSubprocessFailure(stderr_regexp="Input '{}' is not found as a file in project '{}'".format("invalid_file_name",self.project), exit_code=3):
-            run("dx archive -y {}:{}".format(self.project,"invalid_file_name"))
+        with self.assertSubprocessFailure(stderr_regexp="Input '{}' is not found as a file in project '{}'".format("invalid_file_name",self.proj_archive_id), exit_code=3):
+            run("dx archive -y {}:{}".format(self.proj_archive_id,"invalid_file_name"))
 
         # files in different project
         with temporary_project("other_project",select=False) as temp_project:
             test_projectid = temp_project.get_id()
-            fid2 = create_file_in_project("temp_file", trg_proj_id=test_projectid,folder=self.rootdir)
-            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive -y {}:{} {}:{}".format(
-                    self.project,fid1,
-                    test_projectid,fid2))
-            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive -y {}:{} :{}".format(
-                    self.project,fid1,
-                    fid2))
-            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive -y {}:{} {}".format(
-                    self.project,fid1,
-                    fid2))
+            with select_project(test_projectid):
+                fid2 = create_file_in_project("temp_file", trg_proj_id=test_projectid,folder=self.rootdir)
+                with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                    run("dx archive -y {}:{} {}:{}".format(
+                        self.proj_archive_id,fid1,
+                        test_projectid,fid2))
+                with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                    run("dx archive -y {}:{} :{}".format(
+                        self.proj_archive_id,fid1,
+                        fid2))
+                with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                    run("dx archive -y {}:{} {}".format(
+                        self.proj_archive_id,fid1,
+                        fid2))
 
         repeated_name = '/foo'
-        fid = create_file_in_project(repeated_name, self.project)
-        fp = create_folder_in_project(self.project,repeated_name)
+        fid = create_file_in_project(repeated_name, self.proj_archive_id)
+        fp = create_folder_in_project(self.proj_archive_id,repeated_name)
          # invalid file name
         with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
-            run("dx archive -y {}:{} {}:{}/".format(self.project,repeated_name,
-                                                    self.project,repeated_name))
+            run("dx archive -y {}:{} {}:{}/".format(self.proj_archive_id,repeated_name,
+                                                    self.proj_archive_id,repeated_name))
 
     def test_archive_allcopies(self):
         fname = self.gen_uniq_fname()
