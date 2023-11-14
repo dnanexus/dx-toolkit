@@ -88,8 +88,8 @@ def write_dxapp(folder, content):
 def get_regional_options(region, resources_dir):
     nextaur_asset, nextflow_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
-    image_refs = run_nextaur_collect(resources_dir)
-    image_bundled = bundle_docker_images(image_refs)
+    image_refs = None
+    image_bundled = None
     regional_options = {
         region: {
             "systemRequirements": {
@@ -100,8 +100,7 @@ def get_regional_options(region, resources_dir):
             "assetDepends": [
                 {"id": nextaur_asset},
                 {"id": nextflow_asset}
-            ],
-            "bundledDepends": image_bundled
+            ]
         }
     }
     return regional_options
