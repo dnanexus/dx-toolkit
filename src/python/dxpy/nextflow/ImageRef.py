@@ -130,7 +130,8 @@ class DockerImageRef(ImageRef):
 
     def _reconstruct_image_ref(self):
         """
-        Docker image reference has the form of <REPOSITORY_NAME>/<IMAGE_NAME>:<VERSION_TAG>
+        Docker image reference has the form of <REPOSITORY_NAME>/<IMAGE_NAME>:<VERSION_TAG> or
+        <REPOSITORY_NAME>/<IMAGE_NAME>@<DIGEST>
         """
         repo_and_image_name = self._join_if_exists("/", [self._repository, self._image_name])
         if self._digest:
