@@ -209,11 +209,11 @@ class TestDXRemove(DXTestCase):
 class TestApiDebugOutput(DXTestCase):
     def test_dx_debug_shows_request_id(self):
         (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
-        self.assertRegex(stderr, "POST \d{13}-\d{1,6} http",
+        self.assertRegex(stderr, r"POST \d{13}-\d{1,6} http",
                                  msg="stderr does not appear to contain request ID")
 
     def test_dx_debug_shows_timestamp(self):
-        timestamp_regex = "\[\d{1,15}\.\d{0,8}\]"
+        timestamp_regex = r"\[\d{1,15}\.\d{0,8}\]"
 
         (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
         self.assertRegex(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
@@ -1370,7 +1370,7 @@ class TestDXClient(DXTestCase):
                                max_retries=0)
 
     def test_dx_api_error_msg(self):
-        error_regex = "Request Time=\d{1,15}\.\d{0,8}, Request ID=\d{13}-\d{1,6}"
+        error_regex = r"Request Time=\d{1,15}\.\d{0,8}, Request ID=\d{13}-\d{1,6}"
         with self.assertSubprocessFailure(stderr_regexp=error_regex, exit_code=3):
             run("dx api file-InvalidFileID describe")
 
@@ -2792,7 +2792,7 @@ dx-jobutil-add-output outrecord $record_id
 
         # If describing an entity ID fails, then a ResolutionError should be
         # raised
-        with self.assertRaisesRegex(ResolutionError, "The entity record-\d+ could not be found"):
+        with self.assertRaisesRegex(ResolutionError, r"The entity record-\d+ could not be found"):
             check_resolution("some_path", self.project, "/", "record-123456789012345678901234")
 
     def test_dx_run_depends_on_success(self):
@@ -4117,7 +4117,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn("inaccessible", list_output)
 
         # run refuses to run it
-        with self.assertSubprocessFailure(stderr_regexp='following inaccessible stage\(s\)',
+        with self.assertSubprocessFailure(stderr_regexp=r'following inaccessible stage\(s\)',
                                           exit_code=3):
             run("dx run myworkflow")
 
@@ -4750,7 +4750,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
     def test_build_worklow_malformed_dxworkflow_json(self):
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow", "{")
-        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxworkflow\.json file', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp=r'Could not parse dxworkflow\.json file', exit_code=3):
             run("dx build " + workflow_dir)
 
 
@@ -5093,7 +5093,7 @@ class TestDXClientFind(DXTestCase):
         record_id = dxpy.new_dxrecord(project=self.project, name="find_data_formatting", close=True).get_id()
         self.assertRegex(
             run("dx find data --name " + "find_data_formatting").strip(),
-            r"^closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+/find_data_formatting \(" + record_id + "\)$"
+            r"^closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+/find_data_formatting \(" + record_id + r"\)$"
         )
 
     @pytest.mark.TRACEABILITY_MATRIX
@@ -5939,7 +5939,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         # Assert that return format is like: "<user_id> : <user_name> (<level>)"
         levels = "(?:ADMIN|MEMBER)"
         output = run(cmd.format(opts="")).strip().split("\n")
-        pattern = "^user-[a-zA-Z0-9]* : .* \(" + levels + "\)$"
+        pattern = r"^user-[a-zA-Z0-9]* : .* \(" + levels + r"\)$"
         for result in output:
             self.assertRegex(result, pattern)
 
@@ -6119,7 +6119,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         # Assert that return format is like: "<project_id><project_name><level>"
         levels = "(?:ADMINISTER|CONTRIBUTE|UPLOAD|VIEW|NONE)"
         output = run(cmd.format(opts="")).strip().split("\n")
-        pattern = "^project-[a-zA-Z0-9]{24} : .* \(" + levels + "\)$"
+        pattern = r"^project-[a-zA-Z0-9]{24} : .* \(" + levels + r"\)$"
         for result in output:
             self.assertRegex(result, pattern)
 
@@ -6169,7 +6169,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
 
         # Same as above, without the --brief flag, so we need to destructure formatting
         lengthy_outputs = run("dx find org apps {}".format(self.org_id)).rstrip().split("\n")
-        pattern = "^(\s\s|(\s\S)*x(\s\S)*)[a-zA-Z0-9_]*\s\([a-zA-Z0-9_]*\),\sv[0-9.]*$"
+        pattern = r"^(\s\s|(\s\S)*x(\s\S)*)[a-zA-Z0-9_]*\s\([a-zA-Z0-9_]*\),\sv[0-9.]*$"
         for lengthy_output in lengthy_outputs:
             self.assertRegex(lengthy_output, pattern)
 
@@ -8174,12 +8174,12 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     def test_build_applet_with_no_dxapp_json(self):
         app_dir = self.write_app_directory("åpplet_with_no_dxapp_json", None, "code.py")
-        with self.assertSubprocessFailure(stderr_regexp='does not contain dxapp\.json', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp=r'does not contain dxapp\.json', exit_code=3):
             run("dx build " + app_dir)
 
     def test_build_applet_with_malformed_dxapp_json(self):
         app_dir = self.write_app_directory("åpplet_with_malformed_dxapp_json", "{", "code.py")
-        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxapp\.json file', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp=r'Could not parse dxapp\.json file', exit_code=3):
             run("dx build " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -8756,7 +8756,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("invalid_execdepends", json.dumps(app_spec), "code.py")
-        with self.assertSubprocessFailure(stderr_regexp="Expected runSpec\.execDepends to"):
+        with self.assertSubprocessFailure(stderr_regexp=r"Expected runSpec\.execDepends to"):
             run("dx build --json " + app_dir)
 
     def test_invalid_authorized_users(self):
@@ -10984,7 +10984,7 @@ class TestDXLs(DXTestCase):
         rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
         o = run("dx ls -l")
         #                             state    modified                              name      id
-        self.assertRegex(o, r"closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+        self.assertRegex(o, r"closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + r"\)")
 
 
 class TestDXTree(DXTestCase):
@@ -11000,7 +11000,7 @@ class TestDXTree(DXTestCase):
         rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
         o = run("dx tree -l")
         self.assertRegex(o.strip(),
-                         r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+                         r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + r"\)")
 
 
 class TestDXGenerateBatchInputs(DXTestCase):
@@ -11086,7 +11086,7 @@ class TestDXRun(DXTestCase):
         id = 'applet-xxxxasdfasdfasdfasdfas'
         with self.assertSubprocessFailure(
             # there should be no app- or globalworkflow- in the stderr
-            stderr_regexp="\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
+            stderr_regexp=r"\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
             exit_code=3):
             run("_DX_DEBUG=2 dx run {}".format(id))
         
@@ -11094,7 +11094,7 @@ class TestDXRun(DXTestCase):
         id = 'workflow-xxxxasdfasfasdf'
         with self.assertSubprocessFailure( 
             # there should be no app- or globalworkflow- in the stderr
-            stderr_regexp="\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
+            stderr_regexp=r"\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
             exit_code=3):
             run("_DX_DEBUG=2 dx run {}".format(id))
 
