@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 
 from .nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
-                                          get_importer_name, get_regional_options)
+                             get_importer_name, get_regional_options, get_resources_dir_name)
 import json
 import os
 from dxpy import TOOLKIT_VERSION
-from dxpy.compat import USING_PYTHON2,sys_encoding
+from dxpy.compat import USING_PYTHON2, sys_encoding
 
 
-def get_nextflow_dxapp(custom_inputs=None, name="", region="aws:us-east-1"):
+def get_nextflow_dxapp(custom_inputs=None, resources_dir="", region="aws:us-east-1"):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
-    :param name: Name of the applet.
-    :type name: str
+    :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
+    :type resources_dir: str or Path
     :param region: The name of the region in which the applet will be built.
     :type region: str
     Creates Nextflow dxapp.json from the Nextflow dxapp.json template
     """
+
     def is_importer_job():
         try:
             with open("/home/dnanexus/dnanexus-job.json", "r") as f:
@@ -33,13 +34,14 @@ def get_nextflow_dxapp(custom_inputs=None, name="", region="aws:us-east-1"):
     dxapp["inputSpec"] = custom_inputs + dxapp["inputSpec"]
     dxapp["runSpec"]["file"] = get_source_file_name()
 
-    # By default title and summary will be set to the pipeline name
+    # By default, title and summary will be set to the pipeline name
+    name = get_resources_dir_name(resources_dir)
     if name is None or name == "":
         name = "Nextflow pipeline"
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
-    dxapp["regionalOptions"] = get_regional_options(region)
+    dxapp["regionalOptions"] = get_regional_options(region, resources_dir)
 
     # Record dxpy version used for this Nextflow build
     dxapp["details"]["dxpyBuildVersion"] = TOOLKIT_VERSION
@@ -66,13 +68,14 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     with open(os.path.join(str(get_template_dir()), get_source_file_name()), 'r') as f:
         src = f.read()
 
-    exclude_input_download=""
+    exclude_input_download = ""
     applet_runtime_params = ""
     for i in custom_inputs:
         value = "${%s}" % (i['name'])
         if i.get("class") == "file":
-            value = "dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)" % i['name']
-            exclude_input_download+="--except {} ".format(i['name'])
+            value = "dx://${DX_WORKSPACE_ID}:/$(echo ${%s} | jq .[$dnanexus_link] -r | xargs -I {} dx describe {} --json | jq -r .name)" % \
+                    i['name']
+            exclude_input_download += "--except {} ".format(i['name'])
 
         # applet_runtime_inputs variable is initialized in the nextflow.sh script template
         applet_runtime_params = applet_runtime_params + '''
@@ -88,10 +91,9 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     src = src.replace("@@DXPY_BUILD_VERSION@@", TOOLKIT_VERSION)
     if USING_PYTHON2:
         src = src.replace("@@RESOURCES_SUBPATH@@",
-                      get_resources_subpath(resources_dir).encode(sys_encoding))
+                          get_resources_subpath(resources_dir).encode(sys_encoding))
     else:
         src = src.replace("@@RESOURCES_SUBPATH@@",
-                      get_resources_subpath(resources_dir))
-        
-    return src
+                          get_resources_subpath(resources_dir))
 
+    return src

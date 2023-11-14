@@ -47,6 +47,10 @@ class ImageRef(object):
             self._bundled_depends = self._package_bundle()
         return self._bundled_depends
 
+    @property
+    def identifier(self):
+        return self._join_if_exists("_", [self._repository, self._image_name, self._tag, self._digest])
+
     def _cache(self, file_name):
         """
         Function to store an image on the platform as a dx file object. Should be implemented in subclasses.
@@ -126,8 +130,12 @@ class DockerImageRef(ImageRef):
 
     def _reconstruct_image_ref(self):
         """
-        Docker image reference has the form of <REPOSITORY_NAME>/<IMAGE_NAME>:<VERSION_TAG>
+        Docker image reference has the form of <REPOSITORY_NAME>/<IMAGE_NAME>:<VERSION_TAG> or
+        <REPOSITORY_NAME>/<IMAGE_NAME>@<DIGEST>
         """
         repo_and_image_name = self._join_if_exists("/", [self._repository, self._image_name])
-        full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
+        if self._digest:
+            full_ref = self._join_if_exists("@", [repo_and_image_name, self._digest])
+        else:
+            full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
         return full_ref

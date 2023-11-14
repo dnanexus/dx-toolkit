@@ -23,6 +23,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx extract_assay expression`
 * Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+* Docker image can be cached on the platform
 
 ### Changed
 
