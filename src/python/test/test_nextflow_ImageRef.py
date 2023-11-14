@@ -52,7 +52,7 @@ class TestImageRef(DXTestCase):
 
 
     @parameterized.expand([
-        ["proc1", "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824", "busybox", "1.36"]
+        ["proc1", "sha256:3fbc632167424a6d997e74f52b878d7cc478225cffac6bc977eedfe51c7f4e79", "busybox", "1.36"]
     ])
     @unittest.skipIf(USING_PYTHON2,
                      'Skipping Python 3 code')
