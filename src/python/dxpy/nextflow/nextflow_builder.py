@@ -93,7 +93,12 @@ def build_pipeline_with_npi(
     return applet_id
 
 
-def prepare_nextflow(resources_dir, profile, region):
+def prepare_nextflow(
+        resources_dir,
+        profile,
+        region,
+        cache_docker=False
+):
     """
     :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
     :type resources_dir: str or Path
@@ -101,6 +106,8 @@ def prepare_nextflow(resources_dir, profile, region):
     :type profile: str
     :param region: The region in which the applet will be built.
     :type region: str
+    :param cache_docker: Perform pipeline analysis and cache the detected docker images on the platform
+    :type cache_docker: boolean
     :returns: Path to the created dxapp_dir
     :rtype: Path
 
@@ -113,8 +120,12 @@ def prepare_nextflow(resources_dir, profile, region):
     dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
 
     custom_inputs = prepare_custom_inputs(schema_file=os.path.join(resources_dir, "nextflow_schema.json"))
-    dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, resources_dir=resources_dir,
-                                       region=region)
+    dxapp_content = get_nextflow_dxapp(
+        custom_inputs=custom_inputs,
+        resources_dir=resources_dir,
+        region=region,
+        cache_docker=cache_docker
+    )
     exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
     copy_tree(get_template_dir(), dxapp_dir)
     write_dxapp(dxapp_dir, dxapp_content)

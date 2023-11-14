@@ -38,7 +38,7 @@ import dxpy.executable_builder
 from .. import logger
 
 from dxpy.nextflow.nextflow_builder import build_pipeline_with_npi, prepare_nextflow
-from dxpy.nextflow.nextflow_utils import get_resources_subpath
+from dxpy.nextflow.nextflow_utils import get_resources_subpath, is_importer_job
 
 from ..utils import json_load_raise_on_duplicates
 from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError, is_container_id
@@ -1052,16 +1052,16 @@ def _build_app(args, extra_args):
 
     # determine if a nextflow applet ought to be built with Nextflow Pipeline Importer (NPI) app
     build_nf_with_npi = any([x is not None for x in [args.repository, args.cache_docker]])
-
-    # this is to ensure to not call any more NPI executions if already inside an NPI job. Move this into NPI resources and
-    # remove from dx-toolkit
-    if dxpy.JOB_ID is not None:
-        exec_name = dxpy.api.job_describe(dxpy.JOB_ID).get("executableName")
-        already_in_npi = (exec_name == "nextflow_pipeline_importer")
-        build_nf_with_npi = False if already_in_npi else build_nf_with_npi
+    # this is to ensure to not call any more NPI executions if already inside an NPI job.
+    build_nf_with_npi = False if is_importer_job() else build_nf_with_npi
 
     if args.nextflow and not build_nf_with_npi:
-        source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
+        source_dir = prepare_nextflow(
+            resources_dir=args.src_dir,
+            profile=args.profile,
+            region=get_destination_region(args.destination),
+            cache_docker=args.cache_docker
+        )
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
     if args._from:
@@ -1157,15 +1157,15 @@ def _build_app(args, extra_args):
 
         if args.nextflow and build_nf_with_npi:
             return build_pipeline_with_npi(
-                args.repository,
-                args.tag,
-                args.cache_docker,
-                args.docker_secrets,
-                args.profile,
-                args.git_credentials,
-                args.brief,
-                args.destination,
-                extra_args
+                repository=args.repository,
+                tag=args.tag,
+                cache_docker=args.cache_docker,
+                docker_secrets=args.docker_secrets,
+                profile=args.profile,
+                git_creds=args.git_credentials,
+                brief=args.brief,
+                destination=args.destination,
+                extra_args=extra_args
             )
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)

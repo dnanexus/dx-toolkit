@@ -37,6 +37,15 @@ def get_template_dir():
     return path.join(path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
 
+def is_importer_job():
+    try:
+        with open("/home/dnanexus/dnanexus-job.json", "r") as f:
+            job_info = json.load(f)
+            return job_info.get("executableName") == get_importer_name()
+    except Exception:
+        return False
+
+
 def write_exec(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())
     try:
@@ -85,11 +94,14 @@ def write_dxapp(folder, content):
         json.dump(content, dxapp)
 
 
-def get_regional_options(region, resources_dir):
+def get_regional_options(region, resources_dir, cache_docker):
     nextaur_asset, nextflow_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
-    image_refs = run_nextaur_collect(resources_dir)
-    image_bundled = bundle_docker_images(image_refs)
+    if cache_docker:
+        image_refs = run_nextaur_collect(resources_dir)
+        image_bundled = bundle_docker_images(image_refs)
+    else:
+        image_bundled = {}
     regional_options = {
         region: {
             "systemRequirements": {

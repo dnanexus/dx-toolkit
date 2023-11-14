@@ -65,4 +65,3 @@ def run_nextaur_collect(resources_dir):
         if not image_refs:
             raise ImageRefFactoryError("Could not extract processes from nextaur:collect")
     return image_refs
-

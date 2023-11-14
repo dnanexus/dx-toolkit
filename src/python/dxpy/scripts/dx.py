@@ -5082,7 +5082,7 @@ nextflow_options.add_argument('--cache-docker', help=fill("Stores a container im
                                                           "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote.",
                                                    width_adjustment=-24), action="store_true", dest="cache_docker")
 
-nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id or a local path to the file with credential for a private "
+nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "
                                                             "docker repository.",
                                                    width_adjustment=-24), dest="docker_secrets")
 
