@@ -15,20 +15,14 @@
 #   under the License.
 
 $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
-	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
-	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
-	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
+	python3 -c 'import sys; exit("dx-toolkit is not compatible with Python < 3.6" if sys.version_info < (3, 6) else 0)'
+	rm -rf "$(DX_PY_ENV)"
 	$(VIRTUAL_ENV) "$(DX_PY_ENV)"
 
-# Install setuptools and other fundamental packages
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install --upgrade -r python/requirements_setuptools.txt
 
-# Build the dxpy wheel and move it into place
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
-	
-	export DXPY_WHEEL_FILENAME=$$(basename python/dist/dxpy-*.whl) ; \
-		unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/$${DXPY_WHEEL_FILENAME}[xattr]
-	mv "$(DNANEXUS_HOME)"/lib/python?.[0-9]*/site-packages "$(PYTHON_LIBDIR)"
+	# Build the dxpy wheel and move it into place
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install python/
 
 
 # Installation
