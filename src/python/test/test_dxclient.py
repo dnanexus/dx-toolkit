@@ -2906,6 +2906,7 @@ dx-jobutil-add-output outrecord $record_id
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "bundledDepends": [],
                                                      "execDepends": [],
                                                      "code": '''
@@ -3180,6 +3181,7 @@ dx-jobutil-add-output record_array $second_record --array
                                                      "distribution": "Ubuntu",
                                                      "release": "20.04",
                                                      "version": "0",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""},
                                          "access": {"project": "VIEW",
                                                     "allProjects": "VIEW",
@@ -3860,6 +3862,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             "runSpec": {"interpreter": "bash",
                         "distribution": "Ubuntu",
                         "release": "14.04",
+                        "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                         "code": "dx-jobutil-add-output number 32"}
         })["id"]
 
@@ -3945,6 +3948,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "dx-jobutil-add-output number 32"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -3982,6 +3986,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""}
                                          })['id']
 
@@ -4045,6 +4050,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -4095,6 +4101,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 1"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -4149,7 +4156,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash", "code": "",
-                                                     "distribution": "Ubuntu", "release": "14.04"}
+                                                     "distribution": "Ubuntu", "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}}}
                                          })['id']
         run("dx add stage wØrkflØwname " + applet_id)
 
@@ -4203,6 +4211,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         first_stage = run("dx add stage " + workflow_id + " -inumber=10 " + applet_id +
@@ -4224,6 +4233,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         stage_ids = []
@@ -4393,6 +4403,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         stage_id = run("dx add stage " + workflow_id + " " + applet_id + " --brief").strip()
@@ -11066,6 +11077,7 @@ class TestDXRun(DXTestCase):
                 "runSpec": {"interpreter": "bash",
                             "distribution": "Ubuntu",
                             "release": "16.04",
+                            "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                             "code": "dx-jobutil-add-output number 32"}
             })
             run("dx run myapplet -inumber=5 --project %s" % temp_project.name)
