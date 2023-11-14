@@ -227,6 +227,8 @@ def final_payload(
             fields = json.load(infile)
 
     order_by = [{"allele_id":"asc"}]
+    if "sample_id" in fields:
+        order_by.append({"sample_id":"asc"})
 
     final_payload["order_by"] = order_by
     final_payload["fields"] = fields
