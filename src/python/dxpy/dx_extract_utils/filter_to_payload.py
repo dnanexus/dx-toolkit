@@ -227,7 +227,13 @@ def final_payload(
             fields = json.load(infile)
 
     order_by = [{"allele_id":"asc"}]
-    if "sample_id" in fields:
+    #print("fields")
+    #print(fields)
+    sample_id_present = False
+    for field in fields:
+        if "sample_id" in field:
+            sample_id_present = True
+    if sample_id_present:
         order_by.append({"sample_id":"asc"})
 
     final_payload["order_by"] = order_by
@@ -236,6 +242,7 @@ def final_payload(
     final_payload["raw_filters"] = assay_filter
     final_payload["is_cohort"] = True
     final_payload["distinct"] = True
+    #print(json.dumps(final_payload))
 
     field_names = []
     for f in fields:
