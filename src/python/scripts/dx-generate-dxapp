@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """This script attempts to generate valid dxapp.json by introspecting arguments
 configured in an argparse.ArgumentParser. It monkeypatches ArgumentParser with a
 subclass that overrides parse_args to do the introspection, generate the JSON file,

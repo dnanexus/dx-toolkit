@@ -6,9 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-* Updated Nextflow to 23.10.0 (staging only).
+## [365.0] - beta
 
-## [364.0] - beta
+### Changed
+
+* Python >= 3.6 dxpy
+* Updated Nextflow to 23.10.0 (staging only)
+
+### Removed
+
+* Python 2.7 support
+
+## [364.0] - 2023.11.13
 
 ### Added
 
@@ -18,7 +27,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* Disallow Python versions <2.7 or <3.5 in setup.py for dxpy, the next release will only support Python >=3.5
+* Disallow Python versions <2.7 or <3.5 in setup.py for dxpy, the next release will only support Python >=3.6
 
 ### Fixed
 

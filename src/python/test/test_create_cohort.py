@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
+
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2023 DNAnexus, Inc.

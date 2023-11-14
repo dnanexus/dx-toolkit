@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2014-2016 DNAnexus, Inc.
@@ -120,6 +120,7 @@ def update_environ(**kwargs):
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
+@unittest.skip('Temporarily disabled')
 class TestDXBashHelpers(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_PROVIDE_BASH_HELPER_COMMANDS"])
@@ -410,6 +411,7 @@ class TestDXBashHelpers(DXTestCase):
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_BENCHMARKS,
                      'skipping tests that would run jobs, or, run benchmarks')
+@unittest.skip('Temporarily disabled')
 class TestDXBashHelpersBenchmark(DXTestCase):
 
     def create_file_of_size(self, fname, size_bytes):

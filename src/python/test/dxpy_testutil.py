@@ -594,10 +594,10 @@ class DXTestCaseBuildApps(DXTestCase):
         "dxapi": "1.0.0",
         "runSpec": {
           "file": "code.py",
-          "interpreter": "python2.7",
+          "interpreter": "python3",
           "distribution": "Ubuntu",
-          "release": "14.04",
-          "version": '0'
+          "release": "20.04",
+          "version": "0"
           },
         "inputSpec": [],
         "outputSpec": [],
