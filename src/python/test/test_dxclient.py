@@ -11301,16 +11301,16 @@ class TestDXArchive(DXTestCase):
     def test_archive_invalid_paths(self):
         # mixed file and folder path        
         fname1 = self.gen_uniq_fname()
-        fid1 = create_file_in_project(fname1, self.proj_archive_id,folder=self.rootdir)
+        fid1 = create_file_in_project(fname1, self.project,folder=self.rootdir)
         
         with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
             run("dx archive -y {}:{} {}:{}".format(
-                self.proj_archive_id,fid1,
-                self.proj_archive_id,self.rootdir))
+                self.project,fid1,
+                self.project,self.rootdir))
         
         with self.assertSubprocessFailure(stderr_regexp="is invalid. Please check the inputs or check --help for example inputs.", exit_code=3):
             run("dx archive -y {}:{}:{}".format(
-                self.proj_archive_id,self.rootdir,fid1))
+                self.project,self.rootdir,fid1))
 
         # invalid project name
         with self.assertSubprocessFailure(stderr_regexp="Cannot find project with name {}".format("invalid_project_name"), exit_code=3):
@@ -11322,8 +11322,8 @@ class TestDXArchive(DXTestCase):
             run("dx archive -y {}".format(fid1))
         
         # invalid file name
-        with self.assertSubprocessFailure(stderr_regexp="Input '{}' is not found as a file in project '{}'".format("invalid_file_name",self.proj_archive_id), exit_code=3):
-            run("dx archive -y {}:{}".format(self.proj_archive_id,"invalid_file_name"))
+        with self.assertSubprocessFailure(stderr_regexp="Input '{}' is not found as a file in project '{}'".format("invalid_file_name",self.project), exit_code=3):
+            run("dx archive -y {}:{}".format(self.project,"invalid_file_name"))
 
         # files in different project
         with temporary_project("other_project",select=False) as temp_project:
@@ -11331,24 +11331,24 @@ class TestDXArchive(DXTestCase):
             fid2 = create_file_in_project("temp_file", trg_proj_id=test_projectid,folder=self.rootdir)
             with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
                 run("dx archive -y {}:{} {}:{}".format(
-                    self.proj_archive_id,fid1,
+                    self.project,fid1,
                     test_projectid,fid2))
             with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
                 run("dx archive -y {}:{} :{}".format(
-                    self.proj_archive_id,fid1,
+                    self.project,fid1,
                     fid2))
             with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
                 run("dx archive -y {}:{} {}".format(
-                    self.proj_archive_id,fid1,
+                    self.project,fid1,
                     fid2))
 
         repeated_name = '/foo'
-        fid = create_file_in_project(repeated_name, self.proj_archive_id)
-        fp = create_folder_in_project(self.proj_archive_id,repeated_name)
+        fid = create_file_in_project(repeated_name, self.project)
+        fp = create_folder_in_project(self.project,repeated_name)
          # invalid file name
         with self.assertSubprocessFailure(stderr_regexp="Expecting either a single folder or a list of files for each API request", exit_code=3):
-            run("dx archive -y {}:{} {}:{}/".format(self.proj_archive_id,repeated_name,
-                                                    self.proj_archive_id,repeated_name))
+            run("dx archive -y {}:{} {}:{}/".format(self.project,repeated_name,
+                                                    self.project,repeated_name))
 
     def test_archive_allcopies(self):
         fname = self.gen_uniq_fname()
