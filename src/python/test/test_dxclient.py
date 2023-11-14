@@ -7558,7 +7558,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json))
         # reject building gwf if the source WDL workflow is built by unsupported dxCompiler
-        with self.assertSubprocessFailure(stderr_regexp="Source workflow {} is not compiled using dxCompiler \(version>={}\) that supports creating global workflows.".format(dxworkflow_json["name"], SUPPORTED_DXCOMPILER_VERSION), exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="Source workflow " + dxworkflow_json["name"] + r" is not compiled using dxCompiler \(version>=" + SUPPORTED_DXCOMPILER_VERSION + r"\) that supports creating global workflows.", exit_code=3):
             run("dx build --globalworkflow {}".format(workflow_dir))
         
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
