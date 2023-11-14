@@ -11329,7 +11329,7 @@ class TestDXArchive(DXTestCase):
             run("dx archive -y {}:{}".format("invalid_project_name",fid1))
         
         # no project context       
-        with without_project_context:
+        with without_project_context():
             with self.assertSubprocessFailure(stderr_regexp="Cannot find current project. Please check the environment.",
                                             exit_code=3):
                 run("dx archive -y {}".format(fid1))
