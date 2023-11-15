@@ -43,8 +43,8 @@ endif
 
 # Extract the two most significant digits the python distribution
 #
-PYTHON_VERSION_NUMBER:=$(shell python -c 'import sys; print("{}.{}".format(sys.version_info[0], sys.version_info[1]))')
-PYTHON_MAJOR_VERSION:=$(shell python -c 'import sys; print(sys.version_info[0])')
+PYTHON_VERSION_NUMBER:=$(shell python3 -c 'import sys; print("{}.{}".format(sys.version_info[0], sys.version_info[1]))')
+PYTHON_MAJOR_VERSION:=$(shell python3 -c 'import sys; print(sys.version_info[0])')
 
 ifeq (${PYTHON_MAJOR_VERSION}, 2)
 	PIP=pip
@@ -69,7 +69,7 @@ endif
 
 export DNANEXUS_HOME := $(CURDIR)/..
 export PATH := $(DNANEXUS_HOME)/build/bin:$(PATH)
-export DX_PY_ENV := $(DNANEXUS_HOME)/build/py_env${PYTHON_VERSION_NUMBER}
+export DX_PY_ENV := $(DNANEXUS_HOME)/build/py_env
 export DNANEXUS_LIBDIR := $(DNANEXUS_HOME)/share/dnanexus/lib
 
 # Short-circuit sudo when running as root. In a chrooted environment we are
@@ -80,8 +80,6 @@ ifeq (${USER}, root)
 else
 	MAYBE_SUDO='sudo'
 endif
-
-PYTHON_LIBDIR = $(DNANEXUS_LIBDIR)/python${PYTHON_VERSION_NUMBER}/site-packages
 
 
 ifeq ($(PLATFORM), windows)

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
@@ -27,6 +27,7 @@ import unittest
 import json
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
 from dxpy.nextflow.nextflow_utils import get_template_dir
+from dxpy.nextflow.collect_images import bundle_docker_images
 
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
@@ -41,6 +42,9 @@ if USING_PYTHON2:
 else:
     # Python 3 requires specifying the encoding
     spawn_extra_args = {"encoding": "utf-8"}
+from pathlib import Path
+
+THIS_DIR = Path(__file__).parent
 
 
 input1 = {
@@ -156,14 +160,14 @@ class TestNextflowTemplates(DXTestCase):
             input1.get("name"), input3.get("name"), input4.get("name")) in src)
 
     def test_prepare_inputs(self):
-        inputs = prepare_custom_inputs(schema_file="./nextflow/schema2.json")
+        inputs = prepare_custom_inputs(schema_file=THIS_DIR / "nextflow/schema2.json")
         names = [i["name"] for i in inputs]
         self.assertTrue(
             "input" in names and "outdir" in names and "save_merged_fastq" in names)
         self.assertEqual(len(names), 3)
 
     def test_prepare_inputs_single(self):
-        inputs = prepare_custom_inputs(schema_file="./nextflow/schema3.json")
+        inputs = prepare_custom_inputs(schema_file=THIS_DIR / "nextflow/schema3.json")
         self.assertEqual(len(inputs), 1)
         i = inputs[0]
         self.assertEqual(i["name"], "outdir")
@@ -173,7 +177,7 @@ class TestNextflowTemplates(DXTestCase):
         self.assertEqual(i["class"], "string")
 
     def test_prepare_inputs_large_file(self):
-        inputs = prepare_custom_inputs(schema_file="./nextflow/schema1.json")
+        inputs = prepare_custom_inputs(schema_file=THIS_DIR / "nextflow/schema1.json")
         self.assertEqual(len(inputs), 93)
 
 
@@ -250,6 +254,27 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         details = applet.get_details()
         self.assertEqual(details["repository"], "local")
 
+    @unittest.skipIf(USING_PYTHON2,
+                     'Skipping Python 3 code')
+    def test_bundle_docker_images(self):
+        image_refs = [
+            {
+                "engine": "docker",
+                "process": "proc1",
+                "digest": "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824",
+                "image_name": "busybox",
+                "tag": "1.36"
+            },
+            {
+                "engine": "docker",
+                "process": "proc2",
+                "digest": "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824",
+                "image_name": "busybox",
+                "tag": "1.36"
+            }
+        ]
+        bundled_images = bundle_docker_images(image_refs)
+        self.assertEqual(len(bundled_images), 1)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
@@ -322,7 +347,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
     @unittest.skip("skipping flaky test; to be fixed separately")
     def test_dx_run_retry_fail(self):
         pipeline_name = "retryMaxRetries"
-        nextflow_file = "nextflow/RetryMaxRetries/main.nf"
+        nextflow_file = THIS_DIR / "nextflow/RetryMaxRetries/main.nf"
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, existing_nf_file_path=nextflow_file)
         applet_id = json.loads(
@@ -417,7 +442,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         pipeline_name = "cat_ls"
         # extra_args = '{"name": "testing_cat_ls"}'
         applet_dir = self.write_nextflow_applet_directory(
-            pipeline_name, nf_file_name="main.nf", existing_nf_file_path="nextflow/publishDir/main.nf")
+            pipeline_name, nf_file_name="main.nf", existing_nf_file_path=THIS_DIR / "nextflow/publishDir/main.nf")
         applet_id = json.loads(run(
             "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
         desc = dxpy.describe(applet_id)
@@ -447,7 +472,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
     def test_dx_run_override_profile(self):
         pipeline_name = "profile_test"
 
-        applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, "nextflow/profile/")
+        applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, THIS_DIR / "nextflow/profile/")
         applet_id = json.loads(run(
             "dx build --nextflow --profile test '{}' --json".format(applet_dir)))["id"]
         job_id = run(
@@ -466,13 +491,13 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
     def test_dx_run_nextflow_with_soft_conf_files(self):
         pipeline_name = "print_env"
         applet_dir = self.write_nextflow_applet_directory(
-            pipeline_name,  existing_nf_file_path="nextflow/print_env_nextflow_soft_confs/main.nf")
+            pipeline_name,  existing_nf_file_path=THIS_DIR / "nextflow/print_env_nextflow_soft_confs/main.nf")
         applet_id = json.loads(run(
             "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
 
         # Run with "dx run".
-        first_config = dxpy.upload_local_file("nextflow/print_env_nextflow_soft_confs/first.config", project=self.project, wait_on_close=True).get_id()
-        second_config = dxpy.upload_local_file("nextflow/print_env_nextflow_soft_confs/second.config", project=self.project, wait_on_close=True).get_id()
+        first_config = dxpy.upload_local_file(THIS_DIR / "nextflow/print_env_nextflow_soft_confs/first.config", project=self.project, wait_on_close=True).get_id()
+        second_config = dxpy.upload_local_file(THIS_DIR / "nextflow/print_env_nextflow_soft_confs/second.config", project=self.project, wait_on_close=True).get_id()
 
         job_id = run(
             "dx run {applet_id} -idebug=true -inextflow_soft_confs={first_config} -inextflow_soft_confs={second_config} --brief -y".format(
@@ -493,12 +518,12 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
     def test_dx_run_nextflow_with_runtime_param_file(self):
         pipeline_name = "print_params"
         applet_dir = self.write_nextflow_applet_directory(
-            pipeline_name,  existing_nf_file_path="nextflow/print_param_nextflow_params_file/main.nf")
+            pipeline_name,  existing_nf_file_path=THIS_DIR / "nextflow/print_param_nextflow_params_file/main.nf")
         applet_id = json.loads(run(
             "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
 
         # Run with "dx run".
-        params_file = dxpy.upload_local_file("nextflow/print_param_nextflow_params_file/params_file.yml", project=self.project, wait_on_close=True).get_id()
+        params_file = dxpy.upload_local_file(THIS_DIR / "nextflow/print_param_nextflow_params_file/params_file.yml", project=self.project, wait_on_close=True).get_id()
 
         job_id = run(
             "dx run {applet_id} -idebug=true -inextflow_params_file={params_file} -inextflow_pipeline_params=\"--BETA 'CLI beta'\" --brief -y".format(

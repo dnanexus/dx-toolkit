@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from os import path, makedirs, listdir
 import re
 import errno
@@ -6,6 +6,7 @@ import dxpy
 import json
 import shutil
 from dxpy.exceptions import ResourceNotFound
+from dxpy.nextflow.collect_images import run_nextaur_collect, bundle_docker_images
 
 
 def get_source_file_name():
@@ -84,9 +85,11 @@ def write_dxapp(folder, content):
         json.dump(content, dxapp)
 
 
-def get_regional_options(region):
+def get_regional_options(region, resources_dir):
     nextaur_asset, nextflow_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
+    image_refs = None
+    image_bundled = None
     regional_options = {
         region: {
             "systemRequirements": {
