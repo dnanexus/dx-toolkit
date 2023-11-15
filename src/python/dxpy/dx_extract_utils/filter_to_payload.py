@@ -227,8 +227,9 @@ def final_payload(
             fields = json.load(infile)
 
     order_by = [{"allele_id":"asc"}]
-    #print("fields")
-    #print(fields)
+
+    # In order for output to be deterministic, we need to do a secondary sort by sample_id
+    # if it is present in the fields
     sample_id_present = False
     for field in fields:
         if "sample_id" in field:
@@ -242,7 +243,6 @@ def final_payload(
     final_payload["raw_filters"] = assay_filter
     final_payload["is_cohort"] = True
     final_payload["distinct"] = True
-    #print(json.dumps(final_payload))
 
     field_names = []
     for f in fields:
