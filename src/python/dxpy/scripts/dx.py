@@ -2838,6 +2838,15 @@ def build(args):
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
 
+        if args.cache_docker:
+            logging.warning(
+                "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
+                "Intellectual Property agreements of the software within the Docker container. You are also "
+                "responsible for remediating the security vulnerabilities of the Docker images of the pipeline."
+                "Also, cached images will be accessible by the users with VIEW permissions to the projects where the "
+                "cached images will be stored."
+            )
+
         # options not supported by workflow building
 
         if args.mode == "workflow":
