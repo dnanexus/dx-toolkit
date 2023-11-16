@@ -107,7 +107,6 @@ def update_environ(**kwargs):
 
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping tests that would run jobs')
-@unittest.skip('Temporarily disabled')
 class TestDXBashHelpers(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_PROVIDE_BASH_HELPER_COMMANDS"])
