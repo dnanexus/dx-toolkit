@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+* Nextaur updated to 1.7.0-beta on staging
+
 ## [365.0] - beta
 
 ### Changed
