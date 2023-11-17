@@ -1155,6 +1155,7 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
 
+        # TODO check if src_dir or repository and upload to the
         if args.nextflow and build_nf_with_npi:
             return build_pipeline_with_npi(
                 repository=args.repository,
