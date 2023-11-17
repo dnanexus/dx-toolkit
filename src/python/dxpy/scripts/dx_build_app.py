@@ -1166,7 +1166,7 @@ def _build_app(args, extra_args):
                 dest_project = get_project_to_check(args.destination, extra_args)
                 _, dest_folder, _ = parse_destination(args.destination)
                 upload_destination_dir = os.path.join(
-                    dest_folder.strip("/"), ".nf_source", os.path.basename(args.src_dir).strip("/")
+                    dest_folder.strip("/"), ".nf_source"
                 )
                 qualified_upload_dest = ":".join([dest_project, "/" + upload_destination_dir + "/"])
                 if check_folder_exists(
