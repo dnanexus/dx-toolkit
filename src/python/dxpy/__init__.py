@@ -133,30 +133,20 @@ logger.addHandler(logging.NullHandler())
 import os, sys, json, time, platform, ssl, traceback
 import errno
 import math
-import mmap
-import requests
 import socket
 import threading
-import subprocess
-
+import requests
+import certifi
 from collections import namedtuple
 
 from . import exceptions
-from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes, Repr
+from .compat import BadStatusLine, StringIO, bytes, Repr
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 
 from random import randint
-from requests.auth import AuthBase
-from requests.packages import urllib3
+import urllib3
 from threading import Lock
-from . import ssh_tunnel_app_support
-
-try:
-    # python-3
-    from urllib.parse import urlsplit
-except ImportError:
-    # python-2
-    from urlparse import urlsplit
+from urllib.parse import urlsplit
 
 sequence_number_mutex = threading.Lock()
 counter = 0
@@ -172,7 +162,7 @@ def _get_sequence_number():
 def configure_urllib3():
     # Disable verbose urllib3 warnings and log messages
     urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
-    logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)
 
 configure_urllib3()
 
@@ -203,8 +193,13 @@ USER_AGENT = "{name}/{version} ({platform}) Python/{python_version}".format(name
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform(),
                                                     python_version=platform.python_version())
-_default_certs = requests.certs.where()
-_default_headers = requests.utils.default_headers()
+_default_certs = certifi.where()
+_default_headers = {
+            "User-Agent": USER_AGENT,
+            "Accept-Encoding": "gzip, deflate",
+            "Accept": "*/*",
+            "Connection": "keep-alive",
+        }
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
 _expected_exceptions = (exceptions.network_exceptions, exceptions.DXAPIError, BadStatusLine, exceptions.BadJSONInReply,
@@ -295,15 +290,7 @@ def _process_method_url_headers(method, url, headers):
         _headers.update(headers)
     else:
         _url, _headers = url, headers
-    # When *data* is bytes but *headers* contains Unicode text, httplib tries to concatenate them and decode
-    # *data*, which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll
-    # disregard that here, and just encode them with the Python default (ascii) and fail for any non-ascii
-    # content. See http://tools.ietf.org/html/rfc3987 for a discussion of encoding URLs.
-    # TODO: ascertain whether this is a problem in Python 3/make test
-    if USING_PYTHON2:
-        return method.encode(), _url.encode('utf-8'), {k.encode(): v.encode() for k, v in _headers.items()}
-    else:
-        return method, _url, _headers
+    return method, _url, _headers
 
 
 # When any of the following errors are indicated, we are sure that the
@@ -316,9 +303,7 @@ _RETRYABLE_SOCKET_ERRORS = {
 }
 
 _RETRYABLE_WITH_RESPONSE = (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
-                                         urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError)
-if not USING_PYTHON2:
-    _RETRYABLE_WITH_RESPONSE += (ConnectionResetError,)
+                            ConnectionResetError, urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError)
 
 def _is_retryable_exception(e):
     """Returns True if the exception is always safe to retry.
@@ -333,15 +318,13 @@ def _is_retryable_exception(e):
     """
     if isinstance(e, urllib3.exceptions.ProtocolError):
         return True
-    if not USING_PYTHON2 and isinstance(e, ConnectionResetError):
+    if isinstance(e, ConnectionResetError):
         return True
     if isinstance(e, (socket.gaierror, socket.herror)):
         return True
     if isinstance(e, socket.error) and e.errno in _RETRYABLE_SOCKET_ERRORS:
         return True
     if isinstance(e, urllib3.exceptions.NewConnectionError):
-        return True
-    if isinstance(e, requests.exceptions.SSLError):
         return True
     if isinstance(e, urllib3.exceptions.SSLError):
         return True
@@ -607,28 +590,26 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     return i
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
-                if USING_PYTHON2:
-                    encoded_url = _url
-                else:
-                    # This is needed for python 3 urllib
-                    _headers.pop(b'host', None)
-                    _headers.pop(b'content-length', None)
-                    _headers.pop(b'Content-Length', None)
 
-                    # The libraries downstream (http client) require elimination of non-ascii
-                    # chars from URL.
-                    # We check if the URL contains non-ascii characters to see if we need to
-                    # quote it. It is important not to always quote the path (here: parts[2])
-                    # since it might contain elements (e.g. HMAC for api proxy) containing
-                    # special characters that should not be quoted.
-                    try:
-                        ensure_ascii(_url)
-                        encoded_url = _url
-                    except UnicodeEncodeError:
-                        import urllib.parse
-                        parts = list(urllib.parse.urlparse(_url))
-                        parts[2] = urllib.parse.quote(parts[2])
-                        encoded_url = urllib.parse.urlunparse(parts)
+                # This is needed for python 3 urllib
+                _headers.pop(b'host', None)
+                _headers.pop(b'content-length', None)
+                _headers.pop(b'Content-Length', None)
+
+                # The libraries downstream (http client) require elimination of non-ascii
+                # chars from URL.
+                # We check if the URL contains non-ascii characters to see if we need to
+                # quote it. It is important not to always quote the path (here: parts[2])
+                # since it might contain elements (e.g. HMAC for api proxy) containing
+                # special characters that should not be quoted.
+                try:
+                    ensure_ascii(_url)
+                    encoded_url = _url
+                except UnicodeEncodeError:
+                    import urllib.parse
+                    parts = list(urllib.parse.urlparse(_url))
+                    parts[2] = urllib.parse.quote(parts[2])
+                    encoded_url = urllib.parse.urlunparse(parts)
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
@@ -667,6 +648,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         raise exceptions.BadJSONInReply("Invalid JSON received from server", response.status)
                     try:
                         error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
+                        print(content["error"]["type"])
+                        print(error_class)
+                        err_ex = error_class(content, response.status, time_started, req_id)
+                        print(err_ex)
                     except (KeyError, AttributeError, TypeError):
                         raise exceptions.HTTPErrorWithContent("Appropriate error class not found. [HTTPCode=%s]" % response.status, content)
                     raise error_class(content, response.status, time_started, req_id)
@@ -750,7 +735,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # The server has closed the connection prematurely
                     if (response is not None
                        and response.status == 400 and is_retryable and method == 'PUT'
-                       and isinstance(e, requests.exceptions.HTTPError)):
+                       and isinstance(e, urllib3.exceptions.HTTPError)):
                         request_timeout_str = '<Code>RequestTimeout</Code>'
                         if (request_timeout_str in exception_msg
                             or (isinstance(e, exceptions.HTTPErrorWithContent) and request_timeout_str in e.content)):
@@ -810,7 +795,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     raise AssertionError('Should never reach this line: should never break out of loop')
 
 
-class DXHTTPOAuth2(AuthBase):
+class DXHTTPOAuth2():
     def __init__(self, security_context):
         self.security_context = security_context
 

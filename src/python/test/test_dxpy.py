@@ -27,8 +27,7 @@ import platform
 import pytest
 import re
 
-import requests
-from requests.packages.urllib3.exceptions import SSLError
+from urllib3.exceptions import SSLError
 
 import dxpy
 import dxpy_testutil as testutil

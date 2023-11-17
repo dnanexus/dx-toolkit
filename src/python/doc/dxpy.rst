@@ -16,14 +16,6 @@ This Python 2.7 package includes three key modules:
 
 It has the following external dependencies:
 
-* :mod:`requests`: To install on Linux, use ``sudo pip install
-  requests``. Other installation options can be found at
-  http://docs.python-requests.org/en/latest/user/install
-
-* :mod:`futures`: To install on Linux, use ``sudo pip install futures``.
-  Other installation options can be found at
-  http://code.google.com/p/pythonfutures/
-
 
 Package Configuration
 ---------------------

@@ -24,9 +24,8 @@ command-line client.
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import dxpy
-import requests
 from ..utils.resolver import (resolve_existing_path, resolve_path, is_hashid, get_last_pos_of_char)
-from ..exceptions import (err_exit, DXCLIError)
+from ..exceptions import (err_exit, DXCLIError, ResourceNotFound)
 from . import try_call
 from dxpy.utils.printing import (fill)
 
@@ -47,8 +46,8 @@ def cp_to_noexistent_destination(args, dest_path, dx_dest, dest_proj):
     dest_name = dest_path[last_slash_pos + 1:].replace('\/', '/')
     try:
         dx_dest.list_folder(folder=dest_folder, only='folders')
-    except dxpy.DXAPIError as details:
-        if details.code == requests.codes['not_found']:
+    except dxpy.DXAPIError as e:
+        if isinstance(e, ResourceNotFound):
             raise DXCLIError('The destination folder does not exist')
         else:
             raise
