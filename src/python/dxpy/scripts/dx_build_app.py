@@ -1014,23 +1014,24 @@ def get_destination_region(destination):
         dest_project_id = dxpy.WORKSPACE_ID
     return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
 
+
+def get_project_to_check(destination, extra_args):
+    # extra args overrides the destination argument
+    # so we're checking it first
+    if "project" in extra_args:
+        return extra_args["project"]
+    if destination:
+        dest_project_id, _, _ = parse_destination(destination)
+        # checkFeatureAccess is not implemented on the container
+        if dest_project_id.startswith("container-"):
+            dest_project_id = dxpy.PROJECT_CONTEXT_ID
+        return dest_project_id
+    else:
+        return dxpy.PROJECT_CONTEXT_ID
+
+
 def verify_nf_license(destination, extra_args):
-
-    def get_project_to_check():
-        # extra args overrides the destination argument
-        # so we're checking it first
-        if "project" in extra_args:
-            return extra_args["project"]
-        if destination:
-            dest_project_id, _, _ = parse_destination(destination)
-            # checkFeatureAccess is not implemented on the container
-            if dest_project_id.startswith("container-"):
-                dest_project_id = dxpy.PROJECT_CONTEXT_ID
-            return dest_project_id
-        else:
-            return dxpy.PROJECT_CONTEXT_ID
-
-    dest_project_to_check = get_project_to_check()
+    dest_project_to_check = get_project_to_check(destination, extra_args)
     features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
     dx_nextflow_lic = features.get("dxNextflow", False)
     if not dx_nextflow_lic:
@@ -1155,10 +1156,35 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
 
-        # TODO check if src_dir or repository and upload to the
         if args.nextflow and build_nf_with_npi:
+            nf_scr = args.repository
+            if (not args.repository) and args.src_dir:
+                logger.info(
+                    "Building nextflow pipeline with the Nextflow Pipeline Importer app. "
+                    "Uploading the local nextflow source to the platform"
+                )
+                dest_project = get_project_to_check(args.destination, extra_args)
+                _, dest_folder, _ = parse_destination(args.destination)
+                upload_destination_dir = os.path.join(
+                    dest_folder.strip("/"), ".nf_source", os.path.basename(args.src_dir).strip("/")
+                )
+                qualified_upload_dest = ":".join([dest_project, "/" + upload_destination_dir + "/"])
+                if check_folder_exists(
+                        project=dest_project,
+                        path=os.path.join(dest_folder, ".nf_source"),
+                        folder_name=os.path.basename(args.src_dir)
+                ):
+                    raise dxpy.app_builder.AppBuilderException(
+                        "Folder {} exists in the project {}. Remove the directory to avoid file duplication and retry".format(
+                            upload_destination_dir, dest_project
+                        )
+                    )
+                else:
+                    upload_cmd = ["dx", "upload", args.src_dir, "-r", "-o", qualified_upload_dest, "-p"]
+                    _ = subprocess.check_output(upload_cmd)
+                    nf_scr = qualified_upload_dest
             return build_pipeline_with_npi(
-                repository=args.repository,
+                repository=nf_scr,
                 tag=args.tag,
                 cache_docker=args.cache_docker,
                 docker_secrets=args.docker_secrets,
