@@ -648,10 +648,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         raise exceptions.BadJSONInReply("Invalid JSON received from server", response.status)
                     try:
                         error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
-                        print(content["error"]["type"])
-                        print(error_class)
-                        err_ex = error_class(content, response.status, time_started, req_id)
-                        print(err_ex)
                     except (KeyError, AttributeError, TypeError):
                         raise exceptions.HTTPErrorWithContent("Appropriate error class not found. [HTTPCode=%s]" % response.status, content)
                     raise error_class(content, response.status, time_started, req_id)
