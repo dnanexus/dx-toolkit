@@ -121,7 +121,7 @@ class DockerImageRef(ImageRef):
         extracted_digest = self._digest
         if not self._digest:
             digest_cmd = "docker images --no-trunc --quiet {}".format(full_image_ref)
-            extracted_digest = subprocess.check_output(digest_cmd, shell=True)
+            extracted_digest = subprocess.check_output(digest_cmd, shell=True).decode().strip()
         uploaded_dx_file = upload_local_file(
             filename=file_name,
             project=config["DX_PROJECT_CONTEXT_ID"],
