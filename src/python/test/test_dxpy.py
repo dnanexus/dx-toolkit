@@ -26,6 +26,7 @@ import subprocess
 import platform
 import pytest
 import re
+import certifi
 
 from urllib3.exceptions import SSLError
 
@@ -2507,7 +2508,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
     def test_bad_host(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(requests.packages.urllib3.exceptions.NewConnectionError) as exception_cm:
+        with self.assertRaises(urllib3.exceptions.NewConnectionError) as exception_cm:
             dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False,
                                max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
@@ -2515,7 +2516,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
     def test_connection_refused(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(requests.packages.urllib3.exceptions.NewConnectionError) as exception_cm:
+        with self.assertRaises(.urllib3.exceptions.NewConnectionError) as exception_cm:
             # Connecting to a port on which there is no server running
             dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False, max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
@@ -2530,8 +2531,8 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
     # pyopenssl to requirements_test.txt - see DEVEX-2263 for details.
     def test_ssl_options(self):
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=False)
-        dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where())
-        dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where(), cert_file=None, key_file=None)
+        dxpy.DXHTTPRequest("/system/whoami", {}, verify=certifi.where())
+        dxpy.DXHTTPRequest("/system/whoami", {}, verify=certifi.where(), cert_file=None, key_file=None)
         with self.assertRaises(TypeError):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
         if dxpy.APISERVER_PROTOCOL == "https":
