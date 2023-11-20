@@ -4838,7 +4838,7 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
                                                      readme_content="Workflow Readme Please")
 
         error_msg = "The applet {} is not available".format(self.test_applet_id)
-        with self.assertRaisesRegexp(DXCalledProcessError, error_msg):
+        with self.assertRaisesRegex(DXCalledProcessError, error_msg):
             run("dx build --globalworkflow --region azure:westus --json " + workflow_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -7442,7 +7442,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         # will be enabled in the region of the project context
         # (if regionalOptions or --region are not set)
         env = override_environment(DX_PROJECT_CONTEXT_ID='project-B00000000000000000000000')
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "ResourceNotFound"):
+        with self.assertRaisesRegex(subprocess.CalledProcessError, "ResourceNotFound"):
             run("dx build --create-globalworkflow --json " + workflow_dir, env=env)
 
     # this is NOT a global workflow

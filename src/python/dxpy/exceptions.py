@@ -25,8 +25,7 @@ import json
 import traceback
 import errno
 import socket
-import requests
-from requests.exceptions import HTTPError
+from urllib3.exceptions import HTTPError
 
 import dxpy
 from .compat import USING_PYTHON2
@@ -238,12 +237,12 @@ def exit_with_exc_info(code=1, message='', print_tb=False, exception=None):
         sys.stderr.write('\n')
     sys.exit(code)
 
-network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
-                      requests.packages.urllib3.exceptions.NewConnectionError,
-                      requests.packages.urllib3.exceptions.DecodeError,
-                      requests.packages.urllib3.exceptions.ConnectTimeoutError,
-                      requests.packages.urllib3.exceptions.ReadTimeoutError,
-                      requests.packages.urllib3.connectionpool.HTTPException,
+network_exceptions = (urllib3.exceptions.ProtocolError,
+                      urllib3.exceptions.NewConnectionError,
+                      urllib3.exceptions.DecodeError,
+                      urllib3.exceptions.ConnectTimeoutError,
+                      urllib3.exceptions.ReadTimeoutError,
+                      urllib3.connectionpool.HTTPException,
                       urllib3.exceptions.SSLError,
                       ssl.SSLError,
                       HTTPError,

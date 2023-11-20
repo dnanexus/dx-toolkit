@@ -121,6 +121,7 @@ class TestDXUtils(unittest.TestCase):
                          '{"a": [{"b": {"$dnanexus_link": "file-xxxxxxxxxxxxxxxxxxxxxxxx"}}, {"$dnanexus_link": "record-rrrrrrrrrrrrrrrrrrrrrrrr"}]}')
 
 class TestEDI(DXExecDependencyInstaller):
+    __test__ = False
     def __init__(self, *args, **kwargs):
         self.command_log, self.message_log = [], []
         DXExecDependencyInstaller.__init__(self, *args, **kwargs)
@@ -223,7 +224,7 @@ class TestDXExecDependsUtils(testutil.DXTestCaseCompat):
         self.assertNotRegex("\n".join(edi.command_log), "w00t")
         for name in "w00t", "f1":
             assert_log_contains(edi,
-                                "Skipping dependency {} because it is inactive in stage \(function\) main".format(name))
+                                r"Skipping dependency {} because it is inactive in stage \(function\) main".format(name))
 
         edi = self.get_edi({"execDepends": [{"name": "git", "stages": ["foo", "bar"]}]},
                            job_desc={"function": "foo"})
