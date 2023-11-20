@@ -1,7 +1,7 @@
 :mod:`dxpy` Package
 ===================
 
-This Python 2.7 package includes three key modules:
+This package includes three key modules:
 
 * :mod:`dxpy.bindings`: Contains useful Pythonic bindings for
   interacting with remote objects via the DNAnexus API server. For

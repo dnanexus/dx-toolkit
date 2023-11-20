@@ -20,8 +20,7 @@ the following sources in order of decreasing priority:
 
 1. Environment variables
 2. Values stored in ``~/.dnanexus_config/environment``
-3. Values stored in ``/opt/dnanexus/environment``
-4. Hardcoded defaults
+3. Hardcoded defaults
 
 The bindings are configured by the following environment variables:
 
@@ -272,7 +271,7 @@ def _get_pool_manager(verify, cert_file, key_file, ssl_context=None):
                          cert_file=cert_file,
                          key_file=key_file,
                          ssl_context=ssl_context,
-                         ca_certs=verify or os.environ.get('DX_CA_CERT') or requests.certs.where())
+                         ca_certs=verify or os.environ.get('DX_CA_CERT') or certifi.where())
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
             urllib3.disable_warnings()
@@ -479,13 +478,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     :type auth: tuple, object, True (default), or None
     :param timeout: HTTP request timeout, in seconds
     :type timeout: float
-    :param config: *config* value to pass through to :meth:`requests.request`
-    :type config: dict
     :param use_compression: Deprecated
     :type use_compression: string or None
     :param jsonify_data: If True, *data* is converted from a Python list or dict to a JSON string
     :type jsonify_data: boolean
-    :param want_full_response: If True, the full :class:`requests.Response` object is returned (otherwise, only the content of the response body is returned)
+    :param want_full_response: If True, the full :class:`urllib3.response.HTTPResponse` object is returned (otherwise, only the content of the response body is returned)
     :type want_full_response: boolean
     :param decode_response_body: If True (and *want_full_response* is False), the response body is decoded and, if it is a JSON string, deserialized. Otherwise, the response body is uncompressed if transport compression is on, and returned raw.
     :type decode_response_body: boolean
@@ -506,9 +503,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     :type always_retry: boolean
     :returns: Response from API server in the format indicated by *want_full_response* and *decode_response_body*.
-    :raises: :exc:`exceptions.DXAPIError` or a subclass if the server returned a non-200 status code; :exc:`requests.exceptions.HTTPError` if an invalid response was received from the server; or :exc:`requests.exceptions.ConnectionError` if a connection cannot be established.
+    :raises: :exc:`exceptions.DXAPIError` or a subclass if the server returned a non-200 status code; :exc:`urllib3.exceptions.HTTPError` if an invalid response was received from the server; or :exc:`urllib3.exceptions.ConnectionError` if a connection cannot be established.
 
-    Wrapper around :meth:`requests.request()` that makes an HTTP
+    Wrapper around :meth:`urllib3.request()` that makes an HTTP
     request, inserting authentication headers and (by default)
     converting *data* to JSON.
 
