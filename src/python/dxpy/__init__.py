@@ -134,7 +134,6 @@ import errno
 import math
 import socket
 import threading
-import requests
 import certifi
 from collections import namedtuple
 
