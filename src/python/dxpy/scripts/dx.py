@@ -21,7 +21,6 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
 
-import requests
 import csv
 
 logging.basicConfig(level=logging.INFO)
@@ -1139,9 +1138,10 @@ def describe(args):
                 print(get_result_str())
                 print_desc(desc, args.verbose)
             found_match = True
-        except dxpy.DXAPIError as details:
-            if details.code != requests.codes.not_found:
-                raise
+        except dxpy.DXAPIError as e:
+            if not isinstance(e, ResourceNotFound):
+                raise e
+
         return found_match
 
     def find_global_executable(json_output, args):
@@ -1191,9 +1191,9 @@ def describe(args):
                     # access.
                     dxpy.api.project_list_folder(dxpy.WORKSPACE_ID)
                     json_input['project'] = dxpy.WORKSPACE_ID
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
 
         if is_job_id(args.path):
             if args.verbose:
@@ -1261,9 +1261,9 @@ def describe(args):
                     else:
                         print(get_result_str())
                         print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
             elif is_container_id(args.path):
                 try:
                     desc = dxpy.api.project_describe(args.path, json_input)
@@ -1275,9 +1275,9 @@ def describe(args):
                     else:
                         print(get_result_str())
                         print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
 
         # Found data object or is an id
         if entity_results is not None:
@@ -1317,9 +1317,9 @@ def describe(args):
                     else:
                         print(get_result_str())
                         print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
             elif args.path.startswith('org-') or args.path.startswith('team-'):
                 # Org or team
                 try:
@@ -1332,9 +1332,9 @@ def describe(args):
                     else:
                         print(get_result_str())
                         print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
 
         if args.json:
             if args.multi:
