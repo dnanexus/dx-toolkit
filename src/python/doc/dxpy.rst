@@ -14,8 +14,6 @@ This package includes three key modules:
 * :mod:`dxpy.exceptions`: Contains exceptions used in the other
   :mod:`dxpy` modules.
 
-It has the following external dependencies:
-
 
 Package Configuration
 ---------------------
