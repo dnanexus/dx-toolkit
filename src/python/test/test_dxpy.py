@@ -28,7 +28,7 @@ import pytest
 import re
 import certifi
 
-from urllib3.exceptions import SSLError
+from urllib3.exceptions import SSLError, NewConnectionError
 
 import dxpy
 import dxpy_testutil as testutil
@@ -2508,7 +2508,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
     def test_bad_host(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(urllib3.exceptions.NewConnectionError) as exception_cm:
+        with self.assertRaises(NewConnectionError) as exception_cm:
             dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False,
                                max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
@@ -2516,7 +2516,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
     def test_connection_refused(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(.urllib3.exceptions.NewConnectionError) as exception_cm:
+        with self.assertRaises(NewConnectionError) as exception_cm:
             # Connecting to a port on which there is no server running
             dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False, max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
