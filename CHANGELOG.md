@@ -6,6 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* certifi dxpy dependency
+
+### Changed
+
+* urllib3 dxpy dependency to >=1.26.18,<2.2
+
+### Removed
+
+* requests, cryptography as dependencies of dxpy
+
 ## [365.0] - beta
 
 ### Changed
