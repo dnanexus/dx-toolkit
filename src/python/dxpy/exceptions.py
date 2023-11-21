@@ -20,11 +20,15 @@ Exceptions for the :mod:`dxpy` package.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import sys, json, traceback, errno, socket
-import requests
-from requests.exceptions import HTTPError
+import sys
+import json
+import traceback
+import errno
+import socket
+from urllib3.exceptions import HTTPError
 
 import dxpy
+from .compat import USING_PYTHON2
 import urllib3
 import ssl
 
@@ -157,6 +161,18 @@ class ContentLengthError(HTTPError):
     match the "Content-Length" header
     '''
 
+class HTTPErrorWithContent(HTTPError):
+    '''
+    Specific variant of HTTPError with response content.
+
+    This class was created to avoid appending content directly to error message
+    which makes difficult to format log strings.
+    '''
+
+    def __init__(self, value, content):
+        super(HTTPError, self).__init__(value)
+        self.content = content
+
 class BadJSONInReply(ValueError):
     '''
     Raised when the server returned invalid JSON in the response body. Possible reasons
@@ -221,18 +237,26 @@ def exit_with_exc_info(code=1, message='', print_tb=False, exception=None):
         sys.stderr.write('\n')
     sys.exit(code)
 
-network_exceptions = (requests.packages.urllib3.exceptions.ProtocolError,
-                      requests.packages.urllib3.exceptions.NewConnectionError,
-                      requests.packages.urllib3.exceptions.DecodeError,
-                      requests.packages.urllib3.exceptions.ConnectTimeoutError,
-                      requests.packages.urllib3.exceptions.ReadTimeoutError,
-                      requests.packages.urllib3.connectionpool.HTTPException,
+network_exceptions = (urllib3.exceptions.ProtocolError,
+                      urllib3.exceptions.NewConnectionError,
+                      urllib3.exceptions.DecodeError,
+                      urllib3.exceptions.ConnectTimeoutError,
+                      urllib3.exceptions.ReadTimeoutError,
+                      urllib3.connectionpool.HTTPException,
                       urllib3.exceptions.SSLError,
                       ssl.SSLError,
                       HTTPError,
                       socket.error)
+if not USING_PYTHON2:
+    network_exceptions += (ConnectionResetError,)
 
-default_expected_exceptions = network_exceptions + (DXAPIError,
+
+try:
+    json_exceptions = (json.decoder.JSONDecodeError,)
+except:
+    json_exceptions = (ValueError,)
+
+default_expected_exceptions = network_exceptions + json_exceptions + (DXAPIError,
                                                     DXCLIError,
                                                     KeyboardInterrupt)
 

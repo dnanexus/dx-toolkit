@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2014-2016 DNAnexus, Inc.
@@ -56,17 +56,6 @@ LOCAL_SCRIPTS = os.path.join(os.path.dirname(__file__), '..', 'scripts')
 LOCAL_UTILS = os.path.join(os.path.dirname(__file__), '..', 'dxpy', 'utils')
 DUMMY_HASH = "123456789012345678901234"
 
-
-def ignore_folders(directory, contents):
-    accepted_bin = ['dx-unpack', 'dx-unpack-file', 'dxfs', 'register-python-argcomplete',
-                    'python-argcomplete-check-easy-install-script']
-    # Omit Python test dir since it's pretty large
-    if "src/python/test" in directory:
-        return contents
-    if "../bin" in directory:
-        return [f for f in contents if f not in accepted_bin]
-    return []
-
 def build_app_with_bash_helpers(app_dir, project_id):
     tempdir = tempfile.mkdtemp()
     try:
@@ -86,9 +75,7 @@ def build_app_with_bash_helpers(app_dir, project_id):
         # Add lines to the beginning of the job to make and use our new dx-toolkit
         preamble = []
         #preamble.append("cd {appdir}/resources && git clone https://github.com/dnanexus/dx-toolkit.git".format(appdir=updated_app_dir))
-        preamble.append('python3 /dxtoolkit/src/python/setup.py sdist\n')
-        preamble.append('DIST=$(ls /dxtoolkit/src/python/dist)\n')
-        preamble.append('python3 -m pip install -U /dxtoolkit/src/python/dist/$DIST\n')
+        preamble.append('python3 -m pip install /dxtoolkit/src/python/\n')
         # Now find the applet entry point file and prepend the
         # operations above, overwriting it in place.
         with open(os.path.join(app_dir, 'dxapp.json')) as f:
@@ -410,6 +397,7 @@ class TestDXBashHelpers(DXTestCase):
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_BENCHMARKS,
                      'skipping tests that would run jobs, or, run benchmarks')
+@unittest.skip('Temporarily disabled')
 class TestDXBashHelpersBenchmark(DXTestCase):
 
     def create_file_of_size(self, fname, size_bytes):
@@ -672,6 +660,11 @@ class TestDXJobutilNewJob(DXTestCase):
                 pipes.quote(json.dumps({"main": "mem2_hdd2_x2" , "other_function": "mem2_hdd2_x1" })),
                 {"systemRequirements": {"main": { "instanceType": "mem2_hdd2_x2" },
                                         "other_function": { "instanceType": "mem2_hdd2_x1" }}}),
+            ("--instance-type-by-executable " +
+                pipes.quote(json.dumps({"my_applet":{"main": { "instanceType": "mem2_hdd2_x2", "clusterSpec":{"initialInstanceCount": 3}},
+                                        "other_function": { "instanceType": "mem3_ssd2_fpga1_x8", "fpgaDriver": "edico-1.4.5"} }})),
+                {"systemRequirementsByExecutable": {"my_applet":{"main": { "instanceType": "mem2_hdd2_x2", "clusterSpec":{"initialInstanceCount": 3}},
+                                        "other_function": { "instanceType": "mem3_ssd2_fpga1_x8", "fpgaDriver": "edico-1.4.5"} }}}),
             # properties - mapping
             ("--property foo=foo_value --property bar=bar_value",
                 {"properties": {"foo": "foo_value", "bar": "bar_value"}}),

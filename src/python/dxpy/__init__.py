@@ -20,8 +20,7 @@ the following sources in order of decreasing priority:
 
 1. Environment variables
 2. Values stored in ``~/.dnanexus_config/environment``
-3. Values stored in ``/opt/dnanexus/environment``
-4. Hardcoded defaults
+3. Hardcoded defaults
 
 The bindings are configured by the following environment variables:
 
@@ -133,30 +132,19 @@ logger.addHandler(logging.NullHandler())
 import os, sys, json, time, platform, ssl, traceback
 import errno
 import math
-import mmap
-import requests
 import socket
 import threading
-import subprocess
-
+import certifi
 from collections import namedtuple
 
 from . import exceptions
-from .compat import USING_PYTHON2, BadStatusLine, StringIO, bytes, Repr
+from .compat import BadStatusLine, StringIO, bytes, Repr
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 
 from random import randint
-from requests.auth import AuthBase
-from requests.packages import urllib3
+import urllib3
 from threading import Lock
-from . import ssh_tunnel_app_support
-
-try:
-    # python-3
-    from urllib.parse import urlsplit
-except ImportError:
-    # python-2
-    from urlparse import urlsplit
+from urllib.parse import urlsplit
 
 sequence_number_mutex = threading.Lock()
 counter = 0
@@ -172,7 +160,7 @@ def _get_sequence_number():
 def configure_urllib3():
     # Disable verbose urllib3 warnings and log messages
     urllib3.disable_warnings(category=urllib3.exceptions.InsecurePlatformWarning)
-    logging.getLogger('dxpy.packages.requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
+    logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)
 
 configure_urllib3()
 
@@ -199,11 +187,17 @@ _UPGRADE_NOTIFY = True
 
 INCOMPLETE_READS_NUM_SUBCHUNKS = 8
 
-USER_AGENT = "{name}/{version} ({platform})".format(name=__name__,
+USER_AGENT = "{name}/{version} ({platform}) Python/{python_version}".format(name=__name__,
                                                     version=TOOLKIT_VERSION,
-                                                    platform=platform.platform())
-_default_certs = requests.certs.where()
-_default_headers = requests.utils.default_headers()
+                                                    platform=platform.platform(),
+                                                    python_version=platform.python_version())
+_default_certs = certifi.where()
+_default_headers = {
+            "User-Agent": USER_AGENT,
+            "Accept-Encoding": "gzip, deflate",
+            "Accept": "*/*",
+            "Connection": "keep-alive",
+        }
 _default_timeout = urllib3.util.timeout.Timeout(connect=DEFAULT_TIMEOUT, read=DEFAULT_TIMEOUT)
 _RequestForAuth = namedtuple('_RequestForAuth', 'method url headers')
 _expected_exceptions = (exceptions.network_exceptions, exceptions.DXAPIError, BadStatusLine, exceptions.BadJSONInReply,
@@ -276,7 +270,7 @@ def _get_pool_manager(verify, cert_file, key_file, ssl_context=None):
                          cert_file=cert_file,
                          key_file=key_file,
                          ssl_context=ssl_context,
-                         ca_certs=verify or os.environ.get('DX_CA_CERT') or requests.certs.where())
+                         ca_certs=verify or os.environ.get('DX_CA_CERT') or certifi.where())
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
             urllib3.disable_warnings()
@@ -294,15 +288,7 @@ def _process_method_url_headers(method, url, headers):
         _headers.update(headers)
     else:
         _url, _headers = url, headers
-    # When *data* is bytes but *headers* contains Unicode text, httplib tries to concatenate them and decode
-    # *data*, which should not be done. Also, per HTTP/1.1 headers must be encoded with MIME, but we'll
-    # disregard that here, and just encode them with the Python default (ascii) and fail for any non-ascii
-    # content. See http://tools.ietf.org/html/rfc3987 for a discussion of encoding URLs.
-    # TODO: ascertain whether this is a problem in Python 3/make test
-    if USING_PYTHON2:
-        return method.encode(), _url.encode('utf-8'), {k.encode(): v.encode() for k, v in _headers.items()}
-    else:
-        return method, _url, _headers
+    return method, _url, _headers
 
 
 # When any of the following errors are indicated, we are sure that the
@@ -314,6 +300,8 @@ _RETRYABLE_SOCKET_ERRORS = {
     errno.ECONNREFUSED  # A remote host refused to allow the network connection
 }
 
+_RETRYABLE_WITH_RESPONSE = (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
+                            ConnectionResetError, urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError)
 
 def _is_retryable_exception(e):
     """Returns True if the exception is always safe to retry.
@@ -327,14 +315,14 @@ def _is_retryable_exception(e):
 
     """
     if isinstance(e, urllib3.exceptions.ProtocolError):
-        e = e.args[1]
+        return True
+    if isinstance(e, ConnectionResetError):
+        return True
     if isinstance(e, (socket.gaierror, socket.herror)):
         return True
     if isinstance(e, socket.error) and e.errno in _RETRYABLE_SOCKET_ERRORS:
         return True
     if isinstance(e, urllib3.exceptions.NewConnectionError):
-        return True
-    if isinstance(e, requests.exceptions.SSLError):
         return True
     if isinstance(e, urllib3.exceptions.SSLError):
         return True
@@ -352,7 +340,7 @@ def _extract_msg_from_last_exception():
         # '}')
         return last_error.error_message()
     else:
-        return traceback.format_exc().splitlines()[-1].strip()
+        return traceback.format_exception_only(last_exc_type, last_error)[-1].strip()
 
 
 def _calculate_retry_delay(response, num_attempts):
@@ -468,20 +456,6 @@ def _debug_print_response(debug_level, seq_num, time_started, req_id, response_s
               content_to_print,
               file=sys.stderr)
 
-
-def _test_tls_version():
-    tls12_check_script = os.path.join(os.getenv("DNANEXUS_HOME"), "build", "tls12check.py")
-    if not os.path.exists(tls12_check_script):
-        return
-
-    try:
-        subprocess.check_output(['python', tls12_check_script])
-    except subprocess.CalledProcessError as e:
-        if e.returncode == 1:
-            print (e.output)
-            raise exceptions.InvalidTLSProtocol
-
-
 def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                   timeout=DEFAULT_TIMEOUT,
                   use_compression=None, jsonify_data=True, want_full_response=False,
@@ -503,13 +477,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     :type auth: tuple, object, True (default), or None
     :param timeout: HTTP request timeout, in seconds
     :type timeout: float
-    :param config: *config* value to pass through to :meth:`requests.request`
-    :type config: dict
     :param use_compression: Deprecated
     :type use_compression: string or None
     :param jsonify_data: If True, *data* is converted from a Python list or dict to a JSON string
     :type jsonify_data: boolean
-    :param want_full_response: If True, the full :class:`requests.Response` object is returned (otherwise, only the content of the response body is returned)
+    :param want_full_response: If True, the full :class:`urllib3.response.HTTPResponse` object is returned (otherwise, only the content of the response body is returned)
     :type want_full_response: boolean
     :param decode_response_body: If True (and *want_full_response* is False), the response body is decoded and, if it is a JSON string, deserialized. Otherwise, the response body is uncompressed if transport compression is on, and returned raw.
     :type decode_response_body: boolean
@@ -530,9 +502,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     :type always_retry: boolean
     :returns: Response from API server in the format indicated by *want_full_response* and *decode_response_body*.
-    :raises: :exc:`exceptions.DXAPIError` or a subclass if the server returned a non-200 status code; :exc:`requests.exceptions.HTTPError` if an invalid response was received from the server; or :exc:`requests.exceptions.ConnectionError` if a connection cannot be established.
+    :raises: :exc:`exceptions.DXAPIError` or a subclass if the server returned a non-200 status code; :exc:`urllib3.exceptions.HTTPError` if an invalid response was received from the server; or :exc:`urllib3.exceptions.ConnectionError` if a connection cannot be established.
 
-    Wrapper around :meth:`requests.request()` that makes an HTTP
+    Wrapper around :meth:`urllib3.request()` that makes an HTTP
     request, inserting authentication headers and (by default)
     converting *data* to JSON.
 
@@ -614,32 +586,29 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     return i
 
                 _headers = {ensure_ascii(k): ensure_ascii(v) for k, v in _headers.items()}
-                if USING_PYTHON2:
-                    encoded_url = _url
-                else:
-                    # This is needed for python 3 urllib
-                    _headers.pop(b'host', None)
-                    _headers.pop(b'content-length', None)
-                    _headers.pop(b'Content-Length', None)
 
-                    # The libraries downstream (http client) require elimination of non-ascii
-                    # chars from URL.
-                    # We check if the URL contains non-ascii characters to see if we need to
-                    # quote it. It is important not to always quote the path (here: parts[2])
-                    # since it might contain elements (e.g. HMAC for api proxy) containing
-                    # special characters that should not be quoted.
-                    try:
-                        ensure_ascii(_url)
-                        encoded_url = _url
-                    except UnicodeEncodeError:
-                        import urllib.parse
-                        parts = list(urllib.parse.urlparse(_url))
-                        parts[2] = urllib.parse.quote(parts[2])
-                        encoded_url = urllib.parse.urlunparse(parts)
+                # This is needed for python 3 urllib
+                _headers.pop(b'host', None)
+                _headers.pop(b'content-length', None)
+                _headers.pop(b'Content-Length', None)
+
+                # The libraries downstream (http client) require elimination of non-ascii
+                # chars from URL.
+                # We check if the URL contains non-ascii characters to see if we need to
+                # quote it. It is important not to always quote the path (here: parts[2])
+                # since it might contain elements (e.g. HMAC for api proxy) containing
+                # special characters that should not be quoted.
+                try:
+                    ensure_ascii(_url)
+                    encoded_url = _url
+                except UnicodeEncodeError:
+                    import urllib.parse
+                    parts = list(urllib.parse.urlparse(_url))
+                    parts[2] = urllib.parse.quote(parts[2])
+                    encoded_url = urllib.parse.urlunparse(parts)
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
-
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
@@ -653,7 +622,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                and '_ARGCOMPLETE' not in os.environ):
                 logger.info(response.headers['x-upgrade-info'])
                 try:
-                    with file(_UPGRADE_NOTIFY, 'a'):
+                    with open(_UPGRADE_NOTIFY, 'a'):
                         os.utime(_UPGRADE_NOTIFY, None)
                 except:
                     pass
@@ -676,18 +645,17 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     try:
                         error_class = getattr(exceptions, content["error"]["type"], exceptions.DXAPIError)
                     except (KeyError, AttributeError, TypeError):
-                        raise exceptions.HTTPError(response.status, content)
+                        raise exceptions.HTTPErrorWithContent("Appropriate error class not found. [HTTPCode=%s]" % response.status, content)
                     raise error_class(content, response.status, time_started, req_id)
                 else:
                     try:
                         content = response.data.decode('utf-8')
                     except AttributeError:
                         raise exceptions.UrllibInternalError("Content is none", response.status)
-                    raise exceptions.HTTPError("{} {} [Time={} RequestID={}]\n{}".format(response.status,
+                    raise exceptions.HTTPErrorWithContent("{} {} [Time={} RequestID={}]".format(response.status,
                                                                                          response.reason,
                                                                                          time_started,
-                                                                                         req_id,
-                                                                                         content))
+                                                                                         req_id), content.strip())
 
             if want_full_response:
                 return response
@@ -751,8 +719,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # BadStatusLine ---  server did not return anything
                     # BadJSONInReply --- server returned JSON that didn't parse properly
                     if (response is None
-                       or isinstance(e, (exceptions.ContentLengthError, BadStatusLine, exceptions.BadJSONInReply,
-                                         urllib3.exceptions.ProtocolError, exceptions.UrllibInternalError))):
+                       or isinstance(e, _RETRYABLE_WITH_RESPONSE)):
                         ok_to_retry = is_retryable
                     else:
                         ok_to_retry = 500 <= response.status < 600
@@ -760,8 +727,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # The server has closed the connection prematurely
                     if (response is not None
                        and response.status == 400 and is_retryable and method == 'PUT'
-                       and isinstance(e, requests.exceptions.HTTPError)):
-                        if '<Code>RequestTimeout</Code>' in exception_msg:
+                       and isinstance(e, urllib3.exceptions.HTTPError)):
+                        request_timeout_str = '<Code>RequestTimeout</Code>'
+                        if (request_timeout_str in exception_msg
+                            or (isinstance(e, exceptions.HTTPErrorWithContent) and request_timeout_str in e.content)):
                             logger.info("Retrying 400 HTTP error, due to slow data transfer. " +
                                         "Request Time=%f Request ID=%s", time_started, req_id)
                         else:
@@ -772,7 +741,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     # Unprocessable entity, request has semantical errors
                     if response is not None and response.status == 422:
                         ok_to_retry = False
-
                 if ok_to_retry:
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
@@ -786,8 +754,11 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                         waiting_msg = 'Waiting %d seconds before retry %d of %d...' % (
                             delay, try_index + 1, max_retries)
 
-                    logger.warning("[%s] %s %s: %s. %s %s",
-                                   time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
+                    log_msg = "[%s] %s %s: %s. %s %s" % (time.ctime(), method, _url, exception_msg, waiting_msg, range_str)
+                    if isinstance(e, exceptions.HTTPErrorWithContent):
+                        log_msg += "\n%s" % e.content
+
+                    logger.warning(log_msg)
                     time.sleep(delay)
                     try_index_including_503 += 1
                     if response is None or response.status != 503:
@@ -797,13 +768,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
             # All retries have been exhausted OR the error is deemed not
             # retryable. Print the latest error and propagate it back to the caller.
             if not isinstance(e, exceptions.DXAPIError):
-                logger.error("[%s] %s %s: %s.", time.ctime(), method, _url, exception_msg)
-
-            if isinstance(e, urllib3.exceptions.ProtocolError) and \
-                'Connection reset by peer' in exception_msg:
-                # If the protocol error is 'connection reset by peer', most likely it is an
-                # error in the ssl handshake due to unsupported TLS protocol.
-                _test_tls_version()
+                log_msg = "[%s] %s %s: %s." % (time.ctime(), method, _url, exception_msg)
+                if isinstance(e, exceptions.HTTPErrorWithContent):
+                        log_msg += "\n%s" % e.content
+                logger.error(log_msg)
 
             # Retries have been exhausted, and we are unable to get a full
             # buffer from the data source. Raise a special exception.
@@ -819,7 +787,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
     raise AssertionError('Should never reach this line: should never break out of loop')
 
 
-class DXHTTPOAuth2(AuthBase):
+class DXHTTPOAuth2():
     def __init__(self, security_context):
         self.security_context = security_context
 

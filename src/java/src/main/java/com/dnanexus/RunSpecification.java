@@ -41,7 +41,7 @@ public class RunSpecification {
         private Builder(String interpreter, String code, String distribution, String release) {
             this.interpreter = interpreter;
             this.code = code;
-            this. distribution = distribution;
+            this.distribution = distribution;
             this.release = release;
         }
 
@@ -59,7 +59,7 @@ public class RunSpecification {
 
     /**
      * Returns a builder initialized to create a run specification with the given interpreter,
-     * entry point code, distribution and releae.
+     * entry point code, distribution and release.
      *
      * @param interpreter interpreter name, e.g. "bash" or "python2.7"
      * @param code entry point code

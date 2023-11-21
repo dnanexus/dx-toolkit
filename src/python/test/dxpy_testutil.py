@@ -29,7 +29,9 @@ from contextlib import contextmanager
 
 import dxpy
 from dxpy.compat import str, basestring, USING_PYTHON2
+from pathlib import Path
 
+THIS_DIR = Path(__file__).parent
 _run_all_tests = 'DXTEST_FULL' in os.environ
 TEST_AZURE = ((os.environ.get('DXTEST_AZURE', '').startswith('azure:') and os.environ['DXTEST_AZURE']) or
               (os.environ.get('DXTEST_AZURE') and 'azure:westus'))
@@ -594,10 +596,10 @@ class DXTestCaseBuildApps(DXTestCase):
         "dxapi": "1.0.0",
         "runSpec": {
           "file": "code.py",
-          "interpreter": "python2.7",
+          "interpreter": "python3",
           "distribution": "Ubuntu",
-          "release": "14.04",
-          "version": '0'
+          "release": "20.04",
+          "version": "0"
           },
         "inputSpec": [],
         "outputSpec": [],
@@ -656,7 +658,7 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     app destruction, and extraction of app data as local files.
     """
 
-    base_nextflow_nf = "nextflow/hello/main.nf"
+    base_nextflow_nf = THIS_DIR / "nextflow/hello/main.nf"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()
@@ -665,6 +667,16 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_file_path)
         super(DXTestCaseBuildNextflowApps, self).tearDown()
+
+    def write_nextflow_applet_directory_from_folder(self, applet_name, existing_nf_directory_path):
+        p = os.path.join(self.temp_file_path, applet_name)
+        try:
+            shutil.copytree(existing_nf_directory_path, p)
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        return p
+
 
     def write_nextflow_applet_directory(self, applet_name, existing_nf_file_path=None, nf_file_name="main.nf", nf_file_content="\n"):
         # Note: if called twice with the same app_name, will overwrite

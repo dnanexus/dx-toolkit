@@ -61,7 +61,7 @@ _app_required_keys = ['name', 'title', 'summary', 'dxapi', 'openSource',
                       'developers', 'authorizedUsers', 'regionalOptions']
 
 # These are optional keys for apps, not sure what to do with them
-_app_optional_keys = ['details', 'categories', 'access', 'ignoreReuse']
+_app_optional_keys = ['details', 'categories', 'access', 'ignoreReuse', 'treeTurnaroundTimeThreshold']
 
 _app_describe_output_keys = []
 

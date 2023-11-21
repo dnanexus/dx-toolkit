@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
@@ -209,11 +209,11 @@ class TestDXRemove(DXTestCase):
 class TestApiDebugOutput(DXTestCase):
     def test_dx_debug_shows_request_id(self):
         (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
-        self.assertRegex(stderr, "POST \d{13}-\d{1,6} http",
+        self.assertRegex(stderr, r"POST \d{13}-\d{1,6} http",
                                  msg="stderr does not appear to contain request ID")
 
     def test_dx_debug_shows_timestamp(self):
-        timestamp_regex = "\[\d{1,15}\.\d{0,8}\]"
+        timestamp_regex = r"\[\d{1,15}\.\d{0,8}\]"
 
         (stdout, stderr) = run("_DX_DEBUG=1 dx ls", also_return_stderr=True)
         self.assertRegex(stderr, timestamp_regex, msg="Debug log does not contain a timestamp")
@@ -1370,7 +1370,7 @@ class TestDXClient(DXTestCase):
                                max_retries=0)
 
     def test_dx_api_error_msg(self):
-        error_regex = "Request Time=\d{1,15}\.\d{0,8}, Request ID=\d{13}-\d{1,6}"
+        error_regex = r"Request Time=\d{1,15}\.\d{0,8}, Request ID=\d{13}-\d{1,6}"
         with self.assertSubprocessFailure(stderr_regexp=error_regex, exit_code=3):
             run("dx api file-InvalidFileID describe")
 
@@ -1772,8 +1772,8 @@ dxpy.run()
                         "dxapi": "1.0.0",
                         "inputSpec": [],
                         "outputSpec": [{"name": test_file_name, "class": "file"}],
-                        "runSpec": {"code": code_str, "interpreter": "python2.7",
-                                    "distribution": "Ubuntu", "release": "14.04"},
+                        "runSpec": {"code": code_str, "interpreter": "python3",
+                                    "distribution": "Ubuntu", "release": "20.04", "version": "0"},
                         "version": "1.0.0"}
             applet_id = dxpy.api.applet_new(app_spec)['id']
             applet = dxpy.DXApplet(applet_id)
@@ -2342,6 +2342,37 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         self.assertIn("Workflow Outputs", by_id)
         self.assertIn("Billed to", by_id)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run jobs')
+    def test_describe_analysis_verbose(self):
+        analysis_input = {"foo": 100}
+        dxworkflow = self.create_workflow(self.project)
+        dxanalysis = dxworkflow.run(workflow_input=analysis_input)
+
+        analysis_desc_verbose = run("dx describe {} --verbose".format(dxanalysis.get_id()))
+        analysis_desc_json = run("dx describe {} --json".format(dxanalysis.get_id()))
+        analysis_desc_verbose_json = run("dx describe {} --verbose --json".format(dxanalysis.get_id()))
+        self.assertTrue(all(key in analysis_desc_verbose for key in ["Run Sys Reqs", "Run Sys Reqs by Exec", "Merged Sys Reqs By Exec", "Run Stage Sys Reqs"]))
+        self.assertTrue(all(key in analysis_desc_verbose for key in ["ID", "Job name", "Executable name", "Class", "Workspace", "Project context"]))
+        self.assertFalse(any(key in json.loads(analysis_desc_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        self.assertTrue(all(key in json.loads(analysis_desc_json) for key in ['id','name','executable','class','workspace','project']))
+        self.assertTrue(all(key in json.loads(analysis_desc_verbose_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        self.assertTrue(all(key in json.loads(analysis_desc_verbose_json) for key in ['id','name','executable','class','workspace','project']))
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping test that would run jobs')
+    def test_describe_job_verbose(self):
+        job_input = {"number": 100}
+        dxapplet = dxpy.DXApplet(self.test_applet_id)
+        dxjob = dxapplet.run(applet_input=job_input)
+
+        job_desc_verbose = run("dx describe {} --verbose".format(dxjob.get_id()))
+        job_desc_json = run("dx describe {} --json".format(dxjob.get_id()))
+        job_desc_verbose_json = run("dx describe {} --verbose --json".format(dxjob.get_id()))
+        self.assertTrue(all(key in job_desc_verbose for key in ["Run Sys Reqs", "Run Sys Reqs by Exec", "Merged Sys Reqs By Exec"]))
+        self.assertFalse(any(key in json.loads(job_desc_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        self.assertTrue(all(key in json.loads(job_desc_verbose_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable']))
+
 class TestDXClientRun(DXTestCase):
     def setUp(self):
         self.other_proj_id = run("dx new project other --brief").strip()
@@ -2761,7 +2792,7 @@ dx-jobutil-add-output outrecord $record_id
 
         # If describing an entity ID fails, then a ResolutionError should be
         # raised
-        with self.assertRaisesRegex(ResolutionError, "The entity record-\d+ could not be found"):
+        with self.assertRaisesRegex(ResolutionError, r"The entity record-\d+ could not be found"):
             check_resolution("some_path", self.project, "/", "record-123456789012345678901234")
 
     def test_dx_run_depends_on_success(self):
@@ -2875,6 +2906,7 @@ dx-jobutil-add-output outrecord $record_id
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "bundledDepends": [],
                                                      "execDepends": [],
                                                      "code": '''
@@ -3149,6 +3181,7 @@ dx-jobutil-add-output record_array $second_record --array
                                                      "distribution": "Ubuntu",
                                                      "release": "20.04",
                                                      "version": "0",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""},
                                          "access": {"project": "VIEW",
                                                     "allProjects": "VIEW",
@@ -3248,12 +3281,62 @@ dx-jobutil-add-output record_array $second_record --array
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
+    def test_dx_run_sys_reqs(self):
+        app_spec = {"project": self.project,
+                    "dxapi": "1.0.0",
+                    "runSpec": {"interpreter": "bash",
+                                "distribution": "Ubuntu",
+                                "release": "20.04",
+                                "version": "0",
+                                "code": "echo 'hello'",
+                                "systemRequirements": {
+                                    "main": {
+                                        "instanceType": "mem2_hdd2_x1",
+                                        "clusterSpec": {"type": "spark",
+                                                        "initialInstanceCount": 1,
+                                                        "version": "2.4.4",
+                                                        "bootstrapScript": "x.sh"}
+                                    },
+                                    "other": {
+                                        "instanceType": "mem2_hdd2_x4",
+                                        "clusterSpec": {"type": "spark",
+                                                        "initialInstanceCount": 5,
+                                                        "version": "2.4.4",
+                                                        "bootstrapScript": "x.sh"}
+                                    },
+                                }
+                                }
+                    }
+        applet_id = dxpy.api.applet_new(app_spec)['id']
+        requested_inst_type_by_exec = {
+            applet_id: {
+                "main": {
+                    "instanceType": "mem2_ssd1_v2_x2",
+                    "clusterSpec": {"initialInstanceCount": 3}}}}
+
+        (stdout, stderr) = run('_DX_DEBUG=2 dx run ' + applet_id + ' ' +
+                               '--instance-type mem2_hdd2_x2 ' +
+                               '--instance-count 15 ' +
+                               '--instance-type-by-executable ' +
+                               '\'' +
+                               json.dumps(requested_inst_type_by_exec) + '\'',
+                               also_return_stderr=True)
+        expected_sys_reqs_by_exec = '"systemRequirementsByExecutable": ' + \
+            json.dumps(requested_inst_type_by_exec)
+        self.assertIn(expected_sys_reqs_by_exec, stderr)
+
+        # parsing error
+        with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
+            run("dx run " + applet_id +
+                " --instance-type-by-executable not-a-JSON-string")
+
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
-                                                     "release": "14.04",
+                                                     "release": "20.04",
+                                                     "version": "0",
                                                      "code": "echo 'hello'"}
                                          })['id']
         other_applet_id = dxpy.api.applet_new({"project": self.project,
@@ -3261,8 +3344,31 @@ dx-jobutil-add-output record_array $second_record --array
                                                "runSpec": {"interpreter": "bash",
                                                            "code": "echo 'hello'",
                                                            "distribution": "Ubuntu",
-                                                           "release": "14.04"}
-                                           })['id']
+                                                           "release": "20.04",
+                                                           "version": "0",
+                                                           "systemRequirements": {
+                                                               "main": {
+                                                                   "instanceType": "mem2_hdd2_x1",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 1,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}
+                                                               },
+                                                               "some_ep": {
+                                                                   "instanceType": "mem2_hdd2_x2",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 3,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}
+                                                               },
+                                                               "*": {
+                                                                   "instanceType": "mem2_hdd2_x4",
+                                                                   "clusterSpec": {"type": "spark",
+                                                                                   "initialInstanceCount": 5,
+                                                                                   "version": "2.4.4",
+                                                                                   "bootstrapScript": "x.sh"}}}
+                                                           }}
+                                              )['id']
 
         def check_new_job_metadata(new_job_desc, cloned_job_desc, overridden_fields=[]):
             '''
@@ -3293,17 +3399,21 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + applet_id +
                           ' -inumber=32 --name jobname --folder /output ' +
                           '--instance-type mem2_hdd2_x2 ' +
+                          '--instance-type-by-executable \'{"' + applet_id + '": {"*": {"instanceType": "mem1_ssd1_v2_x2"}}}\' '   
                           '--tag Ψ --tag $hello.world ' +
                           '--property Σ_1^n=n --property $hello.=world ' +
                           '--priority normal ' +
                           '--brief -y').strip()
-        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        orig_job_desc = dxpy.api.job_describe(orig_job_id, {"defaultFields": True, "fields":{"runSystemRequirements":True, "runSystemRequirementsByExecutable":True, "mergedSystemRequirementsByExecutable":True}} )
         # control
         self.assertEqual(orig_job_desc['name'], 'jobname')
         self.assertEqual(orig_job_desc['project'], self.project)
         self.assertEqual(orig_job_desc['folder'], '/output')
         self.assertEqual(orig_job_desc['input'], {'number': 32})
-        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
+        self.assertEqual(orig_job_desc['systemRequirements'], {'*': {'instanceType': 'mem1_ssd1_v2_x2'}})
+        self.assertEqual(orig_job_desc['runSystemRequirements'], {'*': {'instanceType': 'mem2_hdd2_x2'}})
+        self.assertEqual(orig_job_desc['runSystemRequirementsByExecutable'], {applet_id: {'*': {'instanceType': 'mem1_ssd1_v2_x2'}}})
+        self.assertEqual(orig_job_desc['mergedSystemRequirementsByExecutable'], {applet_id: {'*': {'instanceType': 'mem1_ssd1_v2_x2'}}})
 
         # clone the job
 
@@ -3319,7 +3429,7 @@ dx-jobutil-add-output record_array $second_record --array
         # override applet
         new_job_desc = get_new_job_desc(other_applet_id)
         self.assertEqual(new_job_desc['applet'], other_applet_id)
-        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['applet'])
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['applet', 'systemRequirements'])
 
         # override name
         new_job_desc = get_new_job_desc("--name newname")
@@ -3373,6 +3483,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['input'], {"number2": 42})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
+        # --instance-type override: original job with universal instance type 
         # override the blanket instance type
         new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_x1")
         self.assertEqual(new_job_desc['systemRequirements'],
@@ -3385,13 +3496,13 @@ dx-jobutil-add-output record_array $second_record --array
                                         json.dumps({"some_ep": "mem2_hdd2_x1",
                                                     "some_other_ep": "mem2_hdd2_x4"}) + "'")
         self.assertEqual(new_job_desc['systemRequirements'],
-                         {'*': {'instanceType': 'mem2_hdd2_x2'},
+                         {'*': {'instanceType': 'mem1_ssd1_v2_x2'},
                           'some_ep': {'instanceType': 'mem2_hdd2_x1'},
                           'some_other_ep': {'instanceType': 'mem2_hdd2_x4'}})
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
-        # new original job with entry point-specific systemRequirements
+        # --instance-type override: original job with entry point-specific systemRequirements
         orig_job_id = run("dx run " + applet_id +
                           " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\"}' --brief -y").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
@@ -3416,6 +3527,119 @@ dx-jobutil-add-output record_array $second_record --array
                          {'some_ep': {'instanceType': 'mem2_hdd2_x2'}})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
 
+        # --instance-type override: original job with entrypoint specific systemRequirements
+        orig_job_id = run("dx run " + applet_id +
+                          " --instance-type '{\"some_ep\": \"mem2_hdd2_x1\", \"*\": \"mem2_hdd2_x2\"}' --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        self.assertEqual(orig_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_x2'}})
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_v2_x2")
+        self.assertEqual(new_job_desc['systemRequirements'], {'*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        # override all entry points with wildcard entry point, which is treated in the same way as specific ones
+        new_job_desc = get_new_job_desc("--instance-type '" +
+                                        json.dumps({"*": "mem2_hdd2_v2_x2"}) + "'")
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+        
+        # override a different entry point; original is merged and overrided
+        new_job_desc = get_new_job_desc("--instance-type '" +
+                                        json.dumps({"some_other_ep": "mem2_hdd2_x4",
+                                                    "*": "mem2_hdd2_v2_x2"}) + "'")
+        self.assertEqual(new_job_desc['systemRequirements'],
+                         {'some_other_ep': {'instanceType': 'mem2_hdd2_x4'},
+                          'some_ep': {'instanceType': 'mem2_hdd2_x1'},
+                          '*': {'instanceType': 'mem2_hdd2_v2_x2'}})
+        check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['systemRequirements'])
+
+        def check_instance_count(job_desc , entrypoints , expected_counts):
+            for ep, count in zip(entrypoints, expected_counts):
+                self.assertEqual(job_desc['systemRequirements'][ep]["clusterSpec"]["initialInstanceCount"], count)
+
+        # --instance-count override: new original job with universal instance count
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count 2 --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 2, 2])
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-count 4")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [4, 4, 4])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override single entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep": 6}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 6, 2])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override wildcard entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"*": 8}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 2, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # --instance-count override: new original job with entrypoint specific instance count
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count '{\"some_ep\": \"2\"}' --brief -y").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [1, 2, 5])
+
+        # override all entry points
+        new_job_desc = get_new_job_desc("--instance-count 4")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [4, 4, 4])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override single entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep": 6}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [1, 6, 5])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # override wildcard entry point
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"*": 8}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [1, 2, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+
+        # fpgaDriver override: new original job with extra_args
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-count 2 --brief -y " +
+                          "--extra-args '" +
+                          json.dumps({"systemRequirements": {"some_ep": {"clusterSpec": {"initialInstanceCount": 12, "bootstrapScript": "z.sh"}, 
+                                                                         "fpgaDriver": "edico-1.4.5"}}}) + "'").strip()
+        orig_job_desc = dxpy.api.job_describe(orig_job_id)
+        check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 12, 2])
+        # --instance-type and --instance-count override: instance type and cluster spec are resolved independently
+        new_job_desc = get_new_job_desc("--instance-count '" +
+                                        json.dumps({"some_ep":6,
+                                                    "*": 8}) + "' " +
+                                                    "--instance-type '" +
+                                        json.dumps({"main": "mem2_hdd2_x4",
+                                                    "*": "mem2_hdd2_v2_x2"}) + "'")
+        check_instance_count(new_job_desc, ["main", "some_ep", "*"], [2, 6, 8])
+        check_new_job_metadata(new_job_desc, orig_job_desc,
+                               overridden_fields=['systemRequirements'])
+        
+        self.assertEqual(new_job_desc['systemRequirements']['main']['instanceType'], 'mem2_hdd2_x4')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['instanceType'], 'mem2_hdd2_x2')
+        self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
+        
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.5')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['clusterSpec']['bootstrapScript'], 'z.sh')
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_dx_describe_job_with_resolved_jbors(self):
@@ -3423,10 +3647,11 @@ dx-jobutil-add-output record_array $second_record --array
                                          "dxapi": "1.0.0",
                                          "inputSpec": [{"name": "array", "class": "array:int"}],
                                          "outputSpec": [{"name": "array", "class": "array:int"}],
-                                         "runSpec": {"interpreter": "python2.7",
+                                         "runSpec": {"interpreter": "python3",
                                                      "distribution": "Ubuntu",
-                                                     "release": "14.04",
-                                                     "code": '''#!/usr/bin/env python
+                                                     "release": "20.04",
+                                                     "version": "0",
+                                                     "code": '''#!/usr/bin/env python3
 
 @dxpy.entry_point('main')
 def main(array):
@@ -3450,7 +3675,7 @@ def main(array):
         while second_job_handler.describe()['state'] in ['idle', 'waiting_on_input']:
             time.sleep(0.1)
         second_job_desc = run("dx describe " + second_job_handler.get_id())
-        first_job_res = first_job_handler.get_id() + ":array => [ 0, 1, 5 ]"
+        first_job_res = first_job_handler.get_id() + ":array => [ 0,\n                                   1, 5 ]"
         self.assertIn(first_job_res, second_job_desc)
 
         # Launch another job which depends on the first done job and
@@ -3473,10 +3698,11 @@ def main(array):
                                          "dxapi": "1.0.0",
                                          "inputSpec": [],
                                          "outputSpec": [],
-                                         "runSpec": {"interpreter": "python2.7",
+                                         "runSpec": {"interpreter": "python3",
                                                      "distribution": "Ubuntu",
-                                                     "release": "14.04",
-                                                     "code": '''#!/usr/bin/env python
+                                                     "release": "20.04",
+                                                     "version": "0",
+                                                     "code": '''#!/usr/bin/env python3
 
 @dxpy.entry_point('main')
 def main():
@@ -3627,7 +3853,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that runs jobs')
     def test_dx_run_clone_analysis(self):
-        dxpy.api.applet_new({
+        applet_id = dxpy.api.applet_new({
             "project": self.project,
             "name": "myapplet",
             "dxapi": "1.0.0",
@@ -3636,8 +3862,9 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             "runSpec": {"interpreter": "bash",
                         "distribution": "Ubuntu",
                         "release": "14.04",
+                        "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                         "code": "dx-jobutil-add-output number 32"}
-        })
+        })["id"]
 
         # make a workflow with the stage twice
         run("dx new workflow myworkflow")
@@ -3654,6 +3881,10 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                           " -i0.number=52 --brief -y").strip()
         change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
                                            " --instance-type mem2_hdd2_x2 --brief -y").strip()
+        change_inst_type_by_exec_analysis_id = run("dx run --clone " + analysis_id +
+                                           " --instance-type-by-executable \'" + 
+                                           json.dumps({applet_id:{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) +
+                                           "\' --brief -y").strip()
 
         time.sleep(25) # May need to wait for any new jobs to be created in the system
 
@@ -3673,10 +3904,21 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertEqual(change_inst_type_analysis_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x2')
 
+        # change inst type by executable: only affects stage with different inst type
+        change_inst_type_by_exec_analysis_desc = dxpy.describe(change_inst_type_by_exec_analysis_id)
+
+        self.assertEqual(change_inst_type_by_exec_analysis_desc['stages'][0]['execution']['instanceType'],'mem2_ssd1_v2_x2')
+        self.assertEqual(change_inst_type_by_exec_analysis_desc['stages'][1]['execution']['instanceType'],'mem2_ssd1_v2_x2')
+
         # Cannot provide workflow executable (ID or name) with --clone analysis
         error_mesg = 'cannot be provided when re-running an analysis'
         with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
             run("dx run myworkflow --clone " + analysis_id)
+
+        # Cannot provide --instance-count when running workflow
+        error_mesg = '--instance-count is not supported for workflows'
+        with self.assertSubprocessFailure(stderr_regexp=error_mesg, exit_code=3):
+            run("dx run --instance-count 5 --clone " + analysis_id)
 
         # Run in a different project and add some metadata
         try:
@@ -3706,6 +3948,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "dx-jobutil-add-output number 32"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -3743,6 +3986,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""}
                                          })['id']
 
@@ -3759,6 +4003,12 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         stg_req_id = run('dx run myworkflow --instance-type an=awful=name=mem2_hdd2_x2 ' +
                          '--instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
+        # request for an executable
+        exec_req_id = run("dx run myworkflow" + 
+                         " --instance-type-by-executable \'" + 
+                         json.dumps({applet_id:{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) +
+                         "\' --brief -y").strip()
+        
         time.sleep(10) # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
@@ -3776,6 +4026,11 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                          'mem2_hdd2_x2')
         self.assertEqual(stg_req_desc['stages'][1]['execution']['instanceType'],
                          'mem2_hdd2_x1')
+        exec_req_desc = dxpy.describe(exec_req_id)
+        self.assertEqual(exec_req_desc['stages'][0]['execution']['instanceType'],
+                         'mem2_ssd1_v2_x2')
+        self.assertEqual(exec_req_desc['stages'][1]['execution']['instanceType'],
+                         'mem2_ssd1_v2_x2')
 
         # request for a stage specifically (by index); if same inst
         # type as before, should reuse results
@@ -3795,6 +4050,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": ""}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -3845,6 +4101,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 1"}
                                          })['id']
         workflow_id = run("dx new workflow myworkflow --brief").strip()
@@ -3860,7 +4117,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn("inaccessible", list_output)
 
         # run refuses to run it
-        with self.assertSubprocessFailure(stderr_regexp='following inaccessible stage\(s\)',
+        with self.assertSubprocessFailure(stderr_regexp=r'following inaccessible stage\(s\)',
                                           exit_code=3):
             run("dx run myworkflow")
 
@@ -3899,7 +4156,8 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "inputSpec": [],
                                          "outputSpec": [],
                                          "runSpec": {"interpreter": "bash", "code": "",
-                                                     "distribution": "Ubuntu", "release": "14.04"}
+                                                     "distribution": "Ubuntu", "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}}}
                                          })['id']
         run("dx add stage wØrkflØwname " + applet_id)
 
@@ -3953,6 +4211,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         first_stage = run("dx add stage " + workflow_id + " -inumber=10 " + applet_id +
@@ -3974,6 +4233,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         stage_ids = []
@@ -4143,6 +4403,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                          "runSpec": {"interpreter": "bash",
                                                      "distribution": "Ubuntu",
                                                      "release": "14.04",
+                                                     "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                                                      "code": "exit 0"}
                                          })['id']
         stage_id = run("dx add stage " + workflow_id + " " + applet_id + " --brief").strip()
@@ -4489,7 +4750,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
 
     def test_build_worklow_malformed_dxworkflow_json(self):
         workflow_dir = self.write_workflow_directory("dxbuilt_workflow", "{")
-        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxworkflow\.json file', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp=r'Could not parse dxworkflow\.json file', exit_code=3):
             run("dx build " + workflow_dir)
 
 
@@ -4577,7 +4838,7 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
                                                      readme_content="Workflow Readme Please")
 
         error_msg = "The applet {} is not available".format(self.test_applet_id)
-        with self.assertRaisesRegexp(DXCalledProcessError, error_msg):
+        with self.assertRaisesRegex(DXCalledProcessError, error_msg):
             run("dx build --globalworkflow --region azure:westus --json " + workflow_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -4590,9 +4851,10 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
               "version": "0.0.111",
               "runSpec": {
                 "file": "code.py",
-                "interpreter": "python2.7",
+                "interpreter": "python3",
                 "distribution": "Ubuntu",
-                "release": "14.04"
+                "release": "20.04",
+                "version": "0"
               },
               "inputSpec": [],
               "outputSpec": [],
@@ -4831,7 +5093,7 @@ class TestDXClientFind(DXTestCase):
         record_id = dxpy.new_dxrecord(project=self.project, name="find_data_formatting", close=True).get_id()
         self.assertRegex(
             run("dx find data --name " + "find_data_formatting").strip(),
-            r"^closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+/find_data_formatting \(" + record_id + "\)$"
+            r"^closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+/find_data_formatting \(" + record_id + r"\)$"
         )
 
     @pytest.mark.TRACEABILITY_MATRIX
@@ -5288,8 +5550,9 @@ class TestDXClientFind(DXTestCase):
                                 ],
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3",
+                              "distribution": "Ubuntu", "release": "20.04",
+                              "version": "0",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -5361,6 +5624,23 @@ class TestDXClientFind(DXTestCase):
         self.assertEqual(len(run("dx find jobs "+options2).splitlines()), 0)
         self.assertEqual(len(run("dx find analyses "+options2).splitlines()), 0)
 
+        # JSON output
+        def get_ids(data):
+            return [item['id'] for item in json.loads(data)]
+
+        options2 = "--user=self --json"
+        self.assertEqual(len(get_ids(run("dx find executions " + options2))), 4)
+        self.assertEqual(len(get_ids(run("dx find jobs " + options2))), 3)
+        self.assertEqual(len(get_ids(run("dx find analyses " + options2))), 1)
+        options3 = options2 + " --origin-jobs"
+        self.assertEqual(len(get_ids(run("dx find executions " + options3))), 4)
+        self.assertEqual(len(get_ids(run("dx find jobs " + options3))), 3)
+        self.assertEqual(len(get_ids(run("dx find analyses " + options3))), 1)
+        options3 = options2 + " --all-jobs"
+        self.assertEqual(len(get_ids(run("dx find executions " + options3))), 4)
+        self.assertEqual(len(get_ids(run("dx find jobs " + options3))), 3)
+        self.assertEqual(len(get_ids(run("dx find analyses " + options3))), 1)
+
         # Search by tag
         options2 = options + " --all-jobs --brief"
         options3 = options2 + " --tag foo"
@@ -5396,8 +5676,9 @@ class TestDXClientFind(DXTestCase):
                                 ],
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3",
+                              "distribution": "Ubuntu", "release": "20.04",
+                              "version": "0",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -5518,6 +5799,23 @@ class TestDXClientFind(DXTestCase):
             self.assert_cmd_gives_ids("dx find executions "+options2, [])
             self.assert_cmd_gives_ids("dx find jobs "+options2, [])
             self.assert_cmd_gives_ids("dx find analyses "+options2, [])
+
+            # JSON output
+            def get_ids(data):
+                return set([item['id'] for item in json.loads(data)])
+
+            options2 = "--json --user=self --project=" + temp_proj_id
+            self.assertEqual(get_ids(run("dx find executions " + options2)), set([job_id, analysis_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find jobs " + options2)), set([job_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find analyses " + options2)), set([analysis_id]))
+            options3 = options2 + " --origin-jobs"
+            self.assertEqual(get_ids(run("dx find executions " + options3)), set([job_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find jobs " + options3)), set([job_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find analyses " + options3)), set([]))
+            options3 = options2 + " --all-jobs"
+            self.assertEqual(get_ids(run("dx find executions " + options3)), set([job_id, analysis_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find jobs " + options3)), set([job_id, subjob_id]))
+            self.assertEqual(get_ids(run("dx find analyses " + options3)), set([analysis_id]))
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_ORG_LIST_ORGS"])
@@ -5641,7 +5939,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         # Assert that return format is like: "<user_id> : <user_name> (<level>)"
         levels = "(?:ADMIN|MEMBER)"
         output = run(cmd.format(opts="")).strip().split("\n")
-        pattern = "^user-[a-zA-Z0-9]* : .* \(" + levels + "\)$"
+        pattern = r"^user-[a-zA-Z0-9]* : .* \(" + levels + r"\)$"
         for result in output:
             self.assertRegex(result, pattern)
 
@@ -5821,7 +6119,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
         # Assert that return format is like: "<project_id><project_name><level>"
         levels = "(?:ADMINISTER|CONTRIBUTE|UPLOAD|VIEW|NONE)"
         output = run(cmd.format(opts="")).strip().split("\n")
-        pattern = "^project-[a-zA-Z0-9]{24} : .* \(" + levels + "\)$"
+        pattern = r"^project-[a-zA-Z0-9]{24} : .* \(" + levels + r"\)$"
         for result in output:
             self.assertRegex(result, pattern)
 
@@ -5871,7 +6169,7 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
 
         # Same as above, without the --brief flag, so we need to destructure formatting
         lengthy_outputs = run("dx find org apps {}".format(self.org_id)).rstrip().split("\n")
-        pattern = "^(\s\s|(\s\S)*x(\s\S)*)[a-zA-Z0-9_]*\s\([a-zA-Z0-9_]*\),\sv[0-9.]*$"
+        pattern = r"^(\s\s|(\s\S)*x(\s\S)*)[a-zA-Z0-9_]*\s\([a-zA-Z0-9_]*\),\sv[0-9.]*$"
         for lengthy_output in lengthy_outputs:
             self.assertRegex(lengthy_output, pattern)
 
@@ -7144,8 +7442,19 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         # will be enabled in the region of the project context
         # (if regionalOptions or --region are not set)
         env = override_environment(DX_PROJECT_CONTEXT_ID='project-B00000000000000000000000')
-        with self.assertRaisesRegexp(subprocess.CalledProcessError, "ResourceNotFound"):
+        with self.assertRaisesRegex(subprocess.CalledProcessError, "ResourceNotFound"):
             run("dx build --create-globalworkflow --json " + workflow_dir, env=env)
+
+    # this is NOT a global workflow
+    def test_build_workflow_with_tree_tat_threshold(self):
+        wf_name = "workflow_build_tree_tat_threshold"
+        dxworkflow_json = dict(self.dxworkflow_spec, name=wf_name)
+        dxworkflow_json.update({"treeTurnaroundTimeThreshold": 2})
+        workflow_dir = self.write_workflow_directory(wf_name,
+                                                     json.dumps(dxworkflow_json))
+        new_workflow_with_tat = run_and_parse_json("dx build --json " + workflow_dir)
+        workflow_describe = dxpy.get_handler(new_workflow_with_tat["id"]).describe()
+        self.assertEqual(workflow_describe['treeTurnaroundTimeThreshold'], 2)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that would create global workflows')
@@ -7168,7 +7477,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
                                                      json.dumps(dxworkflow_json))
         new_gwf = json.loads(run("dx build --globalworkflow --bill-to {} --json {}".format(org_id, workflow_dir)))
         self.assertEqual(new_gwf["billTo"], org_id)
-    
+
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
                          'skipping test that requires presence of test org')
     def test_build_workflow_without_bill_to_rights(self):
@@ -7249,7 +7558,7 @@ class TestDXBuildWorkflow(DXTestCaseBuildWorkflows):
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json))
         # reject building gwf if the source WDL workflow is built by unsupported dxCompiler
-        with self.assertSubprocessFailure(stderr_regexp="Source workflow {} is not compiled using dxCompiler \(version>={}\) that supports creating global workflows.".format(dxworkflow_json["name"], SUPPORTED_DXCOMPILER_VERSION), exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="Source workflow " + dxworkflow_json["name"] + r" is not compiled using dxCompiler \(version>=" + SUPPORTED_DXCOMPILER_VERSION + r"\) that supports creating global workflows.", exit_code=3):
             run("dx build --globalworkflow {}".format(workflow_dir))
         
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -7628,6 +7937,19 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(job_desc['priority'], 'normal')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
+    def test_build_applet_tree_tat_threshold_and_run(self):
+        applet_spec = dict(self.base_app_spec, name="minimal_applet_with_tat_threshold")
+        applet_spec.update({"treeTurnaroundTimeThreshold": 2})
+        applet_dir = self.write_app_directory("minimal_applet_with_tat_threshold", json.dumps(applet_spec), "code.py")
+        new_applet_with_tat = run_and_parse_json("dx build --json " + applet_dir)
+        applet_describe = dxpy.get_handler(new_applet_with_tat["id"]).describe()
+        self.assertEqual(applet_describe['treeTurnaroundTimeThreshold'], 2)
+        job_id = run("dx run {} --yes --brief".format(applet_describe["id"])).strip()
+        job_describe = dxpy.describe(job_id)
+        self.assertEqual(job_describe['selectedTreeTurnaroundTimeThreshold'], 2)
+        self.assertEqual(job_describe['selectedTreeTurnaroundTimeThresholdFrom'], "executable")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_remote_build_applet_and_run_immediately(self):
         app_spec = dict(self.base_app_spec, name="minimal_remote_build_applet_to_run")
         app_dir = self.write_app_directory("minimal_remote_build_åpplet_to_run", json.dumps(app_spec),
@@ -7711,8 +8033,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "summary": "a summary sentence.",
             "description": "foo",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3",
+                        "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [{"name": "34", "class": "int"}],
             "outputSpec": [{"name": "92", "class": "string"}],
             "version": "1.0.0",
@@ -7790,8 +8112,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec = {
             "name": "test_build_app_suggestions",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3",
+                        "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [{"name": "testname", "class": "file", "suggestions": []}],
             "outputSpec": [],
             "version": "0.0.1"
@@ -7835,8 +8157,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
     def test_build_app_suggestions_success(self):
         app_spec = {"name": "test_build_app_suggestions",
                     "dxapi": "1.0.0",
-                    "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                                "distribution": "Ubuntu", "release": "14.04"},
+                    "runSpec": {"file": "code.py", "interpreter": "python3",
+                                "distribution": "Ubuntu", "release": "20.04", "version": "0"},
                     "inputSpec": [{"name": "testname", "class": "file", "suggestions": []}],
                     "outputSpec": [], "version": "0.0.1"}
 
@@ -7852,12 +8174,12 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     def test_build_applet_with_no_dxapp_json(self):
         app_dir = self.write_app_directory("åpplet_with_no_dxapp_json", None, "code.py")
-        with self.assertSubprocessFailure(stderr_regexp='does not contain dxapp\.json', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp=r'does not contain dxapp\.json', exit_code=3):
             run("dx build " + app_dir)
 
     def test_build_applet_with_malformed_dxapp_json(self):
         app_dir = self.write_app_directory("åpplet_with_malformed_dxapp_json", "{", "code.py")
-        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxapp\.json file', exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp=r'Could not parse dxapp\.json file', exit_code=3):
             run("dx build " + app_dir)
 
     @unittest.skipUnless(testutil.TEST_ISOLATED_ENV,
@@ -8425,8 +8747,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "dxapi": "1.0.0",
             "runSpec": {
                 "file": "code.py",
-                "interpreter": "python2.7",
-                "distribution": "Ubuntu", "release": "14.04",
+                "interpreter": "python3",
+                "distribution": "Ubuntu", "release": "20.04", "version": "0",
                 "execDepends": {"name": "oops"}
                 },
             "inputSpec": [],
@@ -8434,7 +8756,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
             "version": "1.0.0"
             }
         app_dir = self.write_app_directory("invalid_execdepends", json.dumps(app_spec), "code.py")
-        with self.assertSubprocessFailure(stderr_regexp="Expected runSpec\.execDepends to"):
+        with self.assertSubprocessFailure(stderr_regexp=r"Expected runSpec\.execDepends to"):
             run("dx build --json " + app_dir)
 
     def test_invalid_authorized_users(self):
@@ -8460,9 +8782,9 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec = dict(self.base_app_spec, name="test_deps_without_network_access",
                         runSpec={"execDepends": [{"name": "ddd", "package_manager": "pip"}],
                                  "file": "code.py",
-                                 "interpreter": "python2.7",
+                                 "interpreter": "python3",
                                  "distribution": "Ubuntu",
-                                 "release": "14.04"})
+                                 "release": "20.04", "version": "0"})
         app_dir = self.write_app_directory("deps_without_network_access", json.dumps(app_spec),
                                            "code.py")
 
@@ -8716,7 +9038,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         app_spec = {
             "name": "build_applet_remote",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3", "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [
                 {"name": "in1", "class": "int"},
             ],
@@ -8747,7 +9069,7 @@ def main(in1):
         app_spec = {
             "name": "applet_help",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3", "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [
                 {"name": "reads", "class": "array:file", "type": "LetterReads", "label": "Reads",
                  "help": "One or more Reads table objects."},
@@ -9374,7 +9696,7 @@ def main(in1):
         with self.assertSubprocessFailure(stderr_regexp="No asset bundle was found", exit_code=3):
             app_spec = dict(self.base_app_spec, name="asset_depends",
                             runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
-                                       "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                       "file": "code.py", "distribution": "Ubuntu", "release": "20.04", "interpreter": "python3", "version": "0"})
             app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
             asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
             run("dx build --json {app_dir}".format(app_dir=app_dir))
@@ -9382,7 +9704,7 @@ def main(in1):
         # success: asset found
         app_spec = dict(self.base_app_spec, name="asset_depends",
                         runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project, "folder": "/record_subfolder"}],
-                                   "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                   "file": "code.py", "distribution": "Ubuntu", "release": "20.04", "interpreter": "python3", "version": "0"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
 
@@ -9397,7 +9719,7 @@ def main(in1):
         with self.assertSubprocessFailure(stderr_regexp="Found more than one asset record that matches", exit_code=3):
             app_spec = dict(self.base_app_spec, name="asset_depends_fail",
                             runSpec = {"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project, "folder": "/record_subfolder"}],
-                                       "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                       "file": "code.py", "distribution": "Ubuntu", "release": "20.04", "interpreter": "python3", "version": "0"})
             app_dir = self.write_app_directory("asset_depends_fail", json.dumps(app_spec), "code.py")
             asset_applet = json.loads(run("dx build --json {app_dir}".format(app_dir=app_dir)))["id"]
             run("dx build --json {app_dir}".format(app_dir=app_dir))
@@ -9418,7 +9740,7 @@ def main(in1):
 
         app_spec = dict(self.base_app_spec, name="asset_depends",
                         runSpec={"assetDepends": [{"id": record.get_id()}],
-                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "20.04", "interpreter": "python3", "version": "0"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = run_and_parse_json("dx build --json {app_dir}".format(app_dir=app_dir))["id"]
         self.assertEqual(
@@ -9441,7 +9763,7 @@ def main(in1):
 
         app_spec = dict(self.base_app_spec, name="asset_depends",
                        runSpec={"assetDepends": [{"name": record_name, "version": "0.1.1", "project": self.project}],
-                                "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                "file": "code.py", "distribution": "Ubuntu", "release": "20.04", "interpreter": "python3", "version": "0"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="No asset bundle was found", exit_code=3):
             run("dx build --json {app_dir}".format(app_dir=app_dir))
@@ -9461,7 +9783,7 @@ def main(in1):
 
         app_spec = dict(self.base_app_spec, name="asset_depends",
                         runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
-                                 "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                 "file": "code.py", "distribution": "Ubuntu", "release": "20.04", "interpreter": "python3", "version": "0"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         with self.assertSubprocessFailure(stderr_regexp="The required field 'archiveFileId'", exit_code=3):
             run("dx build --json {app_dir}".format(app_dir=app_dir))
@@ -9483,8 +9805,8 @@ def main(in1):
         with temporary_project('test_select_project', select=True):
             app_spec = dict(self.base_app_spec, name="asset_depends",
                             runSpec={"assetDepends": [{"id": record.get_id()}],
-                                      "file": "code.py", "distribution": "Ubuntu", "release": "14.04",
-                                      "interpreter": "python2.7"})
+                                      "file": "code.py", "distribution": "Ubuntu", "release": "20.04",
+                                      "interpreter": "python3", "version": "0"})
             app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
             run("dx build --json {app_dir}".format(app_dir=app_dir))
             temp_record_id = run("dx ls {asset} --brief".format(asset=record_name)).strip()
@@ -9510,7 +9832,7 @@ def main(in1):
             app_spec = dict(self.base_app_spec,
                             name=app_name,
                             runSpec={"file": "code.py",
-                                     "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04",
+                                     "interpreter": "python3", "distribution": "Ubuntu", "release": "20.04", "version": "0",
                                      "assetDepends": [{"id": record.get_id()}]})
             app_dir = self.write_app_directory(app_name, json.dumps(app_spec), "code.py")
             run("dx build --dry-run {app_dir}".format(app_dir=app_dir))
@@ -9533,7 +9855,7 @@ def main(in1):
 
         app_spec = dict(self.base_app_spec, name="asset_depends",
                         runSpec={"assetDepends": [{"name": record_name, "version": "0.0.1", "project": self.project}],
-                                  "file": "code.py", "distribution": "Ubuntu", "release": "14.04", "interpreter": "python2.7"})
+                                  "file": "code.py", "distribution": "Ubuntu", "release": "20.04", "interpreter": "python3", "version": "0"})
         app_dir = self.write_app_directory("asset_depends", json.dumps(app_spec), "code.py")
         asset_applet = run_and_parse_json("dx build --json {app_dir}".format(app_dir=app_dir))["id"]
 
@@ -9744,9 +10066,10 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "dxapi": "1.0.0",
             "runSpec": {
               "file": "code.py",
-              "interpreter": "python2.7",
+              "interpreter": "python3",
               "distribution": "Ubuntu",
-              "release": "14.04"},
+              "release": "20.04",
+              "version": "0"},
             "inputSpec": [{
                 "name": "in1",
                 "help": "A help for in1 input param",
@@ -9772,13 +10095,14 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "tags": ["bar"],
             "properties": {"sample_id": "123456"},
             "details": {"key1": "value1"},
-            "ignoreReuse": False
+            "ignoreReuse": False,
+            "treeTurnaroundTimeThreshold": 2
             }
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
-                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python3", "headJobOnDemand": False, "inheritParentRestartOnPolicy": False,
+                                      "distribution": "Ubuntu", "release": "20.04", "version": "0"}
 
         output_app_spec["regionalOptions"] = {"aws:us-east-1": {"systemRequirements": {}}}
 
@@ -9825,6 +10149,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
 
             self.assertNotIn("description", output_json)
             self.assertNotIn("developerNotes", output_json)
+            self.assertEqual(output_json["treeTurnaroundTimeThreshold"], 2)
             with open(os.path.join("get_applet", "Readme.md")) as fh:
                 self.assertEqual("Description\n", fh.read())
             with open(os.path.join("get_applet", "Readme.developer.md")) as fh:
@@ -9894,7 +10219,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         app_spec = {
             "name": "get_applet",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3", "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
@@ -9907,8 +10232,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # description and developerNotes should be un-inlined back to files
         output_app_spec = dict((k, v) for (k, v) in list(app_spec.items()) if k not in ('description',
                                                                                         'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
-                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python3",
+                                      "distribution": "Ubuntu", "release": "20.04", "version": "0"}
 
         app_dir = self.write_app_directory("get_åpplet", json.dumps(app_spec), "code.py",
                                            code_content="import os\n")
@@ -9942,8 +10267,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # dxapp.json so as not to pollute it.
         app_spec = dict(self.base_applet_spec, name="get_applet_field_cleanup")
         output_app_spec = app_spec.copy()
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
-                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python3", "headJobOnDemand": False,
+                                      "distribution": "Ubuntu", "release": "20.04", "version": "0"}
         output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_field_cleanup", json.dumps(app_spec), "code.py",
@@ -9968,8 +10293,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         # making sure the resource directory is downloaded.
         app_spec = dict(self.base_applet_spec, name="get_applet_windows")
         output_app_spec = app_spec.copy()
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7", "headJobOnDemand": False,
-                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python3", "headJobOnDemand": False,
+                                      "distribution": "Ubuntu", "release": "20.04", "version": "0"}
         output_app_spec["regionalOptions"] =  {u'aws:us-east-1': {u'systemRequirements': {}}}
 
         app_dir = self.write_app_directory("get_åpplet_windows", json.dumps(app_spec), "code.py",
@@ -10003,8 +10328,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "name": name,
             "title": "Sir",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04", "version": "0"},
+            "runSpec": {"file": "code.py", "interpreter": "python3",
+                        "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
@@ -10018,8 +10343,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         output_app_spec = dict((k, v)
                                for (k, v) in app_spec.items()
                                if k not in ('description', 'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
-                                      "distribution": "Ubuntu", "release": "14.04", "version": "0"}
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python3",
+                                      "distribution": "Ubuntu", "release": "20.04", "version": "0"}
 
         app_dir = self.write_app_directory(name,
                                            json.dumps(app_spec),
@@ -10212,8 +10537,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "name": app_name,
             "title": "Sir",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3",
+                        "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [{"name": "in1", "class": "file"}],
             "outputSpec": [{"name": "out1", "class": "file"}],
             "description": "Description\n",
@@ -10225,7 +10550,7 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
         output_app_spec = dict((k, v)
                                for (k, v) in app_spec.iteritems()
                                if k not in ('description', 'developerNotes'))
-        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python2.7",
+        output_app_spec["runSpec"] = {"file": "src/code.py", "interpreter": "python3", "version": "0",
                                       "distribution": "Ubuntu", "release": "14.04"}
 
         app_dir = self.write_app_directory(app_name,
@@ -10278,8 +10603,8 @@ class TestDXGetAppsAndApplets(DXTestCaseBuildApps):
             "name": name,
             "title": name,
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3",
+                        "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [],
             "outputSpec": [],
             "description": "Description\n",
@@ -10659,7 +10984,7 @@ class TestDXLs(DXTestCase):
         rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
         o = run("dx ls -l")
         #                             state    modified                              name      id
-        self.assertRegex(o, r"closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+        self.assertRegex(o, r"closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + r"\)")
 
 
 class TestDXTree(DXTestCase):
@@ -10675,7 +11000,7 @@ class TestDXTree(DXTestCase):
         rec = dxpy.new_dxrecord(project=self.project, name="foo", close=True)
         o = run("dx tree -l")
         self.assertRegex(o.strip(),
-                         r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + "\)")
+                         r".\n└── closed\s+\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+foo \(" + rec.get_id() + r"\)")
 
 
 class TestDXGenerateBatchInputs(DXTestCase):
@@ -10752,6 +11077,7 @@ class TestDXRun(DXTestCase):
                 "runSpec": {"interpreter": "bash",
                             "distribution": "Ubuntu",
                             "release": "16.04",
+                            "systemRequirements": {"*": {"instanceType": "mem2_ssd1_v2_x2"}},
                             "code": "dx-jobutil-add-output number 32"}
             })
             run("dx run myapplet -inumber=5 --project %s" % temp_project.name)
@@ -10760,7 +11086,7 @@ class TestDXRun(DXTestCase):
         id = 'applet-xxxxasdfasdfasdfasdfas'
         with self.assertSubprocessFailure(
             # there should be no app- or globalworkflow- in the stderr
-            stderr_regexp="\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
+            stderr_regexp=r"\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
             exit_code=3):
             run("_DX_DEBUG=2 dx run {}".format(id))
         
@@ -10768,7 +11094,7 @@ class TestDXRun(DXTestCase):
         id = 'workflow-xxxxasdfasfasdf'
         with self.assertSubprocessFailure( 
             # there should be no app- or globalworkflow- in the stderr
-            stderr_regexp="\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
+            stderr_regexp=r"\A((?!app\-|globalworkflow\-)[\s\S])*\Z",
             exit_code=3):
             run("_DX_DEBUG=2 dx run {}".format(id))
 
@@ -10782,8 +11108,8 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
         app_spec = {
             "name": "test_app_update",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3",
+                        "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [],
             "outputSpec": [],
             "version": "0.0.1"}
@@ -10798,8 +11124,8 @@ class TestDXUpdateApp(DXTestCaseBuildApps):
         app_spec_2 = {
             "name": "test_app_update",
             "dxapi": "1.0.0",
-            "runSpec": {"file": "code.py", "interpreter": "python2.7",
-                        "distribution": "Ubuntu", "release": "14.04"},
+            "runSpec": {"file": "code.py", "interpreter": "python3",
+                        "distribution": "Ubuntu", "release": "20.04", "version": "0"},
             "inputSpec": [],
             "outputSpec": [],
             "version": "0.0.2"}
@@ -11003,9 +11329,10 @@ class TestDXArchive(DXTestCase):
             run("dx archive -y {}:{}".format("invalid_project_name",fid1))
         
         # no project context       
-        with self.assertSubprocessFailure(stderr_regexp="Cannot find current project. Please check the environment.",
-                                          exit_code=3), without_project_context():
-            run("dx archive -y {}".format(fid1))
+        with without_project_context():
+            with self.assertSubprocessFailure(stderr_regexp="Cannot find current project. Please check the environment.",
+                                            exit_code=3):
+                run("dx archive -y {}".format(fid1))
         
         # invalid file name
         with self.assertSubprocessFailure(stderr_regexp="Input '{}' is not found as a file in project '{}'".format("invalid_file_name",self.proj_archive_id), exit_code=3):
@@ -11014,19 +11341,20 @@ class TestDXArchive(DXTestCase):
         # files in different project
         with temporary_project("other_project",select=False) as temp_project:
             test_projectid = temp_project.get_id()
-            fid2 = create_file_in_project("temp_file", trg_proj_id=test_projectid,folder=self.rootdir)
-            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive -y {}:{} {}:{}".format(
-                    self.proj_archive_id,fid1,
-                    test_projectid,fid2))
-            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive -y {}:{} :{}".format(
-                    self.proj_archive_id,fid1,
-                    fid2))
-            with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
-                run("dx archive -y {}:{} {}".format(
-                    self.proj_archive_id,fid1,
-                    fid2))
+            with select_project(test_projectid):
+                fid2 = create_file_in_project("temp_file", trg_proj_id=test_projectid,folder=self.rootdir)
+                with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                    run("dx archive -y {}:{} {}:{}".format(
+                        self.proj_archive_id,fid1,
+                        test_projectid,fid2))
+                with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                    run("dx archive -y {}:{} :{}".format(
+                        self.proj_archive_id,fid1,
+                        fid2))
+                with self.assertSubprocessFailure(stderr_regexp="All paths must refer to files/folder in a single project", exit_code=3):
+                    run("dx archive -y {}:{} {}".format(
+                        self.proj_archive_id,fid1,
+                        fid2))
 
         repeated_name = '/foo'
         fid = create_file_in_project(repeated_name, self.proj_archive_id)
@@ -11084,12 +11412,12 @@ class TestDXArchive(DXTestCase):
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,fid1))
-        time.sleep(10)
+        time.sleep(15)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"unarchiving")
 
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,self.rootdir))
-        time.sleep(10)
+        time.sleep(15)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"unarchiving")
         

@@ -20,8 +20,8 @@
   ],
   "runSpec": {
     "interpreter": "python3",
-    "release": "16.04",
-    "version": "1",
+    "release": "20.04",
+    "version": "0",
     "distribution": "Ubuntu",
     "file": "src/python_trimmer_example.py"
   }

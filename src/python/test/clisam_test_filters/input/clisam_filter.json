@@ -1,0 +1,29 @@
+{
+    "location": [
+        {
+            "chromosome": "1",
+            "starting_position": "10000",
+            "ending_position": "20000"
+        },
+        {
+            "chromosome": "4",
+            "starting_position": "10",
+            "ending_position": "50"
+        },
+        {
+            "chromosome": "X",
+            "starting_position": "500",
+            "ending_position": "1700"
+        }
+    ],
+    "allele": {
+        "allele_id": [
+            "allele_1",
+            "allele_2"
+        ],
+        "variant_type": [
+            "SNP",
+            "INS"
+        ]
+    }
+}

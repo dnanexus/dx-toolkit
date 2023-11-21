@@ -6,23 +6,282 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [342.0] - beta
-
 ### Added
 
-* Pretty-print spotCostSavings field in dx describe`job-xxxx`
+* certifi dxpy dependency
 
 ### Changed
 
-* Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts is set to 3.
+* urllib3 dxpy dependency to >=1.26.18,<2.2
 
-## [341.0] - 2023.3.3 - stable
+### Removed
+
+* requests, cryptography as dependencies of dxpy
+
+## [365.0] - beta
+
+### Changed
+
+* Python >= 3.6 dxpy
+* Updated Nextflow to 23.10.0 (staging only)
+
+### Removed
+
+* Python 2.7 support
+
+## [364.0] - 2023.11.13
+
+### Added
+
+* `dx extract_assay expression`
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+* Docker image can be cached on the platform
+
+### Changed
+
+* Disallow Python versions <2.7 or <3.5 in setup.py for dxpy, the next release will only support Python >=3.6
+
+### Fixed
+
+* Released Nextaur 1.6.9. It contains fixes for exception types so they are interpreted correctly by Nextflow when caching task runs.
+
+## [363.0] - 2023.11.6
+
+### Fixed
+
+* Project context added for loading dataset descriptor file when using `dx extract_dataset`
+
+### Added
+
+* Support dataset and CB records with Integer and Float type global primary keys as input in `create_cohort`
+* Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
+
+## [362.0] - 2023.10.30
+
+### Added
+
+* archival_state param to `dxpy.bindings.search.find_data_objects()`
+
+## [361.0] - 2023.10.16
+
+### Added
+
+* `--fields-file` argument in `dx extract_dataset`
+* `ALT` and `alt_index` columns in `--additional-fields` of `dx extract_assay somatic`
+
+### Fixed
+
+* `dx extract_assay` error message when no valid assay is found
+* In `dx extract_assay germline`, handled duplicate RSIDs, output sorting order, changed location filter range from 250M to 5M
+* Handled white spaces in `dx extract` command's inputs which are of the type `string` of comma separated values
+* Released Nextaur 1.6.8. It contains minor bugfixes and optimizations.
+* --retrieve-genotype --sql bug in UKB RAP region
+* Retry API call in object_exists_in_project()
+
+## [360.1] - 2023.10.16
+
+### Fixed
+
+* Released Nextaur 1.6.7. It adds DNAnexus docker image support feature and contains errorStrategy bugfixes
+
+## [359.1] - 2023.10.10
+
+### Changed
+
+* Retry `ConnectionResetError` in dxpy
+
+### Fixed
+
+* Reduce API calls in `DXFile.read()` after download URL is cached
+
+## [359.0] - 2023.9.29
+
+### Added
+
+* `dx create_cohort`
+* Nextflow pipeline readme file is used as a readme file of Nextflow applet
+* Default optional inputs `nextflow_soft_confs` and `nextflow_params_file` to Nextflow applets to support soft configuration override and custom parameters file in `nextflow run`
+
+## [358.0] - 2023.9.22
+
+### Changed
+
+* `dx find org projects --property` in Python 3
+
+## [357.0] - 2023.9.15
+
+### Changed
+
+* Remove optional output param `nextflow_log` from Nextflow pipeline applets; instead, always upload Nextflow log file to head job destination when execution completes
+
+### Fixed
+
+* Nextflow applets passes schema input params explicitly in `nextflow run` command, as parameters assigned in runtime config are not handled properly by nextflow-io
+* Unexpected splitting at whitespaces inside quotes when parsing string-type input parameters of Nextflow applets
+
+## [356.0] - 2023.9.1
+
+### Fixed
+
+* `dx describe analysis-xxxx --json --verbose`
+
+## [355.0] - 2023.8.16
+
+### Added
+
+* Return fields in `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
+* `--monthly-compute-limit` and `--monthly-egress-bytes-limit` for `dx new project`
+* `--instance-type-by-executable` for `dx run` and `dx-jobutil-job-new`
+* Parameters `system_requirements` and `system_requirements_by_executable` for `DXExecutable.run()` and `DXJob.new()`
+
+## [354.0] - 2023.8.1
+
+### Added
+
+* `--try T` for `dx watch`, `dx tag/untag`, `dx set_properties/unset_properties`
+* `--include-restarted` parameter for `dx find executions/jobs/analyses`
+* Restarted job fields in `dx describe job-xxxx`
+* `treeTurnaroundTime` fields in `dx get` and `dx describe`
+
+### Changed
+
+* dxpy User-Agent header includes Python version
+
+## [353.1] - 2023.7.24
+
+### Added
+
+* Fields from `dx describe {job/analysis}-xxxx` with `--verbose` argument: 'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements'
+* `dx watch --metrics top` mode
+
+## [352.1] - 2023.7.12
+
+### Added
+
+* `dx extract_assay somatic`
+
+### Fixed
+
+* Log line truncation for strings > 8000 bytes
+
+## [351.0] -  2023.7.7
+
+* No significant changes
+
+## [350.1] - 2023.6.23
+
+### Added
+
+* `dx watch` support for detailed job metrics (cpu, memory, network, disk io, etc every 60s)
+* `--detailed-job-metrics` for `dx run`
+* `--detailed-job-metrics-collect-default` for `dx update org`
+
+## [349.1] - 2023.6.15
+
+### Added
+
+* `dx extract_assay`
+* external_upload_restricted param for DXProject
+
+## [348.0] - 2023.6.9
+
+### Added
+
+* dxpy dependencies test suite
+
+### Changed
+
+* Optimizations in Nextflow Pipeline Applet script to make fewer API calls when
+concluding a subjob
+
+## [347.0] - 2023.5.11
+
+### Changed
+
+* Bumped allowed `colorama` version to 0.4.6
+* Allow `requests` version up to 2.28.x
+
+### Removed
+
+* Unneeded python `gnureadline` dependency
+* Unused `rlcompleter` import which may break alternative readline implementations
+
+## [346.0] - 2023.4.20
+
+### Changed
+
+* Help message of the `dx make_download_url` command
+
+### Fixed
+
+* Released Nextaur 1.6.6. It includes fixes to errorStrategy handling and an update to the way AWS instance types are selected based on resource requirements in Nextflow pipelines (V2 instances are now preferred)
+* `ImportError` in test_dxpy.py
+* Replaced obsolete built-in `file()` method with `open()`
+* Printing HTTP error codes that were hidden for API requests to cloud storage
+
+## [345.0] - 2023.4.13 
+
+### Changed
+
+* Bump allowed cryptography dxpy dependency version to 40.0.x
+* Tab completion in interactive executions now works with `libedit` bundled in MacOS and does not require externally installed GNU `readline`
+* Released Nextaur 1.6.5. It added a caching mechanism to `DxPath` file and folder resolution, which reduces number of DX API calls made during pipeline execution. It also fixes an occasional hanging of the headjob.
+
+### Fixed
+
+* Tab completion in interactive execution of `dx-app-wizard`
+* `dx-app-wizard` script on Windows
+* Tab completion in interactive executions on Windows
+
+## [344.0] - 2023.4.2
+
+### Changed
+
+* Released Nextaur 1.6.4. It includes a fix to folder download, minor fixes and default headjob instance update (mem2_ssd1_v2_x4 for AWS, mem2_ssd1_x4 for Azure)
+* Nextflow pipeline head job defaults to instance types mem2_ssd1_v2_x4 (AWS), azure:mem2_ssd1_x4 (Azure). No change to Nextflow task job instance types.
+
+### Fixed
+
+* Nextflow profiles runtime overriding fix
+
+### Added
+
+* Support for file (un)archival in DXJava
+* `archivalStatus` field to DXFile describe in DXJava
+* `archivalStatus` filtering support to DXSearch in DXJava
+* `dx run` support for `--preserve-job-outputs` and `--preserve-job-outputs-folder` inputs
+* `dx describe` for jobs and analyses outputs `Preserve Job Outputs Folder` field
+* Record the dxpy version used for Nextflow build in applet's metadata and job log
+
+## [343.0] - 2023.3.24 
+
+### Changed
+
+* Released Nextaur 1.6.3. It includes updates to wait times for file upload and closing, and a fix to default Nextflow config path
+* Upgraded Nextflow to 22.10.7
+* Nextflow assets from aws:eu-west-2
+
+## [342.1] - 2023.3.8
+
+### Added
+
+* Pretty-printing additional fields for Granular Wait Times in `dx describe` for jobs and analyses
+
+### Changed
+
+* Released Nextaur 1.6.2. It includes bugfixes and default value of maxTransferAttempts used for file downloads is set to 3
+
+### Fixed
+
+* `dx find jobs` if stopppedRunning not in describe output
+
+## [341.0] - 2023.3.3
 
 ### Added
 
 * `dx ssh` to connect to job's public hostname if job is httpsApp enabled
 * '--list-fields', '--list-entities', '--entities' arguments for `dx extract_dataset`
-* 
+
 ### Changed
 
 * Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
@@ -37,7 +296,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Nextflow - updated default instance types based on destination region
-* Released Nextaur 1.6.1. It includes an optimization of certain API calls and adds `docker pull` retry in Nextflow pipelines
 
 ### Fixed
 

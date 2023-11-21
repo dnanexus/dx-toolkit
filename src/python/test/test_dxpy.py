@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
@@ -26,10 +26,9 @@ import subprocess
 import platform
 import pytest
 import re
+import certifi
 
-import requests
-from requests.packages.urllib3.exceptions import SSLError
-import OpenSSL
+from urllib3.exceptions import SSLError, NewConnectionError
 
 import dxpy
 import dxpy_testutil as testutil
@@ -138,6 +137,7 @@ class TestDXProject(unittest.TestCase):
             self.assertEqual(desc["downloadRestricted"], False)
             self.assertEqual(desc["containsPHI"], False)
             self.assertEqual(desc["databaseUIViewOnly"], False)
+            self.assertEqual(desc["externalUploadRestricted"], False)
             self.assertEqual(desc["tags"], [])
             prop = dxpy.api.project_describe(dxproject.get_id(),
                                              {'fields': {'properties': True}})
@@ -190,6 +190,7 @@ class TestDXProject(unittest.TestCase):
                          protected=True,
                          restricted=True,
                          download_restricted=True,
+                         external_upload_restricted=False,
                          allowed_executables=["applet-abcdefghijklmnopqrstuzwx"],
                          description="new description")
         desc = dxproject.describe()
@@ -199,6 +200,7 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["protected"], True)
         self.assertEqual(desc["restricted"], True)
         self.assertEqual(desc["downloadRestricted"], True)
+        self.assertEqual(desc["externalUploadRestricted"], False)
         self.assertEqual(desc["description"], "new description")
         self.assertEqual(desc["allowedExecutables"][0], "applet-abcdefghijklmnopqrstuzwx")
         self.assertTrue("created" in desc)
@@ -350,11 +352,11 @@ class TestDXFileFunctions(unittest.TestCase):
         else:
             env = dict(os.environ, DX_JOB_ID=b'job-00000000000000000000')
         buffer_size = subprocess.check_output(
-            'python -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
+            'python3 -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
         self.assertEqual(int(buffer_size), 96 * 1024 * 1024)
         del env['DX_JOB_ID']
         buffer_size = subprocess.check_output(
-            'python -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
+            'python3 -c "import dxpy; print(dxpy.bindings.dxfile.DEFAULT_BUFFER_SIZE)"', shell=True, env=env)
         self.assertEqual(int(buffer_size), 16 * 1024 * 1024)
 
     def test_generate_read_requests(self):
@@ -1314,8 +1316,9 @@ class TestDXAppletJob(unittest.TestCase):
 def main():
     pass
 ''',
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3",
+                              "distribution": "Ubuntu", "release": "20.04",
+                              "version": "0",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -1412,8 +1415,8 @@ def main(number):
                                 {"name": "othernumber", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
                      runSpec={"code": self.codeSpec,
-                              "distribution": "Ubuntu", "release": "14.04",
-                              "interpreter": "python2.7"})
+                              "distribution": "Ubuntu", "release": "20.04",
+                              "version": "0", "interpreter": "python3"})
         stage_id = dxpy.api.workflow_add_stage(dxworkflow.get_id(),
                                                {"editVersion": 0,
                                                 "name": "stagename",
@@ -1451,8 +1454,8 @@ def main(number):
                      dxapi="1.04",
                      inputSpec=[{"name": "number", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
-                     runSpec={"code": self.codeSpec, "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04"})
+                     runSpec={"code": self.codeSpec, "interpreter": "python3",
+                              "distribution": "Ubuntu", "release": "20.04", "version": "0"})
 
         stage0 = {'id': 'stage_0', 'executable': dxapplet.get_id(),
                   'input': {'number': {'$dnanexus_link': {'workflowInputField': 'foo'}}}}
@@ -1576,8 +1579,8 @@ def main(number):
                      inputSpec=[{"name": "number", "class": "int"}],
                      outputSpec=[{"name": "number", "class": "int"}],
                      runSpec={"code": self.codeSpec,
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04"})
+                              "interpreter": "python3", "version":"0",
+                              "distribution": "Ubuntu", "release": "20.04"})
         dxworkflow.add_stage(dxapplet, name='stagename')
 
         # Can't specify the same input more than once (with a
@@ -1955,8 +1958,8 @@ class TestDXApp(unittest.TestCase):
                             ],
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3", "version":"0",
+                              "distribution": "Ubuntu", "release": "20.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         my_userid = dxpy.whoami()
@@ -2001,8 +2004,8 @@ class TestDXApp(unittest.TestCase):
                             ],
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3", "version": "0",
+                              "distribution": "Ubuntu", "release": "20.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxapp = dxpy.DXApp()
         my_userid = dxpy.whoami()
@@ -2332,8 +2335,8 @@ class TestDXSearch(testutil.DXTestCaseCompat):
                                 ],
                      outputSpec=[{"name": "mappings", "class": "record"}],
                      runSpec={"code": "def main(): pass",
-                              "interpreter": "python2.7",
-                              "distribution": "Ubuntu", "release": "14.04",
+                              "interpreter": "python3", "version": "0",
+                              "distribution": "Ubuntu", "release": "20.04",
                               "execDepends": [{"name": "python-numpy"}]})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
@@ -2505,7 +2508,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
     def test_bad_host(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(requests.packages.urllib3.exceptions.NewConnectionError) as exception_cm:
+        with self.assertRaises(NewConnectionError) as exception_cm:
             dxpy.DXHTTPRequest('http://doesnotresolve.dnanexus.com/', {}, prepend_srv=False, always_retry=False,
                                max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
@@ -2513,7 +2516,7 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
     def test_connection_refused(self):
         # Verify that the exception raised is one that dxpy would
         # consider to be retryable, but truncate the actual retry loop
-        with self.assertRaises(requests.packages.urllib3.exceptions.NewConnectionError) as exception_cm:
+        with self.assertRaises(NewConnectionError) as exception_cm:
             # Connecting to a port on which there is no server running
             dxpy.DXHTTPRequest('http://localhost:20406', {}, prepend_srv=False, always_retry=False, max_retries=1)
         self.assertTrue(dxpy._is_retryable_exception(exception_cm.exception))
@@ -2524,10 +2527,12 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
         self.assertTrue("CONTENT-type" in res.headers)
 
     @unittest.skip("skipping per DEVEX-2161")
+    # NOTE: Re-enabling this test may require adding a recent version of
+    # pyopenssl to requirements_test.txt - see DEVEX-2263 for details.
     def test_ssl_options(self):
         dxpy.DXHTTPRequest("/system/whoami", {}, verify=False)
-        dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where())
-        dxpy.DXHTTPRequest("/system/whoami", {}, verify=requests.certs.where(), cert_file=None, key_file=None)
+        dxpy.DXHTTPRequest("/system/whoami", {}, verify=certifi.where())
+        dxpy.DXHTTPRequest("/system/whoami", {}, verify=certifi.where(), cert_file=None, key_file=None)
         with self.assertRaises(TypeError):
             dxpy.DXHTTPRequest("/system/whoami", {}, cert="nonexistent")
         if dxpy.APISERVER_PROTOCOL == "https":
@@ -2976,7 +2981,7 @@ class TestIdempotentRequests(unittest.TestCase):
         self.assertEqual(sorted(a), sorted(b))
 
     code = '''@dxpy.entry_point('main')\ndef main():\n    pass'''
-    run_spec = {"code": code, "interpreter": "python2.7", "distribution": "Ubuntu", "release": "14.04"}
+    run_spec = {"code": code, "interpreter": "python3", "distribution": "Ubuntu", "release": "20.04", "version": "0"}
 
     # Create an applet using DXApplet.new
     def create_applet(self, name="app_name"):

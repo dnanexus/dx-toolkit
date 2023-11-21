@@ -1,0 +1,23 @@
+{
+    "allele": {
+        "rsid": "allele$dbsnp151_rsid",
+        "type": "allele$allele_type",
+        "dataset_alt_af": "allele$alt_freq",
+        "gnomad_alt_af": "allele$gnomad201_alt_freq"
+    },
+    "genotype": {
+        "genotype_type": "genotype$type",
+        "sample_id": "genotype$sample_id",
+        "allele_id": "allele$a_id"
+    },
+    "annotation": {
+        "allele_id": "allele$a_id",
+        "gene_name": "annotation$gene_name",
+        "gene_id": "annotation$gene_id",
+        "feature_id": "annotation$feature_id",
+        "consequences": "annotation$effect",
+        "putative_impact": "annotation$putative_impact",
+        "hgvs_c": "annotation$hgvs_c",
+        "hgvs_p": "annotation$hgvs_p"
+    }
+}

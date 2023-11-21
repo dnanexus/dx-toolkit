@@ -15,59 +15,23 @@
 #   under the License.
 
 $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
-	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
-	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
-	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
+	python3 -c 'import sys; exit("dx-toolkit is not compatible with Python < 3.6" if sys.version_info < (3, 6) else 0)'
+	rm -rf "$(DX_PY_ENV)"
 	$(VIRTUAL_ENV) "$(DX_PY_ENV)"
 
-# Install setuptools and other fundamental packages
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install --upgrade -r python/requirements_setuptools.txt
 
-# Build the dxpy wheel and move it into place
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
-	
-	export DXPY_WHEEL_FILENAME=$$(basename python/dist/dxpy-*.whl) ; \
-		unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/$${DXPY_WHEEL_FILENAME}[xattr]
-	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "$(PYTHON_LIBDIR)"
+	# Build the dxpy wheel and move it into place
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install python/
 
 
 # Installation
 # ============
 
-# debian specific installation targets
-debian_install: base_install
-	cp -a $(DNANEXUS_HOME)/share $(DESTDIR)/$(PREFIX)                          # core libraries
-	mkdir -p $(DESTDIR)/$(PREFIX)/share/dnanexus/build
-	cp -a $(DNANEXUS_HOME)/build/info $(DESTDIR)/$(PREFIX)/share/dnanexus/build/
-	rm -f $(DESTDIR)/$(PREFIX)/share/dnanexus/src/cpp/*/.gitignore
-	cp -a $(DNANEXUS_HOME)/doc $(DESTDIR)/$(PREFIX)/share/dnanexus             # docs
-
-	../build/fix_shebang_lines.sh $(DESTDIR)/$(PREFIX)/bin --debian-system-install
-
-	mkdir -p $(DESTDIR)/etc/profile.d                                        # Install environment file into etc
-	install -v -m0644 $(DNANEXUS_HOME)/build/environment.redirector $(DESTDIR)/etc/profile.d/dnanexus.environment
-	install -v -m0644 $(DNANEXUS_HOME)/environment $(DESTDIR)/etc/profile.d/dnanexus.environment.sh
-	cp -a $(DNANEXUS_HOME)/share/dnanexus/lib/python${PYTHON_VERSION_NUMBER}/site-packages/* $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python${PYTHON_VERSION_NUMBER}/site-packages/
-	ls $(DNANEXUS_HOME)/share/dnanexus/lib/python${PYTHON_VERSION_NUMBER}/site-packages | grep dxpy > $(DESTDIR)/$(PREFIX)/share/dnanexus/lib/python${PYTHON_VERSION_NUMBER}/site-packages/dxpy.pth
-
 debian_java_install: java
 	mkdir -p $(DESTDIR)/$(PREFIX)/share/java
 	$(eval CLEANED_JAR_NAME := `cd "$(DNANEXUS_HOME)"/lib/java; ls *.jar | sed "s/dnanexus-api-\([0-9]\+\.[0-9]\+\.[0-9]\+\)-.*/dnanexus-api-\1.jar/g"`)
 	(cd "$(DNANEXUS_HOME)"/lib/java; cp -a *.jar $(DESTDIR)/$(PREFIX)/share/java/"$(CLEANED_JAR_NAME)")
-
-debian_r_install: R
-	mkdir -p $(DESTDIR)/$(PREFIX)/lib/R/site-library
-	cp -a $(DNANEXUS_HOME)/lib/R/{RCurl,RJSONIO} $(DESTDIR)/$(PREFIX)/lib/R/site-library/
-	cp -a $(DNANEXUS_HOME)/lib/R/dxR $(DESTDIR)/$(PREFIX)/lib/R/site-library/
-
-
-# Bundled utilities
-# =================
-
-../bin/jq: jq/
-	(cd jq; autoreconf --install; ./configure)
-	$(MAKE) -C jq -j PATH=./bin:$$PATH
-	cp -f jq/jq ../bin/
 
 # System dependencies
 # ===================

@@ -5,9 +5,12 @@
 
 set -f
 
-DOCKER_CREDS_FOLDER=/docker/credentials/
-DOCKER_CREDS_FILENAME=dx_docker_creds
-CREDENTIALS=${HOME}/credentials
+
+# How long to let a subjob with error keep running for Nextflow to handle it
+# before we end the DX job, in seconds
+MAX_WAIT_AFTER_JOB_ERROR=240
+# How often to check when waiting for a subjob with error, in seconds
+WAIT_INTERVAL=15
 
 # Logs the user to the docker registry.
 # Uses docker credentials that have to be in $CREDENTIALS location.
@@ -21,10 +24,6 @@ CREDENTIALS=${HOME}/credentials
 #          }
 #      }
 docker_registry_login() {
-  if [ ! -f $CREDENTIALS ]; then
-    dx download "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}" -o $CREDENTIALS
-  fi
-
   export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
   export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
   export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
@@ -53,21 +52,6 @@ docker_registry_login() {
   fi
 }
 
-generate_runtime_config() {
-  set +x
-  touch nxf_runtime.config
-  # make a runtime config file to override optional inputs
-  # whose defaults are defined in the default pipeline config such as RESOURCES_SUBPATH/nextflow.config
-  @@GENERATE_RUNTIME_CONFIG@@
-
-  if [[ -s nxf_runtime.config ]]; then
-    if [[ $debug == true ]]; then
-      cat nxf_runtime.config
-      set -x
-    fi
-    RUNTIME_CONFIG_CMD='-c nxf_runtime.config'
-  fi
-}
 
 # On exit, for the main Nextflow orchestrator job
 on_exit() {
@@ -102,7 +86,7 @@ on_exit() {
 
   # backup cache
   if [[ $preserve_cache == true ]]; then
-    echo "=== Execution complete — caching current session to $DX_CACHEDIR/$NXF_UUID"
+    echo "=== Execution completed — caching current session to $DX_CACHEDIR/$NXF_UUID"
 
     # wrap cache folder and upload cache.tar
     if [[ -n "$(ls -A .nextflow)" ]]; then
@@ -119,27 +103,32 @@ on_exit() {
   # preserve_cache is false
   # clean up files of this session
   else
-    echo "=== Execution complete — cache and working files will not be resumable"
+    echo "=== Execution completed — cache and working files will not be resumable"
   fi
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
-  rm nxf_runtime.config
 
-  # try uploading the log file if it is not empty
   if [[ -s $LOG_NAME ]]; then
-    mkdir -p /home/dnanexus/out/nextflow_log
-    mv "$LOG_NAME" "/home/dnanexus/out/nextflow_log/$LOG_NAME" || true
+    echo "=== Execution completed — upload nextflow log to job output destination ${DX_JOB_OUTDIR%/}/"
+    NEXFLOW_LOG_ID=$(dx upload "$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
+      echo "Upload nextflow log as file: $NEXFLOW_LOG_ID" ||
+      echo "Failed to upload log file of current session $NXF_UUID"
   else
-    echo "No nextflow log file available."
+    echo "=== Execution completed — no nextflow log file available."
   fi
+  rm $LOG_NAME || true
 
-  # upload the log file and published files if any
-  mkdir -p /home/dnanexus/out/published_files
-  find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
+  if [[ $ret -ne 0 ]]; then
+    echo "=== Execution failed — skip uploading published files to job output destination ${DX_JOB_OUTDIR%/}/"
 
-  dx-upload-all-outputs --parallel --wait-on-close || echo "No log file or published files has been generated."
-  # done
+  else
+    echo "=== Execution succeeded — upload published files to job output destination ${DX_JOB_OUTDIR%/}/"
+    mkdir -p /home/dnanexus/out/published_files
+    find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
+    dx-upload-all-outputs --parallel --wait-on-close || echo "No published files has been generated."
+    # done
+  fi
   exit $ret
 }
 
@@ -227,25 +216,23 @@ check_cache_db_storage() {
 }
 
 validate_run_opts() {
-  IFS=" " read -r -a arr <<<"$nextflow_run_opts"
-  for i in "${!arr[@]}"; do
-    case ${arr[i]} in
-    -w=* | -work-dir=*)
-      NXF_WORK="${i#*=}"
-      break
+  profile_arg="@@PROFILE_ARG@@"
+
+  IFS=" " read -r -a opts <<<"$nextflow_run_opts"
+  for opt in "${opts[@]}"; do
+    case $opt in
+    -w=* | -work-dir=* | -w | -work-dir)
+      dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
       ;;
-    -w | -work-dir)
-      NXF_WORK=${arr[i + 1]}
-      break
+    -profile | -profile=*)
+      if [ -n "$profile_arg" ]; then
+        echo "Profile was given in run options... overriding the default profile ($profile_arg)"
+        profile_arg=""
+      fi
       ;;
     *) ;;
     esac
   done
-
-  # if there is a user specified workdir, error out as currently user workdir is not supported
-  if [[ -n $NXF_WORK ]]; then
-    dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
-  fi
 }
 
 check_running_jobs() {
@@ -306,7 +293,7 @@ main() {
 
   # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.6.2
+  NXF_PLUGINS_VERSION=1.6.9
 
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
@@ -318,13 +305,6 @@ main() {
   # Check if limit reached for Nextflow sessions preserved in this project's cache
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage
-  fi
-
-  if [ -n "$docker_creds" ]; then
-    dx mkdir -p $DOCKER_CREDS_FOLDER
-    dx download "$(jq '."$dnanexus_link"' <<<${docker_creds} -r)" -o $CREDENTIALS --no-progress -f
-    dx upload $CREDENTIALS --brief --wait --destination "${DOCKER_CREDS_FOLDER}${DOCKER_CREDS_FILENAME}"
-    docker_registry_login
   fi
 
   # set default NXF env constants
@@ -340,8 +320,21 @@ main() {
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
-  required_inputs=""
-  @@REQUIRED_RUNTIME_PARAMS@@
+
+  # make runtime parameter arguments from applet inputs
+  set +x
+  applet_runtime_inputs=()
+  @@APPLET_RUNTIME_PARAMS@@
+  if [[ $debug == true ]]; then
+    if [[ "${#applet_runtime_inputs}" -gt 0 ]]; then
+      echo "Will specify the following runtime parameters:"
+      printf "[%s] " "${applet_runtime_inputs[@]}"
+      echo
+    else
+      echo "No runtime parameter is specified. Will use the default values."
+    fi
+    set -x
+  fi
 
   # get job output destination
   DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
@@ -385,27 +378,36 @@ main() {
   setup_workdir
   export NXF_WORK
 
-  # for optional inputs, pass to the run command by using a runtime config
-  RUNTIME_CONFIG_CMD=""
-  generate_runtime_config
+  # download default applet file type inputs
+  dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
+  RUNTIME_CONFIG_CMD=''
+  RUNTIME_PARAMS_FILE=''
+  [[ -d "$HOME/in/nextflow_soft_confs/" ]] && RUNTIME_CONFIG_CMD=$(find "$HOME"/in/nextflow_soft_confs -name "*.config" -type f -printf "-c %p ")
+  [[ -d "$HOME/in/nextflow_params_file/" ]] && RUNTIME_PARAMS_FILE=$(find "$HOME"/in/nextflow_params_file -type f -printf "-params-file %p ")
+  if [[ -d "$HOME/in/docker_creds" ]]; then
+    CREDENTIALS=$(find "$HOME/in/docker_creds" -type f | head -1)
+    [[ -s $CREDENTIALS ]] && docker_registry_login || echo "no docker credential available"
+    dx upload "$CREDENTIALS" --path "$DX_WORKSPACE_ID:/dx_docker_creds" --brief --wait --no-progress || true
+  fi
 
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
   # execution starts
-  NEXTFLOW_CMD="nextflow \
+  declare -a NEXTFLOW_CMD="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
     ${RUNTIME_CONFIG_CMD} \
     -log ${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
-    @@PROFILE_ARG@@ \
+    $profile_arg \
     -name $DX_JOB_ID \
     $RESUME_CMD \
     $nextflow_run_opts \
-    $nextflow_pipeline_params \
-    $required_inputs
-      "
+    $RUNTIME_PARAMS_FILE \
+    $nextflow_pipeline_params)"
+
+  NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
 
   trap on_exit EXIT
   echo "============================================================="
@@ -415,10 +417,11 @@ main() {
   if [[ $preserve_cache == true ]]; then
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
-  echo "=== NF command      :" $NEXTFLOW_CMD
+  echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
+  echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
   echo "============================================================="
 
-    $NEXTFLOW_CMD & NXF_EXEC_PID=$!
+    "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
     # forwarding nextflow log file to job monitor
     set +x
     if [[ $debug == true ]] ; then
@@ -433,62 +436,65 @@ main() {
     exit $ret
 }
 
+wait_for_terminate_or_retry() {
+  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
+  if [ -n "${terminate_record}" ]; then
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
+    echo "Waiting for the head job to kill the job tree..."
+    sleep $MAX_WAIT_AFTER_JOB_ERROR
+    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+    exit
+  fi
+
+  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
+  if [ -n "${retry_record}" ]; then
+    wait_period=0
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
+    echo "Waiting for the head job to kill the job tree or for instruction to continue..."
+    while true
+    do
+        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
+        if [ "$errorStrategy_set" = "retry" ]; then
+          break
+        fi
+        wait_period=$(($wait_period+$WAIT_INTERVAL))
+        if [ $wait_period -ge $MAX_WAIT_AFTER_JOB_ERROR ];then
+          echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+          break
+        else
+          echo "No instruction to continue was given. Waiting for ${WAIT_INTERVAL} seconds"
+          sleep $WAIT_INTERVAL
+        fi
+    done
+  fi
+}
+
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
-  ret=$?
   if [ -f .command.log ]; then
     dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
   else
     >&2 echo "Missing Nextflow .command.log file"
   fi
-  # mark the job as successful in any case, real task
-  # error code is managed by nextflow via .exitcode file
+
+  # exit_code should already be set in nf_task_entry(); default just in case
+  # This is just for including as DX output; Nextflow internally uses .exitcode file
   if [ -z ${exit_code} ]; then export exit_code=0; fi
 
-  # Make sure that subjob with errorStrategy == terminate end in 'failed' state
-  wait_time=240
-  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
-  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
-  if [ "$exit_code" -ne "0" ] && [ -n "${terminate_record}" ]; then
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
-    echo "Waiting for the headjob to kill the job tree..."
-    sleep $wait_time
-    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-    exit
-  fi
+  if [ "$exit_code" -ne 0 ]; then wait_for_terminate_or_retry; fi
 
-  if [ "$exit_code" -ne "0" ] && [ -n "${retry_record}" ]; then
-    wait_period=0
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
-    echo "Waiting for the headjob to kill the job tree or for instruction to continue"
-
-    while true
-    do
-        dx describe $DX_JOB_ID --json | jq .properties -r
-        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
-        if [ "$errorStrategy_set" = "retry" ]; then
-          break
-        fi
-        wait_period=$(($wait_period+10))
-        if [ $wait_period -ge $wait_time ];then
-           echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-           break
-        else
-           echo "No instruction to continue was given. Waiting for 10 seconds"
-           sleep 10
-        fi
-    done
-  fi
-
+  # There are cases where the Nextflow task had an error but we don't want to fail the whole
+  # DX job exec tree, e.g. because the error strategy should continue,
+  # so we let the DX job succeed but this output records Nextflow's exit code
   dx-jobutil-add-output exit_code $exit_code --class=int
 }
 
 # Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
-  docker_credentials=$(dx find data --path "$DX_WORKSPACE_ID:$DOCKER_CREDS_FOLDER" --name "$DOCKER_CREDS_FILENAME")
-  if [ -n "$docker_credentials" ]; then
-    docker_registry_login
-  fi
+  CREDENTIALS="$HOME/docker_creds"
+  dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
+  [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
+
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on

@@ -64,7 +64,7 @@ def _write_simple_file(filename, content):
 
 def _dump_workflow(workflow_obj, describe_output={}):
     dxworkflow_json_keys = ['name', 'title', 'summary', 'dxapi', 'version',
-                            'outputFolder']
+                            'outputFolder', 'treeTurnaroundTimeThreshold']
     dxworkflow_json_stage_keys = ['id', 'name', 'executable', 'folder', 'input',
                                   'executionPolicy', 'systemRequirements']
 
