@@ -1052,11 +1052,11 @@ def _build_app(args, extra_args):
         verify_nf_license(args.destination, extra_args)
 
     # determine if a nextflow applet ought to be built with Nextflow Pipeline Importer (NPI) app
-    build_nf_with_npi = any([x is not None for x in [args.repository, args.cache_docker]])
+    build_nf_with_npi = any([x for x in [args.repository, args.cache_docker]])
     # this is to ensure to not call any more NPI executions if already inside an NPI job.
     build_nf_with_npi = False if is_importer_job() else build_nf_with_npi
 
-    if args.nextflow and not build_nf_with_npi:
+    if args.nextflow and (not build_nf_with_npi):
         source_dir = prepare_nextflow(
             resources_dir=args.src_dir,
             profile=args.profile,
@@ -1083,7 +1083,7 @@ def _build_app(args, extra_args):
 
         return output['id']
 
-    if not args.remote and not args.repository:  # building with NF repository is implicitly remote
+    if not args.remote and not build_nf_with_npi:  # building with NF repository is implicitly remote
         # LOCAL BUILD
         output = build_and_upload_locally(
             source_dir,
@@ -1156,6 +1156,7 @@ def _build_app(args, extra_args):
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
 
+
         if args.nextflow and build_nf_with_npi:
             nf_scr = args.repository
             if (not args.repository) and args.src_dir:
@@ -1176,13 +1177,13 @@ def _build_app(args, extra_args):
                 ):
                     raise dxpy.app_builder.AppBuilderException(
                         "Folder {} exists in the project {}. Remove the directory to avoid file duplication and retry".format(
-                            upload_destination_dir, dest_project
+                            os.path.join(upload_destination_dir, os.path.basename(args.src_dir)), dest_project
                         )
                     )
                 else:
                     upload_cmd = ["dx", "upload", args.src_dir, "-r", "-o", qualified_upload_dest, "-p"]
                     _ = subprocess.check_output(upload_cmd)
-                    nf_scr = qualified_upload_dest
+                    nf_scr = os.path.join(qualified_upload_dest, os.path.basename(args.src_dir))
             return build_pipeline_with_npi(
                 repository=nf_scr,
                 tag=args.tag,
