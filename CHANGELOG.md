@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * certifi dxpy dependency
+* docker caching to the CLI commands
 
 ### Changed
 
