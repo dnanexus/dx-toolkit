@@ -658,7 +658,7 @@ class DXFile(DXDataObject):
         :type display_progress: boolean
         :param report_progress_fn: Optional: a function to call that takes in two arguments (self, # bytes transmitted)
         :type report_progress_fn: function or None
-        :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is not in the correct range, :exc:`requests.exceptions.HTTPError` if upload fails
+        :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is not in the correct range, :exc:`urllib3.exceptions.HTTPError` if upload fails
 
         Uploads the data in *data* as part number *index* for the
         associated file. If no value for *index* is given, *index*

@@ -21,7 +21,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import logging
 logging.basicConfig(level=logging.WARNING)
-logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
+logging.getLogger('urllib3.connectionpool').setLevel(logging.ERROR)
 
 import os, sys, json, subprocess, argparse
 import platform
