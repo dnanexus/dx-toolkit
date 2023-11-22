@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [366.0] - beta
+
 ### Added
 
 * certifi dxpy dependency
@@ -18,12 +20,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * requests, cryptography as dependencies of dxpy
 
-## [365.0] - beta
+## [365.0] - 2023.11.21
 
 ### Changed
 
-* Python >= 3.6 dxpy
-* Updated Nextflow to 23.10.0 (staging only)
+* Require Python >= 3.6 for dxpy
+* Update Nextflow to 23.10.0 (staging only)
 
 ### Removed
 
@@ -35,7 +37,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx extract_assay expression`
 * Return `jobLogsForwardingStatus` field in `dx describe --verbose job-xxxx`
-* Docker image can be cached on the platform
+* Nextflow Docker image can be cached on the platform
 
 ### Changed
 
