@@ -136,18 +136,10 @@ install: base_install
 
 doc: doc_python doc_dxcpp doc_dxjson doc_java
 
-setup_doc_virtualenv: .setup_doc_virtualenv
-
-.setup_doc_virtualenv: ../build/doc_build_requirements.txt
-	@if ! which pip > /dev/null; then echo "pip not found, please run apt-get install python-pip"; exit 1; fi
-	@if ! which virtualenv > /dev/null; then echo "virtualenv not found, please run apt-get install python-virtualenv"; exit 1; fi
-	(unset PYTHONPATH; $(VIRTUAL_ENV) ../build/doc_env; source ../build/doc_env/$(ACTIVATE); pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
-	$(VIRTUAL_ENV) --relocatable ../build/doc_env
-	touch .setup_doc_virtualenv
-
-doc_python: python setup_doc_virtualenv
+doc_python: python 
 	rm -rf ../doc/python/*
-	source ../build/doc_env/$(ACTIVATE); source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; $(MAKE) -C python/doc html
+	${PIP} install --requirement=../build/doc_build_requirements.txt
+	$(MAKE) -C python/doc html
 
 doc_dxcpp:
 	mkdir -p ../doc/cpp/dxcpp
