@@ -1178,7 +1178,6 @@ def describe(args):
         # Attempt to resolve name
         # First, if it looks like a hash id, do that.
         json_input = {}
-        extra_fields = []
         json_input["properties"] = True
         if args.name and (args.verbose or args.details or args.json):
             raise DXCLIError('Cannot request --name in addition to one of --verbose, --details, or --json')
@@ -1197,25 +1196,21 @@ def describe(args):
                         raise e
 
         if is_job_id(args.path):
-            extra_fields.append('spotCostSavings')
             if args.verbose:
-                extra_fields.append('internetUsageIPs')
-                extra_fields.append('runSystemRequirements')
-                extra_fields.append('runSystemRequirementsByExecutable')
-                extra_fields.append('mergedSystemRequirementsByExecutable')
-                extra_fields.append('jobLogsForwardingStatus')
+                json_input['defaultFields'] = True
+                json_input['fields'] = {'internetUsageIPs': True,
+                                        'runSystemRequirements': True,
+                                        'runSystemRequirementsByExecutable': True,
+                                        'mergedSystemRequirementsByExecutable': True,
+                                        'jobLogsForwardingStatus': True}
 
         if is_analysis_id(args.path):
-            extra_fields.append('spotCostSavings')
             if args.verbose:
-                extra_fields.append('runSystemRequirements')
-                extra_fields.append('runSystemRequirementsByExecutable')
-                extra_fields.append('mergedSystemRequirementsByExecutable')
-                extra_fields.append('runStageSystemRequirements')
-
-        if len(extra_fields) > 0:
-            json_input['defaultFields'] = True
-            json_input['fields'] = {field: True for field in extra_fields}
+                json_input['defaultFields'] = True
+                json_input['fields'] = {'runSystemRequirements': True,
+                                        'runSystemRequirementsByExecutable': True,
+                                        'mergedSystemRequirementsByExecutable': True,
+                                        'runStageSystemRequirements': True}
 
         if args.job_try is not None:
             if not is_job_id(args.path):
