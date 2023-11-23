@@ -8,6 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [366.0] - beta
 
+* Improved error messaging for dx extract_assay expression
+
 ### Added
 
 * certifi dxpy dependency
@@ -46,6 +48,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Released Nextaur 1.6.9. It contains fixes for exception types so they are interpreted correctly by Nextflow when caching task runs.
+* Improved error messaging for dx extract_assay expression
 
 ## [363.0] - 2023.11.6
 
