@@ -70,7 +70,7 @@ def build_pipeline_with_npi(
     if destination:
         build_project_id, build_folder, _ = try_call(resolve_existing_path, destination, expected='folder')
     if docker_secrets:
-        input_hash["docker_secrets"] = parse_obj(git_creds, "file")
+        input_hash["docker_secrets"] = parse_obj(docker_secrets, "file")
     if cache_docker:
         input_hash["cache_docker"] = cache_docker
 
