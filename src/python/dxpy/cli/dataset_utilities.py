@@ -1385,6 +1385,7 @@ def extract_assay_expression(args):
         assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters
     )
     vizserver_payload = viz.build()
+    print(json.dumps(vizserver_payload))
 
     # Get the record ID and vizserver URL from the Dataset object
     record_id = dataset.detail_describe["id"]
