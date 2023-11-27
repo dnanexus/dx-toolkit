@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+* sorting dx extract_assay germline output so that results will be deterministic
+
 ### Added
 
 * certifi dxpy dependency
