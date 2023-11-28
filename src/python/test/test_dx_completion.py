@@ -151,7 +151,7 @@ class TestDXTabCompletion(unittest.TestCase):
     def test_project_completion(self):
         self.ids_to_destroy.append(dxpy.api.project_new({"name": "to select"})['id'])
         self.assert_completion("dx select to", "to select\\:")
-        self.assert_completion("dx select to\ sele", "to select\\:")
+        self.assert_completion(r"dx select to\ sele", "to select\\:")
 
     def test_completion_with_bad_current_project(self):
         os.environ['DX_PROJECT_CONTEXT_ID'] = ''

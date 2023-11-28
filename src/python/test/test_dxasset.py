@@ -102,7 +102,7 @@ class TestDXBuildAsset(DXTestCase):
 
     def test_build_asset_with_malformed_dxasset_json(self):
         asset_dir = self.write_asset_directory("asset_with_malform_json", "{")
-        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxasset\.json', exit_code=1):
+        with self.assertSubprocessFailure(stderr_regexp=r'Could not parse dxasset\.json', exit_code=1):
             run("dx build_asset " + asset_dir)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
