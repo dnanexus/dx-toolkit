@@ -109,8 +109,9 @@ class Dataset(DXRecord):
 
     def assay_names_list(self, assay_type):
         assay_names_list = []
-        for assay in self.assays_info_dict[assay_type]:
-            assay_names_list.append(assay["name"])
+        if self.assays_info_dict.get(assay_type):
+            for assay in self.assays_info_dict.get(assay_type):
+                assay_names_list.append(assay["name"])
         return assay_names_list
 
     def is_assay_name_valid(self, assay_name, assay_type):
