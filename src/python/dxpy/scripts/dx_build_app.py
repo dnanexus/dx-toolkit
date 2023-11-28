@@ -1170,11 +1170,21 @@ def _build_app(args, extra_args):
                     dest_folder.strip("/"), ".nf_source"
                 )
                 qualified_upload_dest = ":".join([dest_project, "/" + upload_destination_dir + "/"])
-                if check_folder_exists(
+                dest_folder_exists = False
+
+                try:
+                    dest_folder_exists = check_folder_exists(
                         project=dest_project,
                         path=os.path.join(dest_folder, ".nf_source"),
                         folder_name=os.path.basename(args.src_dir)
-                ):
+                    )
+                except ResolutionError:
+                    logger.info(
+                        "Destination folder {} does not exist. Creating and uploading the pipeline source.".format(
+                            qualified_upload_dest
+                        )
+                    )
+                if dest_folder_exists:
                     raise dxpy.app_builder.AppBuilderException(
                         "Folder {} exists in the project {}. Remove the directory to avoid file duplication and retry".format(
                             os.path.join(upload_destination_dir, os.path.basename(args.src_dir)), dest_project
