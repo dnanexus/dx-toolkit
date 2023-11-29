@@ -63,6 +63,8 @@ class Dataset(DXRecord):
                 "/" + self.dataset_id + "/visualize",
                 {"project": self.project_id, "cohortBrowser": False},
             )
+            print("Visualize Info datasetRecordProject")
+            print(self.visualize_info["datasetRecordProject"])
         return self._visualize_info
 
     @property
