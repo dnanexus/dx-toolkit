@@ -1221,7 +1221,7 @@ def extract_assay_expression(args):
                 )
             )
     elif not args.assay_name:
-        if len(dataset.assays_info_dict["molecular_expression"]) == 0:
+        if dataset.assays_info_dict.get("molecular_expression") is None or len(dataset.assays_info_dict.get("molecular_expression")) == 0:
             err_exit("No molecular expression assays found in the dataset")
 
     # Load args.filter_json or args.filter_json_file into a dict
@@ -1391,7 +1391,7 @@ def extract_assay_expression(args):
     url = dataset.vizserver_url
 
     # Create VizClient object and get data from vizserver using generated payload
-    client = VizClient(url, project)
+    client = VizClient(url, project, err_exit)
     if args.sql:
         vizserver_response = client.get_raw_sql(vizserver_payload, record_id)
     else:
