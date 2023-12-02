@@ -228,6 +228,15 @@ def final_payload(
 
     order_by = [{"allele_id":"asc"}]
 
+    # In order for output to be deterministic, we need to do a secondary sort by sample_id
+    # if it is present in the fields
+    sample_id_present = False
+    for field in fields:
+        if "sample_id" in field:
+            sample_id_present = True
+    if sample_id_present:
+        order_by.append({"sample_id":"asc"})
+
     final_payload["order_by"] = order_by
     final_payload["fields"] = fields
     final_payload["adjust_geno_bins"] = False

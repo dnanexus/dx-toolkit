@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [366.0] - beta
+## [367.0] - beta
+
+### Fixed
+
+* Improved error messaging for `dx extract_assay expression`
+
+## [366.0] - 2023.12.1
 
 ### Added
 
