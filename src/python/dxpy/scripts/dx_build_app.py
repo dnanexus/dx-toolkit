@@ -1056,6 +1056,7 @@ def _build_app(args, extra_args):
     # this is to ensure to not call any more NPI executions if already inside an NPI job.
     build_nf_with_npi = False if is_importer_job() else build_nf_with_npi
     print(f"BUILD WITH NPI: {build_nf_with_npi}")
+    print(f"IMPORTER: {is_importer_job()}")
     if args.nextflow and (not build_nf_with_npi):
         source_dir = prepare_nextflow(
             resources_dir=args.src_dir,
