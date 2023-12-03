@@ -282,6 +282,13 @@ dx_path() {
   esac
 }
 
+get_nextaur_version() {
+  executable=$(cat dnanexus-executable.json | jq -r .id )
+  bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
+  asset_dependency=$(dx describe ${bundled_dependency} --json | jq -r .properties.AssetBundle)
+  export NXF_PLUGINS_VERSION=$(dx describe ${asset_dependency} --json | jq -r .properties.version)
+}
+
 # Entry point for the main Nextflow orchestrator job
 main() {
   if [[ $debug == true ]]; then
@@ -293,7 +300,7 @@ main() {
 
   # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.7.0-beta
+  get_nextaur_version
 
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
