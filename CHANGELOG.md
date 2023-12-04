@@ -11,6 +11,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Improved error messaging for `dx extract_assay expression`
+* Suppressing traceback when `dx extract_assay expression` attempts to access a dataset it does not have access to 
 
 ## [366.0] - 2023.12.1
 
