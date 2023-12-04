@@ -17,7 +17,7 @@ from utils import EXIT_SUCCESS, init_base_argparser, init_logging, parse_common_
 
 ROOT_DIR = Path(__file__).parent.absolute()
 
-_PYTHON_VERSIONS = ["2.7", "3.7", "3.8", "3.9", "3.10", "3.11"]
+_PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10", "3.11"]
 PYENVS = [f"official-{p}" for p in _PYTHON_VERSIONS]
 
 EXIT_TEST_EXECUTION_FAILED = 1
@@ -103,11 +103,7 @@ class DXPYTestsRunner:
             shutil.copytree(self.dx_toolkit / "src" / "python", dx_python_root)
             env_dir = wd / "testenv"
             try:
-                if python_version == "2":
-                    subprocess.run([python_bin, "-m", "pip", "install", "virtualenv"], check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-                    subprocess.run([python_bin, "-m", "virtualenv", env_dir], check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-                else:
-                    subprocess.run([python_bin, "-m", "venv", env_dir], check=True)
+                subprocess.run([python_bin, "-m", "venv", env_dir], check=True)
             except subprocess.CalledProcessError as e:
                 logging.error(f"[{pyenv}] Unable to create virtual environment for test execution\n{e.output}")
                 self._store_test_results(pyenv, EXIT_TEST_EXECUTION_FAILED)
@@ -168,8 +164,6 @@ Exit 0
             env["DXPY_TEST_PYTHON_VERSION"] = python_version
             env["DXPY_TEST_SKIP_INTERACTIVE"] = str(self.skip_interactive_tests)
             env["DX_USER_CONF_DIR"] = str((wd / ".dnanexus_config").absolute())
-            if python_version == "2":
-                env["PYTHONIOENCODING"] = "UTF-8"
             with open(tests_log, 'w') as fh:
                 res = subprocess.run(["powershell", "-ExecutionPolicy", "Unrestricted", script], env=env, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
             if res.returncode != 0:

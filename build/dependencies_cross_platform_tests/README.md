@@ -61,11 +61,9 @@ Used for streaming execution logs in `dx watch`.
 
 ### Linux
 
-* `debian-10-py2-sysdeps` - problem with psutil installation
+* `*-py2-*` - Python 2.7 is not supported by dx-toolkit
 * `debian-10-py3-sysdeps` - problem with psutil installation
 * `dx-aee-16.04-0` - dx-toolkit is installed using distribution tarball and thus the environment is not ready for installation from the source
-* `rhel-7-py2-sysdeps` - problem with incompatible requests which cannot be uninstalled first
-* `ubuntu-18.04-py2-sysdeps` - problem with psutil installation
 * `ubuntu-18.04-py3-sysdeps` - problem with psutil installation
 
 ### Windows
