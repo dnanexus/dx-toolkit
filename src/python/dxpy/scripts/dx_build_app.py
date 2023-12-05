@@ -1166,7 +1166,7 @@ def _build_app(args, extra_args):
                 dest_project = get_project_to_check(args.destination, extra_args)
                 _, dest_folder, _ = parse_destination(args.destination)
                 upload_destination_dir = os.path.join(
-                    dest_folder.strip("/"), ".nf_source"
+                    dest_folder or "", ".nf_source"
                 )
                 qualified_upload_dest = ":".join([dest_project, "/" + upload_destination_dir + "/"])
                 dest_folder_exists = False
@@ -1174,7 +1174,7 @@ def _build_app(args, extra_args):
                 try:
                     dest_folder_exists = check_folder_exists(
                         project=dest_project,
-                        path=os.path.join(dest_folder, ".nf_source"),
+                        path="/" + upload_destination_dir + "/",
                         folder_name=os.path.basename(args.src_dir)
                     )
                 except ResolutionError:
