@@ -20,8 +20,8 @@ ROOT_DIR = Path(__file__).parent.absolute()
 
 PYENVS = \
     ["system"] + \
-    [f"official-{p}" for p in ("2.7", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11")] + \
-    [f"pyenv-{p}" for p in ("2.7", "3.6", "3.7", "3.8", "3.9", "3.10", "3.11")] + \
+    [f"official-{p}" for p in ("3.6", "3.7", "3.8", "3.9", "3.10", "3.11")] + \
+    [f"pyenv-{p}" for p in ("3.6", "3.7", "3.8", "3.9", "3.10", "3.11")] + \
     [f"brew-{p}" for p in ("3.8", "3.9", "3.10", "3.11")]
 
 EXIT_TEST_EXECUTION_FAILED = 1
@@ -41,7 +41,9 @@ class PyEnv:
         else:
             self._env = p[0]
             if p[0] == "system":
-                self._ver = "3" if Path("/usr/bin/python3").is_file() else "2"
+                if not Path("/usr/bin/python3").is_file():
+                    raise Exception("Python 2.7 is no longer supported")
+                self._ver = "3"
 
     @property
     def is_system(self):
@@ -147,7 +149,7 @@ class DXPYTestsRunner:
             env = os.environ.copy()
 
             if p.is_system:
-                env["DXPY_TEST_BASE_PYTHON_BIN"] = f"/usr/bin/python{'3' if p.python_version == '3' else ''}"
+                env["DXPY_TEST_BASE_PYTHON_BIN"] = f"/usr/bin/python3"
             elif p.is_official:
                 env["DXPY_TEST_BASE_PYTHON_BIN"] = str(Path("/Library") / "Frameworks" / "Python.framework" / "Versions" / p.python_version / "bin" / f"python{p.python_version}")
             elif p.is_pyenv:
