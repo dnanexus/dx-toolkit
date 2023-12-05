@@ -23,9 +23,9 @@ class VizClient(object):
                 else:
                     err_message = response["error"]
                 self.error_handler(str(err_message))
+            return response
         except Exception as details:
             self.error_handler(str(details))
-        return response
 
     def get_data(self, payload, record_id):
         resource_url = "{}/data/3.0/{}/raw".format(self.url, record_id)

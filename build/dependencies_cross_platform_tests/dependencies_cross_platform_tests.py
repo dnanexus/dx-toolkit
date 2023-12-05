@@ -151,7 +151,7 @@ def test_python_version(dx_python_bin):
     Tested libraries: none
     """
     python_version = os.getenv("DXPY_TEST_PYTHON_VERSION")
-    assert python_version in ["2", "3"]
+    assert python_version in ["3"]
     res = subprocess.run([dx_python_bin, "--version"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
     assert res.returncode == 0
     assert res.stdout.split(" ")[1][0] == python_version
