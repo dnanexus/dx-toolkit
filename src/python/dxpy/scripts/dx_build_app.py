@@ -1169,14 +1169,14 @@ def _build_app(args, extra_args):
                 dest_folder = dest_folder or ""
                 upload_destination_dir = os.path.join(
                     dest_folder, ".nf_source"
-                )
+                ).strip("/")
                 qualified_upload_dest = ":".join([dest_project, "/" + upload_destination_dir + "/"])
                 dest_folder_exists = False
 
                 try:
                     dest_folder_exists = check_folder_exists(
                         project=dest_project,
-                        path=os.path.join(dest_folder, ".nf_source"),
+                        path="/" + os.path.join(dest_folder, ".nf_source").strip("/"),
                         folder_name=os.path.basename(args.src_dir)
                     )
                 except ResolutionError:
