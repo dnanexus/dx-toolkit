@@ -56,7 +56,7 @@ Other useful resources:
 
 Python version compatibility
 ----------------------------
-dxpy is supported on Python 3 (3.6+)
+dxpy is supported on Python 3 (3.8+)
 
 Convention for Python scripts that are also modules
 ---------------------------------------------------
