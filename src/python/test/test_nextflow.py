@@ -99,7 +99,7 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_dxapp(self):
         dxapp = get_nextflow_dxapp()
-        self.assertEqual(dxapp.get("name"), "Nextflow pipeline")
+        self.assertEqual(dxapp.get("name"), "python")  # name is by default set to the resources directory name
         self.assertEqual(dxapp.get("details", {}).get("repository"), "local")
 
     @parameterized.expand([
@@ -342,8 +342,8 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
-    # @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-    #                      'skipping tests that would run jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
     @unittest.skip("skipping flaky test; to be fixed separately")
     def test_dx_run_retry_fail(self):
         pipeline_name = "retryMaxRetries"
@@ -391,6 +391,10 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         pipeline_name = "hello"
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        folder_contents = os.listdir(applet_dir)
+        print(applet_dir)
+        for item in folder_contents:
+            print(item)
         applet_id = json.loads(
             run("dx build --nextflow --json " + applet_dir))["id"]
         applet = dxpy.DXApplet(applet_id)
@@ -436,8 +440,8 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertIn("Please remove workDir specification",
                       job_desc["failureMessage"])
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping tests that would run jobs')
+    # @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+    #                      'skipping tests that would run jobs')
     def test_dx_run_nextflow_with_publishDir(self):
         pipeline_name = "cat_ls"
         # extra_args = '{"name": "testing_cat_ls"}'
