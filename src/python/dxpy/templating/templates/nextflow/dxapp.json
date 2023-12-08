@@ -92,7 +92,10 @@
     "headJobOnDemand": true,
     "restartableEntryPoints": "all",
     "interpreter": "bash",
-    "execDepends": [],
+    "execDepends": [    {
+      "name": "awscli",
+      "package_manager": "pip3"
+    }],
     "distribution": "Ubuntu",
     "release": "20.04",
     "version": "0"
