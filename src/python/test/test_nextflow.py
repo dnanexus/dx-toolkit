@@ -467,7 +467,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         job_handler = dxpy.DXJob(job_id)
         job_handler.wait_on_done()
         job_desc = dxpy.describe(job_id)
-
+        print(job_desc["output"])
         # the output files will be: ls_folder.txt, cat_file.txt
         self.assertEqual(len(job_desc["output"]["published_files"]), 2)
 
