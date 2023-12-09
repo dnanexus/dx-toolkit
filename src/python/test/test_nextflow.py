@@ -461,7 +461,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
             outdir, inFile_path, inFolder_path)
 
         job_id = run(
-            "dx run {applet_id} -idebug=true -inextflow_pipeline_params={pipeline_args} --folder :/test-cat-ls/ -y --brief".format(
+            "dx run {applet_id} --delay-workspace-destruction -idebug=true -inextflow_pipeline_params={pipeline_args} --folder :/test-cat-ls/ -y --brief".format(
                 applet_id=applet_id, pipeline_args=pipeline_args)
         ).strip()
         job_handler = dxpy.DXJob(job_id)
