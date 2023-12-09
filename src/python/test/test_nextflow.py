@@ -470,6 +470,8 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         for a in job_desc["output"]["published_files"]:
             print("file below:")
             print(dxpy.describe(a["$dnanexus_link"]))
+            print("content below:")
+            print(dxpy.DXFile(a["$dnanexus_link"]).read())
         # the output files will be: ls_folder.txt, cat_file.txt
         self.assertEqual(len(job_desc["output"]["published_files"]), 2)
 
