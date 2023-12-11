@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Require Python >= 3.8 for dxpy
+
 ### Fixed
 
 * Suppressing traceback when `dx extract_assay expression` attempts to access a dataset it does not have access to
