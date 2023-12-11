@@ -342,8 +342,8 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
 
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
-    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-                         'skipping tests that would run jobs')
+    # @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+    #                      'skipping tests that would run jobs')
     @unittest.skip("skipping flaky test; to be fixed separately")
     def test_dx_run_retry_fail(self):
         pipeline_name = "retryMaxRetries"
@@ -440,8 +440,8 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertIn("Please remove workDir specification",
                       job_desc["failureMessage"])
 
-    # @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-    #                      'skipping tests that would run jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
     def test_dx_run_nextflow_with_publishDir(self):
         pipeline_name = "cat_ls"
         # extra_args = '{"name": "testing_cat_ls"}'
@@ -461,17 +461,13 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
             outdir, inFile_path, inFolder_path)
 
         job_id = run(
-            "dx run {applet_id} --delay-workspace-destruction -idebug=true -inextflow_pipeline_params={pipeline_args} --folder :/test-cat-ls/ -y --brief".format(
+            "dx run {applet_id} -idebug=true -inextflow_pipeline_params={pipeline_args} --folder :/test-cat-ls/ -y --brief".format(
                 applet_id=applet_id, pipeline_args=pipeline_args)
         ).strip()
         job_handler = dxpy.DXJob(job_id)
         job_handler.wait_on_done()
         job_desc = dxpy.describe(job_id)
-        for a in job_desc["output"]["published_files"]:
-            print("file below:")
-            print(dxpy.describe(a["$dnanexus_link"]))
-            print("content below:")
-            print(dxpy.DXFile(a["$dnanexus_link"]).read())
+
         # the output files will be: ls_folder.txt, cat_file.txt
         self.assertEqual(len(job_desc["output"]["published_files"]), 2)
 
