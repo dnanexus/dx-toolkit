@@ -391,10 +391,6 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         pipeline_name = "hello"
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
-        folder_contents = os.listdir(applet_dir)
-        print(applet_dir)
-        for item in folder_contents:
-            print(item)
         applet_id = json.loads(
             run("dx build --nextflow --json " + applet_dir))["id"]
         applet = dxpy.DXApplet(applet_id)
