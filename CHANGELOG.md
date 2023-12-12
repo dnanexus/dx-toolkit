@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [368.0] - beta
+
 ### Changed
 
 * Require Python >= 3.8 for dxpy
@@ -14,12 +16,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.7.0. It contains Nextflow update to 23.10.0 and multiple minor fixes.
 * Suppressing traceback when `dx extract_assay expression` attempts to access a dataset it does not have access to
+  
+### Removed
 
-## [367.0] - beta
+* Python 3.6 and 3.7 for dxpy
+
+## [367.0] - 2023.12.11
 
 ### Fixed
 
 * Improved error messaging for `dx extract_assay expression`
+* Python docs for autodoc.dnanexus.com
 
 ## [366.0] - 2023.12.1
 
