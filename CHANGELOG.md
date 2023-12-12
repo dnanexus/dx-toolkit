@@ -16,6 +16,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.7.0. It contains Nextflow update to 23.10.0 and multiple minor fixes.
 * Suppressing traceback when `dx extract_assay expression` attempts to access a dataset it does not have access to
+* Bugfix regarding multi-assay assay selection in `dx extract_assay expression`
   
 ### Removed
 
