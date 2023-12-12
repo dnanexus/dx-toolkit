@@ -1368,7 +1368,7 @@ def extract_assay_expression(args):
 
     DATASET_DESCRIPTOR = dataset.descriptor_file_dict
     ASSAY_NAME = (
-        args.assay_name if args.assay_name else DATASET_DESCRIPTOR["assays"][0]["name"]
+        args.assay_name if args.assay_name else dataset.assay_names_list("molecular_expression")[0]
     )
 
     if args.assay_name:
@@ -1379,7 +1379,7 @@ def extract_assay_expression(args):
                 ASSAY_ID = molecular_assay["uuid"]
                 break
     else:
-        ASSAY_ID = DATASET_DESCRIPTOR["assays"][0]["uuid"]
+        ASSAY_ID = dataset.assays_info_dict["molecular_expression"][0]["uuid"]
 
     viz.assemble_assay_raw_filters(
         assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters
