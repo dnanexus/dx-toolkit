@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Bugfix regarding multi-assay assay selection in `dx extract_assay expression`
+
 ## [368.0] - beta
 
 ### Changed
