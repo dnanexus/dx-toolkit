@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Relaxed urllib3 dxpy dependency to >=1.25,<2.2
+
 ### Fixed
 
 * Bugfix regarding multi-assay assay selection in `dx extract_assay expression`
