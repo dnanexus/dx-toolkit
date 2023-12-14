@@ -299,7 +299,8 @@ main() {
 
   #
   aws --version
-  
+  aws configure list
+
   # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   NXF_PLUGINS_VERSION=1.7.0-s3strategy
@@ -515,8 +516,6 @@ nf_task_entry() {
   # remove the line in .command.run to disable printing env vars if debugging is on
   # export TEST_S3=true
   if [[ $TEST_S3 == true ]]; then
-    export AWS_ACCESS_KEY_ID=AKIAWBFJYJUUPXH52OHE
-    export AWS_SECRET_ACCESS_KEY=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
     aws s3 cp "s3:/${cmd_launcher_file}" .command.run
   else
     dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
