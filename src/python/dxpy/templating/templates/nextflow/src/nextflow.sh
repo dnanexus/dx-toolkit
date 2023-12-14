@@ -261,6 +261,12 @@ setup_workdir() {
   else
     NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
   fi
+
+  if [[ $s3 == true ]]; then
+    # NXF_WORK="s3://npascaletesting/APPS-2332-nf-s3/work/"
+    export NXF_EXECUTOR='dnanexus-s3'
+    export TEST_S3=true
+  fi
 }
 
 dx_path() {
@@ -296,7 +302,7 @@ main() {
   
   # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  NXF_PLUGINS_VERSION=1.6.9
+  NXF_PLUGINS_VERSION=1.7.0-s3strategy
 
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
@@ -319,7 +325,7 @@ main() {
   export NXF_ANSI_LOG=false
   export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
   export NXF_EXECUTOR='dnanexus'
-
+  # export NXF_CLASSPATH='/opt/nextflow/plugins/'
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
@@ -474,8 +480,13 @@ wait_for_terminate_or_retry() {
 
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
+  dx upload .command.run --path --path "$DX_PROJECT_CONTEXT_ID:/.command.run"  --brief --wait --no-progress || true
   if [ -f .command.log ]; then
-    dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
+    if [[ $TEST_S3 == true ]]; then
+      aws s3 cp .command.log "s3:/${cmd_log_file}"
+    else
+      dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
+    fi
   else
     >&2 echo "Missing Nextflow .command.log file"
   fi
@@ -494,6 +505,7 @@ nf_task_exit() {
 
 # Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
+  [[ $NXF_DEBUG ]] && set -x
   CREDENTIALS="$HOME/docker_creds"
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
@@ -501,10 +513,16 @@ nf_task_entry() {
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
-  dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
+  # export TEST_S3=true
+  if [[ $TEST_S3 == true ]]; then
+    export AWS_ACCESS_KEY_ID=AKIAWBFJYJUUPXH52OHE
+    export AWS_SECRET_ACCESS_KEY=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
+    aws s3 cp "s3:/${cmd_launcher_file}" .command.run
+  else
+    dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
+  fi
   set +e
   # enable debugging mode
-  [[ $NXF_DEBUG ]] && set -x
   # run the task
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?

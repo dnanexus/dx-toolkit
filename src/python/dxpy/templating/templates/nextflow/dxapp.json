@@ -45,6 +45,14 @@
       "default": false
     },
     {
+      "name": "s3",
+      "label": "S3 Mode",
+      "help": "Test S3 mode",
+      "class": "boolean",
+      "group": "Advanced Executable Development Options",
+      "default": false
+    },
+    {
       "name": "resume",
       "label": "Resume",
       "help": "Unique ID of the previous session to be resumed. If 'true' or 'last' is provided instead of the sessionID, will resume the latest resumable session run by an applet with the same name in the current project in the last 6 months.",
