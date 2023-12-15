@@ -481,7 +481,6 @@ wait_for_terminate_or_retry() {
 
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
-  dx upload .command.run --path --path "$DX_PROJECT_CONTEXT_ID:/.command.run"  --brief --wait --no-progress || true
   if [ -f .command.log ]; then
     if [[ $TEST_S3 == true ]]; then
       aws s3 cp .command.log "s3:/${cmd_log_file}"
