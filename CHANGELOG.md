@@ -10,11 +10,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Bugfix regarding multi-assay assay selection in `dx extract_assay expression`
 
-## [368.0] - beta
+## [368.1] - beta
 
 ### Changed
 
 * Require Python >= 3.8 for dxpy
+* Relaxed urllib3 dxpy dependency to >=1.25,<2.2
 
 ### Fixed
 
