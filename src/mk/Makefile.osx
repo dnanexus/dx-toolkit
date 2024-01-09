@@ -15,7 +15,7 @@
 #   under the License.
 
 $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
-	python3 -c 'import sys; exit("dx-toolkit is not compatible with Python < 3.6" if sys.version_info < (3, 6) else 0)'
+	python3 -c 'import sys; exit("dx-toolkit is not compatible with Python < 3.8" if sys.version_info < (3, 8) else 0)'
 	rm -rf "$(DX_PY_ENV)" python/dist
 	$(VIRTUAL_ENV) "$(DX_PY_ENV)"
 
