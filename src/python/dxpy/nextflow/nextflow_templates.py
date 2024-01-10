@@ -12,7 +12,8 @@ def get_nextflow_dxapp(
         custom_inputs=None,
         resources_dir="",
         region="aws:us-east-1",
-        cache_docker=False
+        cache_docker=False,
+        nextflow_pipeline_params=""
 ):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
@@ -23,6 +24,8 @@ def get_nextflow_dxapp(
     :type region: str
     :param cache_docker: Perform pipeline analysis and cache the detected docker images on the platform
     :type cache_docker: boolean
+    :param nextflow_pipeline_params: Custom Nextflow pipeline parameters
+    :type nextflow_pipeline_params: string
     Creates Nextflow dxapp.json from the Nextflow dxapp.json template
     """
 
@@ -40,7 +43,7 @@ def get_nextflow_dxapp(
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
-    dxapp["regionalOptions"] = get_regional_options(region, resources_dir, cache_docker)
+    dxapp["regionalOptions"] = get_regional_options(region, resources_dir, cache_docker, nextflow_pipeline_params)
 
     # Record dxpy version used for this Nextflow build
     dxapp["details"]["dxpyBuildVersion"] = TOOLKIT_VERSION

@@ -94,11 +94,11 @@ def write_dxapp(folder, content):
         json.dump(content, dxapp)
 
 
-def get_regional_options(region, resources_dir, cache_docker):
+def get_regional_options(region, resources_dir, cache_docker, nextflow_pipeline_params):
     nextaur_asset, nextflow_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
     if cache_docker:
-        image_refs = run_nextaur_collect(resources_dir)
+        image_refs = run_nextaur_collect(resources_dir, nextflow_pipeline_params)
         image_bundled = bundle_docker_images(image_refs)
     else:
         image_bundled = {}
