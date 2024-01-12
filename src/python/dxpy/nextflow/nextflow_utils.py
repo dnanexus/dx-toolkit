@@ -30,7 +30,7 @@ def get_resources_subpath(resources_dir):
 
 
 def get_importer_name():
-    return "nextflow_pipeline_importer"
+    return "applet-GfQF4J801xy03zvzyx7b0jpQ"
 
 
 def get_template_dir():
