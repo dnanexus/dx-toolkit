@@ -41,7 +41,7 @@ def is_importer_job():
     try:
         with open("/home/dnanexus/dnanexus-job.json", "r") as f:
             job_info = json.load(f)
-            return job_info.get("executableName") == get_importer_name()
+            return job_info.get("executableName") == "nextflow_pipeline_importer"
     except Exception:
         return False
 
