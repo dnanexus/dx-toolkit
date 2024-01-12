@@ -16,10 +16,9 @@ RUN \
 RUN \
     apt-get install -y \
         python3-argcomplete \
-        python3-cryptography \
         python3-dateutil \
         python3-psutil \
-        python3-requests \
+        python3-urllib3 \
         python3-websocket
 
 COPY run_tests.sh /
