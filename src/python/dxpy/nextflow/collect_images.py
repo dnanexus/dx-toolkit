@@ -61,7 +61,9 @@ def run_nextaur_collect(resources_dir, nextflow_pipeline_params):
         Runs nextaur:collect
         """
     # TODO - figure out the command for nextaur
-    collect_cmd = "nextflow plugin nextaur:collect docker {}".format(resources_dir)
+    collect_cmd = "nextflow plugin nextaur:collect docker {} pipelineParams={}".format(
+        resources_dir, nextflow_pipeline_params
+    )
     _ = subprocess.check_output(collect_cmd, shell=True)
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
