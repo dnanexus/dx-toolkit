@@ -30,7 +30,7 @@ def get_resources_subpath(resources_dir):
 
 
 def get_importer_name():
-    return "applet-GfQjP7801xyJ2PqXjvbBxkpJ"
+    return "applet-GfQqxXQ01xy3fYP22Z77gg96"
 
 
 def get_template_dir():
