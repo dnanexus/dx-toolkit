@@ -5,8 +5,8 @@ ENV DXPY_TEST_PYTHON_VERSION=3
 
 RUN \
     dnf install -y epel-release && \
-    dnf install -y which diffutils python3 python3-pip && \
-    python3 -m pip install --quiet --upgrade pip==21.3.1 && \
+    dnf install -y which diffutils python38 python38-pip && \
+    python3 -m pip install --quiet --upgrade pip && \
     python3 -m venv /pytest-env
 
 RUN \
@@ -15,12 +15,9 @@ RUN \
 
 RUN \
     dnf install -y \
-        python3-argcomplete \
-        python3-cryptography \
-        python3-dateutil \
-        python3-psutil \
-        python3-requests \
-        python3-websocket-client
+        python38-dateutil \
+        python38-psutil \
+        python38-urllib3
 
 COPY run_tests.sh /
 

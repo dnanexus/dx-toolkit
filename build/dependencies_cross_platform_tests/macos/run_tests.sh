@@ -34,18 +34,10 @@ PYTHON_VERSION=$($DXPY_TEST_PYTHON_BIN --version 2>&1)
 
 echo "Using venv with $PYTHON_VERSION ($DXPY_TEST_PYTHON_BIN)"
 
-if echo "$PYTHON_VERSION" | grep -F ' 3.6.'; then
-    $DXPY_TEST_PYTHON_BIN -m pip install pip==20.3.4 setuptools==50.3.2 wheel==0.37.1
-    if [[ ! -z "$DXPY_TEST_EXTRA_REQUIREMENTS" ]]; then
-        LDFLAGS="-L$(brew --prefix openssl@1.1)/lib" CFLAGS="-I$(brew --prefix openssl@1.1)/include" $DXPY_TEST_PYTHON_BIN -m pip install -r $DXPY_TEST_EXTRA_REQUIREMENTS
-    fi
-    LDFLAGS="-L$(brew --prefix openssl@1.1)/lib" CFLAGS="-I$(brew --prefix openssl@1.1)/include" $DXPY_TEST_PYTHON_BIN -m pip install $DX_TOOLKIT_DIR
-else
-    if [[ ! -z "$DXPY_TEST_EXTRA_REQUIREMENTS" ]]; then
-        $DXPY_TEST_PYTHON_BIN -m pip install -r $DXPY_TEST_EXTRA_REQUIREMENTS
-    fi
-    $DXPY_TEST_PYTHON_BIN -m pip install $DX_TOOLKIT_DIR
+if [[ ! -z "$DXPY_TEST_EXTRA_REQUIREMENTS" ]]; then
+    $DXPY_TEST_PYTHON_BIN -m pip install -r $DXPY_TEST_EXTRA_REQUIREMENTS
 fi
+$DXPY_TEST_PYTHON_BIN -m pip install $DX_TOOLKIT_DIR
 
 hash -r
 
