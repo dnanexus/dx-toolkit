@@ -283,13 +283,19 @@ dx_path() {
 }
 
 # Entry point for the main Nextflow orchestrator job
-main() {
+ep_main() {
   if [[ $debug == true ]]; then
     export NXF_DEBUG=2
     TRACE_CMD="-trace nextflow.plugin"
     env | grep -v DX_SECURITY_CONTEXT | sort
     set -x
   fi
+
+  echo "============================================================="
+  echo "==> Listing content of npacunoscaletesting bucket"
+  ls -l /cuno/s3/npacunoscaletesting
+  echo "============================================================="
+  echo
 
   # If cache is used, it will be stored in the project at
   DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
@@ -490,7 +496,13 @@ nf_task_exit() {
 }
 
 # Entry point for the Nextflow task sub-jobs
-nf_task_entry() {
+ep_nf_task_entry() {
+  echo "============================================================="
+  echo "==> Listing content of npacunoscaletesting bucket"
+  ls -l /cuno/s3/npacunoscaletesting
+  echo "============================================================="
+  echo
+
   CREDENTIALS="$HOME/docker_creds"
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
@@ -508,3 +520,25 @@ nf_task_entry() {
   dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
 }
+
+setup_cunofs() {
+  wget https://github.com/cunoFS/cunoFS/releases/latest/download/cuno-glibc-installer.run
+  yes | sh cuno-glibc-installer.run 1>/dev/null
+  dx cat project-GZxxGQ84g24xg8v710Kkx6Q4:file-GfPPGx84g24YyX08fgp62y5j | cuno creds activate
+}
+
+main() {
+  setup_cunofs
+  cuno run bash /home/dnanexus/$DX_JOB_ID.code.sh run_main
+}
+
+nf_task_entry() {
+  setup_cunofs
+  cuno run bash /home/dnanexus/$DX_JOB_ID.code.sh run_nf_task_entry
+}
+
+if [[ "$1" == "run_main" ]]; then
+  ep_main
+elif [[ "$1" == "run_nf_task_entry" ]]; then
+  ep_nf_task_entry
+fi
