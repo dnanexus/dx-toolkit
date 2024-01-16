@@ -1058,7 +1058,7 @@ def _build_app(args, extra_args):
 
     if args.nextflow and (not build_nf_with_npi):
         print("THE CMD build_app 1060!!!!!!")
-        print(args.nextflow_pipeline_params)
+        print(args.cache_docker)
         source_dir = prepare_nextflow(
             resources_dir=args.src_dir,
             profile=args.profile,
