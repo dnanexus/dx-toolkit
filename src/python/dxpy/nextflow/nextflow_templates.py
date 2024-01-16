@@ -43,6 +43,8 @@ def get_nextflow_dxapp(
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
+    print("THE CMD!!!!!!")
+    print(nextflow_pipeline_params)
     dxapp["regionalOptions"] = get_regional_options(region, resources_dir, cache_docker, nextflow_pipeline_params)
 
     # Record dxpy version used for this Nextflow build
