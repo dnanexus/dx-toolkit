@@ -98,6 +98,8 @@ def get_regional_options(region, resources_dir, cache_docker, nextflow_pipeline_
     nextaur_asset, nextflow_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
     if cache_docker:
+        print("THE CMD!!!!!!")
+        print(nextflow_pipeline_params)
         image_refs = run_nextaur_collect(resources_dir, nextflow_pipeline_params)
         image_bundled = bundle_docker_images(image_refs)
     else:
