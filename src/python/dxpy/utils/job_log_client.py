@@ -110,10 +110,10 @@ class DXJobLogStreamClient:
             try:
                 self._app = WebSocketApp(
                     self.url,
-                    on_open=self.opened,
-                    on_close=self.closed,
-                    on_error=self.errored,
-                    on_message=self.received_message
+                    on_open=lambda app: self.opened(),
+                    on_close=lambda app, close_status_code, close_msg: self.closed(close_status_code, close_msg),
+                    on_error=lambda app, exception: self.errored(exception),
+                    on_message=lambda app, message: self.received_message(message)
                 )
                 self._app.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
             except:

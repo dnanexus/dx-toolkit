@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* websocket-client dxpy dependency to >=1.6.0,<1.8.0
+
 ### Fixed
 
 * Bugfix regarding multi-assay assay selection in `dx extract_assay expression`
