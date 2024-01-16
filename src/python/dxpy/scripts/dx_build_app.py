@@ -1057,8 +1057,6 @@ def _build_app(args, extra_args):
     build_nf_with_npi = False if is_importer_job() else build_nf_with_npi
 
     if args.nextflow and (not build_nf_with_npi):
-        print("THE CMD build_app 1060!!!!!!")
-        print(args.cache_docker)
         source_dir = prepare_nextflow(
             resources_dir=args.src_dir,
             profile=args.profile,
