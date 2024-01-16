@@ -132,6 +132,8 @@ def prepare_nextflow(
     dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
 
     custom_inputs = prepare_custom_inputs(schema_file=os.path.join(resources_dir, "nextflow_schema.json"))
+    print("THE CMD builder 135!!!!!!")
+    print(nextflow_pipeline_params)
     dxapp_content = get_nextflow_dxapp(
         custom_inputs=custom_inputs,
         resources_dir=resources_dir,
