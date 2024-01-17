@@ -11,6 +11,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Bugfix regarding multi-assay assay selection in `dx extract_assay expression`
+* Released Nextaur 1.7.1. It contains multiple fixes in resolving docker image digests, handling file path collision and OOM when creating new input stream.
 
 ## [368.1] - 2024.1.16
 
