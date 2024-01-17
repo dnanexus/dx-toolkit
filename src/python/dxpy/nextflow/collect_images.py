@@ -44,10 +44,12 @@ def bundle_docker_images(image_refs):
     return bundled_depends
 
 
-def run_nextaur_collect(resources_dir, nextflow_pipeline_params):
+def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
     """
         :param resources_dir: URL to the local(ized) NF pipeline in the app(let) resources.
         :type resources_dir: String
+        :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
+        :type profile: str
         :param nextflow_pipeline_params: Custom Nextflow pipeline parameters
         :type nextflow_pipeline_params: string
         :returns: Dict. Image references in the form of
@@ -60,8 +62,8 @@ def run_nextaur_collect(resources_dir, nextflow_pipeline_params):
             "engine": String. Container engine.
         Runs nextaur:collect
         """
-    collect_cmd = "nextflow plugin nextaur:collect docker {} pipelineParams={}".format(
-        resources_dir, nextflow_pipeline_params
+    collect_cmd = "nextflow plugin nextaur:collect docker {} pipelineParams={} profile={}".format(
+        resources_dir, nextflow_pipeline_params, profile
     )
     _ = subprocess.check_output(collect_cmd, shell=True)
     with open(CONTAINERS_JSON, "r") as json_file:

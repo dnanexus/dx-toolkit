@@ -136,6 +136,7 @@ def prepare_nextflow(
         custom_inputs=custom_inputs,
         resources_dir=resources_dir,
         region=region,
+        profile=profile,
         cache_docker=cache_docker,
         nextflow_pipeline_params=nextflow_pipeline_params
     )
