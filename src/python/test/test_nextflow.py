@@ -261,14 +261,14 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
             {
                 "engine": "docker",
                 "process": "proc1",
-                "digest": "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824",
+                "digest": "sha256:cca7bbfb3cd4dc1022f00cee78c51aa46ecc3141188f0dd520978a620697e7ad",
                 "image_name": "busybox",
                 "tag": "1.36"
             },
             {
                 "engine": "docker",
                 "process": "proc2",
-                "digest": "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824",
+                "digest": "sha256:cca7bbfb3cd4dc1022f00cee78c51aa46ecc3141188f0dd520978a620697e7ad",
                 "image_name": "busybox",
                 "tag": "1.36"
             }
