@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* Released Nextaur 1.7.1. It contains multiple fixes in resolving docker image digests, handling file path collision and OOM when creating new input stream.
+* Released Nextaur 1.7.1. It contains multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
 
 ## [369.0] - beta
 
