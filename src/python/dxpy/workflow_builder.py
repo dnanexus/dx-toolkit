@@ -76,11 +76,14 @@ def _cleanup_empty_keys(json_spec):
 
 def _check_dxcompiler_version(json_spec):
     SUPPORTED_DXCOMPILER_VERSION = "2.8.0"
-    if  json_spec.get("details") and json_spec["details"].get("version"):
-        from distutils.version import StrictVersion
+    try:
+        from distutils.version import StrictVersion as Version
+    except ImportError:
+        from .utils.version import Version
+    if json_spec.get("details") and json_spec["details"].get("version"):
         compiler_version_used = str(json_spec["details"].get("version"))
         compiler_version_no_snapshot = compiler_version_used.split("-")[0]
-        if StrictVersion(compiler_version_no_snapshot) < StrictVersion(SUPPORTED_DXCOMPILER_VERSION):
+        if Version(compiler_version_no_snapshot) < Version(SUPPORTED_DXCOMPILER_VERSION):
             raise WorkflowBuilderException("Source workflow {} is not compiled using dxCompiler (version>={}) that supports creating global workflows.".format(json_spec["name"], SUPPORTED_DXCOMPILER_VERSION))
     else:
         raise WorkflowBuilderException("Cannot find the dxCompiler version from the dxworkflow.json/source workflow spec. Please specify it by updating the details field of the dxworkflow.json/source workflow spec using the 'version' key.")

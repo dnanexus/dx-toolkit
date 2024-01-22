@@ -41,6 +41,7 @@ $PYTHON3_BIN -m pip install pytest pexpect
 # Download official installation packages
 mkdir python_official
 pushd python_official
+curl -f -O https://www.python.org/ftp/python/3.12.1/python-3.12.1-macos11.pkg
 curl -f -O https://www.python.org/ftp/python/3.11.3/python-3.11.3-macos11.pkg
 curl -f -O https://www.python.org/ftp/python/3.10.11/python-3.10.11-macos11.pkg
 curl -f -O https://www.python.org/ftp/python/3.9.13/python-3.9.13-macos11.pkg
