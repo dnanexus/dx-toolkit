@@ -4,6 +4,7 @@ import dxpy
 import json
 import argparse
 from glob import glob
+import shutil
 import tempfile
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
@@ -12,7 +13,6 @@ from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
 
-from distutils.dir_util import copy_tree
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
@@ -127,7 +127,7 @@ def prepare_nextflow(
         cache_docker=cache_docker
     )
     exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
-    copy_tree(get_template_dir(), dxapp_dir)
+    shutil.copytree(get_template_dir(), dxapp_dir, dirs_exist_ok=True)
     write_dxapp(dxapp_dir, dxapp_content)
     write_exec(dxapp_dir, exec_content)
     create_readme(resources_dir, dxapp_dir)
