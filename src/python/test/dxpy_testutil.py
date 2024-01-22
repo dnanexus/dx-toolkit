@@ -659,6 +659,7 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     """
 
     base_nextflow_nf = THIS_DIR / "nextflow/hello/main.nf"
+    base_nextflow_docker = THIS_DIR / "nextflow/profile_with_docker/main.nf"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()
