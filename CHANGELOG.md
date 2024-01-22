@@ -8,9 +8,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
+* Released Nextaur 1.7.1. It contains multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
+
+## [369.0] - beta
+
+### Fixed
+
 * Bugfix regarding multi-assay assay selection in `dx extract_assay expression`
 
-## [368.1] - beta
+## [368.1] - 2024.1.16
 
 ### Changed
 

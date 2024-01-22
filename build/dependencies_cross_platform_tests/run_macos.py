@@ -20,8 +20,8 @@ ROOT_DIR = Path(__file__).parent.absolute()
 
 PYENVS = \
     ["system"] + \
-    [f"official-{p}" for p in ("3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12")] + \
-    [f"pyenv-{p}" for p in ("3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "3.12")] + \
+    [f"official-{p}" for p in ("3.8", "3.9", "3.10", "3.11", "3.12")] + \
+    [f"pyenv-{p}" for p in ("3.8", "3.9", "3.10", "3.11", "3.12")] + \
     [f"brew-{p}" for p in ("3.8", "3.9", "3.10", "3.11", "3.12")]
 
 EXIT_TEST_EXECUTION_FAILED = 1

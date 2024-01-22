@@ -29,10 +29,6 @@ Argument completion for `dx` commands in Unix shells. Tested usign `pexpect`.
 
 Colorized terminal output on Windows. Called directly in `dx` and `dx-app-wizard` scripts. Don't know how to test automatically.
 
-### cryptography
-
-Seems to be unused in the code and present because of historical issues with SSL implementation in Python.
-
 ### pyreadline and pyreadline3
 
 Used for TAB completion in interactive commands `dx run` and `dx-app-wizard` on Windows.
@@ -44,10 +40,6 @@ Information about process in `DXConfig` and memory information in `dx-download-a
 ### python-dateutil
 
 Date parsing in `dxpy.utils.normalize_time_input` function.
-
-### requests
-
-Seems to be used only as a provider of exceptions, HTTP code mappings and helpers. Mostly used in `dxpy.__init__`. HTTP connections seem to be handled by `urllib3.PoolManager` directly.
 
 ### urllib3
 
@@ -62,14 +54,20 @@ Used for streaming execution logs in `dx watch`.
 ### Linux
 
 * `*-py2-*` - Python 2.7 is not supported by dx-toolkit
+* `pyenv-3.6` - Python 3.6 is not supported by dx-toolkit
+* `pyenv-3.7` - Python 3.6 is not supported by dx-toolkit
 * `debian-10-py3-sysdeps` - problem with psutil installation
 * `dx-aee-16.04-0` - dx-toolkit is installed using distribution tarball and thus the environment is not ready for installation from the source
 * `ubuntu-18.04-py3-sysdeps` - problem with psutil installation
 
 ### Windows
 
-* `official-3.6` - cannot install `psutil` as there are missing C++ build tools which cannot be installed by Chocolatey easily
+* `*-2.7` - Python 2.7 is not supported by dx-toolkit
+* `*-3.6` - Python 3.6 is not supported byt dx-toolkit
+* `*-3.7` - Python 3.7 is not supported byt dx-toolkit
 
 ### MacOS
 
-* `brew-3.7` - only for `x86_64`, deprecated formula
+* `*-2.7` - Python 2.7 is not supported by dx-toolkit
+* `*-3.6` - Python 3.6 is not supported byt dx-toolkit
+* `*-3.7` - Python 3.7 is not supported byt dx-toolkit

@@ -17,7 +17,6 @@ Remove-Item "$destination"
 choco install --yes --no-progress microsoft-windows-terminal
 
 # Install Pythons
-choco install --yes --no-progress python37
 choco install --yes --no-progress python38
 choco install --yes --no-progress python39
 choco install --yes --no-progress python310
