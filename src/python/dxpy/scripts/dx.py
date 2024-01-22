@@ -2843,6 +2843,10 @@ def build(args):
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
 
+        if args.cache_docker and not args.nextflow:
+            build_parser.error(
+                "Docker caching argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
+
         if args.cache_docker:
             logging.warning(
                 "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
