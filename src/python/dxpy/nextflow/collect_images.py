@@ -62,10 +62,9 @@ def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
             "engine": String. Container engine.
         Runs nextaur:collect
         """
-    collect_cmd = "nextflow plugin nextaur:collect docker {} pipelineParams={}".format(
+    collect_cmd = "nextflow plugin nextaur:collect docker {} pipelineParams={} profile={}".format(
         resources_dir, nextflow_pipeline_params, profile
     )
-    print(collect_cmd)
     _ = subprocess.check_output(collect_cmd, shell=True)
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
