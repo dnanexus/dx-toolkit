@@ -101,7 +101,7 @@ def get_regional_options(region, resources_dir, cache_docker):
         image_refs = run_nextaur_collect(resources_dir)
         image_bundled = bundle_docker_images(image_refs)
     else:
-        image_bundled = {}
+        image_bundled = []
     regional_options = {
         region: {
             "systemRequirements": {

@@ -1083,7 +1083,7 @@ def _build_app(args, extra_args):
 
         return output['id']
 
-    if not args.remote and not build_nf_with_npi:  # building with NF repository is implicitly remote
+    if not args.remote and not build_nf_with_npi:  # building with NF repository or cache_docker is done remotely by npi
         # LOCAL BUILD
         output = build_and_upload_locally(
             source_dir,

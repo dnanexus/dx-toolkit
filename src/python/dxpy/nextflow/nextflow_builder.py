@@ -33,6 +33,10 @@ def build_pipeline_with_npi(
     :type repository: string
     :param tag: tag of a given Git repository. If it is not provided, the default branch is used.
     :type tag: string
+    :param cache_docker: Pull a remote docker image and store it on the platform
+    :type cache_docker: bool
+    :param docker_secrets: Dx file id with the private docker registry credentials
+    :type docker_secrets: string
     :param profile: Custom Nextflow profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
     :param brief: Level of verbosity
