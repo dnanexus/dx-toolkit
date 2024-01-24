@@ -21,6 +21,7 @@ choco install --yes --no-progress python38
 choco install --yes --no-progress python39
 choco install --yes --no-progress python310
 choco install --yes --no-progress python311
+choco install --yes --no-progress python312
 #choco install --yes miniconda3
 
 # Install pytest

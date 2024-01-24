@@ -2843,6 +2843,10 @@ def build(args):
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
 
+        if args.cache_docker and not args.nextflow:
+            build_parser.error(
+                "Docker caching argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
+
         if args.cache_docker:
             logging.warning(
                 "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
@@ -5090,20 +5094,6 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
                                                         "Can be used only with --repository. More information about the file syntax can be found"
                                                         " at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
-
-# --cache-docker
-nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project"
-                                                          "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote.",
-                                                   width_adjustment=-24), action="store_true", dest="cache_docker")
-
-# --docker-secrets
-nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "
-                                                            "docker repository.",
-                                                   width_adjustment=-24), dest="docker_secrets")
-
-# --nextflow-pipeline-params
-nextflow_options.add_argument('--nextflow-pipeline-params', help=fill("Custom pipeline parameters to be referenced when collecting the docker images.",
-                                                   width_adjustment=-24), dest="nextflow_pipeline_params")
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
