@@ -62,7 +62,7 @@ def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
             "engine": String. Container engine.
         Runs nextaur:collect
         """
-    base_cmd = "nextflow plugin nextaur:collect docker".format(resources_dir)
+    base_cmd = "nextflow plugin nextaur:collect docker {}".format(resources_dir)
     pipeline_params_arg = "pipelineParams={}".format(nextflow_pipeline_params) if nextflow_pipeline_params else ""
     profile_arg = "profile={}".format(profile) if profile else ""
     nextaur_cmd = " ".join([base_cmd, pipeline_params_arg, profile_arg])
