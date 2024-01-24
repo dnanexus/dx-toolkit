@@ -49,7 +49,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * certifi dxpy dependency
-* `--cache-docker` for `dx build --nextflow`
 
 ### Changed
 
