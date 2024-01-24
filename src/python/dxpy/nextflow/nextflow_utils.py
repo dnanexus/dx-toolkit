@@ -30,7 +30,7 @@ def get_resources_subpath(resources_dir):
 
 
 def get_importer_name():
-    return "nextflow_pipeline_importer"
+    return "applet-Gfjf3kj01xyB8z528Xjv4byY"
 
 
 def get_template_dir():
@@ -41,7 +41,7 @@ def is_importer_job():
     try:
         with open("/home/dnanexus/dnanexus-job.json", "r") as f:
             job_info = json.load(f)
-            return job_info.get("executableName") == get_importer_name()
+            return job_info.get("executableName") == "nextflow_pipeline_importer"
     except Exception:
         return False
 
