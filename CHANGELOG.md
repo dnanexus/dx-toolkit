@@ -9,7 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Python 3.12 support
-* `--cache-docker` for `dx build --nextflow`
+* `--nextflow-pipeline-params` for `dx build --nextflow --cache-docker`
 
 ### Fixed
 

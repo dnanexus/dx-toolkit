@@ -1061,7 +1061,8 @@ def _build_app(args, extra_args):
             resources_dir=args.src_dir,
             profile=args.profile,
             region=get_destination_region(args.destination),
-            cache_docker=args.cache_docker
+            cache_docker=args.cache_docker,
+            nextflow_pipeline_params=args.nextflow_pipeline_params
         )
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
@@ -1200,6 +1201,7 @@ def _build_app(args, extra_args):
                 tag=args.tag,
                 cache_docker=args.cache_docker,
                 docker_secrets=args.docker_secrets,
+                nextflow_pipeline_params=args.nextflow_pipeline_params,
                 profile=args.profile,
                 git_creds=args.git_credentials,
                 brief=args.brief,

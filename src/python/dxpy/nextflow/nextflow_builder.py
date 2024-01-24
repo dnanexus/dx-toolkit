@@ -22,6 +22,7 @@ def build_pipeline_with_npi(
         tag=None,
         cache_docker=False,
         docker_secrets=None,
+        nextflow_pipeline_params="",
         profile="",
         git_creds=None,
         brief=False,
@@ -37,6 +38,8 @@ def build_pipeline_with_npi(
     :type cache_docker: bool
     :param docker_secrets: Dx file id with the private docker registry credentials
     :type docker_secrets: string
+    :param nextflow_pipeline_params: Custom Nextflow pipeline parameters
+    :type nextflow_pipeline_params: string
     :param profile: Custom Nextflow profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
     :param brief: Level of verbosity
@@ -77,6 +80,8 @@ def build_pipeline_with_npi(
         input_hash["docker_secrets"] = parse_obj(docker_secrets, "file")
     if cache_docker:
         input_hash["cache_docker"] = cache_docker
+    if nextflow_pipeline_params:
+        input_hash["nextflow_pipeline_params"] = nextflow_pipeline_params
 
     if build_project_id is None:
         parser.error(
@@ -101,7 +106,8 @@ def prepare_nextflow(
         resources_dir,
         profile,
         region,
-        cache_docker=False
+        cache_docker=False,
+        nextflow_pipeline_params=""
 ):
     """
     :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
@@ -112,6 +118,8 @@ def prepare_nextflow(
     :type region: str
     :param cache_docker: Perform pipeline analysis and cache the detected docker images on the platform
     :type cache_docker: boolean
+    :param nextflow_pipeline_params: Custom Nextflow pipeline parameters
+    :type nextflow_pipeline_params: string
     :returns: Path to the created dxapp_dir
     :rtype: Path
 
@@ -128,7 +136,8 @@ def prepare_nextflow(
         custom_inputs=custom_inputs,
         resources_dir=resources_dir,
         region=region,
-        cache_docker=cache_docker
+        cache_docker=cache_docker,
+        nextflow_pipeline_params=nextflow_pipeline_params
     )
     exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
     shutil.copytree(get_template_dir(), dxapp_dir, dirs_exist_ok=True)
