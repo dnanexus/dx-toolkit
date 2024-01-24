@@ -10,6 +10,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Python 3.12 support
 * `--nextflow-pipeline-params` for `dx build --nextflow --cache-docker`
+* `dx build --nextflow --cache-docker` supports the `--profile` parameter to cache images associated with specific profile 
 
 ### Fixed
 
@@ -49,7 +50,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * certifi dxpy dependency
-* `--cache-docker` for `dx build --nextflow`
 
 ### Changed
 
