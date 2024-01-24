@@ -17,12 +17,26 @@ from dxpy.utils.resolver import resolve_existing_path
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
 
-def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, brief=False, destination=None, extra_args={}):
+def build_pipeline_with_npi(
+        repository=None,
+        tag=None,
+        cache_docker=False,
+        docker_secrets=None,
+        profile="",
+        git_creds=None,
+        brief=False,
+        destination=None,
+        extra_args=None
+):
     """
     :param repository: URL to a Git repository
     :type repository: string
     :param tag: tag of a given Git repository. If it is not provided, the default branch is used.
     :type tag: string
+    :param cache_docker: Pull a remote docker image and store it on the platform
+    :type cache_docker: bool
+    :param docker_secrets: Dx file id with the private docker registry credentials
+    :type docker_secrets: string
     :param profile: Custom Nextflow profile, for more information visit https://www.nextflow.io/docs/latest/config.html#config-profiles
     :type profile: string
     :param brief: Level of verbosity
@@ -46,6 +60,7 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
             dx_input["whats_new"] = extra_args.get("details", {}).get("whatsNew")
         return dx_input
 
+    extra_args = extra_args or {}
     build_project_id = dxpy.WORKSPACE_ID
     build_folder = None
     input_hash = parse_extra_args(extra_args)
@@ -58,6 +73,10 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
         input_hash["github_credentials"] = parse_obj(git_creds, "file")
     if destination:
         build_project_id, build_folder, _ = try_call(resolve_existing_path, destination, expected='folder')
+    if docker_secrets:
+        input_hash["docker_secrets"] = parse_obj(docker_secrets, "file")
+    if cache_docker:
+        input_hash["cache_docker"] = cache_docker
 
     if build_project_id is None:
         parser.error(
@@ -78,7 +97,12 @@ def build_pipeline_from_repository(repository, tag, profile="", git_creds=None, 
     return applet_id
 
 
-def prepare_nextflow(resources_dir, profile, region):
+def prepare_nextflow(
+        resources_dir,
+        profile,
+        region,
+        cache_docker=False
+):
     """
     :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
     :type resources_dir: str or Path
@@ -86,6 +110,8 @@ def prepare_nextflow(resources_dir, profile, region):
     :type profile: str
     :param region: The region in which the applet will be built.
     :type region: str
+    :param cache_docker: Perform pipeline analysis and cache the detected docker images on the platform
+    :type cache_docker: boolean
     :returns: Path to the created dxapp_dir
     :rtype: Path
 
@@ -98,8 +124,12 @@ def prepare_nextflow(resources_dir, profile, region):
     dxapp_dir = tempfile.mkdtemp(prefix=".dx.nextflow")
 
     custom_inputs = prepare_custom_inputs(schema_file=os.path.join(resources_dir, "nextflow_schema.json"))
-    dxapp_content = get_nextflow_dxapp(custom_inputs=custom_inputs, resources_dir=resources_dir,
-                                       region=region)
+    dxapp_content = get_nextflow_dxapp(
+        custom_inputs=custom_inputs,
+        resources_dir=resources_dir,
+        region=region,
+        cache_docker=cache_docker
+    )
     exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
     shutil.copytree(get_template_dir(), dxapp_dir, dirs_exist_ok=True)
     write_dxapp(dxapp_dir, dxapp_content)

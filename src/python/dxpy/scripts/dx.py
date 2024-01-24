@@ -2834,11 +2834,27 @@ def build(args):
         if args.repository and args.remote:
             build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
 
+        if args.cache_docker and args.remote:
+            build_parser.error("Nextflow pipeline built with an option to cache the docker images is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
+
         if args.git_credentials and not args.repository:
             build_parser.error("Git credentials can be supplied only when building Nextflow pipeline from a Git repository.")
 
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
+
+        if args.cache_docker and not args.nextflow:
+            build_parser.error(
+                "Docker caching argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
+
+        if args.cache_docker:
+            logging.warning(
+                "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
+                "Intellectual Property agreements of the software within the Docker container. You are also "
+                "responsible for remediating the security vulnerabilities of the Docker images of the pipeline."
+                "Also, cached images will be accessible by the users with VIEW permissions to the projects where the "
+                "cached images will be stored."
+            )
 
         # options not supported by workflow building
 
@@ -5078,6 +5094,15 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
                                                         "Can be used only with --repository. More information about the file syntax can be found"
                                                         " at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
+
+
+nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project"
+                                                          "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote.",
+                                                   width_adjustment=-24), action="store_true", dest="cache_docker")
+
+nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "
+                                                            "docker repository.",
+                                                   width_adjustment=-24), dest="docker_secrets")
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
