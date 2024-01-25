@@ -12,6 +12,7 @@ def get_nextflow_dxapp(
         custom_inputs=None,
         resources_dir="",
         region="aws:us-east-1",
+        profile="",
         cache_docker=False,
         nextflow_pipeline_params=""
 ):
@@ -22,6 +23,8 @@ def get_nextflow_dxapp(
     :type resources_dir: str or Path
     :param region: The name of the region in which the applet will be built.
     :type region: str
+    :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
+    :type profile: str
     :param cache_docker: Perform pipeline analysis and cache the detected docker images on the platform
     :type cache_docker: boolean
     :param nextflow_pipeline_params: Custom Nextflow pipeline parameters
@@ -43,7 +46,7 @@ def get_nextflow_dxapp(
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
-    dxapp["regionalOptions"] = get_regional_options(region, resources_dir, cache_docker, nextflow_pipeline_params)
+    dxapp["regionalOptions"] = get_regional_options(region, resources_dir, profile, cache_docker, nextflow_pipeline_params)
 
     # Record dxpy version used for this Nextflow build
     dxapp["details"]["dxpyBuildVersion"] = TOOLKIT_VERSION
