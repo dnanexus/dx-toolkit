@@ -23,6 +23,8 @@ Contains utility methods useful for deploying workflows onto the platform.
 """
 
 from __future__ import print_function, unicode_literals, division, absolute_import
+from collections import defaultdict
+import collections
 import os
 import sys
 import json
@@ -557,15 +559,25 @@ def _build_global_workflow(json_spec, enabled_regions, args):
     workflows_by_region, projects_by_region = {}, {}  # IDs by region
     try:
         # prepare "regionalOptions" field for the globalworkflow/new input
+        existing_regional_options = json_spec.get('regionalOptions', {})
+
+        if existing_regional_options:
+            if set(existing_regional_options.keys()) != set(enabled_regions):
+                raise WorkflowBuilderException("These enabled regions do have regional options specified \
+                                           in the JSON spec or from --extra-args: {}",
+                                           ",".join(set(enabled_regions).difference(set(existing_regional_options.keys()))))
+                
+            updated_regional_options= copy.deepcopy(existing_regional_options)
+        else:
+            updated_regional_options = dict.fromkeys(enabled_regions, {})
+        
         workflows_by_region, projects_by_region = \
             _build_underlying_workflows(enabled_regions, json_spec, args)
-        regional_options = {}
         for region, workflow_id in workflows_by_region.items():
-            regional_options[region] = json_spec.get('regionalOptions', {}).get(region,{})
-            regional_options[region]["workflow"] = workflow_id
+            updated_regional_options[region]["workflow"] = workflow_id
 
         # update existing regionalOptions with underlying workflow ids and ignore regions that are not enabled
-        json_spec.update({'regionalOptions': regional_options})
+        json_spec.update({'regionalOptions': updated_regional_options})
 
         # leave only fields that are actually used to build the workflow
         gwf_provided_keys = GLOBALWF_SUPPORTED_KEYS.intersection(set(json_spec.keys()))
