@@ -10,6 +10,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Python 3.12 support
 * `--nextflow-pipeline-params` for `dx build --nextflow --cache-docker`
+* additional regional resources can be specified in dxworkflow.json or using `--extra-args` when `dx build` global workflows 
 
 ### Fixed
 
