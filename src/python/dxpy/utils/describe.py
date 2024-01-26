@@ -408,13 +408,14 @@ def print_json_field(label, json_value):
 
 
 def print_project_desc(desc, verbose=False):
+    print("inside print_project_desc")
     recognized_fields = [
         'id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified',
         'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties',
         'appCaches', 'billTo', 'version', 'createdBy', 'totalSponsoredEgressBytes', 'consumedSponsoredEgressBytes',
         'containsPHI', 'databaseUIViewOnly', 'externalUploadRestricted', 'region', 'storageCost', 'pendingTransfer',
         'atSpendingLimit', 'currentMonthComputeAvailableBudget', 'currentMonthEgressBytesAvailableBudget',
-        'currentMonthComputeUsage', 'currentMonthEgressBytesUsage',
+        'currentMonthComputeUsage', 'currentMonthEgressBytesUsage', 'defaultSymlink'
         # Following are app container-specific
         'destroyAt', 'project', 'type', 'app', 'appName'
     ]
@@ -452,6 +453,8 @@ def print_project_desc(desc, verbose=False):
         print_json_field('Database UI View Only', desc['databaseUIViewOnly'])
     if 'externalUploadRestricted' in desc and desc['externalUploadRestricted']:
         print_json_field('External Upload Restricted', desc['externalUploadRestricted'])
+    if 'defaultSymlink' in desc and verbose:
+        print_json_field('Default Symlink', desc['defaultSymlink'])
 
     # Usage
     print_field("Created", render_timestamp(desc['created']))
