@@ -23,8 +23,6 @@ Contains utility methods useful for deploying workflows onto the platform.
 """
 
 from __future__ import print_function, unicode_literals, division, absolute_import
-from collections import defaultdict
-import collections
 import os
 import sys
 import json
