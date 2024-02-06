@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [370.0] - beta
+
 ### Added
 
 * Python 3.12 support
@@ -17,7 +19,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.7.1. It contains multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
 
-## [369.0] - beta
+## [369.0] - 2024.2.5
 
 ### Fixed
 
