@@ -529,27 +529,6 @@ def _build_underlying_workflows(enabled_regions, json_spec, args):
 
     return workflows_by_region, projects_by_region
 
-# def _get_regional_resources(json_spec, enabled_regions, args):
-#     resources_by_region = {}
-#     if args.extra_args:
-#         regional_options = args.extra_args.get("regionalOptions")
-#     elif json_spec.get("regionalOptions"):
-#         regional_options = json_spec.get("regionalOptions")
-#     else:
-#         return resources_by_region        
-        
-#     if not isinstance(regional_options, dict):
-#         raise WorkflowBuilderException("Expected regional options to be a mapping")
-    
-#     if set(regional_options.keys()) != set(enabled_regions):
-#         regions_missing_options = set(enabled_regions).symmetric_difference((set(regional_options.keys())))
-#         raise WorkflowBuilderException("These regions are not enabled or do not have regional options: {}".format(",".join(regions_missing_options)))
-
-#     for region, regional_opts in regional_options.items():
-#         if isinstance(regional_opts, dict) and "resources" in regional_opts:
-#             resources_by_region[region]= {"resources": regional_opts.get("resources")}
-    
-#     return resources_by_region
 
 def _build_global_workflow(json_spec, enabled_regions, args):
     """
