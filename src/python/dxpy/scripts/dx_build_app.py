@@ -47,6 +47,7 @@ from ..app_categories import APP_CATEGORIES
 from ..exceptions import err_exit
 from ..utils.printing import BOLD
 from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
+from ..cli.parsers import process_extra_args
 
 decode_command_line_args()
 
@@ -1160,7 +1161,7 @@ def _build_app(args, extra_args):
 
 def build(args):
     try:
-        executable_id = _build_app(args, json.loads(args.extra_args) if args.extra_args else {})
+        executable_id = _build_app(args, process_extra_args(args) if args.extra_args else {})
     except dxpy.app_builder.AppBuilderException as e:
         # AppBuilderException represents errors during app building
         # that could reasonably have been anticipated by the user.
