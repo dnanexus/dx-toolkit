@@ -408,7 +408,6 @@ def print_json_field(label, json_value):
 
 
 def print_project_desc(desc, verbose=False):
-    print("inside print_project_desc")
     recognized_fields = [
         'id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified',
         'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties',

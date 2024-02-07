@@ -324,7 +324,6 @@ class DXProject(DXContainer):
 
         """
 
-        print('inside project new')
         input_hash = {}
         input_hash["name"] = name
         if summary is not None:
