@@ -11,6 +11,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Python 3.12 support
 * `--nextflow-pipeline-params` for `dx build --nextflow --cache-docker`
 * `dx build --nextflow --cache-docker` supports the `--profile` parameter to cache images associated with specific profile 
+* additional regional resources can be specified in dxworkflow.json or using `--extra-args` when `dx build` global workflows 
 
 ### Fixed
 

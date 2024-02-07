@@ -503,7 +503,8 @@ def upload_applet(src_dir, uploaded_resources, check_name_collisions=True, overw
 
     # -----
     # Override various fields from the pristine dxapp.json
-
+    # TODO: should merge extra args into app spec before processing
+    #       see line https://github.com/dnanexus/dx-toolkit/blob/f2ebe53a9e49b3213f8252e7ac1cd35d99913333/src/python/dxpy/app_builder.py#L616
     # Carry region-specific values from regionalOptions into the main
     # runSpec
     applet_spec["runSpec"].setdefault("bundledDepends", [])
