@@ -849,10 +849,6 @@ def extract_assay_germline(args):
                 except Exception:
                         err_exit("Failed to find the table, {}, in the generated SQL".format(additional_descriptor_info["genotype_type_table"]), 
                                  expected_exceptions=(AttributeError,))
-                substr = "`" + geno_table + "`.`type`"
-                sql_results = sql_results.replace(
-                    substr, "REPLACE(`" + geno_table + "`.`type`, 'hom', 'hom-alt')", 1
-                )
 
             if print_to_stdout:
                 print(sql_results)
