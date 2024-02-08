@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx build --globalworkflow` accepts resources specified as regional options in dxworkflow.json or via `--extra-args`
+
 ## [370.0] - beta
 
 ### Added
