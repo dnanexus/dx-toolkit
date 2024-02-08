@@ -30,6 +30,7 @@ import copy
 
 import dxpy
 from .cli import INTERACTIVE_CLI
+from .cli.parsers import process_extra_args
 from .utils.printing import fill
 from .compat import input
 from .utils import json_load_raise_on_duplicates
@@ -390,10 +391,8 @@ def _assert_executable_regions_match(workflow_enabled_regions, workflow_spec):
         if exect.startswith("applet-"):
             applet_project = dxpy.DXApplet(exect).project
             applet_region = dxpy.DXProject(applet_project).region
-            if applet_region in workflow_enabled_regions:                
-                workflow_enabled_regions = {applet_region} # only one region is allowed when using applet
-            else:
-                raise WorkflowBuilderException("The applet {} is not available in requested region(s) {}"
+            if {applet_region} != workflow_enabled_regions:                
+                raise WorkflowBuilderException("The applet {} is not available in all requested region(s) {}"
                                                .format(exect, ','.join(workflow_enabled_regions)))
 
         elif exect.startswith("app-"):
@@ -537,12 +536,25 @@ def _build_global_workflow(json_spec, enabled_regions, args):
     workflows_by_region, projects_by_region = {}, {}  # IDs by region
     try:
         # prepare "regionalOptions" field for the globalworkflow/new input
+        existing_regional_options = json_spec.get('regionalOptions', {})
+
+        if existing_regional_options:
+            if set(existing_regional_options.keys()) != set(enabled_regions):
+                raise WorkflowBuilderException("These enabled regions do have regional options specified \
+                                           in the JSON spec or from --extra-args: {}",
+                                           ",".join(set(enabled_regions).difference(set(existing_regional_options.keys()))))
+                
+            updated_regional_options= copy.deepcopy(existing_regional_options)
+        else:
+            updated_regional_options = dict.fromkeys(enabled_regions, {})
+        
         workflows_by_region, projects_by_region = \
             _build_underlying_workflows(enabled_regions, json_spec, args)
-        regional_options = {}
         for region, workflow_id in workflows_by_region.items():
-            regional_options[region] = {'workflow': workflow_id}
-        json_spec.update({'regionalOptions': regional_options})
+            updated_regional_options[region]["workflow"] = workflow_id
+
+        # update existing regionalOptions with underlying workflow ids and ignore regions that are not enabled
+        json_spec.update({'regionalOptions': updated_regional_options})
 
         # leave only fields that are actually used to build the workflow
         gwf_provided_keys = GLOBALWF_SUPPORTED_KEYS.intersection(set(json_spec.keys()))
@@ -633,6 +645,7 @@ def _build_or_update_workflow(args, parser):
     try:
         if args.mode == 'workflow':
             json_spec = _fetch_spec_from_dxworkflowjson(args.src_dir, "dxworkflow.json", parser)
+            json_spec.update(args.extra_args or {})
             json_spec = _get_validated_json(json_spec, args)
             workflow_id = _build_regular_workflow(json_spec, args.keep_open)
         elif args.mode == 'globalworkflow':
@@ -646,6 +659,8 @@ def _build_or_update_workflow(args, parser):
             # so `dx build` requires --version to be specified when using the --from
             if args.version_override:
                 json_spec["version"] = args.version_override
+
+            json_spec.update(args.extra_args or {})
             json_spec = _get_validated_json(json_spec, args)
             
             # Check if the local or source workflow is compiled by dxCompiler that supported dependency annotation
@@ -697,8 +712,9 @@ def build(args, parser):
         raise Exception("Arguments not provided")
 
     try:
+        process_extra_args(args)
         workflow_id = _build_or_update_workflow(args, parser)
         _print_output(workflow_id, args)
     except WorkflowBuilderException as e:
-        print("Error: {}".format(e.args,), file=sys.stderr)
+        print("Error: {}".format(e), file=sys.stderr)
         sys.exit(3)

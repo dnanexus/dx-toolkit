@@ -5108,7 +5108,6 @@ nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with c
 nextflow_options.add_argument('--nextflow-pipeline-params', help=fill("Custom pipeline parameters to be referenced when collecting the docker images.",
                                                    width_adjustment=-24), dest="nextflow_pipeline_params")
 
-
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
 
