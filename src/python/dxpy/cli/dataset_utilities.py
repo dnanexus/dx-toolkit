@@ -750,7 +750,14 @@ def extract_assay_germline(args):
                 comment_fill('Filters and respective definitions', comment_string='# ') + '\n#\n' +
                 comment_fill('allele_id: ID(s) of one or more alleles for which sample genotypes will be returned. If multiple values are provided, any samples having at least one allele that match any of the values specified will be listed. For example, ["1_1000_A_T", "1_1010_C_T"], will search for samples with at least one allele matching either "1_1000_A_T" or "1_1010_C_T". String match is case insensitive.') + '\n#\n' +
                 comment_fill('sample_id: Optional, one or more sample IDs for which sample genotypes will be returned. If the provided object is a cohort, this further intersects the sample ids. If a user has a list of samples more than 1,000, it is recommended to use a cohort id containing all the samples.') + '\n#\n' +
-                comment_fill('genotype_type: Optional, one or more genotype types for which sample genotype types will be returned. One of: ref (homozygous for the reference allele e.g. 0/0), het-ref (heterozygous for the ref allele and alt allele e.g. 0/1), hom (homozygous for the non-ref allele e.g. 1/1), het-alt (heterozygous with two distinct alt alleles e.g. 1/2), half (only one alt allele is known, second allele is unknown e.g. ./1), no-call (both alleles are unknown e.g. ./.).') + '\n#\n' +
+                comment_fill('genotype_type: Optional, one or more genotype types for which sample genotype types will be returned.') + '\n' +
+                comment_fill('One of:') + '\n' +
+                comment_fill('\tref\t(homozygous for the reference allele\t\t\te.g. 0/0)') + '\n' +
+                comment_fill('\thet-ref\t(heterozygous for the ref allele and alt allele\t\te.g. 0/1)') + '\n' +
+                comment_fill('\thom\t(homozygous for the non-ref allele\t\t\te.g. 1/1)') + '\n' +
+                comment_fill('\thet-alt\t(heterozygous with two distinct alt alleles\t\te.g. 1/2)') + '\n' +
+                comment_fill('\thalf\t(only one alt allele is known, second allele is unknown\te.g. ./1)') + '\n' +
+                comment_fill('\tno-call\t(both alleles are unknown\t\t\t\te.g. ./.)') + '\n#\n' +
                 comment_fill('JSON filter template for --retrieve-genotype', comment_string='# ') + '\n' +
                 '{\n  "sample_id": ["s1", "s2"],\n  "allele_id": ["1_1000_A_T","2_1000_G_C"],\n  "genotype_type": ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]\n}'
             )
