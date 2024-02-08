@@ -857,10 +857,6 @@ def extract_assay_germline(args):
                     print(sql_results, file=sql_file)
         else:
             resp_raw = raw_api_call(resp, payload)
-            if args.retrieve_genotype:
-                for r in resp_raw["results"]:
-                    if r["genotype_type"] == "hom":
-                        r["genotype_type"] = "hom-alt"
 
             def sort_variant(d):
                 chrom, pos = d["allele_id"].split("_")[:2]
