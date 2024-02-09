@@ -1,4 +1,3 @@
-import json
 import sys
 from ..exceptions import err_exit
 
@@ -188,9 +187,9 @@ def validate_filter(filter, filter_type):
 
             # Check against allowed values
             for item in filter["genotype_type"]:
-                if item not in ["hom-alt", "het-ref", "het-alt", "half"]:
+                if item not in ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]:
                     err_exit(malformed_filter.format("genotype_type") +"\nvalue {} is not a valid genotype_type".format(item))
 
             # Check for too many values given
-            if len(filter["genotype_type"]) > 4:
+            if len(filter["genotype_type"]) > 6:
                 err_exit(maxitem_message.format("genotype_type", 4))
