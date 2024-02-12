@@ -1222,7 +1222,7 @@ def _build_app(args, extra_args):
 
 def build(args):
     try:
-        executable_id = _build_app(args, process_extra_args(args) if args.extra_args else {})
+        executable_id = _build_app(args, json.loads(args.extra_args) if args.extra_args else {})
     except dxpy.app_builder.AppBuilderException as e:
         # AppBuilderException represents errors during app building
         # that could reasonably have been anticipated by the user.
