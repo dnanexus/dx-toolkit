@@ -281,13 +281,9 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
     @unittest.skipUnless(testutil.TEST_NF_DOCKER,
                          'skipping tests that require docker')
     def test_dx_build_nextflow_from_local_cache_docker(self):
-        pipeline_name = "profile_with_docker"
-        applet_dir = self.write_nextflow_applet_directory(
-            pipeline_name, existing_nf_file_path=self.base_nextflow_docker)
-
-        # Override metadata values
-        applet_id = json.loads(run(
-            "dx build --nextflow '{}' --cache-docker".format(applet_dir)))["id"]
+        applet_id = json.loads(
+            run("dx build --brief --nextflow '{}' --cache-docker".format(self.base_nextflow_docker)).strip()
+        )["id"]
 
         applet = dxpy.DXApplet(applet_id)
         desc = applet.describe()
