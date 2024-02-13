@@ -21,6 +21,8 @@ Environment Variable         | Tests included
 `DXTEST_TCSH`                | Run tests that require `tcsh` to be installed
 `DXTEST_WITH_AUTHSERVER`     | Run tests that require a running authserver
 `DX_RUN_NEXT_TESTS`          | Run tests that require synchronous updates to backend
+`DXTEST_NF_DOCKER`           | Run tests that require docker for Nextflow
+
 
 Python and Java tests recognize these environment variables and enable or
 disable tests accordingly.
