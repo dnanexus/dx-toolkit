@@ -11477,7 +11477,7 @@ class TestDXArchive(DXTestCase):
         fid1 = create_file_in_project(fname1, self.proj_unarchive_id, folder=self.rootdir)
         fid2 = create_file_in_project(fname2, self.proj_unarchive_id, folder=self.rootdir)
         _ = dxpy.api.project_archive(self.proj_unarchive_id, {"folder": self.rootdir})
-        time.sleep(10)
+        time.sleep(15)
 
         dx_archive_confirm = pexpect.spawn("dx unarchive {}:{}".format(self.proj_unarchive_id,fid1),
                                          logfile=sys.stderr,
@@ -11490,12 +11490,12 @@ class TestDXArchive(DXTestCase):
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,fid1))
-        time.sleep(15)
+        time.sleep(20)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"unarchiving")
 
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,self.rootdir))
-        time.sleep(15)
+        time.sleep(20)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"unarchiving")
 
