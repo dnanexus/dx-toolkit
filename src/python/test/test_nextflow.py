@@ -276,8 +276,8 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         bundled_images = bundle_docker_images(image_refs)
         self.assertEqual(len(bundled_images), 1)
 
-    # @unittest.skipUnless(testutil.TEST_RUN_JOBS,
-    #                      'skipping tests that would run jobs')
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
     def test_dx_build_nextflow_from_local_cache_docker(self):
         applet_id = json.loads(
             run("dx build --brief --nextflow '{}' --cache-docker".format(self.base_nextflow_docker)).strip()
