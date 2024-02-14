@@ -671,6 +671,9 @@ def get_assay_name_info(
                 if a["reference_genome"]:
                     selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
                 additional_descriptor_info["genotype_type_table"] = a["entities"]["genotype"]["fields"]["type"]["mapping"]["table"]
+                for exclude_genotype in ("exclude_refdata", "exclude_halfref", "exclude_nocall"):
+                    if exclude_genotype in a:
+                        additional_descriptor_info[exclude_genotype] = a[exclude_genotype]
     elif friendly_assay_type == "somatic":
         selected_ref_genome = ""
         for a in target_assays:
@@ -822,6 +825,9 @@ def extract_assay_germline(args):
             project_context=project,
             genome_reference=selected_ref_genome,
             filter_type="genotype",
+            ref=additional_descriptor_info.get("exclude_refdata"),
+            halfref=additional_descriptor_info.get("exclude_halfref"),
+            nocall=additional_descriptor_info.get("exclude_nocall"),
         )
 
     if "CohortBrowser" in resp["recordTypes"]:
@@ -860,7 +866,10 @@ def extract_assay_germline(args):
                         r["genotype_type"] = "hom-alt"
 
             def sort_variant(d):
-                chrom, pos = d["allele_id"].split("_")[:2]
+                if d["allele_id"] is None:
+                    chrom, pos = d["locus_id"].split("_")[:2]
+                else:
+                    chrom, pos = d["allele_id"].split("_")[:2]
                 if chrom.isdigit():
                     return int(chrom), '', int(pos)
                 return float('inf'), chrom, int(pos)

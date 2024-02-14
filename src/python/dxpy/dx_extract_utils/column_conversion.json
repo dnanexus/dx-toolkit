@@ -8,7 +8,8 @@
     "genotype": {
         "genotype_type": "genotype$type",
         "sample_id": "genotype$sample_id",
-        "allele_id": "allele$a_id"
+        "allele_id": "allele$a_id",
+        "locus_id": "genotype$locus_id"
     },
     "annotation": {
         "allele_id": "allele$a_id",

@@ -148,6 +148,9 @@ def generate_assay_filter(
     project_context,
     genome_reference,
     filter_type,
+    ref=None,
+    halfref=None,
+    nocall=None,
 ):
     """
     Generate the entire assay filters object by reading the filter JSON, making the relevant
@@ -184,11 +187,21 @@ def generate_assay_filter(
     # The general filters are related by "and"
     final_filter_dict["assay_filters"]["logic"] = "and"
 
+    # include reference genotypes
+    if ref:
+        final_filter_dict["assay_filters"]["ref_yn"] = True
+    # include half-reference genotypes
+    if halfref:
+        final_filter_dict["assay_filters"]["halfref_yn"] = True
+    # include no-call genotypes
+    if nocall:
+        final_filter_dict["assay_filters"]["nocall_yn"] = True
+
     return final_filter_dict
 
 
 def final_payload(
-    full_input_dict, name, id, project_context, genome_reference, filter_type
+    full_input_dict, name, id, project_context, genome_reference, filter_type, ref=None, halfref=None, nocall=None
 ):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),
@@ -203,6 +216,9 @@ def final_payload(
         project_context,
         genome_reference,
         filter_type,
+        ref=ref,
+        halfref=halfref,
+        nocall=nocall,
     )
 
     final_payload = {}
