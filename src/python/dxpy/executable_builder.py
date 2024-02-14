@@ -188,7 +188,7 @@ def assert_consistent_regions(from_spec, from_command_line, executable_builder_e
     if from_spec is None or from_command_line is None:
         return
     if set(from_spec) != set(from_command_line):
-        raise executable_builder_exception("--region and the 'regionalOptions' key in the JSON file do not agree")
+        raise executable_builder_exception("--region and the 'regionalOptions' key in the JSON file or --extra-args do not agree")
 
 
 def assert_consistent_reg_options(exec_type, json_spec, executable_builder_exception):
@@ -197,7 +197,7 @@ def assert_consistent_reg_options(exec_type, json_spec, executable_builder_excep
     in "regionalOptions" have the same options.
     """
     reg_options_spec = json_spec.get('regionalOptions')
-    json_fn = 'dxapp.json' if exec_type == 'app' else 'dxworkflow.json'
+    json_fn = 'dxapp.json or --extra-args' if exec_type == 'app' else 'dxworkflow.json or --extra-args'
 
     if not isinstance(reg_options_spec, dict):
         raise executable_builder_exception("The field 'regionalOptions' in  must be a mapping")

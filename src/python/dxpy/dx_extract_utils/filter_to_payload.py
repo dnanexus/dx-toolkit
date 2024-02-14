@@ -1,10 +1,9 @@
 import json
 
-from ..exceptions import err_exit, ResourceNotFound
+from ..exceptions import err_exit
 from .input_validation import validate_filter
 import os
 import dxpy
-import subprocess
 from .retrieve_bins import retrieve_bins
 
 extract_utils_basepath = os.path.join(
@@ -73,13 +72,10 @@ def basic_filter(
         values = int(values)
 
     # Check for special cases where the user-input values need to be changed before creating payload
-    # Case 1: genotype filter, genotype_type field, hom changes to hom-alt
-    if table == "genotype" and friendly_name == "genotype_type":
-        values = [x if x != "hom-alt" else "hom" for x in values]
-    # Case 2: Some fields need to be changed to upper case
+    # Case 1: Some fields need to be changed to upper case
     if friendly_name in ["gene_id", "feature_id", "putative_impact"]:
         values = [x.upper() for x in values]
-    # Case 3: remove duplicate rsid values
+    # Case 2: remove duplicate rsid values
     if table == "allele" and friendly_name == "rsid":
         values = list(set(values))
 

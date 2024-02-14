@@ -414,6 +414,18 @@ class TestDXExtractAssay(unittest.TestCase):
         process2 = subprocess.Popen(command2, stdout=subprocess.PIPE, universal_newlines=True)
         self.assertEqual(process1.communicate(), process2.communicate())
 
+
+    def test_retrieve_genotype(self):
+        """Testing --retrieve-genotype functionality"""
+        allele_genotype_type_filter = json.dumps({
+            "allele_id": ["18_47408_G_A"], 
+            "genotype_type": ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]
+            })
+        expected_result = "sample_1_3\t18_47408_G_A\t18_47408_G_A\t18\t47408\tG\tA\thet-ref"
+        command = ["dx", "extract_assay", "germline", self.test_record, "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+        self.assertIn(expected_result, process.communicate()[0])
+
     ###########
     # Malformed command lines
     ###########
