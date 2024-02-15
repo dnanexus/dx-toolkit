@@ -49,6 +49,7 @@ TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 TEST_WITH_AUTHSERVER = _run_all_tests or 'DXTEST_WITH_AUTHSERVER' in os.environ
 TEST_WITH_SMOKETEST_APP = _run_all_tests or 'DXTEST_WITH_SMOKETEST_APP' in os.environ
+TEST_NF_DOCKER = _run_all_tests or 'DXTEST_NF_DOCKER' in os.environ
 
 
 def _transform_words_to_regexp(s):
@@ -659,7 +660,7 @@ class DXTestCaseBuildNextflowApps(DXTestCase):
     """
 
     base_nextflow_nf = THIS_DIR / "nextflow/hello/main.nf"
-    base_nextflow_docker = THIS_DIR / "nextflow/profile_with_docker/main.nf"
+    base_nextflow_docker = THIS_DIR / "nextflow/profile_with_docker"
 
     def setUp(self):
         super(DXTestCaseBuildNextflowApps, self).setUp()
