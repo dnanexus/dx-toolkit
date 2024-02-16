@@ -11,17 +11,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Python 3.12 support
-* Updated Nextaur from 1.7.0 to 1.7.3
-  * `--nextflow-pipeline-params` for `dx build --nextflow --cache-docker`
-  * `dx build --nextflow --cache-docker` supports the `--profile` parameter to cache images associated with specific profile
+* `--nextflow-pipeline-params` for `dx build --nextflow --cache-docker`
+* `dx build --nextflow --cache-docker` supports the `--profile` parameter to cache images associated with specific profile 
 
 ### Fixed
 
-* Updated Nextaur from 1.7.0 to 1.7.3
-  * Fix for resolving Docker image digests
-  * Fix for occasional head job hanging while uploading outputs
-  * Fix for out of memory err when creating file input stream
-  * Fix to resolve file name collisions in case of spot instance retry
+* Released Nextaur 1.7.1. It contains multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
 
 ## [369.1] - 2024.2.13
 
