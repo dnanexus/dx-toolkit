@@ -21,7 +21,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
   * Fix for resolving Docker image digests
   * Fix for occasional head job hanging while uploading outputs
   * Fix for out of memory err when creating file input stream
-  * Fix to resolve file name collisions in case of spot retry
+  * Fix to resolve file name collisions in case of spot instance retry
 
 ## [369.1] - 2024.2.13
 
