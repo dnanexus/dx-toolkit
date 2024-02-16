@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+#
+# Copyright (C) 2013-2024 DNAnexus, Inc.
+#
+# This file is part of dx-toolkit (DNAnexus platform client libraries).
+#
+#   Licensed under the Apache License, Version 2.0 (the "License"); you may not
+#   use this file except in compliance with the License. You may obtain a copy
+#   of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#   License for the specific language governing permissions and limitations
+#   under the License.
+
+import dxpy
+import argparse, json, sys
+
+parser = argparse.ArgumentParser(description='Creates a new job to run the named function with the specified input.  If successful, prints the ID of the new job.')
+parser.add_argument('--aud', help='')
+parser.add_argument('--subject_claims', help='')
+args = parser.parse_args()
+
+job_get_identity_token_input = {}
+if args.aud is not None:
+    job_get_identity_token_input["aud"] = args.aud
+if args.subject_claims is not None:
+    job_get_identity_token_input["subjectClaims"] = args.subject_claims
+    
+jwt_token = dxpy.api.job_get_identity_token(dxpy.JOB_ID, job_get_identity_token_input)
+jwt_token_json = json.dumps(jwt_token, indent=4)
+sys.stdout.write(jwt_token_json)

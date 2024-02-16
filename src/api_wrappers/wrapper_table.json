@@ -1033,6 +1033,15 @@
         }
     ],
     [
+        "/job-xxxx/getIdentityToken",
+        "getIdentityToken(req, objectId)",
+        {
+            "retryable": true,
+            "objectMethod": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken"
+        }
+    ],
+    [
         "/job/new",
         "jobNew(req)",
         {
