@@ -32,6 +32,13 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+try:
+    print("Job ID: " + dxpy.JOB_ID)
+    print("Audience: " + str(args.aud))
+    print("Subject Claims: " + str(args.subject_claims))
+except Exception as e:
+    print(e)
+
 job_get_identity_token_input = {}
 if args.aud is not None:
     job_get_identity_token_input["aud"] = args.aud

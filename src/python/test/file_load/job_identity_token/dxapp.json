@@ -1,0 +1,56 @@
+{ "name": "basic",
+  "title": "basic",
+  "summary" : "basic file upload/download",
+  "runSpec": {
+    "file": "run.sh",
+    "interpreter": "bash",
+    "distribution": "Ubuntu",
+    "release": "20.04",
+    "version": "0"
+  },
+  "inputSpec": [
+    {"name": "seq1", "class": "file"},
+    {"name": "seq2", "class": "file"},
+    {"name": "ref",  "class": "array:file"},
+    {"name": "bar",  "class": "file", "optional" : true}
+  ],
+  "outputSpec": [
+    {"name": "result", "class": "file"},
+    {"name": "genes", "class":  "array:file"},
+    {"name": "foo",    "class": "array:file", "optional" : true},
+    {"name": "bar",    "class": "int", "optional" : true}
+  ],
+  "access": {
+    "network": ["*"]
+  },
+  "regionalOptions": {
+    "aws:us-east-1": {
+      "systemRequirements": {
+        "*": {
+          "instanceType": "mem2_ssd1_v2_x2"
+        }
+      }
+    },
+    "aws:ap-southeast-2": {
+      "systemRequirements": {
+        "*": {
+          "instanceType": "mem2_ssd1_v2_x2"
+        }
+      }
+    },
+    "aws:eu-central-1": {
+      "systemRequirements": {
+        "*": {
+          "instanceType": "mem2_ssd1_v2_x2"
+        }
+      }
+    },
+    "azure:westus": {
+      "systemRequirements": {
+        "*": {
+          "instanceType": "azure:mem2_ssd1_x2"
+        }
+      }
+    }
+  }
+}
