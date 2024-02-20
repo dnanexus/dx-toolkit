@@ -921,15 +921,6 @@ def job_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/%s/describe' % object_id, input_params, always_retry=always_retry, **kwargs)
 
-def job_get_identity_token(object_id, input_params={}, always_retry=True, **kwargs):
-    """
-    Invokes the /job-xxxx/getIdentityToken API method.
-
-    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getidentitytoken
-    """
-    return DXHTTPRequest('/%s/getIdentityToken' % object_id, input_params, always_retry=always_retry, **kwargs)
-
-
 def job_get_log(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /job-xxxx/getLog API method.
@@ -969,6 +960,14 @@ def job_update(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-update
     """
     return DXHTTPRequest('/%s/update' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def job_get_identity_token(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /job-xxxx/getIdentityToken API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken
+    """
+    return DXHTTPRequest('/%s/getIdentityToken' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def job_new(input_params={}, always_retry=True, **kwargs):
     """

@@ -32,11 +32,20 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
+try:
+    print("Job ID: " + dxpy.JOB_ID)
+    print("Audience: " + str(args.aud))
+    print("Subject Claims: " + str(args.subject_claims))
+except Exception as e:
+    print(e)
+
 job_get_identity_token_input = {}
 if args.aud is not None:
     job_get_identity_token_input["aud"] = args.aud
 if args.subject_claims is not None:
     job_get_identity_token_input["subjectClaims"] = args.subject_claims
+
+print("Job Get Identity Token Input: " + str(job_get_identity_token_input))
 
 jwt_token = dxpy.api.job_get_identity_token(dxpy.JOB_ID, job_get_identity_token_input)
 jwt_token_json = json.dumps(jwt_token, indent=4)

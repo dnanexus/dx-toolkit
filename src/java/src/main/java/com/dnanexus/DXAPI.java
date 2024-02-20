@@ -21142,6 +21142,192 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the jobGetIdentityToken method with an empty input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T jobGetIdentityToken(String objectId, Class<T> outputClass) {
+        return jobGetIdentityToken(objectId, mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the jobGetIdentityToken method with the given input, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T jobGetIdentityToken(String objectId, Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/" + objectId + "/" + "getIdentityToken",
+                        input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+    /**
+     * Invokes the jobGetIdentityToken method with an empty input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T jobGetIdentityToken(String objectId, Class<T> outputClass, DXEnvironment env) {
+        return jobGetIdentityToken(objectId, mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the jobGetIdentityToken method with the given input using the given environment, deserializing to an object of the specified class.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Response object
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T jobGetIdentityToken(String objectId, Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+            new DXHTTPRequest(env).request("/" + objectId + "/" + "getIdentityToken",
+                    input, RetryStrategy.SAFE_TO_RETRY), outputClass);
+    }
+
+    /**
+     * Invokes the jobGetIdentityToken method.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #jobGetIdentityToken(String, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode jobGetIdentityToken(String objectId) {
+        return jobGetIdentityToken(objectId, mapper.createObjectNode());
+    }
+    /**
+     * Invokes the jobGetIdentityToken method with the specified parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #jobGetIdentityToken(String, Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode jobGetIdentityToken(String objectId, JsonNode inputParams) {
+        return new DXHTTPRequest().request("/" + objectId + "/" + "getIdentityToken", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the jobGetIdentityToken method with the specified environment.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #jobGetIdentityToken(String, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode jobGetIdentityToken(String objectId, DXEnvironment env) {
+        return jobGetIdentityToken(objectId, mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the jobGetIdentityToken method with the specified environment and parameters.
+     *
+     * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-xxxx-getIdentityToken">API specification</a>.
+     *
+     * @param objectId ID of the object to operate on
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #jobGetIdentityToken(String, Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode jobGetIdentityToken(String objectId, JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/" + objectId + "/" + "getIdentityToken", inputParams,
+                RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
      * Invokes the jobNew method with an empty input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/running-analyses/applets-and-entry-points#api-method-job-new">API specification</a>.
