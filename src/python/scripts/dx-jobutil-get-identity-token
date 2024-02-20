@@ -45,6 +45,8 @@ if args.aud is not None:
 if args.subject_claims is not None:
     job_get_identity_token_input["subjectClaims"] = args.subject_claims
 
+print(dxpy.api)
+
 jwt_token = dxpy.api.job_get_identity_token(dxpy.JOB_ID, job_get_identity_token_input)
 jwt_token_json = json.dumps(jwt_token, indent=4)
 sys.stdout.write(jwt_token_json)
