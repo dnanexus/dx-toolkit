@@ -1034,7 +1034,7 @@
     ],
     [
         "/job-xxxx/getIdentityToken",
-        "getIdentityToken(req, objectId)",
+        "jobGetIdentityToken(req, objectId)",
         {
             "retryable": true,
             "objectMethod": true,
