@@ -12,7 +12,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.7.3 containing fix for occasional head job hang during upload, fix for "No such file or directory" errors on localized dx files
 
-## [370.1] - beta
+## [370.1]
 
 ### Added
 
