@@ -30,10 +30,12 @@
                     "hom",
                     "het-ref",
                     "het-alt",
-                    "half"
+                    "half",
+                    "ref",
+                    "no-call"
                 ]
             },
-            "maxItems": 4
+            "maxItems": 6
         }
     }
 }
