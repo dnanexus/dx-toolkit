@@ -3963,7 +3963,7 @@ def ssh(args, ssh_config_verified=False):
     job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
-        err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
+        err_exit(f"{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
 
     if not ssh_config_verified:
         verify_ssh_config()
@@ -3991,6 +3991,8 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
+        if job_desc['state'] in ['done', 'failed', 'terminated']:
+            err_exit(f"\n{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
         time.sleep(1)
         job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
@@ -6547,6 +6549,18 @@ parser_e_a_g_mutex_group.add_argument(
     nargs='?',
     help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Use --json-help with this option to get detailed information on the JSON format and filters.'
 )
+
+parser_e_a_g_infer_new_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=False)
+parser_e_a_g_infer_new_mutex_group.add_argument(
+    "--infer-nocall",
+    action="store_true",
+    help='Use the --infer-nocall option to infer and supply "no-call" genotype entries when they were previously absent. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=true", "exclude_halfref=false", and "exclude_refdata=false".')
+parser_e_a_g_infer_new_mutex_group.add_argument(
+    "--infer-ref",
+    action="store_true",
+    help='Use the --infer-ref option to infer and supply "ref" genotype entries when they were previously absent. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=false", "exclude_halfref=false", and "exclude_refdata=true".'
+)
+
 parser_extract_assay_germline.add_argument(
     '--json-help',
     help=argparse.SUPPRESS,
