@@ -412,6 +412,7 @@ def resolve_container_id_or_name(raw_string, is_error=False, multi=False):
 def _maybe_convert_stringified_dxlink(path):
     try:
         possible_hash = json.loads(path)
+        print(possible_hash)
         if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:
             if isinstance(possible_hash['$dnanexus_link'], basestring):
                 return possible_hash['$dnanexus_link']
@@ -419,12 +420,22 @@ def _maybe_convert_stringified_dxlink(path):
                   isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and
                   isinstance(possible_hash['$dnanexus_link'].get('id', None), basestring)):
                 return possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['id']
+            elif (isinstance(possible_hash['$dnanexus_link'], dict) and
+                  isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and
+                  isinstance(possible_hash['$dnanexus_link'].get('volume', None), basestring) and
+                  isinstance(possible_hash['$dnanexus_link'].get('path', None), basestring)):
+                  etag = None
+                  if possible_hash['$dnanexus_link'].get('etag', None) is not None:
+                        etag = possible_hash['$dnanexus_link']['etag']
+                  return possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['volume'] + ':' + possible_hash['$dnanexus_link']['path'] + (':' + etag if etag is not None else '')
+            
     except:
         pass
     return path
 
 
 def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=True):
+    print(path)
     '''
     :param path: A path to a data object to attempt to resolve
     :type path: string
@@ -467,6 +478,12 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
       (job_id, None, output_name)
       where
         job_id and output_name are both non-null
+    
+    OR 
+      (project, volume, path)
+    
+    OR 
+      (project, volume, path, etag)
 
     '''
     # TODO: callers that intend to obtain a data object probably won't be happy
@@ -484,6 +501,7 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
 
     if path == '' and not allow_empty_string:
         raise ResolutionError('Cannot parse ""; expected the path to be a non-empty string')
+    print(path)
     path = _maybe_convert_stringified_dxlink(path)
 
     # Easy case: ":"
@@ -503,6 +521,7 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         return ([path] if multi_projects else path), '/', None
     elif is_hashid(path):
         return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), None, path
+    print(path)
 
     # using a numerical sentinel value to indicate that it hasn't been
     # set in case dxpy.WORKSPACE_ID is actually None
@@ -510,12 +529,14 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
     folderpath = None
     entity_name = None
     wd = dxpy.config.get('DX_CLI_WD', u'/')
+    
 
     # Test for multiple colons
     last_colon = get_last_pos_of_char(':', path)
+    print(last_colon)
     if last_colon >= 0:
         last_last_colon = get_last_pos_of_char(':', path[:last_colon])
-        if last_last_colon >= 0:
+        if last_last_colon >= 3:
             raise ResolutionError('Cannot parse "' + path + '" as a path; at most one unescaped colon can be present')
 
     substrings = split_unescaped(':', path)
