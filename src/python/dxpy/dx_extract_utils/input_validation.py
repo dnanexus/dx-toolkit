@@ -159,20 +159,17 @@ def validate_filter(filter, filter_type):
 
     if filter_type == "genotype":
         keys = filter.keys()
-        if not ("allele_id" in keys or "locus_id" in keys):
-            err_exit("allele_id or locus_id is required in genotype filters")
+        if not "allele_id" in keys:
+            err_exit("allele_id is required in genotype filters")
 
-        # Check allele_id and/or locus_id field
-        for key in ["allele_id", "locus_id"]:
-            if key not in keys:
-                continue
-
-            if not is_list_of_strings(filter[key]):
-                err_exit(malformed_filter.format(key))
+        # Check allele_id field
+        if "allele_id" in keys:
+            if not is_list_of_strings(filter["allele_id"]):
+                err_exit(malformed_filter.format("allele_id"))
 
             # Check for too many values given
-            if len(filter[key]) > 100:
-                err_exit(maxitem_message.format(key, 100))
+            if len(filter["allele_id"]) > 100:
+                err_exit(maxitem_message.format("allele_id", 100))
 
         # Check sample_id field
         if "sample_id" in keys:

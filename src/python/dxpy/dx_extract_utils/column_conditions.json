@@ -8,7 +8,6 @@
     "genotype": {
         "genotype_type": "in",
         "allele_id": "in",
-        "locus_id": "in",
         "sample_id": "in"
     },
     "annotation": {
