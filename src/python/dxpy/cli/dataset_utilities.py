@@ -671,6 +671,9 @@ def get_assay_name_info(
                 if a["reference_genome"]:
                     selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
                 additional_descriptor_info["genotype_type_table"] = a["entities"]["genotype"]["fields"]["type"]["mapping"]["table"]
+                for exclude_genotype in ("exclude_refdata", "exclude_halfref", "exclude_nocall"):
+                    if exclude_genotype in a:
+                        additional_descriptor_info[exclude_genotype] = a[exclude_genotype]
     elif friendly_assay_type == "somatic":
         selected_ref_genome = ""
         for a in target_assays:
@@ -683,6 +686,25 @@ def get_assay_name_info(
 def comment_fill(string, comment_string='#  ', **kwargs):
     width_adjustment = kwargs.pop('width_adjustment', 0) - len(comment_string)
     return re.sub('^', comment_string, fill(string, width_adjustment=width_adjustment, **kwargs), flags=re.MULTILINE)
+
+def validate_infer_flags(args, ex_nocall, ex_ref, ex_halfref):
+    # Validate that the genomic_variant assay ingestion exclusion marks and the infer flags are used properly
+    ingestion_parameters_str =  f"Exclusion parameters set at the ingestion: exclude_nocall={ex_nocall}, exclude_halfref={ex_halfref}, exclude_refdata={ex_ref}"
+    if args.infer_ref:
+        if not (ex_nocall == False and ex_halfref == False and ex_ref == True):
+            err_exit(
+                f"""The --infer-ref flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=false', 'exclude_halfref=false', and 'exclude_refdata=true'.
+                {ingestion_parameters_str}"""
+            )
+
+    if args.infer_nocall:
+        if not (ex_nocall == True and ex_halfref == False and ex_ref == False):
+            err_exit(
+                f"""The --infer-nocall flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=true', 'exclude_halfref=false', and 'exclude_refdata=false'.
+                {ingestion_parameters_str}"""
+            )
+
+
 
 
 def extract_assay_germline(args):
@@ -831,6 +853,10 @@ def extract_assay_germline(args):
             filter_type="annotation",
         )
     elif args.retrieve_genotype:
+        ex_ref: bool = additional_descriptor_info.get("exclude_refdata"),
+        ex_halfref: bool = additional_descriptor_info.get("exclude_halfref"),
+        ex_nocall: bool = additional_descriptor_info.get("exclude_nocall"),
+        validate_infer_flags(args, ex_ref, ex_halfref, ex_nocall)
 
         payload, fields_list = final_payload(
             full_input_dict=filter_dict,
@@ -839,6 +865,9 @@ def extract_assay_germline(args):
             project_context=project,
             genome_reference=selected_ref_genome,
             filter_type="genotype",
+            # ex_ref=ex_ref,
+            # ex_halfref=ex_halfref,
+            # ex_nocall=ex_nocall,    
         )
 
     if "CohortBrowser" in resp["recordTypes"]:
