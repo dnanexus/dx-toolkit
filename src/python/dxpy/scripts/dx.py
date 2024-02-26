@@ -3178,7 +3178,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    requested_instance_type, requested_cluster_spec = {}, {}
+    requested_instance_type, requested_cluster_spec, requested_system_requirements_by_executable = {}, {}, {}
     executable_describe = None
 
     if args.cloned_job_desc:
@@ -3194,6 +3194,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         cloned_system_requirements = {}
         cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver = SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({})
         cloned_system_requirements_by_executable = {}
+
+    if all([args.instance_type, args.instance_type_by_executable, cloned_system_requirements_by_executable]):
+        print(fill(BOLD("WARNING") + ": --instance-type argument {} may get overridden by --instance-type-by-executable argument \
+                   {} and {} mergedSystemRequirementsByExecutable value of {}".format(
+            args.instance_type, args.instance_type_by_executable, args.cloned_job_desc.get('id'), cloned_system_requirements_by_executable)))
+        print()
 
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
     # here the args.instance_type no longer contains specifications for stage sys reqs
@@ -3228,10 +3234,17 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     # into the runtime systemRequirements
     requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
 
-    # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
+    # store runtime --instance-type-by-executable {executable:{entrypoint:xxx}} as systemRequirementsByExecutable
     # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
     # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
-    requested_system_requirements_by_executable = SystemRequirementsDict(args.instance_type_by_executable).as_dict() or cloned_system_requirements_by_executable
+    if args.instance_type_by_executable:
+        requested_system_requirements_by_executable = {exec: SystemRequirementsDict.from_instance_type(sys_req_by_exec).as_dict(
+        ) for exec, sys_req_by_exec in args.instance_type_by_executable.items()}
+        requested_system_requirements_by_executable = SystemRequirementsDict(merge(
+            cloned_system_requirements_by_executable, requested_system_requirements_by_executable)).as_dict()
+    else:
+        requested_system_requirements_by_executable = cloned_system_requirements_by_executable
+
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -3600,7 +3613,11 @@ def run(args):
     if args.clone is not None:
         # Resolve job ID or name; both job-id and analysis-id can be described using job_describe()
         if is_job_id(args.clone) or is_analysis_id(args.clone):
-            clone_desc = dxpy.api.job_describe(args.clone)
+            clone_desc = dxpy.api.job_describe(args.clone, {"defaultFields": True, 
+                                                            "fields": {"runSystemRequirements": True, 
+                                                                       "runSystemRequirementsByExecutable": True, 
+                                                                       "mergedSystemRequirementsByExecutable": True}})
+
         else:
             iterators = []
             if ":" in args.clone:
