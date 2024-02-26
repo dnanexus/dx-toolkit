@@ -115,15 +115,17 @@ def location_filter(location_list):
     }
 
     for location in location_list:
-        # First, ensure that the geno bins width isn't greater than 250 megabases
         start = int(location["starting_position"])
-        end = int(location["ending_position"])
-        if end - start > 5000000:
-            err_exit(
-                "Error in location {}\nLocation filters may not specify regions larger than 5 megabases".format(
-                    location
-                )
-            )
+        if "ending_position" in location:
+            end = int(location["ending_position"])
+            # Ensure that the geno bins width isn't greater than 250 megabases
+            if end - start > 5000000:
+                err_exit('\n'.join([
+                    "Error in location {}".format(location),
+                    "Location filters may not specify regions larger than 5 megabases",
+                ]))
+        else:
+            end = start
 
         # Fill out the contents of an object in the geno_bins array
         location_aid_filter["allele$a_id"][0]["geno_bins"].append(

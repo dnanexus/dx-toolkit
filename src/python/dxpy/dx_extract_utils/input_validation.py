@@ -159,8 +159,11 @@ def validate_filter(filter, filter_type):
 
     if filter_type == "genotype":
         keys = filter.keys()
-        if not "allele_id" in keys:
-            err_exit("allele_id is required in genotype filters")
+        if not ("allele_id" in keys or "location" in keys):
+            err_exit("allele_id or location is required in genotype filters")
+
+        if "allele_id" in keys and "location" in keys:
+            err_exit("allele_id and location fields cannot both be specified in the same genotype filter")
 
         # Check allele_id field
         if "allele_id" in keys:
@@ -170,6 +173,20 @@ def validate_filter(filter, filter_type):
             # Check for too many values given
             if len(filter["allele_id"]) > 100:
                 err_exit(maxitem_message.format("allele_id", 100))
+
+        # Check location field
+        if "location" in keys:
+            # Ensure there are not more than 100 locations
+            if len(filter["location"]) > 100:
+                err_exit(maxitem_message.format("location", 100))
+            for indiv_location in filter["location"]:
+                indiv_loc_keys = indiv_location.keys()
+                # Ensure all keys are there
+                if not ("chromosome" in indiv_loc_keys and "starting_position" in indiv_loc_keys):
+                    err_exit(malformed_filter.format("location"))
+                # Check that each key is a string
+                if not is_list_of_strings(list(indiv_location.values())):
+                    err_exit(malformed_filter.format("location"))
 
         # Check sample_id field
         if "sample_id" in keys:
