@@ -714,6 +714,14 @@ def extract_assay_germline(args):
         elif filter_given:
             err_exit("--list-assays cannot be presented with other options.")
 
+    #### Validate that a retrieve options infer_ref or infer_nocall are not passed with retrieve_allele or retrieve_annotation ####
+    if args.infer_ref or args.infer_nocall:
+        if args.retrieve_allele or args.retrieve_annotation:
+            err_exit(
+                "The flags, --infer-ref and --infer-nocall, can only be used with --retrieve-genotype."
+            )
+
+
     #### Check if the retrieve options are passed correctly, print help if needed ####
     if args.retrieve_allele:
         if args.json_help:
@@ -770,6 +778,7 @@ def extract_assay_germline(args):
     elif args.retrieve_genotype:
         filter_dict = json_validation_function("genotype", args)
 
+
     #### Validate that a retrieve option is passed with --assay-name ####
     if args.assay_name:
         if not filter_given:
@@ -822,6 +831,7 @@ def extract_assay_germline(args):
             filter_type="annotation",
         )
     elif args.retrieve_genotype:
+
         payload, fields_list = final_payload(
             full_input_dict=filter_dict,
             name=selected_assay_name,
