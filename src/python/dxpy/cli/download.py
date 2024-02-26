@@ -29,7 +29,7 @@ import logging
 
 import dxpy
 from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_project_explicit,
-                              object_exists_in_project, is_jbor_str)
+                              object_exists_in_project, is_jbor_str, is_stringified_dxlink)
 from ..exceptions import err_exit
 from . import try_call
 from dxpy.utils.printing import (fill)
@@ -68,6 +68,28 @@ def _verify(filename, md5digest):
         err_exit("Checksum doesn't match " + actual_md5 + "  expected:" + md5digest)
     print("Checksum correct")
 
+def download_one_v2_file(volume, path, etag, dest_filename, args):
+    if not args.overwrite:
+        if os.path.exists(dest_filename):
+            err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))     
+    import boto3
+    s3 = boto3.client('s3')
+    bucket_name = 'dnanexus-dev-comp14s2'
+    filename = os.path.basename(path)
+    if etag is not None:
+        try:
+            response = s3.head_object(Bucket=bucket_name, Key=path)
+            if response['ETag'].replace('"', '') == etag:
+                s3.download_file(bucket_name, path, os.path.join(os.getcwd(), filename))
+            else:
+                print(f"ETag mismatch for file {path}. Not downloading.")
+                print(f"ETag from server: {response['ETag']}, ETag from provided: {etag}")
+        except Exception as e:
+            print(f"Error occurred while checking ETag for file {path}: {str(e)}")
+    else:
+        s3.download_file(bucket_name, path, os.path.join(os.getcwd(), filename))
+    print(f"Downloaded file s3://{bucket_name}:{path} to {os.path.join(os.getcwd(), filename)}")
+    
 
 def download_one_file(project, file_desc, dest_filename, args):
     if not args.overwrite:
@@ -166,6 +188,12 @@ def _download_files(files, destdir, args, dest_filename=None):
             dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
             download_one_file(project, file_desc, dest, args)
 
+def _download_v2_files(files, destdir, args, dest_filename=None):
+    for volume in files:
+        for obj in files[volume]:
+            path = obj.get('path')
+            dest = dest_filename or os.path.join(destdir, os.path.basename(path))
+            download_one_v2_file(volume, path, obj.get('etag', None), dest, args)
 
 def _download_folders(folders, destdir, args):
     try:
@@ -187,7 +215,7 @@ def _download_folders(folders, destdir, args):
 
 # Main entry point.
 def download(args):
-    folders_to_get, files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), 0
+    folders_to_get, files_to_get, v2_files_to_get, count = collections.defaultdict(list), collections.defaultdict(list), collections.defaultdict(list), 0
     foldernames, filenames = [], []
     for path in args.paths:
         # Attempt to resolve name. If --all is given or the path looks like a glob, download all matches.
@@ -203,8 +231,12 @@ def download(args):
                                              "drive": True,
                                              "md5": True}})
 
-        project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
-
+        project, folder_or_volume, matching_files, is_v2_path, etag = try_call(resolve_existing_path, path, **resolver_kwargs)
+        if is_v2_path:
+            folderpath = folder_or_volume
+            matching_files = {'path': matching_files, 'etag': etag}
+        else:
+            volume = folder_or_volume
         if matching_files is None:
             matching_files = []
         elif not isinstance(matching_files, list):
@@ -219,7 +251,7 @@ def download(args):
             project = matching_files[0]["describe"]["project"]
         matching_folders = []
         # project may be none if path is an ID and there is no project context
-        if project is not None:
+        if project is not None and not is_stringified_dxlink(path) and not is_v2_path:
             colon_pos = get_first_pos_of_char(":", path)
             if colon_pos >= 0:
                 path = path[colon_pos + 1:]
@@ -248,17 +280,22 @@ def download(args):
         #
         # If length of matching_files is 0 then we're only downloading folders
         # so skip this logic since the files will be verified in the API call.
-        if not args.lightweight \
+        if not args.lightweight and not is_v2_path \
             and len(matching_files) > 0 \
             and path_has_explicit_proj \
             and not any(object_exists_in_project(f['describe']['id'], project) for f in matching_files):
                 err_exit(fill('Error: specified project does not contain specified file object'))
-
-        files_to_get[project].extend(matching_files)
+        if is_v2_path:
+            v2_files_to_get[folder_or_volume].extend(matching_files)
+        else:
+            files_to_get[project].extend(matching_files)
         folders_to_get[project].extend(((f, strip_prefix) for f in matching_folders))
         count += len(matching_files) + len(matching_folders)
-        filenames.extend(f["describe"]["name"] for f in matching_files)
-        foldernames.extend(f[len(strip_prefix):].lstrip('/') for f in matching_folders)
+        if is_v2_path:
+            filenames.extend(os.path.basename(f.get('path')) for f in matching_files)
+        else:
+            filenames.extend(f["describe"]["name"] for f in matching_files)
+            foldernames.extend(f[len(strip_prefix):].lstrip('/') for f in matching_folders)
 
     if len(filenames) > 0 and len(foldernames) > 0:
         name_conflicts = set(filenames) & set(foldernames)
@@ -283,3 +320,4 @@ def download(args):
 
     _download_folders(folders_to_get, destdir, args)
     _download_files(files_to_get, destdir, args, dest_filename=dest_filename)
+    _download_v2_files(v2_files_to_get, destdir, args, dest_filename=dest_filename)
