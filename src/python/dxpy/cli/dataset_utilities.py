@@ -935,6 +935,7 @@ def extract_assay_germline(args):
                             table=table, column=column, genotype_return_column=genotype_return_column))
                     elif genotype_return_column == "ref":
                         locus_id = "`{}`.`{}`".format(*select_info['locus_id'])
+                        # FIXME: this is normREF, not REF
                         select_lists.append("SPLIT({locus_id}, \"_\")[2] AS `ref`".format(locus_id=locus_id))
                     else:
                         select_lists.append("NULL AS `{genotype_return_column}`".format(
@@ -951,6 +952,7 @@ def extract_assay_germline(args):
                         if field in result:
                             massaged_result[field] = result[field]
                         elif field == "ref" and "locus_id" in result and result["locus_id"]:
+                            # FIXME: this is normREF, not REF
                             massaged_result[field] = result["locus_id"].split("_")[2]
                         else:
                             massaged_result[field] = None
