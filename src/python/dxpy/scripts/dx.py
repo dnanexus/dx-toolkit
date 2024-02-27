@@ -1225,7 +1225,7 @@ def describe(args):
         # Otherwise, attempt to look for it as a data object or
         # execution
         try:
-            project, _folderpath, entity_results = resolve_existing_path(args.path,
+            project, _folderpath, entity_results, is_v2_path, etag = resolve_existing_path(args.path,
                                                                          expected='entity',
                                                                          ask_to_resolve=False,
                                                                          describe=json_input)
