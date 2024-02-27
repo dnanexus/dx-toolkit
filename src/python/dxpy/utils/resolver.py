@@ -514,18 +514,18 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         if dxpy.WORKSPACE_ID is None:
             raise ResolutionError("Cannot resolve \":\": expected a project name or ID "
                                   "to the left of the colon, or for a current project to be set")
-        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None, None, None
     # Second easy case: empty string
     if path == '':
         if dxpy.WORKSPACE_ID is None:
             raise ResolutionError('Expected a project name or ID to the left of a colon, '
                                   'or for a current project to be set')
-        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), dxpy.config.get('DX_CLI_WD', '/'), None
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), dxpy.config.get('DX_CLI_WD', '/'), None, None, None
     # Third easy case: hash ID
     if is_container_id(path):
-        return ([path] if multi_projects else path), '/', None
+        return ([path] if multi_projects else path), '/', None, None, None
     elif is_hashid(path):
-        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), None, path
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), None, path, None, None
 
     # using a numerical sentinel value to indicate that it hasn't been
     # set in case dxpy.WORKSPACE_ID is actually None
