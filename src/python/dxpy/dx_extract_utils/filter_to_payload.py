@@ -118,7 +118,7 @@ def location_filter(location_list):
         start = int(location["starting_position"])
         if "ending_position" in location:
             end = int(location["ending_position"])
-            # Ensure that the geno bins width isn't greater than 250 megabases
+            # Ensure that the geno bins width isn't greater than 5 megabases
             if end - start > 5000000:
                 err_exit('\n'.join([
                     "Error in location {}".format(location),
