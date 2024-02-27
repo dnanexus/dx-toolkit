@@ -186,8 +186,10 @@ def generate_assay_filter(
     if ex_nocall is not None:
         # no-call genotypes 
         final_filter_dict["assay_filters"]["nocall_yn"] = not ex_nocall
-        # reference genotypes
+    if ex_ref is not None:
+        # reference genotypes        
         final_filter_dict["assay_filters"]["ref_yn"] = not ex_ref
+    if ex_halfref is not None:
         # half-reference genotypes
         final_filter_dict["assay_filters"]["halfref_yn"] = not ex_halfref
     
