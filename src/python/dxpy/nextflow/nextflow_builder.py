@@ -75,7 +75,7 @@ def build_pipeline_with_npi(
     if git_creds:
         input_hash["github_credentials"] = parse_obj(git_creds, "file")
     if destination:
-        build_project_id, build_folder, _ = try_call(resolve_existing_path, destination, expected='folder')
+        build_project_id, build_folder, _, _, _ = try_call(resolve_existing_path, destination, expected='folder')
     if docker_secrets:
         input_hash["docker_secrets"] = parse_obj(docker_secrets, "file")
     if cache_docker:

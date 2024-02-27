@@ -38,7 +38,7 @@ def new_workflow(args):
         if is_analysis_id(args.init):
             init_from = args.init
         else:
-            init_project, _init_folder, init_result = try_call(resolve_existing_path,
+            init_project, _init_folder, init_result, is_v2_path, etag = try_call(resolve_existing_path,
                                                                args.init,
                                                                expected='entity')
             init_from = dxpy.get_handler(init_result['id'], project=init_project)
