@@ -1611,7 +1611,7 @@ def remove_types(args):
 def add_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
 
@@ -1646,7 +1646,7 @@ def add_tags(args):
 def remove_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
 
@@ -1681,7 +1681,7 @@ def remove_tags(args):
 def rename(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
 
@@ -1707,7 +1707,7 @@ def rename(args):
 def set_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
 
@@ -1741,7 +1741,7 @@ def set_properties(args):
 def unset_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
     properties = {}

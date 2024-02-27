@@ -1325,7 +1325,7 @@ def get_exec_handler(path, alias=None):
     if alias is None:
         try:
             # Look for applets and workflows
-            _project, _folderpath, entity_results = resolve_existing_path(path,
+            _project, _folderpath, entity_results, is_v2_path, etag = resolve_existing_path(path,
                                                                           expected='entity',
                                                                           ask_to_resolve=False,
                                                                           expected_classes=['applet', 'record', 'workflow'],
@@ -1386,7 +1386,7 @@ def resolve_to_objects_or_project(path, all_matching_results=False):
     a choice will be initiated if input is a tty, or else throw an error).
     '''
     # Attempt to resolve name
-    project, folderpath, entity_results = resolve_existing_path(path,
+    project, folderpath, entity_results, is_v2_path, etag = resolve_existing_path(path,
                                                                 expected='entity',
                                                                 allow_mult=True,
                                                                 all_mult=all_matching_results)
@@ -1396,7 +1396,7 @@ def resolve_to_objects_or_project(path, all_matching_results=False):
                                   '''" to an existing data object or to only a project;
                                   if you were attempting to refer to a project by name,
                                   please append a colon ":" to indicate that it is a project.''')
-    return project, folderpath, entity_results
+    return project, folderpath, entity_results, is_v2_path, etag
 
 # Generic function to parse an input key-value pair of the form '-ikey=val'
 # e.g. returns ("key", "val") in the example above
