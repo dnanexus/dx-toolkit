@@ -3657,7 +3657,7 @@ dx-jobutil-add-output record_array $second_record --array
                           " --instance-type mem2_hdd2_x2" +
                           " --instance-type-by-executable \'" + 
                           json.dumps({other_applet_id: {"some_ep": "mem1_ssd1_v2_x2", "some_other_ep": "mem2_hdd2_x4"}}) + "\'" +
-                          " --brief -y").strip()
+                          " --brief -y").strip().split('\n')[-1]
         orig_job_desc = dxpy.api.job_describe(orig_job_id, {"defaultFields": True, "fields": {
                                               "runSystemRequirements": True, "runSystemRequirementsByExecutable": True, "mergedSystemRequirementsByExecutable": True}})
 
