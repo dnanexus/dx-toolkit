@@ -3195,12 +3195,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver = SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({})
         cloned_system_requirements_by_executable = {}
 
-    if all([args.instance_type, args.instance_type_by_executable, cloned_system_requirements_by_executable]):
-        print(fill(BOLD("WARNING") + ": --instance-type argument {} may get overridden by --instance-type-by-executable argument \
-                   {} and {} mergedSystemRequirementsByExecutable value of {}".format(
-            args.instance_type, args.instance_type_by_executable, args.cloned_job_desc.get('id'), cloned_system_requirements_by_executable)))
-        print()
-
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
     # here the args.instance_type no longer contains specifications for stage sys reqs
     if args.instance_type:
@@ -3233,6 +3227,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     # combine the requested instance type, full cluster spec, fpga spec
     # into the runtime systemRequirements
     requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
+
+    if (args.instance_type and (args.instance_type_by_executable or cloned_system_requirements_by_executable)):
+        print(fill((BOLD("WARNING") + ": --instance-type argument {} may get overridden by --instance-type-by-executable argument " + 
+            "{} and {} mergedSystemRequirementsByExecutable value of {}").format(
+            args.instance_type, args.instance_type_by_executable, args.cloned_job_desc.get('id'), cloned_system_requirements_by_executable)))
+        print()
 
     # store runtime --instance-type-by-executable {executable:{entrypoint:xxx}} as systemRequirementsByExecutable
     # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
