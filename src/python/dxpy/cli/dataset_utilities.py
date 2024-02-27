@@ -704,6 +704,20 @@ def validate_infer_flags(args, ex_nocall, ex_ref, ex_halfref):
                 {ingestion_parameters_str}"""
             )
 
+def validate_filter_applicable_genotype_types(infer_nocall, infer_ref, filter_dict, ex_ref, ex_nocall):
+    # Check filter provided genotype_types against exclusion options at ingestion. 
+    # e.g. no-call is not applicable when exclude_genotype set and infer-nocall false
+    if ex_nocall and not infer_nocall:
+        if "no-call" in filter_dict["genotype_types"]:
+            err_exit(
+                "The genotype type 'no-call' is not applicable when the dataset ingestion was set to exclude no-call genotypes and the --infer-nocall flag is not set."
+            )
+    if ex_ref and not infer_ref:
+        if "ref" in filter_dict["genotype_types"]:
+            err_exit(
+                "The genotype type 'ref' is not applicable when the dataset ingestion was set to exclude reference genotypes and the --infer-ref flag is not set."
+            )
+
 
 
 
@@ -853,10 +867,16 @@ def extract_assay_germline(args):
             filter_type="annotation",
         )
     elif args.retrieve_genotype:
-        ex_ref: bool = additional_descriptor_info.get("exclude_refdata"),
-        ex_halfref: bool = additional_descriptor_info.get("exclude_halfref"),
-        ex_nocall: bool = additional_descriptor_info.get("exclude_nocall"),
+        ex_ref: bool = bool(additional_descriptor_info.get("exclude_refdata")),
+        ex_halfref: bool = bool(additional_descriptor_info.get("exclude_halfref")),
+        ex_nocall: bool = bool(additional_descriptor_info.get("exclude_nocall")),
         validate_infer_flags(args, ex_ref, ex_halfref, ex_nocall)
+        validate_filter_applicable_genotype_types(
+            args.infer_nocall,
+            args.infer_ref,
+            filter_dict,
+            ex_ref,
+            ex_nocall)
 
         payload, fields_list = final_payload(
             full_input_dict=filter_dict,
@@ -865,9 +885,10 @@ def extract_assay_germline(args):
             project_context=project,
             genome_reference=selected_ref_genome,
             filter_type="genotype",
-            # ex_ref=ex_ref,
-            # ex_halfref=ex_halfref,
-            # ex_nocall=ex_nocall,    
+            ex_ref=ex_ref,
+            ex_halfref=ex_halfref,
+            ex_nocall=ex_nocall,    
+
         )
 
     if "CohortBrowser" in resp["recordTypes"]:
