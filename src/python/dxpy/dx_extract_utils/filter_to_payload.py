@@ -199,7 +199,7 @@ def generate_assay_filter(
 
 
 def final_payload(
-    full_input_dict, name, id, project_context, genome_reference, filter_type, ref=None, halfref=None, nocall=None
+    full_input_dict, name, id, project_context, genome_reference, filter_type, order=True, ref=None, halfref=None, nocall=None
 ):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),
@@ -239,19 +239,29 @@ def final_payload(
             os.path.join(extract_utils_basepath, "return_columns_genotype.json"), "r"
         ) as infile:
             fields = json.load(infile)
+    elif filter_type == "genotype_only":
+        with open(
+            os.path.join(extract_utils_basepath, "return_columns_genotype_only.json"), "r"
+        ) as infile:
+            fields = json.load(infile)
 
-    order_by = [{"allele_id":"asc"}]
+    if order:
+        order_by = [{"allele_id":"asc"}]
 
-    # In order for output to be deterministic, we need to do a secondary sort by sample_id
-    # if it is present in the fields
-    sample_id_present = False
-    for field in fields:
-        if "sample_id" in field:
-            sample_id_present = True
-    if sample_id_present:
-        order_by.append({"sample_id":"asc"})
+        if any("locus_id" in field for field in fields):
+            order_by.insert(0, {"locus_id":"asc"})
 
-    final_payload["order_by"] = order_by
+        # In order for output to be deterministic, we need to do a secondary sort by sample_id
+        # if it is present in the fields
+        sample_id_present = False
+        for field in fields:
+            if "sample_id" in field:
+                sample_id_present = True
+        if sample_id_present:
+            order_by.append({"sample_id":"asc"})
+
+        final_payload["order_by"] = order_by
+
     final_payload["fields"] = fields
     final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter

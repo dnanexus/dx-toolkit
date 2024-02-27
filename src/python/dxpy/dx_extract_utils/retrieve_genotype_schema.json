@@ -4,8 +4,17 @@
     "description": "A description of the retrieve sample JSON file",
     "type": "object",
     "additionalProperties": false,
-    "required": [
-        "allele_id"
+    "oneOf": [
+        {
+            "required": [
+                "allele_id"
+            ]
+        },
+        {
+            "required": [
+                "location"
+            ]
+        }
     ],
     "properties": {
         "allele_id": {

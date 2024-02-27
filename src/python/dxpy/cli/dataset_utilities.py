@@ -46,7 +46,7 @@ from ..exceptions import (
     default_expected_exceptions,
 )
 
-from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
+from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload, extract_utils_basepath
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -134,6 +134,7 @@ def resolve_validate_record_path(path):
 
 
 def viz_query_api_call(resp, payload, route):
+    resp["url"] = "http://127.0.0.1:8081"
     resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/" + route
     try:
         resp_query = dxpy.DXHTTPRequest(
@@ -155,6 +156,7 @@ def raw_cohort_query_api_call(resp, payload):
 
 
 def raw_api_call(resp, payload, sql_message=True):
+    resp["url"] = "http://127.0.0.1:8081"
     resource_val = resp["url"] + "/data/3.0/" + resp["dataset"] + "/raw"
     try:
         resp_raw = dxpy.DXHTTPRequest(
@@ -824,8 +826,30 @@ def extract_assay_germline(args):
 
     out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "germline")
 
-    payload = {}
+    def add_base_sql(resp, payload):
+        if "CohortBrowser" in resp["recordTypes"]:
+            if resp.get("baseSql"):
+                payload["base_sql"] = resp.get("baseSql")
+            payload["filters"] = resp["filters"]
+
+    def sort_variant(d):
+        if "allele_id" in d and d["allele_id"]:
+            chrom, pos, _, alt = d["allele_id"].split("_")
+        elif "locus_id" in d and d["locus_id"]:
+            chrom, pos = d["locus_id"].split("_")[:2]
+            alt = ""
+        sample_id = d.get("sample_id", "")
+        if chrom.isdigit():
+            return int(chrom), "", int(pos), alt, sample_id
+        return float("inf"), chrom, int(pos), alt, sample_id
+
+    filter_type = None
     if args.retrieve_allele:
+        filter_type = "allele"
+    elif args.retrieve_annotation:
+        filter_type = "annotation"
+
+    if filter_type and filter_given:
         payload, fields_list = final_payload(
             full_input_dict=filter_dict,
             name=selected_assay_name,
@@ -834,46 +858,11 @@ def extract_assay_germline(args):
             genome_reference=selected_ref_genome,
             filter_type="allele",
         )
-    elif args.retrieve_annotation:
-        payload, fields_list = final_payload(
-            full_input_dict=filter_dict,
-            name=selected_assay_name,
-            id=selected_assay_id,
-            project_context=project,
-            genome_reference=selected_ref_genome,
-            filter_type="annotation",
-        )
-    elif args.retrieve_genotype:
-        payload, fields_list = final_payload(
-            full_input_dict=filter_dict,
-            name=selected_assay_name,
-            id=selected_assay_id,
-            project_context=project,
-            genome_reference=selected_ref_genome,
-            filter_type="genotype",
-            ref=additional_descriptor_info.get("exclude_refdata"),
-            halfref=additional_descriptor_info.get("exclude_halfref"),
-            nocall=additional_descriptor_info.get("exclude_nocall"),
-        )
 
-    if "CohortBrowser" in resp["recordTypes"]:
-        if resp.get("baseSql"):
-            payload["base_sql"] = resp.get("baseSql")
-        payload["filters"] = resp["filters"]
+        add_base_sql(resp, payload)
 
-    #### Run api call to get sql or extract data ####
-    if filter_given:
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
-            if args.retrieve_genotype:
-                try:
-                    geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
-                    geno_table = re.search(
-                        geno_table_regex, sql_results
-                    ).group()
-                except Exception:
-                        err_exit("Failed to find the table, {}, in the generated SQL".format(additional_descriptor_info["genotype_type_table"]), 
-                                 expected_exceptions=(AttributeError,))
 
             if print_to_stdout:
                 print(sql_results)
@@ -882,16 +871,151 @@ def extract_assay_germline(args):
                     print(sql_results, file=sql_file)
         else:
             resp_raw = raw_api_call(resp, payload)
+            ordered_results = sorted(resp_raw, key=sort_variant)
 
-            def sort_variant(d):
-                if d["allele_id"] is None:
-                    chrom, pos = d["locus_id"].split("_")[:2]
-                else:
-                    chrom, pos = d["allele_id"].split("_")[:2]
-                if chrom.isdigit():
-                    return int(chrom), '', int(pos)
-                return float('inf'), chrom, int(pos)
-            ordered_results = sorted(resp_raw["results"], key=sort_variant)
+            csv_from_json(
+                out_file_name=out_file,
+                print_to_stdout=print_to_stdout,
+                sep="\t",
+                raw_results=ordered_results,
+                column_names=fields_list,
+                quote_char=str("|"),
+            )
+
+    if args.retrieve_genotype and filter_given:
+        genotype_only_types = []
+        if "allele_id" not in filter_dict:
+            genotype_only_type_map = {
+                "ref": "exclude_refdata",
+                "half": "exclude_halfref",
+                "no-call": "exclude_nocall",
+            }
+            genotype_types = filter_dict.get("genotype_type") or list(genotype_only_type_map)
+            for genotype_type, exclude_flag in genotype_only_type_map.items():
+                if genotype_type in genotype_types and not additional_descriptor_info.get(exclude_flag):
+                    genotype_only_types.append(genotype_type)
+
+        genotype_payload, fields_list = final_payload(
+            full_input_dict=filter_dict,
+            name=selected_assay_name,
+            id=selected_assay_id,
+            project_context=project,
+            genome_reference=selected_ref_genome,
+            filter_type="genotype",
+            order=not genotype_only_types,
+        )
+
+        add_base_sql(resp, genotype_payload)
+
+        if genotype_only_types:
+            def massage_sql(sql):
+                with open(os.path.join(extract_utils_basepath, "return_columns_genotype.json")) as infile:
+                    genotype_return_columns = json.load(infile)
+
+                # TODO: catch error
+                # TODO: hints
+                # TODO: snowflake
+                select_list_regex = r"SELECT\s+(DISTINCT\s+)?(.+?)\s+FROM"
+                select_list_match = re.match(select_list_regex, sql).group(2)
+                named_expressions = [x.strip() for x in select_list_match.split(",")]
+                named_expression_regex = r"(`?(\w+)?`?\.)?`?(\w+)`?( AS `?(\w+)`?)?"
+                select_info = {}
+                for named_expression in named_expressions:
+                    named_expression_match = re.match(named_expression_regex, named_expression).groups()
+                    table, column, alias = (
+                        named_expression_match[1], named_expression_match[2], named_expression_match[4])
+                    select_info[alias] = (table, column)
+
+                select_lists = []
+                for genotype_return_column in genotype_return_columns:
+                    genotype_return_column = tuple(genotype_return_column)[0]
+                    if genotype_return_column in select_info:
+                        table, column = select_info[genotype_return_column]
+                        select_lists.append("`{table}`.`{column}` AS `{genotype_return_column}`".format(
+                            table=table, column=column, genotype_return_column=genotype_return_column))
+                    elif genotype_return_column == "ref":
+                        locus_id = "`{}`.`{}`".format(*select_info['locus_id'])
+                        select_lists.append("SPLIT({locus_id}, \"_\")[2] AS `ref`".format(locus_id=locus_id))
+                    else:
+                        select_lists.append("NULL AS `{genotype_return_column}`".format(
+                            genotype_return_column=genotype_return_column))
+                select_list = ", ".join(select_lists)
+
+                return re.sub(select_list_regex, "SELECT {select_list} FROM".format(select_list=select_list), sql)
+
+            def massage_results(results, fields_list):
+                massaged_results = []
+                for result in results:
+                    massaged_result = {}
+                    for field in fields_list:
+                        if field in result:
+                            massaged_result[field] = result[field]
+                        elif field == "ref" and "locus_id" in result and result["locus_id"]:
+                            massaged_result[field] = result["locus_id"].split("_")[2]
+                        else:
+                            massaged_result[field] = None
+                    massaged_results.append(massaged_result)
+                return massaged_results
+
+            genotype_only_payloads = []
+            for i, genotype_only_type in enumerate(genotype_only_types):
+                genotype_only_filter_dict = filter_dict.copy()
+                if genotype_only_type == "ref":
+                    genotype_only_filter_dict['ref_yn'] = genotype_only_type == "ref"
+                elif genotype_only_type == "half":
+                    genotype_only_filter_dict['halfref_yn'] = genotype_only_type == "half"
+                elif genotype_only_type == "no-call":
+                    genotype_only_filter_dict['nocall_yn'] = genotype_only_type == "no-call"
+
+                genotype_only_payload, _ = final_payload(
+                    full_input_dict=genotype_only_filter_dict,
+                    name=selected_assay_name,
+                    id=selected_assay_id,
+                    project_context=project,
+                    genome_reference=selected_ref_genome,
+                    filter_type="genotype_only",
+                    ref=genotype_only_type == "ref",
+                    halfref=genotype_only_type == "half",
+                    nocall=genotype_only_type == "no-call",
+                    order=i == len(genotype_only_types) - 1,
+                )
+
+                add_base_sql(resp, genotype_only_payload)
+
+                genotype_only_payloads.append(genotype_only_payload)
+
+
+        if args.sql:
+            genotype_sql_query = raw_query_api_call(resp, genotype_payload)[:-1]
+            try:
+                geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
+                re.search(geno_table_regex, genotype_sql_query).group()
+            except Exception:
+                err_exit("Failed to find the table, {}, in the generated SQL".format(
+                    additional_descriptor_info["genotype_type_table"]), expected_exceptions=(AttributeError,))
+            sql_queries = [genotype_sql_query]
+
+            for genotype_only_payload in genotype_only_payloads:
+                genotype_only_sql_query = raw_query_api_call(resp, genotype_only_payload)[:-1]
+                sql_queries.append(massage_sql(genotype_only_sql_query))
+
+            sql_results = " UNION ".join(sql_queries) + ";"
+
+            if print_to_stdout:
+                print(sql_results)
+            else:
+                with open(out_file, "w") as sql_file:
+                    print(sql_results, file=sql_file)
+        else:
+            ordered_results = []
+            genotype_resp_raw = raw_api_call(resp, genotype_payload)
+            ordered_results.extend(genotype_resp_raw["results"])
+
+            for genotype_only_payload in genotype_only_payloads:
+                genotype_only_resp_raw = raw_api_call(resp, genotype_only_payload)
+                ordered_results.extend(massage_results(genotype_only_resp_raw["results"], fields_list))
+
+            ordered_results.sort(key=sort_variant)
 
             csv_from_json(
                 out_file_name=out_file,
