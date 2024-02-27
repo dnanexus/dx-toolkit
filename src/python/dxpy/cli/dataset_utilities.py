@@ -134,7 +134,6 @@ def resolve_validate_record_path(path):
 
 
 def viz_query_api_call(resp, payload, route):
-    resp["url"] = "http://127.0.0.1:8081"
     resource_val = resp["url"] + "/viz-query/3.0/" + resp["dataset"] + "/" + route
     try:
         resp_query = dxpy.DXHTTPRequest(
@@ -156,7 +155,6 @@ def raw_cohort_query_api_call(resp, payload):
 
 
 def raw_api_call(resp, payload, sql_message=True):
-    resp["url"] = "http://127.0.0.1:8081"
     resource_val = resp["url"] + "/data/3.0/" + resp["dataset"] + "/raw"
     try:
         resp_raw = dxpy.DXHTTPRequest(
