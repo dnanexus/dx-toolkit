@@ -905,6 +905,7 @@ def extract_assay_germline(args):
 
         add_base_sql(resp, genotype_payload)
 
+        genotype_only_payloads = []
         if genotype_only_types:
             def massage_sql(sql):
                 with open(os.path.join(extract_utils_basepath, "return_columns_genotype.json")) as infile:
@@ -957,7 +958,6 @@ def extract_assay_germline(args):
                     massaged_results.append(massaged_result)
                 return massaged_results
 
-            genotype_only_payloads = []
             for i, genotype_only_type in enumerate(genotype_only_types):
                 genotype_only_filter_dict = filter_dict.copy()
                 if genotype_only_type == "ref":
