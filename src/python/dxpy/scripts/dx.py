@@ -3964,7 +3964,7 @@ def ssh(args, ssh_config_verified=False):
     job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
-        err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
+        err_exit(f"{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
 
     if not ssh_config_verified:
         verify_ssh_config()
@@ -3992,6 +3992,8 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
+        if job_desc['state'] in ['done', 'failed', 'terminated']:
+            err_exit(f"\n{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
         time.sleep(1)
         job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
