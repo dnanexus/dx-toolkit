@@ -199,7 +199,15 @@ def generate_assay_filter(
 
 
 def final_payload(
-    full_input_dict, name, id, project_context, genome_reference, filter_type, ex_nocall, ex_ref, ex_halfref
+    full_input_dict,
+    name,
+    id,
+    project_context,
+    genome_reference,
+    filter_type,
+    ex_nocall=None,
+    ex_ref=None,
+    ex_halfref=None
 ):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),

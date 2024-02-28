@@ -719,7 +719,7 @@ def validate_filter_applicable_genotype_types(infer_nocall, infer_ref, filter_di
         if ex_ref == True and not infer_ref:
             if "ref" in filter_dict["genotype_type"]:
                 print(
-                    "WARNING: Filter requested genotype type 'ref' genotype entries of this type were was not ingested in the provided dataset and the --infer-ref flag is not set."
+                    "WARNING: Filter requested genotype type 'ref', genotype entries of this type were not ingested in the provided dataset and the --infer-ref flag is not set!"
                 )
             if filter_dict["genotype_type"] == []:
                 print(
@@ -895,7 +895,8 @@ def extract_assay_germline(args):
             args.infer_ref,
             filter_dict,
             ex_ref,
-            ex_nocall)
+            ex_nocall,
+            ex_halfref)
 
         payload, fields_list = final_payload(
             full_input_dict=filter_dict,
