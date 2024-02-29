@@ -118,7 +118,7 @@ def location_filter(location_list):
         start = int(location["starting_position"])
         if "ending_position" in location:
             end = int(location["ending_position"])
-            # Ensure that the geno bins width isn't greater than 250 megabases
+            # Ensure that the geno bins width isn't greater than 5 megabases
             if end - start > 5000000:
                 err_exit('\n'.join([
                     "Error in location {}".format(location),
@@ -146,9 +146,9 @@ def generate_assay_filter(
     project_context,
     genome_reference,
     filter_type,
-    ref=None,
-    halfref=None,
-    nocall=None,
+    exclude_nocall=None,
+    exclude_refdata=None,
+    exclude_halfref=None
 ):
     """
     Generate the entire assay filters object by reading the filter JSON, making the relevant
@@ -185,21 +185,29 @@ def generate_assay_filter(
     # The general filters are related by "and"
     final_filter_dict["assay_filters"]["logic"] = "and"
 
-    # include reference genotypes
-    if ref:
-        final_filter_dict["assay_filters"]["ref_yn"] = True
-    # include half-reference genotypes
-    if halfref:
-        final_filter_dict["assay_filters"]["halfref_yn"] = True
-    # include no-call genotypes
-    if nocall:
-        final_filter_dict["assay_filters"]["nocall_yn"] = True
+    if exclude_nocall is not None:
+        # no-call genotypes
+        final_filter_dict["assay_filters"]["nocall_yn"] = not exclude_nocall
+    if exclude_refdata is not None:
+        # reference genotypes
+        final_filter_dict["assay_filters"]["ref_yn"] = not exclude_refdata
+    if exclude_halfref is not None:
+        # half-reference genotypes
+        final_filter_dict["assay_filters"]["halfref_yn"] = not exclude_halfref
 
     return final_filter_dict
 
 
 def final_payload(
-    full_input_dict, name, id, project_context, genome_reference, filter_type, order=True, ref=None, halfref=None, nocall=None
+    full_input_dict,
+    name,
+    id,
+    project_context,
+    genome_reference,
+    filter_type,
+    exclude_nocall=None,
+    exclude_refdata=None,
+    exclude_halfref=None
 ):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),
@@ -214,9 +222,9 @@ def final_payload(
         project_context,
         genome_reference,
         filter_type,
-        ref=ref,
-        halfref=halfref,
-        nocall=nocall,
+        exclude_nocall,
+        exclude_refdata,
+        exclude_halfref
     )
 
     final_payload = {}
