@@ -2834,7 +2834,7 @@ def build(args):
         if args.repository and args.remote:
             build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
 
-        if args.cache_docker and args.remote:
+        if args.cache_docker and args.remote:When using the "--retrieve-genotype" option, infer genotypes with type "ref" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=false", "exclude_halfref=false", and "exclude_refdata=true".
             build_parser.error("Nextflow pipeline built with an option to cache the docker images is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
 
         if args.git_credentials and not args.repository:
@@ -6554,11 +6554,11 @@ parser_e_a_g_infer_new_mutex_group = parser_extract_assay_germline.add_mutually_
 parser_e_a_g_infer_new_mutex_group.add_argument(
     "--infer-nocall",
     action="store_true",
-    help='Use the --infer-nocall option to infer and supply "no-call" genotype entries when they were previously absent. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=true", "exclude_halfref=false", and "exclude_refdata=false".')
+    help='When using the "--retrieve-genotype" option, infer genotypes with type "no-call" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=true", "exclude_halfref=false", and "exclude_refdata=false".')
 parser_e_a_g_infer_new_mutex_group.add_argument(
     "--infer-ref",
     action="store_true",
-    help='Use the --infer-ref option to infer and supply "ref" genotype entries when they were previously absent. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=false", "exclude_halfref=false", and "exclude_refdata=true".'
+    help='When using the "--retrieve-genotype" option, infer genotypes with type "ref" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=false", "exclude_halfref=false", and "exclude_refdata=true".'
 )
 
 parser_extract_assay_germline.add_argument(

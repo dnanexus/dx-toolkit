@@ -687,27 +687,48 @@ def comment_fill(string, comment_string='#  ', **kwargs):
     width_adjustment = kwargs.pop('width_adjustment', 0) - len(comment_string)
     return re.sub('^', comment_string, fill(string, width_adjustment=width_adjustment, **kwargs), flags=re.MULTILINE)
 
-def validate_infer_flags(args, ex_nocall, ex_ref, ex_halfref):
+def validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref):
     # Validate that the genomic_variant assay ingestion exclusion marks and the infer flags are used properly
 
-    ingestion_parameters_str =  f"Exclusion parameters set at the ingestion: exclude_nocall={ex_nocall}, exclude_halfref={ex_halfref}, exclude_refdata={ex_ref}"
+    ingestion_parameters_str = f"Exclusion parameters set at the ingestion: exclude_nocall={str(exclude_nocall).lower()}, exclude_halfref={str(exclude_halfref).lower()}, exclude_refdata={str(exclude_refdata).lower()}"
     if args.infer_ref:
-        if not (ex_nocall == False and ex_halfref == False and ex_ref == True):
+        if not (
+            exclude_nocall == False
+            and exclude_halfref == False
+            and exclude_refdata == True
+        ):
             err_exit(
                 f"The --infer-ref flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=false', 'exclude_halfref=false', and 'exclude_refdata=true'.\n{ingestion_parameters_str}"
             )
 
     if args.infer_nocall:
-        if not (ex_nocall == True and ex_halfref == False and ex_ref == False):
+        if not (
+            exclude_nocall == True
+            and exclude_halfref == False
+            and exclude_refdata == False
+        ):
             err_exit(
                 f"The --infer-nocall flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=true', 'exclude_halfref=false', and 'exclude_refdata=false'.\n{ingestion_parameters_str}"
             )
 
-def validate_filter_applicable_genotype_types(infer_nocall, infer_ref, filter_dict, ex_ref, ex_nocall, ex_halfref):
-    # Check filter provided genotype_types against exclusion options at ingestion. 
+    if args.infer_ref or args.infer_nocall and exclude_nocall is None:
+        err_exit(
+            "The --infer-ref or --infer-nocall flags can only be used when the undelying assay is of version generalized_assay_model_version 1.1.1 or higher."
+        )
+
+
+def validate_filter_applicable_genotype_types(
+    infer_nocall,
+    infer_ref,
+    filter_dict,
+    exclude_nocall,
+    exclude_refdata,
+    exclude_halfref,
+):
+    # Check filter provided genotype_types against exclusion options at ingestion.
     # e.g. no-call is not applicable when exclude_genotype set and infer-nocall false
     if "genotype_type" in filter_dict:
-        if ex_nocall == True and not infer_nocall:
+        if exclude_nocall == True and not infer_nocall:
             if "no-call" in filter_dict["genotype_type"]:
                 print(
                     "WARNING: Filter requested genotype type 'no-call', genotype entries of this type were not ingested in the provided dataset and the --infer-nocall flag is not set!"
@@ -716,7 +737,7 @@ def validate_filter_applicable_genotype_types(infer_nocall, infer_ref, filter_di
                 print(
                     "WARNING: No genotype type requested in the filter. All genotype types will be returned. Genotype entries of type 'no-call' were not ingested in the provided dataset and the --infer-nocall flag is not set!"
                 )
-        if ex_ref == True and not infer_ref:
+        if exclude_refdata == True and not infer_ref:
             if "ref" in filter_dict["genotype_type"]:
                 print(
                     "WARNING: Filter requested genotype type 'ref', genotype entries of this type were not ingested in the provided dataset and the --infer-ref flag is not set!"
@@ -725,7 +746,7 @@ def validate_filter_applicable_genotype_types(infer_nocall, infer_ref, filter_di
                 print(
                     "WARNING: No genotype type requested in the filter. All genotype types will be returned. Genotype entries of type 'ref' were not ingested in the provided dataset and the --infer-ref flag is not set!"
                 )
-        if ex_halfref == True:
+        if exclude_halfref == True:
             if "half" in filter_dict["genotype_type"]:
                 print(
                     "WARNING: Filter requested genotype type 'half', 'half-ref genotype' entries (0/.) were not ingested in the provided dataset!"
@@ -734,11 +755,6 @@ def validate_filter_applicable_genotype_types(infer_nocall, infer_ref, filter_di
                 print(
                     "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!"
                 )
-        
-
-        
-
-
 
 
 def extract_assay_germline(args):
@@ -772,11 +788,10 @@ def extract_assay_germline(args):
 
     #### Validate that a retrieve options infer_ref or infer_nocall are not passed with retrieve_allele or retrieve_annotation ####
     if args.infer_ref or args.infer_nocall:
-        if args.retrieve_allele or args.retrieve_annotation:
+        if args.retrieve_allele or args.retrieve_annotation or args.sql or args.list_assays:
             err_exit(
                 "The flags, --infer-ref and --infer-nocall, can only be used with --retrieve-genotype."
             )
-
 
     #### Check if the retrieve options are passed correctly, print help if needed ####
     if args.retrieve_allele:
@@ -886,17 +901,17 @@ def extract_assay_germline(args):
             filter_type="annotation",
         )
     elif args.retrieve_genotype:
-        ex_ref: bool = additional_descriptor_info.get("exclude_refdata")
-        ex_halfref: bool = additional_descriptor_info.get("exclude_halfref")
-        ex_nocall: bool = additional_descriptor_info.get("exclude_nocall")
-        validate_infer_flags(args, ex_ref, ex_halfref, ex_nocall)
+        exclude_refdata: bool = additional_descriptor_info.get("exclude_refdata")
+        exclude_halfref: bool = additional_descriptor_info.get("exclude_halfref")
+        exclude_nocall: bool = additional_descriptor_info.get("exclude_nocall")
+        validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref)
         validate_filter_applicable_genotype_types(
             args.infer_nocall,
             args.infer_ref,
             filter_dict,
-            ex_ref,
-            ex_nocall,
-            ex_halfref)
+            exclude_nocall,
+            exclude_refdata,
+            exclude_halfref)
 
         payload, fields_list = final_payload(
             full_input_dict=filter_dict,
@@ -905,9 +920,9 @@ def extract_assay_germline(args):
             project_context=project,
             genome_reference=selected_ref_genome,
             filter_type="genotype",
-            ex_ref=ex_ref,
-            ex_halfref=ex_halfref,
-            ex_nocall=ex_nocall,    
+            exclude_nocall=exclude_nocall,  
+            exclude_refdata=exclude_refdata,
+            exclude_halfref=exclude_halfref,  
 
         )
 
