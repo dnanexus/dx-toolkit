@@ -27,6 +27,9 @@ import subprocess
 import json
 import sys
 
+from unittest.mock import patch
+from io import StringIO
+
 from dxpy_testutil import cd
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
@@ -40,6 +43,7 @@ from dxpy.cli.dataset_utilities import (
     DXDataset,
     resolve_validate_record_path,
     get_assay_name_info,
+    validate_filter_applicable_genotype_types
 )
 
 python_version = sys.version_info.major
@@ -334,6 +338,53 @@ class TestDXExtractAssay(unittest.TestCase):
             basic_filter(table, friendly_name, values, self.proj_id, genome_reference),
             expected_output,
         )
+
+    # Test filters for exclusion options
+    def test_no_call_warning(self):
+        # This is a test of the validate_filter_applicable_genotype_types function "no-call", "ref" requested
+        filter_dict = {"genotype_type": ["no-call", "ref"]}
+        exclude_nocall = True
+        exclude_refdata = True
+        infer_nocall = False
+        expected_warnings = [
+            "WARNING: Filter requested genotype type 'no-call', genotype entries of this type were not ingested in the provided dataset and the --infer-nocall flag is not set!",
+            "WARNING: Filter requested genotype type 'ref', genotype entries of this type were not ingested in the provided dataset and the --infer-ref flag is not set!"
+            ]
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            validate_filter_applicable_genotype_types(
+                infer_nocall, infer_ref=False, filter_dict=filter_dict,
+                exclude_refdata=exclude_refdata, exclude_nocall=exclude_nocall, exclude_halfref=False
+            )
+            output = fake_out.getvalue().strip()
+            for warning in expected_warnings:
+                self.assertIn(warning, output)
+
+    def test_no_genotype_type_warning(self):
+        # This is a test of the validate_filter_applicable_genotype_types function no genotype type requested
+        filter_dict = {"genotype_type": []}
+        exclude_nocall = True
+
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            validate_filter_applicable_genotype_types(
+                infer_nocall=False, infer_ref=False, filter_dict=filter_dict,
+                exclude_refdata=False, exclude_nocall=exclude_nocall, exclude_halfref=False
+            )
+            output = fake_out.getvalue().strip()
+            self.assertEqual(output, "WARNING: No genotype type requested in the filter. All genotype types will be returned. Genotype entries of type 'no-call' were not ingested in the provided dataset and the --infer-nocall flag is not set!")
+
+    def test_no_genotype_type_warning_exclude_halfref(self):
+        # This is a test of the validate_filter_applicable_genotype_types function half genotype type requested
+        filter_dict = {"genotype_type": []}
+        exclude_halfref = True
+
+        with patch("sys.stdout", new=StringIO()) as fake_out:
+            validate_filter_applicable_genotype_types(
+                infer_nocall=False, infer_ref=False, filter_dict=filter_dict,
+                exclude_refdata=False, exclude_nocall=False, exclude_halfref=exclude_halfref
+            )
+            output = fake_out.getvalue().strip()
+            self.assertEqual(output, "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!")
+
 
     ##########
     # Normal Command Lines
