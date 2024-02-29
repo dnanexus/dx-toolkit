@@ -711,9 +711,9 @@ def validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref)
                 f"The --infer-nocall flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=true', 'exclude_halfref=false', and 'exclude_refdata=false'.\n{ingestion_parameters_str}"
             )
 
-    if args.infer_ref or args.infer_nocall and exclude_nocall is None:
+    if (args.infer_ref or args.infer_nocall) and exclude_nocall is None:
         err_exit(
-            "The --infer-ref or --infer-nocall flags can only be used when the undelying assay is of version generalized_assay_model_version 1.1.1 or higher."
+            "The --infer-ref or --infer-nocall flags can only be used when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
         )
 
 
