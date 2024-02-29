@@ -3190,7 +3190,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         cloned_instance_type = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceType')
         cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='clusterSpec')
         cloned_fpga_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='fpgaDriver')
-        cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {})
+        cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}) or {}
     else:
         cloned_system_requirements = {}
         cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver = SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({})
@@ -3234,7 +3234,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         warning += " {} mergedSystemRequirementsByExecutable: {}".format(args.cloned_job_desc.get('id'), json.dumps(cloned_system_requirements_by_executable))
         if (args.instance_type_by_executable):
             warning += " and runtime --instance-type-by-executable argument:{}\n".format(json.dumps(args.instance_type_by_executable))
-        print(fill(warning, width_adjustment=-24))
+        print(fill(warning))
         print()
 
     # store runtime --instance-type-by-executable {executable:{entrypoint:xxx}} as systemRequirementsByExecutable
