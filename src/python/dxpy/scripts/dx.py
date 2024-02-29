@@ -3228,13 +3228,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     # into the runtime systemRequirements
     requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
 
-    if (args.instance_type and (args.instance_type_by_executable or cloned_system_requirements_by_executable)):
-        warning = BOLD("WARNING") + ": --instance-type argument {} may get overridden by\n".format(args.instance_type) 
+    if (args.instance_type and cloned_system_requirements_by_executable):
+        warning = BOLD("WARNING") + ": --instance-type argument: {} may get overridden by".format(args.instance_type) 
+        warning += " {} mergedSystemRequirementsByExecutable: {}".format(args.cloned_job_desc.get('id'), json.dumps(cloned_system_requirements_by_executable))
         if (args.instance_type_by_executable):
-            warning += " {}\n".format(args.instance_type_by_executable)
-        if (cloned_system_requirements_by_executable):
-            warning += " {} mergedSystemRequirementsByExecutable value of {}\n".format(args.cloned_job_desc.get('id'), cloned_system_requirements_by_executable)
-        print(fill(warning))
+            warning += " and runtime --instance-type-by-executable argument:{}\n".format(json.dumps(args.instance_type_by_executable))
+        print(fill(warning, width_adjustment=-24))
         print()
 
     # store runtime --instance-type-by-executable {executable:{entrypoint:xxx}} as systemRequirementsByExecutable
