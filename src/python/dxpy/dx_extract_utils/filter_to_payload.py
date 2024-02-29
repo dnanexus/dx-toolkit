@@ -205,6 +205,7 @@ def final_payload(
     project_context,
     genome_reference,
     filter_type,
+    order=True,
     exclude_nocall=None,
     exclude_refdata=None,
     exclude_halfref=None
