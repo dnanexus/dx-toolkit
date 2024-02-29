@@ -689,7 +689,10 @@ def comment_fill(string, comment_string='#  ', **kwargs):
 
 def validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref):
     # Validate that the genomic_variant assay ingestion exclusion marks and the infer flags are used properly
-
+    if (args.infer_ref or args.infer_nocall) and exclude_nocall is None:
+        err_exit(
+            "The --infer-ref or --infer-nocall flags can only be used when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
+        )
     ingestion_parameters_str = f"Exclusion parameters set at the ingestion: exclude_nocall={str(exclude_nocall).lower()}, exclude_halfref={str(exclude_halfref).lower()}, exclude_refdata={str(exclude_refdata).lower()}"
     if args.infer_ref:
         if not (
@@ -710,11 +713,6 @@ def validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref)
             err_exit(
                 f"The --infer-nocall flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=true', 'exclude_halfref=false', and 'exclude_refdata=false'.\n{ingestion_parameters_str}"
             )
-
-    if (args.infer_ref or args.infer_nocall) and exclude_nocall is None:
-        err_exit(
-            "The --infer-ref or --infer-nocall flags can only be used when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
-        )
 
 
 def validate_filter_applicable_genotype_types(
