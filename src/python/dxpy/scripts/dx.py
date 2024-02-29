@@ -1437,7 +1437,8 @@ def new_project(args):
         inputs["monthlyComputeLimit"] = args.monthly_compute_limit
     if args.monthly_egress_bytes_limit is not None:
         inputs["monthlyEgressBytesLimit"] = args.monthly_egress_bytes_limit
-
+    if args.default_symlink is not None:
+        inputs["defaultSymlink"] = json.loads(args.default_symlink)
     try:
         resp = dxpy.api.project_new(inputs)
         if args.brief:
@@ -5797,6 +5798,7 @@ parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the 
                                 action='store_true')
 parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly project spending limit for compute')
 parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly project spending limit for egress (in Bytes)')
+parser_new_project.add_argument('--default-symlink', help='Default symlink for external store account')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
