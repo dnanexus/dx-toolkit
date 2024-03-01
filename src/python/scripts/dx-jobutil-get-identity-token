@@ -17,36 +17,43 @@
 #   under the License.
 
 import dxpy
-import argparse, json, sys
+import os, argparse, json, sys
 
 parser = argparse.ArgumentParser(
     description="Creates a new job to run the named function with the specified input.  If successful, prints the ID of the new job."
 )
-parser.add_argument("--aud", help="Audience URI the JWT is intended for")
+parser.add_argument("--aud", help="Audience URI the JWT is intended for", required=True)
 parser.add_argument(
     "--subject_claims",
     action="append",
-    nargs="+",
     metavar="<subject_claims>",
     help="Defines the subject claims to be validated by the cloud provider",
 )
 args = parser.parse_args()
 
-try:
-    print("Job ID: " + dxpy.JOB_ID)
-    print("Audience: " + str(args.aud))
-    print("Subject Claims: " + str(args.subject_claims))
-except Exception as e:
-    print(e)
+print(args.subject_claims)
 
 job_get_identity_token_input = {}
 if args.aud is not None:
     job_get_identity_token_input["aud"] = args.aud
 if args.subject_claims is not None:
-    job_get_identity_token_input["subjectClaims"] = args.subject_claims
+    # Iterate over subject_claims and flatten them into a single list
+    subject_claims = []
+    for subject_claim in args.subject_claims:
+        subject_claims.extend(subject_claim.split(","))
+    job_get_identity_token_input["subjectClaims"] = subject_claims
 
+print("Job ID: " + str(dxpy.JOB_ID))
+print("Audience: " + str(args.aud))
+print("Subject Claims: " + str(args.subject_claims))
 print("Job Get Identity Token Input: " + str(job_get_identity_token_input))
 
-jwt_token = dxpy.api.job_get_identity_token(dxpy.JOB_ID, job_get_identity_token_input)
-jwt_token_json = json.dumps(jwt_token, indent=4)
-sys.stdout.write(jwt_token_json)
+if "DX_JOB_ID" in os.environ:
+    jwt_token = dxpy.api.job_get_identity_token(
+        dxpy.JOB_ID, job_get_identity_token_input
+    )
+    jwt_token_json = json.dumps(jwt_token, indent=4)
+    sys.stdout.write(jwt_token_json)
+else:
+    print("This script should be run from within a job environment.")
+    sys.exit(1)
