@@ -5,9 +5,14 @@ import re
 from .filter_to_payload import extract_utils_basepath
 
 
+SELECT_LIST_REGEX = r"SELECT\s+(DISTINCT\s+)?(.+?)\s+FROM"
+NAMED_EXPRESSION_REGEX = r"(`?(\w+)?`?\.)?`?(\w+)`?( AS `?(\w+)`?)?"
+
+
 def get_genotype_only_types(filter_dict, exclude_refdata, exclude_halfref, exclude_nocall):
-    if "alleld_id" in filter_dict:
-        return []
+    """
+    Returns a list of genotype types for the filter that are use in genotype table only queries.
+    """
 
     genotype_type_exclude_flag_map = {
         "ref": exclude_refdata,
@@ -17,7 +22,7 @@ def get_genotype_only_types(filter_dict, exclude_refdata, exclude_halfref, exclu
     genotype_types = filter_dict.get("genotype_type") or list(genotype_type_exclude_flag_map)
     genotype_only_types = []
     for genotype_type, excluded in genotype_type_exclude_flag_map.items():
-        if genotype_type in genotype_types and not excluded:
+        if genotype_type in genotype_types and excluded is not None and not excluded:
             genotype_only_types.append(genotype_type)
 
     return genotype_only_types
@@ -42,57 +47,80 @@ def sort_germline_variant(d):
     return float("inf"), chrom, int(pos), alt, sample_id
 
 
-def massage_germline_sql(sql):
+def _parse_sql_select_named_expression(sql):
+    """
+    Parses the SELECT list of a SQL statement and returns a generator of named expressions table, column, and alias.
+    """
+    select_list_match = re.match(SELECT_LIST_REGEX, sql).group(2)
+    for named_expression in [x.strip() for x in select_list_match.split(",")]:
+        named_expression_match = re.match(NAMED_EXPRESSION_REGEX, named_expression).groups()
+        yield named_expression_match[1], named_expression_match[2], named_expression_match[4]
+
+
+def _harmonize_sql_select_named_expression(sql, return_columns, **kwargs):
+    """
+    Harmonizes the SELECT list of a SQL statement to include all columns in return_columns. NULL values are used for
+    columns not in the SELECT list.
+    """
+    select_info = {alias: (table, column) for table, column, alias in _parse_sql_select_named_expression(sql)}
+
+    select_lists = []
+    for return_column in return_columns:
+        return_column = tuple(return_column)[0]
+        if return_column in select_info:
+            table, column = select_info[return_column]
+            select_lists.append("`{table}`.`{column}` AS `{return_column}`".format(table=table,
+                                                                                   column=column,
+                                                                                   return_column=return_column))
+        elif return_column in kwargs:
+            select_lists.append("`{table}`.`{column}` AS `ref`".format(table=kwargs[return_column][0],
+                                                                       column=kwargs[return_column][1]))
+        else:
+            select_lists.append("NULL AS `{return_column}`".format(return_column=return_column))
+    select_list = ", ".join(select_lists)
+
+    return re.sub(SELECT_LIST_REGEX, "SELECT {select_list} FROM".format(select_list=select_list), sql)
+
+
+def harmonize_germline_sql(sql):
+    """
+    Harmonize the SQL statement for genotype table only queries to include columns to UNION with genotype and allele
+    table queries. JOIN genotype table to allele table on locus_id to include ref columns values.
+    """
     with open(os.path.join(extract_utils_basepath, "return_columns_genotype.json")) as infile:
         genotype_return_columns = json.load(infile)
 
-    select_list_regex = r"SELECT\s+(DISTINCT\s+)?(.+?)\s+FROM"
-    select_list_match = re.match(select_list_regex, sql).group(2)
-    named_expressions = [x.strip() for x in select_list_match.split(",")]
-    named_expression_regex = r"(`?(\w+)?`?\.)?`?(\w+)`?( AS `?(\w+)`?)?"
-    select_info = {}
-    for named_expression in named_expressions:
-        named_expression_match = re.match(named_expression_regex, named_expression).groups()
-        table, column, alias = (
-            named_expression_match[1], named_expression_match[2], named_expression_match[4])
-        select_info[alias] = (table, column)
+    # join genotype table to allele table on locus_id
+    join_condition_regex = r"ON\s+`(\w+)`\.`(a_id)`\s+=\s+`(\w+)`\.`(a_id)`\s+WHERE"
+    allele_table = re.search(join_condition_regex, sql).group(2)
+    sql = re.sub(join_condition_regex, "ON `\\1`.`locus_id` = `\\3`.`locus_id` WHERE", sql)
 
-    join_condition_re = r"ON\s+`(\w+)`\.`(a_id)`\s+=\s+`(\w+)`\.`(a_id)`\s+WHERE"
-    sql = re.sub(join_condition_re, "ON `\\1`.`locus_id` = `\\3`.`locus_id` WHERE", sql)
+    # Add return columns missing in SQL statement to the SELECT list as NULL values
+    sql = _harmonize_sql_select_named_expression(sql, genotype_return_columns, ref=(allele_table, "a_id"))
 
-    select_lists = []
-    for genotype_return_column in genotype_return_columns:
-        genotype_return_column = tuple(genotype_return_column)[0]
-        if genotype_return_column in select_info:
-            table, column = select_info[genotype_return_column]
-            select_lists.append("`{table}`.`{column}` AS `{genotype_return_column}`".format(
-                table=table, column=column, genotype_return_column=genotype_return_column))
-        elif genotype_return_column == "ref":
-            locus_id = "`{}`.`{}`".format(*select_info["locus_id"])
-            # FIXME: this is normREF, not REF
-            select_lists.append("SPLIT({locus_id}, \"_\")[2] AS `ref`".format(locus_id=locus_id))
-        else:
-            select_lists.append("NULL AS `{genotype_return_column}`".format(
-                genotype_return_column=genotype_return_column))
-    select_list = ", ".join(select_lists)
-
-    return re.sub(select_list_regex, "SELECT {select_list} FROM".format(select_list=select_list), sql)
+    return sql
 
 
-def massage_germline_results(results, fields_list):
-    massaged_results = []
+def harmonize_germline_results(results, fields_list):
+    """
+    Harmonizes raw query results to include all columns in fields_list. Columns not in fields_list have value None.
+    """
+    harmonized_results = []
     for result in results:
-        massaged_result = {}
+        harmonized_result = {}
         for field in fields_list:
             if field in result:
-                massaged_result[field] = result[field]
+                harmonized_result[field] = result[field]
             else:
-                massaged_result[field] = None
-        massaged_results.append(massaged_result)
-    return massaged_results
+                harmonized_result[field] = None
+        harmonized_results.append(harmonized_result)
+    return harmonized_results
 
 
 def get_germline_ref_payload(results, genotype_payload):
+    """
+    Create a payload to query locus_id/ref pairs from the allele table for genotypes missing ref column values.
+    """
     locus_ids = set((r["locus_id"], r["chromosome"], r["starting_position"]) for r in results if r["ref"] is None)
     allele_filters = []
     for locus_id, chr, pos in locus_ids:
@@ -123,6 +151,9 @@ def get_germline_ref_payload(results, genotype_payload):
 
 
 def update_genotype_only_ref(results, locus_id_refs):
+    """
+    Update genotype results with ref column values from locus_id/ref query result
+    """
     locus_id_ref_map = {result["locus_id"]: result["ref"] for result in locus_id_refs["results"]}
     for result in results:
         if result["ref"] is not None:

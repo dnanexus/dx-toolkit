@@ -48,7 +48,7 @@ from ..exceptions import (
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.germline_utils import get_genotype_only_types, add_germline_base_sql, sort_germline_variant, \
-    massage_germline_sql, massage_germline_results, get_germline_ref_payload, update_genotype_only_ref
+    harmonize_germline_sql, harmonize_germline_results, get_germline_ref_payload, update_genotype_only_ref
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -913,7 +913,7 @@ def extract_assay_germline(args):
             id=selected_assay_id,
             project_context=project,
             genome_reference=selected_ref_genome,
-            filter_type="allele",
+            filter_type=filter_type,
         )
 
         add_germline_base_sql(resp, payload)
@@ -928,7 +928,7 @@ def extract_assay_germline(args):
                     print(sql_results, file=sql_file)
         else:
             resp_raw = raw_api_call(resp, payload)
-            ordered_results = sorted(resp_raw, key=sort_germline_variant)
+            ordered_results = sorted(resp_raw["results"], key=sort_germline_variant)
 
             csv_from_json(
                 out_file_name=out_file,
@@ -953,7 +953,11 @@ def extract_assay_germline(args):
             exclude_halfref)
 
         # get a list of requested genotype types for the genotype table only queries
-        genotype_only_types = get_genotype_only_types(filter_dict, exclude_refdata, exclude_halfref, exclude_nocall)
+        if "alleld_id" in filter_dict:
+            genotype_only_types = []
+        else:
+            genotype_only_types = get_genotype_only_types(filter_dict,
+                                                          exclude_refdata, exclude_halfref, exclude_nocall)
 
         # get the payload for the genotype/allele table query for alternate genotype types
         genotype_payload, fields_list = final_payload(
@@ -1016,7 +1020,7 @@ def extract_assay_germline(args):
                 genotype_only_payload["fields"].append({"ref": "allele$ref"})
                 genotype_only_sql_query = raw_query_api_call(resp, genotype_only_payload)[:-1]
                 # update the query to add column in the genotype/allele table query and join on locus_id
-                sql_queries.append(massage_germline_sql(genotype_only_sql_query))
+                sql_queries.append(harmonize_germline_sql(genotype_only_sql_query))
 
             # combine the queries into a single query
             sql_results = " UNION ".join(sql_queries) + ";"
@@ -1036,15 +1040,16 @@ def extract_assay_germline(args):
             for genotype_only_payload in genotype_only_payloads:
                 genotype_only_resp_raw = raw_api_call(resp, genotype_only_payload)
                 # add missing keys that are in the allele table part of the genotype/allele table query
-                ordered_results.extend(massage_germline_results(genotype_only_resp_raw["results"], fields_list))
+                ordered_results.extend(harmonize_germline_results(genotype_only_resp_raw["results"], fields_list))
 
-            # get the ref value from the allele table using locus ids
-            # ingestion of VCFs lines missing ALT is unsupported so the locus_id will exist in the allele table
-            # normalized ref values in the locus_id will match the ref value for missing ALT lines if they
-            # were ingested and locus_id could be parsed for the ref value
-            ref_payload = get_germline_ref_payload(ordered_results, genotype_payload)
-            locus_id_refs = raw_api_call(resp, ref_payload)
-            update_genotype_only_ref(ordered_results, locus_id_refs)
+            if genotype_only_types:
+                # get the ref value from the allele table using locus ids
+                # ingestion of VCFs lines missing ALT is unsupported so the locus_id will exist in the allele table
+                # normalized ref values in the locus_id will match the ref value for missing ALT lines if they
+                # were ingested and locus_id could be parsed for the ref value
+                ref_payload = get_germline_ref_payload(ordered_results, genotype_payload)
+                locus_id_refs = raw_api_call(resp, ref_payload)
+                update_genotype_only_ref(ordered_results, locus_id_refs)
 
             ordered_results.sort(key=sort_germline_variant)
 

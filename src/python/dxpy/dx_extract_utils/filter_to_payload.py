@@ -98,14 +98,14 @@ def basic_filter(
     return listed_filter
 
 
-def location_filter(location_list):
+def location_filter(location_list, filter_type):
     """
-    A location filter is actually an allele$a_id filter with no filter values
+    A location filter is actually an filter_type$a_id filter with no filter values
     The geno_bins perform the actual location filtering.  Related to other geno_bins filters by "or"
     """
 
     location_aid_filter = {
-        "allele$a_id": [
+        "{}$a_id".format(filter_type): [
             {
                 "condition": "in",
                 "values": [],
@@ -128,7 +128,7 @@ def location_filter(location_list):
             end = start
 
         # Fill out the contents of an object in the geno_bins array
-        location_aid_filter["allele$a_id"][0]["geno_bins"].append(
+        location_aid_filter["{}$a_id".format(filter_type)][0]["geno_bins"].append(
             {
                 "chr": location["chromosome"],
                 "start": start,
@@ -164,7 +164,7 @@ def generate_assay_filter(
     for key in full_input_dict.keys():
         if key == "location":
             location_list = full_input_dict["location"]
-            location_aid_filter = location_filter(location_list)
+            location_aid_filter = location_filter(location_list, filter_type)
             filters_dict.update(location_aid_filter)
 
         else:
