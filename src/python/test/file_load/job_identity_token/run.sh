@@ -1,7 +1,7 @@
 main() {
     dx-download-all-inputs
 
-    dx-jobutil-get-identity-token
+    token=$(dx-jobutil-get-identity-token --aud "$audience" --subject_claims "$subject_claims")
 
-    dx-upload-all-outputs
+    dx-jobutil-add-output token "$token"
 }

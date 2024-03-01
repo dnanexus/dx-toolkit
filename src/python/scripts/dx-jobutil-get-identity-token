@@ -29,13 +29,12 @@ parser.add_argument(
     metavar="<subject_claims>",
     help="Defines the subject claims to be validated by the cloud provider",
 )
+
 args = parser.parse_args()
-
-print(args.subject_claims)
-
 job_get_identity_token_input = {}
+
 if args.aud is not None:
-    job_get_identity_token_input["aud"] = args.aud
+    job_get_identity_token_input["audience"] = args.aud
 if args.subject_claims is not None:
     # Iterate over subject_claims and flatten them into a single list
     subject_claims = []
