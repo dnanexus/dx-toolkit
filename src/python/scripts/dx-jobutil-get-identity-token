@@ -33,6 +33,7 @@ parser.add_argument(
 args = parser.parse_args()
 job_get_identity_token_input = {}
 
+# Parse out audience and subject_claims from args
 if args.aud is not None:
     job_get_identity_token_input["audience"] = args.aud
 if args.subject_claims is not None:
@@ -41,11 +42,6 @@ if args.subject_claims is not None:
     for subject_claim in args.subject_claims:
         subject_claims.extend(subject_claim.split(","))
     job_get_identity_token_input["subjectClaims"] = subject_claims
-
-print("Job ID: " + str(dxpy.JOB_ID))
-print("Audience: " + str(args.aud))
-print("Subject Claims: " + str(args.subject_claims))
-print("Job Get Identity Token Input: " + str(job_get_identity_token_input))
 
 if "DX_JOB_ID" in os.environ:
     jwt_token = dxpy.api.job_get_identity_token(
