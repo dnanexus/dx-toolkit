@@ -365,13 +365,24 @@ class TestDXBashHelpers(DXTestCase):
                 os.path.join(TEST_APPS, "job_identity_token"), dxproj.get_id()
             )
 
-            # Run the applet
+            # pass in the audience with the --aud flag
             applet_args = [
                 "-iaudience=fake.compute.team",
             ]
             cmd_args = ["dx", "run", "--yes", "--watch", applet_id]
             cmd_args.extend(applet_args)
-            run(cmd_args, env=env)
+            token = run(cmd_args, env=env)
+            self.assertIsInstance(token, str)
+
+            # pass in the audience and subject_claims
+            applet_args = [
+                "-iaudience=fake.compute.team",
+                "-isubject_claims=job_id,root_execution_id",
+            ]
+            cmd_args = ["dx", "run", "--yes", "--watch", applet_id]
+            cmd_args.extend(applet_args)
+            token = run(cmd_args, env=env)
+            self.assertIsInstance(token, str)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "skipping test that would run a job")
     def test_file_optional(self):

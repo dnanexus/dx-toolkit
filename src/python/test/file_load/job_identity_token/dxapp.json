@@ -9,7 +9,7 @@
     "version": "0"
   },
   "inputSpec": [
-    {"name": "audience",  "class": "array:string"},
+    {"name": "audience",  "class": "string"},
     {"name": "subject_claims",  "class": "array:string", "optional" : true}
   ],
   "outputSpec": [

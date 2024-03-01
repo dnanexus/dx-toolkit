@@ -44,11 +44,10 @@ if args.subject_claims is not None:
     job_get_identity_token_input["subjectClaims"] = subject_claims
 
 if "DX_JOB_ID" in os.environ:
-    jwt_token = dxpy.api.job_get_identity_token(
+    response = dxpy.api.job_get_identity_token(
         dxpy.JOB_ID, job_get_identity_token_input
     )
-    jwt_token_json = json.dumps(jwt_token, indent=4)
-    sys.stdout.write(jwt_token_json)
+    sys.stdout.write(response["Token"])
 else:
     print("This script should be run from within a job environment.")
     sys.exit(1)
