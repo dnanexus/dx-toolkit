@@ -17,37 +17,72 @@
 #   under the License.
 
 import dxpy
-import os, argparse, json, sys
+import os, argparse, sys
 
-parser = argparse.ArgumentParser(
-    description="Creates a new job to run the named function with the specified input.  If successful, prints the ID of the new job."
-)
-parser.add_argument("--aud", help="Audience URI the JWT is intended for", required=True)
-parser.add_argument(
-    "--subject_claims",
-    action="append",
-    metavar="<subject_claims>",
-    help="Defines the subject claims to be validated by the cloud provider",
-)
+subject_claim_choices = [
+    "app_name",
+    "app_version",
+    "bill_to",
+    "executable_id",
+    "job_id",
+    "job_try",
+    "job_worker_ipv4",
+    "job_worker_ipv6",
+    "launched_by",
+    "project_id",
+    "region",
+    "root_executable_id",
+    "root_executable_name",
+    "root_executable_version",
+    "root_execution_id",
+]
 
-args = parser.parse_args()
-job_get_identity_token_input = {}
 
-# Parse out audience and subject_claims from args
-if args.aud is not None:
-    job_get_identity_token_input["audience"] = args.aud
-if args.subject_claims is not None:
-    # Iterate over subject_claims and flatten them into a single list
-    subject_claims = []
-    for subject_claim in args.subject_claims:
-        subject_claims.extend(subject_claim.split(","))
-    job_get_identity_token_input["subjectClaims"] = subject_claims
-
-if "DX_JOB_ID" in os.environ:
-    response = dxpy.api.job_get_identity_token(
-        dxpy.JOB_ID, job_get_identity_token_input
+def _parse_args():
+    """
+    Parse the input arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="calls job-xxxx/getIdentityToken and retrieves a JWT token based on aud and subject claims input"
     )
-    sys.stdout.write(response["Token"])
-else:
-    print("This script should be run from within a job environment.")
-    sys.exit(1)
+    parser.add_argument(
+        "--aud", help="Audience URI the JWT is intended for", required=True
+    )
+    parser.add_argument(
+        "--subject_claims",
+        action="append",
+        metavar="<subject_claims>",
+        choices=subject_claim_choices,
+        help="Defines the subject claims to be validated by the cloud provider",
+    )
+
+    return parser.parse_args()
+
+
+def main(aud, subject_claims):
+    job_get_identity_token_input = {}
+
+    # Parse out audience and subject_claims from args
+    job_get_identity_token_input["audience"] = aud
+
+    if subject_claims is not None:
+        # Iterate over subject_claims and flatten them into a single list
+        subject_claims = []
+        for subject_claim in subject_claims:
+            subject_claims.extend(subject_claim.split(","))
+        job_get_identity_token_input["subject_claims"] = subject_claims
+
+    # Call job-xxxx/getIdentityToken
+    if "DX_JOB_ID" in os.environ:
+        response = dxpy.api.job_get_identity_token(
+            dxpy.JOB_ID, job_get_identity_token_input
+        )
+        sys.stdout.write(response["Token"])
+    else:
+        print("This script should be run from within a job environment.")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    args = _parse_args()
+    main(args.aud, args.subject_claims)

@@ -58,6 +58,7 @@ def run(command, **kwargs):
 
 
 TEST_APPS = os.path.join(os.path.dirname(__file__), "file_load")
+TEST_JWT = os.path.join(os.path.dirname(__file__), "jwt")
 TEST_MOUNT_APPS = os.path.join(os.path.dirname(__file__), "file_mount")
 LOCAL_SCRIPTS = os.path.join(os.path.dirname(__file__), "..", "scripts")
 LOCAL_UTILS = os.path.join(os.path.dirname(__file__), "..", "dxpy", "utils")
@@ -352,6 +353,7 @@ class TestDXBashHelpers(DXTestCase):
             cmd_args.extend(applet_args)
             run(cmd_args, env=env)
 
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "skipping test that would run a job")
     def test_job_identity_token(self):
         """Tests dx-jobutil-get-identity-token script"""
         with temporary_project(
@@ -362,7 +364,7 @@ class TestDXBashHelpers(DXTestCase):
             # Build the applet, patching in the bash helpers from the
             # local checkout
             applet_id = build_app_with_bash_helpers(
-                os.path.join(TEST_APPS, "job_identity_token"), dxproj.get_id()
+                os.path.join(TEST_JWT), dxproj.get_id()
             )
 
             # pass in the audience with the --aud flag
@@ -383,6 +385,26 @@ class TestDXBashHelpers(DXTestCase):
             cmd_args.extend(applet_args)
             token = run(cmd_args, env=env)
             self.assertIsInstance(token, str)
+
+            # pass invalid aud (missing)
+            with pytest.raises(Exception):
+                applet_args = [
+                    "-isubject_claims=job_id,root_execution_id",
+                ]
+                cmd_args = ["dx", "run", "--yes", "--watch", applet_id]
+                cmd_args.extend(applet_args)
+
+                run(cmd_args, env=env)
+
+            # pass invalid subject_claims
+            with pytest.raises(Exception):
+                applet_args = [
+                    "-isubject_claims=apples,bananas",
+                ]
+                cmd_args = ["dx", "run", "--yes", "--watch", applet_id]
+                cmd_args.extend(applet_args)
+
+                run(cmd_args, env=env)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "skipping test that would run a job")
     def test_file_optional(self):

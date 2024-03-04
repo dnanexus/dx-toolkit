@@ -1,6 +1,6 @@
-{ "name": "basic",
-  "title": "basic",
-  "summary" : "basic file upload/download",
+{ "name": "basic jwt retrieval",
+  "title": "basic jwt retrieval",
+  "summary" : "basic jwt retrieval",
   "runSpec": {
     "file": "run.sh",
     "interpreter": "bash",
