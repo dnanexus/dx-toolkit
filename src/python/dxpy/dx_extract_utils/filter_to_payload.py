@@ -98,14 +98,14 @@ def basic_filter(
     return listed_filter
 
 
-def location_filter(location_list):
+def location_filter(location_list, filter_type):
     """
-    A location filter is actually an allele$a_id filter with no filter values
+    A location filter is actually an filter_type$a_id filter with no filter values
     The geno_bins perform the actual location filtering.  Related to other geno_bins filters by "or"
     """
 
     location_aid_filter = {
-        "allele$a_id": [
+        "{}$a_id".format(filter_type): [
             {
                 "condition": "in",
                 "values": [],
@@ -128,7 +128,7 @@ def location_filter(location_list):
             end = start
 
         # Fill out the contents of an object in the geno_bins array
-        location_aid_filter["allele$a_id"][0]["geno_bins"].append(
+        location_aid_filter["{}$a_id".format(filter_type)][0]["geno_bins"].append(
             {
                 "chr": location["chromosome"],
                 "start": start,
@@ -146,8 +146,8 @@ def generate_assay_filter(
     project_context,
     genome_reference,
     filter_type,
-    exclude_nocall=None, 
-    exclude_refdata=None, 
+    exclude_nocall=None,
+    exclude_refdata=None,
     exclude_halfref=None
 ):
     """
@@ -164,7 +164,7 @@ def generate_assay_filter(
     for key in full_input_dict.keys():
         if key == "location":
             location_list = full_input_dict["location"]
-            location_aid_filter = location_filter(location_list)
+            location_aid_filter = location_filter(location_list, filter_type)
             filters_dict.update(location_aid_filter)
 
         else:
@@ -186,16 +186,14 @@ def generate_assay_filter(
     final_filter_dict["assay_filters"]["logic"] = "and"
 
     if exclude_nocall is not None:
-        # no-call genotypes 
+        # no-call genotypes
         final_filter_dict["assay_filters"]["nocall_yn"] = not exclude_nocall
     if exclude_refdata is not None:
-        # reference genotypes        
+        # reference genotypes
         final_filter_dict["assay_filters"]["ref_yn"] = not exclude_refdata
     if exclude_halfref is not None:
         # half-reference genotypes
         final_filter_dict["assay_filters"]["halfref_yn"] = not exclude_halfref
-    
-
 
     return final_filter_dict
 
@@ -207,6 +205,7 @@ def final_payload(
     project_context,
     genome_reference,
     filter_type,
+    order=True,
     exclude_nocall=None,
     exclude_refdata=None,
     exclude_halfref=None
@@ -224,8 +223,8 @@ def final_payload(
         project_context,
         genome_reference,
         filter_type,
-        exclude_nocall, 
-        exclude_refdata, 
+        exclude_nocall,
+        exclude_refdata,
         exclude_halfref
     )
 
@@ -249,19 +248,29 @@ def final_payload(
             os.path.join(extract_utils_basepath, "return_columns_genotype.json"), "r"
         ) as infile:
             fields = json.load(infile)
+    elif filter_type == "genotype_only":
+        with open(
+            os.path.join(extract_utils_basepath, "return_columns_genotype_only.json"), "r"
+        ) as infile:
+            fields = json.load(infile)
 
-    order_by = [{"allele_id":"asc"}]
+    if order:
+        order_by = [{"allele_id":"asc"}]
 
-    # In order for output to be deterministic, we need to do a secondary sort by sample_id
-    # if it is present in the fields
-    sample_id_present = False
-    for field in fields:
-        if "sample_id" in field:
-            sample_id_present = True
-    if sample_id_present:
-        order_by.append({"sample_id":"asc"})
+        if any("locus_id" in field for field in fields):
+            order_by.insert(0, {"locus_id":"asc"})
 
-    final_payload["order_by"] = order_by
+        # In order for output to be deterministic, we need to do a secondary sort by sample_id
+        # if it is present in the fields
+        sample_id_present = False
+        for field in fields:
+            if "sample_id" in field:
+                sample_id_present = True
+        if sample_id_present:
+            order_by.append({"sample_id":"asc"})
+
+        final_payload["order_by"] = order_by
+
     final_payload["fields"] = fields
     final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter

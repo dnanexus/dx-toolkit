@@ -47,6 +47,8 @@ from ..exceptions import (
 )
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
+from ..dx_extract_utils.germline_utils import get_genotype_only_types, add_germline_base_sql, sort_germline_variant, \
+    harmonize_germline_sql, harmonize_germline_results, get_germline_ref_payload, update_genotype_only_ref
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -898,26 +900,46 @@ def extract_assay_germline(args):
 
     out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "germline")
 
-    payload = {}
+    filter_type = None
     if args.retrieve_allele:
-        payload, fields_list = final_payload(
-            full_input_dict=filter_dict,
-            name=selected_assay_name,
-            id=selected_assay_id,
-            project_context=project,
-            genome_reference=selected_ref_genome,
-            filter_type="allele",
-        )
+        filter_type = "allele"
     elif args.retrieve_annotation:
+        filter_type = "annotation"
+
+    if filter_type and filter_given:
         payload, fields_list = final_payload(
             full_input_dict=filter_dict,
             name=selected_assay_name,
             id=selected_assay_id,
             project_context=project,
             genome_reference=selected_ref_genome,
-            filter_type="annotation",
+            filter_type=filter_type,
         )
-    elif args.retrieve_genotype:
+
+        add_germline_base_sql(resp, payload)
+
+        if args.sql:
+            sql_results = raw_query_api_call(resp, payload)
+
+            if print_to_stdout:
+                print(sql_results)
+            else:
+                with open(out_file, "w") as sql_file:
+                    print(sql_results, file=sql_file)
+        else:
+            resp_raw = raw_api_call(resp, payload)
+            ordered_results = sorted(resp_raw["results"], key=sort_germline_variant)
+
+            csv_from_json(
+                out_file_name=out_file,
+                print_to_stdout=print_to_stdout,
+                sep="\t",
+                raw_results=ordered_results,
+                column_names=fields_list,
+                quote_char=str("|"),
+            )
+
+    if args.retrieve_genotype and filter_given:
         exclude_refdata: bool = additional_descriptor_info.get("exclude_refdata")
         exclude_halfref: bool = additional_descriptor_info.get("exclude_halfref")
         exclude_nocall: bool = additional_descriptor_info.get("exclude_nocall")
@@ -930,37 +952,78 @@ def extract_assay_germline(args):
             exclude_refdata,
             exclude_halfref)
 
-        payload, fields_list = final_payload(
+        # get a list of requested genotype types for the genotype table only queries
+        if "alleld_id" in filter_dict:
+            genotype_only_types = []
+        else:
+            genotype_only_types = get_genotype_only_types(filter_dict,
+                                                          exclude_refdata, exclude_halfref, exclude_nocall)
+
+        # get the payload for the genotype/allele table query for alternate genotype types
+        genotype_payload, fields_list = final_payload(
             full_input_dict=filter_dict,
             name=selected_assay_name,
             id=selected_assay_id,
             project_context=project,
             genome_reference=selected_ref_genome,
             filter_type="genotype",
-            exclude_nocall=exclude_nocall,  
-            exclude_refdata=exclude_refdata,
-            exclude_halfref=exclude_halfref,  
-
+            order=not genotype_only_types,
         )
 
-    if "CohortBrowser" in resp["recordTypes"]:
-        if resp.get("baseSql"):
-            payload["base_sql"] = resp.get("baseSql")
-        payload["filters"] = resp["filters"]
+        add_germline_base_sql(resp, genotype_payload)
 
-    #### Run api call to get sql or extract data ####
-    if filter_given:
+        genotype_only_payloads = []
+        if genotype_only_types:
+            # get the payloads for the genotype table only query
+            # assay_filter does not support "or" so there is a separate query for each partition
+            for i, genotype_only_type in enumerate(genotype_only_types):
+                genotype_only_filter_dict = filter_dict.copy()
+                if genotype_only_type == "ref":
+                    genotype_only_filter_dict["ref_yn"] = genotype_only_type == "ref"
+                elif genotype_only_type == "half":
+                    genotype_only_filter_dict["halfref_yn"] = genotype_only_type == "half"
+                elif genotype_only_type == "no-call":
+                    genotype_only_filter_dict["nocall_yn"] = genotype_only_type == "no-call"
+
+                genotype_only_payload, _ = final_payload(
+                    full_input_dict=genotype_only_filter_dict,
+                    name=selected_assay_name,
+                    id=selected_assay_id,
+                    project_context=project,
+                    genome_reference=selected_ref_genome,
+                    filter_type="genotype_only",
+                    exclude_refdata=genotype_only_type != "ref",
+                    exclude_halfref=genotype_only_type != "half",
+                    exclude_nocall=genotype_only_type != "no-call",
+                    order=i == len(genotype_only_types) - 1,
+                )
+
+                add_germline_base_sql(resp, genotype_only_payload)
+
+                genotype_only_payloads.append(genotype_only_payload)
+
         if args.sql:
-            sql_results = raw_query_api_call(resp, payload)
-            if args.retrieve_genotype:
-                try:
-                    geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
-                    geno_table = re.search(
-                        geno_table_regex, sql_results
-                    ).group()
-                except Exception:
-                        err_exit("Failed to find the table, {}, in the generated SQL".format(additional_descriptor_info["genotype_type_table"]), 
-                                 expected_exceptions=(AttributeError,))
+            # get the genotype/allele table query
+            genotype_sql_query = raw_query_api_call(resp, genotype_payload)[:-1]
+            try:
+                geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
+                re.search(geno_table_regex, genotype_sql_query).group()
+            except Exception:
+                err_exit("Failed to find the table, {}, in the generated SQL".format(
+                    additional_descriptor_info["genotype_type_table"]), expected_exceptions=(AttributeError,))
+            sql_queries = [genotype_sql_query]
+
+            # get the genotype table only query
+            # assay_filter does not support "or" so there is a separate query for each partition
+            for genotype_only_payload in genotype_only_payloads:
+                # join the allele table to get the ref, will join on locus_id
+                genotype_only_payload["fields"].append({"ref": "allele$ref"})
+                genotype_only_sql_query = raw_query_api_call(resp, genotype_only_payload)[:-1]
+                # update the query to add column in the genotype/allele table query and join on locus_id
+                sql_queries.append(harmonize_germline_sql(genotype_only_sql_query))
+
+            # combine the queries into a single query
+            sql_results = " UNION ".join(sql_queries) + ";"
 
             if print_to_stdout:
                 print(sql_results)
@@ -968,14 +1031,27 @@ def extract_assay_germline(args):
                 with open(out_file, "w") as sql_file:
                     print(sql_results, file=sql_file)
         else:
-            resp_raw = raw_api_call(resp, payload)
+            # get the list of dictionary results for the genotype/allele table query
+            ordered_results = []
+            genotype_resp_raw = raw_api_call(resp, genotype_payload)
+            ordered_results.extend(genotype_resp_raw["results"])
 
-            def sort_variant(d):
-                chrom, pos = d["allele_id"].split("_")[:2]
-                if chrom.isdigit():
-                    return int(chrom), '', int(pos)
-                return float('inf'), chrom, int(pos)
-            ordered_results = sorted(resp_raw["results"], key=sort_variant)
+            # get the list of dictionary results for each genotype table only query
+            for genotype_only_payload in genotype_only_payloads:
+                genotype_only_resp_raw = raw_api_call(resp, genotype_only_payload)
+                # add missing keys that are in the allele table part of the genotype/allele table query
+                ordered_results.extend(harmonize_germline_results(genotype_only_resp_raw["results"], fields_list))
+
+            if genotype_only_types:
+                # get the ref value from the allele table using locus ids
+                # ingestion of VCFs lines missing ALT is unsupported so the locus_id will exist in the allele table
+                # normalized ref values in the locus_id will match the ref value for missing ALT lines if they
+                # were ingested and locus_id could be parsed for the ref value
+                ref_payload = get_germline_ref_payload(ordered_results, genotype_payload)
+                locus_id_refs = raw_api_call(resp, ref_payload)
+                update_genotype_only_ref(ordered_results, locus_id_refs)
+
+            ordered_results.sort(key=sort_germline_variant)
 
             csv_from_json(
                 out_file_name=out_file,
