@@ -1437,7 +1437,8 @@ def new_project(args):
         inputs["monthlyComputeLimit"] = args.monthly_compute_limit
     if args.monthly_egress_bytes_limit is not None:
         inputs["monthlyEgressBytesLimit"] = args.monthly_egress_bytes_limit
-
+    if args.default_symlink is not None:
+        inputs["defaultSymlink"] = json.loads(args.default_symlink)
     try:
         resp = dxpy.api.project_new(inputs)
         if args.brief:
@@ -3963,7 +3964,7 @@ def ssh(args, ssh_config_verified=False):
     job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
-        err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
+        err_exit(f"{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
 
     if not ssh_config_verified:
         verify_ssh_config()
@@ -3991,6 +3992,8 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
+        if job_desc['state'] in ['done', 'failed', 'terminated']:
+            err_exit(f"\n{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
         time.sleep(1)
         job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
@@ -5795,6 +5798,7 @@ parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the 
                                 action='store_true')
 parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly project spending limit for compute')
 parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly project spending limit for egress (in Bytes)')
+parser_new_project.add_argument('--default-symlink', help='Default symlink for external store account')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
