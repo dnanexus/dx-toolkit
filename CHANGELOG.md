@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [370.1] - beta
+## [371.0] - beta
+
+### Fixed
+
+* `dx run --ssh` hanging if job has reused outputs
+
+## [370.2] - 2024.2.26
 
 ### Added
 
@@ -16,7 +22,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* Released Nextaur 1.7.1. It contains multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
+* Released Nextaur 1.7.3
+* Fix for occasional head job hang during upload, fix for "No such file or directory" errors on localized dx files
+* Mltiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
 
 ## [369.1] - 2024.2.13
 
