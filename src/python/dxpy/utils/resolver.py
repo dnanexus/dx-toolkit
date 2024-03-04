@@ -1022,7 +1022,7 @@ def resolve_multiple_existing_paths(paths):
     to_resolve_in_batch_paths = []  # Paths to resolve
     to_resolve_in_batch_inputs = []  # Project, folderpath, and entity name
     for path in paths:
-        project, folderpath, entity_name = resolve_path(path, expected='entity')
+        project, folderpath, entity_name, is_v2_path, etag = resolve_path(path, expected='entity')
         try:
             must_resolve, project, folderpath, entity_name = _check_resolution_needed(
                 path, project, folderpath, entity_name)

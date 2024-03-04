@@ -80,15 +80,15 @@ def download_one_v2_file(volume, path, etag, dest_filename, args):
         try:
             response = s3.head_object(Bucket=bucket_name, Key=path)
             if response['ETag'].replace('"', '') == etag:
-                s3.download_file(bucket_name, path, os.path.join(os.getcwd(), filename))
+                s3.download_file(bucket_name, path, os.path.join(os.getcwd(), dest_filename))
             else:
                 print(f"ETag mismatch for file {path}. Not downloading.")
                 print(f"ETag from server: {response['ETag']}, ETag from provided: {etag}")
         except Exception as e:
             print(f"Error occurred while checking ETag for file {path}: {str(e)}")
     else:
-        s3.download_file(bucket_name, path, os.path.join(os.getcwd(), filename))
-    print(f"Downloaded file s3://{bucket_name}:{path} to {os.path.join(os.getcwd(), filename)}")
+        s3.download_file(bucket_name, path, os.path.join(os.getcwd(), dest_filename))
+    print(f"Downloaded file s3://{bucket_name}:{path} to {os.path.join(os.getcwd(), dest_filename)}")
     
 
 def download_one_file(project, file_desc, dest_filename, args):
