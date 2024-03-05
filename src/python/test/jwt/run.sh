@@ -1,4 +1,5 @@
 main() {
+    set -x
     dx-download-all-inputs
 
     # check if subject_claims is an empty string
