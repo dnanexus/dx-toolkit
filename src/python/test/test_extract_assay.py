@@ -185,7 +185,27 @@ class TestDXExtractAssay(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(location_filter(location_list), expected_output)
+        self.assertEqual(location_filter(location_list, "allele"), expected_output)
+
+    def test_genotype_location_filter(self):
+        location_list = [
+            {
+                "chromosome": "18",
+                "starting_position": "47361",
+            }
+        ]
+
+        expected_output = {
+            "genotype$a_id": [
+                {
+                    "condition": "in",
+                    "values": [],
+                    "geno_bins": [{"chr": "18", "start": 47361, "end": 47361}],
+                }
+            ]
+        }
+
+        self.assertEqual(location_filter(location_list, "genotype"), expected_output)
 
     def test_generate_assay_filter(self):
         # A small payload, uses allele_rsid.json
