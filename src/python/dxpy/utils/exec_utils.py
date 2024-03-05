@@ -227,7 +227,7 @@ def parse_args_as_job_input(args, app_spec):
                 inputs[i] = json.loads(value)
             except ValueError:
                 from dxpy.utils.resolver import resolve_existing_path
-                project, path, results = resolve_existing_path(value, ask_to_resolve=False, describe={'id': True}, allow_mult=False)
+                project, path, results, is_v2_path, etag = resolve_existing_path(value, ask_to_resolve=False, describe={'id': True}, allow_mult=False)
                 print(project, path, results)
                 if results is None or len(results) != 1:
                     raise ValueError("Value {v} could not be resolved".format(v=value))

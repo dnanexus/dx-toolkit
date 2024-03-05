@@ -582,7 +582,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
         # 3. Supply --destination=NAME to the interior call of dx-build-applet.
         build_project_id = dxpy.WORKSPACE_ID
         if destination_override:
-            build_project_id, dest_folder, dest_applet_name = parse_destination(destination_override)
+            build_project_id, dest_folder, dest_applet_name, is_v2_path, etag = parse_destination(destination_override)
         if build_project_id is None:
             parser.error("Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
         if dest_applet_name:
@@ -787,7 +787,7 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
     # Prepare projects in which the app's underlying applets will be built (one per region).
     projects_by_region = None
     if mode == "applet" and destination_override:
-        working_project, override_folder, override_applet_name = parse_destination(destination_override)
+        working_project, override_folder, override_applet_name, is_v2_path, etag = parse_destination(destination_override)
         if kwargs.get("name"):
             if override_applet_name:
                 logger.warning("Name of the applet is set in both destination and extra args! "
@@ -1010,7 +1010,7 @@ def get_destination_region(destination):
     :rtype: str
     """
     if destination:
-        dest_project_id, _, _ = parse_destination(destination)
+        dest_project_id, _, _, is_v2_path, etag = parse_destination(destination)
     else:
         dest_project_id = dxpy.WORKSPACE_ID
     return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
@@ -1022,7 +1022,7 @@ def get_project_to_check(destination, extra_args):
     if "project" in extra_args:
         return extra_args["project"]
     if destination:
-        dest_project_id, _, _ = parse_destination(destination)
+        dest_project_id, _, _, is_v2_path, etag = parse_destination(destination)
         # checkFeatureAccess is not implemented on the container
         if dest_project_id.startswith("container-"):
             dest_project_id = dxpy.PROJECT_CONTEXT_ID
@@ -1167,7 +1167,7 @@ def _build_app(args, extra_args):
                     "Uploading the local nextflow source to the platform"
                 )
                 dest_project = get_project_to_check(args.destination, extra_args)
-                _, dest_folder, _ = parse_destination(args.destination)
+                _, dest_folder, _, is_v2_path, etag = parse_destination(args.destination)
                 dest_folder = dest_folder or ""
                 upload_destination_dir = os.path.join(
                     dest_folder, ".nf_source"

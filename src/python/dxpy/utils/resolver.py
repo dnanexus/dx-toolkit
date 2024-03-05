@@ -408,6 +408,14 @@ def resolve_container_id_or_name(raw_string, is_error=False, multi=False):
         # len(results) > 1 and multi
         return [result['id'] for result in results]
 
+def is_stringified_dxlink(path):
+    try:
+        possible_hash = json.loads(path)
+        if isinstance(possible_hash, dict) and '$dnanexus_link' in possible_hash:
+            return True
+    except:
+        pass
+    return False
 
 def _maybe_convert_stringified_dxlink(path):
     try:
@@ -419,6 +427,15 @@ def _maybe_convert_stringified_dxlink(path):
                   isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and
                   isinstance(possible_hash['$dnanexus_link'].get('id', None), basestring)):
                 return possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['id']
+            elif (isinstance(possible_hash['$dnanexus_link'], dict) and
+                  isinstance(possible_hash['$dnanexus_link'].get('project', None), basestring) and
+                  isinstance(possible_hash['$dnanexus_link'].get('volume', None), basestring) and
+                  isinstance(possible_hash['$dnanexus_link'].get('path', None), basestring)):
+                  etag = None
+                  if possible_hash['$dnanexus_link'].get('etag', None) is not None:
+                        etag = possible_hash['$dnanexus_link']['etag']
+                  return possible_hash['$dnanexus_link']['project'] + ':' + possible_hash['$dnanexus_link']['volume'] + ':' + possible_hash['$dnanexus_link']['path'] + (':' + etag if etag is not None else '')
+            
     except:
         pass
     return path
@@ -467,6 +484,12 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
       (job_id, None, output_name)
       where
         job_id and output_name are both non-null
+    
+    OR 
+      (project, volume, path)
+    
+    OR 
+      (project, volume, path, etag)
 
     '''
     # TODO: callers that intend to obtain a data object probably won't be happy
@@ -491,41 +514,57 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         if dxpy.WORKSPACE_ID is None:
             raise ResolutionError("Cannot resolve \":\": expected a project name or ID "
                                   "to the left of the colon, or for a current project to be set")
-        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), '/', None, None, None
     # Second easy case: empty string
     if path == '':
         if dxpy.WORKSPACE_ID is None:
             raise ResolutionError('Expected a project name or ID to the left of a colon, '
                                   'or for a current project to be set')
-        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), dxpy.config.get('DX_CLI_WD', '/'), None
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), dxpy.config.get('DX_CLI_WD', '/'), None, None, None
     # Third easy case: hash ID
     if is_container_id(path):
-        return ([path] if multi_projects else path), '/', None
+        return ([path] if multi_projects else path), '/', None, None, None
     elif is_hashid(path):
-        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), None, path
+        return ([dxpy.WORKSPACE_ID] if multi_projects else dxpy.WORKSPACE_ID), None, path, None, None
 
     # using a numerical sentinel value to indicate that it hasn't been
     # set in case dxpy.WORKSPACE_ID is actually None
     project = 0
     folderpath = None
     entity_name = None
+    is_v2_path = False
+    etag = None
     wd = dxpy.config.get('DX_CLI_WD', u'/')
+    
 
     # Test for multiple colons
     last_colon = get_last_pos_of_char(':', path)
-    if last_colon >= 0:
+    count = 0 
+    while last_colon >= 0:
+        count += 1
+        if count > 3:
+            raise ResolutionError('Cannot parse "' + path + '" as a path; at most three unescaped colon can be present')
         last_last_colon = get_last_pos_of_char(':', path[:last_colon])
-        if last_last_colon >= 0:
-            raise ResolutionError('Cannot parse "' + path + '" as a path; at most one unescaped colon can be present')
+        last_colon = last_last_colon
+    substrings = split_unescaped(':', path)    
 
-    substrings = split_unescaped(':', path)
+    if len(substrings) > 2:
+        # One of the following
+        # project-name-or-id:volume:path
+        # project-name-or-id:volume:path:etag
+        is_v2_path = True
+        project = resolve_container_id_or_name(substrings[0], is_error=True)
+        volume = substrings[1]
+        obj_path = substrings[2]
+        etag = substrings[3] if len(substrings) == 4 else None
+        return ([project] if multi_projects else project), volume, obj_path, is_v2_path, etag
 
-    if len(substrings) == 2:
+    elif len(substrings) == 2:
         # One of the following:
         # 1) job-id:fieldname
         # 2) project-name-or-id:folderpath/to/possible/entity
         if is_job_id(substrings[0]):
-            return ([substrings[0]] if multi_projects else substrings[0]), None, substrings[1]
+            return ([substrings[0]] if multi_projects else substrings[0]), None, substrings[1], is_v2_path, None
 
         if multi_projects:
             project_ids = resolve_container_id_or_name(substrings[0], is_error=True, multi=True)
@@ -559,9 +598,9 @@ def resolve_path(path, expected=None, multi_projects=False, allow_empty_string=T
         folderpath, entity_name = clean_folder_path(('' if folderpath.startswith('/') else wd + '/') + folderpath, expected)
 
     if multi_projects:
-        return (project_ids if project == 0 else [project]), folderpath, entity_name
+        return (project_ids if project == 0 else [project]), folderpath, entity_name, is_v2_path, None
     else:
-        return project, folderpath, entity_name
+        return project, folderpath, entity_name, is_v2_path, None
 
 def resolve_job_ref(job_id, name, describe={}):
     try:
@@ -983,7 +1022,7 @@ def resolve_multiple_existing_paths(paths):
     to_resolve_in_batch_paths = []  # Paths to resolve
     to_resolve_in_batch_inputs = []  # Project, folderpath, and entity name
     for path in paths:
-        project, folderpath, entity_name = resolve_path(path, expected='entity')
+        project, folderpath, entity_name, is_v2_path, etag = resolve_path(path, expected='entity')
         try:
             must_resolve, project, folderpath, entity_name = _check_resolution_needed(
                 path, project, folderpath, entity_name)
@@ -1060,7 +1099,11 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
     NOTE: if expected_classes is provided and conflicts with the class
     of the hash ID, it will return None for all fields.
     '''
-    project, folderpath, entity_name = resolve_path(path, expected=expected, allow_empty_string=allow_empty_string)
+    project, folder_or_volume, entity_name, is_v2_path, etag = resolve_path(path, expected=expected, allow_empty_string=allow_empty_string)
+    if is_v2_path:
+        return project, folder_or_volume, entity_name, is_v2_path, etag
+    else:
+        folderpath = folder_or_volume
     must_resolve, project, folderpath, entity_name = _check_resolution_needed(path,
                                                                               project,
                                                                               folderpath,
@@ -1075,7 +1118,7 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
         if len(results) == 0:
             # Could not resolve entity, so it is probably a folder
             folder = _resolve_folder(project, folderpath, entity_name)
-            return project, folder, None
+            return project, folder, None, None
         else:
             validated_results = _validate_resolution_output_length(path,
                                                                    entity_name,
@@ -1084,9 +1127,9 @@ def resolve_existing_path(path, expected=None, ask_to_resolve=True, expected_cla
                                                                    all_mult=all_mult,
                                                                    ask_to_resolve=ask_to_resolve)
             if is_job_id(project):
-                return None, None, validated_results
-            return project, None, validated_results
-    return project, folderpath, entity_name
+                return None, None, validated_results, is_v2_path, None
+            return project, None, validated_results, is_v2_path, None
+    return project, folderpath, entity_name, is_v2_path, None
 
 
 def check_folder_exists(project, path, folder_name):
@@ -1282,7 +1325,7 @@ def get_exec_handler(path, alias=None):
     if alias is None:
         try:
             # Look for applets and workflows
-            _project, _folderpath, entity_results = resolve_existing_path(path,
+            _project, _folderpath, entity_results, is_v2_path, etag = resolve_existing_path(path,
                                                                           expected='entity',
                                                                           ask_to_resolve=False,
                                                                           expected_classes=['applet', 'record', 'workflow'],
@@ -1343,7 +1386,7 @@ def resolve_to_objects_or_project(path, all_matching_results=False):
     a choice will be initiated if input is a tty, or else throw an error).
     '''
     # Attempt to resolve name
-    project, folderpath, entity_results = resolve_existing_path(path,
+    project, folderpath, entity_results, is_v2_path, etag = resolve_existing_path(path,
                                                                 expected='entity',
                                                                 allow_mult=True,
                                                                 all_mult=all_matching_results)
@@ -1353,7 +1396,7 @@ def resolve_to_objects_or_project(path, all_matching_results=False):
                                   '''" to an existing data object or to only a project;
                                   if you were attempting to refer to a project by name,
                                   please append a colon ":" to indicate that it is a project.''')
-    return project, folderpath, entity_results
+    return project, folderpath, entity_results, is_v2_path, etag
 
 # Generic function to parse an input key-value pair of the form '-ikey=val'
 # e.g. returns ("key", "val") in the example above

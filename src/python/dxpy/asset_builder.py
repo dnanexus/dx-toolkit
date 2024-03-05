@@ -188,7 +188,7 @@ def build_asset(args):
         asset_conf_file = os.path.join(args.src_dir, "dxasset.json")
 
         dxpy.api.system_whoami()
-        dest_project_name, dest_folder_name, dest_asset_name = parse_destination(args.destination)
+        dest_project_name, dest_folder_name, dest_asset_name, is_v2_path, etag = parse_destination(args.destination)
         if dest_project_name is None:
             raise AssetBuilderException("Can't build an asset without specifying a destination project; \
             please use the -d/--destination flag to explicitly specify a project")

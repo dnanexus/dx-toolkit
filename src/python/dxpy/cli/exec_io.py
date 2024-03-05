@@ -54,7 +54,7 @@ def parse_bool(string):
 def parse_obj(string, klass):
     if string == '':
         raise DXCLIError('Error: Nonempty string cannot be resolved')
-    project, path, entity_result = resolve_existing_path(string)
+    project, path, entity_result, is_v2_path, etag = resolve_existing_path(string)
     if entity_result is None:
         raise DXCLIError('Could not resolve \"' + string + '\" to a name or ID')
     if not entity_result['describe']['class'] == klass:

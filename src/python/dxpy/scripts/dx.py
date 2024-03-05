@@ -657,7 +657,7 @@ def invite(args):
     # should not hurt the path resolution.
     if ':' not in args.project:
         args.project += ':'
-    project, _none, _none = try_call(resolve_existing_path,
+    project, _none, _none, _, _ = try_call(resolve_existing_path,
                                      args.project, 'project')
     if args.invitee != 'PUBLIC' and '-' not in args.invitee and '@' not in args.invitee:
         args.invitee = 'user-' + args.invitee.lower()
@@ -675,7 +675,7 @@ def uninvite(args):
     # should not hurt the path resolution.
     if ':' not in args.project:
         args.project += ':'
-    project, _none, _none = try_call(resolve_existing_path,
+    project, _none, _none, _, _ = try_call(resolve_existing_path,
                                      args.project, 'project')
     if args.entity != 'PUBLIC' and '-' not in args.entity:
         args.entity = 'user-' + args.entity.lower()
@@ -727,7 +727,7 @@ def cmp_names(x):
     return x['describe']['name'].lower()
 
 def ls(args):
-    project, folderpath, entity_results = try_call(resolve_existing_path, # TODO: this needs to honor "ls -a" (all) (args.obj/args.folders/args.full)
+    project, folderpath, entity_results, _, _ = try_call(resolve_existing_path, # TODO: this needs to honor "ls -a" (all) (args.obj/args.folders/args.full)
                                                    args.path,
                                                    ask_to_resolve=False)
 
@@ -863,7 +863,7 @@ def rm(args):
         for path in args.paths:
             try:
                 with nostderr():
-                    project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
+                    project, folderpath, entity_results, is_v2_path, etag = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
                 if folderpath == '/' and entity_results is None:
                     print("")
                     print("===========================================================================")
@@ -883,7 +883,7 @@ def rm(args):
     for path in args.paths:
         # Resolve the path and add it to the list
         try:
-            project, folderpath, entity_results = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
+            project, folderpath, entity_results, is_v2_path, etag = resolve_existing_path(path, allow_mult=True, all_mult=args.all)
         except Exception as details:
             print(fill('Could not resolve "' + path + '": ' + str(details)))
             had_error = True
@@ -1017,7 +1017,7 @@ def mv(args):
             err_exit('The destination folder does not exist', 3)
 
         # Either rename the data object or rename the folder
-        src_proj, src_path, src_results = try_call(resolve_existing_path,
+        src_proj, src_path, src_results, is_v2_path, etag = try_call(resolve_existing_path,
                                                    args.sources[0],
                                                    allow_mult=True, all_mult=args.all)
 
@@ -1051,7 +1051,7 @@ def mv(args):
     src_objects = []
     src_folders = []
     for source in args.sources:
-        src_proj, src_folderpath, src_results = try_call(resolve_existing_path,
+        src_proj, src_folderpath, src_results, is_v2_path, etag = try_call(resolve_existing_path,
                                                          source,
                                                          allow_mult=True, all_mult=args.all)
         if src_proj != dest_proj:
@@ -1071,7 +1071,7 @@ def mv(args):
 
 
 def tree(args):
-    project, folderpath, _none = try_call(resolve_existing_path, args.path,
+    project, folderpath, _none, is_v2_path, etag = try_call(resolve_existing_path, args.path,
                                           expected='folder')
 
     if project is None:
@@ -1225,7 +1225,7 @@ def describe(args):
         # Otherwise, attempt to look for it as a data object or
         # execution
         try:
-            project, _folderpath, entity_results = resolve_existing_path(args.path,
+            project, _folderpath, entity_results, is_v2_path, etag = resolve_existing_path(args.path,
                                                                          expected='entity',
                                                                          ask_to_resolve=False,
                                                                          describe=json_input)
@@ -1458,7 +1458,7 @@ def new_record(args):
     init_from = None
 
     if args.init is not None:
-        init_project, _init_folder, init_result = try_call(resolve_existing_path,
+        init_project, _init_folder, init_result, is_v2_path, etag = try_call(resolve_existing_path,
                                                            args.init,
                                                            expected='entity')
         init_from = dxpy.DXRecord(dxid=init_result['id'], project=init_project)
@@ -1489,7 +1489,7 @@ def new_record(args):
 def set_visibility(args):
     had_error = False
     # Attempt to resolve name
-    _project, _folderpath, entity_results = try_call(resolve_existing_path,
+    _project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_existing_path,
                                                      args.path,
                                                      expected='entity',
                                                      allow_mult=True, all_mult=args.all)
@@ -1510,7 +1510,7 @@ def set_visibility(args):
 
 def get_details(args):
     # Attempt to resolve name
-    _project, _folderpath, entity_result = try_call(resolve_existing_path,
+    _project, _folderpath, entity_result, is_v2_path, etag = try_call(resolve_existing_path,
                                                     args.path, expected='entity')
 
     if entity_result is None:
@@ -1524,7 +1524,7 @@ def get_details(args):
 def set_details(args):
     had_error = False
     # Attempt to resolve name
-    _project, _folderpath, entity_results = try_call(resolve_existing_path,
+    _project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_existing_path,
                                                      args.path, expected='entity',
                                                      allow_mult=True, all_mult=args.all)
 
@@ -1570,7 +1570,7 @@ def set_details(args):
 def add_types(args):
     had_error = False
     # Attempt to resolve name
-    _project, _folderpath, entity_results = try_call(resolve_existing_path,
+    _project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_existing_path,
                                                      args.path,
                                                      expected='entity',
                                                      allow_mult=True, all_mult=args.all)
@@ -1591,7 +1591,7 @@ def add_types(args):
 def remove_types(args):
     had_error = False
     # Attempt to resolve name
-    _project, _folderpath, entity_results = try_call(resolve_existing_path,
+    _project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_existing_path,
                                                      args.path,
                                                      expected='entity',
                                                      allow_mult=True, all_mult=args.all)
@@ -1612,7 +1612,7 @@ def remove_types(args):
 def add_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
 
@@ -1647,7 +1647,7 @@ def add_tags(args):
 def remove_tags(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
 
@@ -1682,7 +1682,7 @@ def remove_tags(args):
 def rename(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
 
@@ -1708,7 +1708,7 @@ def rename(args):
 def set_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
 
@@ -1742,7 +1742,7 @@ def set_properties(args):
 def unset_properties(args):
     had_error = False
     # Attempt to resolve name
-    project, _folderpath, entity_results = try_call(resolve_to_objects_or_project,
+    project, _folderpath, entity_results, is_v2_path, etag = try_call(resolve_to_objects_or_project,
                                                     args.path,
                                                     args.all)
     properties = {}
@@ -1776,7 +1776,7 @@ def unset_properties(args):
 
 
 def make_download_url(args):
-    project, _folderpath, entity_result = try_call(resolve_existing_path, args.path, expected='entity')
+    project, _folderpath, entity_result, is_v2_path, etag = try_call(resolve_existing_path, args.path, expected='entity')
     if entity_result is None:
         err_exit(fill('Could not resolve ' + args.path + ' to a data object'), 3)
 
@@ -1955,7 +1955,7 @@ def get(args):
         desc = dxpy.api.global_workflow_describe(args.path)
         entity_result = {"id": desc["id"], "describe": desc}
     else:
-        project, _folderpath, entity_result = try_call(resolve_existing_path,
+        project, _folderpath, entity_result, is_v2_path, etag = try_call(resolve_existing_path,
                                                        args.path,
                                                        expected='entity')
 
@@ -1985,7 +1985,8 @@ def get(args):
 
 def cat(args):
     for path in args.path:
-        project, _folderpath, entity_result = try_call(resolve_existing_path, path)
+        # TODO v2
+        project, _folderpath, entity_result, is_v2_path, etag = try_call(resolve_existing_path, path)
 
         if entity_result is None:
             err_exit('Could not resolve ' + path + ' to a data object', 3)
@@ -2037,7 +2038,7 @@ def download_or_cat(args):
 
 def head(args):
     # Attempt to resolve name
-    project, _folderpath, entity_result = try_call(resolve_existing_path,
+    project, _folderpath, entity_result, is_v2_path, etag = try_call(resolve_existing_path,
                                                    args.path, expected='entity')
     if entity_result is None:
         err_exit('Could not resolve ' + args.path + ' to a data object', 3)
@@ -2197,7 +2198,7 @@ def find_executions(args):
         if args.project is not None:
             if get_last_pos_of_char(':', args.project) == -1:
                 args.project = args.project + ':'
-            project, _none, _none = try_call(resolve_existing_path,
+            project, _none, _none, is_v2_path, etag = try_call(resolve_existing_path,
                                              args.project, 'project')
         if args.user is not None and args.user != 'self' and not args.user.startswith('user-'):
             args.user = 'user-' + args.user.lower()
@@ -2454,7 +2455,7 @@ def find_data(args):
             err_exit(exception=DXParserError('Cannot supply both --project and --path PROJECTID:FOLDERPATH.'),
                      expected_exceptions=(DXParserError,))
 
-        args.project, _none, _none = try_call(resolve_existing_path,
+        args.project, _none, _none, is_v2_path, etag = try_call(resolve_existing_path,
                                               args.project, 'project')
 
     if args.folder is not None and not args.folder.startswith('/'):
@@ -2612,7 +2613,7 @@ def update_project(args):
     if ':' not in args.project_id:
         args.project_id += ':'
 
-    project, _none, _none = try_call(resolve_existing_path,
+    project, _none, _none, is_v2_path, etag = try_call(resolve_existing_path,
                                      args.project_id, 'project')
     try:
         results = dxpy.api.project_update(object_id=project, input_params=input_params)
@@ -2633,7 +2634,7 @@ def close(args):
     for path in args.path:
         # Attempt to resolve name
         try:
-            project, _folderpath, entity_results = resolve_existing_path(path,
+            project, _folderpath, entity_results, is_v2_path, etag = resolve_existing_path(path,
                                                                          expected='entity',
                                                                          allow_mult=True,
                                                                          all_mult=args.all)
@@ -2683,7 +2684,7 @@ def wait(args):
         else:
             # Attempt to resolve name
             try:
-                project, _folderpath, entity_result = resolve_existing_path(path, expected='entity')
+                project, _folderpath, entity_result, is_v2_path, etag = resolve_existing_path(path, expected='entity')
             except:
                 project, entity_result = None, None
 
@@ -2718,7 +2719,7 @@ def build(args):
         :rtype: dict
         """
         exec_describe_fields={'fields':{"properties":True, "details":True},'defaultFields':True}
-        _, _, exec_result = try_call(resolve_existing_path,
+        _, _, exec_result, is_v2_path, etag = try_call(resolve_existing_path,
                                      source_exec_path,
                                      expected='entity',
                                      ask_to_resolve=False,
@@ -2990,7 +2991,7 @@ def list_database_files(args):
             entity_result = {"id": desc["id"], "describe": desc}
         else:
         # otherwise it was provided as a path, so try and resolve
-            project, _folderpath, entity_result = try_call(resolve_existing_path,
+            project, _folderpath, entity_result, is_v2_path, etag = try_call(resolve_existing_path,
                                                            args.database,
                                                            expected='entity')
 
@@ -3575,7 +3576,7 @@ def run(args):
         dest_proj = resolve_container_id_or_name(args.project, is_error=True, multi=False)
 
     if args.folder is not None:
-        dest_proj, dest_path, _none = try_call(resolve_existing_path,
+        dest_proj, dest_path, _none, is_v2_path, etag = try_call(resolve_existing_path,
                                                args.folder,
                                                expected='folder')
 
@@ -3587,7 +3588,7 @@ def run(args):
     if args.stage_output_folder or args.stage_relative_output_folder:
         stage_folders = {}
         for stage, stage_folder in args.stage_output_folder:
-            _proj, stage_folder, _none = try_call(resolve_existing_path,
+            _proj, stage_folder, _none, is_v2_path, etag = try_call(resolve_existing_path,
                                                   stage_folder,
                                                   expected='folder')
             stage_folders[stage] = stage_folder
