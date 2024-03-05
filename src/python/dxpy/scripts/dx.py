@@ -2101,7 +2101,7 @@ def upload_one(args):
         folder = dxpy.config.get('DX_CLI_WD', '/')
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
-        project, folder, name = try_call(resolve_path, args.path)
+        project, folder, name, is_v2_path, etag = try_call(resolve_path, args.path)
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
 
