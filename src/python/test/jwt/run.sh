@@ -5,6 +5,8 @@ main() {
     if [ -z "$subject_claims" ]; then
         token=$(dx-jobutil-get-identity-token --aud "$audience")
     else
+        subject_claims=$(printf ",%s" "${subject_claims[@]}")
+        subject_claims=${subject_claims:1}
         token=$(dx-jobutil-get-identity-token --aud "$audience" --subject_claims "$subject_claims")
     fi
 
