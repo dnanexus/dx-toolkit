@@ -8,6 +8,7 @@ install_dxpy_from_branch() {
 }
 
 main() {
+    install_dxpy_from_branch
     dx-download-all-inputs
 
     # check if subject_claims is an empty string
