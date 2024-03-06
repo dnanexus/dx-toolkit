@@ -30,6 +30,8 @@ import sys
 from unittest.mock import patch
 from io import StringIO
 
+from parameterized import parameterized
+
 from dxpy_testutil import cd
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
@@ -55,6 +57,9 @@ class TestDXExtractAssay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         test_project_name = "dx-toolkit_test_data"
+        cls.test_v1_record = "{}:/Extract_Assay_Germline/test01_dataset".format(
+            test_project_name
+        )
         cls.test_record = "{}:/Extract_Assay_Germline/test01_v1_0_1_dataset".format(
             test_project_name
         )
@@ -86,10 +91,7 @@ class TestDXExtractAssay(unittest.TestCase):
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
         # Expected Results
         expected_assay_name = "test01_assay"
-        expected_assay_id = {
-            'STAGE': "<TODO:stage_assay_uuid>",
-            'PROD': "<TODO:prod_assay_uuid>",
-        }
+        expected_assay_id = "cc5dcc31-000c-4a2c-b225-ecad6233a0a3"
         expected_ref_genome = "GRCh38.92"
         expected_additional_descriptor_info = {
             "exclude_refdata": True,
@@ -112,7 +114,7 @@ class TestDXExtractAssay(unittest.TestCase):
         )
 
         self.assertEqual(expected_assay_name, selected_assay_name)
-        self.assertIn(selected_assay_id, expected_assay_id.values())
+        self.assertEqual(expected_assay_id, selected_assay_id)
         self.assertEqual(expected_ref_genome, selected_ref_genome)
         self.assertEqual(expected_additional_descriptor_info, additional_descriptor_info)
 
@@ -497,14 +499,18 @@ class TestDXExtractAssay(unittest.TestCase):
         self.assertEqual(process1.communicate(), process2.communicate())
 
 
-    def test_retrieve_genotype(self):
+    @parameterized.expand([
+        "test_record",
+        "test_v1_record",
+    ])
+    def test_retrieve_genotype(self, record):
         """Testing --retrieve-genotype functionality"""
         allele_genotype_type_filter = json.dumps({
             "allele_id": ["18_47408_G_A"], 
             "genotype_type": ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]
             })
         expected_result = "sample_1_3\t18_47408_G_A\t18_47408_G_A\t18\t47408\tG\tA\thet-ref"
-        command = ["dx", "extract_assay", "germline", self.test_record, "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
+        command = ["dx", "extract_assay", "germline", getattr(self, record), "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
         self.assertIn(expected_result, process.communicate()[0])
 
