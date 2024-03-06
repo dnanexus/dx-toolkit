@@ -51,7 +51,7 @@ def main(aud, subject_claims):
         subject_claims = []
         for subject_claim in subject_claims:
             subject_claims.extend(subject_claim.split(","))
-        job_get_identity_token_input["subject_claims"] = subject_claims
+        job_get_identity_token_input["subject_claims"] = subject_claim
 
     # Call job-xxxx/getIdentityToken
     if "DX_JOB_ID" in os.environ:
