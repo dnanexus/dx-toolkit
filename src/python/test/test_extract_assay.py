@@ -55,7 +55,10 @@ class TestDXExtractAssay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         test_project_name = "dx-toolkit_test_data"
-        cls.test_record = "{}:Extract_Assay_Germline/test01_dataset".format(
+        cls.test_record = "{}:/Extract_Assay_Germline/test01_v1_0_1_dataset".format(
+            test_project_name
+        )
+        cls.test_non_alt_record = "{}:/Extract_Assay_Germline/test03_dataset".format(
             test_project_name
         )
         cls.output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
@@ -83,9 +86,17 @@ class TestDXExtractAssay(unittest.TestCase):
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
         # Expected Results
         expected_assay_name = "test01_assay"
-        expected_assay_id = "6a25ebd7-c304-4308-84c8-ca93da19caed"
+        expected_assay_id = {
+            'STAGE': "<TODO:stage_assay_uuid>",
+            'PROD': "<TODO:prod_assay_uuid>",
+        }
         expected_ref_genome = "GRCh38.92"
-        expected_additional_descriptor_info = {"genotype_type_table": "genotype_alt_read_optimized"}
+        expected_additional_descriptor_info = {
+            "exclude_refdata": True,
+            "exclude_halfref": True,
+            "exclude_nocall": True,
+            "genotype_type_table": "genotype_alt_read_optimized",
+        }
 
         (
             selected_assay_name,
@@ -101,7 +112,7 @@ class TestDXExtractAssay(unittest.TestCase):
         )
 
         self.assertEqual(expected_assay_name, selected_assay_name)
-        self.assertEqual(expected_assay_id, selected_assay_id)
+        self.assertIn(selected_assay_id, expected_assay_id.values())
         self.assertEqual(expected_ref_genome, selected_ref_genome)
         self.assertEqual(expected_additional_descriptor_info, additional_descriptor_info)
 
@@ -337,7 +348,7 @@ class TestDXExtractAssay(unittest.TestCase):
     def test_bad_rsid(self):
         filter = {"rsid": ["rs1342568097","rs1342568098"]}
         test_project = "dx-toolkit_test_data"
-        test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
+        test_record = "{}:Extract_Assay_Germline/test01_v1_0_1_dataset".format(test_project)
 
         command = ["dx", "extract_assay", "germline", test_record, "--retrieve-allele", json.dumps(filter)]
         process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
@@ -496,6 +507,28 @@ class TestDXExtractAssay(unittest.TestCase):
         command = ["dx", "extract_assay", "germline", self.test_record, "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
         self.assertIn(expected_result, process.communicate()[0])
+
+
+    def test_retrieve_genotype(self):
+        """Testing --retrieve-genotype functionality"""
+        location_genotype_type_filter = json.dumps({
+            "location": [{
+                "chromosome": "20",
+                "starting_position": "14370",
+            }],
+            "genotype_type": ["ref", "half", "no-call"]
+        })
+        # not a comprehensive list
+        expected_results = [
+            "S01_m_m\t\t20_14370_G_A\t20\t14370\tG\t\tno-call",
+            "S02_m_0\t\t20_14370_G_A\t20\t14370\tG\t\thalf",
+            "S06_0_m\t\t20_14370_G_A\t20\t14370\tG\t\thalf",
+            "S07_0_0\t\t20_14370_G_A\t20\t14370\tG\t\tref",
+        ]
+        command = ["dx", "extract_assay", "germline", self.test_non_alt_record, "--retrieve-genotype", location_genotype_type_filter, "-o", "-"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+        result = process.communicate()[0]
+        [self.assertIn(expected_result, result) for expected_result in expected_results]
 
     ###########
     # Malformed command lines
