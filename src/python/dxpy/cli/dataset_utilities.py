@@ -953,7 +953,7 @@ def extract_assay_germline(args):
             exclude_halfref)
 
         # get a list of requested genotype types for the genotype table only queries
-        if "alleld_id" in filter_dict:
+        if "allele_id" in filter_dict:
             genotype_only_types = []
         else:
             genotype_only_types = get_genotype_only_types(filter_dict,
