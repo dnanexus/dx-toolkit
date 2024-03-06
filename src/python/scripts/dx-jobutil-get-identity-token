@@ -49,7 +49,7 @@ def main(aud, subject_claims):
     if subject_claims is not None:
         # Iterate over subject_claims and flatten them into a single list
         subject_claims_input = []
-        for subject_claim in subject_claims:
+        for subject_claim in subject_claims_input:
             subject_claims_input.extend(subject_claim.split(","))
             # DEBUG
             print(subject_claims)
