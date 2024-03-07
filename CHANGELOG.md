@@ -6,13 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Removed
-
-* For Nextflow applets, removed allProjects: VIEW access. They will have only UPLOAD access to the current project context.
-
 ### Fixed
 
 * Released Nextaur 1.7.4: Fixes error when multiple Docker images with the same name and digest are cached.
+
+### Removed
+
+* For Nextflow applets, removed allProjects: VIEW access. They will have only UPLOAD access to the current project context.
 
 ## [371.0] - beta
 
