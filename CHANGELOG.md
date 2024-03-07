@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Released Nextaur 1.7.4: Fixes error when multiple Docker images with the same name and digest are cached.
+
 ## [371.0] - beta
 
 ### Fixed
