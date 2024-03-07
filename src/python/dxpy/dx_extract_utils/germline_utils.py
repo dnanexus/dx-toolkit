@@ -3,10 +3,25 @@ import os
 import re
 
 from .filter_to_payload import extract_utils_basepath
+from .input_validation import GENOTYPE_TYPES
 
+
+GENOTYPE_ONLY_TYPES = (
+    "ref",
+    "no-call",
+)
 
 SELECT_LIST_REGEX = r"SELECT\s+(DISTINCT\s+)?(.+?)\s+FROM"
 NAMED_EXPRESSION_REGEX = r"(`?(\w+)?`?\.)?`?(\w+)`?( AS `?(\w+)`?)?"
+
+
+def get_genotype_types(filter_dict):
+    """
+    Returns a list of genotype types for the filter that are use in genotype and allele table queries.
+    """
+
+    genotype_types = filter_dict.get("genotype_type") or GENOTYPE_TYPES
+    return [genotype_type for genotype_type in genotype_types if genotype_type not in GENOTYPE_ONLY_TYPES]
 
 
 def get_genotype_only_types(filter_dict, exclude_refdata, exclude_halfref, exclude_nocall):
@@ -79,7 +94,12 @@ def _harmonize_sql_select_named_expression(sql, return_columns, **kwargs):
             select_lists.append("NULL AS `{return_column}`".format(return_column=return_column))
     select_list = ", ".join(select_lists)
 
-    return re.sub(SELECT_LIST_REGEX, "SELECT {select_list} FROM".format(select_list=select_list), sql)
+    distinct = re.match(SELECT_LIST_REGEX, sql).group(1)
+    return re.sub(
+        SELECT_LIST_REGEX,
+        "SELECT {distinct}{select_list} FROM".format(distinct=distinct, select_list=select_list),
+        sql,
+    )
 
 
 def harmonize_germline_sql(sql):

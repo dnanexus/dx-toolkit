@@ -8,6 +8,16 @@ maxitem_message = "Too many items given in field {}, maximum is {}"
 python_version = sys.version_info.major
 
 
+GENOTYPE_TYPES = (
+    "ref",
+    "het-ref",
+    "hom",
+    "het-alt",
+    "half",
+    "no-call",
+)
+
+
 def is_list_of_strings(object):
     if not isinstance(object, list):
         return False
@@ -204,7 +214,7 @@ def validate_filter(filter, filter_type):
 
             # Check against allowed values
             for item in filter["genotype_type"]:
-                if item not in ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]:
+                if item not in GENOTYPE_TYPES:
                     err_exit(malformed_filter.format("genotype_type") +"\nvalue {} is not a valid genotype_type".format(item))
 
             # Check for too many values given
