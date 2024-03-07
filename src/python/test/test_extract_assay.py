@@ -30,6 +30,8 @@ import sys
 from unittest.mock import patch
 from io import StringIO
 
+from parameterized import parameterized
+
 from dxpy_testutil import cd
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
@@ -55,7 +57,13 @@ class TestDXExtractAssay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         test_project_name = "dx-toolkit_test_data"
-        cls.test_record = "{}:Extract_Assay_Germline/test01_dataset".format(
+        cls.test_v1_record = "{}:/Extract_Assay_Germline/test01_dataset".format(
+            test_project_name
+        )
+        cls.test_record = "{}:/Extract_Assay_Germline/test01_v1_0_1_dataset".format(
+            test_project_name
+        )
+        cls.test_non_alt_record = "{}:/Extract_Assay_Germline/test03_dataset".format(
             test_project_name
         )
         cls.output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
@@ -83,9 +91,14 @@ class TestDXExtractAssay(unittest.TestCase):
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
         # Expected Results
         expected_assay_name = "test01_assay"
-        expected_assay_id = "6a25ebd7-c304-4308-84c8-ca93da19caed"
+        expected_assay_id = "cc5dcc31-000c-4a2c-b225-ecad6233a0a3"
         expected_ref_genome = "GRCh38.92"
-        expected_additional_descriptor_info = {"genotype_type_table": "genotype_alt_read_optimized"}
+        expected_additional_descriptor_info = {
+            "exclude_refdata": True,
+            "exclude_halfref": True,
+            "exclude_nocall": True,
+            "genotype_type_table": "genotype_alt_read_optimized",
+        }
 
         (
             selected_assay_name,
@@ -185,7 +198,27 @@ class TestDXExtractAssay(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(location_filter(location_list), expected_output)
+        self.assertEqual(location_filter(location_list, "allele"), expected_output)
+
+    def test_genotype_location_filter(self):
+        location_list = [
+            {
+                "chromosome": "18",
+                "starting_position": "47361",
+            }
+        ]
+
+        expected_output = {
+            "genotype$a_id": [
+                {
+                    "condition": "in",
+                    "values": [],
+                    "geno_bins": [{"chr": "18", "start": 47361, "end": 47361}],
+                }
+            ]
+        }
+
+        self.assertEqual(location_filter(location_list, "genotype"), expected_output)
 
     def test_generate_assay_filter(self):
         # A small payload, uses allele_rsid.json
@@ -317,7 +350,7 @@ class TestDXExtractAssay(unittest.TestCase):
     def test_bad_rsid(self):
         filter = {"rsid": ["rs1342568097","rs1342568098"]}
         test_project = "dx-toolkit_test_data"
-        test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
+        test_record = "{}:Extract_Assay_Germline/test01_v1_0_1_dataset".format(test_project)
 
         command = ["dx", "extract_assay", "germline", test_record, "--retrieve-allele", json.dumps(filter)]
         process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
@@ -466,16 +499,42 @@ class TestDXExtractAssay(unittest.TestCase):
         self.assertEqual(process1.communicate(), process2.communicate())
 
 
-    def test_retrieve_genotype(self):
+    @parameterized.expand([
+        "test_record",
+        "test_v1_record",
+    ])
+    def test_retrieve_genotype(self, record):
         """Testing --retrieve-genotype functionality"""
         allele_genotype_type_filter = json.dumps({
             "allele_id": ["18_47408_G_A"], 
             "genotype_type": ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]
             })
         expected_result = "sample_1_3\t18_47408_G_A\t18_47408_G_A\t18\t47408\tG\tA\thet-ref"
-        command = ["dx", "extract_assay", "germline", self.test_record, "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
+        command = ["dx", "extract_assay", "germline", getattr(self, record), "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
         self.assertIn(expected_result, process.communicate()[0])
+
+
+    def test_retrieve_genotype(self):
+        """Testing --retrieve-genotype functionality"""
+        location_genotype_type_filter = json.dumps({
+            "location": [{
+                "chromosome": "20",
+                "starting_position": "14370",
+            }],
+            "genotype_type": ["ref", "half", "no-call"]
+        })
+        # not a comprehensive list
+        expected_results = [
+            "S01_m_m\t\t20_14370_G_A\t20\t14370\tG\t\tno-call",
+            "S02_m_0\t\t20_14370_G_A\t20\t14370\tG\t\thalf",
+            "S06_0_m\t\t20_14370_G_A\t20\t14370\tG\t\thalf",
+            "S07_0_0\t\t20_14370_G_A\t20\t14370\tG\t\tref",
+        ]
+        command = ["dx", "extract_assay", "germline", self.test_non_alt_record, "--retrieve-genotype", location_genotype_type_filter, "-o", "-"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+        result = process.communicate()[0]
+        [self.assertIn(expected_result, result) for expected_result in expected_results]
 
     ###########
     # Malformed command lines
