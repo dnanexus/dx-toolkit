@@ -28,7 +28,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.7.3
 * Fix for occasional head job hang during upload, fix for "No such file or directory" errors on localized dx files
-* Mltiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
+* Multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
 
 ## [369.1] - 2024.2.13
 
