@@ -48,7 +48,7 @@ from ..exceptions import (
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.germline_utils import get_genotype_only_types, add_germline_base_sql, sort_germline_variant, \
-    harmonize_germline_sql, harmonize_germline_results, get_germline_ref_payload, update_genotype_only_ref
+    harmonize_germline_sql, harmonize_germline_results, get_germline_ref_payload, update_genotype_only_ref, infer_genotype_type
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -756,6 +756,26 @@ def validate_filter_applicable_genotype_types(
                     "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!"
                 )
 
+def retrieve_samples(resp, assay_name: str, assay_id: str) -> list:
+    """
+    Get the list of sample_ids from the sample table for the selected assay.
+    """
+    sample_payload = {
+        "project_context": resp["datasetRecordProject"],
+        "fields": [
+            {"sample_id": "sample$sample_id"},
+        ],
+        "raw_filters": {
+            "assay_filters": {
+                "name": assay_name,
+                "id": assay_id,
+                }   
+            }
+        }
+    
+    
+    return  [_["sample_id"] for _ in raw_api_call(resp, sample_payload)["results"]]
+
 
 def extract_assay_germline(args):
     """
@@ -1050,6 +1070,12 @@ def extract_assay_germline(args):
                 ref_payload = get_germline_ref_payload(ordered_results, genotype_payload)
                 locus_id_refs = raw_api_call(resp, ref_payload)
                 update_genotype_only_ref(ordered_results, locus_id_refs)
+
+            if args.infer_ref or args.infer_nocall:
+                samples = retrieve_samples(resp, project, selected_assay_name, selected_assay_id)
+                type_to_infer = "ref" if args.infer_ref else "no-call"
+                infered_entries = infer_genotype_type(samples, ordered_results, type_to_infer)
+                ordered_results.extend(infered_entries)
 
             ordered_results.sort(key=sort_germline_variant)
 
