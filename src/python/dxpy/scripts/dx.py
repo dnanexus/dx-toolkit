@@ -809,7 +809,7 @@ def mkdir(args):
     for path in args.paths:
         # Resolve the path and add it to the list
         try:
-            project, folderpath, _none = resolve_path(path, expected='folder')
+            project, folderpath, _none, _, _ = resolve_path(path, expected='folder')
         except ResolutionError as details:
             print(fill('Could not resolve "' + path + '": ' + str(details)))
             had_error = True
@@ -829,7 +829,7 @@ def rmdir(args):
     had_error = False
     for path in args.paths:
         try:
-            project, folderpath, _none = resolve_path(path, expected='folder')
+            project, folderpath, _none, _, _ = resolve_path(path, expected='folder')
         except ResolutionError as details:
             print(fill('Could not resolve "' + path + '": ' + str(details)))
             had_error = True
@@ -992,7 +992,7 @@ def rmproject(args):
 
 # ONLY for within the SAME project.  Will exit fatally otherwise.
 def mv(args):
-    dest_proj, dest_path, _none = try_call(resolve_path, args.destination, expected='folder')
+    dest_proj, dest_path, _none, _, _ = try_call(resolve_path, args.destination, expected='folder')
     try:
         if dest_path is None:
             raise ValueError()
@@ -1468,7 +1468,7 @@ def new_record(args):
         folder = dxpy.config.get('DX_CLI_WD', '/')
         name = None
     else:
-        project, folder, name = try_call(resolve_path, args.output)
+        project, folder, name, is_v2_path, etag = try_call(resolve_path, args.output)
 
     dxrecord = None
     try:
@@ -2069,6 +2069,7 @@ def head(args):
             err_exit()
 
 def upload(args, **kwargs):
+
     if args.output is not None and args.path is not None:
         raise DXParserError('Error: Cannot provide both the -o/--output and --path/--destination arguments')
     elif args.path is None:
@@ -2084,26 +2085,56 @@ def upload(args, **kwargs):
         # Called as "dx upload x y --dest /z", z is implicitly a folder, so append a slash to avoid incorrect path
         # resolution.
         args.path += "/"
-
     paths = copy.copy(args.filename)
     for path in paths:
         args.filename = path
         upload_one(args, **kwargs)
 
 upload_seen_paths = set()
+
+def upload_one_v2_file(volume, path, etag, args):
+    import boto3
+    s3 = boto3.client('s3')
+    bucket_name = 'dnanexus-dev-comp14s2' or volume
+    filename = os.path.basename(path)
+    print(path)
+    print(filename)
+    if etag is not None:
+        try:
+            response = s3.head_object(Bucket=bucket_name, Key=path)
+            if response['ETag'].replace('"', '') == etag:
+                s3.upload_file(path, bucket_name, filename)
+            else:
+                print(f"ETag mismatch for file {path}. Not uploading.")
+                print(f"ETag from server: {response['ETag']}, ETag from provided: {etag}")
+        except Exception as e:
+            print(f"Error occurred while checking ETag for file {path}: {str(e)}")
+    else:
+        s3.upload_file(path, bucket_name, path)
+
 def upload_one(args):
     try_call(process_dataobject_args, args)
 
     args.show_progress = args.show_progress and not args.brief
+    print(args.path)
 
     if args.path is None:
         project = dxpy.WORKSPACE_ID
-        folder = dxpy.config.get('DX_CLI_WD', '/')
+        folder_or_volume = dxpy.config.get('DX_CLI_WD', '/')
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
-        project, folder, name, is_v2_path, etag = try_call(resolve_path, args.path)
+        project, folder_or_volume, name, is_v2_path, etag = try_call(resolve_path, args.filename)
+        print(project)
+        print(folder_or_volume)
+        print(name)
+        print(is_v2_path)
+        print(etag)
+        print(args.path)
+        print('here')
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
+        if is_v2_path:
+            upload_one_v2_file(folder_or_volume, args.path, etag, args)
 
     if os.path.isdir(args.filename):
         if not args.recursive:
@@ -2117,14 +2148,14 @@ def upload_one(args):
 
         dir_listing = os.listdir(args.filename)
         if len(dir_listing) == 0: # Create empty folder
-            dxpy.api.project_new_folder(project, {"folder": os.path.join(folder, os.path.basename(args.filename)),
+            dxpy.api.project_new_folder(project, {"folder": os.path.join(folder_or_volume, os.path.basename(args.filename)),
                                                   "parents": True})
         else:
             for f in dir_listing:
                 sub_args = copy.copy(args)
                 sub_args.mute = True
                 sub_args.filename = os.path.join(args.filename, f)
-                sub_args.path = "{p}:{f}/{sf}/".format(p=project, f=folder, sf=os.path.basename(args.filename))
+                sub_args.path = "{p}:{f}/{sf}/".format(p=project, f=folder_or_volume, sf=os.path.basename(args.filename))
                 sub_args.parents = True
                 upload_one(sub_args)
     else:
@@ -2140,7 +2171,7 @@ def upload_one(args):
                                             project=project,
                                             properties=args.properties,
                                             details=args.details,
-                                            folder=folder,
+                                            folder=folder_or_volume,
                                             parents=args.parents,
                                             show_progress=args.show_progress,
                                             multithread=args.multithread)
@@ -2459,7 +2490,7 @@ def find_data(args):
                                               args.project, 'project')
 
     if args.folder is not None and not args.folder.startswith('/'):
-        args.project, args.folder, _none = try_call(resolve_path, args.folder, expected='folder')
+        args.project, args.folder, _none, _, _ = try_call(resolve_path, args.folder, expected='folder')
 
     if args.brief:
         describe_input = dict(fields=dict(project=True, id=True))
@@ -4124,7 +4155,7 @@ def generate_batch_inputs(args):
 
     # Internally restricted maximum batch size for a TSV
     MAX_BATCH_SIZE = 500
-    project, folder, _none = try_call(resolve_path, args.path, expected='folder')
+    project, folder, _none, _, _ = try_call(resolve_path, args.path, expected='folder')
 
     # Parse input values
     input_dict = dict([parse_input_keyval(keyeqval) for keyeqval in args.input])
