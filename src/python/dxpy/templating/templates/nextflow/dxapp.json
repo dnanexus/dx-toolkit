@@ -103,8 +103,7 @@
   "categories": [],
   "access": {
     "network": ["*"],
-    "project": "UPLOAD",
-    "allProjects": "VIEW"
+    "project": "UPLOAD"
   },
   "ignoreReuse": true
 }
