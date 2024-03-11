@@ -756,6 +756,10 @@ def validate_filter_applicable_genotype_types(
                 print(
                     "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!"
                 )
+        if (exclude_refdata is None and "ref" in filter_dict["genotype_type"] or exclude_nocall is None and "no-call" in filter_dict["genotype_type"]):
+            err_exit(
+                "\"ref\" and \"no-call\" genotype types can only be filtered when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
+            )
 
 
 def extract_assay_germline(args):
