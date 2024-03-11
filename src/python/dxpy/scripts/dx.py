@@ -2097,26 +2097,27 @@ def upload_one_v2_file(volume, path, etag, args):
     s3 = boto3.client('s3')
     bucket_name = 'dnanexus-dev-comp14s2' or volume
     filename = os.path.basename(path)
-    print(path)
-    print(filename)
-    if etag is not None:
-        try:
-            response = s3.head_object(Bucket=bucket_name, Key=path)
-            if response['ETag'].replace('"', '') == etag:
-                s3.upload_file(path, bucket_name, filename)
-            else:
-                print(f"ETag mismatch for file {path}. Not uploading.")
-                print(f"ETag from server: {response['ETag']}, ETag from provided: {etag}")
-        except Exception as e:
-            print(f"Error occurred while checking ETag for file {path}: {str(e)}")
+
+
+    # Send the file
+    with open(filename, 'rb') as fd:
+        result = s3.put_object(
+            Bucket=bucket_name,
+            Key=path,
+            Body=fd
+        )
+
+    if result['ResponseMetadata']['HTTPStatusCode'] == 200:
+        response = "https://{0}.s3.us-east-2.amCCazonaws.com/{1}".format(bucket, s3_key)
     else:
-        s3.upload_file(path, bucket_name, path)
+       response = False
+
+    return response
 
 def upload_one(args):
     try_call(process_dataobject_args, args)
 
     args.show_progress = args.show_progress and not args.brief
-    print(args.path)
 
     if args.path is None:
         project = dxpy.WORKSPACE_ID
@@ -2130,7 +2131,6 @@ def upload_one(args):
         print(is_v2_path)
         print(etag)
         print(args.path)
-        print('here')
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
         if is_v2_path:
