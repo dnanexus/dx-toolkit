@@ -19,24 +19,6 @@
 import dxpy
 import os, argparse, sys
 
-subject_claim_choices = [
-    "app_name",
-    "app_version",
-    "bill_to",
-    "executable_id",
-    "job_id",
-    "job_try",
-    "job_worker_ipv4",
-    "job_worker_ipv6",
-    "launched_by",
-    "project_id",
-    "region",
-    "root_executable_id",
-    "root_executable_name",
-    "root_executable_version",
-    "root_execution_id",
-]
-
 
 def _parse_args():
     """
@@ -52,7 +34,6 @@ def _parse_args():
         "--subject_claims",
         action="append",
         metavar="<subject_claims>",
-        choices=subject_claim_choices,
         help="Defines the subject claims to be validated by the cloud provider",
     )
 
@@ -67,10 +48,10 @@ def main(aud, subject_claims):
 
     if subject_claims is not None:
         # Iterate over subject_claims and flatten them into a single list
-        subject_claims = []
+        subject_claims_input = []
         for subject_claim in subject_claims:
-            subject_claims.extend(subject_claim.split(","))
-        job_get_identity_token_input["subject_claims"] = subject_claims
+            subject_claims_input.extend(subject_claim.split(","))
+        job_get_identity_token_input["subject_claims"] = subject_claims_input
 
     # Call job-xxxx/getIdentityToken
     if "DX_JOB_ID" in os.environ:
