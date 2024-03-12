@@ -2107,12 +2107,7 @@ def upload_one_v2_file(volume, path, etag, args):
             Body=fd
         )
 
-    if result['ResponseMetadata']['HTTPStatusCode'] == 200:
-        response = "https://{0}.s3.us-east-2.amCCazonaws.com/{1}".format(bucket, s3_key)
-    else:
-       response = False
-
-    return response
+    return result or None
 
 def upload_one(args):
     try_call(process_dataobject_args, args)
@@ -2125,12 +2120,6 @@ def upload_one(args):
         name = None if args.filename == '-' else os.path.basename(args.filename)
     else:
         project, folder_or_volume, name, is_v2_path, etag = try_call(resolve_path, args.filename)
-        print(project)
-        print(folder_or_volume)
-        print(name)
-        print(is_v2_path)
-        print(etag)
-        print(args.path)
         if name is None and args.filename != '-':
             name = os.path.basename(args.filename)
         if is_v2_path:
