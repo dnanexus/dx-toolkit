@@ -2124,6 +2124,7 @@ def upload_one(args):
             name = os.path.basename(args.filename)
         if is_v2_path:
             upload_one_v2_file(folder_or_volume, args.path, etag, args)
+            return
 
     if os.path.isdir(args.filename):
         if not args.recursive:
