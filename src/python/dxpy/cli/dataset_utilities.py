@@ -964,7 +964,7 @@ def extract_assay_germline(args):
             exclude_refdata,
             exclude_halfref)
         
-        # in case of infer flags, we query all the genotypes and do teh filtering post query
+        # in case of infer flags, we query all the genotypes and do the filtering post query
         if args.infer_ref or args.infer_nocall:
             types_to_filter_out = get_types_to_filter_out_when_infering(filter_dict.get("genotype_type", []))
             filter_dict["genotype_type"] = []
@@ -1075,7 +1075,7 @@ def extract_assay_germline(args):
                 ordered_results.extend(infered_entries)
                 # Filter out not requested genotypes
                 if len(types_to_filter_out) > 0:
-                    ordered_results_copy = ordered_results.list.copy()
+                    ordered_results_copy = ordered_results.copy()
                     ordered_results = []
                     [
                         ordered_results.append(result)
