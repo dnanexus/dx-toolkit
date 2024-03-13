@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [372.0] - beta
+
+### Added
+
+* dx-jobutil-get-identity-token 
+
 ### Fixed
 
 * Released Nextaur 1.7.4: Fixes error when multiple Docker images with the same name and digest are cached.
@@ -14,7 +20,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * For Nextflow applets, removed allProjects: VIEW access. They will have only UPLOAD access to the current project context.
 
-## [371.0] - beta
+## [371.0] - 2024.3.13
 
 ### Fixed
 
