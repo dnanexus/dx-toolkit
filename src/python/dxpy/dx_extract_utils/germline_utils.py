@@ -27,6 +27,22 @@ def get_genotype_only_types(filter_dict, exclude_refdata, exclude_halfref, exclu
 
     return genotype_only_types
 
+def get_types_to_filter_out_when_infering(
+    requested_types: list[str],
+) -> list:
+    """
+    Infer option require all genotypes types to be queried.
+    If users wishes to obtain only certain types of genotypes,
+    reminder of the types should be filtered out post querying
+    """
+    if len(requested_types) == 0:
+        return []
+
+    return [
+        type
+        for type in ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]
+        if type not in requested_types
+    ]
 
 def add_germline_base_sql(resp, payload):
     if "CohortBrowser" in resp["recordTypes"]:
@@ -213,7 +229,6 @@ def infer_genotype_type(samples: list, result_entries: list[dict], type_to_infer
                 inferred_entries.append(
                     {
                         "sample_id": sample,
-                        "allele_id": None, #f"{locus}_{alt_symbol}",
                         **loci_dict[locus]["entry"],
                         "genotype_type": type_to_infer,
                     }

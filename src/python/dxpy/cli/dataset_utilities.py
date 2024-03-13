@@ -48,7 +48,8 @@ from ..exceptions import (
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
 from ..dx_extract_utils.germline_utils import get_genotype_only_types, add_germline_base_sql, sort_germline_variant, \
-    harmonize_germline_sql, harmonize_germline_results, get_germline_ref_payload, update_genotype_only_ref, infer_genotype_type
+    harmonize_germline_sql, harmonize_germline_results, get_germline_ref_payload, update_genotype_only_ref, infer_genotype_type, \
+    get_types_to_filter_out_when_infering
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -756,25 +757,16 @@ def validate_filter_applicable_genotype_types(
                     "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!"
                 )
 
-def retrieve_samples(resp, assay_name: str, assay_id: str) -> list:
+def retrieve_samples(resp: dict, assay_name: str, assay_id: str) -> list:
     """
     Get the list of sample_ids from the sample table for the selected assay.
     """
     sample_payload = {
         "project_context": resp["datasetRecordProject"],
-        "fields": [
-            {"sample_id": "sample$sample_id"},
-        ],
-        "raw_filters": {
-            "assay_filters": {
-                "name": assay_name,
-                "id": assay_id,
-                }   
-            }
-        }
-    
-    
-    return  [_["sample_id"] for _ in raw_api_call(resp, sample_payload)["results"]]
+        "fields": [{"sample_id": "sample$sample_id"}],
+        "raw_filters": {"assay_filters": {"name": assay_name, "id": assay_id}},
+    }
+    return [_["sample_id"] for _ in raw_api_call(resp, sample_payload)["results"]]
 
 
 def extract_assay_germline(args):
@@ -971,6 +963,11 @@ def extract_assay_germline(args):
             exclude_nocall,
             exclude_refdata,
             exclude_halfref)
+        
+        # in case of infer flags, we query all the genotypes and do teh filtering post query
+        if args.infer_ref or args.infer_nocall:
+            types_to_filter_out = get_types_to_filter_out_when_infering(filter_dict.get("genotype_type", []))
+            filter_dict["genotype_type"] = []
 
         # get a list of requested genotype types for the genotype table only queries
         if "allele_id" in filter_dict:
@@ -978,7 +975,7 @@ def extract_assay_germline(args):
         else:
             genotype_only_types = get_genotype_only_types(filter_dict,
                                                           exclude_refdata, exclude_halfref, exclude_nocall)
-
+            
         # get the payload for the genotype/allele table query for alternate genotype types
         genotype_payload, fields_list = final_payload(
             full_input_dict=filter_dict,
@@ -1076,6 +1073,15 @@ def extract_assay_germline(args):
                 type_to_infer = "ref" if args.infer_ref else "no-call"
                 infered_entries = infer_genotype_type(samples, ordered_results, type_to_infer)
                 ordered_results.extend(infered_entries)
+                # Filter out not requested genotypes
+                if len(types_to_filter_out) > 0:
+                    ordered_results_copy = ordered_results.list.copy()
+                    ordered_results = []
+                    [
+                        ordered_results.append(result)
+                        for result in ordered_results_copy
+                        if result["genotype_type"] not in types_to_filter_out
+                    ]
 
             ordered_results.sort(key=sort_germline_variant)
 
