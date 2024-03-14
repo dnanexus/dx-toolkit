@@ -179,7 +179,8 @@ def update_genotype_only_ref(results, locus_id_refs):
 
 def _produce_loci_dict(reults_entries: list[dict]) -> dict:
     """
-    Produces a dictionary with locus_id as key and a set of samples and entry as value."""
+    Produces a dictionary with locus_id as key and a set of samples and entry as value.
+    """
     loci_dict = {}
     for entry in reults_entries:
         locus_id = entry["locus_id"]
@@ -194,7 +195,6 @@ def _produce_loci_dict(reults_entries: list[dict]) -> dict:
                     "starting_position": entry["starting_position"],
                     "ref": entry["ref"],
                     "alt": None,
-                    "genotype_type": entry["genotype_type"],
                 },
             }
         else:
@@ -202,7 +202,9 @@ def _produce_loci_dict(reults_entries: list[dict]) -> dict:
     return loci_dict
 
 
-def infer_genotype_type(samples: list, result_entries: list[dict], type_to_infer: str) -> list[dict]:
+def infer_genotype_type(
+    samples: list, result_entries: list[dict], type_to_infer: str
+) -> list[dict]:
     """
     If the result_entries does not contain entry with sample_id of specifific starting_position the the genotype type is either no-call or ref.
     Args:
@@ -233,4 +235,29 @@ def infer_genotype_type(samples: list, result_entries: list[dict], type_to_infer
                         "genotype_type": type_to_infer,
                     }
                 )
-    return result_entries + inferred_entries 
+    return result_entries + inferred_entries
+
+
+def filter_results(
+    results: list[dict], key: str, restricted_values: list
+) -> list[dict]:
+    """
+    Filters results by key and restricted_values.
+    Args:
+        results: list of results from extract_assay query. e.g.
+            {
+            "sample_id": "SAMPLE_2",
+            "allele_id": "1_1076145_A_AT",
+            "locus_id": "1_1076145_A_T",
+            "chromosome": "1",
+            "starting_position": 1076145,
+            "ref": "A",
+            "alt": "AT",
+            "genotype_type": "het-alt",
+            }
+        key: key to filter by
+        restricted_values: list of values to filter by
+    Returns: list of filtered entries
+    """
+    return [entry for entry in results if entry[key] not in restricted_values]
+

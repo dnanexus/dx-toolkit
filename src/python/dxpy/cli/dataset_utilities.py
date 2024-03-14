@@ -47,9 +47,18 @@ from ..exceptions import (
 )
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
-from ..dx_extract_utils.germline_utils import get_genotype_only_types, add_germline_base_sql, sort_germline_variant, \
-    harmonize_germline_sql, harmonize_germline_results, get_germline_ref_payload, update_genotype_only_ref, infer_genotype_type, \
-    get_types_to_filter_out_when_infering
+from ..dx_extract_utils.germline_utils import (
+    get_genotype_only_types,
+    add_germline_base_sql,
+    sort_germline_variant,
+    harmonize_germline_sql,
+    harmonize_germline_results,
+    get_germline_ref_payload,
+    update_genotype_only_ref,
+    infer_genotype_type,
+    get_types_to_filter_out_when_infering,
+    filter_results
+)
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -757,6 +766,7 @@ def validate_filter_applicable_genotype_types(
                     "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!"
                 )
 
+
 def retrieve_samples(resp: dict, assay_name: str, assay_id: str) -> list:
     """
     Get the list of sample_ids from the sample table for the selected assay.
@@ -1075,13 +1085,7 @@ def extract_assay_germline(args):
                 ordered_results.extend(infered_entries)
                 # Filter out not requested genotypes
                 if len(types_to_filter_out) > 0:
-                    ordered_results_copy = ordered_results.copy()
-                    ordered_results = []
-                    [
-                        ordered_results.append(result)
-                        for result in ordered_results_copy
-                        if result["genotype_type"] not in types_to_filter_out
-                    ]
+                    ordered_results = filter_results(ordered_results, "genotype_type", types_to_filter_out)
 
             ordered_results.sort(key=sort_germline_variant)
 
