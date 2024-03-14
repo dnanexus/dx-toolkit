@@ -8,18 +8,45 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added AWScliv2 asset to Nextflow applets
 
-## [370.0] - beta
+## [372.0] - beta
+
+### Added
+
+* dx-jobutil-get-identity-token 
+
+### Fixed
+
+* Released Nextaur 1.7.4: Fixes error when multiple Docker images with the same name and digest are cached.
+
+### Removed
+
+* For Nextflow applets, removed allProjects: VIEW access. They will have only UPLOAD access to the current project context.
+
+## [371.0] - 2024.3.13
+
+### Fixed
+
+* `dx run --ssh` hanging if job has reused outputs
+
+## [370.2] - 2024.2.26
 
 ### Added
 
 * Python 3.12 support
 * `--nextflow-pipeline-params` for `dx build --nextflow --cache-docker`
 * `dx build --nextflow --cache-docker` supports the `--profile` parameter to cache images associated with specific profile 
-* additional regional resources can be specified in dxworkflow.json or using `--extra-args` when `dx build` global workflows 
 
 ### Fixed
 
-* Released Nextaur 1.7.1. It contains multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
+* Released Nextaur 1.7.3
+* Fix for occasional head job hang during upload, fix for "No such file or directory" errors on localized dx files
+* Multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
+
+## [369.1] - 2024.2.13
+
+### Added
+
+* Additional regional resources can be specified in dxworkflow.json or using `--extra-args` when `dx build` global workflows 
 
 ## [369.0] - 2024.2.5
 

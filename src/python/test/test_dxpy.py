@@ -3264,7 +3264,6 @@ class TestApiWrappers(unittest.TestCase):
             auth=None)
         assert 'messages' in greeting
 
-
 if __name__ == '__main__':
     if dxpy.AUTH_HELPER is None:
         sys.exit(1, 'Error: Need to be logged in to run these tests')
