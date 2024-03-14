@@ -1059,8 +1059,9 @@ def extract_assay_germline(args):
                 # normalized ref values in the locus_id will match the ref value for missing ALT lines if they
                 # were ingested and locus_id could be parsed for the ref value
                 ref_payload = get_germline_ref_payload(ordered_results, genotype_payload)
-                locus_id_refs = raw_api_call(resp, ref_payload)
-                update_genotype_only_ref(ordered_results, locus_id_refs)
+                if ref_payload:
+                    locus_id_refs = raw_api_call(resp, ref_payload)
+                    update_genotype_only_ref(ordered_results, locus_id_refs)
 
             ordered_results.sort(key=sort_germline_variant)
 
