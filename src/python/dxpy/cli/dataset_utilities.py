@@ -765,6 +765,10 @@ def validate_filter_applicable_genotype_types(
                 print(
                     "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!"
                 )
+        if (exclude_refdata is None and "ref" in filter_dict["genotype_type"] or exclude_nocall is None and "no-call" in filter_dict["genotype_type"]):
+            err_exit(
+                "\"ref\" and \"no-call\" genotype types can only be filtered when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
+            )
 
 
 def retrieve_samples(resp: dict, assay_name: str, assay_id: str) -> list:
@@ -1029,16 +1033,21 @@ def extract_assay_germline(args):
 
                 genotype_only_payloads.append(genotype_only_payload)
 
+        # get the list of requested genotype types for the genotype/allele table query
+        genotype_types = get_genotype_types(filter_dict)
+
         if args.sql:
-            # get the genotype/allele table query
-            genotype_sql_query = raw_query_api_call(resp, genotype_payload)[:-1]
-            try:
-                geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
-                re.search(geno_table_regex, genotype_sql_query).group()
-            except Exception:
-                err_exit("Failed to find the table, {}, in the generated SQL".format(
-                    additional_descriptor_info["genotype_type_table"]), expected_exceptions=(AttributeError,))
-            sql_queries = [genotype_sql_query]
+            sql_queries = []
+            if genotype_types:
+                # get the genotype/allele table query
+                genotype_sql_query = raw_query_api_call(resp, genotype_payload)[:-1]
+                try:
+                    geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
+                    re.search(geno_table_regex, genotype_sql_query).group()
+                except Exception:
+                    err_exit("Failed to find the table, {}, in the generated SQL".format(
+                        additional_descriptor_info["genotype_type_table"]), expected_exceptions=(AttributeError,))
+                sql_queries.append(genotype_sql_query)
 
             # get the genotype table only query
             # assay_filter does not support "or" so there is a separate query for each partition
@@ -1060,8 +1069,9 @@ def extract_assay_germline(args):
         else:
             # get the list of dictionary results for the genotype/allele table query
             ordered_results = []
-            genotype_resp_raw = raw_api_call(resp, genotype_payload)
-            ordered_results.extend(genotype_resp_raw["results"])
+            if genotype_types:
+                genotype_resp_raw = raw_api_call(resp, genotype_payload)
+                ordered_results.extend(genotype_resp_raw["results"])
 
             # get the list of dictionary results for each genotype table only query
             for genotype_only_payload in genotype_only_payloads:
