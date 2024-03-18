@@ -3,6 +3,7 @@ import os
 import re
 
 from .filter_to_payload import extract_utils_basepath
+from __future__ import annotations
 
 
 SELECT_LIST_REGEX = r"SELECT\s+(DISTINCT\s+)?(.+?)\s+FROM"
