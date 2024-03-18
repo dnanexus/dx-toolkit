@@ -55,6 +55,7 @@ from ..dx_extract_utils.germline_utils import (
     harmonize_germline_results,
     get_germline_ref_payload,
     update_genotype_only_ref,
+    get_genotype_types,
     infer_genotype_type,
     get_types_to_filter_out_when_infering,
     filter_results
@@ -1089,7 +1090,7 @@ def extract_assay_germline(args):
                 update_genotype_only_ref(ordered_results, locus_id_refs)
 
             if args.infer_ref or args.infer_nocall:
-                samples = retrieve_samples(resp, project, selected_assay_name, selected_assay_id)
+                samples = retrieve_samples(resp, selected_assay_name, selected_assay_id)
                 type_to_infer = "ref" if args.infer_ref else "no-call"
                 infered_entries = infer_genotype_type(samples, ordered_results, type_to_infer)
                 ordered_results.extend(infered_entries)
