@@ -1,9 +1,9 @@
+from __future__ import annotations
 import json
 import os
 import re
 
 from .filter_to_payload import extract_utils_basepath
-from __future__ import annotations
 from .input_validation import GENOTYPE_TYPES
 
 
