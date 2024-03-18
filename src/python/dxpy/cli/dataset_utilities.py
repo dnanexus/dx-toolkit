@@ -729,16 +729,16 @@ def validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref)
 
 
 def validate_filter_applicable_genotype_types(
-    infer_nocall,
-    infer_ref,
-    filter_dict,
-    exclude_nocall,
-    exclude_refdata,
-    exclude_halfref,
+    infer_nocall: bool,
+    infer_ref: bool,
+    filter_dict: dict,
+    exclude_nocall: bool,
+    exclude_refdata: bool,
+    exclude_halfref: bool,
 ):
     # Check filter provided genotype_types against exclusion options at ingestion.
     # e.g. no-call is not applicable when exclude_genotype set and infer-nocall false
-    if "genotype_type" in filter_dict:
+    if "genotype_type" in filter_dict.keys():
         if exclude_nocall == True and not infer_nocall:
             if "no-call" in filter_dict["genotype_type"]:
                 print(
@@ -770,6 +770,10 @@ def validate_filter_applicable_genotype_types(
             err_exit(
                 "\"ref\" and \"no-call\" genotype types can only be filtered when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
             )
+    if "allele_id" in filter_dict.keys() and (infer_nocall or infer_ref):
+        err_exit(
+            "The --infer-ref or --infer-nocall flags can only be used with a 'location' filter use '--json-help' to list an example."
+        )
 
 
 def retrieve_samples(resp: dict, assay_name: str, assay_id: str) -> list:
