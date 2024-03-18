@@ -39,7 +39,7 @@ def retrieve_geno_bins(list_of_genes, project, genome_reference):
 
 
 def basic_filter(
-    table, friendly_name, values=[], project_context=None, genome_reference=None
+    filter_type, friendly_name, values=[], project_context=None, genome_reference=None
 ):
     """
     A low-level filter consisting of a dictionary with one key defining the table and column
@@ -55,8 +55,8 @@ def basic_filter(
                            }
     ]}
     """
-    filter_key = column_conversion[table][friendly_name]
-    condition = column_conditions[table][friendly_name]
+    filter_key = column_conversion[filter_type][friendly_name]
+    condition = column_conditions[filter_type][friendly_name]
 
     # Input validation.  Check that the user hasn't provided an invalid min/max in any fields
     if condition == "between":
@@ -76,7 +76,7 @@ def basic_filter(
     if friendly_name in ["gene_id", "feature_id", "putative_impact"]:
         values = [x.upper() for x in values]
     # Case 2: remove duplicate rsid values
-    if table == "allele" and friendly_name == "rsid":
+    if filter_type == "allele" and friendly_name == "rsid":
         values = list(set(values))
 
     # Check if we need to add geno bins as well
@@ -98,14 +98,14 @@ def basic_filter(
     return listed_filter
 
 
-def location_filter(location_list, filter_type):
+def location_filter(location_list, table):
     """
-    A location filter is actually an filter_type$a_id filter with no filter values
+    A location filter is actually an table$a_id filter with no filter values
     The geno_bins perform the actual location filtering.  Related to other geno_bins filters by "or"
     """
 
     location_aid_filter = {
-        "{}$a_id".format(filter_type): [
+        "{}$a_id".format(table): [
             {
                 "condition": "in",
                 "values": [],
@@ -128,7 +128,7 @@ def location_filter(location_list, filter_type):
             end = start
 
         # Fill out the contents of an object in the geno_bins array
-        location_aid_filter["{}$a_id".format(filter_type)][0]["geno_bins"].append(
+        location_aid_filter["{}$a_id".format(table)][0]["geno_bins"].append(
             {
                 "chr": location["chromosome"],
                 "start": start,
@@ -159,19 +159,19 @@ def generate_assay_filter(
     """
 
     filters_dict = {}
-    table = filter_type
+    table = filter_type if filter_type != "genotype_only" else "genotype"
 
     for key in full_input_dict.keys():
         if key == "location":
             location_list = full_input_dict["location"]
-            location_aid_filter = location_filter(location_list, filter_type)
+            location_aid_filter = location_filter(location_list, table)
             filters_dict.update(location_aid_filter)
 
         else:
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
                 filters_dict.update(
                     basic_filter(
-                        table,
+                        filter_type,
                         key,
                         full_input_dict[key],
                         project_context,
