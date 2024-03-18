@@ -143,6 +143,8 @@ def get_germline_ref_payload(results, genotype_payload):
     """
     locus_ids = set((r["locus_id"], r["chromosome"], r["starting_position"]) for r in results if r["ref"] is None)
     allele_filters = []
+    if not locus_ids:
+        return None
     for locus_id, chr, pos in locus_ids:
         allele_filters.append({
             "condition": "in",

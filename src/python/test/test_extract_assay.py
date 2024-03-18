@@ -500,14 +500,14 @@ class TestDXExtractAssay(unittest.TestCase):
 
 
     @parameterized.expand([
-        "test_record",
-        "test_v1_record",
+        ("test_record", ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]),
+        ("test_v1_record", ["het-ref", "hom", "het-alt", "half"]),
     ])
-    def test_retrieve_genotype(self, record):
+    def test_retrieve_genotype(self, record, genotype_types):
         """Testing --retrieve-genotype functionality"""
         allele_genotype_type_filter = json.dumps({
             "allele_id": ["18_47408_G_A"], 
-            "genotype_type": ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]
+            "genotype_type": genotype_types,
             })
         expected_result = "sample_1_3\t18_47408_G_A\t18_47408_G_A\t18\t47408\tG\tA\thet-ref"
         command = ["dx", "extract_assay", "germline", getattr(self, record), "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
