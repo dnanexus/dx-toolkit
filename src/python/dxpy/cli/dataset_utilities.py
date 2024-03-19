@@ -1097,8 +1097,7 @@ def extract_assay_germline(args):
             if args.infer_ref or args.infer_nocall:
                 samples = retrieve_samples(resp, selected_assay_name, selected_assay_id)
                 type_to_infer = "ref" if args.infer_ref else "no-call"
-                infered_entries = infer_genotype_type(samples, ordered_results, type_to_infer)
-                ordered_results.extend(infered_entries)
+                ordered_results = infer_genotype_type(samples, ordered_results, type_to_infer)
                 # Filter out not requested genotypes
                 if len(types_to_filter_out) > 0:
                     ordered_results = filter_results(ordered_results, "genotype_type", types_to_filter_out)
