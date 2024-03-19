@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import print_function, unicode_literals, division, absolute_import, annotations
 
 import sys
 import collections
@@ -47,9 +47,19 @@ from ..exceptions import (
 )
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
-from ..dx_extract_utils.germline_utils import get_genotype_types, get_genotype_only_types, add_germline_base_sql, \
-    sort_germline_variant, harmonize_germline_sql, harmonize_germline_results, get_germline_ref_payload, \
-    update_genotype_only_ref
+from ..dx_extract_utils.germline_utils import (
+    get_genotype_only_types,
+    add_germline_base_sql,
+    sort_germline_variant,
+    harmonize_germline_sql,
+    harmonize_germline_results,
+    get_germline_ref_payload,
+    update_genotype_only_ref,
+    get_genotype_types,
+    infer_genotype_type,
+    get_types_to_filter_out_when_infering,
+    filter_results
+)
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -719,16 +729,16 @@ def validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref)
 
 
 def validate_filter_applicable_genotype_types(
-    infer_nocall,
-    infer_ref,
-    filter_dict,
-    exclude_nocall,
-    exclude_refdata,
-    exclude_halfref,
+    infer_nocall: bool,
+    infer_ref: bool,
+    filter_dict: dict,
+    exclude_nocall: bool,
+    exclude_refdata: bool,
+    exclude_halfref: bool,
 ):
     # Check filter provided genotype_types against exclusion options at ingestion.
     # e.g. no-call is not applicable when exclude_genotype set and infer-nocall false
-    if "genotype_type" in filter_dict:
+    if "genotype_type" in filter_dict.keys():
         if exclude_nocall == True and not infer_nocall:
             if "no-call" in filter_dict["genotype_type"]:
                 print(
@@ -760,6 +770,22 @@ def validate_filter_applicable_genotype_types(
             err_exit(
                 "\"ref\" and \"no-call\" genotype types can only be filtered when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
             )
+    if "allele_id" in filter_dict.keys() and (infer_nocall or infer_ref):
+        err_exit(
+            "The --infer-ref or --infer-nocall flags can only be used with a 'location' filter use '--json-help' to list an example."
+        )
+
+
+def retrieve_samples(resp: dict, assay_name: str, assay_id: str) -> list:
+    """
+    Get the list of sample_ids from the sample table for the selected assay.
+    """
+    sample_payload = {
+        "project_context": resp["datasetRecordProject"],
+        "fields": [{"sample_id": "sample$sample_id"}],
+        "raw_filters": {"assay_filters": {"name": assay_name, "id": assay_id}},
+    }
+    return [_["sample_id"] for _ in raw_api_call(resp, sample_payload)["results"]]
 
 
 def extract_assay_germline(args):
@@ -956,6 +982,11 @@ def extract_assay_germline(args):
             exclude_nocall,
             exclude_refdata,
             exclude_halfref)
+        
+        # in case of infer flags, we query all the genotypes and do the filtering post query
+        if args.infer_ref or args.infer_nocall:
+            types_to_filter_out = get_types_to_filter_out_when_infering(filter_dict.get("genotype_type", []))
+            filter_dict["genotype_type"] = []
 
         # get a list of requested genotype types for the genotype table only queries
         if "allele_id" in filter_dict:
@@ -963,7 +994,7 @@ def extract_assay_germline(args):
         else:
             genotype_only_types = get_genotype_only_types(filter_dict,
                                                           exclude_refdata, exclude_halfref, exclude_nocall)
-
+            
         # get the payload for the genotype/allele table query for alternate genotype types
         genotype_payload, fields_list = final_payload(
             full_input_dict=filter_dict,
@@ -1062,6 +1093,14 @@ def extract_assay_germline(args):
                 if ref_payload:
                     locus_id_refs = raw_api_call(resp, ref_payload)
                     update_genotype_only_ref(ordered_results, locus_id_refs)
+
+            if args.infer_ref or args.infer_nocall:
+                samples = retrieve_samples(resp, selected_assay_name, selected_assay_id)
+                type_to_infer = "ref" if args.infer_ref else "no-call"
+                ordered_results = infer_genotype_type(samples, ordered_results, type_to_infer)
+                # Filter out not requested genotypes
+                if len(types_to_filter_out) > 0:
+                    ordered_results = filter_results(ordered_results, "genotype_type", types_to_filter_out)
 
             ordered_results.sort(key=sort_germline_variant)
 

@@ -41,6 +41,11 @@ from dxpy.dx_extract_utils.filter_to_payload import (
     final_payload,
     validate_JSON,
 )
+from dxpy.dx_extract_utils.germline_utils import (
+    filter_results,
+    _produce_loci_dict,
+    infer_genotype_type
+)
 from dxpy.cli.dataset_utilities import (
     DXDataset,
     resolve_validate_record_path,
@@ -417,8 +422,168 @@ class TestDXExtractAssay(unittest.TestCase):
             )
             output = fake_out.getvalue().strip()
             self.assertEqual(output, "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!")
+    
+    def test_filter_results(self):
+        # Define sample input data
+        results = [
+            {
+                "sample_id": "SAMPLE_1",
+                "allele_id": "1_1076145_A_AT",
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "het-alt",
+            },
+            {
+                "sample_id": "SAMPLE_2",
+                "allele_id": "1_1076146_A_AT",
+                "locus_id": "1_1076146_A_T",
+                "chromosome": "1",
+                "starting_position": 1076146,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "het-alt",
+            },
+            {
+                "sample_id": "SAMPLE_3",
+                "allele_id": "1_1076147_A_AT",
+                "locus_id": "1_1076147_A_T",
+                "chromosome": "1",
+                "starting_position": 1076147,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "ref",
+            },
+        ]
+        # Call the function to filter the results
+        filtered_results = filter_results(
+            results=results, key="genotype_type", restricted_values=["het-alt"]
+        )
 
+        # Define the expected output
+        expected_output = [
+            {
+                "sample_id": "SAMPLE_3",
+                "allele_id": "1_1076147_A_AT",
+                "locus_id": "1_1076147_A_T",
+                "chromosome": "1",
+                "starting_position": 1076147,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "ref",
+            },
+        ]
 
+        # Assert that the filtered results match the expected output
+        self.assertEqual(filtered_results, expected_output)
+
+    def test_produce_loci_dict(self):
+        # Define the input data
+        results_entries = [
+            {
+                "locus_id": "18_47361_A_T",
+                "allele_id": "18_47361_A_T",
+                "sample_id": "sample1",
+                "chromosome": "18",
+                "starting_position": 47361,
+                "ref": "A",
+                "alt": "T",
+            },
+            {
+                "locus_id": "18_47361_A_T",
+                "allele_id": "18_47361_A_G",
+                "sample_id": "sample2",
+                "chromosome": "18",
+                "starting_position": 47361,
+                "ref": "A",
+                "alt": "G",
+            },
+            {
+                "locus_id": "X_1000_C_A",
+                "allele_id": "X_1000_C_A",
+                "sample_id": "sample1",
+                "chromosome": "X",
+                "starting_position": 1000,
+                "ref": "C",
+                "alt": "A",
+            },
+        ]
+
+        # Define the expected output
+        expected_output = {
+            "18_47361_A_T": {
+                "samples": {"sample1", "sample2"},
+                "entry": {
+                    "allele_id": None,
+                    "locus_id": "18_47361_A_T",
+                    "chromosome": "18",
+                    "starting_position": 47361,
+                    "ref": "A",
+                    "alt": None,
+                },
+            },
+            "X_1000_C_A": {
+                "samples": {"sample1"},
+                "entry": {
+                    "allele_id": None,
+                    "locus_id": "X_1000_C_A",
+                    "chromosome": "X",
+                    "starting_position": 1000,
+                    "ref": "C",
+                    "alt": None,
+                },
+            },
+        }
+
+        # Call the function
+        result = _produce_loci_dict(results_entries)
+
+        # Assert the result
+        self.assertEqual(result, expected_output)
+
+    def test_infer_genotype_type(self):
+        samples = ["SAMPLE_1", "SAMPLE_2", "SAMPLE_3"]
+        result_entries = [
+            {
+                "sample_id": "SAMPLE_2",
+                "allele_id": "1_1076145_A_AT",
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "het-alt",
+            },
+            {
+                "sample_id": "SAMPLE_3",
+                "allele_id": "1_1076145_A_T",
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+                "alt": "T",
+                "genotype_type": "hom-ref",
+            },
+        ]
+        type_to_infer = "no-call"
+
+        expected_output = [
+            {
+                "sample_id": "SAMPLE_1",
+                "allele_id": None,
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+                "alt": None,
+                "genotype_type": "no-call",
+            },
+        ]
+
+        output = infer_genotype_type(samples, result_entries, type_to_infer)
+        self.assertEqual(output, result_entries + expected_output)
     ##########
     # Normal Command Lines
     ##########

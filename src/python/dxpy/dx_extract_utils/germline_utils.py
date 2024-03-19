@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 import os
 import re
@@ -42,6 +43,22 @@ def get_genotype_only_types(filter_dict, exclude_refdata, exclude_halfref, exclu
 
     return genotype_only_types
 
+def get_types_to_filter_out_when_infering(
+    requested_types: list[str],
+) -> list:
+    """
+    Infer option require all genotypes types to be queried.
+    If users wishes to obtain only certain types of genotypes,
+    reminder of the types should be filtered out post querying
+    """
+    if len(requested_types) == 0:
+        return []
+
+    return [
+        type
+        for type in ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]
+        if type not in requested_types
+    ]
 
 def add_germline_base_sql(resp, payload):
     if "CohortBrowser" in resp["recordTypes"]:
@@ -181,3 +198,89 @@ def update_genotype_only_ref(results, locus_id_refs):
         if result["ref"] is not None:
             continue
         result["ref"] = locus_id_ref_map[result["locus_id"]]
+
+
+def _produce_loci_dict(reults_entries: list[dict]) -> dict:
+    """
+    Produces a dictionary with locus_id as key and a set of samples and entry as value.
+    """
+    loci_dict = {}
+    for entry in reults_entries:
+        locus_id = entry["locus_id"]
+        sample_id = entry["sample_id"]
+        if locus_id not in loci_dict:
+            loci_dict[locus_id] = {
+                "samples": {sample_id},
+                "entry": {
+                    "allele_id": None,
+                    "locus_id": locus_id,
+                    "chromosome": entry["chromosome"],
+                    "starting_position": entry["starting_position"],
+                    "ref": entry["ref"],
+                    "alt": None,
+                },
+            }
+        else:
+            loci_dict[locus_id]["samples"].add(sample_id)
+    return loci_dict
+
+
+def infer_genotype_type(
+    samples: list, result_entries: list[dict], type_to_infer: str
+) -> list[dict]:
+    """
+    If the result_entries does not contain entry with sample_id of specifific starting_position the the genotype type is either no-call or ref.
+    Args:
+        samples: list of all samples
+        result_entries: list of results from extract_assay query. e.g.
+            {
+            "sample_id": "SAMPLE_2",
+            "allele_id": "1_1076145_A_AT",
+            "locus_id": "1_1076145_A_T",
+            "chromosome": "1",
+            "starting_position": 1076145,
+            "ref": "A",
+            "alt": "AT",
+            "genotype_type": "het-alt",
+            }
+        type_to_infer: type to infer either  "ref" or "no-call"
+    Returns: list of infered entries with added inferred genotype type and other entries retrieved from result for loci of interest.
+    """
+    loci_dict = _produce_loci_dict(result_entries)
+    inferred_entries = []
+    for locus in loci_dict:
+        for sample in samples:
+            if sample not in loci_dict[locus]["samples"]:
+                inferred_entries.append(
+                    {
+                        "sample_id": sample,
+                        **loci_dict[locus]["entry"],
+                        "genotype_type": type_to_infer,
+                    }
+                )
+    return result_entries + inferred_entries
+
+
+def filter_results(
+    results: list[dict], key: str, restricted_values: list
+) -> list[dict]:
+    """
+    Filters results by key and restricted_values.
+    Args:
+        results: list of results from extract_assay query. e.g.
+            {
+            "sample_id": "SAMPLE_2",
+            "allele_id": "1_1076145_A_AT",
+            "locus_id": "1_1076145_A_T",
+            "chromosome": "1",
+            "starting_position": 1076145,
+            "ref": "A",
+            "alt": "AT",
+            "genotype_type": "het-alt",
+            }
+        key: key to filter by
+        restricted_values: list of values to filter by
+    Returns: list of filtered entries
+    """
+    return [entry for entry in results if entry[key] not in restricted_values]
+
