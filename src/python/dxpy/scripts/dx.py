@@ -6549,7 +6549,7 @@ parser_e_a_g_mutex_group.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Use --json-help with this option to get detailed information on the JSON format and filters.'
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Genotype types "ref" and "no-call" have no allele ID, and "half" types where the genotype is half reference and half no-call also have no allele ID. All other genotype types have an allele ID, including "half" types where the genotype is half alternate allele and half no-call. Use --json-help with this option to get detailed information on the JSON format and filters.'
 )
 
 parser_e_a_g_infer_new_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=False)
