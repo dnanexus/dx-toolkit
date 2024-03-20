@@ -13,6 +13,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * dx-jobutil-get-identity-token 
+* `dx extract_assay germline --retrieve-genotype` supports germline assay datasets with reference and no-call genotypes
 
 ### Fixed
 
