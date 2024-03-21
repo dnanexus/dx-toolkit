@@ -54,6 +54,7 @@ from ..dx_extract_utils.germline_utils import (
     harmonize_germline_sql,
     harmonize_germline_results,
     get_germline_ref_payload,
+    get_germline_loci_payload,
     update_genotype_only_ref,
     get_genotype_types,
     infer_genotype_type,
@@ -1096,8 +1097,10 @@ def extract_assay_germline(args):
 
             if args.infer_ref or args.infer_nocall:
                 samples = retrieve_samples(resp, selected_assay_name, selected_assay_id)
+                loci_payload = get_germline_loci_payload(filter_dict["location"], genotype_payload)
+                loci = [locus for locus in raw_api_call(resp, loci_payload)["results"]]
                 type_to_infer = "ref" if args.infer_ref else "no-call"
-                ordered_results = infer_genotype_type(samples, ordered_results, type_to_infer)
+                ordered_results = infer_genotype_type(samples, loci, ordered_results, type_to_infer)
                 # Filter out not requested genotypes
                 if len(types_to_filter_out) > 0:
                     ordered_results = filter_results(ordered_results, "genotype_type", types_to_filter_out)
