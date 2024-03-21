@@ -481,6 +481,26 @@ class TestDXExtractAssay(unittest.TestCase):
 
     def test_produce_loci_dict(self):
         # Define the input data
+        loci = [
+            {
+                "locus_id": "18_47361_A_T",
+                "chromosome": "18",
+                "starting_position": 47361,
+                "ref": "A",
+            },
+            {
+                "locus_id": "X_1000_C_A",
+                "chromosome": "X",
+                "starting_position": 1000,
+                "ref": "C",
+            },
+            {
+                "locus_id": "1_123_A_.",
+                "chromosome": "1",
+                "starting_position": 123,
+                "ref": "A",
+            },
+        ]
         results_entries = [
             {
                 "locus_id": "18_47361_A_T",
@@ -535,16 +555,41 @@ class TestDXExtractAssay(unittest.TestCase):
                     "alt": None,
                 },
             },
+            "1_123_A_.": {
+                "samples": set(),
+                "entry": {
+                    "allele_id": None,
+                    "locus_id": "1_123_A_.",
+                    "chromosome": "1",
+                    "starting_position": 123,
+                    "ref": "A",
+                    "alt": None,
+                },
+            },
         }
 
         # Call the function
-        result = _produce_loci_dict(results_entries)
+        result = _produce_loci_dict(loci, results_entries)
 
         # Assert the result
         self.assertEqual(result, expected_output)
 
     def test_infer_genotype_type(self):
         samples = ["SAMPLE_1", "SAMPLE_2", "SAMPLE_3"]
+        loci = [
+            {
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+            },
+            {
+                "locus_id": "2_1042_G_CC",
+                "chromosome": "2",
+                "starting_position": 1042,
+                "ref": "G",
+            },
+        ]
         result_entries = [
             {
                 "sample_id": "SAMPLE_2",
@@ -580,9 +625,39 @@ class TestDXExtractAssay(unittest.TestCase):
                 "alt": None,
                 "genotype_type": "no-call",
             },
+            {
+                "sample_id": "SAMPLE_1",
+                "allele_id": None,
+                "locus_id": "2_1042_G_CC",
+                "chromosome": "2",
+                "starting_position": 1042,
+                "ref": "G",
+                "alt": None,
+                "genotype_type": "no-call",
+            },
+            {
+                "sample_id": "SAMPLE_2",
+                "allele_id": None,
+                "locus_id": "2_1042_G_CC",
+                "chromosome": "2",
+                "starting_position": 1042,
+                "ref": "G",
+                "alt": None,
+                "genotype_type": "no-call",
+            },
+            {
+                "sample_id": "SAMPLE_3",
+                "allele_id": None,
+                "locus_id": "2_1042_G_CC",
+                "chromosome": "2",
+                "starting_position": 1042,
+                "ref": "G",
+                "alt": None,
+                "genotype_type": "no-call",
+            },
         ]
 
-        output = infer_genotype_type(samples, result_entries, type_to_infer)
+        output = infer_genotype_type(samples, loci, result_entries, type_to_infer)
         self.assertEqual(output, result_entries + expected_output)
     ##########
     # Normal Command Lines
