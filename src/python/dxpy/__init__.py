@@ -609,6 +609,13 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
+                # Handle redirection manually for symlink files
+                if response.status in range(300, 399):
+                    url = response.headers.get('Location')
+                    if url:
+                        # Make a new request to the URL specified in the Location header
+                        response = pool_manager.request(_method, url, headers=_headers, body=body,
+                                                timeout=timeout, retries=False, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError

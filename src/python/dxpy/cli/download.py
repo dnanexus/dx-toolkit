@@ -23,8 +23,6 @@ import collections
 import os
 import subprocess
 import sys
-import tempfile
-import warnings
 import logging
 
 import dxpy
