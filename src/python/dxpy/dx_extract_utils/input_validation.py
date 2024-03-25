@@ -194,6 +194,8 @@ def validate_filter(filter, filter_type):
                 # Ensure all keys are there
                 if not ("chromosome" in indiv_loc_keys and "starting_position" in indiv_loc_keys):
                     err_exit(malformed_filter.format("location"))
+                if "ending_position" in indiv_loc_keys:
+                    err_exit(malformed_filter.format("location"))
                 # Check that each key is a string
                 if not is_list_of_strings(list(indiv_location.values())):
                     err_exit(malformed_filter.format("location"))

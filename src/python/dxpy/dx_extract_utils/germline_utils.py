@@ -177,6 +177,7 @@ def get_germline_ref_payload(results, genotype_payload):
             {"locus_id": "allele$locus_id"},
             {"ref": "allele$ref"},
         ],
+        "is_cohort": False,
         "raw_filters": {
             "assay_filters": {
                 "id": genotype_payload["raw_filters"]["assay_filters"]["id"],
@@ -200,38 +201,82 @@ def update_genotype_only_ref(results, locus_id_refs):
         result["ref"] = locus_id_ref_map[result["locus_id"]]
 
 
-def _produce_loci_dict(reults_entries: list[dict]) -> dict:
+def get_germline_loci_payload(locations, genotype_payload):
+    """
+    Create a payload to query locus ids from the allele table with a location filter
+    """
+    return {
+        "project_context": genotype_payload["project_context"],
+        "adjust_geno_bins": False,
+        "distinct": True,
+        "logic": "and",
+        "fields": [
+            {"locus_id": "allele$locus_id"},
+            {"chromosome": "allele$chr"},
+            {"starting_position": "allele$pos"},
+            {"ref": "allele$ref"},
+        ],
+        "is_cohort": False,
+        "raw_filters": {
+            "assay_filters": {
+                "id": genotype_payload["raw_filters"]["assay_filters"]["id"],
+                "name": genotype_payload["raw_filters"]["assay_filters"]["name"],
+                "filters": {
+                    "allele$a_id": [{
+                        "condition": "in",
+                        "values": [],
+                        "geno_bins": [
+                            {
+                                "chr": location["chromosome"],
+                                "start": location["starting_position"],
+                                "end": location["starting_position"]
+                            } for location in locations
+                        ],
+                    }],
+                },
+            },
+        },
+    }
+
+
+def _produce_loci_dict(loci: list[dict], results_entries: list[dict]) -> dict:
     """
     Produces a dictionary with locus_id as key and a set of samples and entry as value.
     """
     loci_dict = {}
-    for entry in reults_entries:
-        locus_id = entry["locus_id"]
-        sample_id = entry["sample_id"]
-        if locus_id not in loci_dict:
-            loci_dict[locus_id] = {
-                "samples": {sample_id},
-                "entry": {
-                    "allele_id": None,
-                    "locus_id": locus_id,
-                    "chromosome": entry["chromosome"],
-                    "starting_position": entry["starting_position"],
-                    "ref": entry["ref"],
-                    "alt": None,
-                },
-            }
-        else:
-            loci_dict[locus_id]["samples"].add(sample_id)
+    for locus in loci:
+        loci_dict[locus["locus_id"]] = {
+            "samples": set(),
+            "entry": {
+                "allele_id": None,
+                "locus_id": locus["locus_id"],
+                "chromosome": locus["chromosome"],
+                "starting_position": locus["starting_position"],
+                "ref": locus["ref"],
+                "alt": None,
+            },
+        }
+
+    for entry in results_entries:
+        loci_dict[entry["locus_id"]]["samples"].add(entry["sample_id"])
+
     return loci_dict
 
 
 def infer_genotype_type(
-    samples: list, result_entries: list[dict], type_to_infer: str
+    samples: list, loci: list[dict], result_entries: list[dict], type_to_infer: str
 ) -> list[dict]:
     """
     If the result_entries does not contain entry with sample_id of specifific starting_position the the genotype type is either no-call or ref.
     Args:
         samples: list of all samples
+        loci: list of information on each loci within the filter  e.g.
+            {
+            "locus_id": "1_1076145_A_T",
+            "chromosome": "1",
+            "starting_position": 1076145,
+            "ref": "A",
+            }
         result_entries: list of results from extract_assay query. e.g.
             {
             "sample_id": "SAMPLE_2",
@@ -246,7 +291,7 @@ def infer_genotype_type(
         type_to_infer: type to infer either  "ref" or "no-call"
     Returns: list of infered entries with added inferred genotype type and other entries retrieved from result for loci of interest.
     """
-    loci_dict = _produce_loci_dict(result_entries)
+    loci_dict = _produce_loci_dict(loci, result_entries)
     inferred_entries = []
     for locus in loci_dict:
         for sample in samples:
