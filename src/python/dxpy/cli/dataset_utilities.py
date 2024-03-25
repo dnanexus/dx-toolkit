@@ -60,6 +60,7 @@ from ..dx_extract_utils.germline_utils import (
     get_types_to_filter_out_when_infering,
     filter_results
 )
+from ..dx_extract_utils.input_validation import inference_validation
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -700,81 +701,6 @@ def comment_fill(string, comment_string='#  ', **kwargs):
     width_adjustment = kwargs.pop('width_adjustment', 0) - len(comment_string)
     return re.sub('^', comment_string, fill(string, width_adjustment=width_adjustment, **kwargs), flags=re.MULTILINE)
 
-def validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref):
-    # Validate that the genomic_variant assay ingestion exclusion marks and the infer flags are used properly
-    if (args.infer_ref or args.infer_nocall) and exclude_nocall is None:
-        err_exit(
-            "The --infer-ref or --infer-nocall flags can only be used when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
-        )
-    ingestion_parameters_str = f"Exclusion parameters set at the ingestion: exclude_nocall={str(exclude_nocall).lower()}, exclude_halfref={str(exclude_halfref).lower()}, exclude_refdata={str(exclude_refdata).lower()}"
-    if args.infer_ref:
-        if not (
-            exclude_nocall == False
-            and exclude_halfref == False
-            and exclude_refdata == True
-        ):
-            err_exit(
-                f"The --infer-ref flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=false', 'exclude_halfref=false', and 'exclude_refdata=true'.\n{ingestion_parameters_str}"
-            )
-
-    if args.infer_nocall:
-        if not (
-            exclude_nocall == True
-            and exclude_halfref == False
-            and exclude_refdata == False
-        ):
-            err_exit(
-                f"The --infer-nocall flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=true', 'exclude_halfref=false', and 'exclude_refdata=false'.\n{ingestion_parameters_str}"
-            )
-
-
-def validate_filter_applicable_genotype_types(
-    infer_nocall: bool,
-    infer_ref: bool,
-    filter_dict: dict,
-    exclude_nocall: bool,
-    exclude_refdata: bool,
-    exclude_halfref: bool,
-):
-    # Check filter provided genotype_types against exclusion options at ingestion.
-    # e.g. no-call is not applicable when exclude_genotype set and infer-nocall false
-    if "genotype_type" in filter_dict.keys():
-        if exclude_nocall == True and not infer_nocall:
-            if "no-call" in filter_dict["genotype_type"]:
-                print(
-                    "WARNING: Filter requested genotype type 'no-call', genotype entries of this type were not ingested in the provided dataset and the --infer-nocall flag is not set!"
-                )
-            if filter_dict["genotype_type"] == []:
-                print(
-                    "WARNING: No genotype type requested in the filter. All genotype types will be returned. Genotype entries of type 'no-call' were not ingested in the provided dataset and the --infer-nocall flag is not set!"
-                )
-        if exclude_refdata == True and not infer_ref:
-            if "ref" in filter_dict["genotype_type"]:
-                print(
-                    "WARNING: Filter requested genotype type 'ref', genotype entries of this type were not ingested in the provided dataset and the --infer-ref flag is not set!"
-                )
-            if filter_dict["genotype_type"] == []:
-                print(
-                    "WARNING: No genotype type requested in the filter. All genotype types will be returned. Genotype entries of type 'ref' were not ingested in the provided dataset and the --infer-ref flag is not set!"
-                )
-        if exclude_halfref == True:
-            if "half" in filter_dict["genotype_type"]:
-                print(
-                    "WARNING: Filter requested genotype type 'half', 'half-ref genotype' entries (0/.) were not ingested in the provided dataset!"
-                )
-            if filter_dict["genotype_type"] == []:
-                print(
-                    "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!"
-                )
-        if (exclude_refdata is None and "ref" in filter_dict["genotype_type"] or exclude_nocall is None and "no-call" in filter_dict["genotype_type"]):
-            err_exit(
-                "\"ref\" and \"no-call\" genotype types can only be filtered when the undelying assay is of version generalized_assay_model_version 1.0.1/1.1.1 or higher."
-            )
-    if "allele_id" in filter_dict.keys() and (infer_nocall or infer_ref):
-        err_exit(
-            "The --infer-ref or --infer-nocall flags can only be used with a 'location' filter use '--json-help' to list an example."
-        )
-
 
 def retrieve_samples(resp: dict, assay_name: str, assay_id: str) -> list:
     """
@@ -974,15 +900,14 @@ def extract_assay_germline(args):
         exclude_refdata: bool = additional_descriptor_info.get("exclude_refdata")
         exclude_halfref: bool = additional_descriptor_info.get("exclude_halfref")
         exclude_nocall: bool = additional_descriptor_info.get("exclude_nocall")
-        validate_infer_flags(args, exclude_nocall, exclude_refdata, exclude_halfref)
-        validate_filter_applicable_genotype_types(
+        inference_validation(
             args.infer_nocall,
             args.infer_ref,
             filter_dict,
             exclude_nocall,
             exclude_refdata,
-            exclude_halfref)
-        
+            exclude_halfref
+            )
         # in case of infer flags, we query all the genotypes and do the filtering post query
         if args.infer_ref or args.infer_nocall:
             types_to_filter_out = get_types_to_filter_out_when_infering(filter_dict.get("genotype_type", []))
