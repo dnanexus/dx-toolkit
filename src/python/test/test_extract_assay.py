@@ -755,7 +755,8 @@ class TestDXExtractAssay(unittest.TestCase):
         self.assertIn(expected_result, process.communicate()[0])
 
 
-    def test_retrieve_genotype(self):
+    @unittest.skip("Vizserver implementation of PMUX-1652 needs to be deployed")
+    def test_retrieve_non_alt_genotype(self):
         """Testing --retrieve-genotype functionality"""
         location_genotype_type_filter = json.dumps({
             "location": [{
