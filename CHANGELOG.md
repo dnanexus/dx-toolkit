@@ -6,9 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Added AWScliv2 asset to Nextflow applets
+## [373.0] - beta
 
-## [372.0] - beta
+### Added 
+
+* AWScliv2 asset to Nextflow applets
+
+## [372.0] - 2024.3.22
 
 ### Added
 
