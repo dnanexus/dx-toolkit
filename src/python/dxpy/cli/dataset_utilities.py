@@ -80,7 +80,7 @@ from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from ..bindings.apollo.vizclient import VizClient
 
 from ..bindings.apollo.data_transformations import transform_to_expression_matrix
-from .output_handling import write_expression_output
+from .output_handling import write_expression_output, pretty_print_json
 
 from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP, EXTRACT_ASSAY_EXPRESSION_ADDITIONAL_FIELDS_HELP
 
@@ -799,23 +799,23 @@ def extract_assay_germline(args):
                 comment_fill('\tno-call\t(both alleles are unknown\t\t\t\te.g. ./.)') + '\n#\n' +
                 comment_fill('JSON filter templates for --retrieve-genotype', comment_string='# ') + '\n#\n' +
                 comment_fill('Example using location:', comment_string='# ') + '\n' +
-                comment_fill('{', comment_string='# ') + '\n' +
-                comment_fill('  "sample_id": ["s1", "s2"],', comment_string='# ') + '\n' +
-                comment_fill('  "location": [', comment_string='# ') + '\n' +
-                comment_fill('    {', comment_string='# ') + '\n' +
-                comment_fill('      "chromosome": "1",', comment_string='# ') + '\n' +
-                comment_fill('      "starting_position": "10000"', comment_string='# ') + '\n' +
-                comment_fill('    },', comment_string='# ') + '\n' +
-                comment_fill('    {', comment_string='# ') + '\n' +
-                comment_fill('      "chromosome": "X",', comment_string='# ') + '\n' +
-                comment_fill('      "starting_position": "500"', comment_string='# ') + '\n' +
-                comment_fill('    }', comment_string='# ') + '\n' +
-                comment_fill('  ],', comment_string='# ') + '\n' +
-                comment_fill('  "genotype_type": ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]', comment_string='# ') + '\n' +
-                comment_fill('}', comment_string='# ') + '\n#\n' +
-
+                pretty_print_json(
+                    {
+                        "sample_id": ["s1", "s2"],
+                        "location": [
+                            {"chromosome": "1", "starting_position": "10000"},
+                            {"chromosome": "X", "starting_position": "500"},
+                        ],
+                        "genotype_type": ["ref", "het-ref", "hom", "het-alt", "half", "no-call"],
+                    }
+                ) + '\n' +
                 comment_fill('Example using allele_id:', comment_string='# ') + '\n' +
-                '{\n  "sample_id": ["s1", "s2"],\n  "allele_id": ["1_1000_A_T","2_1000_G_C"],\n  "genotype_type": ["het-ref", "hom", "het-alt", "half"]\n}'
+                pretty_print_json({
+                    "sample_id": ["s1", "s2"],
+                    "allele_id": ["1_1000_A_T", "2_1000_G_C"],
+                    "genotype_type": ["het-ref", "hom", "het-alt", "half"],
+                }
+                )
             )
             sys.exit(0)
 
