@@ -178,5 +178,5 @@ def pretty_print_json(json_dict: dict) -> str:
         formatted_json = json.dumps(json_dict, sort_keys=True, indent=4)
         return formatted_json
     else:
-        print("WARNING: Invalid JSON provided.")
+        print("WARNING: Invalid JSON provided.", file=sys.stderr)
         return None
