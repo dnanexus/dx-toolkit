@@ -245,14 +245,14 @@ def validate_infer_flags(
         if not (
             exclude_nocall is False
             and exclude_halfref is False
-            and exclude_refdata is True
+            and exclude_refdata
         ):
             err_exit(
                 f"The --infer-ref flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=false', 'exclude_halfref=false', and 'exclude_refdata=true'.\n{ingestion_parameters_str}"
             )
     if infer_nocall:
         if not (
-            exclude_nocall is True
+            exclude_nocall
             and exclude_halfref is False
             and exclude_refdata is False
         ):
@@ -282,7 +282,7 @@ def validate_filter_applicable_genotype_types(
                 warn(
                     "No genotype type requested in the filter. All genotype types will be returned. Genotype entries of type 'no-call' were not ingested in the provided dataset and the --infer-nocall flag is not set!"
                 )
-        if exclude_refdata is True and not infer_ref:
+        if exclude_refdata and not infer_ref:
             if "ref" in filter_dict["genotype_type"]:
                 warn(
                     "Filter requested genotype type 'ref', genotype entries of this type were not ingested in the provided dataset and the --infer-ref flag is not set!"
