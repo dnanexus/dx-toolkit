@@ -6,12 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+* `dx extract_assay germline --retrieve-genotype` supports germline assay datasets with reference and no-call genotypes
+
 ## [373.0] - beta
 
 ### Added 
 
 * AWScliv2 asset to Nextflow applets
-* `dx extract_assay germline --retrieve-genotype` supports germline assay datasets with reference and no-call genotypes
 
 ## [372.0] - 2024.3.22
 
