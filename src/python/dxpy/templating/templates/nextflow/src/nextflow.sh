@@ -499,9 +499,10 @@ nf_task_exit() {
 # Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
   CREDENTIALS="$HOME/docker_creds"
+  AWS_ENV="$HOME/.dx-aws.env"
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
-
+  aws_login
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
@@ -514,4 +515,30 @@ nf_task_entry() {
   export exit_code=$?
   dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
+}
+
+aws_login() {
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
+  if [ -f "$AWS_ENV" ]; then
+    source $AWS_ENV
+    # aws env file example values:
+    # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "region"
+    python3 -m pip install --upgrade 'git+https://github.com/dnanexus/dx-toolkit.git@master#egg=dxpy&subdirectory=src/python' # FIXME: Remove after it is available on staging.
+    job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
+    output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
+    mkdir -p /home/dnanexus/.aws/
+
+    cat <<EOF > /home/dnanexus/.aws/credentials
+[default]
+aws_access_key_id = $(echo "$output" | jq -r '.Credentials.AccessKeyId')
+aws_secret_access_key = $(echo "$output" | jq -r '.Credentials.SecretAccessKey')
+aws_session_token = $(echo "$output" | jq -r '.Credentials.SessionToken')
+EOF
+    cat <<EOF > /home/dnanexus/.aws/config
+[default]
+region = $region
+EOF
+  else
+    echo "No AWS environment variables available"
+  fi
 }
