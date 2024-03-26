@@ -273,7 +273,7 @@ def validate_filter_applicable_genotype_types(
     # e.g. no-call is not applicable when exclude_genotype set and infer-nocall false
 
     if "genotype_type" in filter_dict:
-        if exclude_nocall == True and not infer_nocall:
+        if exclude_nocall is True and not infer_nocall:
             if "no-call" in filter_dict["genotype_type"]:
                 warn(
                     "Filter requested genotype type 'no-call', genotype entries of this type were not ingested in the provided dataset and the --infer-nocall flag is not set!"
@@ -291,7 +291,7 @@ def validate_filter_applicable_genotype_types(
                 warn(
                     "No genotype type requested in the filter. All genotype types will be returned. Genotype entries of type 'ref' were not ingested in the provided dataset and the --infer-ref flag is not set!"
                 )
-        if exclude_halfref == True:
+        if exclude_halfref is True:
             if "half" in filter_dict["genotype_type"]:
                 warn(
                     "Filter requested genotype type 'half', 'half-ref genotype' entries (0/.) were not ingested in the provided dataset!"
