@@ -941,11 +941,11 @@ def extract_assay_germline(args):
             for i, genotype_only_type in enumerate(genotype_only_types):
                 genotype_only_filter_dict = filter_dict.copy()
                 if genotype_only_type == "ref":
-                    genotype_only_filter_dict["ref_yn"] = genotype_only_type == "ref"
+                    genotype_only_filter_dict["ref_yn"] = True
                 elif genotype_only_type == "half":
-                    genotype_only_filter_dict["halfref_yn"] = genotype_only_type == "half"
+                    genotype_only_filter_dict["halfref_yn"] = True
                 elif genotype_only_type == "no-call":
-                    genotype_only_filter_dict["nocall_yn"] = genotype_only_type == "no-call"
+                    genotype_only_filter_dict["nocall_yn"] = True
 
                 genotype_only_payload, _ = final_payload(
                     full_input_dict=genotype_only_filter_dict,
