@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added 
+
 * `dx extract_assay germline --retrieve-genotype` supports germline assay datasets with reference and no-call genotypes
 
 ## [373.0] - beta
