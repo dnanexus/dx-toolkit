@@ -252,7 +252,7 @@ def validate_infer_flags(
             )
     if infer_nocall:
         if not (
-            exclude_nocall == True
+            exclude_nocall is True
             and exclude_halfref is False
             and exclude_refdata is False
         ):
