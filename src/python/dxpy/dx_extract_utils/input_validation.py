@@ -245,7 +245,7 @@ def validate_infer_flags(
         if not (
             exclude_nocall == False
             and exclude_halfref == False
-            and exclude_refdata == True
+            and exclude_refdata is True
         ):
             err_exit(
                 f"The --infer-ref flag can only be used when exclusion parameters at ingestion were set to 'exclude_nocall=false', 'exclude_halfref=false', and 'exclude_refdata=true'.\n{ingestion_parameters_str}"
