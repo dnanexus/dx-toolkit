@@ -243,8 +243,8 @@ def validate_infer_flags(
     ingestion_parameters_str = f"Exclusion parameters set at the ingestion: exclude_nocall={str(exclude_nocall).lower()}, exclude_halfref={str(exclude_halfref).lower()}, exclude_refdata={str(exclude_refdata).lower()}"
     if infer_ref:
         if not (
-            exclude_nocall == False
-            and exclude_halfref == False
+            exclude_nocall is False
+            and exclude_halfref is False
             and exclude_refdata is True
         ):
             err_exit(
