@@ -1,6 +1,8 @@
+from __future__ import annotations
 import sys
 import csv
 import os
+import json
 from ..exceptions import err_exit
 
 
@@ -160,3 +162,21 @@ def write_expression_output(
 
         else:
             error_handler("Unexpected error occurred while writing output")
+
+
+
+def pretty_print_json(json_dict: dict) -> str:
+    """Pretty-prints the provided JSON object.
+
+    Args:
+        json_dict: A string containing valid JSON data.
+
+    Returns:
+        Returns a string with formatted JSON or None if there's an error.
+    """
+    if isinstance(json_dict, dict):
+        formatted_json = json.dumps(json_dict, sort_keys=True, indent=4)
+        return formatted_json
+    else:
+        print("WARNING: Invalid JSON provided.")
+        return None
