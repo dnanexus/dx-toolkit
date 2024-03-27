@@ -199,7 +199,8 @@ def download(args):
         resolver_kwargs.update({"describe": {"parts": True,
                                              "size": True,
                                              "drive": True,
-                                             "md5": True}})
+                                             "md5": True,
+                                             "uploadId": True}})
 
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
 

@@ -269,10 +269,10 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     if describe_output and describe_output.get("parts") is not None:
         dxfile_desc = describe_output
     else:
-        dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
+        dxfile_desc = dxfile.describe(fields={"parts", "uploadId"}, default_fields=True, **kwargs)
 
     # handling of symlinked files.
-    if 'drive' in dxfile_desc:
+    if 'drive' in dxfile_desc and 'uploadId' not in dxfile_desc:
         if 'md5' in dxfile_desc:
             md5 = dxfile_desc['md5']
         else:
@@ -692,7 +692,8 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
                                       parts=True,
                                       size=True,
                                       drive=True,
-                                      md5=True))
+                                      md5=True,
+                                      uploadId=True))
 
     # A generator that returns the files one by one. We don't want to materialize it, because
     # there could be many files here.
