@@ -272,7 +272,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
 
     # handling of symlinked files.
-    if 'drive' in dxfile_desc:
+    if 'drive' in dxfile_desc and 'parts' not in dxfile_desc:
         if 'md5' in dxfile_desc:
             md5 = dxfile_desc['md5']
         else:
