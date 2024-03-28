@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added 
+
+* AWS login for Nextflow subjobs and relogin for Nextflow headjob and subjobs
+
 ## [373.0] - beta
 
 ### Added 
