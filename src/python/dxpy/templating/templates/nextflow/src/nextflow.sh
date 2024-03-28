@@ -415,7 +415,10 @@ main() {
     $nextflow_pipeline_params)"
 
   NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
-
+  # first AWS login of the headjob is done in the Nextflow code,
+  # this is due to the dependency on config values.
+  AWS_ENV="$HOME/.dx-aws.env"
+  automatic_aws_relogin & AWS_RELOGIN_PID=$!
   trap on_exit EXIT
   echo "============================================================="
   echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
@@ -439,6 +442,7 @@ main() {
     fi
     
     wait $NXF_EXEC_PID
+    kill "$AWS_RELOGIN_PID"
     ret=$?
     exit $ret
 }
@@ -502,7 +506,9 @@ nf_task_entry() {
   AWS_ENV="$HOME/.dx-aws.env"
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
   aws_login
+  automatic_aws_relogin & AWS_RELOGIN_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
@@ -513,12 +519,12 @@ nf_task_entry() {
   # run the task
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
+  kill "$AWS_RELOGIN_PID"
   dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
 }
 
 aws_login() {
-  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
     # aws env file example values:
@@ -541,4 +547,14 @@ EOF
   else
     echo "No AWS environment variables available"
   fi
+}
+
+automatic_aws_relogin() {
+  while true; do
+      sleep 3000 # 50 minutes, first login is done independently, so we wait first
+      if [ -f "$AWS_ENV" ]; then
+        aws_login
+        echo "Successfully reauthenticated to AWS"
+      fi
+  done
 }
