@@ -1,10 +1,9 @@
 import json
 
-from ..exceptions import err_exit, ResourceNotFound
+from ..exceptions import err_exit
 from .input_validation import validate_filter
 import os
 import dxpy
-import subprocess
 from .retrieve_bins import retrieve_bins
 
 extract_utils_basepath = os.path.join(
@@ -40,7 +39,7 @@ def retrieve_geno_bins(list_of_genes, project, genome_reference):
 
 
 def basic_filter(
-    table, friendly_name, values=[], project_context=None, genome_reference=None
+    filter_type, friendly_name, values=[], project_context=None, genome_reference=None
 ):
     """
     A low-level filter consisting of a dictionary with one key defining the table and column
@@ -56,8 +55,8 @@ def basic_filter(
                            }
     ]}
     """
-    filter_key = column_conversion[table][friendly_name]
-    condition = column_conditions[table][friendly_name]
+    filter_key = column_conversion[filter_type][friendly_name]
+    condition = column_conditions[filter_type][friendly_name]
 
     # Input validation.  Check that the user hasn't provided an invalid min/max in any fields
     if condition == "between":
@@ -73,14 +72,11 @@ def basic_filter(
         values = int(values)
 
     # Check for special cases where the user-input values need to be changed before creating payload
-    # Case 1: genotype filter, genotype_type field, hom changes to hom-alt
-    if table == "genotype" and friendly_name == "genotype_type":
-        values = [x if x != "hom-alt" else "hom" for x in values]
-    # Case 2: Some fields need to be changed to upper case
+    # Case 1: Some fields need to be changed to upper case
     if friendly_name in ["gene_id", "feature_id", "putative_impact"]:
         values = [x.upper() for x in values]
-    # Case 3: remove duplicate rsid values
-    if table == "allele" and friendly_name == "rsid":
+    # Case 2: remove duplicate rsid values
+    if filter_type == "allele" and friendly_name == "rsid":
         values = list(set(values))
 
     # Check if we need to add geno bins as well
@@ -102,14 +98,14 @@ def basic_filter(
     return listed_filter
 
 
-def location_filter(location_list):
+def location_filter(location_list, table):
     """
-    A location filter is actually an allele$a_id filter with no filter values
+    A location filter is actually an table$a_id filter with no filter values
     The geno_bins perform the actual location filtering.  Related to other geno_bins filters by "or"
     """
 
     location_aid_filter = {
-        "allele$a_id": [
+        "{}$a_id".format(table): [
             {
                 "condition": "in",
                 "values": [],
@@ -119,18 +115,20 @@ def location_filter(location_list):
     }
 
     for location in location_list:
-        # First, ensure that the geno bins width isn't greater than 250 megabases
         start = int(location["starting_position"])
-        end = int(location["ending_position"])
-        if end - start > 5000000:
-            err_exit(
-                "Error in location {}\nLocation filters may not specify regions larger than 5 megabases".format(
-                    location
-                )
-            )
+        if "ending_position" in location:
+            end = int(location["ending_position"])
+            # Ensure that the geno bins width isn't greater than 5 megabases
+            if end - start > 5000000:
+                err_exit('\n'.join([
+                    "Error in location {}".format(location),
+                    "Location filters may not specify regions larger than 5 megabases",
+                ]))
+        else:
+            end = start
 
         # Fill out the contents of an object in the geno_bins array
-        location_aid_filter["allele$a_id"][0]["geno_bins"].append(
+        location_aid_filter["{}$a_id".format(table)][0]["geno_bins"].append(
             {
                 "chr": location["chromosome"],
                 "start": start,
@@ -148,6 +146,9 @@ def generate_assay_filter(
     project_context,
     genome_reference,
     filter_type,
+    exclude_nocall=None,
+    exclude_refdata=None,
+    exclude_halfref=None
 ):
     """
     Generate the entire assay filters object by reading the filter JSON, making the relevant
@@ -158,19 +159,19 @@ def generate_assay_filter(
     """
 
     filters_dict = {}
-    table = filter_type
+    table = filter_type if filter_type != "genotype_only" else "genotype"
 
     for key in full_input_dict.keys():
         if key == "location":
             location_list = full_input_dict["location"]
-            location_aid_filter = location_filter(location_list)
+            location_aid_filter = location_filter(location_list, table)
             filters_dict.update(location_aid_filter)
 
         else:
             if not (full_input_dict[key] == "*" or full_input_dict[key] == None):
                 filters_dict.update(
                     basic_filter(
-                        table,
+                        filter_type,
                         key,
                         full_input_dict[key],
                         project_context,
@@ -184,11 +185,30 @@ def generate_assay_filter(
     # The general filters are related by "and"
     final_filter_dict["assay_filters"]["logic"] = "and"
 
+    if exclude_nocall is not None:
+        # no-call genotypes
+        final_filter_dict["assay_filters"]["nocall_yn"] = not exclude_nocall
+    if exclude_refdata is not None:
+        # reference genotypes
+        final_filter_dict["assay_filters"]["ref_yn"] = not exclude_refdata
+    if exclude_halfref is not None:
+        # half-reference genotypes
+        final_filter_dict["assay_filters"]["halfref_yn"] = not exclude_halfref
+
     return final_filter_dict
 
 
 def final_payload(
-    full_input_dict, name, id, project_context, genome_reference, filter_type
+    full_input_dict,
+    name,
+    id,
+    project_context,
+    genome_reference,
+    filter_type,
+    order=True,
+    exclude_nocall=None,
+    exclude_refdata=None,
+    exclude_halfref=None
 ):
     """
     Assemble the top level payload.  Top level dict contains the project context, fields (return columns),
@@ -203,6 +223,9 @@ def final_payload(
         project_context,
         genome_reference,
         filter_type,
+        exclude_nocall,
+        exclude_refdata,
+        exclude_halfref
     )
 
     final_payload = {}
@@ -225,19 +248,29 @@ def final_payload(
             os.path.join(extract_utils_basepath, "return_columns_genotype.json"), "r"
         ) as infile:
             fields = json.load(infile)
+    elif filter_type == "genotype_only":
+        with open(
+            os.path.join(extract_utils_basepath, "return_columns_genotype_only.json"), "r"
+        ) as infile:
+            fields = json.load(infile)
 
-    order_by = [{"allele_id":"asc"}]
+    if order:
+        order_by = [{"allele_id":"asc"}]
 
-    # In order for output to be deterministic, we need to do a secondary sort by sample_id
-    # if it is present in the fields
-    sample_id_present = False
-    for field in fields:
-        if "sample_id" in field:
-            sample_id_present = True
-    if sample_id_present:
-        order_by.append({"sample_id":"asc"})
+        if any("locus_id" in field for field in fields):
+            order_by.insert(0, {"locus_id":"asc"})
 
-    final_payload["order_by"] = order_by
+        # In order for output to be deterministic, we need to do a secondary sort by sample_id
+        # if it is present in the fields
+        sample_id_present = False
+        for field in fields:
+            if "sample_id" in field:
+                sample_id_present = True
+        if sample_id_present:
+            order_by.append({"sample_id":"asc"})
+
+        final_payload["order_by"] = order_by
+
     final_payload["fields"] = fields
     final_payload["adjust_geno_bins"] = False
     final_payload["raw_filters"] = assay_filter
