@@ -1022,6 +1022,9 @@ def extract_assay_germline(args):
 
             if args.infer_ref or args.infer_nocall:
                 samples = retrieve_samples(resp, selected_assay_name, selected_assay_id)
+                selected_samples = set(filter_dict.get("sample_id", []))
+                if selected_samples:
+                    samples = list(selected_samples.intersection(samples))
                 loci_payload = get_germline_loci_payload(filter_dict["location"], genotype_payload)
                 loci = [locus for locus in raw_api_call(resp, loci_payload)["results"]]
                 type_to_infer = "ref" if args.infer_ref else "no-call"
