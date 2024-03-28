@@ -6,9 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Added AWScliv2 asset to Nextflow applets
+### Added 
 
-## [372.0] - beta
+* AWS login for Nextflow subjobs and relogin for Nextflow headjob and subjobs
+
+## [373.0] - beta
+
+### Added 
+
+* AWScliv2 asset to Nextflow applets
+
+## [372.0] - 2024.3.22
 
 ### Added
 
