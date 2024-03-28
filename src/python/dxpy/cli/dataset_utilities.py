@@ -17,7 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-from __future__ import print_function, unicode_literals, division, absolute_import
+from __future__ import print_function, unicode_literals, division, absolute_import, annotations
 
 import sys
 import collections
@@ -47,6 +47,21 @@ from ..exceptions import (
 )
 
 from ..dx_extract_utils.filter_to_payload import validate_JSON, final_payload
+from ..dx_extract_utils.germline_utils import (
+    get_genotype_only_types,
+    add_germline_base_sql,
+    sort_germline_variant,
+    harmonize_germline_sql,
+    harmonize_germline_results,
+    get_germline_ref_payload,
+    get_germline_loci_payload,
+    update_genotype_only_ref,
+    get_genotype_types,
+    infer_genotype_type,
+    get_types_to_filter_out_when_infering,
+    filter_results
+)
+from ..dx_extract_utils.input_validation import inference_validation
 from ..dx_extract_utils.input_validation_somatic import validate_somatic_filter
 from ..dx_extract_utils.somatic_filter_payload import somatic_final_payload
 from ..dx_extract_utils.cohort_filter_payload import cohort_filter_payload, cohort_final_payload
@@ -65,7 +80,7 @@ from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from ..bindings.apollo.vizclient import VizClient
 
 from ..bindings.apollo.data_transformations import transform_to_expression_matrix
-from .output_handling import write_expression_output
+from .output_handling import write_expression_output, pretty_print_json
 
 from .help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_HELP, EXTRACT_ASSAY_EXPRESSION_ADDITIONAL_FIELDS_HELP
 
@@ -671,6 +686,9 @@ def get_assay_name_info(
                 if a["reference_genome"]:
                     selected_ref_genome = a["reference_genome"]["name"].split(".", 1)[1]
                 additional_descriptor_info["genotype_type_table"] = a["entities"]["genotype"]["fields"]["type"]["mapping"]["table"]
+                for exclude_genotype in ("exclude_refdata", "exclude_halfref", "exclude_nocall"):
+                    if exclude_genotype in a:
+                        additional_descriptor_info[exclude_genotype] = a[exclude_genotype]
     elif friendly_assay_type == "somatic":
         selected_ref_genome = ""
         for a in target_assays:
@@ -683,6 +701,18 @@ def get_assay_name_info(
 def comment_fill(string, comment_string='#  ', **kwargs):
     width_adjustment = kwargs.pop('width_adjustment', 0) - len(comment_string)
     return re.sub('^', comment_string, fill(string, width_adjustment=width_adjustment, **kwargs), flags=re.MULTILINE)
+
+
+def retrieve_samples(resp: dict, assay_name: str, assay_id: str) -> list:
+    """
+    Get the list of sample_ids from the sample table for the selected assay.
+    """
+    sample_payload = {
+        "project_context": resp["datasetRecordProject"],
+        "fields": [{"sample_id": "sample$sample_id"}],
+        "raw_filters": {"assay_filters": {"name": assay_name, "id": assay_id}},
+    }
+    return [_["sample_id"] for _ in raw_api_call(resp, sample_payload)["results"]]
 
 
 def extract_assay_germline(args):
@@ -713,6 +743,13 @@ def extract_assay_germline(args):
             )
         elif filter_given:
             err_exit("--list-assays cannot be presented with other options.")
+
+    #### Validate that a retrieve options infer_ref or infer_nocall are not passed with retrieve_allele or retrieve_annotation ####
+    if args.infer_ref or args.infer_nocall:
+        if args.retrieve_allele or args.retrieve_annotation or args.sql or args.list_assays:
+            err_exit(
+                "The flags, --infer-ref and --infer-nocall, can only be used with --retrieve-genotype."
+            )
 
     #### Check if the retrieve options are passed correctly, print help if needed ####
     if args.retrieve_allele:
@@ -749,10 +786,36 @@ def extract_assay_germline(args):
             print(
                 comment_fill('Filters and respective definitions', comment_string='# ') + '\n#\n' +
                 comment_fill('allele_id: ID(s) of one or more alleles for which sample genotypes will be returned. If multiple values are provided, any samples having at least one allele that match any of the values specified will be listed. For example, ["1_1000_A_T", "1_1010_C_T"], will search for samples with at least one allele matching either "1_1000_A_T" or "1_1010_C_T". String match is case insensitive.') + '\n#\n' +
+                comment_fill('location: Genomic position in the reference genome of the starting position of the alleles.  If multiple values are provided in the list, the conditional search will be, "OR." String match is case sensitive.') + '\n#\n' +
+                comment_fill('allele_id and location are mutually exclusive filters.') + '\n#\n' +
                 comment_fill('sample_id: Optional, one or more sample IDs for which sample genotypes will be returned. If the provided object is a cohort, this further intersects the sample ids. If a user has a list of samples more than 1,000, it is recommended to use a cohort id containing all the samples.') + '\n#\n' +
-                comment_fill('genotype_type: Optional, one or more genotype types for which sample genotype types will be returned. One of: hom-alt (homozygous for the non-ref allele), het-ref (heterozygous with a ref allele and alt allele), het-alt (heterozygous with two distinct alt alleles), half (only one alt allele is known, second allele is unknown).') + '\n#\n' +
-                comment_fill('JSON filter template for --retrieve-genotype', comment_string='# ') + '\n' +
-                '{\n  "sample_id": ["s1", "s2"],\n  "allele_id": ["1_1000_A_T","2_1000_G_C"],\n  "genotype_type": ["het-ref", "hom-alt"]\n}'
+                comment_fill('genotype_type: Optional, one or more genotype types for which sample genotype types will be returned.') + '\n' +
+                comment_fill('One of:') + '\n' +
+                comment_fill('\tref\t(homozygous for the reference allele\t\t\te.g. 0/0)') + '\n' +
+                comment_fill('\thet-ref\t(heterozygous for the ref allele and alt allele\t\te.g. 0/1)') + '\n' +
+                comment_fill('\thom\t(homozygous for the non-ref allele\t\t\te.g. 1/1)') + '\n' +
+                comment_fill('\thet-alt\t(heterozygous with two distinct alt alleles\t\te.g. 1/2)') + '\n' +
+                comment_fill('\thalf\t(only one allele is known, second allele is unknown\te.g. ./1)') + '\n' +
+                comment_fill('\tno-call\t(both alleles are unknown\t\t\t\te.g. ./.)') + '\n#\n' +
+                comment_fill('JSON filter templates for --retrieve-genotype', comment_string='# ') + '\n#\n' +
+                comment_fill('Example using location:', comment_string='# ') + '\n' +
+                pretty_print_json(
+                    {
+                        "sample_id": ["s1", "s2"],
+                        "location": [
+                            {"chromosome": "1", "starting_position": "10000"},
+                            {"chromosome": "X", "starting_position": "500"},
+                        ],
+                        "genotype_type": ["ref", "het-ref", "hom", "het-alt", "half", "no-call"],
+                    }
+                ) + '\n' +
+                comment_fill('Example using allele_id:', comment_string='# ') + '\n' +
+                pretty_print_json({
+                    "sample_id": ["s1", "s2"],
+                    "allele_id": ["1_1000_A_T", "2_1000_G_C"],
+                    "genotype_type": ["het-ref", "hom", "het-alt", "half"],
+                }
+                )
             )
             sys.exit(0)
 
@@ -795,57 +858,26 @@ def extract_assay_germline(args):
 
     out_file, print_to_stdout = assign_output_method(args, resp["recordName"], "germline")
 
-    payload = {}
+    filter_type = None
     if args.retrieve_allele:
-        payload, fields_list = final_payload(
-            full_input_dict=filter_dict,
-            name=selected_assay_name,
-            id=selected_assay_id,
-            project_context=project,
-            genome_reference=selected_ref_genome,
-            filter_type="allele",
-        )
+        filter_type = "allele"
     elif args.retrieve_annotation:
+        filter_type = "annotation"
+
+    if filter_type and filter_given:
         payload, fields_list = final_payload(
             full_input_dict=filter_dict,
             name=selected_assay_name,
             id=selected_assay_id,
             project_context=project,
             genome_reference=selected_ref_genome,
-            filter_type="annotation",
-        )
-    elif args.retrieve_genotype:
-        payload, fields_list = final_payload(
-            full_input_dict=filter_dict,
-            name=selected_assay_name,
-            id=selected_assay_id,
-            project_context=project,
-            genome_reference=selected_ref_genome,
-            filter_type="genotype",
+            filter_type=filter_type,
         )
 
-    if "CohortBrowser" in resp["recordTypes"]:
-        if resp.get("baseSql"):
-            payload["base_sql"] = resp.get("baseSql")
-        payload["filters"] = resp["filters"]
+        add_germline_base_sql(resp, payload)
 
-    #### Run api call to get sql or extract data ####
-    if filter_given:
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
-            if args.retrieve_genotype:
-                try:
-                    geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
-                    geno_table = re.search(
-                        geno_table_regex, sql_results
-                    ).group()
-                except Exception:
-                        err_exit("Failed to find the table, {}, in the generated SQL".format(additional_descriptor_info["genotype_type_table"]), 
-                                 expected_exceptions=(AttributeError,))
-                substr = "`" + geno_table + "`.`type`"
-                sql_results = sql_results.replace(
-                    substr, "REPLACE(`" + geno_table + "`.`type`, 'hom', 'hom-alt')", 1
-                )
 
             if print_to_stdout:
                 print(sql_results)
@@ -854,17 +886,154 @@ def extract_assay_germline(args):
                     print(sql_results, file=sql_file)
         else:
             resp_raw = raw_api_call(resp, payload)
-            if args.retrieve_genotype:
-                for r in resp_raw["results"]:
-                    if r["genotype_type"] == "hom":
-                        r["genotype_type"] = "hom-alt"
+            ordered_results = sorted(resp_raw["results"], key=sort_germline_variant)
 
-            def sort_variant(d):
-                chrom, pos = d["allele_id"].split("_")[:2]
-                if chrom.isdigit():
-                    return int(chrom), '', int(pos)
-                return float('inf'), chrom, int(pos)
-            ordered_results = sorted(resp_raw["results"], key=sort_variant)
+            csv_from_json(
+                out_file_name=out_file,
+                print_to_stdout=print_to_stdout,
+                sep="\t",
+                raw_results=ordered_results,
+                column_names=fields_list,
+                quote_char=str("|"),
+            )
+
+    if args.retrieve_genotype and filter_given:
+        exclude_refdata: bool = additional_descriptor_info.get("exclude_refdata")
+        exclude_halfref: bool = additional_descriptor_info.get("exclude_halfref")
+        exclude_nocall: bool = additional_descriptor_info.get("exclude_nocall")
+        inference_validation(
+            args.infer_nocall,
+            args.infer_ref,
+            filter_dict,
+            exclude_nocall,
+            exclude_refdata,
+            exclude_halfref
+            )
+        # in case of infer flags, we query all the genotypes and do the filtering post query
+        if args.infer_ref or args.infer_nocall:
+            types_to_filter_out = get_types_to_filter_out_when_infering(filter_dict.get("genotype_type", []))
+            filter_dict["genotype_type"] = []
+
+        # get a list of requested genotype types for the genotype table only queries
+        if "allele_id" in filter_dict:
+            genotype_only_types = []
+        else:
+            genotype_only_types = get_genotype_only_types(filter_dict,
+                                                          exclude_refdata, exclude_halfref, exclude_nocall)
+            
+        # get the payload for the genotype/allele table query for alternate genotype types
+        genotype_payload, fields_list = final_payload(
+            full_input_dict=filter_dict,
+            name=selected_assay_name,
+            id=selected_assay_id,
+            project_context=project,
+            genome_reference=selected_ref_genome,
+            filter_type="genotype",
+            order=not genotype_only_types,
+        )
+
+        add_germline_base_sql(resp, genotype_payload)
+
+        genotype_only_payloads = []
+        if genotype_only_types:
+            # get the payloads for the genotype table only query
+            # assay_filter does not support "or" so there is a separate query for each partition
+            for i, genotype_only_type in enumerate(genotype_only_types):
+                genotype_only_filter_dict = filter_dict.copy()
+                if genotype_only_type == "ref":
+                    genotype_only_filter_dict["ref_yn"] = True
+                elif genotype_only_type == "half":
+                    genotype_only_filter_dict["halfref_yn"] = True
+                elif genotype_only_type == "no-call":
+                    genotype_only_filter_dict["nocall_yn"] = True
+
+                genotype_only_payload, _ = final_payload(
+                    full_input_dict=genotype_only_filter_dict,
+                    name=selected_assay_name,
+                    id=selected_assay_id,
+                    project_context=project,
+                    genome_reference=selected_ref_genome,
+                    filter_type="genotype_only",
+                    exclude_refdata=genotype_only_type != "ref",
+                    exclude_halfref=genotype_only_type != "half",
+                    exclude_nocall=genotype_only_type != "no-call",
+                    order=i == len(genotype_only_types) - 1,
+                )
+
+                add_germline_base_sql(resp, genotype_only_payload)
+
+                genotype_only_payloads.append(genotype_only_payload)
+
+        # get the list of requested genotype types for the genotype/allele table query
+        genotype_types = get_genotype_types(filter_dict)
+
+        if args.sql:
+            sql_queries = []
+            if genotype_types:
+                # get the genotype/allele table query
+                genotype_sql_query = raw_query_api_call(resp, genotype_payload)[:-1]
+                try:
+                    geno_table_regex = r"\b" + additional_descriptor_info["genotype_type_table"] + r"\w+"
+                    re.search(geno_table_regex, genotype_sql_query).group()
+                except Exception:
+                    err_exit("Failed to find the table, {}, in the generated SQL".format(
+                        additional_descriptor_info["genotype_type_table"]), expected_exceptions=(AttributeError,))
+                sql_queries.append(genotype_sql_query)
+
+            # get the genotype table only query
+            # assay_filter does not support "or" so there is a separate query for each partition
+            for genotype_only_payload in genotype_only_payloads:
+                # join the allele table to get the ref, will join on locus_id
+                genotype_only_payload["fields"].append({"ref": "allele$ref"})
+                genotype_only_sql_query = raw_query_api_call(resp, genotype_only_payload)[:-1]
+                # update the query to add column in the genotype/allele table query and join on locus_id
+                sql_queries.append(harmonize_germline_sql(genotype_only_sql_query))
+
+            # combine the queries into a single query
+            sql_results = " UNION ".join(sql_queries) + ";"
+
+            if print_to_stdout:
+                print(sql_results)
+            else:
+                with open(out_file, "w") as sql_file:
+                    print(sql_results, file=sql_file)
+        else:
+            # get the list of dictionary results for the genotype/allele table query
+            ordered_results = []
+            if genotype_types:
+                genotype_resp_raw = raw_api_call(resp, genotype_payload)
+                ordered_results.extend(genotype_resp_raw["results"])
+
+            # get the list of dictionary results for each genotype table only query
+            for genotype_only_payload in genotype_only_payloads:
+                genotype_only_resp_raw = raw_api_call(resp, genotype_only_payload)
+                # add missing keys that are in the allele table part of the genotype/allele table query
+                ordered_results.extend(harmonize_germline_results(genotype_only_resp_raw["results"], fields_list))
+
+            if genotype_only_types:
+                # get the ref value from the allele table using locus ids
+                # ingestion of VCFs lines missing ALT is unsupported so the locus_id will exist in the allele table
+                # normalized ref values in the locus_id will match the ref value for missing ALT lines if they
+                # were ingested and locus_id could be parsed for the ref value
+                ref_payload = get_germline_ref_payload(ordered_results, genotype_payload)
+                if ref_payload:
+                    locus_id_refs = raw_api_call(resp, ref_payload)
+                    update_genotype_only_ref(ordered_results, locus_id_refs)
+
+            if args.infer_ref or args.infer_nocall:
+                samples = retrieve_samples(resp, selected_assay_name, selected_assay_id)
+                selected_samples = set(filter_dict.get("sample_id", []))
+                if selected_samples:
+                    samples = list(selected_samples.intersection(samples))
+                loci_payload = get_germline_loci_payload(filter_dict["location"], genotype_payload)
+                loci = [locus for locus in raw_api_call(resp, loci_payload)["results"]]
+                type_to_infer = "ref" if args.infer_ref else "no-call"
+                ordered_results = infer_genotype_type(samples, loci, ordered_results, type_to_infer)
+                # Filter out not requested genotypes
+                if len(types_to_filter_out) > 0:
+                    ordered_results = filter_results(ordered_results, "genotype_type", types_to_filter_out)
+
+            ordered_results.sort(key=sort_germline_variant)
 
             csv_from_json(
                 out_file_name=out_file,
