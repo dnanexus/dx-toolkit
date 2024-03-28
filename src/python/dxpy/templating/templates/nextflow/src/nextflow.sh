@@ -528,7 +528,7 @@ aws_login() {
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
     # aws env file example values:
-    # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "region"
+    # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
     python3 -m pip install --upgrade 'git+https://github.com/dnanexus/dx-toolkit.git@master#egg=dxpy&subdirectory=src/python' # FIXME: Remove after it is available on staging.
     job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
     output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
@@ -542,7 +542,7 @@ aws_session_token = $(echo "$output" | jq -r '.Credentials.SessionToken')
 EOF
     cat <<EOF > /home/dnanexus/.aws/config
 [default]
-region = $region
+region = $awsRegion
 EOF
   else
     echo "No AWS environment variables available"
