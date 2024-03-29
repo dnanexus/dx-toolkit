@@ -560,6 +560,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     retried_responses = []
     _url = None
+    redirect_url = None
     while True:
         success, time_started = True, None
         response = None
@@ -611,14 +612,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                                                 timeout=timeout, retries=False, **kwargs)
                 # Handle redirection manually for symlink files
                 if response.status in range(300, 399):
-                    url = response.headers.get('Location')
-                    if url:
-                        if try_index > 0:
-                            logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
-                        # Make a new request to the URL specified in the Location header
-                        return DXHTTPRequest(url, body, method, headers, auth, timeout, use_compression, jsonify_data, want_full_response,
-                                      decode_response_body, prepend_srv, session_handler,
-                                      max_retries, always_retry, **kwargs)
+                    redirect_url = response.headers.get('Location')
+                    if try_index > 0:
+                        logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
+                    break
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
@@ -794,6 +791,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
+
+    # Make a new request to the URL specified in the Location header if we got a redirect_url
+    if redirect_url:
+        return DXHTTPRequest(redirect_url, body, method=method, headers=headers, auth=auth, timeout=timeout,
+                             use_compression=use_compression, jsonify_data=jsonify_data,
+                             want_full_response=want_full_response,
+                             decode_response_body=decode_response_body, prepend_srv=prepend_srv,
+                             session_handler=session_handler,
+                             max_retries=max_retries, always_retry=always_retry, **kwargs)
     raise AssertionError('Should never reach this line: should never break out of loop')
 
 
