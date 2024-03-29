@@ -613,9 +613,12 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 if response.status in range(300, 399):
                     url = response.headers.get('Location')
                     if url:
+                        if try_index > 0:
+                            logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
                         # Make a new request to the URL specified in the Location header
-                        response = pool_manager.request(_method, url, headers=_headers, body=body,
-                                                timeout=timeout, retries=False, **kwargs)
+                        return DXHTTPRequest(url, body, method, headers, auth, timeout, use_compression, jsonify_data, want_full_response,
+                                      decode_response_body, prepend_srv, session_handler,
+                                      max_retries, always_retry, **kwargs)
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
