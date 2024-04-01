@@ -6,7 +6,31 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [371.0] - beta
+### Added 
+
+* `dx extract_assay germline --retrieve-genotype` supports germline assay datasets with reference and no-call genotypes
+
+## [373.0] - beta
+
+### Added 
+
+* AWScliv2 asset to Nextflow applets
+
+## [372.0] - 2024.3.22
+
+### Added
+
+* dx-jobutil-get-identity-token 
+
+### Fixed
+
+* Released Nextaur 1.7.4: Fixes error when multiple Docker images with the same name and digest are cached.
+
+### Removed
+
+* For Nextflow applets, removed allProjects: VIEW access. They will have only UPLOAD access to the current project context.
+
+## [371.0] - 2024.3.13
 
 ### Fixed
 
@@ -24,7 +48,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.7.3
 * Fix for occasional head job hang during upload, fix for "No such file or directory" errors on localized dx files
-* Mltiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
+* Multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
 
 ## [369.1] - 2024.2.13
 
