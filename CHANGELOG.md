@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added 
 
 * AWS login for Nextflow subjobs and relogin for Nextflow headjob and subjobs
+* `dx extract_assay germline --retrieve-genotype` supports germline assay datasets with reference and no-call genotypes
 
 ## [373.0] - beta
 

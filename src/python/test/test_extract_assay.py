@@ -27,6 +27,11 @@ import subprocess
 import json
 import sys
 
+from unittest.mock import patch
+from io import StringIO
+
+from parameterized import parameterized
+
 from dxpy_testutil import cd
 from dxpy.dx_extract_utils.filter_to_payload import (
     retrieve_geno_bins,
@@ -36,11 +41,18 @@ from dxpy.dx_extract_utils.filter_to_payload import (
     final_payload,
     validate_JSON,
 )
+from dxpy.dx_extract_utils.germline_utils import (
+    filter_results,
+    _produce_loci_dict,
+    infer_genotype_type
+)
 from dxpy.cli.dataset_utilities import (
     DXDataset,
     resolve_validate_record_path,
     get_assay_name_info,
 )
+from dxpy.dx_extract_utils.input_validation import validate_filter_applicable_genotype_types
+
 
 python_version = sys.version_info.major
 
@@ -51,7 +63,13 @@ class TestDXExtractAssay(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         test_project_name = "dx-toolkit_test_data"
-        cls.test_record = "{}:Extract_Assay_Germline/test01_dataset".format(
+        cls.test_v1_record = "{}:/Extract_Assay_Germline/test01_dataset".format(
+            test_project_name
+        )
+        cls.test_record = "{}:/Extract_Assay_Germline/test01_v1_0_1_dataset".format(
+            test_project_name
+        )
+        cls.test_non_alt_record = "{}:/Extract_Assay_Germline/test03_dataset".format(
             test_project_name
         )
         cls.output_folder = os.path.join(dirname, "extract_assay_germline/test_output/")
@@ -79,9 +97,14 @@ class TestDXExtractAssay(unittest.TestCase):
         rec_descriptor = DXDataset(dataset_id, project=dataset_project).get_descriptor()
         # Expected Results
         expected_assay_name = "test01_assay"
-        expected_assay_id = "6a25ebd7-c304-4308-84c8-ca93da19caed"
+        expected_assay_id = "cc5dcc31-000c-4a2c-b225-ecad6233a0a3"
         expected_ref_genome = "GRCh38.92"
-        expected_additional_descriptor_info = {"genotype_type_table": "genotype_alt_read_optimized"}
+        expected_additional_descriptor_info = {
+            "exclude_refdata": True,
+            "exclude_halfref": True,
+            "exclude_nocall": True,
+            "genotype_type_table": "genotype_alt_read_optimized",
+        }
 
         (
             selected_assay_name,
@@ -181,7 +204,27 @@ class TestDXExtractAssay(unittest.TestCase):
             ]
         }
 
-        self.assertEqual(location_filter(location_list), expected_output)
+        self.assertEqual(location_filter(location_list, "allele"), expected_output)
+
+    def test_genotype_location_filter(self):
+        location_list = [
+            {
+                "chromosome": "18",
+                "starting_position": "47361",
+            }
+        ]
+
+        expected_output = {
+            "genotype$a_id": [
+                {
+                    "condition": "in",
+                    "values": [],
+                    "geno_bins": [{"chr": "18", "start": 47361, "end": 47361}],
+                }
+            ]
+        }
+
+        self.assertEqual(location_filter(location_list, "genotype"), expected_output)
 
     def test_generate_assay_filter(self):
         # A small payload, uses allele_rsid.json
@@ -313,7 +356,7 @@ class TestDXExtractAssay(unittest.TestCase):
     def test_bad_rsid(self):
         filter = {"rsid": ["rs1342568097","rs1342568098"]}
         test_project = "dx-toolkit_test_data"
-        test_record = "{}:Extract_Assay_Germline/test01_dataset".format(test_project)
+        test_record = "{}:Extract_Assay_Germline/test01_v1_0_1_dataset".format(test_project)
 
         command = ["dx", "extract_assay", "germline", test_record, "--retrieve-allele", json.dumps(filter)]
         process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
@@ -335,6 +378,288 @@ class TestDXExtractAssay(unittest.TestCase):
             expected_output,
         )
 
+    # Test filters for exclusion options
+    def test_no_call_warning(self):
+        # This is a test of the validate_filter_applicable_genotype_types function "no-call", "ref" requested
+        filter_dict = {"genotype_type": ["no-call", "ref"]}
+        exclude_nocall = True
+        exclude_refdata = True
+        infer_nocall = False
+        expected_warnings = [
+            "WARNING: Filter requested genotype type 'no-call', genotype entries of this type were not ingested in the provided dataset and the --infer-nocall flag is not set!",
+            "WARNING: Filter requested genotype type 'ref', genotype entries of this type were not ingested in the provided dataset and the --infer-ref flag is not set!"
+            ]
+        with patch("sys.stderr", new=StringIO()) as fake_err:
+            validate_filter_applicable_genotype_types(
+                infer_nocall, infer_ref=False, filter_dict=filter_dict,
+                exclude_refdata=exclude_refdata, exclude_nocall=exclude_nocall, exclude_halfref=False
+            )
+            output = fake_err.getvalue().strip()
+            for warning in expected_warnings:
+                self.assertIn(warning, output)
+
+    def test_no_genotype_type_warning(self):
+        # This is a test of the validate_filter_applicable_genotype_types function no genotype type requested
+        filter_dict = {"genotype_type": []}
+        exclude_nocall = True
+
+        with patch("sys.stderr", new=StringIO()) as fake_err:
+            validate_filter_applicable_genotype_types(
+                infer_nocall=False, infer_ref=False, filter_dict=filter_dict,
+                exclude_refdata=False, exclude_nocall=exclude_nocall, exclude_halfref=False
+            )
+            output = fake_err.getvalue().strip()
+            self.assertEqual(output, "WARNING: No genotype type requested in the filter. All genotype types will be returned. Genotype entries of type 'no-call' were not ingested in the provided dataset and the --infer-nocall flag is not set!")
+
+    def test_no_genotype_type_warning_exclude_halfref(self):
+        # This is a test of the validate_filter_applicable_genotype_types function half genotype type requested
+        filter_dict = {"genotype_type": []}
+        exclude_halfref = True
+
+        with patch("sys.stderr", new=StringIO()) as fake_err:
+            validate_filter_applicable_genotype_types(
+                infer_nocall=False, infer_ref=False, filter_dict=filter_dict,
+                exclude_refdata=False, exclude_nocall=False, exclude_halfref=exclude_halfref
+            )
+            output = fake_err.getvalue().strip()
+            self.assertEqual(output, "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!")
+    
+    def test_filter_results(self):
+        # Define sample input data
+        results = [
+            {
+                "sample_id": "SAMPLE_1",
+                "allele_id": "1_1076145_A_AT",
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "het-alt",
+            },
+            {
+                "sample_id": "SAMPLE_2",
+                "allele_id": "1_1076146_A_AT",
+                "locus_id": "1_1076146_A_T",
+                "chromosome": "1",
+                "starting_position": 1076146,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "het-alt",
+            },
+            {
+                "sample_id": "SAMPLE_3",
+                "allele_id": "1_1076147_A_AT",
+                "locus_id": "1_1076147_A_T",
+                "chromosome": "1",
+                "starting_position": 1076147,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "ref",
+            },
+        ]
+        # Call the function to filter the results
+        filtered_results = filter_results(
+            results=results, key="genotype_type", restricted_values=["het-alt"]
+        )
+
+        # Define the expected output
+        expected_output = [
+            {
+                "sample_id": "SAMPLE_3",
+                "allele_id": "1_1076147_A_AT",
+                "locus_id": "1_1076147_A_T",
+                "chromosome": "1",
+                "starting_position": 1076147,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "ref",
+            },
+        ]
+
+        # Assert that the filtered results match the expected output
+        self.assertEqual(filtered_results, expected_output)
+
+    def test_produce_loci_dict(self):
+        # Define the input data
+        loci = [
+            {
+                "locus_id": "18_47361_A_T",
+                "chromosome": "18",
+                "starting_position": 47361,
+                "ref": "A",
+            },
+            {
+                "locus_id": "X_1000_C_A",
+                "chromosome": "X",
+                "starting_position": 1000,
+                "ref": "C",
+            },
+            {
+                "locus_id": "1_123_A_.",
+                "chromosome": "1",
+                "starting_position": 123,
+                "ref": "A",
+            },
+        ]
+        results_entries = [
+            {
+                "locus_id": "18_47361_A_T",
+                "allele_id": "18_47361_A_T",
+                "sample_id": "sample1",
+                "chromosome": "18",
+                "starting_position": 47361,
+                "ref": "A",
+                "alt": "T",
+            },
+            {
+                "locus_id": "18_47361_A_T",
+                "allele_id": "18_47361_A_G",
+                "sample_id": "sample2",
+                "chromosome": "18",
+                "starting_position": 47361,
+                "ref": "A",
+                "alt": "G",
+            },
+            {
+                "locus_id": "X_1000_C_A",
+                "allele_id": "X_1000_C_A",
+                "sample_id": "sample1",
+                "chromosome": "X",
+                "starting_position": 1000,
+                "ref": "C",
+                "alt": "A",
+            },
+        ]
+
+        # Define the expected output
+        expected_output = {
+            "18_47361_A_T": {
+                "samples": {"sample1", "sample2"},
+                "entry": {
+                    "allele_id": None,
+                    "locus_id": "18_47361_A_T",
+                    "chromosome": "18",
+                    "starting_position": 47361,
+                    "ref": "A",
+                    "alt": None,
+                },
+            },
+            "X_1000_C_A": {
+                "samples": {"sample1"},
+                "entry": {
+                    "allele_id": None,
+                    "locus_id": "X_1000_C_A",
+                    "chromosome": "X",
+                    "starting_position": 1000,
+                    "ref": "C",
+                    "alt": None,
+                },
+            },
+            "1_123_A_.": {
+                "samples": set(),
+                "entry": {
+                    "allele_id": None,
+                    "locus_id": "1_123_A_.",
+                    "chromosome": "1",
+                    "starting_position": 123,
+                    "ref": "A",
+                    "alt": None,
+                },
+            },
+        }
+
+        # Call the function
+        result = _produce_loci_dict(loci, results_entries)
+
+        # Assert the result
+        self.assertEqual(result, expected_output)
+
+    def test_infer_genotype_type(self):
+        samples = ["SAMPLE_1", "SAMPLE_2", "SAMPLE_3"]
+        loci = [
+            {
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+            },
+            {
+                "locus_id": "2_1042_G_CC",
+                "chromosome": "2",
+                "starting_position": 1042,
+                "ref": "G",
+            },
+        ]
+        result_entries = [
+            {
+                "sample_id": "SAMPLE_2",
+                "allele_id": "1_1076145_A_AT",
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+                "alt": "AT",
+                "genotype_type": "het-alt",
+            },
+            {
+                "sample_id": "SAMPLE_3",
+                "allele_id": "1_1076145_A_T",
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+                "alt": "T",
+                "genotype_type": "hom-ref",
+            },
+        ]
+        type_to_infer = "no-call"
+
+        expected_output = [
+            {
+                "sample_id": "SAMPLE_1",
+                "allele_id": None,
+                "locus_id": "1_1076145_A_T",
+                "chromosome": "1",
+                "starting_position": 1076145,
+                "ref": "A",
+                "alt": None,
+                "genotype_type": "no-call",
+            },
+            {
+                "sample_id": "SAMPLE_1",
+                "allele_id": None,
+                "locus_id": "2_1042_G_CC",
+                "chromosome": "2",
+                "starting_position": 1042,
+                "ref": "G",
+                "alt": None,
+                "genotype_type": "no-call",
+            },
+            {
+                "sample_id": "SAMPLE_2",
+                "allele_id": None,
+                "locus_id": "2_1042_G_CC",
+                "chromosome": "2",
+                "starting_position": 1042,
+                "ref": "G",
+                "alt": None,
+                "genotype_type": "no-call",
+            },
+            {
+                "sample_id": "SAMPLE_3",
+                "allele_id": None,
+                "locus_id": "2_1042_G_CC",
+                "chromosome": "2",
+                "starting_position": 1042,
+                "ref": "G",
+                "alt": None,
+                "genotype_type": "no-call",
+            },
+        ]
+
+        output = infer_genotype_type(samples, loci, result_entries, type_to_infer)
+        self.assertEqual(output, result_entries + expected_output)
     ##########
     # Normal Command Lines
     ##########
@@ -413,6 +738,45 @@ class TestDXExtractAssay(unittest.TestCase):
         command2 = ["dx", "extract_assay", "germline", self.test_record, "--retrieve-allele", allele_rsid_filter, "-o", "-"]
         process2 = subprocess.Popen(command2, stdout=subprocess.PIPE, universal_newlines=True)
         self.assertEqual(process1.communicate(), process2.communicate())
+
+
+    @parameterized.expand([
+        ("test_record", ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]),
+        ("test_v1_record", ["het-ref", "hom", "het-alt", "half"]),
+    ])
+    def test_retrieve_genotype(self, record, genotype_types):
+        """Testing --retrieve-genotype functionality"""
+        allele_genotype_type_filter = json.dumps({
+            "allele_id": ["18_47408_G_A"], 
+            "genotype_type": genotype_types,
+            })
+        expected_result = "sample_1_3\t18_47408_G_A\t18_47408_G_A\t18\t47408\tG\tA\thet-ref"
+        command = ["dx", "extract_assay", "germline", getattr(self, record), "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+        self.assertIn(expected_result, process.communicate()[0])
+
+
+    @unittest.skip("Vizserver implementation of PMUX-1652 needs to be deployed")
+    def test_retrieve_non_alt_genotype(self):
+        """Testing --retrieve-genotype functionality"""
+        location_genotype_type_filter = json.dumps({
+            "location": [{
+                "chromosome": "20",
+                "starting_position": "14370",
+            }],
+            "genotype_type": ["ref", "half", "no-call"]
+        })
+        # not a comprehensive list
+        expected_results = [
+            "S01_m_m\t\t20_14370_G_A\t20\t14370\tG\t\tno-call",
+            "S02_m_0\t\t20_14370_G_A\t20\t14370\tG\t\thalf",
+            "S06_0_m\t\t20_14370_G_A\t20\t14370\tG\t\thalf",
+            "S07_0_0\t\t20_14370_G_A\t20\t14370\tG\t\tref",
+        ]
+        command = ["dx", "extract_assay", "germline", self.test_non_alt_record, "--retrieve-genotype", location_genotype_type_filter, "-o", "-"]
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+        result = process.communicate()[0]
+        [self.assertIn(expected_result, result) for expected_result in expected_results]
 
     ###########
     # Malformed command lines
