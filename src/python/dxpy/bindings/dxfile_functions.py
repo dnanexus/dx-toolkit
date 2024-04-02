@@ -191,8 +191,12 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max
                  "Please see the documentation at https://aria2.github.io/.")
         return
 
-    dxfile = dxpy.DXFile(dxid)
-    url, _headers = dxfile.get_download_url(preauthenticated=True,
+    if isinstance(dxid, DXFile):
+        dxf = dxid
+    else:
+        dxf = dxpy.DXFile(dxid)
+    
+    url, _headers = dxf.get_download_url(preauthenticated=True,
                                             duration=6*3600,
                                             project=project)
 
