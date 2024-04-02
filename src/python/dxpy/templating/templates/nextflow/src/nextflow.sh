@@ -550,7 +550,7 @@ EOF
 
 automatic_aws_relogin() {
   while true; do
-      sleep 3000 # 50 minutes, first login is done independently, so we wait first
+      sleep 3300 # 55 minutes, first login is done independently, so we wait first
       if [ -f "$AWS_ENV" ]; then
         aws_login
         echo "Successfully reauthenticated to AWS"
