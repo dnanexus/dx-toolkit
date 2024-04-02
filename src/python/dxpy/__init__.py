@@ -613,8 +613,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # Handle redirection manually for symlink files
                 if response.status in range(300, 399):
                     redirect_url = response.headers.get('Location')
-                    if try_index > 0:
-                        logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
+                    if not redirect_url:
+                        raise exceptions.UrllibInternalError("Location not found in redirect response", response.status)
                     break
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was

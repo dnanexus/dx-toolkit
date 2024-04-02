@@ -195,7 +195,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max
         dxf = dxid
     else:
         dxf = dxpy.DXFile(dxid)
-    
+
     url, _headers = dxf.get_download_url(preauthenticated=True,
                                             duration=6*3600,
                                             project=project)
