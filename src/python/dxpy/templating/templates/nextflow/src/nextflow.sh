@@ -544,7 +544,7 @@ EOF
 region = $awsRegion
 EOF
   else
-    echo "No AWS environment variables available"
+#    echo "No AWS environment variables available" // TODO: uncomment with Nextaur update
   fi
 }
 
