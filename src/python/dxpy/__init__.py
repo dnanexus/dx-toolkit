@@ -610,12 +610,6 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                 response = pool_manager.request(_method, encoded_url, headers=_headers, body=body,
                                                 timeout=timeout, retries=False, **kwargs)
-                # Handle redirection manually for symlink files
-                if response.status in range(300, 399):
-                    redirect_url = response.headers.get('Location')
-                    if not redirect_url:
-                        raise exceptions.UrllibInternalError("Location not found in redirect response", response.status)
-                    break
             except urllib3.exceptions.ClosedPoolError:
                 # If another thread closed the pool before the request was
                 # started, will throw ClosedPoolError
@@ -634,6 +628,13 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 except:
                     pass
                 _UPGRADE_NOTIFY = False
+
+            # Handle redirection manually for symlink files
+            if response.status in range(300, 399):
+                redirect_url = response.headers.get('Location')
+                if not redirect_url:
+                    raise exceptions.UrllibInternalError("Location not found in redirect response", response.status)
+                break
 
             # If an HTTP code that is not in the 200 series is received and the content is JSON, parse it and throw the
             # appropriate error.  Otherwise, raise the usual exception.
