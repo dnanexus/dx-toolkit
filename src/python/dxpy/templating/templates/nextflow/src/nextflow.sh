@@ -415,7 +415,10 @@ main() {
     $nextflow_pipeline_params)"
 
   NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
-
+  # first AWS login of the headjob is done in the Nextflow code,
+  # this is due to the dependency on config values.
+  AWS_ENV="$HOME/.dx-aws.env"
+  automatic_aws_relogin & AWS_RELOGIN_PID=$!
   trap on_exit EXIT
   echo "============================================================="
   echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
@@ -439,6 +442,7 @@ main() {
     fi
     
     wait $NXF_EXEC_PID
+    kill "$AWS_RELOGIN_PID"
     ret=$?
     exit $ret
 }
@@ -499,9 +503,12 @@ nf_task_exit() {
 # Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
   CREDENTIALS="$HOME/docker_creds"
+  AWS_ENV="$HOME/.dx-aws.env"
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
-
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
+  aws_login
+  automatic_aws_relogin & AWS_RELOGIN_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
@@ -512,6 +519,41 @@ nf_task_entry() {
   # run the task
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
+  kill "$AWS_RELOGIN_PID"
   dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
+}
+
+aws_login() {
+  if [ -f "$AWS_ENV" ]; then
+    source $AWS_ENV
+    # aws env file example values:
+    # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
+    job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
+    output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
+    mkdir -p /home/dnanexus/.aws/
+
+    cat <<EOF > /home/dnanexus/.aws/credentials
+[default]
+aws_access_key_id = $(echo "$output" | jq -r '.Credentials.AccessKeyId')
+aws_secret_access_key = $(echo "$output" | jq -r '.Credentials.SecretAccessKey')
+aws_session_token = $(echo "$output" | jq -r '.Credentials.SessionToken')
+EOF
+    cat <<EOF > /home/dnanexus/.aws/config
+[default]
+region = $awsRegion
+EOF
+#  else
+#    echo "No AWS environment variables available" // TODO: uncomment with Nextaur update
+  fi
+}
+
+automatic_aws_relogin() {
+  while true; do
+      sleep 3300 # 55 minutes, first login is done independently, so we wait first
+      if [ -f "$AWS_ENV" ]; then
+        aws_login
+        echo "Successfully reauthenticated to AWS"
+      fi
+  done
 }
