@@ -560,6 +560,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     retried_responses = []
     _url = None
+    redirect_url = None
     while True:
         success, time_started = True, None
         response = None
@@ -627,6 +628,13 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 except:
                     pass
                 _UPGRADE_NOTIFY = False
+
+            # Handle redirection manually for symlink files
+            if response.status // 100 == 3:
+                redirect_url = response.headers.get('Location')
+                if not redirect_url:
+                    raise exceptions.UrllibInternalError("Location not found in redirect response", response.status)
+                break
 
             # If an HTTP code that is not in the 200 series is received and the content is JSON, parse it and throw the
             # appropriate error.  Otherwise, raise the usual exception.
@@ -784,6 +792,15 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 logger.info("[%s] %s %s: Recovered after %d retries", time.ctime(), method, _url, try_index)
 
         raise AssertionError('Should never reach this line: should have attempted a retry or reraised by now')
+
+    # Make a new request to the URL specified in the Location header if we got a redirect_url
+    if redirect_url:
+        return DXHTTPRequest(redirect_url, body, method=method, headers=headers, auth=auth, timeout=timeout,
+                             use_compression=use_compression, jsonify_data=jsonify_data,
+                             want_full_response=want_full_response,
+                             decode_response_body=decode_response_body, prepend_srv=prepend_srv,
+                             session_handler=session_handler,
+                             max_retries=max_retries, always_retry=always_retry, **kwargs)
     raise AssertionError('Should never reach this line: should never break out of loop')
 
 
