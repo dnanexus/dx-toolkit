@@ -23,24 +23,14 @@ import sys
 import unittest
 
 from parameterized import parameterized
-from dxpy_testutil import DXTestCase
-from dxpy.compat import USING_PYTHON2
+from dxpy_testutil import DXTestCase, TEST_NF_DOCKER
 from dxpy.nextflow.ImageRef import ImageRef, DockerImageRef
-
-if USING_PYTHON2:
-    spawn_extra_args = {}
-else:
-    # Python 3 requires specifying the encoding
-    spawn_extra_args = {"encoding": "utf-8"}
-
 
 class TestImageRef(DXTestCase):
 
     @parameterized.expand([
         ["proc1", "sha256aasdfadfadfafddasfdsfa"]
     ])
-    @unittest.skipIf(USING_PYTHON2,
-                     'Skipping Python 3 code')
     def test_ImageRef_cache(self, process, digest):
         image_ref = ImageRef(process, digest)
         with self.assertRaises(NotImplementedError) as err:
@@ -54,8 +44,8 @@ class TestImageRef(DXTestCase):
     @parameterized.expand([
         ["proc1", "sha256:3fbc632167424a6d997e74f52b878d7cc478225cffac6bc977eedfe51c7f4e79", "busybox", "1.36"]
     ])
-    @unittest.skipIf(USING_PYTHON2,
-                     'Skipping Python 3 code')
+    @unittest.skipUnless(TEST_NF_DOCKER,
+                         'skipping tests that require docker')
     def test_DockerImageRef_cache(self, process, digest, image_name, tag):
         image_ref = DockerImageRef(process=process, digest=digest, image_name=image_name, tag=tag)
         bundle_dx_file_id = image_ref.bundled_depends

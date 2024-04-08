@@ -35,7 +35,7 @@ class ImageRefFactory(object):
         return image(
             process=self._image_ref["process"],
             digest=self._image_ref["digest"],
-            dx_file_id=self._image_ref.get("dx_file_id", None),
+            dx_file_id=self._image_ref.get("file_id", None),
             repository=self._image_ref.get("repository", None),
             image_name=self._image_ref.get("image_name", None),
             tag=self._image_ref.get("tag", None)

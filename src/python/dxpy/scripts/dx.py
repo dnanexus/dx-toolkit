@@ -1439,7 +1439,8 @@ def new_project(args):
         inputs["monthlyEgressBytesLimit"] = args.monthly_egress_bytes_limit
     if args.monthly_storage_limit is not None:
         inputs["monthlyStorageLimit"] = args.monthly_storage_limit
-
+    if args.default_symlink is not None:
+        inputs["defaultSymlink"] = json.loads(args.default_symlink)
     try:
         resp = dxpy.api.project_new(inputs)
         if args.brief:
@@ -2836,11 +2837,27 @@ def build(args):
         if args.repository and args.remote:
             build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
 
+        if args.cache_docker and args.remote:
+            build_parser.error("Nextflow pipeline built with an option to cache the docker images is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
+
         if args.git_credentials and not args.repository:
             build_parser.error("Git credentials can be supplied only when building Nextflow pipeline from a Git repository.")
 
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
+
+        if args.cache_docker and not args.nextflow:
+            build_parser.error(
+                "Docker caching argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
+
+        if args.cache_docker:
+            logging.warning(
+                "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
+                "Intellectual Property agreements of the software within the Docker container. You are also "
+                "responsible for remediating the security vulnerabilities of the Docker images of the pipeline."
+                "Also, cached images will be accessible by the users with VIEW permissions to the projects where the "
+                "cached images will be stored."
+            )
 
         # options not supported by workflow building
 
@@ -3949,7 +3966,7 @@ def ssh(args, ssh_config_verified=False):
     job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
-        err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
+        err_exit(f"{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
 
     if not ssh_config_verified:
         verify_ssh_config()
@@ -3977,6 +3994,8 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
+        if job_desc['state'] in ['done', 'failed', 'terminated']:
+            err_exit(f"\n{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
         time.sleep(1)
         job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
@@ -5086,6 +5105,19 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
                                                         "Can be used only with --repository. More information about the file syntax can be found"
                                                         " at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
+# --cache-docker
+nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project"
+                                                          "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote.",
+                                                   width_adjustment=-24), action="store_true", dest="cache_docker")
+
+# --docker-secrets
+nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "
+                                                            "docker repository.",
+                                                   width_adjustment=-24), dest="docker_secrets")
+
+# --nextflow-pipeline-params
+nextflow_options.add_argument('--nextflow-pipeline-params', help=fill("Custom pipeline parameters to be referenced when collecting the docker images.",
+                                                   width_adjustment=-24), dest="nextflow_pipeline_params")
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
@@ -5775,6 +5807,7 @@ parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the 
 parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly project spending limit for compute')
 parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly project spending limit for egress (in Bytes)')
 parser_new_project.add_argument('--monthly-storage-limit', type=positive_number, help='Monthly project spending limit for storage')
+parser_new_project.add_argument('--default-symlink', help='Default symlink for external store account')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
@@ -6525,8 +6558,20 @@ parser_e_a_g_mutex_group.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Use --json-help with this option to get detailed information on the JSON format and filters.'
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Genotype types "ref" and "no-call" have no allele ID, and "half" types where the genotype is half reference and half no-call also have no allele ID. All other genotype types have an allele ID, including "half" types where the genotype is half alternate allele and half no-call. Use --json-help with this option to get detailed information on the JSON format and filters.'
 )
+
+parser_e_a_g_infer_new_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=False)
+parser_e_a_g_infer_new_mutex_group.add_argument(
+    "--infer-nocall",
+    action="store_true",
+    help='When using the "--retrieve-genotype" option, infer genotypes with type "no-call" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=true", "exclude_halfref=false", and "exclude_refdata=false".')
+parser_e_a_g_infer_new_mutex_group.add_argument(
+    "--infer-ref",
+    action="store_true",
+    help='When using the "--retrieve-genotype" option, infer genotypes with type "ref" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=false", "exclude_halfref=false", and "exclude_refdata=true".'
+)
+
 parser_extract_assay_germline.add_argument(
     '--json-help',
     help=argparse.SUPPRESS,

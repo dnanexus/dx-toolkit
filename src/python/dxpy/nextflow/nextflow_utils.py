@@ -37,6 +37,15 @@ def get_template_dir():
     return path.join(path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
 
 
+def is_importer_job():
+    try:
+        with open("/home/dnanexus/dnanexus-job.json", "r") as f:
+            job_info = json.load(f)
+            return job_info.get("executableName") == get_importer_name()
+    except Exception:
+        return False
+
+
 def write_exec(folder, content):
     exec_file = "{}/{}".format(folder, get_source_file_name())
     try:
@@ -85,11 +94,14 @@ def write_dxapp(folder, content):
         json.dump(content, dxapp)
 
 
-def get_regional_options(region, resources_dir):
-    nextaur_asset, nextflow_asset = get_nextflow_assets(region)
+def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_pipeline_params):
+    nextaur_asset, nextflow_asset, awscli_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
-    image_refs = None
-    image_bundled = None
+    if cache_docker:
+        image_refs = run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params)
+        image_bundled = bundle_docker_images(image_refs)
+    else:
+        image_bundled = {}
     regional_options = {
         region: {
             "systemRequirements": {
@@ -99,8 +111,10 @@ def get_regional_options(region, resources_dir):
             },
             "assetDepends": [
                 {"id": nextaur_asset},
-                {"id": nextflow_asset}
-            ]
+                {"id": nextflow_asset},
+                {"id": awscli_asset}
+            ],
+            "bundledDepends": image_bundled
         }
     }
     return regional_options
@@ -125,15 +139,18 @@ def get_nextflow_assets(region):
     # The order of assets in the tuple is: nextaur, nextflow
     nextaur_assets = path.join(nextflow_basepath, "nextaur_assets.json")
     nextflow_assets = path.join(nextflow_basepath, "nextflow_assets.json")
+    awscli_assets = path.join(nextflow_basepath, "awscli_assets.json")
     try:
-        with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f:
+        with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f, open(awscli_assets, 'r') as awscli_f:
             nextaur = json.load(nextaur_f)[region]
             nextflow = json.load(nextflow_f)[region]
-        dxpy.describe(nextaur, fields={})
-        return nextaur, nextflow
+            awscli = json.load(awscli_f)[region]
+        dxpy.describe(nextaur, fields={})  # existence check
+        return nextaur, nextflow, awscli
     except ResourceNotFound:
         nextaur_assets = path.join(nextflow_basepath, "nextaur_assets.staging.json")
         nextflow_assets = path.join(nextflow_basepath, "nextflow_assets.staging.json")
+        awscli_assets = path.join(nextflow_basepath, "awscli_assets.staging.json")
 
-        with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f:
-            return json.load(nextaur_f)[region], json.load(nextflow_f)[region]
+        with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f, open(awscli_assets, 'r') as awscli_f:
+            return json.load(nextaur_f)[region], json.load(nextflow_f)[region], json.load(awscli_f)[region]

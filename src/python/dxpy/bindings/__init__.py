@@ -549,10 +549,10 @@ class DXDataObject(DXObject):
 
     def list_projects(self, **kwargs):
         """
-        :rtype: list of strings
+        :rtype: dict
 
-        Returns a list of project IDs of the projects that contain this
-        object and are visible to the requesting user.
+        Returns a dict of project IDs of the projects that contain this
+        object and the permission level of the requesting user.
 
         """
 

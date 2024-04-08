@@ -6,11 +6,65 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added 
+
+* Released Nextaur 1.8.0: Enables login to AWS
+* AWS login for Nextflow subjobs and relogin for Nextflow headjob and subjobs
+* `dx extract_assay germline --retrieve-genotype` supports germline assay datasets with reference and no-call genotypes
+
+## [373.0] - beta
+
+### Added 
+
+* AWScliv2 asset to Nextflow applets
+
+## [372.0] - 2024.3.22
+
+### Added
+
+* dx-jobutil-get-identity-token 
+
+### Fixed
+
+* Released Nextaur 1.7.4: Fixes error when multiple Docker images with the same name and digest are cached.
+
+### Removed
+
+* For Nextflow applets, removed allProjects: VIEW access. They will have only UPLOAD access to the current project context.
+
+## [371.0] - 2024.3.13
+
+### Fixed
+
+* `dx run --ssh` hanging if job has reused outputs
+
+## [370.2] - 2024.2.26
+
+### Added
+
+* Python 3.12 support
+* `--nextflow-pipeline-params` for `dx build --nextflow --cache-docker`
+* `dx build --nextflow --cache-docker` supports the `--profile` parameter to cache images associated with specific profile 
+
+### Fixed
+
+* Released Nextaur 1.7.3
+* Fix for occasional head job hang during upload, fix for "No such file or directory" errors on localized dx files
+* Multiple fixes in resolving docker image digests, handling file path collision, and OOM when creating new input stream.
+
+## [369.1] - 2024.2.13
+
+### Added
+
+* Additional regional resources can be specified in dxworkflow.json or using `--extra-args` when `dx build` global workflows 
+
+## [369.0] - 2024.2.5
+
 ### Fixed
 
 * Bugfix regarding multi-assay assay selection in `dx extract_assay expression`
 
-## [368.1] - beta
+## [368.1] - 2024.1.16
 
 ### Changed
 

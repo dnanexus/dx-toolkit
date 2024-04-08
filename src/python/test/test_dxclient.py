@@ -4824,11 +4824,77 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         workflow_dir = self.write_workflow_directory(gwf_name,
                                                      json.dumps(dxworkflow_json),
                                                      readme_content="Workflow Readme Please")
-       
+
         gwf_desc = json.loads(run('dx build --globalworkflow ' + workflow_dir + ' --json'))
         gwf_regional_options = gwf_desc["regionalOptions"]
         self.assertIn("aws:us-east-1", gwf_regional_options)
         self.assertNotIn("azure:westus",gwf_regional_options)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, "skipping test that would create global workflows")
+    def test_build_workflow_with_regional_resources(self):
+        with temporary_project(region="aws:us-east-1") as aws_proj:
+            aws_file_id = create_file_in_project("aws_file", aws_proj.get_id())
+
+            gwf_name = "gwf_{t}_with_regional_resources".format(t=int(time.time()))
+            dxworkflow_json = dict(
+                self.dxworkflow_spec,
+                name=gwf_name,
+                regionalOptions={
+                    "aws:us-east-1": dict(resources=[aws_file_id]),
+                },
+            )
+            workflow_dir = self.write_workflow_directory(
+                gwf_name,
+                json.dumps(dxworkflow_json),
+                readme_content="Workflow Readme Please",
+            )
+
+            gwf_desc = json.loads(run("dx build --globalworkflow " + workflow_dir + " --json"))
+
+            self.assertIn("regionalOptions", gwf_desc)
+            gwf_regional_options = gwf_desc["regionalOptions"]
+            self.assertIn("aws:us-east-1", gwf_regional_options)
+
+            # Make sure additional resources were cloned to the workflow containers
+            # in the specified regions
+            aws_container = gwf_regional_options["aws:us-east-1"]["resources"]
+            aws_obj_id_list = dxpy.api.container_list_folder(aws_container, {"folder": "/"})
+            self.assertIn(aws_file_id, [item["id"] for item in aws_obj_id_list["objects"]])
+
+            error_msg = "--region and the 'regionalOptions' key in the JSON file or --extra-args do not agree"
+            with self.assertRaisesRegex(DXCalledProcessError, error_msg):
+                run("dx build --globalworkflow --region azure:westus --json " + workflow_dir)
+
+    @unittest.skipUnless(testutil.TEST_ISOLATED_ENV, "skipping test that would create global workflows")
+    def test_build_workflow_with_regional_resources_from_extra_args(self):
+        with temporary_project(region="aws:us-east-1") as aws_proj:
+            aws_file_id = create_file_in_project("aws_file", aws_proj.get_id())
+
+            gwf_name = "gwf_{t}_with_regional_resources_from_extra_args".format(t=int(time.time()))
+            dxworkflow_json = dict(self.dxworkflow_spec,name=gwf_name)
+            workflow_dir = self.write_workflow_directory(
+                gwf_name,
+                json.dumps(dxworkflow_json),
+                readme_content="Workflow Readme Please",
+            )
+
+            extra_args = json.dumps({"regionalOptions":{"aws:us-east-1": {"resources":aws_proj.get_id()}}})
+            
+            error_msg = "--region and the 'regionalOptions' key in the JSON file or --extra-args do not agree"
+            with self.assertRaisesRegex(DXCalledProcessError, error_msg):
+                run("dx build --globalworkflow --region azure:westus --extra-args \'{}\' --json {}".format(extra_args, workflow_dir))
+            
+            gwf_desc = json.loads(run("dx build --globalworkflow --json {} --extra-args \'{}\'".format(workflow_dir, extra_args)))
+
+            self.assertIn("regionalOptions", gwf_desc)
+            gwf_regional_options = gwf_desc["regionalOptions"]
+            self.assertIn("aws:us-east-1", gwf_regional_options)
+
+            # Make sure additional resources were cloned to the workflow containers
+            # in the specified regions
+            aws_container = gwf_regional_options["aws:us-east-1"]["resources"]
+            aws_obj_id_list = dxpy.api.container_list_folder(aws_container, {"folder": "/"})
+            self.assertIn(aws_file_id, [item["id"] for item in aws_obj_id_list["objects"]])
 
     def test_build_workflow_in_invalid_multi_regions(self):
         gwf_name = "gwf_{t}_multi_region".format(t=int(time.time()))
@@ -7859,6 +7925,17 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         self.assertEqual(applet_describe["id"], applet_describe["id"])
         self.assertEqual(applet_describe["name"], "minimal_applet")
 
+    @pytest.mark.TRACEABILITY_MATRIX
+    @testutil.update_traceability_matrix(["DNA_CLI_APP_UPLOAD_BUILD_NEW_APPLET"])
+    def test_build_applet_with_extra_args(self):
+        app_spec = dict(self.base_app_spec, name="minimal_applet_to_run")
+        app_dir = self.write_app_directory("minimal_åpplet", json.dumps(app_spec), "code.py")
+        applet_id = run_and_parse_json("dx build " + app_dir + ' -y --brief' + ' --extra-args \'{"name": "applet_with_new_name"}\'')["id"]
+        applet_describe = dxpy.get_handler(applet_id).describe()
+        self.assertEqual(applet_describe["class"], "applet")
+        self.assertEqual(applet_describe["id"], applet_describe["id"])
+        self.assertEqual(applet_describe["name"], "applet_with_new_name")
+
     def test_dx_build_applet_dxapp_json_created_with_makefile(self):
         app_name = "nodxapp_applet"
         app_dir = self.write_app_directory(app_name, None, "code.py")
@@ -7935,6 +8012,7 @@ class TestDXBuildApp(DXTestCaseBuildApps):
         job_desc = json.loads(run('dx describe --json ' + job_id))
         self.assertEqual(job_desc['name'], 'minimal_applet_to_run')
         self.assertEqual(job_desc['priority'], 'normal')
+
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_build_applet_tree_tat_threshold_and_run(self):
@@ -11399,7 +11477,7 @@ class TestDXArchive(DXTestCase):
         fid1 = create_file_in_project(fname1, self.proj_unarchive_id, folder=self.rootdir)
         fid2 = create_file_in_project(fname2, self.proj_unarchive_id, folder=self.rootdir)
         _ = dxpy.api.project_archive(self.proj_unarchive_id, {"folder": self.rootdir})
-        time.sleep(10)
+        time.sleep(15)
 
         dx_archive_confirm = pexpect.spawn("dx unarchive {}:{}".format(self.proj_unarchive_id,fid1),
                                          logfile=sys.stderr,
@@ -11412,15 +11490,15 @@ class TestDXArchive(DXTestCase):
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"archived")
         
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,fid1))
-        time.sleep(15)
+        time.sleep(20)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid1)["archivalState"],"unarchiving")
 
         output = run("dx unarchive -y {}:{}".format(self.proj_unarchive_id,self.rootdir))
-        time.sleep(15)
+        time.sleep(20)
         self.assertIn("Tagged 1 file(s) for unarchival", output)
         self.assertEqual(dxpy.describe(fid2)["archivalState"],"unarchiving")
-        
+
 if __name__ == '__main__':
     if 'DXTEST_FULL' not in os.environ:
         sys.stderr.write('WARNING: env var DXTEST_FULL is not set; tests that create apps or run jobs will not be run\n')

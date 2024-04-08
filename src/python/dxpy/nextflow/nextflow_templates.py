@@ -1,14 +1,21 @@
 #!/usr/bin/env python3
 
 from .nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
-                             get_importer_name, get_regional_options, get_resources_dir_name)
+                             is_importer_job, get_regional_options, get_resources_dir_name)
 import json
 import os
 from dxpy import TOOLKIT_VERSION
 from dxpy.compat import USING_PYTHON2, sys_encoding
 
 
-def get_nextflow_dxapp(custom_inputs=None, resources_dir="", region="aws:us-east-1"):
+def get_nextflow_dxapp(
+        custom_inputs=None,
+        resources_dir="",
+        region="aws:us-east-1",
+        profile="",
+        cache_docker=False,
+        nextflow_pipeline_params=""
+):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
     :type custom_inputs: list
@@ -16,16 +23,14 @@ def get_nextflow_dxapp(custom_inputs=None, resources_dir="", region="aws:us-east
     :type resources_dir: str or Path
     :param region: The name of the region in which the applet will be built.
     :type region: str
+    :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
+    :type profile: str
+    :param cache_docker: Perform pipeline analysis and cache the detected docker images on the platform
+    :type cache_docker: boolean
+    :param nextflow_pipeline_params: Custom Nextflow pipeline parameters
+    :type nextflow_pipeline_params: string
     Creates Nextflow dxapp.json from the Nextflow dxapp.json template
     """
-
-    def is_importer_job():
-        try:
-            with open("/home/dnanexus/dnanexus-job.json", "r") as f:
-                job_info = json.load(f)
-                return job_info.get("executableName") == get_importer_name()
-        except Exception:
-            return False
 
     if custom_inputs is None:
         custom_inputs = []
@@ -41,7 +46,7 @@ def get_nextflow_dxapp(custom_inputs=None, resources_dir="", region="aws:us-east
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
-    dxapp["regionalOptions"] = get_regional_options(region, resources_dir)
+    dxapp["regionalOptions"] = get_regional_options(region, resources_dir, profile, cache_docker, nextflow_pipeline_params)
 
     # Record dxpy version used for this Nextflow build
     dxapp["details"]["dxpyBuildVersion"] = TOOLKIT_VERSION

@@ -118,13 +118,17 @@ class DockerImageRef(ImageRef):
             except subprocess.CalledProcessError:
                 err_exit("Failed to run a subprocess command: {}".format(cmd))
         # may need wait_on_close = True??
+        extracted_digest = self._digest
+        if not self._digest:
+            digest_cmd = "docker images --no-trunc --quiet {}".format(full_image_ref)
+            extracted_digest = subprocess.check_output(digest_cmd, shell=True).decode().strip()
         uploaded_dx_file = upload_local_file(
             filename=file_name,
             project=config["DX_PROJECT_CONTEXT_ID"],
             folder=self._caching_dir,
             name=file_name,
             parents=True,
-            properties={"image_digest": self._digest}
+            properties={"image_digest": self._digest or extracted_digest}
         )
         return uploaded_dx_file.get_id()
 
@@ -133,7 +137,7 @@ class DockerImageRef(ImageRef):
         Docker image reference has the form of <REPOSITORY_NAME>/<IMAGE_NAME>:<VERSION_TAG> or
         <REPOSITORY_NAME>/<IMAGE_NAME>@<DIGEST>
         """
-        repo_and_image_name = self._join_if_exists("/", [self._repository, self._image_name])
+        repo_and_image_name = self._join_if_exists("", [self._repository, self._image_name])
         if self._digest:
             full_ref = self._join_if_exists("@", [repo_and_image_name, self._digest])
         else:
