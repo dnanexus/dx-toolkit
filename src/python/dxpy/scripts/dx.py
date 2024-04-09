@@ -1437,6 +1437,8 @@ def new_project(args):
         inputs["monthlyComputeLimit"] = args.monthly_compute_limit
     if args.monthly_egress_bytes_limit is not None:
         inputs["monthlyEgressBytesLimit"] = args.monthly_egress_bytes_limit
+    if args.monthly_storage_limit is not None:
+        inputs["monthlyStorageLimit"] = args.monthly_storage_limit
     if args.default_symlink is not None:
         inputs["defaultSymlink"] = json.loads(args.default_symlink)
     try:
@@ -4558,6 +4560,12 @@ def positive_integer(value):
         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
 
+def positive_number(value):
+    number_value = float(value)
+    if number_value <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive number value" % value)
+    return number_value
+
 parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://documentation.dnanexus.com/getting-started/tutorials/cli-quickstart#quickstart-for-cli\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
                           formatter_class=argparse.RawTextHelpFormatter,
                           parents=[env_args],
@@ -5798,6 +5806,7 @@ parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the 
                                 action='store_true')
 parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly project spending limit for compute')
 parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly project spending limit for egress (in Bytes)')
+parser_new_project.add_argument('--monthly-storage-limit', type=positive_number, help='Monthly project spending limit for storage')
 parser_new_project.add_argument('--default-symlink', help='Default symlink for external store account')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
