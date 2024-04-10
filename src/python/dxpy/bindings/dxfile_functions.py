@@ -191,8 +191,12 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max
                  "Please see the documentation at https://aria2.github.io/.")
         return
 
-    dxfile = dxpy.DXFile(dxid)
-    url, _headers = dxfile.get_download_url(preauthenticated=True,
+    if isinstance(dxid, DXFile):
+        dxf = dxid
+    else:
+        dxf = dxpy.DXFile(dxid)
+
+    url, _headers = dxf.get_download_url(preauthenticated=True,
                                             duration=6*3600,
                                             project=project)
 
@@ -272,7 +276,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
 
     # handling of symlinked files.
-    if 'drive' in dxfile_desc:
+    if 'drive' in dxfile_desc and 'parts' not in dxfile_desc:
         if 'md5' in dxfile_desc:
             md5 = dxfile_desc['md5']
         else:
