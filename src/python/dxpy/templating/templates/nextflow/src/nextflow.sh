@@ -560,10 +560,6 @@ nf_task_entry() {
 }
 
 download_cmd_launcher_file() {
-  # DEBUG
-  echo "$cmd_launcher_file"
-  echo "< cmd launcher file"
-
   if [ -f "$AWS_ENV" ]; then
     aws s3 cp "${cmd_launcher_file}" .command.run.tmp
   else
@@ -572,12 +568,7 @@ download_cmd_launcher_file() {
 
   # remove the line in .command.run to disable printing env vars if debugging is on
   cat .command.run.tmp | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
-
-  # DEBUG
-  echo "COMMAND.RUN SHOULD BE CAT"
-  cat .command.run
 }
-
 
 aws_login() {
   if [ -f "$AWS_ENV" ]; then
