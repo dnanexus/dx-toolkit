@@ -262,6 +262,13 @@ setup_workdir() {
   else
     NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
   fi
+
+  if [ -f "$AWS_ENV" ]; then
+    source $AWS_ENV
+    NXF_WORK="${workdir}/${NXF_UUID}/work"
+  fi
+
+
 }
 
 dx_path() {
@@ -382,10 +389,6 @@ main() {
     restore_cache
   fi
 
-  # set workdir based on preserve_cache option
-  setup_workdir
-  export NXF_WORK
-
   # download default applet file type inputs
   dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
   RUNTIME_CONFIG_CMD=''
@@ -414,7 +417,11 @@ main() {
 
   # first nextflow run is to only obtain config variables required for AWS login (thus no parsing on our side needed)
   "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
   aws_relogin_loop & AWS_RELOGIN_PID=$!
+    # set workdir based on preserve_cache option
+  setup_workdir
+  export NXF_WORK
   "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
   # forwarding nextflow log file to job monitor
   set +x
@@ -525,6 +532,7 @@ nf_task_entry() {
   CREDENTIALS="$HOME/docker_creds"
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
   aws_relogin_loop & AWS_RELOGIN_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
@@ -542,7 +550,6 @@ nf_task_entry() {
 }
 
 aws_relogin_loop() {
-  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
   while true; do
       if [ -f "$AWS_ENV" ]; then
         source $AWS_ENV
