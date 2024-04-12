@@ -543,14 +543,14 @@ nf_task_entry() {
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
+  # TODO also handle for S3
   echo "$cmd_launcher_file"
   echo "< cmd launcher file"
   if [ -f "$AWS_ENV" ]; then
-    aws s3 cp "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
+    aws s3 cp "${cmd_launcher_file}" .command.run
   else
     dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
   fi
-  cat .command.run
   echo "COMMAND.RUN SHOULD BE CAT"
   set +e
   # enable debugging mode
