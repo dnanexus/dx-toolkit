@@ -510,8 +510,10 @@ wait_for_terminate_or_retry() {
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   if [ -f .command.log ]; then
+    echo $cmd_log_file
+    echo "CMD_LOG_FILE HERE"
     if [ -f "$AWS_ENV" ]; then
-      aws s3 cp .command.log "s3:/${cmd_log_file}"
+      aws s3 cp .command.log "${cmd_log_file}"
     else
       dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
     fi
@@ -541,11 +543,15 @@ nf_task_entry() {
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
+  echo "$cmd_launcher_file"
+  echo "< cmd launcher file"
   if [ -f "$AWS_ENV" ]; then
-    aws s3 cp "s3:/${cmd_launcher_file}" .command.run
+    aws s3 cp "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
   else
     dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
   fi
+  cat .command.run
+  echo "COMMAND.RUN SHOULD BE CAT"
   set +e
   # enable debugging mode
   [[ $NXF_DEBUG ]] && set -x
