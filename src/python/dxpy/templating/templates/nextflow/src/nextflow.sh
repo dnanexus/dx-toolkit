@@ -5,7 +5,7 @@
 
 set -f
 
-
+AWS_ENV="$HOME/.dx-aws.env"
 # How long to let a subjob with error keep running for Nextflow to handle it
 # before we end the DX job, in seconds
 MAX_WAIT_AFTER_JOB_ERROR=240
@@ -125,6 +125,7 @@ on_exit() {
   else
     echo "=== Execution succeeded — upload published files to job output destination ${DX_JOB_OUTDIR%/}/"
     mkdir -p /home/dnanexus/out/published_files
+    # filter "not ending with -GET-ENV
     find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
     dx-upload-all-outputs --parallel --wait-on-close || echo "No published files has been generated."
     # done
@@ -401,25 +402,59 @@ main() {
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
   # execution starts
-  declare -a NEXTFLOW_CMD="(nextflow \
+
+  declare -a NEXTFLOW_CMD="$(generate_nextflow_cmd '')"
+  declare -a NEXTFLOW_CMD_ENV="$(generate_nextflow_cmd '-GET-ENV')"
+
+  # first AWS login of the headjob is done in the Nextflow code,
+  # this is due to the dependency on config values.
+  AWS_ENV="$HOME/.dx-aws.env"
+  trap on_exit EXIT
+  log_context_info
+
+  # first nextflow run is to only obtain config variables required for AWS login (thus no parsing on our side needed)
+  "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
+  aws_relogin_loop & AWS_RELOGIN_PID=$!
+  "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
+  # forwarding nextflow log file to job monitor
+  set +x
+  if [[ $debug == true ]] ; then
+    touch $LOG_NAME
+    tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
+    disown $LOG_MONITOR_PID
+    set -x
+  fi
+
+  wait $NXF_EXEC_PID
+  kill "$AWS_RELOGIN_PID"
+  ret=$?
+  exit $ret
+}
+
+generate_nextflow_cmd() {
+  local name_suffix=$1
+
+  # make get-env suffix /home/dnanexus/<log_name>, in order not to be uploaded.
+
+  local cmd="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
     ${RUNTIME_CONFIG_CMD} \
-    -log ${LOG_NAME} \
+    -log ${LOG_NAME}${name_suffix} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
-    -name $DX_JOB_ID \
+    -name ${DX_JOB_ID}${name_suffix} \
     $RESUME_CMD \
     $nextflow_run_opts \
     $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
 
-  NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
-  # first AWS login of the headjob is done in the Nextflow code,
-  # this is due to the dependency on config values.
-  AWS_ENV="$HOME/.dx-aws.env"
-  automatic_aws_relogin & AWS_RELOGIN_PID=$!
-  trap on_exit EXIT
+  cmd+=("${applet_runtime_inputs[@]}")
+
+  echo "${cmd[@]}"
+}
+
+log_context_info() {
   echo "============================================================="
   echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
   echo "=== NF session ID   : ${NXF_UUID}"
@@ -430,21 +465,6 @@ main() {
   echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
   echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
   echo "============================================================="
-
-    "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
-    # forwarding nextflow log file to job monitor
-    set +x
-    if [[ $debug == true ]] ; then
-      touch $LOG_NAME
-      tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
-      disown $LOG_MONITOR_PID
-      set -x
-    fi
-    
-    wait $NXF_EXEC_PID
-    kill "$AWS_RELOGIN_PID"
-    ret=$?
-    exit $ret
 }
 
 wait_for_terminate_or_retry() {
@@ -503,12 +523,9 @@ nf_task_exit() {
 # Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
   CREDENTIALS="$HOME/docker_creds"
-  AWS_ENV="$HOME/.dx-aws.env"
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
-  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
-  aws_login
-  automatic_aws_relogin & AWS_RELOGIN_PID=$!
+  aws_relogin_loop & AWS_RELOGIN_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
@@ -524,36 +541,29 @@ nf_task_entry() {
   set -e
 }
 
-aws_login() {
-  if [ -f "$AWS_ENV" ]; then
-    source $AWS_ENV
-    # aws env file example values:
-    # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
-    job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
-    output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
-    mkdir -p /home/dnanexus/.aws/
+aws_relogin_loop() {
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
+  while true; do
+      if [ -f "$AWS_ENV" ]; then
+        source $AWS_ENV
+        # aws env file example values:
+        # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
+        job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
+        output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
+        mkdir -p /home/dnanexus/.aws/
 
-    cat <<EOF > /home/dnanexus/.aws/credentials
+        cat <<EOF > /home/dnanexus/.aws/credentials
 [default]
 aws_access_key_id = $(echo "$output" | jq -r '.Credentials.AccessKeyId')
 aws_secret_access_key = $(echo "$output" | jq -r '.Credentials.SecretAccessKey')
 aws_session_token = $(echo "$output" | jq -r '.Credentials.SessionToken')
 EOF
-    cat <<EOF > /home/dnanexus/.aws/config
+        cat <<EOF > /home/dnanexus/.aws/config
 [default]
 region = $awsRegion
 EOF
-#  else
-#    echo "No AWS environment variables available" // TODO: uncomment with Nextaur update
-  fi
-}
-
-automatic_aws_relogin() {
-  while true; do
-      sleep 3300 # 55 minutes, first login is done independently, so we wait first
-      if [ -f "$AWS_ENV" ]; then
-        aws_login
-        echo "Successfully reauthenticated to AWS"
+        echo "Successfully authenticated to AWS"
       fi
+      sleep 3300 # relogin every 55 minutes
   done
 }
