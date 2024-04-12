@@ -542,26 +542,38 @@ nf_task_entry() {
   aws_relogin_loop & AWS_RELOGIN_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
-  # remove the line in .command.run to disable printing env vars if debugging is on
-  # TODO also handle for S3
-  # TODO error if .command.run file not found
-  echo "$cmd_launcher_file"
-  echo "< cmd launcher file"
-  if [ -f "$AWS_ENV" ]; then
-    aws s3 cp "${cmd_launcher_file}" .command.run
-  else
-    dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
-  fi
-  echo "COMMAND.RUN SHOULD BE CAT"
-  set +e
+
+  download_cmd_launcher_file
+
   # enable debugging mode
   [[ $NXF_DEBUG ]] && set -x
+
   # run the task
+  set +e
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
   kill "$AWS_RELOGIN_PID"
   dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
+}
+
+download_cmd_launcher_file() {
+  # DEBUG
+  echo "$cmd_launcher_file"
+  echo "< cmd launcher file"
+
+  if [ -f "$AWS_ENV" ]; then
+    aws s3 cp "${cmd_launcher_file}" .command.run.tmp
+  else
+    dx download "${cmd_launcher_file}" .command.run.tmp
+  fi
+
+  # remove the line in .command.run to disable printing env vars if debugging is on
+  cat .command.run.tmp | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
+
+  # DEBUG
+  echo "COMMAND.RUN SHOULD BE CAT"
+  cat .command.run
 }
 
 aws_relogin_loop() {
