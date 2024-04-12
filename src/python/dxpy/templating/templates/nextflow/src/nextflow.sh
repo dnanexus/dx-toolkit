@@ -544,6 +544,7 @@ nf_task_entry() {
   trap nf_task_exit EXIT
   # remove the line in .command.run to disable printing env vars if debugging is on
   # TODO also handle for S3
+  # TODO error if .command.run file not found
   echo "$cmd_launcher_file"
   echo "< cmd launcher file"
   if [ -f "$AWS_ENV" ]; then
