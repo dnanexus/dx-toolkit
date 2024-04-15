@@ -414,7 +414,8 @@ def print_project_desc(desc, verbose=False):
         'appCaches', 'billTo', 'version', 'createdBy', 'totalSponsoredEgressBytes', 'consumedSponsoredEgressBytes',
         'containsPHI', 'databaseUIViewOnly', 'externalUploadRestricted', 'region', 'storageCost', 'pendingTransfer',
         'atSpendingLimit', 'currentMonthComputeAvailableBudget', 'currentMonthEgressBytesAvailableBudget',
-        'currentMonthComputeUsage', 'currentMonthEgressBytesUsage', 'defaultSymlink'
+        'currentMonthStorageAvailableBudget', 'currentMonthComputeUsage', 'currentMonthEgressBytesUsage', 
+        'currentMonthExpectedStorageUsage', 'defaultSymlink'
         # Following are app container-specific
         'destroyAt', 'project', 'type', 'app', 'appName'
     ]
@@ -490,6 +491,15 @@ def print_project_desc(desc, verbose=False):
         else:
             msg = '%s Bytes of unlimited' % current_usage
         print_field('Egress usage for current month', msg)
+    if 'currentMonthExpectedStorageUsage' in desc:
+        current_usage = format_currency(desc['currentMonthExpectedStorageUsage'] if desc['currentMonthExpectedStorageUsage'] is not None else 0, meta=desc['currency'])
+        if desc.get('currentMonthExpectedStorageUsage') is None and desc.get('currentMonthStorageAvailableBudget') is None:
+            msg = '-'
+        elif desc.get('currentMonthStorageAvailableBudget') is not None:
+            msg = '%s of %s total' % (current_usage, format_currency(desc['currentMonthStorageAvailableBudget'], meta=desc['currency']))
+        else:
+            msg = '%s of unlimited' % current_usage
+        print_field('Expected storage usage for current month', msg)
     if 'atSpendingLimit' in desc:
         print_json_field("At spending limit?", desc['atSpendingLimit'])
 
