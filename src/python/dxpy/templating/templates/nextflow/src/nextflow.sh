@@ -409,8 +409,6 @@ main() {
   declare -a NEXTFLOW_CMD="$(generate_nextflow_cmd '')"
   declare -a NEXTFLOW_CMD_ENV="$(generate_nextflow_cmd '-GET-ENV')"
 
-  # first AWS login of the headjob is done in the Nextflow code,
-  # this is due to the dependency on config values.
   AWS_ENV="$HOME/.dx-aws.env"
   trap on_exit EXIT
   log_context_info
@@ -418,6 +416,7 @@ main() {
   # first nextflow run is to only obtain config variables required for AWS login (thus no parsing on our side needed)
   "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
+
   aws_login
   aws_relogin_loop & AWS_RELOGIN_PID=$!
     # set workdir based on preserve_cache option
@@ -511,8 +510,6 @@ wait_for_terminate_or_retry() {
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   if [ -f .command.log ]; then
-    echo $cmd_log_file
-    echo "CMD_LOG_FILE HERE"
     if [ -f "$AWS_ENV" ]; then
       aws s3 cp .command.log "${cmd_log_file}"
     else
