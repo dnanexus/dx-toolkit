@@ -630,7 +630,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 _UPGRADE_NOTIFY = False
 
             # Handle redirection manually for symlink files
-            if response.status in range(300, 399):
+            if response.status // 100 == 3:
                 redirect_url = response.headers.get('Location')
                 if not redirect_url:
                     raise exceptions.UrllibInternalError("Location not found in redirect response", response.status)

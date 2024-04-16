@@ -110,8 +110,8 @@ class DockerImageRef(ImageRef):
 
     def _cache(self, file_name):
         full_image_ref = self._reconstruct_image_ref()
-        docker_pull_cmd = "docker pull {}".format(full_image_ref)
-        docker_save_cmd = "docker save {} | gzip > {}".format(full_image_ref, file_name)
+        docker_pull_cmd = "sudo docker pull {}".format(full_image_ref)
+        docker_save_cmd = "sudo docker save {} | gzip > {}".format(full_image_ref, file_name)
         for cmd in [docker_pull_cmd, docker_save_cmd]:
             try:
                 _ = subprocess.check_output(cmd, shell=True)
