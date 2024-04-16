@@ -256,19 +256,21 @@ check_running_jobs() {
 }
 
 setup_workdir() {
-  if [[ $preserve_cache == true ]]; then
+  if [ -f "$AWS_ENV" ]; then
+    source $AWS_ENV
+  fi
+
+  if [ -n $workdir ]; then
+    # S3 work dir was specified, use that
+    NXF_WORK="${workdir}/${NXF_UUID}/work"
+  elif [[ $preserve_cache == true ]]; then
+    # Work dir on platform and using cache, use project
     [[ -n $resume ]] || dx mkdir -p $DX_CACHEDIR/$NXF_UUID/work/
     NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
   else
+    # Work dir on platform and not using cache, use project
     NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
   fi
-
-  if [ -f "$AWS_ENV" ]; then
-    source $AWS_ENV
-    NXF_WORK="${workdir}/${NXF_UUID}/work"
-  fi
-
-
 }
 
 dx_path() {
