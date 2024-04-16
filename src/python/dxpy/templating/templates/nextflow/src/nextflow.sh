@@ -281,7 +281,7 @@ setup_workdir() {
     [[ -n $resume ]] || dx mkdir -p $DX_CACHEDIR/$NXF_UUID/work/
     NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
   else
-    # Work dir on platform and not using cache, use project
+    # Work dir on platform and not using cache, use workspace
     NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
   fi
 }
@@ -432,13 +432,16 @@ main() {
   "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
+  # Login to AWS, if configured
   aws_login
   aws_relogin_loop & AWS_RELOGIN_PID=$!
-    # set workdir based on preserve_cache option
+
+  # Set Nextflow workdir based on S3 workdir / preserve_cache options
   setup_workdir
   export NXF_WORK
+
+  # Run Nextflow and forward logs to job monitor
   "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
-  # forwarding nextflow log file to job monitor
   set +x
   if [[ $debug == true ]] ; then
     touch $LOG_NAME
@@ -447,6 +450,7 @@ main() {
     set -x
   fi
 
+  # After Nextflow run
   wait $NXF_EXEC_PID
   kill "$AWS_RELOGIN_PID"
   ret=$?
