@@ -256,11 +256,11 @@ check_running_jobs() {
 }
 
 setup_workdir() {
-  if [ -f "$AWS_ENV" ]; then
+  if [[ -f "$AWS_ENV" ]]; then
     source $AWS_ENV
   fi
 
-  if [ -n $workdir ]; then
+  if [[ -n $workdir ]]; then
     # S3 work dir was specified, use that
     NXF_WORK="${workdir}/${NXF_UUID}/work"
   elif [[ $preserve_cache == true ]]; then
@@ -512,7 +512,7 @@ wait_for_terminate_or_retry() {
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   if [ -f .command.log ]; then
-    if [ -f "$AWS_ENV" ]; then
+    if [[ -n $workdir ]]; then
       aws s3 cp .command.log "${cmd_log_file}"
     else
       dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
@@ -559,7 +559,7 @@ nf_task_entry() {
 }
 
 download_cmd_launcher_file() {
-  if [ -f "$AWS_ENV" ]; then
+  if [[ -n $workdir ]]; then
     aws s3 cp "${cmd_launcher_file}" .command.run.tmp
   else
     dx download "${cmd_launcher_file}" .command.run.tmp
