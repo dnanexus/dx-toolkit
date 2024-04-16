@@ -7,6 +7,7 @@ set -f
 
 AWS_ENV="$HOME/.dx-aws.env"
 USING_S3_WORKDIR=false
+LOGS_DIR="$HOME/.log/"
 
 # How long to let a subjob with error keep running for Nextflow to handle it
 # before we end the DX job, in seconds
@@ -111,15 +112,14 @@ on_exit() {
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
 
-  if [[ -s $LOG_NAME ]]; then
+  if [[ -s "${LOGS_DIR}${LOG_NAME}" ]]; then
     echo "=== Execution completed — upload nextflow log to job output destination ${DX_JOB_OUTDIR%/}/"
-    NEXFLOW_LOG_ID=$(dx upload "$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
+    NEXFLOW_LOG_ID=$(dx upload "${LOGS_DIR}${LOG_NAME}" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
       echo "Upload nextflow log as file: $NEXFLOW_LOG_ID" ||
       echo "Failed to upload log file of current session $NXF_UUID"
   else
     echo "=== Execution completed — no nextflow log file available."
   fi
-  rm $LOG_NAME || true
 
   if [[ $ret -ne 0 ]]; then
     echo "=== Execution failed — skip uploading published files to job output destination ${DX_JOB_OUTDIR%/}/"
@@ -127,10 +127,8 @@ on_exit() {
   else
     echo "=== Execution succeeded — upload published files to job output destination ${DX_JOB_OUTDIR%/}/"
     mkdir -p /home/dnanexus/out/published_files
-    # filter "not ending with -GET-ENV
     find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
     dx-upload-all-outputs --parallel --wait-on-close || echo "No published files has been generated."
-    # done
   fi
   exit $ret
 }
@@ -458,13 +456,11 @@ main() {
 generate_nextflow_cmd() {
   local name_suffix=$1
 
-  # make get-env suffix /home/dnanexus/<log_name>, in order not to be uploaded.
-
   local cmd="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
     ${RUNTIME_CONFIG_CMD} \
-    -log ${LOG_NAME}${name_suffix} \
+    -log ${LOGS_DIR}${LOG_NAME}${name_suffix} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
     -name ${DX_JOB_ID}${name_suffix} \
