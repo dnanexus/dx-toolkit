@@ -6,6 +6,8 @@
 set -f
 
 AWS_ENV="$HOME/.dx-aws.env"
+USING_S3_WORKDIR=false
+
 # How long to let a subjob with error keep running for Nextflow to handle it
 # before we end the DX job, in seconds
 MAX_WAIT_AFTER_JOB_ERROR=240
@@ -255,14 +257,25 @@ check_running_jobs() {
     or run without preserve_cache set to true."
 }
 
+detect_using_s3_workdir() {
+  if [[ -f "$AWS_ENV" ]]; then
+    source $AWS_ENV
+  fi
+
+  if [[ -n $workdir && $workdir != "null" ]]; then
+    USING_S3_WORKDIR=true
+  fi
+}
+
 setup_workdir() {
   if [[ -f "$AWS_ENV" ]]; then
     source $AWS_ENV
   fi
 
-  if [[ -n $workdir ]]; then
+  if [[ -n $workdir && $workdir != "null" ]]; then
     # S3 work dir was specified, use that
     NXF_WORK="${workdir}/${NXF_UUID}/work"
+    USING_S3_WORKDIR=true
   elif [[ $preserve_cache == true ]]; then
     # Work dir on platform and using cache, use project
     [[ -n $resume ]] || dx mkdir -p $DX_CACHEDIR/$NXF_UUID/work/
@@ -512,7 +525,7 @@ wait_for_terminate_or_retry() {
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   if [ -f .command.log ]; then
-    if [[ -n $workdir ]]; then
+    if [[ $USING_S3_WORKDIR == true ]]; then
       aws s3 cp .command.log "${cmd_log_file}"
     else
       dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
@@ -559,10 +572,10 @@ nf_task_entry() {
 }
 
 download_cmd_launcher_file() {
-  if [[ -n $workdir ]]; then
+  if [[ $USING_S3_WORKDIR == true ]]; then
     aws s3 cp "${cmd_launcher_file}" .command.run.tmp
   else
-    dx download "${cmd_launcher_file}" .command.run.tmp
+    dx download "${cmd_launcher_file}" --output .command.run.tmp
   fi
 
   # remove the line in .command.run to disable printing env vars if debugging is on
@@ -572,6 +585,8 @@ download_cmd_launcher_file() {
 aws_login() {
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
+    detect_using_s3_workdir
+  
     # aws env file example values:
     # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
     job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
