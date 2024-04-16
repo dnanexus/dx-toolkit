@@ -419,8 +419,6 @@ main() {
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
-  # execution starts
-
   declare -a NEXTFLOW_CMD="$(generate_nextflow_cmd '')"
   declare -a NEXTFLOW_CMD_ENV="$(generate_nextflow_cmd '-GET-ENV')"
 
