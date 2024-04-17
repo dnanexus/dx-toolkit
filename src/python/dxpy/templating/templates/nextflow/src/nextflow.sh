@@ -440,10 +440,12 @@ main() {
       disown $LOG_MONITOR_PID
       set -x
     fi
-    
+      
+    # After Nextflow run
     wait $NXF_EXEC_PID
-    kill "$AWS_RELOGIN_PID"
     ret=$?
+
+    kill "$AWS_RELOGIN_PID"
     exit $ret
 }
 
