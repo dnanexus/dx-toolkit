@@ -448,8 +448,9 @@ main() {
 
   # After Nextflow run
   wait $NXF_EXEC_PID
-  kill "$AWS_RELOGIN_PID"
   ret=$?
+
+  kill "$AWS_RELOGIN_PID"
   exit $ret
 }
 
