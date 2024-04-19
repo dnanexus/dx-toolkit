@@ -429,7 +429,7 @@ main() {
     $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
 
-  NEXTFLOW_CMD_ENV+=(${applet_runtime_inputs[@]})
+  NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
   
   AWS_ENV="$HOME/.dx-aws.env"
   "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
@@ -460,7 +460,7 @@ main() {
     $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
 
-  NEXTFLOW_CMD+=(${applet_runtime_inputs[@]})
+  NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
 
   trap on_exit EXIT
   log_context_info
