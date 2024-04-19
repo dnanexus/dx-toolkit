@@ -425,7 +425,9 @@ main() {
   log_context_info
 
   # first nextflow run is to only obtain config variables required for AWS login (thus no parsing on our side needed)
-  "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
+  # TODO revert
+  # "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
+  "${NEXTFLOW_CMD_ENV[@]}"
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
   # Login to AWS, if configured
