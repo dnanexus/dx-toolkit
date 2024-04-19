@@ -417,17 +417,13 @@ main() {
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
-  declare -a NEXTFLOW_CMD="$(generate_nextflow_cmd '')"
-  declare -a NEXTFLOW_CMD_ENV="$(generate_nextflow_cmd '-GET-ENV')"
-
   AWS_ENV="$HOME/.dx-aws.env"
   trap on_exit EXIT
   log_context_info
 
   # first nextflow run is to only obtain config variables required for AWS login (thus no parsing on our side needed)
-  # TODO revert
-  # "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
-  "${NEXTFLOW_CMD_ENV[@]}"
+  generate_nextflow_cmd ''
+  "${NEXTFLOW_CMD[@]}" > /home/dnanexus/.dx_get_env.log
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
   # Login to AWS, if configured
@@ -439,6 +435,7 @@ main() {
   export NXF_WORK
 
   # Run Nextflow and forward logs to job monitor
+  generate_nextflow_cmd '-GET-ENV'
   "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
   set +x
   if [[ $debug == true ]] ; then
@@ -459,7 +456,7 @@ main() {
 generate_nextflow_cmd() {
   local name_suffix=$1
 
-  local cmd="(nextflow \
+  NEXTFLOW_CMD="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
     ${RUNTIME_CONFIG_CMD} \
@@ -472,9 +469,9 @@ generate_nextflow_cmd() {
     $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
 
-  cmd+=("${applet_runtime_inputs[@]}")
+  NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
 
-  echo "${cmd[@]}"
+  export NEXTFLOW_CMD
 }
 
 log_context_info() {
