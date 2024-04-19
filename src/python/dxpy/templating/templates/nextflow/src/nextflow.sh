@@ -414,49 +414,8 @@ main() {
     dx upload "$CREDENTIALS" --path "$DX_WORKSPACE_ID:/dx_docker_creds" --brief --wait --no-progress || true
   fi
 
-  # set beginning timestamp
-  BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
-
-  AWS_ENV="$HOME/.dx-aws.env"
-  trap on_exit EXIT
-  log_context_info
-
-  # first nextflow run is to only obtain config variables required for AWS login (thus no parsing on our side needed)
-  generate_nextflow_cmd ''
-  "${NEXTFLOW_CMD[@]}" > /home/dnanexus/.dx_get_env.log
-  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
-
-  # Login to AWS, if configured
-  aws_login
-  aws_relogin_loop & AWS_RELOGIN_PID=$!
-
-  # Set Nextflow workdir based on S3 workdir / preserve_cache options
-  setup_workdir
-  export NXF_WORK
-
-  # Run Nextflow and forward logs to job monitor
-  generate_nextflow_cmd '-GET-ENV'
-  "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
-  set +x
-  if [[ $debug == true ]] ; then
-    touch $LOG_NAME
-    tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
-    disown $LOG_MONITOR_PID
-    set -x
-  fi
-
-  # After Nextflow run
-  wait $NXF_EXEC_PID
-  ret=$?
-
-  kill "$AWS_RELOGIN_PID"
-  exit $ret
-}
-
-generate_nextflow_cmd() {
-  local name_suffix=$1
-
-  NEXTFLOW_CMD="(nextflow \
+  # First Nextflow run, only to parse & save config required for AWS login
+  declare -a NEXTFLOW_CMD_ENV="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
     ${RUNTIME_CONFIG_CMD} \
@@ -469,9 +428,58 @@ generate_nextflow_cmd() {
     $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
 
+  NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
+  
+  AWS_ENV="$HOME/.dx-aws.env"
+  ""${NEXTFLOW_CMD_ENV[@]}"" > /home/dnanexus/.dx_get_env.log
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
+
+  # Login to AWS, if configured
+  aws_login
+  aws_relogin_loop & AWS_RELOGIN_PID=$!
+
+  # Set Nextflow workdir based on S3 workdir / preserve_cache options
+  setup_workdir
+  export NXF_WORK
+
+  # set beginning timestamp
+  BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
+
+  # Start Nextflow run
+  declare -a NEXTFLOW_CMD="(nextflow \
+    ${TRACE_CMD} \
+    $nextflow_top_level_opts \
+    ${RUNTIME_CONFIG_CMD} \
+    -log ${LOGS_DIR}${LOG_NAME} \
+    run @@RESOURCES_SUBPATH@@ \
+    $profile_arg \
+    -name ${DX_JOB_ID} \
+    $RESUME_CMD \
+    $nextflow_run_opts \
+    $RUNTIME_PARAMS_FILE \
+    $nextflow_pipeline_params)"
+
   NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
 
-  export NEXTFLOW_CMD
+  trap on_exit EXIT
+  log_context_info
+
+  "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
+  set +x
+  if [[ $debug == true ]] ; then
+    # Forward Nextflow log to job log
+    touch $LOG_NAME
+    tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
+    disown $LOG_MONITOR_PID
+    set -x
+  fi
+
+  # After Nextflow run
+  wait $NXF_EXEC_PID
+  ret=$?
+
+  kill "$AWS_RELOGIN_PID"
+  exit $ret
 }
 
 log_context_info() {
