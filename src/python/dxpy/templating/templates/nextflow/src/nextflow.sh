@@ -415,14 +415,15 @@ main() {
   fi
 
   # First Nextflow run, only to parse & save config required for AWS login
+  local env_job_suffix='-GET-ENV'
   declare -a NEXTFLOW_CMD_ENV="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
     ${RUNTIME_CONFIG_CMD} \
-    -log ${LOGS_DIR}${LOG_NAME}${name_suffix} \
+    -log ${LOGS_DIR}${LOG_NAME}${env_job_suffix} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
-    -name ${DX_JOB_ID}${name_suffix} \
+    -name ${DX_JOB_ID}${env_job_suffix} \
     $RESUME_CMD \
     $nextflow_run_opts \
     $RUNTIME_PARAMS_FILE \
@@ -431,7 +432,7 @@ main() {
   NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
   
   AWS_ENV="$HOME/.dx-aws.env"
-  ""${NEXTFLOW_CMD_ENV[@]}"" > /home/dnanexus/.dx_get_env.log
+  "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
   # Login to AWS, if configured
