@@ -67,7 +67,13 @@ def build_pipeline_with_npi(
     build_project_id = dxpy.WORKSPACE_ID
     build_folder = None
     input_hash = parse_extra_args(extra_args)
+
+    # TODO revert
+    # For testing a branch on staging with NPI app
+    input_hash["dx_toolkit_tag"] = "APPS-2524-aws2-support"
+
     input_hash["repository_url"] = repository
+
     if tag:
         input_hash["repository_tag"] = tag
     if profile:
