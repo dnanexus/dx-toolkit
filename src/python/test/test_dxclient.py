@@ -3310,9 +3310,8 @@ dx-jobutil-add-output record_array $second_record --array
         applet_id = dxpy.api.applet_new(app_spec)['id']
         requested_inst_type_by_exec = {
             applet_id: {
-                "main": {
-                    "instanceType": "mem2_ssd1_v2_x2",
-                    "clusterSpec": {"initialInstanceCount": 3}}}}
+                "main": "mem2_ssd1_v2_x2",
+                "other": "mem2_hdd2_x1"}}
 
         (stdout, stderr) = run('_DX_DEBUG=2 dx run ' + applet_id + ' ' +
                                '--instance-type mem2_hdd2_x2 ' +
@@ -3322,7 +3321,10 @@ dx-jobutil-add-output record_array $second_record --array
                                json.dumps(requested_inst_type_by_exec) + '\'',
                                also_return_stderr=True)
         expected_sys_reqs_by_exec = '"systemRequirementsByExecutable": ' + \
-            json.dumps(requested_inst_type_by_exec)
+            json.dumps({
+                applet_id: {
+                    "main": {"instanceType": "mem2_ssd1_v2_x2"},
+                    "other": {"instanceType": "mem2_hdd2_x1"}}})
         self.assertIn(expected_sys_reqs_by_exec, stderr)
 
         # parsing error
@@ -3399,12 +3401,14 @@ dx-jobutil-add-output record_array $second_record --array
         orig_job_id = run("dx run " + applet_id +
                           ' -inumber=32 --name jobname --folder /output ' +
                           '--instance-type mem2_hdd2_x2 ' +
-                          '--instance-type-by-executable \'{"' + applet_id + '": {"*": {"instanceType": "mem1_ssd1_v2_x2"}}}\' '   
+                          '--instance-type-by-executable \'{"' + applet_id + '": {"*": "mem1_ssd1_v2_x2"}}\' '   
                           '--tag Ψ --tag $hello.world ' +
                           '--property Σ_1^n=n --property $hello.=world ' +
                           '--priority normal ' +
-                          '--brief -y').strip()
-        orig_job_desc = dxpy.api.job_describe(orig_job_id, {"defaultFields": True, "fields":{"runSystemRequirements":True, "runSystemRequirementsByExecutable":True, "mergedSystemRequirementsByExecutable":True}} )
+                          '--brief -y').strip().split('\n')[-1]
+        orig_job_desc = dxpy.api.job_describe(orig_job_id, {"defaultFields": True, 
+                                                            "fields":{
+                                                                "runSystemRequirements":True, "runSystemRequirementsByExecutable":True, "mergedSystemRequirementsByExecutable":True}} )
         # control
         self.assertEqual(orig_job_desc['name'], 'jobname')
         self.assertEqual(orig_job_desc['project'], self.project)
@@ -3423,8 +3427,10 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc)
 
         def get_new_job_desc(cmd_suffix):
-            new_job_id = run("dx run --clone " + orig_job_id + " --brief -y " + cmd_suffix).strip()
-            return dxpy.api.job_describe(new_job_id)
+            new_job_id = run("dx run --clone " + orig_job_id + " --brief -y " + cmd_suffix).strip().split('\n')[-1]
+            return dxpy.api.job_describe(new_job_id, {"defaultFields": True, 
+                                                      "fields":{
+                                                          "runSystemRequirements":True, "runSystemRequirementsByExecutable":True, "mergedSystemRequirementsByExecutable":True}})
 
         # override applet
         new_job_desc = get_new_job_desc(other_applet_id)
@@ -3483,8 +3489,14 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['input'], {"number2": 42})
         check_new_job_metadata(new_job_desc, orig_job_desc, overridden_fields=['input'])
 
-        # --instance-type override: original job with universal instance type 
+        # --instance-type override: original job with universal instance type
         # override the blanket instance type
+        orig_job_id = run("dx run " + applet_id +
+                          ' --instance-type mem1_ssd1_v2_x2 ' +
+                          '--brief -y').strip().split('\n')[-1]
+        orig_job_desc = dxpy.api.job_describe(orig_job_id, {"defaultFields": True, 
+                                                            "fields": {"runSystemRequirements": True,
+                                                                       "runSystemRequirementsByExecutable": True, "mergedSystemRequirementsByExecutable": True}})
         new_job_desc = get_new_job_desc("--instance-type mem2_hdd2_x1")
         self.assertEqual(new_job_desc['systemRequirements'],
                          {'*': {'instanceType': 'mem2_hdd2_x1'}})
@@ -3639,6 +3651,28 @@ dx-jobutil-add-output record_array $second_record --array
         
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.5')
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['clusterSpec']['bootstrapScript'], 'z.sh')
+
+        # --instance-type and --instance-type-by-executable override
+        orig_job_id = run("dx run " + other_applet_id +
+                          " --instance-type mem2_hdd2_x2" +
+                          " --instance-type-by-executable \'" + 
+                          json.dumps({other_applet_id: {"some_ep": "mem1_ssd1_v2_x2", "some_other_ep": "mem2_hdd2_x4"}}) + "\'" +
+                          " --brief -y").strip().split('\n')[-1]
+        orig_job_desc = dxpy.api.job_describe(orig_job_id, {"defaultFields": True, "fields": {
+                                              "runSystemRequirements": True, "runSystemRequirementsByExecutable": True, "mergedSystemRequirementsByExecutable": True}})
+
+        new_job_desc = get_new_job_desc("--instance-type-by-executable \'" + 
+                          json.dumps({other_applet_id: {"some_ep": "mem1_ssd1_v2_x8", "*": "mem2_hdd2_x1"}}) + "\'")
+
+        # cloned from original job systemRequirements
+        self.assertEqual(new_job_desc["runSystemRequirements"], orig_job_desc["systemRequirements"])
+        self.assertEqual(
+            new_job_desc['runSystemRequirementsByExecutable'][other_applet_id]['some_ep']['instanceType'], 'mem1_ssd1_v2_x8')
+        self.assertEqual(
+            new_job_desc['runSystemRequirementsByExecutable'][other_applet_id]['*']['instanceType'], 'mem2_hdd2_x1')
+        # cloned from original job mergedSystemRequirements
+        self.assertEqual(
+            new_job_desc['runSystemRequirementsByExecutable'][other_applet_id]['some_other_ep']['instanceType'], 'mem2_hdd2_x4')
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
@@ -3882,9 +3916,9 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         change_inst_type_analysis_id = run("dx run --clone " + analysis_id +
                                            " --instance-type mem2_hdd2_x2 --brief -y").strip()
         change_inst_type_by_exec_analysis_id = run("dx run --clone " + analysis_id +
-                                           " --instance-type-by-executable \'" + 
-                                           json.dumps({applet_id:{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) +
-                                           "\' --brief -y").strip()
+                                                   " --instance-type-by-executable \'" +
+                                                   json.dumps({applet_id: {"*": "mem2_ssd1_v2_x2"}}) +
+                                                   "\' --brief -y").strip()
 
         time.sleep(25) # May need to wait for any new jobs to be created in the system
 
@@ -4004,9 +4038,9 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                          '--instance-type second=mem2_hdd2_x1 -y --brief').strip()
 
         # request for an executable
-        exec_req_id = run("dx run myworkflow" + 
-                         " --instance-type-by-executable \'" + 
-                         json.dumps({applet_id:{"*": {"instanceType": "mem2_ssd1_v2_x2"}}}) +
+        exec_req_id = run("dx run myworkflow" +
+                          " --instance-type-by-executable \'" +
+                          json.dumps({applet_id: {"*": "mem2_ssd1_v2_x2"}}) +
                          "\' --brief -y").strip()
         
         time.sleep(10) # give time for all jobs to be populated
