@@ -6,13 +6,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [374.0] - beta
+
 ### Added 
 
 * Released Nextaur 1.8.0: Enables login to AWS
 * AWS login for Nextflow subjobs and relogin for Nextflow headjob and subjobs
 * `dx extract_assay germline --retrieve-genotype` supports germline assay datasets with reference and no-call genotypes
 
-## [373.0] - beta
+## [373.0] - 2024.4.18
 
 ### Added 
 

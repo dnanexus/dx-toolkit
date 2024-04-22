@@ -5125,8 +5125,8 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
                                                         " at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
 # --cache-docker
-nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project"
-                                                          "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote.",
+nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project "
+                                                          "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote, --force, --archive, --dry-run, --json.",
                                                    width_adjustment=-24), action="store_true", dest="cache_docker")
 
 # --docker-secrets

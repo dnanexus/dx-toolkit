@@ -1126,19 +1126,20 @@ def _build_app(args, extra_args):
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
         # options through to the interior call of dx_build_app(let).
+        incompatible_options = "--cache-docker" if args.cache_docker else "--remote and --repository"
         if args.dry_run:
-            parser.error('--remote and --repository cannot be combined with --dry-run')
+            parser.error('{} cannot be combined with --dry-run'.format(incompatible_options))
         if args.overwrite:
-            parser.error('--remote and --repository cannot be combined with --overwrite/-f')
+            parser.error('{} cannot be combined with --overwrite/-f'.format(incompatible_options))
         if args.archive:
-            parser.error('--remote and --repository cannot be combined with --archive/-a')
+            parser.error('{} cannot be combined with --archive/-a'.format(incompatible_options))
 
         # The following flags are probably not useful in conjunction
         # with --remote.
         if args.json:
-            parser.error('--remote and --repository cannot be combined with --json')
+            parser.error('{} cannot be combined with --json'.format(incompatible_options))
         if not args.use_temp_build_project:
-            parser.error('--remote and --repository cannot be combined with --no-temp-build-project')
+            parser.error('{} cannot be combined with --no-temp-build-project'.format(incompatible_options))
 
         if isinstance(args.region, list) and len(args.region) > 1:
             parser.error('--region can only be specified once for remote builds')
