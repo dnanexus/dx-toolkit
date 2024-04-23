@@ -67,13 +67,7 @@ def build_pipeline_with_npi(
     build_project_id = dxpy.WORKSPACE_ID
     build_folder = None
     input_hash = parse_extra_args(extra_args)
-
-    # TODO revert
-    # For testing a branch on staging with NPI app
-    # input_hash["dx_toolkit_tag"] = "APPS-2524-aws2-support"
-
     input_hash["repository_url"] = repository
-
     if tag:
         input_hash["repository_tag"] = tag
     if profile:
@@ -93,8 +87,7 @@ def build_pipeline_with_npi(
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
-    # TODO revert
-    nf_builder_job = dxpy.DXApp(name="nextflow_pipeline_importer_qe").run(app_input=input_hash, project=build_project_id,
+    nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id,
                                                               folder=build_folder,
                                                               name="Nextflow build of %s" % (repository), detach=True)
 
