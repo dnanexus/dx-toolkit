@@ -54,11 +54,14 @@ def get_job_new_input(args):
     if args.instance_type is not None:
         try_call(process_instance_type_arg, args, False)
         job_new_input["systemRequirements"] = SystemRequirementsDict.from_instance_type(args.instance_type, args.function).as_dict()
-    
+
     if args.instance_type_by_executable is not None:
         try_call(process_instance_type_by_executable_arg, args)
-        job_new_input["systemRequirementsByExecutable"] = SystemRequirementsDict(args.instance_type_by_executable).as_dict()
-    
+        job_new_input["systemRequirementsByExecutable"] = {
+            exec: SystemRequirementsDict.from_instance_type(sys_req_by_exec).as_dict()
+            for exec, sys_req_by_exec in args.instance_type_by_executable.items()
+        }
+
     if args.head_job_on_demand is not None:
         job_new_input['headJobOnDemand'] = args.head_job_on_demand
 
