@@ -70,7 +70,7 @@ def build_pipeline_with_npi(
 
     # TODO revert
     # For testing a branch on staging with NPI app
-    input_hash["dx_toolkit_tag"] = "APPS-2524-aws2-support"
+    # input_hash["dx_toolkit_tag"] = "APPS-2524-aws2-support"
 
     input_hash["repository_url"] = repository
 
