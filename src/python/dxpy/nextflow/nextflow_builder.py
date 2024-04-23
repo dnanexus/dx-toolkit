@@ -94,7 +94,7 @@ def build_pipeline_with_npi(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
     # TODO revert
-    nf_builder_job = dxpy.DXApp(name="app-nextflow_pipeline_importer_qe").run(app_input=input_hash, project=build_project_id,
+    nf_builder_job = dxpy.DXApp(name="nextflow_pipeline_importer_qe").run(app_input=input_hash, project=build_project_id,
                                                               folder=build_folder,
                                                               name="Nextflow build of %s" % (repository), detach=True)
 
