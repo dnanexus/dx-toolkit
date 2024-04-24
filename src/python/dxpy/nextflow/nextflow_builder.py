@@ -94,7 +94,7 @@ def build_pipeline_with_npi(
 
     nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id,
                                                               folder=build_folder,
-                                                              name="Nextflow build of %s" % (repository), detach=True, delay_workspace_destruction=True)
+                                                              name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
         print("Started builder job %s" % (nf_builder_job.get_id(),))
