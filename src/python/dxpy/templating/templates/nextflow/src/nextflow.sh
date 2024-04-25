@@ -595,7 +595,8 @@ aws_login() {
     detect_using_s3_workdir
   
     # aws env file example values:
-    # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
+    # "iamRoleArnToAssume", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
+    roleSessionName="dnanexus_${DX_JOB_ID}"
     job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
     output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
     mkdir -p /home/dnanexus/.aws/
