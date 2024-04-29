@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [374.0] - beta
+## [375.0] - beta
+
+### Fixed
+
+* `dx run --instance-type-by-executable`
+
+## [374.0] - 2024.4.29
 
 ### Added 
 
