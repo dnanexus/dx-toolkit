@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Removed
+
+* `dx upgrade` command. `python3 -m pip install -U dxpy` is the recommended installation method
+
 ## [375.0] - beta
 
 ### Fixed
