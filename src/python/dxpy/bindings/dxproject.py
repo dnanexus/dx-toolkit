@@ -314,7 +314,7 @@ class DXProject(DXContainer):
         :param external_upload_restricted: If provided, whether project members can upload data to project from external sources, e.g. outside of job
         :type external_upload_restricted: boolean
         :param default_symlink: If provided, the details needed to have writable symlinks in the project. Dict must include drive, container, and optional prefix.
-        : type default_symlink: dict
+        :type default_symlink: dict
 
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
