@@ -247,14 +247,14 @@ boost_build:
 
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
-CURL_MAJOR=7
-CURL_MINOR=45
-CURL_MICRO=0
+CURL_MAJOR=8
+CURL_MINOR=0
+CURL_MICRO=1
 CURL_PV=$(CURL_MAJOR).$(CURL_MINOR).$(CURL_MICRO)
 CURL_PV_UNDERSCORES=$(CURL_MAJOR)_$(CURL_MINOR)_$(CURL_MICRO)
 CURL_MIRROR=https://github.com/bagder/curl/releases/download
 CURL_URL=$(CURL_MIRROR)/curl-$(CURL_PV_UNDERSCORES)/curl-$(CURL_PV).tar.gz
-CURL_SHA=e44fc290844c1e3c9b7f6ef9926d4366d0600514
+CURL_SHA=4bd44cec15725d6e983ea1824b8f6c8a7d80ef4c
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
@@ -277,24 +277,38 @@ curl/stage/lib/libcurl.la: shasum openssl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
 	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
 	tar -xzf curl-$(CURL_PV).tar.gz -C curl --strip-components=1
-	cd curl; ./configure --disable-ldap --disable-ldaps \
+	# Unset default DESTDIR value (set in src/mk/config.mk) since using
+	# DESTDIR along with --enable-ares breaks the way recent curl releases
+	# load the ares header/library dirs. See:
+	# https://github.com/curl/curl/issues/2982
+	cd curl; \
+	    unset DESTDIR ; \
+	    ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
 	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
-	    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
+	    --without-nss --without-libssh2 --without-librtmp \
 	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
-	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
-	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
+	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=$(DNANEXUS_HOME)/src/curl/stage
+	unset DESTDIR ; $(MAKE) -C curl install
 
-CARES_PV=1.13.0
-CARES_SHA=dde50284cc3d505fb2463ff6276e61d5531b1d68
+CARES_MAJOR=1
+CARES_MINOR=19
+CARES_MICRO=0
+CARES_PV=$(CARES_MAJOR).$(CARES_MINOR).$(CARES_MICRO)
+CARES_PV_UNDERSCORES=$(CARES_MAJOR)_$(CARES_MINOR)_$(CARES_MICRO)
+CARES_MIRROR=https://github.com/c-ares/c-ares/releases/download
+CARES_SOURCE_TARBALL=c-ares-$(CARES_PV).tar.gz
+CARES_URL=$(CARES_MIRROR)/cares-$(CARES_PV_UNDERSCORES)/$(CARES_SOURCE_TARBALL)
+CARES_SHA=7d936708075944ee13405199eb57653d31b44e98
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
-	curl https://c-ares.org/download/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
-	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
-	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
-	cd c-ares; ./configure --prefix=/
-	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
+
+	curl -L $(CARES_URL) > $(CARES_SOURCE_TARBALL)
+	[[ $$(shasum $(CARES_SOURCE_TARBALL) | cut -f 1 -d ' ') == $(CARES_SHA) ]]
+	tar -xzf $(CARES_SOURCE_TARBALL) -C c-ares --strip-components=1
+	cd c-ares; unset DESTDIR ; ./configure --prefix=$(DNANEXUS_HOME)/src/c-ares/stage
+	unset DESTDIR ; $(MAKE) -C c-ares install
 
 FILE_PV=5.32
 FILE_SHA=6a84bddca6fa9bcf6882832ccece38cf22b9b600
