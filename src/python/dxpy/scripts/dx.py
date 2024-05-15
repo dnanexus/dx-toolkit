@@ -4119,27 +4119,6 @@ def ssh(args, ssh_config_verified=False):
         print(fill(tip.format(job_id=args.job_id)))
     exit(exit_code)
 
-def upgrade(args):
-    if len(args.args) == 0:
-        try:
-            greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION}, auth=None)
-            if greeting['update']['available']:
-                recommended_version = greeting['update']['version']
-            else:
-                err_exit("Your SDK is up to date.", code=0)
-        except default_expected_exceptions as e:
-            print(e)
-            recommended_version = "current"
-        print("Upgrading to", recommended_version)
-        args.args = [recommended_version]
-
-    try:
-        cmd = os.path.join(os.environ['DNANEXUS_HOME'], 'build', 'upgrade.sh')
-        args.args.insert(0, cmd)
-        os.execv(cmd, args.args)
-    except:
-        err_exit()
-
 def generate_batch_inputs(args):
 
     # Internally restricted maximum batch size for a TSV
@@ -6345,16 +6324,6 @@ parser_api.add_argument('--input', help=fill('Load JSON input from FILENAME ("-"
 parser_api.set_defaults(func=api)
 # parser_api.completer = TODO
 register_parser(parser_api)
-
-#####################################
-# upgrade
-#####################################
-parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program)',
-                                       description='Upgrades dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform.',
-                                       prog='dx upgrade')
-parser_upgrade.add_argument('args', nargs='*')
-parser_upgrade.set_defaults(func=upgrade)
-register_parser(parser_upgrade)
 
 #####################################
 # generate_batch_inputs
