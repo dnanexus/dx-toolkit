@@ -310,6 +310,21 @@ get_nextaur_version() {
   export NXF_PLUGINS_VERSION=$(dx describe ${asset_dependency} --json | jq -r .properties.version)
 }
 
+get_nextflow_environment() {
+  NEXTFLOW_CMD_ENV=("$@")
+  set +e
+  ENV_OUTPUT=$("${NEXTFLOW_CMD_ENV[@]}" 2>&1)
+  ENV_EXIT=$?
+  set -e
+
+  if [ $ENV_EXIT -ne 0 ]; then
+      echo "$ENV_OUTPUT"
+      return $ENV_EXIT
+  else
+      echo "$ENV_OUTPUT" > "/home/dnanexus/.dx_get_env.log"
+  fi
+}
+
 # Entry point for the main Nextflow orchestrator job
 main() {
   if [[ $debug == true ]]; then
@@ -432,7 +447,8 @@ main() {
   NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
   
   AWS_ENV="$HOME/.dx-aws.env"
-  "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
+  get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
+
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
   # Login to AWS, if configured
