@@ -435,7 +435,7 @@ main() {
   "${NEXTFLOW_CMD_ENV[@]}" > /home/dnanexus/.dx_get_env.log
   ret=$?
   if [ $ret -ne 0 ]; then
-    # Include in log only if it fails
+    # Include get env log in job log if error
     cat /home/dnanexus/.dx_get_env.log
   fi
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
