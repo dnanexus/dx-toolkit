@@ -447,8 +447,8 @@ main() {
   NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
   
   AWS_ENV="$HOME/.dx-aws.env"
-  get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
 
+  get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
   # Login to AWS, if configured
