@@ -17,7 +17,7 @@ from utils import EXIT_SUCCESS, init_base_argparser, init_logging, parse_common_
 
 ROOT_DIR = Path(__file__).parent.absolute()
 
-_PYTHON_VERSIONS = ["3.7", "3.8", "3.9", "3.10", "3.11"]
+_PYTHON_VERSIONS = ["3.8", "3.9", "3.10", "3.11", "3.12"]
 PYENVS = [f"official-{p}" for p in _PYTHON_VERSIONS]
 
 EXIT_TEST_EXECUTION_FAILED = 1

@@ -1437,7 +1437,10 @@ def new_project(args):
         inputs["monthlyComputeLimit"] = args.monthly_compute_limit
     if args.monthly_egress_bytes_limit is not None:
         inputs["monthlyEgressBytesLimit"] = args.monthly_egress_bytes_limit
-
+    if args.monthly_storage_limit is not None:
+        inputs["monthlyStorageLimit"] = args.monthly_storage_limit
+    if args.default_symlink is not None:
+        inputs["defaultSymlink"] = json.loads(args.default_symlink)
     try:
         resp = dxpy.api.project_new(inputs)
         if args.brief:
@@ -2834,11 +2837,27 @@ def build(args):
         if args.repository and args.remote:
             build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
 
+        if args.cache_docker and args.remote:
+            build_parser.error("Nextflow pipeline built with an option to cache the docker images is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
+
         if args.git_credentials and not args.repository:
             build_parser.error("Git credentials can be supplied only when building Nextflow pipeline from a Git repository.")
 
         if args.nextflow and args.mode == "app":
             build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
+
+        if args.cache_docker and not args.nextflow:
+            build_parser.error(
+                "Docker caching argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
+
+        if args.cache_docker:
+            logging.warning(
+                "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
+                "Intellectual Property agreements of the software within the Docker container. You are also "
+                "responsible for remediating the security vulnerabilities of the Docker images of the pipeline."
+                "Also, cached images will be accessible by the users with VIEW permissions to the projects where the "
+                "cached images will be stored."
+            )
 
         # options not supported by workflow building
 
@@ -3162,7 +3181,7 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    requested_instance_type, requested_cluster_spec = {}, {}
+    requested_instance_type, requested_cluster_spec, requested_system_requirements_by_executable = {}, {}, {}
     executable_describe = None
 
     if args.cloned_job_desc:
@@ -3173,7 +3192,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         cloned_instance_type = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceType')
         cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='clusterSpec')
         cloned_fpga_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='fpgaDriver')
-        cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {})
+        cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}) or {}
     else:
         cloned_system_requirements = {}
         cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver = SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({})
@@ -3212,10 +3231,25 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     # into the runtime systemRequirements
     requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
 
-    # store runtime --instance-type-by-executable {executable:{entrypoint:{'instanceType':xxx}}} as systemRequirementsByExecutable 
+    if (args.instance_type and cloned_system_requirements_by_executable):
+        warning = BOLD("WARNING") + ": --instance-type argument: {} may get overridden by".format(args.instance_type) 
+        warning += " {} mergedSystemRequirementsByExecutable: {}".format(args.cloned_job_desc.get('id'), json.dumps(cloned_system_requirements_by_executable))
+        if (args.instance_type_by_executable):
+            warning += " and runtime --instance-type-by-executable argument:{}\n".format(json.dumps(args.instance_type_by_executable))
+        print(fill(warning))
+        print()
+
+    # store runtime --instance-type-by-executable {executable:{entrypoint:xxx}} as systemRequirementsByExecutable
     # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
     # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
-    requested_system_requirements_by_executable = SystemRequirementsDict(args.instance_type_by_executable).as_dict() or cloned_system_requirements_by_executable
+    if args.instance_type_by_executable:
+        requested_system_requirements_by_executable = {exec: SystemRequirementsDict.from_instance_type(sys_req_by_exec).as_dict(
+        ) for exec, sys_req_by_exec in args.instance_type_by_executable.items()}
+        requested_system_requirements_by_executable = SystemRequirementsDict(merge(
+            cloned_system_requirements_by_executable, requested_system_requirements_by_executable)).as_dict()
+    else:
+        requested_system_requirements_by_executable = cloned_system_requirements_by_executable
+
 
     if args.debug_on:
         if 'All' in args.debug_on:
@@ -3584,7 +3618,11 @@ def run(args):
     if args.clone is not None:
         # Resolve job ID or name; both job-id and analysis-id can be described using job_describe()
         if is_job_id(args.clone) or is_analysis_id(args.clone):
-            clone_desc = dxpy.api.job_describe(args.clone)
+            clone_desc = dxpy.api.job_describe(args.clone, {"defaultFields": True, 
+                                                            "fields": {"runSystemRequirements": True, 
+                                                                       "runSystemRequirementsByExecutable": True, 
+                                                                       "mergedSystemRequirementsByExecutable": True}})
+
         else:
             iterators = []
             if ":" in args.clone:
@@ -3947,7 +3985,7 @@ def ssh(args, ssh_config_verified=False):
     job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
-        err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
+        err_exit(f"{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
 
     if not ssh_config_verified:
         verify_ssh_config()
@@ -3975,6 +4013,8 @@ def ssh(args, ssh_config_verified=False):
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
+        if job_desc['state'] in ['done', 'failed', 'terminated']:
+            err_exit(f"\n{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
         time.sleep(1)
         job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
@@ -4078,27 +4118,6 @@ def ssh(args, ssh_config_verified=False):
               " to stop it if necessary."
         print(fill(tip.format(job_id=args.job_id)))
     exit(exit_code)
-
-def upgrade(args):
-    if len(args.args) == 0:
-        try:
-            greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION}, auth=None)
-            if greeting['update']['available']:
-                recommended_version = greeting['update']['version']
-            else:
-                err_exit("Your SDK is up to date.", code=0)
-        except default_expected_exceptions as e:
-            print(e)
-            recommended_version = "current"
-        print("Upgrading to", recommended_version)
-        args.args = [recommended_version]
-
-    try:
-        cmd = os.path.join(os.environ['DNANEXUS_HOME'], 'build', 'upgrade.sh')
-        args.args.insert(0, cmd)
-        os.execv(cmd, args.args)
-    except:
-        err_exit()
 
 def generate_batch_inputs(args):
 
@@ -4538,6 +4557,12 @@ def positive_integer(value):
     if ivalue <= 0:
         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
+
+def positive_number(value):
+    number_value = float(value)
+    if number_value <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive number value" % value)
+    return number_value
 
 parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://documentation.dnanexus.com/getting-started/tutorials/cli-quickstart#quickstart-for-cli\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
                           formatter_class=argparse.RawTextHelpFormatter,
@@ -5078,6 +5103,19 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
                                                         "Can be used only with --repository. More information about the file syntax can be found"
                                                         " at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
                                                    width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
+# --cache-docker
+nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project "
+                                                          "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote, --force, --archive, --dry-run, --json.",
+                                                   width_adjustment=-24), action="store_true", dest="cache_docker")
+
+# --docker-secrets
+nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "
+                                                            "docker repository.",
+                                                   width_adjustment=-24), dest="docker_secrets")
+
+# --nextflow-pipeline-params
+nextflow_options.add_argument('--nextflow-pipeline-params', help=fill("Custom pipeline parameters to be referenced when collecting the docker images.",
+                                                   width_adjustment=-24), dest="nextflow_pipeline_params")
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
@@ -5766,6 +5804,8 @@ parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the 
                                 action='store_true')
 parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly project spending limit for compute')
 parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly project spending limit for egress (in Bytes)')
+parser_new_project.add_argument('--monthly-storage-limit', type=positive_number, help='Monthly project spending limit for storage')
+parser_new_project.add_argument('--default-symlink', help='Default symlink for external store account')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
@@ -6286,16 +6326,6 @@ parser_api.set_defaults(func=api)
 register_parser(parser_api)
 
 #####################################
-# upgrade
-#####################################
-parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program)',
-                                       description='Upgrades dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform.',
-                                       prog='dx upgrade')
-parser_upgrade.add_argument('args', nargs='*')
-parser_upgrade.set_defaults(func=upgrade)
-register_parser(parser_upgrade)
-
-#####################################
 # generate_batch_inputs
 #####################################
 
@@ -6516,8 +6546,20 @@ parser_e_a_g_mutex_group.add_argument(
     const='{}',
     default=None,
     nargs='?',
-    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Use --json-help with this option to get detailed information on the JSON format and filters.'
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Genotype types "ref" and "no-call" have no allele ID, and "half" types where the genotype is half reference and half no-call also have no allele ID. All other genotype types have an allele ID, including "half" types where the genotype is half alternate allele and half no-call. Use --json-help with this option to get detailed information on the JSON format and filters.'
 )
+
+parser_e_a_g_infer_new_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=False)
+parser_e_a_g_infer_new_mutex_group.add_argument(
+    "--infer-nocall",
+    action="store_true",
+    help='When using the "--retrieve-genotype" option, infer genotypes with type "no-call" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=true", "exclude_halfref=false", and "exclude_refdata=false".')
+parser_e_a_g_infer_new_mutex_group.add_argument(
+    "--infer-ref",
+    action="store_true",
+    help='When using the "--retrieve-genotype" option, infer genotypes with type "ref" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=false", "exclude_halfref=false", and "exclude_refdata=true".'
+)
+
 parser_extract_assay_germline.add_argument(
     '--json-help',
     help=argparse.SUPPRESS,

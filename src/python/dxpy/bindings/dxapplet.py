@@ -242,7 +242,7 @@ class DXExecutable:
         :param preserve_job_outputs: Copy cloneable outputs of every non-reused job entering "done" state in this root execution to a folder in the project. If value is True it will place job outputs into the "intermediateJobOutputs" subfolder under the output folder for the root execution. If the value is dict, it may contains "folder" key with desired folder path. If the folder path starts with '/' it refers to an absolute path within the project, otherwise, it refers to a subfolder under root execution's output folder.
         :type preserve_job_outputs: boolean or dict
         :param detailed_job_metrics: Enable detailed job metrics for this root execution
-        :type preserve_job_outputs: boolean
+        :type detailed_job_metrics: boolean
         :param extra_args: If provided, a hash of options that will be merged into the underlying JSON given for the API call
         :type extra_args: dict
         :returns: Object handler of the newly created job

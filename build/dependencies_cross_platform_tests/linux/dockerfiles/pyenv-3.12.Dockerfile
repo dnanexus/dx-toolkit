@@ -12,14 +12,12 @@ RUN \
 
 ENV PYENV_ROOT=/root/.pyenv
 ENV PATH="${PYENV_ROOT}/bin:${PATH}"
-ENV PYENV_PYTHON_VERSION=3.6
+ENV PYENV_PYTHON_VERSION=3.12
 
 RUN \
     eval "$(pyenv init -)" && \
     pyenv install ${PYENV_PYTHON_VERSION} && \
     pyenv global ${PYENV_PYTHON_VERSION} && \
-    # Ensure we can use pip reasonably 
-    python3 -m pip install --quiet pip==20.3.4 setuptools==50.3.2 wheel==0.37.1 && \
     python3 -m venv /pytest-env
 
 RUN \

@@ -1,0 +1,20 @@
+[
+    {
+        "sample_id": "genotype$sample_id"
+    },
+    {
+        "allele_id": "genotype$a_id"
+    },
+    {
+        "locus_id": "genotype$locus_id"
+    },
+    {
+        "chromosome": "genotype$chr"
+    },
+    {
+        "starting_position": "genotype$pos"
+    },
+    {
+        "genotype_type": "genotype$type"
+    }
+]

@@ -37,8 +37,8 @@ import dxpy.workflow_builder
 import dxpy.executable_builder
 from .. import logger
 
-from dxpy.nextflow.nextflow_builder import build_pipeline_from_repository, prepare_nextflow
-from dxpy.nextflow.nextflow_utils import get_resources_subpath
+from dxpy.nextflow.nextflow_builder import build_pipeline_with_npi, prepare_nextflow
+from dxpy.nextflow.nextflow_utils import get_resources_subpath, is_importer_job
 
 from ..utils import json_load_raise_on_duplicates
 from ..utils.resolver import resolve_path, check_folder_exists, ResolutionError, is_container_id
@@ -47,6 +47,7 @@ from ..app_categories import APP_CATEGORIES
 from ..exceptions import err_exit
 from ..utils.printing import BOLD
 from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
+from ..cli.parsers import process_extra_args
 
 decode_command_line_args()
 
@@ -1014,23 +1015,24 @@ def get_destination_region(destination):
         dest_project_id = dxpy.WORKSPACE_ID
     return dxpy.api.project_describe(dest_project_id, input_params={"fields": {"region": True}})["region"]
 
+
+def get_project_to_check(destination, extra_args):
+    # extra args overrides the destination argument
+    # so we're checking it first
+    if "project" in extra_args:
+        return extra_args["project"]
+    if destination:
+        dest_project_id, _, _ = parse_destination(destination)
+        # checkFeatureAccess is not implemented on the container
+        if dest_project_id.startswith("container-"):
+            dest_project_id = dxpy.PROJECT_CONTEXT_ID
+        return dest_project_id
+    else:
+        return dxpy.PROJECT_CONTEXT_ID
+
+
 def verify_nf_license(destination, extra_args):
-
-    def get_project_to_check():
-        # extra args overrides the destination argument
-        # so we're checking it first
-        if "project" in extra_args:
-            return extra_args["project"]
-        if destination:
-            dest_project_id, _, _ = parse_destination(destination)
-            # checkFeatureAccess is not implemented on the container
-            if dest_project_id.startswith("container-"):
-                dest_project_id = dxpy.PROJECT_CONTEXT_ID
-            return dest_project_id
-        else:
-            return dxpy.PROJECT_CONTEXT_ID
-
-    dest_project_to_check = get_project_to_check()
+    dest_project_to_check = get_project_to_check(destination, extra_args)
     features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
     dx_nextflow_lic = features.get("dxNextflow", False)
     if not dx_nextflow_lic:
@@ -1050,8 +1052,19 @@ def _build_app(args, extra_args):
     if args.nextflow:
         verify_nf_license(args.destination, extra_args)
 
-    if args.nextflow and not args.repository:
-        source_dir = prepare_nextflow(args.src_dir, args.profile, get_destination_region(args.destination))
+    # determine if a nextflow applet ought to be built with Nextflow Pipeline Importer (NPI) app
+    build_nf_with_npi = any([x for x in [args.repository, args.cache_docker]])
+    # this is to ensure to not call any more NPI executions if already inside an NPI job.
+    build_nf_with_npi = False if is_importer_job() else build_nf_with_npi
+
+    if args.nextflow and (not build_nf_with_npi):
+        source_dir = prepare_nextflow(
+            resources_dir=args.src_dir,
+            profile=args.profile,
+            region=get_destination_region(args.destination),
+            cache_docker=args.cache_docker,
+            nextflow_pipeline_params=args.nextflow_pipeline_params
+        )
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
     if args._from:
@@ -1072,7 +1085,7 @@ def _build_app(args, extra_args):
 
         return output['id']
 
-    if not args.remote and not args.repository:  # building with NF repository is implicitly remote
+    if not args.remote and not build_nf_with_npi:  # building with NF repository or cache_docker is done remotely by npi
         # LOCAL BUILD
         output = build_and_upload_locally(
             source_dir,
@@ -1113,19 +1126,20 @@ def _build_app(args, extra_args):
         # The following flags might be useful in conjunction with
         # --remote. To enable these, we need to learn how to pass these
         # options through to the interior call of dx_build_app(let).
+        incompatible_options = "--cache-docker" if args.cache_docker else "--remote and --repository"
         if args.dry_run:
-            parser.error('--remote and --repository cannot be combined with --dry-run')
+            parser.error('{} cannot be combined with --dry-run'.format(incompatible_options))
         if args.overwrite:
-            parser.error('--remote and --repository cannot be combined with --overwrite/-f')
+            parser.error('{} cannot be combined with --overwrite/-f'.format(incompatible_options))
         if args.archive:
-            parser.error('--remote and --repository cannot be combined with --archive/-a')
+            parser.error('{} cannot be combined with --archive/-a'.format(incompatible_options))
 
         # The following flags are probably not useful in conjunction
         # with --remote.
         if args.json:
-            parser.error('--remote and --repository cannot be combined with --json')
+            parser.error('{} cannot be combined with --json'.format(incompatible_options))
         if not args.use_temp_build_project:
-            parser.error('--remote and --repository cannot be combined with --no-temp-build-project')
+            parser.error('{} cannot be combined with --no-temp-build-project'.format(incompatible_options))
 
         if isinstance(args.region, list) and len(args.region) > 1:
             parser.error('--region can only be specified once for remote builds')
@@ -1144,9 +1158,58 @@ def _build_app(args, extra_args):
             more_kwargs['do_parallel_build'] = False
         if not args.check_syntax:
             more_kwargs['do_check_syntax'] = False
-        if args.nextflow and args.repository is not None:
-            return build_pipeline_from_repository(args.repository, args.tag, args.profile, args.git_credentials,
-                                                  args.brief, args.destination, extra_args)
+
+
+        if args.nextflow and build_nf_with_npi:
+            nf_scr = args.repository
+            if (not args.repository) and args.src_dir:
+                logger.info(
+                    "Building nextflow pipeline with the Nextflow Pipeline Importer app. "
+                    "Uploading the local nextflow source to the platform"
+                )
+                dest_project = get_project_to_check(args.destination, extra_args)
+                _, dest_folder, _ = parse_destination(args.destination)
+                dest_folder = dest_folder or ""
+                upload_destination_dir = os.path.join(
+                    dest_folder, ".nf_source"
+                ).strip("/")
+                qualified_upload_dest = ":".join([dest_project, "/" + upload_destination_dir + "/"])
+                dest_folder_exists = False
+
+                try:
+                    dest_folder_exists = check_folder_exists(
+                        project=dest_project,
+                        path="/" + os.path.join(dest_folder, ".nf_source").strip("/"),
+                        folder_name=os.path.basename(args.src_dir)
+                    )
+                except ResolutionError:
+                    logger.info(
+                        "Destination folder {} does not exist. Creating and uploading the pipeline source.".format(
+                            qualified_upload_dest
+                        )
+                    )
+                if dest_folder_exists:
+                    raise dxpy.app_builder.AppBuilderException(
+                        "Folder {} exists in the project {}. Remove the directory to avoid file duplication and retry".format(
+                            os.path.join(upload_destination_dir, os.path.basename(args.src_dir)), dest_project
+                        )
+                    )
+                else:
+                    upload_cmd = ["dx", "upload", args.src_dir, "-r", "-o", qualified_upload_dest, "-p"]
+                    _ = subprocess.check_output(upload_cmd)
+                    nf_scr = os.path.join(qualified_upload_dest, os.path.basename(args.src_dir))
+            return build_pipeline_with_npi(
+                repository=nf_scr,
+                tag=args.tag,
+                cache_docker=args.cache_docker,
+                docker_secrets=args.docker_secrets,
+                nextflow_pipeline_params=args.nextflow_pipeline_params,
+                profile=args.profile,
+                git_creds=args.git_credentials,
+                brief=args.brief,
+                destination=args.destination,
+                extra_args=extra_args
+            )
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)
         _verify_app_source_dir(source_dir, args.mode)
@@ -1160,7 +1223,8 @@ def _build_app(args, extra_args):
 
 def build(args):
     try:
-        executable_id = _build_app(args, json.loads(args.extra_args) if args.extra_args else {})
+        process_extra_args(args)
+        executable_id = _build_app(args, args.extra_args or {})
     except dxpy.app_builder.AppBuilderException as e:
         # AppBuilderException represents errors during app building
         # that could reasonably have been anticipated by the user.

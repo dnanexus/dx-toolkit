@@ -44,10 +44,14 @@ def bundle_docker_images(image_refs):
     return bundled_depends
 
 
-def run_nextaur_collect(resources_dir):
+def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
     """
         :param resources_dir: URL to the local(ized) NF pipeline in the app(let) resources.
         :type resources_dir: String
+        :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
+        :type profile: str
+        :param nextflow_pipeline_params: Custom Nextflow pipeline parameters
+        :type nextflow_pipeline_params: string
         :returns: Dict. Image references in the form of
             "process": String. Name of the process/task
             "repository": String. Repository (host) prefix
@@ -58,11 +62,13 @@ def run_nextaur_collect(resources_dir):
             "engine": String. Container engine.
         Runs nextaur:collect
         """
-    collect_cmd = "nextflow plugin nextaur:collect docker {}".format(resources_dir)
-    _ = subprocess.check_output(collect_cmd, shell=True)
+    base_cmd = "nextflow plugin nextaur:collect docker {}".format(resources_dir)
+    pipeline_params_arg = "pipelineParams={}".format(nextflow_pipeline_params) if nextflow_pipeline_params else ""
+    profile_arg = "profile={}".format(profile) if profile else ""
+    nextaur_cmd = " ".join([base_cmd, pipeline_params_arg, profile_arg])
+    _ = subprocess.check_output(nextaur_cmd, shell=True)
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
         if not image_refs:
             raise ImageRefFactoryError("Could not extract processes from nextaur:collect")
     return image_refs
-

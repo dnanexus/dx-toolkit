@@ -254,27 +254,45 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         details = applet.get_details()
         self.assertEqual(details["repository"], "local")
 
-    @unittest.skipIf(USING_PYTHON2,
-                     'Skipping Python 3 code')
+    @unittest.skipUnless(testutil.TEST_NF_DOCKER,
+                         'skipping tests that require docker')
     def test_bundle_docker_images(self):
         image_refs = [
             {
                 "engine": "docker",
                 "process": "proc1",
-                "digest": "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824",
+                "digest": "sha256:cca7bbfb3cd4dc1022f00cee78c51aa46ecc3141188f0dd520978a620697e7ad",
                 "image_name": "busybox",
                 "tag": "1.36"
             },
             {
                 "engine": "docker",
                 "process": "proc2",
-                "digest": "sha256:a416a98b71e224a31ee99cff8e16063554498227d2b696152a9c3e0aa65e5824",
+                "digest": "sha256:cca7bbfb3cd4dc1022f00cee78c51aa46ecc3141188f0dd520978a620697e7ad",
                 "image_name": "busybox",
                 "tag": "1.36"
             }
         ]
         bundled_images = bundle_docker_images(image_refs)
         self.assertEqual(len(bundled_images), 1)
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    @unittest.skipUnless(testutil.TEST_NF_DOCKER,
+                         'skipping tests that require docker')
+    def test_dx_build_nextflow_from_local_cache_docker(self):
+        applet_id = json.loads(
+            run("dx build --brief --nextflow '{}' --cache-docker".format(self.base_nextflow_docker)).strip()
+        )["id"]
+
+        applet = dxpy.DXApplet(applet_id)
+        desc = applet.describe()
+        dependencies = desc.get("runSpec").get("bundledDepends")
+        docker_dependency = [x for x in dependencies if x["name"] == "bash"]
+        self.assertEqual(len(docker_dependency), 1)
+        details = applet.get_details()
+        self.assertTrue(details["repository"].startswith("project-"))
+
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')

@@ -10,6 +10,14 @@
         "sample_id": "genotype$sample_id",
         "allele_id": "allele$a_id"
     },
+    "genotype_only": {
+        "genotype_type": "genotype$type",
+        "sample_id": "genotype$sample_id",
+        "allele_id": "genotype$a_id",
+        "ref_yn": "genotype$ref_yn",
+        "halfref_yn": "genotype$halfref_yn",
+        "nocall_yn": "genotype$nocall_yn"
+    },
     "annotation": {
         "allele_id": "allele$a_id",
         "gene_name": "annotation$gene_name",
