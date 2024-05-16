@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* websocket-client dxpy dependency to >=1.6.0,<1.8.0
+
 ### Removed
 
 * `dx upgrade` command. `python3 -m pip install -U dxpy` is the recommended installation method
