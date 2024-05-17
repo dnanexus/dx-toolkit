@@ -17,8 +17,6 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 from __future__ import print_function, unicode_literals, division, absolute_import
-
-import dxpy.api
 from parameterized import parameterized
 
 import tempfile
@@ -483,18 +481,6 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         job_handler = dxpy.DXJob(job_id)
         job_handler.wait_on_done()
         job_desc = dxpy.describe(job_id)
-
-        # For debugging
-        params = {
-            "fields": {
-                "name": True
-            }
-        }
-
-        for fmap in job_desc["output"]["published_files"]:
-            fid = fmap["$dnanexus_link"]
-            fname = dxpy.api.file_describe(fid, input_params=params)
-            print(fname)
 
         # the output files will be: ls_folder.txt, cat_file.txt
         self.assertEqual(len(job_desc["output"]["published_files"]), 2)
