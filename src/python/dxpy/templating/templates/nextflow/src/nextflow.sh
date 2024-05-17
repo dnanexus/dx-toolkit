@@ -485,8 +485,8 @@ main() {
   set +x
   if [[ $debug == true ]] ; then
     # Forward Nextflow log to job log
-    touch $LOG_NAME
-    tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
+    touch "${LOGS_DIR}${LOG_NAME}"
+    tail --follow -n 0 "${LOGS_DIR}${LOG_NAME}" -s 60 >&2 & LOG_MONITOR_PID=$!
     disown $LOG_MONITOR_PID
     set -x
   fi
