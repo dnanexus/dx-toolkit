@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [377.0] - beta
+
 ### Added
 
 * Released Nextaur 1.9.0: Enables option to host the Nextflow workdir on one's own S3 bucket, with access managed using job identity tokens.
@@ -18,7 +20,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx upgrade` command. `python3 -m pip install -U dxpy` is the recommended installation method
 
-## [376.0] - beta
+## [376.0] - 2024.5.20
 
 * No significant changes
 
