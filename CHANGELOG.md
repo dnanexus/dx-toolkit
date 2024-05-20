@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Released Nextaur 1.9.0: Enables option to host the Nextflow workdir on one's own S3 bucket, with access managed using job identity tokens.
+
 ### Changed
 
 * websocket-client dxpy dependency to >=1.6.0,<1.8.0

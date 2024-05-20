@@ -5,6 +5,9 @@
 
 set -f
 
+AWS_ENV="$HOME/.dx-aws.env"
+USING_S3_WORKDIR=false
+LOGS_DIR="$HOME/.log/"
 
 # How long to let a subjob with error keep running for Nextflow to handle it
 # before we end the DX job, in seconds
@@ -109,15 +112,14 @@ on_exit() {
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
   rm -rf .nextflow
 
-  if [[ -s $LOG_NAME ]]; then
+  if [[ -s "${LOGS_DIR}${LOG_NAME}" ]]; then
     echo "=== Execution completed — upload nextflow log to job output destination ${DX_JOB_OUTDIR%/}/"
-    NEXFLOW_LOG_ID=$(dx upload "$LOG_NAME" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
+    NEXFLOW_LOG_ID=$(dx upload "${LOGS_DIR}${LOG_NAME}" --path "${DX_JOB_OUTDIR%/}/${LOG_NAME}" --wait --brief --no-progress --parents) &&
       echo "Upload nextflow log as file: $NEXFLOW_LOG_ID" ||
       echo "Failed to upload log file of current session $NXF_UUID"
   else
     echo "=== Execution completed — no nextflow log file available."
   fi
-  rm $LOG_NAME || true
 
   if [[ $ret -ne 0 ]]; then
     echo "=== Execution failed — skip uploading published files to job output destination ${DX_JOB_OUTDIR%/}/"
@@ -127,7 +129,6 @@ on_exit() {
     mkdir -p /home/dnanexus/out/published_files
     find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
     dx-upload-all-outputs --parallel --wait-on-close || echo "No published files has been generated."
-    # done
   fi
   exit $ret
 }
@@ -254,11 +255,31 @@ check_running_jobs() {
     or run without preserve_cache set to true."
 }
 
+detect_using_s3_workdir() {
+  if [[ -f "$AWS_ENV" ]]; then
+    source $AWS_ENV
+  fi
+
+  if [[ -n $workdir && $workdir != "null" ]]; then
+    USING_S3_WORKDIR=true
+  fi
+}
+
 setup_workdir() {
-  if [[ $preserve_cache == true ]]; then
+  if [[ -f "$AWS_ENV" ]]; then
+    source $AWS_ENV
+  fi
+
+  if [[ -n $workdir && $workdir != "null" ]]; then
+    # S3 work dir was specified, use that
+    NXF_WORK="${workdir}/${NXF_UUID}/work"
+    USING_S3_WORKDIR=true
+  elif [[ $preserve_cache == true ]]; then
+    # Work dir on platform and using cache, use project
     [[ -n $resume ]] || dx mkdir -p $DX_CACHEDIR/$NXF_UUID/work/
     NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
   else
+    # Work dir on platform and not using cache, use workspace
     NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
   fi
 }
@@ -287,6 +308,21 @@ get_nextaur_version() {
   bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
   asset_dependency=$(dx describe ${bundled_dependency} --json | jq -r .properties.AssetBundle)
   export NXF_PLUGINS_VERSION=$(dx describe ${asset_dependency} --json | jq -r .properties.version)
+}
+
+get_nextflow_environment() {
+  NEXTFLOW_CMD_ENV=("$@")
+  set +e
+  ENV_OUTPUT=$("${NEXTFLOW_CMD_ENV[@]}" 2>&1)
+  ENV_EXIT=$?
+  set -e
+
+  if [ $ENV_EXIT -ne 0 ]; then
+      echo "$ENV_OUTPUT"
+      return $ENV_EXIT
+  else
+      echo "$ENV_OUTPUT" > "/home/dnanexus/.dx_get_env.log"
+  fi
 }
 
 # Entry point for the main Nextflow orchestrator job
@@ -381,10 +417,6 @@ main() {
     restore_cache
   fi
 
-  # set workdir based on preserve_cache option
-  setup_workdir
-  export NXF_WORK
-
   # download default applet file type inputs
   dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
   RUNTIME_CONFIG_CMD=''
@@ -397,29 +429,77 @@ main() {
     dx upload "$CREDENTIALS" --path "$DX_WORKSPACE_ID:/dx_docker_creds" --brief --wait --no-progress || true
   fi
 
+  # First Nextflow run, only to parse & save config required for AWS login
+  local env_job_suffix='-GET-ENV'
+  declare -a NEXTFLOW_CMD_ENV="(nextflow \
+    ${TRACE_CMD} \
+    $nextflow_top_level_opts \
+    ${RUNTIME_CONFIG_CMD} \
+    -log ${LOGS_DIR}${LOG_NAME}${env_job_suffix} \
+    run @@RESOURCES_SUBPATH@@ \
+    $profile_arg \
+    -name ${DX_JOB_ID}${env_job_suffix} \
+    $RESUME_CMD \
+    $nextflow_run_opts \
+    $RUNTIME_PARAMS_FILE \
+    $nextflow_pipeline_params)"
+
+  NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
+  
+  AWS_ENV="$HOME/.dx-aws.env"
+
+  get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
+
+  # Login to AWS, if configured
+  aws_login
+  aws_relogin_loop & AWS_RELOGIN_PID=$!
+
+  # Set Nextflow workdir based on S3 workdir / preserve_cache options
+  setup_workdir
+  export NXF_WORK
+
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
 
-  # execution starts
+  # Start Nextflow run
   declare -a NEXTFLOW_CMD="(nextflow \
     ${TRACE_CMD} \
     $nextflow_top_level_opts \
     ${RUNTIME_CONFIG_CMD} \
-    -log ${LOG_NAME} \
+    -log ${LOGS_DIR}${LOG_NAME} \
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
-    -name $DX_JOB_ID \
+    -name ${DX_JOB_ID} \
     $RESUME_CMD \
     $nextflow_run_opts \
     $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
 
   NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
-  # first AWS login of the headjob is done in the Nextflow code,
-  # this is due to the dependency on config values.
-  AWS_ENV="$HOME/.dx-aws.env"
-  automatic_aws_relogin & AWS_RELOGIN_PID=$!
+
   trap on_exit EXIT
+  log_context_info
+
+  "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
+  set +x
+  if [[ $debug == true ]] ; then
+    # Forward Nextflow log to job log
+    touch "${LOGS_DIR}${LOG_NAME}"
+    tail --follow -n 0 "${LOGS_DIR}${LOG_NAME}" -s 60 >&2 & LOG_MONITOR_PID=$!
+    disown $LOG_MONITOR_PID
+    set -x
+  fi
+
+  # After Nextflow run
+  wait $NXF_EXEC_PID
+  ret=$?
+
+  kill "$AWS_RELOGIN_PID"
+  exit $ret
+}
+
+log_context_info() {
   echo "============================================================="
   echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
   echo "=== NF session ID   : ${NXF_UUID}"
@@ -430,23 +510,6 @@ main() {
   echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
   echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
   echo "============================================================="
-
-    "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
-    # forwarding nextflow log file to job monitor
-    set +x
-    if [[ $debug == true ]] ; then
-      touch $LOG_NAME
-      tail --follow -n 0 $LOG_NAME -s 60 >&2 & LOG_MONITOR_PID=$!
-      disown $LOG_MONITOR_PID
-      set -x
-    fi
-      
-    # After Nextflow run
-    wait $NXF_EXEC_PID
-    ret=$?
-
-    kill "$AWS_RELOGIN_PID"
-    exit $ret
 }
 
 wait_for_terminate_or_retry() {
@@ -485,7 +548,11 @@ wait_for_terminate_or_retry() {
 # On exit, for the Nextflow task sub-jobs
 nf_task_exit() {
   if [ -f .command.log ]; then
-    dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
+    if [[ $USING_S3_WORKDIR == true ]]; then
+      aws s3 cp .command.log "${cmd_log_file}"
+    else
+      dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
+    fi
   else
     >&2 echo "Missing Nextflow .command.log file"
   fi
@@ -505,20 +572,21 @@ nf_task_exit() {
 # Entry point for the Nextflow task sub-jobs
 nf_task_entry() {
   CREDENTIALS="$HOME/docker_creds"
-  AWS_ENV="$HOME/.dx-aws.env"
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
   aws_login
-  automatic_aws_relogin & AWS_RELOGIN_PID=$!
+  aws_relogin_loop & AWS_RELOGIN_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
-  # remove the line in .command.run to disable printing env vars if debugging is on
-  dx cat "${cmd_launcher_file}" | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
-  set +e
+
+  download_cmd_launcher_file
+
   # enable debugging mode
   [[ $NXF_DEBUG ]] && set -x
+
   # run the task
+  set +e
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
   kill "$AWS_RELOGIN_PID"
@@ -526,11 +594,25 @@ nf_task_entry() {
   set -e
 }
 
+download_cmd_launcher_file() {
+  if [[ $USING_S3_WORKDIR == true ]]; then
+    aws s3 cp "${cmd_launcher_file}" .command.run.tmp
+  else
+    dx download "${cmd_launcher_file}" --output .command.run.tmp
+  fi
+
+  # remove the line in .command.run to disable printing env vars if debugging is on
+  cat .command.run.tmp | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
+}
+
 aws_login() {
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
+    detect_using_s3_workdir
+  
     # aws env file example values:
-    # "iamRoleArnToAssume", "roleSessionName", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
+    # "iamRoleArnToAssume", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
+    roleSessionName="dnanexus_${DX_JOB_ID}"
     job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
     output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
     mkdir -p /home/dnanexus/.aws/
@@ -545,17 +627,15 @@ EOF
 [default]
 region = $awsRegion
 EOF
-#  else
-#    echo "No AWS environment variables available" // TODO: uncomment with Nextaur update
+    echo "Successfully authenticated to AWS - $(aws sts get-caller-identity)"
   fi
 }
 
-automatic_aws_relogin() {
+aws_relogin_loop() {
   while true; do
-      sleep 3300 # 55 minutes, first login is done independently, so we wait first
+    sleep 3300 # relogin every 55 minutes, first login is done separately, so we wait before the login
       if [ -f "$AWS_ENV" ]; then
         aws_login
-        echo "Successfully reauthenticated to AWS"
       fi
   done
 }
