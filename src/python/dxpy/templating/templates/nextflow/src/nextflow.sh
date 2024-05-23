@@ -195,58 +195,6 @@ main() {
   exit $ret
 }
 
-# =========================================================
-# 2. Nextflow task subjobs
-# =========================================================
-
-# =========================================================
-# Helper functions
-# =========================================================
-
-# =========================================================
-
-# Logs the user to the docker registry.
-# Uses docker credentials that have to be in $CREDENTIALS location.
-# Format of the file:
-#      {
-#          docker_registry: {
-#              "registry": "<Docker registry name, e.g. quay.io or docker.io>",
-#              "username": "<registry login name>",
-#              "organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
-#              "token": "<API token>"
-#          }
-#      }
-docker_registry_login() {
-  export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
-  export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
-  export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
-  if [[  -z $REGISTRY_ORGANIZATION || $REGISTRY_ORGANIZATION == "null" ]]; then
-      export REGISTRY_ORGANIZATION=$REGISTRY_USERNAME
-  fi
-
-  if [[ -z $REGISTRY || $REGISTRY == "null" \
-        || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
-      echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
-      echo "{"
-      echo "    \"docker_registry\": {"
-      echo "        \"registry\": \"<Docker registry name, e.g. quay.io or docker.io>\"",
-      echo "        \"username\": \"<registry login name>\"",
-      echo "        \"organization\": \"<(optional, default value equals username) organization as defined by DockerHub or Quay.io>\"",
-      echo "        \"token\": \"<API token>\""
-      echo "    }"
-      echo "}"
-      exit 1
-  fi
-
-  jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
-  if [ ! $? -eq 0 ]; then
-      echo "Docker authentication failed, please check if the docker credentials file is correct." 1>&2
-      exit 2
-  fi
-}
-
-
-# On exit, for the main Nextflow orchestrator job
 on_exit() {
   ret=$?
 
@@ -321,6 +269,103 @@ on_exit() {
     dx-upload-all-outputs --parallel --wait-on-close || echo "No published files has been generated."
   fi
   exit $ret
+}
+
+# =========================================================
+# 2. Nextflow task subjobs
+# =========================================================
+
+nf_task_entry() {
+  CREDENTIALS="$HOME/docker_creds"
+  dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
+  [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
+  aws_login
+  aws_relogin_loop & AWS_RELOGIN_PID=$!
+  # capture the exit code
+  trap nf_task_exit EXIT
+
+  download_cmd_launcher_file
+
+  # enable debugging mode
+  [[ $NXF_DEBUG ]] && set -x
+
+  # run the task
+  set +e
+  bash .command.run > >(tee .command.log) 2>&1
+  export exit_code=$?
+  kill "$AWS_RELOGIN_PID"
+  dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
+  set -e
+}
+
+nf_task_exit() {
+  if [ -f .command.log ]; then
+    if [[ $USING_S3_WORKDIR == true ]]; then
+      aws s3 cp .command.log "${cmd_log_file}"
+    else
+      dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
+    fi
+  else
+    >&2 echo "Missing Nextflow .command.log file"
+  fi
+
+  # exit_code should already be set in nf_task_entry(); default just in case
+  # This is just for including as DX output; Nextflow internally uses .exitcode file
+  if [ -z ${exit_code} ]; then export exit_code=0; fi
+
+  if [ "$exit_code" -ne 0 ]; then wait_for_terminate_or_retry; fi
+
+  # There are cases where the Nextflow task had an error but we don't want to fail the whole
+  # DX job exec tree, e.g. because the error strategy should continue,
+  # so we let the DX job succeed but this output records Nextflow's exit code
+  dx-jobutil-add-output exit_code $exit_code --class=int
+}
+
+# =========================================================
+# Helper functions
+# =========================================================
+
+# =========================================================
+
+# Logs the user to the docker registry.
+# Uses docker credentials that have to be in $CREDENTIALS location.
+# Format of the file:
+#      {
+#          docker_registry: {
+#              "registry": "<Docker registry name, e.g. quay.io or docker.io>",
+#              "username": "<registry login name>",
+#              "organization": "<(optional, default value equals username) organization as defined by DockerHub or Quay.io>",
+#              "token": "<API token>"
+#          }
+#      }
+docker_registry_login() {
+  export REGISTRY=$(jq '.docker_registry.registry' "$CREDENTIALS" | tr -d '"')
+  export REGISTRY_USERNAME=$(jq '.docker_registry.username' "$CREDENTIALS" | tr -d '"')
+  export REGISTRY_ORGANIZATION=$(jq '.docker_registry.organization' "$CREDENTIALS" | tr -d '"')
+  if [[  -z $REGISTRY_ORGANIZATION || $REGISTRY_ORGANIZATION == "null" ]]; then
+      export REGISTRY_ORGANIZATION=$REGISTRY_USERNAME
+  fi
+
+  if [[ -z $REGISTRY || $REGISTRY == "null" \
+        || -z $REGISTRY_USERNAME  || $REGISTRY_USERNAME == "null" ]]; then
+      echo "Error parsing the credentials file. The expected format to specify a Docker registry is: "
+      echo "{"
+      echo "    \"docker_registry\": {"
+      echo "        \"registry\": \"<Docker registry name, e.g. quay.io or docker.io>\"",
+      echo "        \"username\": \"<registry login name>\"",
+      echo "        \"organization\": \"<(optional, default value equals username) organization as defined by DockerHub or Quay.io>\"",
+      echo "        \"token\": \"<API token>\""
+      echo "    }"
+      echo "}"
+      exit 1
+  fi
+
+  jq '.docker_registry.token' "$CREDENTIALS" -r | docker login $REGISTRY --username $REGISTRY_USERNAME --password-stdin 2> >(grep -v -E "WARNING! Your password will be stored unencrypted in |Configure a credential helper to remove this warning. See|https://docs.docker.com/engine/reference/commandline/login/#credentials-store")
+  if [ ! $? -eq 0 ]; then
+      echo "Docker authentication failed, please check if the docker credentials file is correct." 1>&2
+      exit 2
+  fi
 }
 
 get_resume_session_id() {
@@ -559,55 +604,6 @@ wait_for_terminate_or_retry() {
         fi
     done
   fi
-}
-
-# On exit, for the Nextflow task sub-jobs
-nf_task_exit() {
-  if [ -f .command.log ]; then
-    if [[ $USING_S3_WORKDIR == true ]]; then
-      aws s3 cp .command.log "${cmd_log_file}"
-    else
-      dx upload .command.log --path "${cmd_log_file}" --brief --wait --no-progress || true
-    fi
-  else
-    >&2 echo "Missing Nextflow .command.log file"
-  fi
-
-  # exit_code should already be set in nf_task_entry(); default just in case
-  # This is just for including as DX output; Nextflow internally uses .exitcode file
-  if [ -z ${exit_code} ]; then export exit_code=0; fi
-
-  if [ "$exit_code" -ne 0 ]; then wait_for_terminate_or_retry; fi
-
-  # There are cases where the Nextflow task had an error but we don't want to fail the whole
-  # DX job exec tree, e.g. because the error strategy should continue,
-  # so we let the DX job succeed but this output records Nextflow's exit code
-  dx-jobutil-add-output exit_code $exit_code --class=int
-}
-
-# Entry point for the Nextflow task sub-jobs
-nf_task_entry() {
-  CREDENTIALS="$HOME/docker_creds"
-  dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
-  [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
-  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
-  aws_login
-  aws_relogin_loop & AWS_RELOGIN_PID=$!
-  # capture the exit code
-  trap nf_task_exit EXIT
-
-  download_cmd_launcher_file
-
-  # enable debugging mode
-  [[ $NXF_DEBUG ]] && set -x
-
-  # run the task
-  set +e
-  bash .command.run > >(tee .command.log) 2>&1
-  export exit_code=$?
-  kill "$AWS_RELOGIN_PID"
-  dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
-  set -e
 }
 
 download_cmd_launcher_file() {
