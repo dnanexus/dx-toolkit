@@ -22,6 +22,179 @@ WAIT_INTERVAL=15
 # 1. Nextflow head (orchestrator) job
 # =========================================================
 
+main() {
+  if [[ $debug == true ]]; then
+    export NXF_DEBUG=2
+    TRACE_CMD="-trace nextflow.plugin"
+    env | grep -v DX_SECURITY_CONTEXT | sort
+    set -x
+  fi
+
+  # If cache is used, it will be stored in the project at
+  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
+  get_nextaur_version
+
+  # unset properties
+  cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
+  [[ -z $cloned_job_properties ]] || dx unset_properties "$DX_JOB_ID" $cloned_job_properties
+
+  # check if all run opts provided by user are supported
+  validate_run_opts
+
+  # Check if limit reached for Nextflow sessions preserved in this project's cache
+  if [[ $preserve_cache == true ]]; then
+    check_cache_db_storage
+  fi
+
+  # set default NXF env constants
+
+  # Disable use of newer flag --cpus when running Docker
+  # Can be enabled when Docker version on DNAnexus workers supports it
+  export NXF_DOCKER_LEGACY=true
+  export NXF_HOME=/opt/nextflow
+  export NXF_ANSI_LOG=false
+  export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
+  export NXF_EXECUTOR='dnanexus'
+
+  # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
+  mkdir -p /home/dnanexus/nextflow_execution
+  cd /home/dnanexus/nextflow_execution
+
+  # make runtime parameter arguments from applet inputs
+  set +x
+  applet_runtime_inputs=()
+  @@APPLET_RUNTIME_PARAMS@@
+  if [[ $debug == true ]]; then
+    if [[ "${#applet_runtime_inputs}" -gt 0 ]]; then
+      echo "Will specify the following runtime parameters:"
+      printf "[%s] " "${applet_runtime_inputs[@]}"
+      echo
+    else
+      echo "No runtime parameter is specified. Will use the default values."
+    fi
+    set -x
+  fi
+
+  # get job output destination
+  DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
+  # initiate log file
+  LOG_NAME="nextflow-$DX_JOB_ID.log"
+
+  # get current executable name
+  EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
+
+  # If resuming session, use resume id; otherwise create id for this session
+  if [[ -n $resume ]]; then
+    get_resume_session_id
+  else
+    NXF_UUID=$(uuidgen)
+  fi
+  export NXF_UUID
+
+  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
+  export NXF_CACHE_MODE=LENIENT
+
+  if [[ $preserve_cache == true ]]; then
+    dx set_properties "$DX_JOB_ID" \
+      nextflow_executable="$EXECUTABLE_NAME" \
+      nextflow_session_id="$NXF_UUID" \
+      nextflow_preserve_cache="$preserve_cache"
+  fi
+
+  # check if there are any ongoing jobs resuming
+  # and generating new cache for the session to resume
+  if [[ $preserve_cache == true && -n $resume ]]; then
+    check_running_jobs
+  fi
+
+  # restore previous cache and create resume argument to nextflow run
+  RESUME_CMD=""
+  if [[ -n $resume ]]; then
+    restore_cache
+  fi
+
+  # download default applet file type inputs
+  dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
+  RUNTIME_CONFIG_CMD=''
+  RUNTIME_PARAMS_FILE=''
+  [[ -d "$HOME/in/nextflow_soft_confs/" ]] && RUNTIME_CONFIG_CMD=$(find "$HOME"/in/nextflow_soft_confs -name "*.config" -type f -printf "-c %p ")
+  [[ -d "$HOME/in/nextflow_params_file/" ]] && RUNTIME_PARAMS_FILE=$(find "$HOME"/in/nextflow_params_file -type f -printf "-params-file %p ")
+  if [[ -d "$HOME/in/docker_creds" ]]; then
+    CREDENTIALS=$(find "$HOME/in/docker_creds" -type f | head -1)
+    [[ -s $CREDENTIALS ]] && docker_registry_login || echo "no docker credential available"
+    dx upload "$CREDENTIALS" --path "$DX_WORKSPACE_ID:/dx_docker_creds" --brief --wait --no-progress || true
+  fi
+
+  # First Nextflow run, only to parse & save config required for AWS login
+  local env_job_suffix='-GET-ENV'
+  declare -a NEXTFLOW_CMD_ENV="(nextflow \
+    ${TRACE_CMD} \
+    $nextflow_top_level_opts \
+    ${RUNTIME_CONFIG_CMD} \
+    -log ${LOGS_DIR}${LOG_NAME}${env_job_suffix} \
+    run @@RESOURCES_SUBPATH@@ \
+    $profile_arg \
+    -name ${DX_JOB_ID}${env_job_suffix} \
+    $RESUME_CMD \
+    $nextflow_run_opts \
+    $RUNTIME_PARAMS_FILE \
+    $nextflow_pipeline_params)"
+
+  NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
+  
+  AWS_ENV="$HOME/.dx-aws.env"
+
+  get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
+  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
+
+  # Login to AWS, if configured
+  aws_login
+  aws_relogin_loop & AWS_RELOGIN_PID=$!
+
+  # Set Nextflow workdir based on S3 workdir / preserve_cache options
+  setup_workdir
+  export NXF_WORK
+
+  # set beginning timestamp
+  BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
+
+  # Start Nextflow run
+  declare -a NEXTFLOW_CMD="(nextflow \
+    ${TRACE_CMD} \
+    $nextflow_top_level_opts \
+    ${RUNTIME_CONFIG_CMD} \
+    -log ${LOGS_DIR}${LOG_NAME} \
+    run @@RESOURCES_SUBPATH@@ \
+    $profile_arg \
+    -name ${DX_JOB_ID} \
+    $RESUME_CMD \
+    $nextflow_run_opts \
+    $RUNTIME_PARAMS_FILE \
+    $nextflow_pipeline_params)"
+
+  NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
+
+  trap on_exit EXIT
+  log_context_info
+
+  "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
+  set +x
+  if [[ $debug == true ]] ; then
+    # Forward Nextflow log to job log
+    touch "${LOGS_DIR}${LOG_NAME}"
+    tail --follow -n 0 "${LOGS_DIR}${LOG_NAME}" -s 60 >&2 & LOG_MONITOR_PID=$!
+    disown $LOG_MONITOR_PID
+    set -x
+  fi
+
+  # After Nextflow run
+  wait $NXF_EXEC_PID
+  ret=$?
+
+  kill "$AWS_RELOGIN_PID"
+  exit $ret
+}
+
 # =========================================================
 # 2. Nextflow task subjobs
 # =========================================================
@@ -340,180 +513,6 @@ get_nextflow_environment() {
   else
       echo "$ENV_OUTPUT" > "/home/dnanexus/.dx_get_env.log"
   fi
-}
-
-# Entry point for the main Nextflow orchestrator job
-main() {
-  if [[ $debug == true ]]; then
-    export NXF_DEBUG=2
-    TRACE_CMD="-trace nextflow.plugin"
-    env | grep -v DX_SECURITY_CONTEXT | sort
-    set -x
-  fi
-
-  # If cache is used, it will be stored in the project at
-  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  get_nextaur_version
-
-  # unset properties
-  cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
-  [[ -z $cloned_job_properties ]] || dx unset_properties "$DX_JOB_ID" $cloned_job_properties
-
-  # check if all run opts provided by user are supported
-  validate_run_opts
-
-  # Check if limit reached for Nextflow sessions preserved in this project's cache
-  if [[ $preserve_cache == true ]]; then
-    check_cache_db_storage
-  fi
-
-  # set default NXF env constants
-
-  # Disable use of newer flag --cpus when running Docker
-  # Can be enabled when Docker version on DNAnexus workers supports it
-  export NXF_DOCKER_LEGACY=true
-  export NXF_HOME=/opt/nextflow
-  export NXF_ANSI_LOG=false
-  export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
-  export NXF_EXECUTOR='dnanexus'
-
-  # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
-  mkdir -p /home/dnanexus/nextflow_execution
-  cd /home/dnanexus/nextflow_execution
-
-  # make runtime parameter arguments from applet inputs
-  set +x
-  applet_runtime_inputs=()
-  @@APPLET_RUNTIME_PARAMS@@
-  if [[ $debug == true ]]; then
-    if [[ "${#applet_runtime_inputs}" -gt 0 ]]; then
-      echo "Will specify the following runtime parameters:"
-      printf "[%s] " "${applet_runtime_inputs[@]}"
-      echo
-    else
-      echo "No runtime parameter is specified. Will use the default values."
-    fi
-    set -x
-  fi
-
-  # get job output destination
-  DX_JOB_OUTDIR=$(jq -r '[.project, .folder] | join(":")' /home/dnanexus/dnanexus-job.json)
-  # initiate log file
-  LOG_NAME="nextflow-$DX_JOB_ID.log"
-
-  # get current executable name
-  EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
-
-  # If resuming session, use resume id; otherwise create id for this session
-  if [[ -n $resume ]]; then
-    get_resume_session_id
-  else
-    NXF_UUID=$(uuidgen)
-  fi
-  export NXF_UUID
-
-  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
-  export NXF_CACHE_MODE=LENIENT
-
-  if [[ $preserve_cache == true ]]; then
-    dx set_properties "$DX_JOB_ID" \
-      nextflow_executable="$EXECUTABLE_NAME" \
-      nextflow_session_id="$NXF_UUID" \
-      nextflow_preserve_cache="$preserve_cache"
-  fi
-
-  # check if there are any ongoing jobs resuming
-  # and generating new cache for the session to resume
-  if [[ $preserve_cache == true && -n $resume ]]; then
-    check_running_jobs
-  fi
-
-  # restore previous cache and create resume argument to nextflow run
-  RESUME_CMD=""
-  if [[ -n $resume ]]; then
-    restore_cache
-  fi
-
-  # download default applet file type inputs
-  dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
-  RUNTIME_CONFIG_CMD=''
-  RUNTIME_PARAMS_FILE=''
-  [[ -d "$HOME/in/nextflow_soft_confs/" ]] && RUNTIME_CONFIG_CMD=$(find "$HOME"/in/nextflow_soft_confs -name "*.config" -type f -printf "-c %p ")
-  [[ -d "$HOME/in/nextflow_params_file/" ]] && RUNTIME_PARAMS_FILE=$(find "$HOME"/in/nextflow_params_file -type f -printf "-params-file %p ")
-  if [[ -d "$HOME/in/docker_creds" ]]; then
-    CREDENTIALS=$(find "$HOME/in/docker_creds" -type f | head -1)
-    [[ -s $CREDENTIALS ]] && docker_registry_login || echo "no docker credential available"
-    dx upload "$CREDENTIALS" --path "$DX_WORKSPACE_ID:/dx_docker_creds" --brief --wait --no-progress || true
-  fi
-
-  # First Nextflow run, only to parse & save config required for AWS login
-  local env_job_suffix='-GET-ENV'
-  declare -a NEXTFLOW_CMD_ENV="(nextflow \
-    ${TRACE_CMD} \
-    $nextflow_top_level_opts \
-    ${RUNTIME_CONFIG_CMD} \
-    -log ${LOGS_DIR}${LOG_NAME}${env_job_suffix} \
-    run @@RESOURCES_SUBPATH@@ \
-    $profile_arg \
-    -name ${DX_JOB_ID}${env_job_suffix} \
-    $RESUME_CMD \
-    $nextflow_run_opts \
-    $RUNTIME_PARAMS_FILE \
-    $nextflow_pipeline_params)"
-
-  NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
-  
-  AWS_ENV="$HOME/.dx-aws.env"
-
-  get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
-  dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
-
-  # Login to AWS, if configured
-  aws_login
-  aws_relogin_loop & AWS_RELOGIN_PID=$!
-
-  # Set Nextflow workdir based on S3 workdir / preserve_cache options
-  setup_workdir
-  export NXF_WORK
-
-  # set beginning timestamp
-  BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
-
-  # Start Nextflow run
-  declare -a NEXTFLOW_CMD="(nextflow \
-    ${TRACE_CMD} \
-    $nextflow_top_level_opts \
-    ${RUNTIME_CONFIG_CMD} \
-    -log ${LOGS_DIR}${LOG_NAME} \
-    run @@RESOURCES_SUBPATH@@ \
-    $profile_arg \
-    -name ${DX_JOB_ID} \
-    $RESUME_CMD \
-    $nextflow_run_opts \
-    $RUNTIME_PARAMS_FILE \
-    $nextflow_pipeline_params)"
-
-  NEXTFLOW_CMD+=("${applet_runtime_inputs[@]}")
-
-  trap on_exit EXIT
-  log_context_info
-
-  "${NEXTFLOW_CMD[@]}" & NXF_EXEC_PID=$!
-  set +x
-  if [[ $debug == true ]] ; then
-    # Forward Nextflow log to job log
-    touch "${LOGS_DIR}${LOG_NAME}"
-    tail --follow -n 0 "${LOGS_DIR}${LOG_NAME}" -s 60 >&2 & LOG_MONITOR_PID=$!
-    disown $LOG_MONITOR_PID
-    set -x
-  fi
-
-  # After Nextflow run
-  wait $NXF_EXEC_PID
-  ret=$?
-
-  kill "$AWS_RELOGIN_PID"
-  exit $ret
 }
 
 log_context_info() {
