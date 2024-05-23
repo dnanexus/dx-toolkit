@@ -323,9 +323,7 @@ nf_task_exit() {
 }
 
 # =========================================================
-# Helper functions
-# =========================================================
-
+# Helpers: Docker
 # =========================================================
 
 # Logs the user to the docker registry.
@@ -367,6 +365,14 @@ docker_registry_login() {
       exit 2
   fi
 }
+
+# =========================================================
+# Helpers: AWS, job id tokens
+# =========================================================
+
+# =========================================================
+# Helpers: preserve cache, resume
+# =========================================================
 
 get_resume_session_id() {
   if [[ $resume == 'true' || $resume == 'last' ]]; then
@@ -450,6 +456,12 @@ check_cache_db_storage() {
   [[ $existing_cache -le MAX_CACHE_STORAGE ]] ||
     dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
 }
+
+# =========================================================
+# Helper functions
+# =========================================================
+
+# =========================================================
 
 validate_run_opts() {
   profile_arg="@@PROFILE_ARG@@"
