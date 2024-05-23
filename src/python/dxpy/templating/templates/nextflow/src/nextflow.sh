@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
-# Script that is used to run both the main Nextflow orchestrator job
-# and the Nextflow task sub-jobs.
+# =========================================================
+# Script with entrypoints to run
+# 1. Nextflow head (orchestrator) job
+# 2. Nextflow task subjobs
+# =========================================================
 
 set -f
 
@@ -14,6 +17,20 @@ LOGS_DIR="$HOME/.log/"
 MAX_WAIT_AFTER_JOB_ERROR=240
 # How often to check when waiting for a subjob with error, in seconds
 WAIT_INTERVAL=15
+
+# =========================================================
+# 1. Nextflow head (orchestrator) job
+# =========================================================
+
+# =========================================================
+# 2. Nextflow task subjobs
+# =========================================================
+
+# =========================================================
+# Helper functions
+# =========================================================
+
+# =========================================================
 
 # Logs the user to the docker registry.
 # Uses docker credentials that have to be in $CREDENTIALS location.
