@@ -370,6 +370,41 @@ docker_registry_login() {
 # Helpers: AWS login, job id tokens
 # =========================================================
 
+aws_login() {
+  if [ -f "$AWS_ENV" ]; then
+    source $AWS_ENV
+    detect_using_s3_workdir
+  
+    # aws env file example values:
+    # "iamRoleArnToAssume", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
+    roleSessionName="dnanexus_${DX_JOB_ID}"
+    job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
+    output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
+    mkdir -p /home/dnanexus/.aws/
+
+    cat <<EOF > /home/dnanexus/.aws/credentials
+[default]
+aws_access_key_id = $(echo "$output" | jq -r '.Credentials.AccessKeyId')
+aws_secret_access_key = $(echo "$output" | jq -r '.Credentials.SecretAccessKey')
+aws_session_token = $(echo "$output" | jq -r '.Credentials.SessionToken')
+EOF
+    cat <<EOF > /home/dnanexus/.aws/config
+[default]
+region = $awsRegion
+EOF
+    echo "Successfully authenticated to AWS - $(aws sts get-caller-identity)"
+  fi
+}
+
+aws_relogin_loop() {
+  while true; do
+    sleep 3300 # relogin every 55 minutes, first login is done separately, so we wait before the login
+      if [ -f "$AWS_ENV" ]; then
+        aws_login
+      fi
+  done
+}
+
 # =========================================================
 # Helpers: workdir configuration
 # =========================================================
@@ -629,41 +664,4 @@ check_running_jobs() {
     dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
     Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
     or run without preserve_cache set to true."
-}
-
-# =========================================================
-
-aws_login() {
-  if [ -f "$AWS_ENV" ]; then
-    source $AWS_ENV
-    detect_using_s3_workdir
-  
-    # aws env file example values:
-    # "iamRoleArnToAssume", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
-    roleSessionName="dnanexus_${DX_JOB_ID}"
-    job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
-    output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
-    mkdir -p /home/dnanexus/.aws/
-
-    cat <<EOF > /home/dnanexus/.aws/credentials
-[default]
-aws_access_key_id = $(echo "$output" | jq -r '.Credentials.AccessKeyId')
-aws_secret_access_key = $(echo "$output" | jq -r '.Credentials.SecretAccessKey')
-aws_session_token = $(echo "$output" | jq -r '.Credentials.SessionToken')
-EOF
-    cat <<EOF > /home/dnanexus/.aws/config
-[default]
-region = $awsRegion
-EOF
-    echo "Successfully authenticated to AWS - $(aws sts get-caller-identity)"
-  fi
-}
-
-aws_relogin_loop() {
-  while true; do
-    sleep 3300 # relogin every 55 minutes, first login is done separately, so we wait before the login
-      if [ -f "$AWS_ENV" ]; then
-        aws_login
-      fi
-  done
 }
