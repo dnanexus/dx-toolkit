@@ -367,8 +367,65 @@ docker_registry_login() {
 }
 
 # =========================================================
-# Helpers: AWS, job id tokens
+# Helpers: AWS login, job id tokens
 # =========================================================
+
+# =========================================================
+# Helpers: workdir configuration
+# =========================================================
+
+detect_using_s3_workdir() {
+  if [[ -f "$AWS_ENV" ]]; then
+    source $AWS_ENV
+  fi
+
+  if [[ -n $workdir && $workdir != "null" ]]; then
+    USING_S3_WORKDIR=true
+  fi
+}
+
+setup_workdir() {
+  if [[ -f "$AWS_ENV" ]]; then
+    source $AWS_ENV
+  fi
+
+  if [[ -n $workdir && $workdir != "null" ]]; then
+    # S3 work dir was specified, use that
+    NXF_WORK="${workdir}/${NXF_UUID}/work"
+    USING_S3_WORKDIR=true
+  elif [[ $preserve_cache == true ]]; then
+    # Work dir on platform and using cache, use project
+    [[ -n $resume ]] || dx mkdir -p $DX_CACHEDIR/$NXF_UUID/work/
+    NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
+  else
+    # Work dir on platform and not using cache, use workspace
+    NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
+  fi
+}
+
+# =========================================================
+# Helpers: run configuration
+# =========================================================
+
+validate_run_opts() {
+  profile_arg="@@PROFILE_ARG@@"
+
+  IFS=" " read -r -a opts <<<"$nextflow_run_opts"
+  for opt in "${opts[@]}"; do
+    case $opt in
+    -w=* | -work-dir=* | -w | -work-dir)
+      dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
+      ;;
+    -profile | -profile=*)
+      if [ -n "$profile_arg" ]; then
+        echo "Profile was given in run options... overriding the default profile ($profile_arg)"
+        profile_arg=""
+      fi
+      ;;
+    *) ;;
+    esac
+  done
+}
 
 # =========================================================
 # Helpers: preserve cache, resume
@@ -457,32 +514,6 @@ check_cache_db_storage() {
     dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
 }
 
-# =========================================================
-# Helper functions
-# =========================================================
-
-# =========================================================
-
-validate_run_opts() {
-  profile_arg="@@PROFILE_ARG@@"
-
-  IFS=" " read -r -a opts <<<"$nextflow_run_opts"
-  for opt in "${opts[@]}"; do
-    case $opt in
-    -w=* | -work-dir=* | -w | -work-dir)
-      dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
-      ;;
-    -profile | -profile=*)
-      if [ -n "$profile_arg" ]; then
-        echo "Profile was given in run options... overriding the default profile ($profile_arg)"
-        profile_arg=""
-      fi
-      ;;
-    *) ;;
-    esac
-  done
-}
-
 check_running_jobs() {
   FIRST_RESUMED_JOB=$(
     dx api system findExecutions \
@@ -502,34 +533,7 @@ check_running_jobs() {
     or run without preserve_cache set to true."
 }
 
-detect_using_s3_workdir() {
-  if [[ -f "$AWS_ENV" ]]; then
-    source $AWS_ENV
-  fi
-
-  if [[ -n $workdir && $workdir != "null" ]]; then
-    USING_S3_WORKDIR=true
-  fi
-}
-
-setup_workdir() {
-  if [[ -f "$AWS_ENV" ]]; then
-    source $AWS_ENV
-  fi
-
-  if [[ -n $workdir && $workdir != "null" ]]; then
-    # S3 work dir was specified, use that
-    NXF_WORK="${workdir}/${NXF_UUID}/work"
-    USING_S3_WORKDIR=true
-  elif [[ $preserve_cache == true ]]; then
-    # Work dir on platform and using cache, use project
-    [[ -n $resume ]] || dx mkdir -p $DX_CACHEDIR/$NXF_UUID/work/
-    NXF_WORK="dx://$DX_CACHEDIR/$NXF_UUID/work/"
-  else
-    # Work dir on platform and not using cache, use workspace
-    NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
-  fi
-}
+# =========================================================
 
 dx_path() {
   local str=${1#"dx://"}
