@@ -404,7 +404,7 @@ setup_workdir() {
 }
 
 # =========================================================
-# Helpers: run configuration
+# Helpers: basic run
 # =========================================================
 
 validate_run_opts() {
@@ -427,8 +427,49 @@ validate_run_opts() {
   done
 }
 
+dx_path() {
+  local str=${1#"dx://"}
+  local tmp=$(mktemp -t nf-XXXXXXXXXX)
+  case $str in
+    project-*)
+      dx download $str -o $tmp --no-progress --recursive -f
+      echo file://$tmp
+      ;;
+    container-*)
+      dx download $str -o $tmp --no-progress --recursive -f
+      echo file://$tmp
+      ;;
+    *)
+      echo "Invalid $2 path: $1"
+      return 1
+      ;;
+  esac
+}
+
+get_nextaur_version() {
+  executable=$(cat dnanexus-executable.json | jq -r .id )
+  bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
+  asset_dependency=$(dx describe ${bundled_dependency} --json | jq -r .properties.AssetBundle)
+  export NXF_PLUGINS_VERSION=$(dx describe ${asset_dependency} --json | jq -r .properties.version)
+}
+
+get_nextflow_environment() {
+  NEXTFLOW_CMD_ENV=("$@")
+  set +e
+  ENV_OUTPUT=$("${NEXTFLOW_CMD_ENV[@]}" 2>&1)
+  ENV_EXIT=$?
+  set -e
+
+  if [ $ENV_EXIT -ne 0 ]; then
+      echo "$ENV_OUTPUT"
+      return $ENV_EXIT
+  else
+      echo "$ENV_OUTPUT" > "/home/dnanexus/.dx_get_env.log"
+  fi
+}
+
 # =========================================================
-# Helpers: preserve cache, resume
+# Helpers: run with preserve cache, resume
 # =========================================================
 
 get_resume_session_id() {
@@ -534,47 +575,6 @@ check_running_jobs() {
 }
 
 # =========================================================
-
-dx_path() {
-  local str=${1#"dx://"}
-  local tmp=$(mktemp -t nf-XXXXXXXXXX)
-  case $str in
-    project-*)
-      dx download $str -o $tmp --no-progress --recursive -f
-      echo file://$tmp
-      ;;
-    container-*)
-      dx download $str -o $tmp --no-progress --recursive -f
-      echo file://$tmp
-      ;;
-    *)
-      echo "Invalid $2 path: $1"
-      return 1
-      ;;
-  esac
-}
-
-get_nextaur_version() {
-  executable=$(cat dnanexus-executable.json | jq -r .id )
-  bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
-  asset_dependency=$(dx describe ${bundled_dependency} --json | jq -r .properties.AssetBundle)
-  export NXF_PLUGINS_VERSION=$(dx describe ${asset_dependency} --json | jq -r .properties.version)
-}
-
-get_nextflow_environment() {
-  NEXTFLOW_CMD_ENV=("$@")
-  set +e
-  ENV_OUTPUT=$("${NEXTFLOW_CMD_ENV[@]}" 2>&1)
-  ENV_EXIT=$?
-  set -e
-
-  if [ $ENV_EXIT -ne 0 ]; then
-      echo "$ENV_OUTPUT"
-      return $ENV_EXIT
-  else
-      echo "$ENV_OUTPUT" > "/home/dnanexus/.dx_get_env.log"
-  fi
-}
 
 log_context_info() {
   echo "============================================================="
