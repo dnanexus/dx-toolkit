@@ -323,7 +323,7 @@ nf_task_exit() {
 }
 
 # =========================================================
-# Helpers: Docker
+# Helpers: Docker login
 # =========================================================
 
 # Logs the user to the docker registry.
