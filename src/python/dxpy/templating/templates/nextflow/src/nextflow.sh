@@ -468,6 +468,63 @@ get_nextflow_environment() {
   fi
 }
 
+log_context_info() {
+  echo "============================================================="
+  echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
+  echo "=== NF session ID   : ${NXF_UUID}"
+  echo "=== NF log file     : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
+  if [[ $preserve_cache == true ]]; then
+    echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
+  fi
+  echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
+  echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
+  echo "============================================================="
+}
+
+wait_for_terminate_or_retry() {
+  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
+  if [ -n "${terminate_record}" ]; then
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
+    echo "Waiting for the head job to kill the job tree..."
+    sleep $MAX_WAIT_AFTER_JOB_ERROR
+    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+    exit
+  fi
+
+  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
+  if [ -n "${retry_record}" ]; then
+    wait_period=0
+    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
+    echo "Waiting for the head job to kill the job tree or for instruction to continue..."
+    while true
+    do
+        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
+        if [ "$errorStrategy_set" = "retry" ]; then
+          break
+        fi
+        wait_period=$(($wait_period+$WAIT_INTERVAL))
+        if [ $wait_period -ge $MAX_WAIT_AFTER_JOB_ERROR ];then
+          echo "This subjob was not killed in time, exiting to prevent excessive waiting."
+          break
+        else
+          echo "No instruction to continue was given. Waiting for ${WAIT_INTERVAL} seconds"
+          sleep $WAIT_INTERVAL
+        fi
+    done
+  fi
+}
+
+download_cmd_launcher_file() {
+  if [[ $USING_S3_WORKDIR == true ]]; then
+    aws s3 cp "${cmd_launcher_file}" .command.run.tmp
+  else
+    dx download "${cmd_launcher_file}" --output .command.run.tmp
+  fi
+
+  # remove the line in .command.run to disable printing env vars if debugging is on
+  cat .command.run.tmp | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
+}
+
 # =========================================================
 # Helpers: run with preserve cache, resume
 # =========================================================
@@ -575,63 +632,6 @@ check_running_jobs() {
 }
 
 # =========================================================
-
-log_context_info() {
-  echo "============================================================="
-  echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
-  echo "=== NF session ID   : ${NXF_UUID}"
-  echo "=== NF log file     : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
-  if [[ $preserve_cache == true ]]; then
-    echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
-  fi
-  echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
-  echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
-  echo "============================================================="
-}
-
-wait_for_terminate_or_retry() {
-  terminate_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.TERMINATE --brief | head -n 1)
-  if [ -n "${terminate_record}" ]; then
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is terminate."
-    echo "Waiting for the head job to kill the job tree..."
-    sleep $MAX_WAIT_AFTER_JOB_ERROR
-    echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-    exit
-  fi
-
-  retry_record=$(dx find data --name $DX_JOB_ID --path $DX_WORKSPACE_ID:/.RETRY --brief | head -n 1)
-  if [ -n "${retry_record}" ]; then
-    wait_period=0
-    echo "Subjob exited with non-zero exit_code and the errorStrategy is retry."
-    echo "Waiting for the head job to kill the job tree or for instruction to continue..."
-    while true
-    do
-        errorStrategy_set=$(dx describe $DX_JOB_ID --json | jq .properties.nextflow_errorStrategy -r)
-        if [ "$errorStrategy_set" = "retry" ]; then
-          break
-        fi
-        wait_period=$(($wait_period+$WAIT_INTERVAL))
-        if [ $wait_period -ge $MAX_WAIT_AFTER_JOB_ERROR ];then
-          echo "This subjob was not killed in time, exiting to prevent excessive waiting."
-          break
-        else
-          echo "No instruction to continue was given. Waiting for ${WAIT_INTERVAL} seconds"
-          sleep $WAIT_INTERVAL
-        fi
-    done
-  fi
-}
-
-download_cmd_launcher_file() {
-  if [[ $USING_S3_WORKDIR == true ]]; then
-    aws s3 cp "${cmd_launcher_file}" .command.run.tmp
-  else
-    dx download "${cmd_launcher_file}" --output .command.run.tmp
-  fi
-
-  # remove the line in .command.run to disable printing env vars if debugging is on
-  cat .command.run.tmp | sed 's/\[\[ $NXF_DEBUG > 0 ]] && nxf_env//' > .command.run
-}
 
 aws_login() {
   if [ -f "$AWS_ENV" ]; then
