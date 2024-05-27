@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Nextaur 1.9.1: Fixed remote bin dir; currently works when docker.enabled=true
+
 ## [377.0] - beta
 
 ### Added
