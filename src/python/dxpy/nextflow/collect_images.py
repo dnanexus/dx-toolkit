@@ -66,6 +66,7 @@ def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
     pipeline_params_arg = "pipelineParams={}".format(nextflow_pipeline_params) if nextflow_pipeline_params else ""
     profile_arg = "profile={}".format(profile) if profile else ""
     nextaur_cmd = " ".join([base_cmd, pipeline_params_arg, profile_arg])
+    # TODO Catch error here, save logs
     _ = subprocess.check_output(nextaur_cmd, shell=True)
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
