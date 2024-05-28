@@ -68,6 +68,10 @@ def build_pipeline_with_npi(
     build_folder = None
     input_hash = parse_extra_args(extra_args)
     input_hash["repository_url"] = repository
+
+    # TODO for testing, revert
+    input_hash["dx_toolkit_tag"] = "<dx-toolkit branch or tag>"
+
     if tag:
         input_hash["repository_tag"] = tag
     if profile:
