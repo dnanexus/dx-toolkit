@@ -98,7 +98,6 @@ def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_
     nextaur_asset, nextflow_asset, awscli_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
     if cache_docker:
-        # TODO better logging from run_nextaur_collect
         image_refs = run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params)
         image_bundled = bundle_docker_images(image_refs)
     else:
