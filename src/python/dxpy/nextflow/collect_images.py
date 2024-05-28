@@ -69,10 +69,9 @@ def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
     nextaur_cmd = " ".join([base_cmd, pipeline_params_arg, profile_arg])
 
     try:
-        subprocess.check_output(nextaur_cmd, stderr=subprocess.STDOUT, shell=True)
+        result = subprocess.check_output(nextaur_cmd, stderr=subprocess.STDOUT, shell=True)
+        print(str(object=result, encoding='utf-8', errors='strict'))
     except subprocess.CalledProcessError as e:
-        # test
-        print(e.output)
         output = str(object=e.output, encoding='utf-8', errors='strict')
         logger.error("Error collecting Docker image references: {}".format(output))
 
