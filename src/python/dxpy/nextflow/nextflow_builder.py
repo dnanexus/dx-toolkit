@@ -69,8 +69,8 @@ def build_pipeline_with_npi(
     input_hash = parse_extra_args(extra_args)
     input_hash["repository_url"] = repository
 
-    # TODO for testing, revert
-    input_hash["dx_toolkit_tag"] = "APPS-2588_nf_cache_docker_better_logging"
+    # TODO for testing with app-nextflow_pipeline_importer_qe, revert
+    input_hash["dx_toolkit_branch"] = "APPS-2588_nf_cache_docker_better_logging"
 
     if tag:
         input_hash["repository_tag"] = tag

@@ -28,7 +28,7 @@ def get_resources_dir_name(resources_dir):
 def get_resources_subpath(resources_dir):
     return path.join("/home/dnanexus/", get_resources_dir_name(resources_dir))
 
-# TODO for testing, revert
+# TODO for testing with app-nextflow_pipeline_importer_qe, revert
 def get_importer_name():
     return "nextflow_pipeline_importer_qe"
 
