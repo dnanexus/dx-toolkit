@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Nextflow Pipeline Applet script - refactoring
+
 ## [377.0] - beta
 
 ### Added
