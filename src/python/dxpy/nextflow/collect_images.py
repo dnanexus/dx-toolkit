@@ -71,8 +71,8 @@ def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
     try:
         subprocess.check_output(nextaur_cmd, stderr=subprocess.STDOUT, shell=True)
     except subprocess.CalledProcessError as e:
-        logger.error("Error collecting Docker image references:")
-        logger.error(e.output)
+        output = str(object=e.output, encoding='utf-8', errors='strict')
+        logger.error("Error collecting Docker image references: %s" % output)
 
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
