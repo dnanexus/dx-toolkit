@@ -145,7 +145,7 @@ def get_nextflow_assets(region):
             nextaur = json.load(nextaur_f)[region]
             nextflow = json.load(nextflow_f)[region]
             awscli = json.load(awscli_f)[region]
-        dxpy.describe(nextaur, fields={})  # existence check
+        dxpy.describe(nextflow, fields={})  # existence check
         return nextaur, nextflow, awscli
     except ResourceNotFound:
         nextaur_assets = path.join(nextflow_basepath, "nextaur_assets.staging.json")
