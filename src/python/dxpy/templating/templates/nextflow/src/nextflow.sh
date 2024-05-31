@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 
 # =========================================================
-# Script with entrypoints to run
-# 1. Nextflow head (orchestrator) job
-# 2. Nextflow task subjobs
+# Script containing
+# 1. Nextflow head (orchestrator) job entry, exit functions
+# 2. Nextflow task subjob entry, exit functions
+# 3. Helper functions
+# They are currently in one file because supporting use
+# of the resources folder for Nextflow Pipeline Applets
+# would require more changes; currently the pipeline
+# source folder completely replaces the resources folder.
 # =========================================================
 
 set -f
