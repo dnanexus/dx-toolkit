@@ -19,6 +19,7 @@
 
 import json
 import subprocess
+from .. import logger
 from dxpy.nextflow.ImageRefFactory import ImageRefFactory, ImageRefFactoryError
 
 CONTAINERS_JSON = "containers.json"
@@ -66,7 +67,14 @@ def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
     pipeline_params_arg = "pipelineParams={}".format(nextflow_pipeline_params) if nextflow_pipeline_params else ""
     profile_arg = "profile={}".format(profile) if profile else ""
     nextaur_cmd = " ".join([base_cmd, pipeline_params_arg, profile_arg])
-    _ = subprocess.check_output(nextaur_cmd, shell=True)
+
+    try:
+        result = subprocess.check_output(nextaur_cmd, stderr=subprocess.STDOUT, shell=True)
+        print(str(object=result, encoding='utf-8', errors='strict'))
+    except subprocess.CalledProcessError as e:
+        output = str(object=e.output, encoding='utf-8', errors='strict')
+        logger.error("Error collecting Docker image references: {}".format(output))
+
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
         if not image_refs:
