@@ -646,7 +646,8 @@ restore_cache() {
 # Enforce a limit on cached session workdirs stored in the DNAnexus project
 # Limit does not apply when the workdir is external (e.g. S3)
 check_cache_db_storage() {
-  MAX_CACHE_STORAGE=20
+  # TODO After testing, revert --> 20
+  MAX_CACHE_STORAGE=2
   existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
   [[ $existing_cache -le MAX_CACHE_STORAGE ]] || [[ $USING_S3_WORKDIR == true ]] ||
     dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
