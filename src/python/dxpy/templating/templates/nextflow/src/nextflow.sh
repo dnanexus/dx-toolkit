@@ -643,12 +643,12 @@ restore_cache() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
-# Have to ask user to empty the cache if limit exceeded because Nextflow only
-# has UPLOAD access to project
+# Enforce a limit on cached session workdirs stored in the DNAnexus project
+# Limit does not apply when the workdir is external (e.g. S3)
 check_cache_db_storage() {
   MAX_CACHE_STORAGE=20
   existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
-  [[ $existing_cache -le MAX_CACHE_STORAGE ]] ||
+  [[ $existing_cache -le MAX_CACHE_STORAGE ]] || [[ $USING_S3_WORKDIR == true ]] ||
     dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
 }
 
