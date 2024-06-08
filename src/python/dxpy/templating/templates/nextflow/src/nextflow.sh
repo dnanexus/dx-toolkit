@@ -132,6 +132,7 @@ main() {
 
   RESUME_CMD=""
   if [[ -n $resume ]]; then
+    set_env_cache
     restore_cache_and_set_resume_cmd
   fi
 
