@@ -133,10 +133,9 @@ main() {
     fi
   fi
 
-  # restore previous cache and create resume argument to nextflow run
   RESUME_CMD=""
   if [[ -n $resume ]]; then
-    restore_cache
+    restore_cache_and_set_resume_cmd
   fi
 
   # ==================================================
@@ -598,6 +597,7 @@ set_job_properties_cache() {
 
 check_cache_db_storage_limit() {
   # Enforce a limit on cached session workdirs stored in the DNAnexus project
+  # Removal must be manual, because applet can only upload, not delete project files
   # Limit does not apply when the workdir is external (e.g. S3)
 
   # TODO After testing, revert --> 20
@@ -631,7 +631,7 @@ check_no_concurrent_job_same_cache() {
     or run without preserve_cache set to true."
 }
 
-restore_cache() {
+restore_cache_and_set_resume_cmd() {
   # download latest cache.tar from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
   PREV_JOB_CACHE_FILE=$(
     dx api system findDataObjects \
