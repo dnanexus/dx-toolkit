@@ -123,19 +123,12 @@ main() {
   # Move preserve cache / resume here
 
   set_env_dx_cachedir
+  set_env_session_id
 
-  # Check if limit reached for Nextflow sessions preserved in this project's cache
+  # Check conditions to allow using preserve_cache=true
   if [[ $preserve_cache == true ]]; then
-    check_cache_db_storage
+    check_cache_db_storage_limit
   fi
-
-  # If resuming session, use resume id; otherwise create id for this session
-  if [[ -n $resume ]]; then
-    get_resume_session_id
-  else
-    NXF_UUID=$(uuidgen)
-  fi
-  export NXF_UUID
 
   # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
   export NXF_CACHE_MODE=LENIENT
@@ -150,7 +143,7 @@ main() {
   # check if there are any ongoing jobs resuming
   # and generating new cache for the session to resume
   if [[ $preserve_cache == true && -n $resume ]]; then
-    check_running_jobs
+    check_no_concurrent_job_same_cache
   fi
 
   # restore previous cache and create resume argument to nextflow run
@@ -561,6 +554,29 @@ set_env_dx_cachedir() {
   DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
 }
 
+set_env_session_id() {
+  # If resuming session, use resume id; otherwise create id for this session
+  if [[ -n $resume ]]; then
+    get_resume_session_id
+  else
+    NXF_UUID=$(uuidgen)
+  fi
+  export NXF_UUID
+}
+
+check_cache_db_storage_limit() {
+  # Enforce a limit on cached session workdirs stored in the DNAnexus project
+  # Limit does not apply when the workdir is external (e.g. S3)
+
+  # TODO After testing, revert --> 20
+  MAX_CACHE_STORAGE=2
+  existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
+  echo "================ existing cache is $existing_cache ================"
+  echo "================ max cache is $MAX_CACHE_STORAGE ================"
+  [[ $existing_cache -le $MAX_CACHE_STORAGE ]] || [[ $USING_S3_WORKDIR == true ]] ||
+    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) for preserved sessions in the project. Please remove the folders in $DX_CACHEDIR to be under the limit, run without preserve_cache=true, or use S3 as workdir."
+}
+
 get_resume_session_id() {
   if [[ $resume == 'true' || $resume == 'last' ]]; then
     # find the latest job run by applet with the same name
@@ -635,19 +651,7 @@ restore_cache() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
-# Enforce a limit on cached session workdirs stored in the DNAnexus project
-# Limit does not apply when the workdir is external (e.g. S3)
-check_cache_db_storage() {
-  # TODO After testing, revert --> 20
-  MAX_CACHE_STORAGE=2
-  existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
-  echo "================ existing cache is $existing_cache ================"
-  echo "================ max cache is $MAX_CACHE_STORAGE ================"
-  [[ $existing_cache -le $MAX_CACHE_STORAGE ]] || [[ $USING_S3_WORKDIR == true ]] ||
-    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) for preserved sessions in the project. Please remove the folders in $DX_CACHEDIR to be under the limit, run without preserve_cache=true, or use S3 as workdir."
-}
-
-check_running_jobs() {
+check_no_concurrent_job_same_cache() {
   FIRST_RESUMED_JOB=$(
     dx api system findExecutions \
       '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
