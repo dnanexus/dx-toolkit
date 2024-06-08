@@ -123,24 +123,14 @@ main() {
   # Move preserve cache / resume here
 
   set_env_session_id
-  set_env_cache
-
-  # Check conditions to allow using preserve_cache=true
+  
   if [[ $preserve_cache == true ]]; then
+    set_env_cache
+    set_job_properties_cache
     check_cache_db_storage_limit
-  fi
-
-  if [[ $preserve_cache == true ]]; then
-    dx set_properties "$DX_JOB_ID" \
-      nextflow_executable="$EXECUTABLE_NAME" \
-      nextflow_session_id="$NXF_UUID" \
-      nextflow_preserve_cache="$preserve_cache"
-  fi
-
-  # check if there are any ongoing jobs resuming
-  # and generating new cache for the session to resume
-  if [[ $preserve_cache == true && -n $resume ]]; then
-    check_no_concurrent_job_same_cache
+    if [[ -n $resume ]]; then
+      check_no_concurrent_job_same_cache
+    fi
   fi
 
   # restore previous cache and create resume argument to nextflow run
@@ -556,27 +546,6 @@ set_env_session_id() {
   export NXF_UUID
 }
 
-set_env_cache() {
-  # Path in project to store cached sessions
-  export DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
-
-  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
-  export NXF_CACHE_MODE=LENIENT
-}
-
-check_cache_db_storage_limit() {
-  # Enforce a limit on cached session workdirs stored in the DNAnexus project
-  # Limit does not apply when the workdir is external (e.g. S3)
-
-  # TODO After testing, revert --> 20
-  MAX_CACHE_STORAGE=2
-  existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
-  echo "================ existing cache is $existing_cache ================"
-  echo "================ max cache is $MAX_CACHE_STORAGE ================"
-  [[ $existing_cache -le $MAX_CACHE_STORAGE ]] || [[ $USING_S3_WORKDIR == true ]] ||
-    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) for preserved sessions in the project. Please remove the folders in $DX_CACHEDIR to be under the limit, run without preserve_cache=true, or use S3 as workdir."
-}
-
 get_resume_session_id() {
   if [[ $resume == 'true' || $resume == 'last' ]]; then
     # find the latest job run by applet with the same name
@@ -609,6 +578,57 @@ get_resume_session_id() {
     Please provide the exact sessionID for \"resume\" or run without resume."
 
   NXF_UUID=$PREV_JOB_SESSION_ID
+}
+
+set_env_cache() {
+  # Path in project to store cached sessions
+  export DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
+
+  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
+  export NXF_CACHE_MODE=LENIENT
+}
+
+set_job_properties_cache() {
+  # Set properties on job, which can be used to look up cached job later
+  dx set_properties "$DX_JOB_ID" \
+    nextflow_executable="$EXECUTABLE_NAME" \
+    nextflow_session_id="$NXF_UUID" \
+    nextflow_preserve_cache="$preserve_cache"
+}
+
+check_cache_db_storage_limit() {
+  # Enforce a limit on cached session workdirs stored in the DNAnexus project
+  # Limit does not apply when the workdir is external (e.g. S3)
+
+  # TODO After testing, revert --> 20
+  MAX_CACHE_STORAGE=2
+  existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
+  echo "================ existing cache is $existing_cache ================"
+  echo "================ max cache is $MAX_CACHE_STORAGE ================"
+  [[ $existing_cache -le $MAX_CACHE_STORAGE ]] || [[ $USING_S3_WORKDIR == true ]] ||
+    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) for preserved sessions in the project. Please remove the folders in $DX_CACHEDIR to be under the limit, run without preserve_cache=true, or use S3 as workdir."
+}
+
+check_no_concurrent_job_same_cache() {
+  # Do not allow more than 1 concurrent run with the same session id,
+  # to prevent conflicting workdir contents
+
+  FIRST_RESUMED_JOB=$(
+    dx api system findExecutions \
+      '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
+        "project":"'$DX_PROJECT_CONTEXT_ID'",
+        "includeSubjobs":false,
+        "properties":{
+          "nextflow_session_id":"'$NXF_UUID'",
+          "nextflow_preserve_cache":"true",
+          "nextflow_executable":"'$EXECUTABLE_NAME'"}}' 2>/dev/null |
+      jq -r '.results[-1].id // empty'
+  )
+
+  [[ -n $FIRST_RESUMED_JOB && $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
+    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
+    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
+    or run without preserve_cache set to true."
 }
 
 restore_cache() {
@@ -649,23 +669,4 @@ restore_cache() {
   echo "Will resume from previous session: $PREV_JOB_SESSION_ID"
   RESUME_CMD="-resume $NXF_UUID"
   dx tag "$DX_JOB_ID" "resumed"
-}
-
-check_no_concurrent_job_same_cache() {
-  FIRST_RESUMED_JOB=$(
-    dx api system findExecutions \
-      '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
-        "project":"'$DX_PROJECT_CONTEXT_ID'",
-        "includeSubjobs":false,
-        "properties":{
-          "nextflow_session_id":"'$NXF_UUID'",
-          "nextflow_preserve_cache":"true",
-          "nextflow_executable":"'$EXECUTABLE_NAME'"}}' 2>/dev/null |
-      jq -r '.results[-1].id // empty'
-  )
-
-  [[ -n $FIRST_RESUMED_JOB && $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
-    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
-    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
-    or run without preserve_cache set to true."
 }
