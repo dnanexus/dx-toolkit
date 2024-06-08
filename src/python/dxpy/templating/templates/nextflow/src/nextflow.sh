@@ -461,7 +461,7 @@ validate_run_opts() {
   for opt in "${opts[@]}"; do
     case $opt in
     -w=* | -work-dir=* | -w | -work-dir)
-      dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
+      dx-jobutil-report-error "Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts. For Nextflow runs on DNAnexus, the workdir will be located at 1) In the workspace container-xxx 2) In project-yyy:/.nextflow_cache_db if preserve_cache=true, or 3) on S3, if specified."
       ;;
     -profile | -profile=*)
       if [ -n "$profile_arg" ]; then
