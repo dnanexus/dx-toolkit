@@ -35,8 +35,6 @@ main() {
     set -x
   fi
 
-  # If cache is used, it will be stored in the project at
-  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
   get_nextaur_version
 
   # unset properties
@@ -45,11 +43,6 @@ main() {
 
   # check if all run opts provided by user are supported
   validate_run_opts
-
-  # Check if limit reached for Nextflow sessions preserved in this project's cache
-  if [[ $preserve_cache == true ]]; then
-    check_cache_db_storage
-  fi
 
   # set default NXF env constants
 
@@ -156,9 +149,21 @@ main() {
   aws_login
   aws_relogin_loop & AWS_RELOGIN_PID=$!
 
+  # ==================================================
+  # Move preserve cache / resume here
+
+  # If cache is used, it will be stored in the project at
+  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
+
+  # Check if limit reached for Nextflow sessions preserved in this project's cache
+  if [[ $preserve_cache == true ]]; then
+    check_cache_db_storage
+  fi
+
+  # ==================================================
+
   # Set Nextflow workdir based on S3 workdir / preserve_cache options
   setup_workdir
-  export NXF_WORK
 
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
@@ -441,6 +446,8 @@ setup_workdir() {
     # Work dir on platform and not using cache, use workspace
     NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
   fi
+
+  export NXF_WORK
 }
 
 # =========================================================
@@ -649,8 +656,10 @@ check_cache_db_storage() {
   # TODO After testing, revert --> 20
   MAX_CACHE_STORAGE=2
   existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
-  [[ $existing_cache -le MAX_CACHE_STORAGE ]] || [[ $USING_S3_WORKDIR == true ]] ||
-    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
+  echo "================ existing cache is $existing_cache ================"
+  echo "================ max cache is $MAX_CACHE_STORAGE ================"
+  [[ $existing_cache -le $MAX_CACHE_STORAGE ]] || [[ $USING_S3_WORKDIR == true ]] ||
+    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) for preserved sessions in the project. Please remove the folders in $DX_CACHEDIR to be under the limit, run without preserve_cache=true, or use S3 as workdir."
 }
 
 check_running_jobs() {
