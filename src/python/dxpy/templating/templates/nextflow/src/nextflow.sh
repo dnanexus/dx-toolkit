@@ -103,7 +103,6 @@ main() {
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
     -name ${DX_JOB_ID}${env_job_suffix} \
-    $RESUME_CMD \
     $nextflow_run_opts \
     $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
