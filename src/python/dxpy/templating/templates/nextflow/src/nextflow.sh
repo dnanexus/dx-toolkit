@@ -35,7 +35,7 @@ main() {
     set -x
   fi
 
-  set_env_nextaur_plugin_version
+  detect_nextaur_plugin_version
 
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
@@ -118,7 +118,7 @@ main() {
   aws_login
   aws_relogin_loop & AWS_RELOGIN_PID=$!
 
-  set_env_session_cache
+  set_vars_session_and_cache
   
   if [[ $preserve_cache == true ]]; then
     set_job_properties_cache
@@ -134,7 +134,7 @@ main() {
   fi
 
   # Set Nextflow workdir based on S3 workdir / preserve_cache options
-  set_env_workdir
+  setup_workdir
 
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
@@ -339,7 +339,7 @@ docker_registry_login() {
 aws_login() {
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
-    set_env_using_s3_workdir
+    detect_if_using_s3_workdir
   
     # aws env file example values:
     # "iamRoleArnToAssume", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
@@ -375,7 +375,7 @@ aws_relogin_loop() {
 # Helpers: workdir configuration
 # =========================================================
 
-set_env_using_s3_workdir() {
+detect_if_using_s3_workdir() {
   if [[ -f "$AWS_ENV" ]]; then
     source $AWS_ENV
   fi
@@ -385,7 +385,7 @@ set_env_using_s3_workdir() {
   fi
 }
 
-set_env_workdir() {
+setup_workdir() {
   if [[ -f "$AWS_ENV" ]]; then
     source $AWS_ENV
   fi
@@ -430,7 +430,7 @@ validate_run_opts() {
   done
 }
 
-set_env_nextaur_plugin_version() {
+detect_nextaur_plugin_version() {
   executable=$(cat dnanexus-executable.json | jq -r .id )
   bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
   asset_dependency=$(dx describe ${bundled_dependency} --json | jq -r .properties.AssetBundle)
@@ -513,7 +513,7 @@ download_cmd_launcher_file() {
 # Helpers: run with preserve cache, resume
 # =========================================================
 
-set_env_session_cache() {
+set_vars_session_and_cache() {
   # Path in project to store cached sessions
   export DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
 
