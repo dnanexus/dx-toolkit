@@ -584,7 +584,7 @@ check_cache_db_storage_limit() {
   MAX_CACHE_STORAGE=2
   existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
   [[ $existing_cache -lt $MAX_CACHE_STORAGE || $USING_S3_WORKDIR == true ]] ||
-    dx-jobutil-report-error "The limit for preserved sesssions in the project is ($MAX_CACHE_STORAGE). Please remove folders from $DX_CACHEDIR to be under the limit, run without preserve_cache=true, or use S3 as workdir."
+    dx-jobutil-report-error "The limit for preserved sessions in the project is $MAX_CACHE_STORAGE. Please remove folders from $DX_CACHEDIR to be under the limit, run without preserve_cache=true, or use S3 as workdir."
 }
 
 check_no_concurrent_job_same_cache() {
