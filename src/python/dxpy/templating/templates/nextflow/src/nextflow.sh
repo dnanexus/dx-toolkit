@@ -122,8 +122,7 @@ main() {
   # ==================================================
   # Move preserve cache / resume here
 
-  # If cache is used, it will be stored in the project at
-  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
+  set_env_dx_cachedir
 
   # Check if limit reached for Nextflow sessions preserved in this project's cache
   if [[ $preserve_cache == true ]]; then
@@ -556,6 +555,11 @@ download_cmd_launcher_file() {
 # =========================================================
 # Helpers: run with preserve cache, resume
 # =========================================================
+
+set_env_dx_cachedir() {
+  # Path in project to store cached sessions
+  DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
+}
 
 get_resume_session_id() {
   if [[ $resume == 'true' || $resume == 'last' ]]; then
