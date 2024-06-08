@@ -119,9 +119,6 @@ main() {
   aws_login
   aws_relogin_loop & AWS_RELOGIN_PID=$!
 
-  # ==================================================
-  # Move preserve cache / resume here
-
   set_env_session_id
   
   if [[ $preserve_cache == true ]]; then
@@ -137,8 +134,6 @@ main() {
   if [[ -n $resume ]]; then
     restore_cache_and_set_resume_cmd
   fi
-
-  # ==================================================
 
   # Set Nextflow workdir based on S3 workdir / preserve_cache options
   set_env_workdir
