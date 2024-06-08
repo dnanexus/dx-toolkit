@@ -35,7 +35,7 @@ main() {
     set -x
   fi
 
-  get_nextaur_version
+  set_env_nextaur_plugin_version
 
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
@@ -80,18 +80,6 @@ main() {
 
   # get current executable name
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
-
-  # check if there are any ongoing jobs resuming
-  # and generating new cache for the session to resume
-  if [[ $preserve_cache == true && -n $resume ]]; then
-    check_running_jobs
-  fi
-
-  # restore previous cache and create resume argument to nextflow run
-  RESUME_CMD=""
-  if [[ -n $resume ]]; then
-    restore_cache
-  fi
 
   # download default applet file type inputs
   dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
@@ -160,10 +148,22 @@ main() {
       nextflow_preserve_cache="$preserve_cache"
   fi
 
+  # check if there are any ongoing jobs resuming
+  # and generating new cache for the session to resume
+  if [[ $preserve_cache == true && -n $resume ]]; then
+    check_running_jobs
+  fi
+
+  # restore previous cache and create resume argument to nextflow run
+  RESUME_CMD=""
+  if [[ -n $resume ]]; then
+    restore_cache
+  fi
+
   # ==================================================
 
   # Set Nextflow workdir based on S3 workdir / preserve_cache options
-  setup_workdir
+  set_env_workdir
 
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
@@ -383,7 +383,7 @@ docker_registry_login() {
 aws_login() {
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
-    detect_using_s3_workdir
+    set_env_using_s3_workdir
   
     # aws env file example values:
     # "iamRoleArnToAssume", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
@@ -419,7 +419,7 @@ aws_relogin_loop() {
 # Helpers: workdir configuration
 # =========================================================
 
-detect_using_s3_workdir() {
+set_env_using_s3_workdir() {
   if [[ -f "$AWS_ENV" ]]; then
     source $AWS_ENV
   fi
@@ -429,7 +429,7 @@ detect_using_s3_workdir() {
   fi
 }
 
-setup_workdir() {
+set_env_workdir() {
   if [[ -f "$AWS_ENV" ]]; then
     source $AWS_ENV
   fi
@@ -493,7 +493,7 @@ dx_path() {
   esac
 }
 
-get_nextaur_version() {
+set_env_nextaur_plugin_version() {
   executable=$(cat dnanexus-executable.json | jq -r .id )
   bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
   asset_dependency=$(dx describe ${bundled_dependency} --json | jq -r .properties.AssetBundle)
