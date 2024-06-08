@@ -208,24 +208,9 @@ on_exit() {
     set -xe
   fi
 
-  # backup cache
   if [[ $preserve_cache == true ]]; then
     echo "=== Execution completed — caching current session to $DX_CACHEDIR/$NXF_UUID"
-
-    # wrap cache folder and upload cache.tar
-    if [[ -n "$(ls -A .nextflow)" ]]; then
-      tar -cf cache.tar .nextflow
-
-      CACHE_ID=$(dx upload "cache.tar" --path "$DX_CACHEDIR/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
-        echo "Upload cache of current session as file: $CACHE_ID" &&
-        rm -f cache.tar ||
-        echo "Failed to upload cache of current session $NXF_UUID"
-    else
-      echo "No cache is generated from this execution. Skip uploading cache."
-    fi
-
-  # preserve_cache is false
-  # clean up files of this session
+    upload_session_cache_file
   else
     echo "=== Execution completed — cache and working files will not be resumable"
   fi
@@ -664,4 +649,18 @@ restore_cache_and_set_resume_cmd() {
   echo "Will resume from previous session: $PREV_JOB_SESSION_ID"
   RESUME_CMD="-resume $NXF_UUID"
   dx tag "$DX_JOB_ID" "resumed"
+}
+
+upload_session_cache_file() {
+  # wrap cache folder and upload cache.tar
+  if [[ -n "$(ls -A .nextflow)" ]]; then
+    tar -cf cache.tar .nextflow
+
+    CACHE_ID=$(dx upload "cache.tar" --path "$DX_CACHEDIR/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
+      echo "Upload cache of current session as file: $CACHE_ID" &&
+      rm -f cache.tar ||
+      echo "Failed to upload cache of current session $NXF_UUID"
+  else
+    echo "No cache is generated from this execution. Skip uploading cache."
+  fi
 }
