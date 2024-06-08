@@ -474,25 +474,6 @@ validate_run_opts() {
   done
 }
 
-dx_path() {
-  local str=${1#"dx://"}
-  local tmp=$(mktemp -t nf-XXXXXXXXXX)
-  case $str in
-    project-*)
-      dx download $str -o $tmp --no-progress --recursive -f
-      echo file://$tmp
-      ;;
-    container-*)
-      dx download $str -o $tmp --no-progress --recursive -f
-      echo file://$tmp
-      ;;
-    *)
-      echo "Invalid $2 path: $1"
-      return 1
-      ;;
-  esac
-}
-
 set_env_nextaur_plugin_version() {
   executable=$(cat dnanexus-executable.json | jq -r .id )
   bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
