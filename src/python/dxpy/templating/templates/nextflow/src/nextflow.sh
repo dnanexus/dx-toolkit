@@ -81,24 +81,6 @@ main() {
   # get current executable name
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
 
-  # If resuming session, use resume id; otherwise create id for this session
-  if [[ -n $resume ]]; then
-    get_resume_session_id
-  else
-    NXF_UUID=$(uuidgen)
-  fi
-  export NXF_UUID
-
-  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
-  export NXF_CACHE_MODE=LENIENT
-
-  if [[ $preserve_cache == true ]]; then
-    dx set_properties "$DX_JOB_ID" \
-      nextflow_executable="$EXECUTABLE_NAME" \
-      nextflow_session_id="$NXF_UUID" \
-      nextflow_preserve_cache="$preserve_cache"
-  fi
-
   # check if there are any ongoing jobs resuming
   # and generating new cache for the session to resume
   if [[ $preserve_cache == true && -n $resume ]]; then
@@ -158,6 +140,24 @@ main() {
   # Check if limit reached for Nextflow sessions preserved in this project's cache
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage
+  fi
+
+  # If resuming session, use resume id; otherwise create id for this session
+  if [[ -n $resume ]]; then
+    get_resume_session_id
+  else
+    NXF_UUID=$(uuidgen)
+  fi
+  export NXF_UUID
+
+  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
+  export NXF_CACHE_MODE=LENIENT
+
+  if [[ $preserve_cache == true ]]; then
+    dx set_properties "$DX_JOB_ID" \
+      nextflow_executable="$EXECUTABLE_NAME" \
+      nextflow_session_id="$NXF_UUID" \
+      nextflow_preserve_cache="$preserve_cache"
   fi
 
   # ==================================================
