@@ -122,16 +122,13 @@ main() {
   # ==================================================
   # Move preserve cache / resume here
 
-  set_env_dx_cachedir
   set_env_session_id
+  set_env_cache
 
   # Check conditions to allow using preserve_cache=true
   if [[ $preserve_cache == true ]]; then
     check_cache_db_storage_limit
   fi
-
-  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
-  export NXF_CACHE_MODE=LENIENT
 
   if [[ $preserve_cache == true ]]; then
     dx set_properties "$DX_JOB_ID" \
@@ -549,11 +546,6 @@ download_cmd_launcher_file() {
 # Helpers: run with preserve cache, resume
 # =========================================================
 
-set_env_dx_cachedir() {
-  # Path in project to store cached sessions
-  DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
-}
-
 set_env_session_id() {
   # If resuming session, use resume id; otherwise create id for this session
   if [[ -n $resume ]]; then
@@ -562,6 +554,14 @@ set_env_session_id() {
     NXF_UUID=$(uuidgen)
   fi
   export NXF_UUID
+}
+
+set_env_cache() {
+  # Path in project to store cached sessions
+  export DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
+
+  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
+  export NXF_CACHE_MODE=LENIENT
 }
 
 check_cache_db_storage_limit() {
