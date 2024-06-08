@@ -119,10 +119,9 @@ main() {
   aws_login
   aws_relogin_loop & AWS_RELOGIN_PID=$!
 
-  set_env_session_id
+  set_env_session_cache
   
   if [[ $preserve_cache == true ]]; then
-    set_env_cache
     set_job_properties_cache
     check_cache_db_storage_limit
     if [[ -n $resume ]]; then
@@ -132,7 +131,6 @@ main() {
 
   RESUME_CMD=""
   if [[ -n $resume ]]; then
-    set_env_cache
     restore_cache_and_set_resume_cmd
   fi
 
@@ -516,7 +514,13 @@ download_cmd_launcher_file() {
 # Helpers: run with preserve cache, resume
 # =========================================================
 
-set_env_session_id() {
+set_env_session_cache() {
+  # Path in project to store cached sessions
+  export DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
+
+  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
+  export NXF_CACHE_MODE=LENIENT
+
   # If resuming session, use resume id; otherwise create id for this session
   if [[ -n $resume ]]; then
     get_resume_session_id
@@ -558,14 +562,6 @@ get_resume_session_id() {
     Please provide the exact sessionID for \"resume\" or run without resume."
 
   NXF_UUID=$PREV_JOB_SESSION_ID
-}
-
-set_env_cache() {
-  # Path in project to store cached sessions
-  export DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
-
-  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
-  export NXF_CACHE_MODE=LENIENT
 }
 
 set_job_properties_cache() {
