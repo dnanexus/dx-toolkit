@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Nextflow Pipeline Applet script - refactoring
+* Nextflow: Limit of 20 cached sessions in the project no longer applies when using S3 as workdir
 
 ### Fixed
 
