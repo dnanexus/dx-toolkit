@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [378.0] - beta
+
 ### Changed
 
 * Nextflow Pipeline Applet script - refactoring
@@ -13,9 +15,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Nextaur 1.9.1: Fixed remote bin dir; currently works when docker.enabled=true
-* Quick fix for detecting current env for selecting Nextflow assets
+* Detecting current env for selecting Nextflow assets
 
-## [377.0] - beta
+## [377.0] - 2024.6.10
 
 ### Added
 
