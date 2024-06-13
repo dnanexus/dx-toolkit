@@ -457,6 +457,9 @@ log_context_info() {
   echo "=== NF command          :" "${NEXTFLOW_CMD[@]}"
   echo "=== NF session ID       : ${NXF_UUID}"
   echo "=== NF workdir          : ${NXF_WORK}"
+  if [[ $preserve_cache == true ]]; then
+    echo "=== Preserving cache    : true"
+  fi
   echo "=== NF source on worker : @@RESOURCES_SUBPATH@@"
   echo "=== NF log file         : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
   echo "=== Built with dxpy     : @@DXPY_BUILD_VERSION@@"
