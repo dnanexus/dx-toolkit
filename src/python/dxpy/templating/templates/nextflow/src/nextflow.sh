@@ -35,9 +35,7 @@ main() {
     set -x
   fi
 
-  # If cache is used, it will be stored in the project at
-  DX_CACHEDIR=$DX_PROJECT_CONTEXT_ID:/.nextflow_cache_db
-  get_nextaur_version
+  detect_nextaur_plugin_version
 
   # unset properties
   cloned_job_properties=$(dx describe "$DX_JOB_ID" --json | jq -r '.properties | to_entries[] | select(.key | startswith("nextflow")) | .key')
@@ -45,11 +43,6 @@ main() {
 
   # check if all run opts provided by user are supported
   validate_run_opts
-
-  # Check if limit reached for Nextflow sessions preserved in this project's cache
-  if [[ $preserve_cache == true ]]; then
-    check_cache_db_storage
-  fi
 
   # set default NXF env constants
 
@@ -88,36 +81,6 @@ main() {
   # get current executable name
   EXECUTABLE_NAME=$(jq -r .executableName /home/dnanexus/dnanexus-job.json)
 
-  # If resuming session, use resume id; otherwise create id for this session
-  if [[ -n $resume ]]; then
-    get_resume_session_id
-  else
-    NXF_UUID=$(uuidgen)
-  fi
-  export NXF_UUID
-
-  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
-  export NXF_CACHE_MODE=LENIENT
-
-  if [[ $preserve_cache == true ]]; then
-    dx set_properties "$DX_JOB_ID" \
-      nextflow_executable="$EXECUTABLE_NAME" \
-      nextflow_session_id="$NXF_UUID" \
-      nextflow_preserve_cache="$preserve_cache"
-  fi
-
-  # check if there are any ongoing jobs resuming
-  # and generating new cache for the session to resume
-  if [[ $preserve_cache == true && -n $resume ]]; then
-    check_running_jobs
-  fi
-
-  # restore previous cache and create resume argument to nextflow run
-  RESUME_CMD=""
-  if [[ -n $resume ]]; then
-    restore_cache
-  fi
-
   # download default applet file type inputs
   dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
   RUNTIME_CONFIG_CMD=''
@@ -140,7 +103,6 @@ main() {
     run @@RESOURCES_SUBPATH@@ \
     $profile_arg \
     -name ${DX_JOB_ID}${env_job_suffix} \
-    $RESUME_CMD \
     $nextflow_run_opts \
     $RUNTIME_PARAMS_FILE \
     $nextflow_pipeline_params)"
@@ -156,9 +118,23 @@ main() {
   aws_login
   aws_relogin_loop & AWS_RELOGIN_PID=$!
 
+  set_vars_session_and_cache
+  
+  if [[ $preserve_cache == true ]]; then
+    set_job_properties_cache
+    check_cache_db_storage_limit
+    if [[ -n $resume ]]; then
+      check_no_concurrent_job_same_cache
+    fi
+  fi
+
+  RESUME_CMD=""
+  if [[ -n $resume ]]; then
+    restore_cache_and_set_resume_cmd
+  fi
+
   # Set Nextflow workdir based on S3 workdir / preserve_cache options
   setup_workdir
-  export NXF_WORK
 
   # set beginning timestamp
   BEGIN_TIME="$(date +"%Y-%m-%d %H:%M:%S")"
@@ -230,24 +206,9 @@ on_exit() {
     set -xe
   fi
 
-  # backup cache
   if [[ $preserve_cache == true ]]; then
     echo "=== Execution completed — caching current session to $DX_CACHEDIR/$NXF_UUID"
-
-    # wrap cache folder and upload cache.tar
-    if [[ -n "$(ls -A .nextflow)" ]]; then
-      tar -cf cache.tar .nextflow
-
-      CACHE_ID=$(dx upload "cache.tar" --path "$DX_CACHEDIR/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
-        echo "Upload cache of current session as file: $CACHE_ID" &&
-        rm -f cache.tar ||
-        echo "Failed to upload cache of current session $NXF_UUID"
-    else
-      echo "No cache is generated from this execution. Skip uploading cache."
-    fi
-
-  # preserve_cache is false
-  # clean up files of this session
+    upload_session_cache_file
   else
     echo "=== Execution completed — cache and working files will not be resumable"
   fi
@@ -378,7 +339,7 @@ docker_registry_login() {
 aws_login() {
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
-    detect_using_s3_workdir
+    detect_if_using_s3_workdir
   
     # aws env file example values:
     # "iamRoleArnToAssume", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
@@ -414,7 +375,7 @@ aws_relogin_loop() {
 # Helpers: workdir configuration
 # =========================================================
 
-detect_using_s3_workdir() {
+detect_if_using_s3_workdir() {
   if [[ -f "$AWS_ENV" ]]; then
     source $AWS_ENV
   fi
@@ -441,6 +402,8 @@ setup_workdir() {
     # Work dir on platform and not using cache, use workspace
     NXF_WORK="dx://$DX_WORKSPACE_ID:/work/"
   fi
+
+  export NXF_WORK
 }
 
 # =========================================================
@@ -454,7 +417,7 @@ validate_run_opts() {
   for opt in "${opts[@]}"; do
     case $opt in
     -w=* | -work-dir=* | -w | -work-dir)
-      dx-jobutil-report-error "Nextflow workDir is set as $DX_CACHEDIR/<session_id>/work/ if preserve_cache=true, or $DX_WORKSPACE_ID:/work/ if preserve_cache=false. Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts and run again."
+      dx-jobutil-report-error "Please remove workDir specification (-w|-work-dir path) in nextflow_run_opts. For Nextflow runs on DNAnexus, the workdir will be located at 1) In the workspace container-xxx 2) In project-yyy:/.nextflow_cache_db if preserve_cache=true, or 3) on S3, if specified."
       ;;
     -profile | -profile=*)
       if [ -n "$profile_arg" ]; then
@@ -467,26 +430,7 @@ validate_run_opts() {
   done
 }
 
-dx_path() {
-  local str=${1#"dx://"}
-  local tmp=$(mktemp -t nf-XXXXXXXXXX)
-  case $str in
-    project-*)
-      dx download $str -o $tmp --no-progress --recursive -f
-      echo file://$tmp
-      ;;
-    container-*)
-      dx download $str -o $tmp --no-progress --recursive -f
-      echo file://$tmp
-      ;;
-    *)
-      echo "Invalid $2 path: $1"
-      return 1
-      ;;
-  esac
-}
-
-get_nextaur_version() {
+detect_nextaur_plugin_version() {
   executable=$(cat dnanexus-executable.json | jq -r .id )
   bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
   asset_dependency=$(dx describe ${bundled_dependency} --json | jq -r .properties.AssetBundle)
@@ -569,6 +513,22 @@ download_cmd_launcher_file() {
 # Helpers: run with preserve cache, resume
 # =========================================================
 
+set_vars_session_and_cache() {
+  # Path in project to store cached sessions
+  export DX_CACHEDIR="${DX_PROJECT_CONTEXT_ID}:/.nextflow_cache_db"
+
+  # Using the lenient mode to caching makes it possible to reuse working files for resume on the platform
+  export NXF_CACHE_MODE=LENIENT
+
+  # If resuming session, use resume id; otherwise create id for this session
+  if [[ -n $resume ]]; then
+    get_resume_session_id
+  else
+    NXF_UUID=$(uuidgen)
+  fi
+  export NXF_UUID
+}
+
 get_resume_session_id() {
   if [[ $resume == 'true' || $resume == 'last' ]]; then
     # find the latest job run by applet with the same name
@@ -603,7 +563,48 @@ get_resume_session_id() {
   NXF_UUID=$PREV_JOB_SESSION_ID
 }
 
-restore_cache() {
+set_job_properties_cache() {
+  # Set properties on job, which can be used to look up cached job later
+  dx set_properties "$DX_JOB_ID" \
+    nextflow_executable="$EXECUTABLE_NAME" \
+    nextflow_session_id="$NXF_UUID" \
+    nextflow_preserve_cache="$preserve_cache"
+}
+
+check_cache_db_storage_limit() {
+  # Enforce a limit on cached session workdirs stored in the DNAnexus project
+  # Removal must be manual, because applet can only upload, not delete project files
+  # Limit does not apply when the workdir is external (e.g. S3)
+
+  MAX_CACHE_STORAGE=20
+  existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
+  [[ $existing_cache -lt $MAX_CACHE_STORAGE || $USING_S3_WORKDIR == true ]] ||
+    dx-jobutil-report-error "The limit for preserved sessions in the project is $MAX_CACHE_STORAGE. Please remove folders from $DX_CACHEDIR to be under the limit, run without preserve_cache=true, or use S3 as workdir."
+}
+
+check_no_concurrent_job_same_cache() {
+  # Do not allow more than 1 concurrent run with the same session id,
+  # to prevent conflicting workdir contents
+
+  FIRST_RESUMED_JOB=$(
+    dx api system findExecutions \
+      '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
+        "project":"'$DX_PROJECT_CONTEXT_ID'",
+        "includeSubjobs":false,
+        "properties":{
+          "nextflow_session_id":"'$NXF_UUID'",
+          "nextflow_preserve_cache":"true",
+          "nextflow_executable":"'$EXECUTABLE_NAME'"}}' 2>/dev/null |
+      jq -r '.results[-1].id // empty'
+  )
+
+  [[ -n $FIRST_RESUMED_JOB && $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
+    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
+    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
+    or run without preserve_cache set to true."
+}
+
+restore_cache_and_set_resume_cmd() {
   # download latest cache.tar from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
   PREV_JOB_CACHE_FILE=$(
     dx api system findDataObjects \
@@ -643,30 +644,16 @@ restore_cache() {
   dx tag "$DX_JOB_ID" "resumed"
 }
 
-# Have to ask user to empty the cache if limit exceeded because Nextflow only
-# has UPLOAD access to project
-check_cache_db_storage() {
-  MAX_CACHE_STORAGE=20
-  existing_cache=$(dx ls $DX_CACHEDIR --folders 2>/dev/null | wc -l)
-  [[ $existing_cache -le MAX_CACHE_STORAGE ]] ||
-    dx-jobutil-report-error "The number of preserved sessions is already at the limit ($MAX_CACHE_STORAGE) and preserve_cache is true. Please remove the folders in $DX_CACHEDIR to be under the limit, or run without preserve_cache set to true."
-}
+upload_session_cache_file() {
+  # wrap cache folder and upload cache.tar
+  if [[ -n "$(ls -A .nextflow)" ]]; then
+    tar -cf cache.tar .nextflow
 
-check_running_jobs() {
-  FIRST_RESUMED_JOB=$(
-    dx api system findExecutions \
-      '{"state":["idle", "waiting_on_input", "runnable", "running", "debug_hold", "waiting_on_output", "restartable", "terminating"],
-        "project":"'$DX_PROJECT_CONTEXT_ID'",
-        "includeSubjobs":false,
-        "properties":{
-          "nextflow_session_id":"'$NXF_UUID'",
-          "nextflow_preserve_cache":"true",
-          "nextflow_executable":"'$EXECUTABLE_NAME'"}}' 2>/dev/null |
-      jq -r '.results[-1].id // empty'
-  )
-
-  [[ -n $FIRST_RESUMED_JOB && $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
-    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
-    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
-    or run without preserve_cache set to true."
+    CACHE_ID=$(dx upload "cache.tar" --path "$DX_CACHEDIR/$NXF_UUID/cache.tar" --no-progress --brief --wait -p -r) &&
+      echo "Upload cache of current session as file: $CACHE_ID" &&
+      rm -f cache.tar ||
+      echo "Failed to upload cache of current session $NXF_UUID"
+  else
+    echo "No cache is generated from this execution. Skip uploading cache."
+  fi
 }

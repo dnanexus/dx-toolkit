@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Nextflow: Limit of 20 cached sessions in the project no longer applies when using S3 as workdir
+
 ## [378.0] - beta
 
 ### Changed
