@@ -1026,6 +1026,7 @@ def append_underlying_workflow_describe(globalworkflow_desc):
     return globalworkflow_desc
 
 
+# Create a configuration structure
 from .utils.config import DXConfig as _DXConfig
 config = _DXConfig()
 
