@@ -9,7 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Nextflow: Limit of 20 cached sessions in the project no longer applies when using S3 as workdir
-* Nextflow: Edit context info block in job log; include workdir
+* Nextflow: Include NF workdir in context info block in job log
 
 ## [378.0] - beta
 
