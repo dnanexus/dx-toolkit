@@ -457,6 +457,7 @@ log_context_info() {
   echo "=== NF projectDir   : @@RESOURCES_SUBPATH@@"
   echo "=== NF session ID   : ${NXF_UUID}"
   echo "=== NF log file     : dx://${DX_JOB_OUTDIR%/}/${LOG_NAME}"
+  echo "=== NF workdir      : ${NXF_WORK}"
   if [[ $preserve_cache == true ]]; then
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
   fi
