@@ -6,12 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+
+## [379.0] - beta
+
 ### Changed
 
+* Pin numpy < 2.0.0 in dxpy[pandas] extra requirements
 * Nextflow: Limit of 20 cached sessions in the project no longer applies when using S3 as workdir
 * Nextflow: Include NF workdir in context info block in job log
 
-## [378.0] - beta
+## [378.0] - 2024.06.21
 
 ### Changed
 
