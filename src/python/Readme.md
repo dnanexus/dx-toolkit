@@ -1,7 +1,8 @@
 dxpy: DNAnexus Python API
 =========================
+[DNAnexus Documentation](https://documentation.dnanexus.com/)
 
-[API Documentation](http://autodoc.dnanexus.com/bindings/python/current/)
+[dxpy API Documentation](http://autodoc.dnanexus.com/bindings/python/current/)
 
 Building
 --------
