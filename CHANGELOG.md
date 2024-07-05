@@ -6,6 +6,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Fixed occasional timeout issue when building Nextflow applets
 
 ## [379.0] - beta
 
