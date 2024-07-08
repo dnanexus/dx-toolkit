@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [380.0] - beta
+
 ### Changed
 
 * Fixed occasional timeout issue when building Nextflow applets
 
-## [379.0] - beta
+## [379.0] - 2024.7.8
 
 ### Changed
 
@@ -18,7 +20,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Nextflow: Limit of 20 cached sessions in the project no longer applies when using S3 as workdir
 * Nextflow: Include NF workdir in context info block in job log
 
-## [378.0] - 2024.06.21
+## [378.0] - 2024.6.21
 
 ### Changed
 
