@@ -290,7 +290,7 @@ CARES_PV=1.13.0
 CARES_SHA=dde50284cc3d505fb2463ff6276e61d5531b1d68
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
-	curl https://c-ares.org/download/historic/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
+	curl https://c-ares.org/archive/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
 	cd c-ares; ./configure --prefix=/
