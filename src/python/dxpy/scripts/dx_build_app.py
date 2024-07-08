@@ -1033,7 +1033,7 @@ def get_project_to_check(destination, extra_args):
 
 def verify_nf_license(destination, extra_args):
     dest_project_to_check = get_project_to_check(destination, extra_args)
-    features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}).get("features", {})
+    features = dxpy.DXHTTPRequest("/" + dest_project_to_check + "/checkFeatureAccess", {"features": ["dxNextflow"]}, always_retry=True).get("features", {})
     dx_nextflow_lic = features.get("dxNextflow", False)
     if not dx_nextflow_lic:
         raise dxpy.app_builder.AppBuilderException("PermissionDenied: billTo of the applet's destination project must have the dxNextflow feature enabled. For inquiries, please contact support@dnanexus.com")
