@@ -4997,8 +4997,11 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
 class TestDXClientFind(DXTestCase):
 
     def assert_cmd_gives_ids(self, cmd, ids):
-        self.assertEqual(set(execid.strip() for execid in run(cmd).splitlines()),
-                         set(ids))
+        found_set = set(execid.strip() for execid in run(cmd).splitlines())
+        expected_set = set(ids)
+        print("found_set:", found_set)
+        print("expected_set:", expected_set)
+        self.assertEqual(found_set, expected_set)
 
     def test_dx_find_apps_and_globalworkflows_category(self):
         # simple test here does not assume anything about apps that do
