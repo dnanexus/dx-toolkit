@@ -5926,7 +5926,7 @@ class TestDXClientFind(DXTestCase):
         self.assertTrue(dxpy.api.org_describe(org_with_billable_activities)["allowBillableActivities"])
         org_without_billable_activities = "org-members_without_billing_rights"
         self.assertFalse(dxpy.api.org_describe(org_without_billable_activities)["allowBillableActivities"])
-        orgs_with_admin = ["org-piratelabs", "org-auth_file_app_download"]
+        orgs_with_admin = ["org-piratelabs", "org-auth_file_app_download", "org-team_odd"]
         for org_with_admin in orgs_with_admin:
             self.assertTrue(dxpy.api.org_describe(org_with_admin)["level"] == "ADMIN")
 
@@ -6696,8 +6696,8 @@ class TestDXClientNewUser(DXTestCase):
                 run(" ".join([cmd, invalid_opts]))
 
         resource_not_found_opts = [
-            "--username {u} --email {e} --first {f} --org does_not_exist".format(
-                u=username, e=email, f=first),
+            "--username {u} --email {e} --first {f} --on-behalf-of {o} --org does_not_exist".format(
+                u=username, e=email, f=first, o=self.org_id),
         ]
         for invalid_opts in resource_not_found_opts:
             with self.assertRaisesRegex(subprocess.CalledProcessError,
@@ -6740,16 +6740,15 @@ class TestDXClientNewUser(DXTestCase):
         # no org specified
         with self.assertRaisesRegex(subprocess.CalledProcessError,
                                     "error: argument --on-behalf-of: expected one argument"):   
-            run(" ".join([cmd, baseargs,"--on-behalf-of" ]))
+            run(" ".join([cmd, baseargs, "--on-behalf-of"]))
         # creating user on behalf of org that does not exist 
         with self.assertRaisesRegex(subprocess.CalledProcessError,
                                         "ResourceNotFound"):
-            run(" ".join([cmd, baseargs,"--on-behalf-of org-does_not_exist"]))
+            run(" ".join([cmd, baseargs, "--on-behalf-of org-does_not_exist"]))
         # creating user for org in which the adder does not have ADMIN permissions
         with self.assertRaisesRegex(subprocess.CalledProcessError,
                                     "(PermissionDenied)|(ResourceNotFound)"):
-            run(" ".join([cmd, baseargs,"--on-behalf-of org-dnanexus"]))
-
+            run(" ".join([cmd, baseargs, "--on-behalf-of org-dnanexus"]))
 
     def test_self_signup_negative(self):
         # How to unset context?
@@ -6793,7 +6792,7 @@ class TestDXClientNewUser(DXTestCase):
 
         # Grant default org membership level and permission flags.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --brief".format(
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"first": first})
@@ -6811,7 +6810,7 @@ class TestDXClientNewUser(DXTestCase):
         # has uppercase chars.
         username, email = generate_unique_username_email()
         username = username.upper()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --brief".format(
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"first": first})
@@ -6827,7 +6826,7 @@ class TestDXClientNewUser(DXTestCase):
 
         # Grant custom org membership level and permission flags.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id, l="MEMBER", pa="VIEW")).strip()
         self._assert_user_desc(user_id, {"first": first})
@@ -6844,7 +6843,7 @@ class TestDXClientNewUser(DXTestCase):
         # Grant ADMIN org membership level; ignore all other org permission
         # options.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --no-app-access --project-access {pa} --brief".format(
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --level {l} --no-app-access --project-access {pa} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id, l="ADMIN", pa="VIEW")).strip()
         self._assert_user_desc(user_id, {"first": first})
