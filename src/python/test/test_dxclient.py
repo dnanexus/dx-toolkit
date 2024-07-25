@@ -6696,8 +6696,8 @@ class TestDXClientNewUser(DXTestCase):
                 run(" ".join([cmd, invalid_opts]))
 
         resource_not_found_opts = [
-            "--username {u} --email {e} --first {f} --org does_not_exist".format(
-                u=username, e=email, f=first),
+            "--username {u} --email {e} --first {f} --on-behalf-of {o} --org does_not_exist".format(
+                u=username, e=email, f=first, o=self.org_id),
         ]
         for invalid_opts in resource_not_found_opts:
             with self.assertRaisesRegex(subprocess.CalledProcessError,
