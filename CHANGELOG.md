@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Nextflow: Support for specifying CPUs with the cpus directive in process definitions
+* Nextflow: Support for specifying the cpus directive in Docker process definitions
 
 ## [380.0] - beta
 
