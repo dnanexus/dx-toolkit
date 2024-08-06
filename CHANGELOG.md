@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Nextflow: Support for specifying the cpus directive in Docker process definitions
+
 ## [381.0] - beta
 
 * No significant changes
