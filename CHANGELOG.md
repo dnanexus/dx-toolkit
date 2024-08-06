@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Nextflow: Support for specifying CPUs with the cpus directive in process definitions
+
 ## [380.0] - beta
 
 ### Changed
