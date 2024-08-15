@@ -67,6 +67,7 @@ def build_pipeline_with_npi(
     build_project_id = dxpy.WORKSPACE_ID
     build_folder = None
     input_hash = parse_extra_args(extra_args)
+    input_hash["dx_toolkit_branch"] = "APPS-2588_verbose_error"
     input_hash["repository_url"] = repository
     if tag:
         input_hash["repository_tag"] = tag
