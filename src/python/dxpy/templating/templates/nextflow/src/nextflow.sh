@@ -45,10 +45,6 @@ main() {
   validate_run_opts
 
   # set default NXF env constants
-
-  # Disable use of newer flag --cpus when running Docker
-  # Can be enabled when Docker version on DNAnexus workers supports it
-  export NXF_DOCKER_LEGACY=true
   export NXF_HOME=/opt/nextflow
   export NXF_ANSI_LOG=false
   export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION

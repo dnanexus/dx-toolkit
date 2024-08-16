@@ -6,6 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Nextflow: Support for specifying the cpus directive in Docker process definitions
+* Nextaur 1.9.2: Improved error messages, mostly related to S3
+
 ## [381.0] - beta
 
 * No significant changes
