@@ -18,6 +18,7 @@
 #   under the License.
 
 import json
+import os.path
 import subprocess
 from dxpy.nextflow.ImageRefFactory import ImageRefFactory, ImageRefFactoryError
 
@@ -66,7 +67,9 @@ def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
     pipeline_params_arg = "pipelineParams={}".format(nextflow_pipeline_params) if nextflow_pipeline_params else ""
     profile_arg = "profile={}".format(profile) if profile else ""
     nextaur_cmd = " ".join([base_cmd, pipeline_params_arg, profile_arg])
-    _ = subprocess.check_output(nextaur_cmd, shell=True)
+    process = subprocess.run(nextaur_cmd, shell=True, capture_output=True, text=True)
+    if not os.path.exists(CONTAINERS_JSON):
+        raise ImageRefFactoryError(process.stdout)
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
         if not image_refs:
