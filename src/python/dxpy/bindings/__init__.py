@@ -661,6 +661,8 @@ class DXDataObject(DXObject):
         elapsed = 0
         i = 0
         describe_input = {"fields": {"parts": True, "state": True}}
+        if self._proj is not None:
+            describe_input["project"] = self._proj
         while True:
             describe = self._describe(self._dxid, describe_input, **kwargs)
             state, parts = describe["state"], describe["parts"]
