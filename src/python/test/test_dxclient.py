@@ -6799,6 +6799,7 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
+            "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id
@@ -6817,6 +6818,7 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
+            "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id
@@ -6833,6 +6835,7 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
+            "cloudIntegrationManagement": False,
             "appAccess": False,
             "projectAccess": "VIEW",
             "id": user_id
@@ -6850,6 +6853,7 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
+            "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id
@@ -6871,6 +6875,7 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
+            "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "VIEW",
             "id": user_id
@@ -6887,6 +6892,7 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
+            "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id
@@ -6962,6 +6968,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -6973,6 +6980,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "CONTRIBUTE"}
         membership = self._org_find_members(self.user_id)
@@ -6986,6 +6994,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -6998,6 +7007,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": False,
                           "projectAccess": "NONE"}
         membership = self._org_find_members(self.user_id)
@@ -7031,6 +7041,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -7046,6 +7057,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -7093,6 +7105,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -7155,6 +7168,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -7165,6 +7179,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
+                          "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
                           "appAccess": True}
         membership = self._org_find_members(self.user_id)
@@ -7175,6 +7190,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
                           "appAccess": False}
 
@@ -7189,6 +7205,7 @@ class TestDXClientMembership(DXTestCase):
         exp = {"id": self.user_id,
                "level": "ADMIN",
                "allowBillableActivities": True,
+               "cloudIntegrationManagement": False,
                "projectAccess": "ADMINISTER",
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
@@ -7199,6 +7216,7 @@ class TestDXClientMembership(DXTestCase):
                "level": "MEMBER",
                "allowBillableActivities": False,
                "projectAccess": "CONTRIBUTE",
+               "cloudIntegrationManagement": False,
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
         self.assertEqual(membership_response, exp)
@@ -7208,6 +7226,7 @@ class TestDXClientMembership(DXTestCase):
         exp = {"id": self.user_id,
                "level": "MEMBER",
                "allowBillableActivities": True,
+               "cloudIntegrationManagement": False,
                "projectAccess": "CONTRIBUTE",
                "appAccess": True}
         membership_response = self._org_find_members(self.user_id)
@@ -7257,6 +7276,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "UPLOAD"}
         membership = self._org_find_members(self.user_id)
@@ -7273,6 +7293,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
@@ -7299,6 +7320,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "UPLOAD"}
         membership = self._org_find_members(self.user_id)
@@ -7315,6 +7337,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "ADMIN",
                           "allowBillableActivities": True,
+                          "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER"}
         membership = self._org_find_members(self.user_id)
