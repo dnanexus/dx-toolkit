@@ -6292,19 +6292,19 @@ class TestDXClientOrg(DXTestCase):
 
     def test_create_new_org_negative(self):
         # No handle supplied
-        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: the following arguments are required: --handle"):
             run('dx new org')
 
-        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: the following arguments are required: --handle"):
             run('dx new org "Test Org"')
 
-        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: the following arguments are required: --handle"):
             run('dx new org --member-list-visibility MEMBER')
 
-        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: the following arguments are required: --handle"):
             run('dx new org --project-transfer-ability MEMBER')
 
-        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: argument --handle is required"):
+        with self.assertRaisesRegex(subprocess.CalledProcessError, "error: the following arguments are required: --handle"):
             run('dx new org --member-list-visibility ADMIN --project-transfer-ability MEMBER')
 
         with self.assertRaisesRegex(subprocess.CalledProcessError,
@@ -6474,7 +6474,7 @@ class TestDXClientOrg(DXTestCase):
         invalid_cmds = ["dx update org",
                         "dx update org --name foo --member-list-visibility ADMIN --project-transfer-ability ADMIN"]
         for invalid_cmd in invalid_cmds:
-            with self.assertSubprocessFailure(stderr_regexp="too few arguments", exit_code=2):
+            with self.assertSubprocessFailure(stderr_regexp="error: the following arguments are required:", exit_code=2):
                 run(invalid_cmd)
 
         # --project-transfer-ability may not be PUBLIC.
@@ -6762,22 +6762,21 @@ class TestDXClientNewUser(DXTestCase):
 
         # Basic with first name only.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first)).strip()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first, o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"first": first})
 
         # Basic with last name only.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --last {l} --brief".format(
-                      cmd=cmd, u=username, e=email, l=last)).strip()
+        user_id = run("{cmd} --username {u} --email {e} --last {l} --on-behalf-of {o} --brief".format(
+                      cmd=cmd, u=username, e=email, l=last, o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"last": last})
 
         # Basic with all options we can verify.
         # TODO: Test --occupation.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --middle {m} --last {l} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first, m=middle,
-                      l=last)).strip()
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --middle {m} --last {l} --on-behalf-of {o} --brief".format(
+                      cmd=cmd, u=username, e=email, f=first, m=middle, l=last, o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"first": first,
                                          "last": last,
                                          "middle": middle})
@@ -6868,7 +6867,7 @@ class TestDXClientNewUser(DXTestCase):
         # --allow-billable-activities is implied; grant custom org membership
         # level and other permission flags.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level {l} --project-access {pa} --brief".format(
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --on-behalf-of {o} --level {l} --project-access {pa} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id, l="MEMBER", pa="VIEW")).strip()
         self._assert_user_desc(user_id, {"first": first})
@@ -6885,7 +6884,7 @@ class TestDXClientNewUser(DXTestCase):
 
         # Grant ADMIN org membership level.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --level ADMIN --brief".format(
+        user_id = run("{cmd} --username {u} --email {e} --first {f} --org {o} --on-behalf-of {o} --level ADMIN --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id)).strip()
         self._assert_user_desc(user_id, {"first": first})
@@ -6903,7 +6902,7 @@ class TestDXClientNewUser(DXTestCase):
     def test_create_user_account_and_set_token_duration_negative(self):
         first = "Asset"
         username, email = "token_duration_neg", "token_duration_neg@example.com"
-        cmd = "dx new user --username {u} --email {e} --first {f} --token-duration {td}"
+        cmd = "dx new user --username {u} --email {e} --first {f} --on-behalf-of {o} --token-duration {td}"
 
         invalid_token_durations = [
             "8md",  # "md" is an invalid unit
@@ -6915,17 +6914,17 @@ class TestDXClientNewUser(DXTestCase):
         # test invalid inputs for token duration
         for invalid_token_duration in invalid_token_durations:
             with self.assertRaisesRegex(subprocess.CalledProcessError, "ValueError"):
-                run(cmd.format(u=username.lower(), e=email, f=first, td=invalid_token_duration))
+                run(cmd.format(u=username.lower(), e=email, f=first, o=self.org_id, td=invalid_token_duration))
 
     def test_create_user_account_and_set_token_duration(self):
         first = "Asset"
-        cmd = "dx new user --username {u} --email {e} --first {f} --token-duration={td} --brief"
+        cmd = "dx new user --username {u} --email {e} --first {f} --on-behalf-of {o} --token-duration={td} --brief"
 
         token_durations = ["10000", "10d", "-10000", "-10d"]
 
         for token_duration in token_durations:
             username, email = generate_unique_username_email()
-            user_id = run(cmd.format(u=username, e=email, f=first, td=token_duration)).strip()
+            user_id = run(cmd.format(u=username, e=email, f=first, o=self.org_id, td=token_duration)).strip()
             self.assertEqual(user_id, "user-" + username.lower())
 
 

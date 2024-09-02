@@ -99,7 +99,7 @@ class TestNextflowTemplates(DXTestCase):
 
     def test_dxapp(self):
         dxapp = get_nextflow_dxapp()
-        self.assertEqual(dxapp.get("name"), "python")  # name is by default set to the resources directory name
+        self.assertEqual(dxapp.get("name"), "test")  # name is by default set to the resources directory name
         self.assertEqual(dxapp.get("details", {}).get("repository"), "local")
 
     @parameterized.expand([
