@@ -16,9 +16,9 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os, unittest, subprocess, sys
+import os, unittest, re, subprocess, sys
 from tempfile import NamedTemporaryFile, mkdtemp
-import pytest
+import pexpect, pytest
 
 import dxpy
 import dxpy_testutil as testutil
@@ -65,36 +65,27 @@ class TestDXTabCompletion(unittest.TestCase):
             if var in os.environ:
                 del os.environ[var]
 
-    def get_bash_completions(self, line, point=None, stderr_contains=""):
-        os.environ['COMP_LINE'] = line
-        os.environ['COMP_POINT'] = point if point else str(len(line))
-        p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
-        if not USING_PYTHON2:
-            # python-3 requires converting from bytes to strings
-            out = out.decode("utf-8")
-            err = err.decode("utf-8")
-        self.assertIn(stderr_contains, err)
-        return out.split(IFS)
+    def get_bash_completions(self, line, completion):
+        proc = pexpect.spawn("/bin/bash", encoding="utf-8")
+        proc.sendline('eval "$(register-python-argcomplete dx|sed \'s/-o default//\')"')
+        proc.send(f"{line}\t\t")
+        proc.expect(completion[-1] if isinstance(completion, list) else completion)
+        proc.sendline('\003')
+        proc.sendline("exit")
+        proc.expect(pexpect.EOF)
+        return re.split("\\s+", proc.before.splitlines()[-1])
 
     def assert_completion(self, line, completion):
-        actual_completions = self.get_bash_completions(line)
-        completion = completion.replace("\\", "")
-        actual_completions = [s.replace("\\", "") for s in actual_completions]
+        actual_completions = self.get_bash_completions(line, completion)
         self.assertIn(completion, actual_completions)
 
     def assert_completions(self, line, completions):
-        actual_completions = self.get_bash_completions(line)
-        actual_completions = [s.replace("\\", "") for s in actual_completions]
-        completions = [s.replace("\\", "") for s in completions]
+        actual_completions = self.get_bash_completions(line, completions)
         for completion in completions:
             self.assertIn(completion, actual_completions)
 
-    def assert_non_completion(self, line, non_completion):
-        self.assertNotIn(non_completion, self.get_bash_completions(line))
-
-    def assert_no_completions(self, line, stderr_contains=""):
-        self.assertEqual(self.get_bash_completions(line, stderr_contains=stderr_contains), [''])
+    def assert_no_completions(self, line):
+        self.assertEqual(self.get_bash_completions(line, ""), [''])
 
     def test_command_completion(self):
         self.assert_completion("dx ru", "run ")
