@@ -6,7 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [382.0] - beta
+## [383.0] - beta
+
+* No significant changes
+
+## [382.0] - 2024.9.6
 
 ### Added
 
