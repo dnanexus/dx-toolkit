@@ -364,7 +364,7 @@ class DXExecDependencyInstaller(object):
         elif dep_type == "pip":
             return "pip install --upgrade " + make_pm_atoms(packages, version_separator="==")
         elif dep_type == "pip3":
-            return "pip3 install --upgrade " + make_pm_atoms(packages, version_separator="==")
+            return "PIP_BREAK_SYSTEM_PACKAGES=1 pip3 install --upgrade " + make_pm_atoms(packages, version_separator="==")
         elif dep_type == "gem":
             commands = []
             for p in packages:
