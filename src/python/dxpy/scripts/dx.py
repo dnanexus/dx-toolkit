@@ -1512,14 +1512,18 @@ def set_visibility(args):
 
 def get_details(args):
     # Attempt to resolve name
-    _project, _folderpath, entity_result = try_call(resolve_existing_path,
+    project, _folderpath, entity_result = try_call(resolve_existing_path,
                                                     args.path, expected='entity')
 
     if entity_result is None:
         err_exit(fill('Could not resolve "' + args.path + '" to a name or ID'), 3)
+    
+    input_params = {}
+    if project is not None:
+        input_params['project'] = project
 
     try:
-        print(json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4))
+        print(json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', input_params), indent=4))
     except:
         err_exit()
 
