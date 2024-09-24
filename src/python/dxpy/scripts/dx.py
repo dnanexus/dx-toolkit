@@ -1185,12 +1185,11 @@ def describe(args):
         # Always retrieve details too (just maybe don't render them)
         json_input["details"] = True
         if is_data_obj_id(args.path):
-            # Should prefer the current project's version if possible
+            # Prefer the current project's version if possible
             if dxpy.WORKSPACE_ID is not None:
                 try:
-                    # But only put it in the JSON if you still have
-                    # access.
-                    dxpy.api.project_list_folder(dxpy.WORKSPACE_ID)
+                    # But only put it in the JSON if you still have access
+                    dxpy.api.project_describe(dxpy.WORKSPACE_ID, input_params={"fields": {"id": True}})
                     json_input['project'] = dxpy.WORKSPACE_ID
                 except dxpy.DXAPIError as e:
                     if not isinstance(e, ResourceNotFound):
