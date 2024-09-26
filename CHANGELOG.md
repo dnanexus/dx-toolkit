@@ -6,9 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [383.0] - beta
+## [384.0] - beta
 
-* No significant changes
+### Fixed
+
+* `dx get_details` provides project-id
+
+## [383.1] - 2024.9.26
+
+### Fixed
+
+* `dx describe file-xxxx` does not call /project-xxxx/listFolder
 
 ## [382.0] - 2024.9.6
 
