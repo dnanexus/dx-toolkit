@@ -183,7 +183,7 @@ class DXJob(DXObject):
                 req_input["tags"] = tags
             if properties is not None:
                 req_input["properties"] = properties
-            if instance_type is not None or cluster_spec is not None or fpga_driver is not None or nvidia_driver is not None:
+            if instance_type or cluster_spec or fpga_driver or nvidia_driver:
                 instance_type_srd = SystemRequirementsDict.from_instance_type(instance_type, fn_name)
                 cluster_spec_srd = SystemRequirementsDict(cluster_spec)
                 fpga_driver_srd = SystemRequirementsDict(fpga_driver)
