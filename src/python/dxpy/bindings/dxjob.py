@@ -42,10 +42,10 @@ from ..compat import basestring
 # DXJob #
 #########
 
-def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=None,
-              instance_type=None, depends_on=None,
-              cluster_spec=None, fpga_driver=None, system_requirements=None, system_requirements_by_executable=None,
-              **kwargs):
+
+def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=None, instance_type=None,
+              depends_on=None, cluster_spec=None, fpga_driver=None, nvidia_driver=None, system_requirements=None,
+              system_requirements_by_executable=None, **kwargs):
     '''
     :param fn_input: Function input
     :type fn_input: dict
@@ -67,6 +67,8 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     :type cluster_spec: dict
     :param fpga_driver: a dict mapping function names to fpga driver requests
     :type fpga_driver: dict
+    :param nvidia_driver: a dict mapping function names to nvidia driver requests
+    :type nvidia_driver: dict
     :param system_requirements: System requirement single mapping
     :type system_requirements: dict
     :param system_requirements_by_executable: System requirement by executable double mapping
@@ -94,11 +96,12 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
 
     '''
     dxjob = DXJob()
-    dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties,
-              details=details, instance_type=instance_type, depends_on=depends_on,
-              cluster_spec=cluster_spec, fpga_driver=fpga_driver, 
-              system_requirements=system_requirements, system_requirements_by_executable=system_requirements_by_executable, **kwargs)
+    dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties, details=details,
+              instance_type=instance_type, depends_on=depends_on, cluster_spec=cluster_spec, fpga_driver=fpga_driver,
+              nvidia_driver=nvidia_driver, system_requirements=system_requirements,
+              system_requirements_by_executable=system_requirements_by_executable, **kwargs)
     return dxjob
+
 
 class DXJob(DXObject):
     '''
@@ -112,10 +115,9 @@ class DXJob(DXObject):
         DXObject.__init__(self, dxid=dxid)
         self.set_id(dxid)
 
-    def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None,
-            instance_type=None, depends_on=None,
-            cluster_spec=None, fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, 
-            **kwargs):
+    def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None, instance_type=None,
+            depends_on=None, cluster_spec=None, fpga_driver=None, nvidia_driver=None, system_requirements=None,
+            system_requirements_by_executable=None, **kwargs):
         '''
         :param fn_input: Function input
         :type fn_input: dict
@@ -137,6 +139,8 @@ class DXJob(DXObject):
         :type cluster_spec: dict
         :param fpga_driver: a dict mapping function names to fpga driver requests
         :type fpga_driver: dict
+        :param nvidia_driver: a dict mapping function names to nvidia driver requests
+        :type nvidia_driver: dict
         :param system_requirements: System requirement single mapping
         :type system_requirements: dict
         :param system_requirements_by_executable: System requirement by executable double mapping
@@ -179,11 +183,12 @@ class DXJob(DXObject):
                 req_input["tags"] = tags
             if properties is not None:
                 req_input["properties"] = properties
-            if instance_type is not None or cluster_spec is not None or fpga_driver is not None:
+            if instance_type is not None or cluster_spec is not None or fpga_driver is not None or nvidia_driver is not None:
                 instance_type_srd = SystemRequirementsDict.from_instance_type(instance_type, fn_name)
                 cluster_spec_srd = SystemRequirementsDict(cluster_spec)
                 fpga_driver_srd = SystemRequirementsDict(fpga_driver)
-                req_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd + fpga_driver_srd).as_dict()
+                nvidia_driver_srd = SystemRequirementsDict(nvidia_driver)
+                req_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd + fpga_driver_srd + nvidia_driver_srd).as_dict()
             if system_requirements is not None:
                 req_input["systemRequirements"] = system_requirements
             if system_requirements_by_executable is not None:
