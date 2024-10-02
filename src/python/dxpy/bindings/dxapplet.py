@@ -465,4 +465,5 @@ class DXApplet(DXDataObject, DXExecutable):
         """
         # Rename applet_input arg to preserve API compatibility when calling
         # DXApplet.run(applet_input=...)
+        # DXApplet.run(applet_input=...)
         return super(DXApplet, self).run(applet_input, *args, **kwargs)
