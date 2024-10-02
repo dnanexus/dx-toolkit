@@ -1277,7 +1277,7 @@ class TestDXRecord(testutil.DXTestCaseCompat):
         self.assertNotIn('details', describe_with_custom_fields)
 
 
-#@unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
+@unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run a job')
 class TestDXAppletJob(unittest.TestCase):
     def setUp(self):
         setUpTempProjects(self)
