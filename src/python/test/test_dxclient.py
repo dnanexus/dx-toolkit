@@ -3626,12 +3626,14 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
-        # fpgaDriver override: new original job with extra_args
+        # fpgaDriver/nvidiaDriver override: new original job with extra_args
         orig_job_id = run("dx run " + other_applet_id +
                           " --instance-count 2 --brief -y " +
                           "--extra-args '" +
-                          json.dumps({"systemRequirements": {"some_ep": {"clusterSpec": {"initialInstanceCount": 12, "bootstrapScript": "z.sh"}, 
-                                                                         "fpgaDriver": "edico-1.4.5"}}}) + "'").strip()
+                          json.dumps({"systemRequirements": {"some_ep":
+                                                {"clusterSpec": {"initialInstanceCount": 12, "bootstrapScript": "z.sh"},
+                                                 "fpgaDriver": "edico-1.4.5",
+                                                 "nvidiaDriver": "R535"}}}) + "'").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
         check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 12, 2])
         # --instance-type and --instance-count override: instance type and cluster spec are resolved independently
@@ -3650,6 +3652,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
         
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.5')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['nvidiaDriver'], 'R535')
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['clusterSpec']['bootstrapScript'], 'z.sh')
 
         # --instance-type and --instance-type-by-executable override
