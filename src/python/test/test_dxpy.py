@@ -1319,7 +1319,12 @@ def main():
                               "interpreter": "python3",
                               "distribution": "Ubuntu", "release": "20.04",
                               "version": "0",
-                              "execDepends": [{"name": "python-numpy"}]})
+                              "execDepends": [{"name": "python-numpy"}],
+                              "systemRequirements": {
+                                  "*": {
+                                      "nvidiaDriver": "R535"
+                                  }
+                              }})
         dxrecord = dxpy.new_dxrecord()
         dxrecord.close()
         prog_input = {"chromosomes": {"$dnanexus_link": dxrecord.get_id()},
@@ -1346,6 +1351,7 @@ def main():
         self.assertEqual(len(jobdesc["properties"]), 1)
         self.assertEqual(jobdesc["properties"]["$dnanexus_link.foo"], "barbaz")
         self.assertEqual(jobdesc["priority"], "normal")
+        self.assertEqual(jobdesc["systemRequirements"]["*"]["nvidiaDriver"], "R535")
 
         # Test setting tags and properties on job
         dxjob.add_tags(["foo", "bar", "foo"])
