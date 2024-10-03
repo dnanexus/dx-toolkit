@@ -29,7 +29,7 @@ job creating a subjob.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, time
+import os, time, logging
 
 import dxpy
 from . import DXObject, DXDataObject, DXJobFailureError, verify_string_dxid
@@ -37,6 +37,8 @@ from ..exceptions import DXError
 from ..system_requirements import SystemRequirementsDict
 from ..utils.local_exec_utils import queue_entry_point
 from ..compat import basestring
+
+log = logging.getLogger(__name__)
 
 #########
 # DXJob #
@@ -96,8 +98,10 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
 
     '''
     print("TEST LOG: Creating job..")
+    log.info(f"TEST LOG: Creating job..")
     dxjob = DXJob()
     print(f"TEST LOG: Job created {dxjob.get_id()}")
+    log.info(f"TEST LOG: Job created {dxjob.get_id()}")
     dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties, details=details,
               instance_type=instance_type, depends_on=depends_on, cluster_spec=cluster_spec, fpga_driver=fpga_driver,
               nvidia_driver=nvidia_driver, system_requirements=system_requirements,
@@ -185,7 +189,7 @@ class DXJob(DXObject):
                 req_input["tags"] = tags
             if properties is not None:
                 req_input["properties"] = properties
-            if instance_type or cluster_spec or fpga_driver or nvidia_driver:
+            if instance_type is not None or cluster_spec is not None or fpga_driver is not None or nvidia_driver is not None:
                 instance_type_srd = SystemRequirementsDict.from_instance_type(instance_type, fn_name)
                 cluster_spec_srd = SystemRequirementsDict(cluster_spec)
                 fpga_driver_srd = SystemRequirementsDict(fpga_driver)
