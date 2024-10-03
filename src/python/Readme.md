@@ -27,6 +27,14 @@ Example:
 $ _DX_DEBUG=1 dx ls
 ```
 
+### Debugging inside the IDE (PyCharm)
+To be able to debug dx-toolkit (dx commands) directly in the IDE, 'Run/Debug Configurations' needs to be changed.
+1. Go to Run &#8594; Edit Configurations...
+2. Add New Configuration (Python)
+3. Change script to module (dxpy.scripts.dx)
+4. To Script parameters field write dx command you want to run (eg 'ls' runs 'dx ls')
+5. Apply and OK (now it is possible to start debugging via main() function in dx.py)
+
 Python coding style
 -------------------
 
