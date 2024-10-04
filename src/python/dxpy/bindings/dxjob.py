@@ -29,7 +29,7 @@ job creating a subjob.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, time, logging
+import os, time
 
 import dxpy
 from . import DXObject, DXDataObject, DXJobFailureError, verify_string_dxid
@@ -38,7 +38,6 @@ from ..system_requirements import SystemRequirementsDict
 from ..utils.local_exec_utils import queue_entry_point
 from ..compat import basestring
 
-log = logging.getLogger(__name__)
 
 #########
 # DXJob #
