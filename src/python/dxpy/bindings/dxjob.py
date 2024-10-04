@@ -97,11 +97,7 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     .. note:: If the environment variable ``DX_JOB_ID`` is not set, this method assmes that it is running within the debug harness, executes the job in place, and provides a debug job handler object that does not have a corresponding remote API job object.
 
     '''
-    print("TEST LOG: Creating job..")
-    log.info(f"TEST LOG: Creating job..")
     dxjob = DXJob()
-    print(f"TEST LOG: Job created {dxjob.get_id()}")
-    log.info(f"TEST LOG: Job created {dxjob.get_id()}")
     dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties, details=details,
               instance_type=instance_type, depends_on=depends_on, cluster_spec=cluster_spec, fpga_driver=fpga_driver,
               nvidia_driver=nvidia_driver, system_requirements=system_requirements,

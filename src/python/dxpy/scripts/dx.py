@@ -6818,8 +6818,6 @@ parser_categories['all']['cmds'].sort()
 
 
 def main():
-    print("Test kitties - print")
-    eprint("Test kitties - eprint")
     # Bash argument completer hook
     if '_ARGCOMPLETE' in os.environ:
         import argcomplete
