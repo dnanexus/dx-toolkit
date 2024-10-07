@@ -101,7 +101,7 @@ setup(
     install_requires = dependencies,
     extras_require={
         'pandas': ["pandas==1.3.5", "numpy<2.0.0"],
-        'xattr': ["xattr==0.10.1; sys_platform == 'linux2' or sys_platform == 'linux'"]
+        'xattr': ["xattr==1.1.0; sys_platform == 'linux2' or sys_platform == 'linux'"]
     },
     tests_require = test_dependencies,
     test_suite = "test",
