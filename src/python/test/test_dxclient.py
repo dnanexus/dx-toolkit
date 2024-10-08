@@ -3363,7 +3363,7 @@ dx-jobutil-add-output record_array $second_record --array
         cloned_job_desc = dxpy.api.job_describe(cloned_job_id)
         assert cloned_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == build_nvidia_version
 
-        # Change nvidia driver version in runtime (run value)
+        # Change nvidia driver version in runtime - origin job (run value)
         extra_args = json.dumps({"systemRequirements": {"*": {"nvidiaDriver": run_nvidia_version}}})
         origin_job_id_nvidia_override = run(f"dx run {applet_id} --extra-args '{extra_args}' --brief -y").strip().split('\n')[-1]
         origin_job_desc = dxpy.api.job_describe(origin_job_id_nvidia_override)
@@ -3372,6 +3372,12 @@ dx-jobutil-add-output record_array $second_record --array
         cloned_job_id_nvidia_override = run(f"dx run --clone {origin_job_id_nvidia_override} --brief -y").strip()
         cloned_job_desc = dxpy.api.job_describe(cloned_job_id_nvidia_override)
         assert cloned_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == run_nvidia_version
+
+        # Change nvidia driver version in runtime - cloned job (build value)
+        extra_args = json.dumps({"systemRequirements": {"*": {"nvidiaDriver": build_nvidia_version}}})
+        cloned_job_id_nvidia_override = run(f"dx run --clone {origin_job_id_nvidia_override} --extra-args '{extra_args}' --brief -y").strip()
+        cloned_job_desc = dxpy.api.job_describe(cloned_job_id_nvidia_override)
+        assert cloned_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == build_nvidia_version
 
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
