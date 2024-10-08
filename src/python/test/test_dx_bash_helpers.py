@@ -935,6 +935,22 @@ class TestDXJobutilNewJob(DXTestCase):
                                         "other_function": {"fpgaDriver": "edico-1.4.5"}}}})),
                 {"systemRequirementsByExecutable": {"my_applet":{"main": { "instanceType": "mem2_hdd2_x2", "clusterSpec":{"initialInstanceCount": 3}},
                                         "other_function": { "instanceType": "mem3_ssd2_fpga1_x8", "fpgaDriver": "edico-1.4.5"} }}}),
+            # nvidia driver
+            ("--instance-type-by-executable " +
+             pipes.quote(json.dumps({
+                 "my_applet": {
+                     "main": "mem1_ssd1_v2_x2",
+                     "other_function": "mem2_ssd1_gpu_x16"}})) +
+             " --extra-args " +
+             pipes.quote(json.dumps({
+                 "systemRequirementsByExecutable": {
+                     "my_applet": {
+                         "main": {"instanceType": "mem2_hdd2_x2"},
+                         "other_function": {"nvidiaDriver": "R535"}}}})),
+             {"systemRequirementsByExecutable": {
+                 "my_applet": {"main": {"instanceType": "mem2_hdd2_x2"},
+                               "other_function": {"instanceType": "mem2_ssd1_gpu_x16",
+                                                  "nvidiaDriver": "R535"}}}}),
             # properties - mapping
             (
                 "--property foo=foo_value --property bar=bar_value",
