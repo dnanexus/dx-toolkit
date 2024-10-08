@@ -45,8 +45,8 @@ from ..compat import basestring
 
 
 def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=None, instance_type=None,
-              depends_on=None, cluster_spec=None, fpga_driver=None, nvidia_driver=None, system_requirements=None,
-              system_requirements_by_executable=None, **kwargs):
+              depends_on=None, cluster_spec=None, fpga_driver=None, system_requirements=None,
+              system_requirements_by_executable=None, nvidia_driver=None, **kwargs):
     '''
     :param fn_input: Function input
     :type fn_input: dict
@@ -68,12 +68,12 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     :type cluster_spec: dict
     :param fpga_driver: a dict mapping function names to fpga driver requests
     :type fpga_driver: dict
-    :param nvidia_driver: a dict mapping function names to nvidia driver requests
-    :type nvidia_driver: dict
     :param system_requirements: System requirement single mapping
     :type system_requirements: dict
     :param system_requirements_by_executable: System requirement by executable double mapping
     :type system_requirements_by_executable: dict
+    :param nvidia_driver: a dict mapping function names to nvidia driver requests
+    :type nvidia_driver: dict
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
     Creates and enqueues a new job that will execute a particular
@@ -117,8 +117,8 @@ class DXJob(DXObject):
         self.set_id(dxid)
 
     def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None, instance_type=None,
-            depends_on=None, cluster_spec=None, fpga_driver=None, nvidia_driver=None, system_requirements=None,
-            system_requirements_by_executable=None, **kwargs):
+            depends_on=None, cluster_spec=None, fpga_driver=None, system_requirements=None,
+            system_requirements_by_executable=None, nvidia_driver=None, **kwargs):
         '''
         :param fn_input: Function input
         :type fn_input: dict
@@ -140,12 +140,12 @@ class DXJob(DXObject):
         :type cluster_spec: dict
         :param fpga_driver: a dict mapping function names to fpga driver requests
         :type fpga_driver: dict
-        :param nvidia_driver: a dict mapping function names to nvidia driver requests
-        :type nvidia_driver: dict
         :param system_requirements: System requirement single mapping
         :type system_requirements: dict
         :param system_requirements_by_executable: System requirement by executable double mapping
         :type system_requirements_by_executable: dict
+        :param nvidia_driver: a dict mapping function names to nvidia driver requests
+        :type nvidia_driver: dict
 
         Creates and enqueues a new job that will execute a particular
         function (from the same app or applet as the one the current job

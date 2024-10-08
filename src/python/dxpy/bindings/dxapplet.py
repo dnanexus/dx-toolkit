@@ -197,7 +197,7 @@ class DXExecutable:
             depends_on=None, allow_ssh=None, debug=None, delay_workspace_destruction=None, priority=None, head_job_on_demand=None,
             ignore_reuse=None, ignore_reuse_stages=None, detach=None, cost_limit=None, rank=None, max_tree_spot_wait_time=None,
             max_job_spot_wait_time=None, preserve_job_outputs=None, detailed_job_metrics=None, extra_args=None,
-            fpga_driver=None, nvidia_driver=None, system_requirements=None, system_requirements_by_executable=None, **kwargs):
+            fpga_driver=None, system_requirements=None, system_requirements_by_executable=None, nvidia_driver=None, **kwargs):
         '''
         :param executable_input: Hash of the executable's input arguments
         :type executable_input: dict
@@ -250,12 +250,12 @@ class DXExecutable:
         :returns: Object handler of the newly created job
         :param fpga_driver: a dict mapping function names to fpga driver requests
         :type fpga_driver: dict
-        :param nvidia_driver: a dict mapping function names to nvidia driver requests
-        :type nvidia_driver: dict
         :param system_requirements: System requirement single mapping
         :type system_requirements: dict
         :param system_requirements_by_executable: System requirement by executable double mapping
         :type system_requirements_by_executable: dict
+        :param nvidia_driver: a dict mapping function names to nvidia driver requests
+        :type nvidia_driver: dict
         :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
         Creates a new job that executes the function "main" of this executable with
@@ -295,9 +295,9 @@ class DXExecutable:
                                         detailed_job_metrics=detailed_job_metrics,
                                         extra_args=extra_args,
                                         fpga_driver=fpga_driver,
-                                        nvidia_driver=nvidia_driver,
                                         system_requirements=system_requirements,
-                                        system_requirements_by_executable=system_requirements_by_executable)
+                                        system_requirements_by_executable=system_requirements_by_executable,
+                                        nvidia_driver=nvidia_driver)
         return self._run_impl(run_input, **kwargs)
 
 
