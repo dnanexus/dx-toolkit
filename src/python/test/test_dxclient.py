@@ -3364,7 +3364,7 @@ dx-jobutil-add-output record_array $second_record --array
         assert cloned_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == build_nvidia_version
 
         # Change nvidia driver version in runtime (run value)
-        extra_args = json.dumps({"systemRequirements": {"*": {"nvidiaDriver": "R535"}}})
+        extra_args = json.dumps({"systemRequirements": {"*": {"nvidiaDriver": run_nvidia_version}}})
         origin_job_id_nvidia_override = run(f"dx run {applet_id} --extra-args '{extra_args}' --brief -y").strip().split('\n')[-1]
         origin_job_desc = dxpy.api.job_describe(origin_job_id_nvidia_override)
         assert origin_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == run_nvidia_version
