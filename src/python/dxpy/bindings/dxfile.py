@@ -728,7 +728,7 @@ class DXFile(DXDataObject):
             report_progress_fn(self, len(data))
 
     def wait_until_parts_uploaded(self, **kwargs):
-        self._wait_until_parts_uploaded(self, **kwargs)
+        self._wait_until_parts_uploaded(**kwargs)
 
 
     def get_download_url(self, duration=None, preauthenticated=False, filename=None, project=None, **kwargs):
