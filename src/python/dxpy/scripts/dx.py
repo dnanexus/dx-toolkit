@@ -3195,10 +3195,12 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         cloned_instance_type = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceType')
         cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='clusterSpec')
         cloned_fpga_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='fpgaDriver')
+        cloned_nvidia_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='nvidiaDriver')
         cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}) or {}
     else:
         cloned_system_requirements = {}
-        cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver = SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({})
+        cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver, cloned_nvidia_driver = (
+            SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}))
         cloned_system_requirements_by_executable = {}
 
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
@@ -3227,12 +3229,15 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     else:
         requested_cluster_spec = cloned_cluster_spec
 
-    # fpga driver now does not have corresponding dx run option, so it can only be requested using the cloned value
+    # fpga/nvidia driver now does not have corresponding dx run option,
+    # so it can only be requested using the cloned value
     requested_fpga_driver = cloned_fpga_driver
+    requested_nvidia_driver = cloned_nvidia_driver
 
-    # combine the requested instance type, full cluster spec, fpga spec
+    # combine the requested instance type, full cluster spec, fpga spec, nvidia spec
     # into the runtime systemRequirements
-    requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver).as_dict()
+    requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver +
+                                     requested_nvidia_driver).as_dict()
 
     if (args.instance_type and cloned_system_requirements_by_executable):
         warning = BOLD("WARNING") + ": --instance-type argument: {} may get overridden by".format(args.instance_type) 
@@ -3283,6 +3288,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "instance_type": None,
         "cluster_spec": None,
         "fpga_driver": None,
+        "nvidia_driver": None,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
