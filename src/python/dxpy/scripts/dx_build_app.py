@@ -357,11 +357,11 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
         if "interpreter" not in manifest['runSpec']:
             raise dxpy.app_builder.AppBuilderException('runSpec.interpreter field was not present')
 
-        if "release" not in manifest['runSpec'] or "distribution" not in manifest['runSpec']:
-            warn_message = 'runSpec.distribution or runSpec.release was not present. These fields '
-            warn_message += 'will be required in a future version of the API. Recommended value '
-            warn_message += 'for distribution is \"Ubuntu\" and release - \"14.04\".'
-            logger.warn(warn_message)
+        if "distribution" not in manifest['runSpec']:
+            raise dxpy.app_builder.AppBuilderException('Required field runSpec.distribution is not present')
+
+        if "release" not in manifest['runSpec']:
+            raise dxpy.app_builder.AppBuilderException('Required field runSpec.release is not present')
 
         if manifest['runSpec']['interpreter'] in ["python2.7", "bash", "python3"]:
             if "file" in manifest['runSpec']:
