@@ -1440,6 +1440,8 @@ def new_project(args):
         inputs["monthlyStorageLimit"] = args.monthly_storage_limit
     if args.default_symlink is not None:
         inputs["defaultSymlink"] = json.loads(args.default_symlink)
+    if args.drive is not None:
+        inputs["drive"] = args.drive
     try:
         resp = dxpy.api.project_new(inputs)
         if args.brief:
@@ -5814,7 +5816,8 @@ parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the 
 parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly project spending limit for compute')
 parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly project spending limit for egress (in Bytes)')
 parser_new_project.add_argument('--monthly-storage-limit', type=positive_number, help='Monthly project spending limit for storage')
-parser_new_project.add_argument('--default-symlink', help='Default symlink for external store account')
+parser_new_project.add_argument('--default-symlink', help='Default symlink for external storage account')
+parser_new_project.add_argument('--drive', help='Drive for external storage account')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
