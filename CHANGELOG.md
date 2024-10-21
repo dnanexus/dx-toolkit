@@ -6,7 +6,18 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [384.0] - beta
+## [385.0] - beta
+
+### Added
+
+* `nvidiaDriver` field 
+* `--drive` parameter for `dx new project`
+
+### Fixed
+
+* Throw an error when runSpec.distribution or runSpec.release is not present in `dx build`
+
+## [384.0] - 2024.10.21
 
 ### Fixed
 
