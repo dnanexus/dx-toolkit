@@ -83,7 +83,7 @@ will download into the execution environment:
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import json
-import pipes
+import shlex
 import os
 import fnmatch
 import sys
@@ -401,10 +401,6 @@ def analyze_bash_vars(job_input_file, job_homedir):
     return file_key_descs, rest_hash
 
 
-#
-# Note: pipes.quote() to be replaced with shlex.quote() in Python 3
-# (see http://docs.python.org/2/library/pipes.html#pipes.quote)
-#
 def gen_bash_vars(job_input_file, job_homedir=None, check_name_collision=True):
     """
     :param job_input_file: path to a JSON file describing the job inputs
@@ -427,7 +423,7 @@ def gen_bash_vars(job_input_file, job_homedir=None, check_name_collision=True):
             result = json.dumps(dxpy.dxlink(elem))
         else:
             result = json.dumps(elem)
-        return pipes.quote(result)
+        return shlex.quote(result)
 
     def string_of_value(val):
         if isinstance(val, list):

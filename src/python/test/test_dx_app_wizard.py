@@ -19,7 +19,6 @@
 
 import os, sys, unittest, json, tempfile, subprocess
 import pexpect
-import pipes
 
 from dxpy_testutil import DXTestCase, check_output
 import dxpy_testutil as testutil
