@@ -23,7 +23,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, sys, json, re, collections, logging, argparse, string, itertools, subprocess, tempfile
 from functools import wraps
 from collections import namedtuple
-import pipes
+import shlex
 
 import dxpy
 from ..compat import USING_PYTHON2, open, Mapping
@@ -435,7 +435,7 @@ class DXExecDependencyInstaller(object):
                 dxpy.download_dxfile(bundle["id"], bundle["name"], project=dxpy.WORKSPACE_ID)
             except dxpy.exceptions.ResourceNotFound:
                 dxpy.download_dxfile(bundle["id"], bundle["name"])
-            self.run("dx-unpack {}".format(pipes.quote(bundle["name"])))
+            self.run("dx-unpack {}".format(shlex.quote(bundle["name"])))
         else:
             self.log('Skipping bundled dependency "{name}" because it does not refer to a file'.format(**bundle))
 

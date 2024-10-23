@@ -23,7 +23,7 @@ import dxpy
 import dxpy_testutil as testutil
 import json
 import os
-import pipes
+import shlex
 import pytest
 import shutil
 import tempfile
@@ -42,7 +42,7 @@ from dxpy.bindings.download_all_inputs import _get_num_parallel_threads
 def run(command, **kwargs):
     try:
         if isinstance(command, list) or isinstance(command, tuple):
-            print("$ %s" % " ".join(pipes.quote(f) for f in command))
+            print("$ %s" % " ".join(shlex.quote(f) for f in command))
             output = check_output(command, **kwargs)
         else:
             print("$ %s" % (command,))
@@ -919,30 +919,30 @@ class TestDXJobutilNewJob(DXTestCase):
             ),
             # instance type: mapping
             ("--instance-type " +
-                pipes.quote(json.dumps({"main": "mem2_hdd2_x2" , "other_function": "mem2_hdd2_x1" })),
+                shlex.quote(json.dumps({"main": "mem2_hdd2_x2" , "other_function": "mem2_hdd2_x1" })),
                 {"systemRequirements": {"main": { "instanceType": "mem2_hdd2_x2" },
                                         "other_function": { "instanceType": "mem2_hdd2_x1" }}}),
             ("--instance-type-by-executable " +
-                pipes.quote(json.dumps({"my_applet": {"main": "mem2_hdd2_x2",
+                shlex.quote(json.dumps({"my_applet": {"main": "mem2_hdd2_x2",
                                         "other_function": "mem3_ssd2_fpga1_x8"}})),
                 {"systemRequirementsByExecutable": {"my_applet": {"main": {"instanceType": "mem2_hdd2_x2"},
                                                     "other_function": {"instanceType": "mem3_ssd2_fpga1_x8"}}}}),
             ("--instance-type-by-executable " +
-             pipes.quote(json.dumps({"my_applet": {"main": "mem1_ssd1_v2_x2",
+             shlex.quote(json.dumps({"my_applet": {"main": "mem1_ssd1_v2_x2",
                                                    "other_function": "mem3_ssd2_fpga1_x8"}})) +
              " --extra-args " +
-                pipes.quote(json.dumps({"systemRequirementsByExecutable": {"my_applet": {"main": {"instanceType": "mem2_hdd2_x2", "clusterSpec": {"initialInstanceCount": 3}},
+                shlex.quote(json.dumps({"systemRequirementsByExecutable": {"my_applet": {"main": {"instanceType": "mem2_hdd2_x2", "clusterSpec": {"initialInstanceCount": 3}},
                                         "other_function": {"fpgaDriver": "edico-1.4.5"}}}})),
                 {"systemRequirementsByExecutable": {"my_applet":{"main": { "instanceType": "mem2_hdd2_x2", "clusterSpec":{"initialInstanceCount": 3}},
                                         "other_function": { "instanceType": "mem3_ssd2_fpga1_x8", "fpgaDriver": "edico-1.4.5"} }}}),
             # nvidia driver
             ("--instance-type-by-executable " +
-             pipes.quote(json.dumps({
+             shlex.quote(json.dumps({
                  "my_applet": {
                      "main": "mem1_ssd1_v2_x2",
                      "other_function": "mem2_ssd1_gpu_x16"}})) +
              " --extra-args " +
-             pipes.quote(json.dumps({
+             shlex.quote(json.dumps({
                  "systemRequirementsByExecutable": {
                      "my_applet": {
                          "main": {"instanceType": "mem2_hdd2_x2"},
@@ -963,14 +963,14 @@ class TestDXJobutilNewJob(DXTestCase):
             self.assertNewJobInputHash(cmd_snippet, arguments_hash)
 
     def test_extra_arguments(self):
-        cmd_snippet = "--extra-args " + pipes.quote(
+        cmd_snippet = "--extra-args " + shlex.quote(
             json.dumps({"details": {"d1": "detail1", "d2": 1234}, "foo": "foo_value"})
         )
         arguments_hash = {"details": {"d1": "detail1", "d2": 1234}, "foo": "foo_value"}
         self.assertNewJobInputHash(cmd_snippet, arguments_hash)
 
         # override previously specified args
-        cmd_snippet = "--name JobName --extra-args " + pipes.quote(
+        cmd_snippet = "--name JobName --extra-args " + shlex.quote(
             json.dumps({"name": "FinalName"})
         )
         arguments_hash = {"name": "FinalName"}
