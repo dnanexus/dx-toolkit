@@ -21,7 +21,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, unittest, json, tempfile, subprocess, shutil, re, base64, random, time
 import filecmp
-import pipes
+import shlex
 import stat
 import hashlib
 import collections
@@ -380,14 +380,14 @@ class TestDXClient(DXTestCase):
 
             # Test -f with valid JSON file.
             record_id = run("dx new record Ψ2 --brief").strip()
-            run("dx set_details Ψ2 -f " + pipes.quote(tmp_file.name))
+            run("dx set_details Ψ2 -f " + shlex.quote(tmp_file.name))
             dxrecord = dxpy.DXRecord(record_id)
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f with valid JSON input file failed.")
 
             # Test --details-file with valid JSON file.
             record_id = run("dx new record Ψ3 --brief").strip()
-            run("dx set_details Ψ3 --details-file " + pipes.quote(tmp_file.name))
+            run("dx set_details Ψ3 --details-file " + shlex.quote(tmp_file.name))
             dxrecord = dxpy.DXRecord(record_id)
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details,
@@ -400,16 +400,16 @@ class TestDXClient(DXTestCase):
             # Test above with invalid JSON file.
             record_id = run("dx new record Ψ4 --brief").strip()
             with self.assertSubprocessFailure(stderr_regexp="JSON", exit_code=3):
-                run("dx set_details Ψ4 -f " + pipes.quote(tmp_invalid_file.name))
+                run("dx set_details Ψ4 -f " + shlex.quote(tmp_invalid_file.name))
 
             # Test command with (-f or --details-file) and CL JSON.
             with self.assertSubprocessFailure(stderr_regexp="Error: Cannot provide both -f/--details-file and details",
                                               exit_code=3):
-                run("dx set_details Ψ4 '{ \"foo\":\"bar\" }' -f " + pipes.quote(tmp_file.name))
+                run("dx set_details Ψ4 '{ \"foo\":\"bar\" }' -f " + shlex.quote(tmp_file.name))
 
             # Test piping JSON from STDIN.
             record_id = run("dx new record Ψ5 --brief").strip()
-            run("cat " + pipes.quote(tmp_file.name) + " | dx set_details Ψ5 -f -")
+            run("cat " + shlex.quote(tmp_file.name) + " | dx set_details Ψ5 -f -")
             dxrecord = dxpy.DXRecord(record_id)
             details = dxrecord.get_details()
             self.assertEqual({"foo": "bar"}, details, msg="dx set_details -f - with valid JSON input failed.")
@@ -3332,6 +3332,53 @@ dx-jobutil-add-output record_array $second_record --array
             run("dx run " + applet_id +
                 " --instance-type-by-executable not-a-JSON-string")
 
+    def test_dx_run_clone_nvidia_driver(self):
+        """
+        Run the applet and clone the origin job. Verify nvidiaDriver value.
+        """
+        build_nvidia_version = "R535"
+        run_nvidia_version = "R470"
+
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "20.04",
+                                                     "version": "0",
+                                                     "code": "echo 'hello'",
+                                                     "systemRequirements": {
+                                                         "*": {
+                                                             "instanceType": "mem2_hdd2_x1",
+                                                             "nvidiaDriver": build_nvidia_version
+                                                         }
+                                                     }}
+                                         })['id']
+
+        # Run with unchanged nvidia version (build value)
+        origin_job_id = run(f"dx run {applet_id} --brief -y").strip().split('\n')[-1]
+        origin_job_desc = dxpy.api.job_describe(origin_job_id)
+        assert origin_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == build_nvidia_version
+
+        cloned_job_id = run(f"dx run --clone {origin_job_id} --brief -y").strip()
+        cloned_job_desc = dxpy.api.job_describe(cloned_job_id)
+        assert cloned_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == build_nvidia_version
+
+        # Change nvidia driver version in runtime - origin job (run value)
+        extra_args = json.dumps({"systemRequirements": {"*": {"nvidiaDriver": run_nvidia_version}}})
+        origin_job_id_nvidia_override = run(f"dx run {applet_id} --extra-args '{extra_args}' --brief -y").strip().split('\n')[-1]
+        origin_job_desc = dxpy.api.job_describe(origin_job_id_nvidia_override)
+        assert origin_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == run_nvidia_version
+
+        cloned_job_id_nvidia_override = run(f"dx run --clone {origin_job_id_nvidia_override} --brief -y").strip()
+        cloned_job_desc = dxpy.api.job_describe(cloned_job_id_nvidia_override)
+        assert cloned_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == run_nvidia_version
+
+        # Change nvidia driver version in runtime - cloned job (build value)
+        extra_args = json.dumps({"systemRequirements": {"*": {"nvidiaDriver": build_nvidia_version}}})
+        cloned_job_id_nvidia_override = run(f"dx run --clone {origin_job_id_nvidia_override} --extra-args '{extra_args}' --brief -y").strip()
+        cloned_job_desc = dxpy.api.job_describe(cloned_job_id_nvidia_override)
+        assert cloned_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == build_nvidia_version
+
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
                                          "dxapi": "1.0.0",
@@ -3626,12 +3673,14 @@ dx-jobutil-add-output record_array $second_record --array
         check_new_job_metadata(new_job_desc, orig_job_desc,
                                overridden_fields=['systemRequirements'])
 
-        # fpgaDriver override: new original job with extra_args
+        # fpgaDriver/nvidiaDriver override: new original job with extra_args
         orig_job_id = run("dx run " + other_applet_id +
                           " --instance-count 2 --brief -y " +
                           "--extra-args '" +
-                          json.dumps({"systemRequirements": {"some_ep": {"clusterSpec": {"initialInstanceCount": 12, "bootstrapScript": "z.sh"}, 
-                                                                         "fpgaDriver": "edico-1.4.5"}}}) + "'").strip()
+                          json.dumps({"systemRequirements": {"some_ep":
+                                                {"clusterSpec": {"initialInstanceCount": 12, "bootstrapScript": "z.sh"},
+                                                 "fpgaDriver": "edico-1.4.5",
+                                                 "nvidiaDriver": "R535"}}}) + "'").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
         check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 12, 2])
         # --instance-type and --instance-count override: instance type and cluster spec are resolved independently
@@ -3650,6 +3699,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
         
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.5')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['nvidiaDriver'], 'R535')
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['clusterSpec']['bootstrapScript'], 'z.sh')
 
         # --instance-type and --instance-type-by-executable override
@@ -5454,11 +5504,11 @@ class TestDXClientFind(DXTestCase):
     def test_dx_find_projects(self):
         unique_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(unique_project_name) as unique_project:
-            self.assertEqual(run("dx find projects --name " + pipes.quote(unique_project_name)),
+            self.assertEqual(run("dx find projects --name " + shlex.quote(unique_project_name)),
                              unique_project.get_id() + ' : ' + unique_project_name + ' (ADMINISTER)\n')
-            self.assertEqual(run("dx find projects --brief --name " + pipes.quote(unique_project_name)),
+            self.assertEqual(run("dx find projects --brief --name " + shlex.quote(unique_project_name)),
                              unique_project.get_id() + '\n')
-            json_output = json.loads(run("dx find projects --json --name " + pipes.quote(unique_project_name)))
+            json_output = json.loads(run("dx find projects --json --name " + shlex.quote(unique_project_name)))
             self.assertEqual(len(json_output), 1)
             self.assertEqual(json_output[0]['id'], unique_project.get_id())
 
@@ -5479,15 +5529,15 @@ class TestDXClientFind(DXTestCase):
         created_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(created_project_name) as unique_project:
             self.assertEqual(run("dx find projects --created-after=-1d --brief --name " +
-                             pipes.quote(created_project_name)), unique_project.get_id() + '\n')
+                             shlex.quote(created_project_name)), unique_project.get_id() + '\n')
             self.assertEqual(run("dx find projects --created-before=" + str(int(time.time() + 1000) * 1000) +
-                             " --brief --name " + pipes.quote(created_project_name)),
+                             " --brief --name " + shlex.quote(created_project_name)),
                              unique_project.get_id() + '\n')
             self.assertEqual(run("dx find projects --created-after=-1d --created-before=" +
                              str(int(time.time() + 1000) * 1000) + " --brief --name " +
-                             pipes.quote(created_project_name)), unique_project.get_id() + '\n')
+                             shlex.quote(created_project_name)), unique_project.get_id() + '\n')
             self.assertEqual(run("dx find projects --created-after=" + str(int(time.time() + 1000) * 1000) + " --name "
-                             + pipes.quote(created_project_name)), "")
+                             + shlex.quote(created_project_name)), "")
 
     def test_dx_find_projects_by_region(self):
         awseast = "aws:us-east-1"
@@ -5495,7 +5545,7 @@ class TestDXClientFind(DXTestCase):
         created_project_name = 'dx find projects test ' + str(time.time())
         with temporary_project(created_project_name, region=awseast) as unique_project:
             self.assertEqual(run("dx find projects --region {} --brief --name {}".format(
-                                 awseast, pipes.quote(created_project_name))),
+                                 awseast, shlex.quote(created_project_name))),
                              unique_project.get_id() + '\n')
             self.assertIn(unique_project.get_id(),
                           run("dx find projects --region {} --brief".format(awseast)))
@@ -5585,10 +5635,10 @@ class TestDXClientFind(DXTestCase):
     def test_dx_find_projects_phi(self):
         projectName = "tempProject+{t}".format(t=time.time())
         with temporary_project(name=projectName) as project_1:
-            res = run('dx find projects --phi true --brief --name ' + pipes.quote(projectName))
+            res = run('dx find projects --phi true --brief --name ' + shlex.quote(projectName))
             self.assertTrue(len(res) == 0, "Expected no PHI projects to be found")
 
-            res = run('dx find projects --phi false --brief --name ' + pipes.quote(projectName)).strip().split('\n')
+            res = run('dx find projects --phi false --brief --name ' + shlex.quote(projectName)).strip().split('\n')
             self.assertTrue(len(res) == 1, "Expected to find one project")
             self.assertTrue(res[0] == project_1.get_id())
 
@@ -6237,10 +6287,10 @@ class TestDXClientFindInOrg(DXTestCaseBuildApps):
             project1_id = project_1.get_id()
             dxpy.api.project_update(project1_id, {"billTo": self.org_id})
 
-            res = run('dx find org projects org-piratelabs --phi true --brief --name ' + pipes.quote(projectName))
+            res = run('dx find org projects org-piratelabs --phi true --brief --name ' + shlex.quote(projectName))
             self.assertTrue(len(res) == 0, "Expected no PHI projects to be found")
 
-            res = run('dx find org projects org-piratelabs --phi false --brief --name ' + pipes.quote(projectName)).strip().split("\n")
+            res = run('dx find org projects org-piratelabs --phi false --brief --name ' + shlex.quote(projectName)).strip().split("\n")
 
             self.assertTrue(len(res) == 1, "Expected to find one project")
             self.assertEqual(res[0], project1_id)
@@ -7381,7 +7431,7 @@ class TestDXClientUpdateProject(DXTestCase):
 
         #Update items one by one.
         for item in update_items:
-            run(self.cmd.format(pid=self.project, item=item, n=pipes.quote(update_items[item])))
+            run(self.cmd.format(pid=self.project, item=item, n=shlex.quote(update_items[item])))
             describe_input = {}
             describe_input[item] = 'true'
             self.assertEqual(self.project_describe(describe_input)[item],
@@ -7397,14 +7447,14 @@ class TestDXClientUpdateProject(DXTestCase):
                         'protected': 'false'}
 
         update_project_output = check_output(["dx", "update", "project", self.project, "--name",
-                pipes.quote(update_items['name']), "--summary", update_items['summary'], "--description",
+                shlex.quote(update_items['name']), "--summary", update_items['summary'], "--description",
                 update_items['description'], "--protected", update_items['protected']])
         update_project_json = json.loads(update_project_output);
         self.assertTrue("id" in update_project_json)
         self.assertEqual(self.project, update_project_json["id"])
 
         update_project_output = check_output(["dx", "update", "project", self.project, "--name",
-                pipes.quote(update_items['name']), "--summary", update_items['summary'], "--description",
+                shlex.quote(update_items['name']), "--summary", update_items['summary'], "--description",
                 update_items['description'], "--protected", update_items['protected'], "--brief"])
         self.assertEqual(self.project, update_project_output.rstrip("\n"))
 
@@ -7429,7 +7479,7 @@ class TestDXClientUpdateProject(DXTestCase):
         project_name = self.project_describe(describe_input)['name']
         new_name = 'Another Project Name' + str(time.time())
 
-        run(self.cmd.format(pid=project_name, item='name', n=pipes.quote(new_name)))
+        run(self.cmd.format(pid=project_name, item='name', n=shlex.quote(new_name)))
         result = self.project_describe(describe_input)
         self.assertEqual(result['name'], new_name)
 
