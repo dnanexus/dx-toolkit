@@ -6842,9 +6842,12 @@ class TestDXClientNewUser(DXTestCase):
 
         # Grant default org membership level and permission flags.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --brief".format(
+        try:
+            user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --brief".format(
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id)).strip()
+        finally:
+            print(open('/home/nucleustester/nucleus/var/log/authserver.log').read())
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
