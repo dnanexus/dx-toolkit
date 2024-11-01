@@ -6847,7 +6847,8 @@ class TestDXClientNewUser(DXTestCase):
                       cmd=cmd, u=username, e=email, f=first,
                       o=self.org_id)).strip()
         finally:
-            print(open('/home/nucleustester/nucleus/var/log/authserver.log').read())
+            import time
+            time.sleep(1800)
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
