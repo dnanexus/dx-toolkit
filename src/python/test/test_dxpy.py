@@ -139,6 +139,7 @@ class TestDXProject(unittest.TestCase):
             self.assertEqual(desc["databaseUIViewOnly"], False)
             self.assertEqual(desc["externalUploadRestricted"], False)
             self.assertEqual(desc["tags"], [])
+            self.assertTrue("databaseResultsRestricted" not in desc)
             prop = dxpy.api.project_describe(dxproject.get_id(),
                                              {'fields': {'properties': True}})
             self.assertEqual(prop['properties'], {})
@@ -192,6 +193,7 @@ class TestDXProject(unittest.TestCase):
                          download_restricted=True,
                          external_upload_restricted=False,
                          allowed_executables=["applet-abcdefghijklmnopqrstuzwx"],
+                         database_results_restricted=10,
                          description="new description")
         desc = dxproject.describe()
         self.assertEqual(desc["id"], self.proj_id)
@@ -203,13 +205,15 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["externalUploadRestricted"], False)
         self.assertEqual(desc["description"], "new description")
         self.assertEqual(desc["allowedExecutables"][0], "applet-abcdefghijklmnopqrstuzwx")
+        self.assertEqual(desc["databaseResultsRestricted"], 10)
         self.assertTrue("created" in desc)
 
-        dxproject.update(restricted=False, download_restricted=False, unset_allowed_executables=True)
+        dxproject.update(restricted=False, download_restricted=False, unset_allowed_executables=True, unset_database_results_restricted=True)
         desc = dxproject.describe()
         self.assertEqual(desc["restricted"], False)
         self.assertEqual(desc["downloadRestricted"], False)
         self.assertTrue("allowedExecutables" not in desc)
+        self.assertTrue("databaseResultsRestricted" not in desc)
 
     def test_new_list_remove_folders(self):
         dxproject = dxpy.DXProject()

@@ -285,6 +285,7 @@ class DXProject(DXContainer):
             restricted=None, download_restricted=None, contains_phi=None,
             tags=None, properties=None, bill_to=None, database_ui_view_only=None,
             external_upload_restricted=None, default_symlink=None,
+            database_results_restricted=None,
             **kwargs):
         """
         :param name: The name of the project
@@ -313,6 +314,8 @@ class DXProject(DXContainer):
         :type database_ui_view_only: boolean
         :param external_upload_restricted: If provided, whether project members can upload data to project from external sources, e.g. outside of job
         :type external_upload_restricted: boolean
+        :param database_results_restricted: If provided, minimum amount of data that project members with VIEW access can see from databases in the project
+        :type database_results_restricted: int
         :param default_symlink: If provided, the details needed to have writable symlinks in the project. Dict must include drive, container, and optional prefix.
         :type default_symlink: dict
 
@@ -346,6 +349,8 @@ class DXProject(DXContainer):
             input_hash["databaseUIViewOnly"] = database_ui_view_only
         if external_upload_restricted is not None:
             input_hash["externalUploadRestricted"] = external_upload_restricted
+        if database_results_restricted is not None:
+            input_hash["databaseResultsRestricted"] = database_results_restricted
         if tags is not None:
             input_hash["tags"] = tags
         if properties is not None:
@@ -360,7 +365,9 @@ class DXProject(DXContainer):
     def update(self, name=None, summary=None, description=None, protected=None,
                restricted=None, download_restricted=None, version=None,
                allowed_executables=None, unset_allowed_executables=None,
-               database_ui_view_only=None, external_upload_restricted=None, **kwargs):
+               database_ui_view_only=None, external_upload_restricted=None,
+               database_results_restricted=None, unset_database_results_restricted=None,
+               **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -376,10 +383,16 @@ class DXProject(DXContainer):
         :type download_restricted: boolean
         :param allowed_executables: If provided, these are the only executable ID(s) allowed to run as root executions in this project
         :type allowed_executables: list
+        :param unset_allowed_executables: If provided, removes any restrictions set by allowed_executables
+        :type unset_allowed_executables: boolean
         :param database_ui_view_only: If provided, whether the viewers on the project can access the database data directly
         :type database_ui_view_only: boolean
         :param external_upload_restricted: If provided, whether project members can upload data to project from external sources, e.g. outside of job
         :type external_upload_restricted: boolean
+        :param database_results_restricted: If provided, minimum amount of data that project members with VIEW access can see from databases in the project
+        :type database_results_restricted: int
+        :param unset_database_results_restricted: If provided, removes any restrictions set by database_results_restricted
+        :type unset_database_results_restricted: boolean
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
 
@@ -413,6 +426,10 @@ class DXProject(DXContainer):
             update_hash["databaseUIViewOnly"] = database_ui_view_only
         if external_upload_restricted is not None:
             update_hash["externalUploadRestricted"] = external_upload_restricted
+        if database_results_restricted is not None:
+            update_hash["databaseResultsRestricted"] = database_results_restricted
+        if unset_database_results_restricted is not None:
+            update_hash["databaseResultsRestricted"] = None
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):
