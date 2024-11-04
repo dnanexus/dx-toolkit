@@ -383,12 +383,16 @@ class DXProject(DXContainer):
         :type download_restricted: boolean
         :param allowed_executables: If provided, these are the only executable ID(s) allowed to run as root executions in this project
         :type allowed_executables: list
+        :param unset_allowed_executables: If provided, removes any restrictions set by allowed_executables
+        :type unset_allowed_executables: boolean
         :param database_ui_view_only: If provided, whether the viewers on the project can access the database data directly
         :type database_ui_view_only: boolean
         :param external_upload_restricted: If provided, whether project members can upload data to project from external sources, e.g. outside of job
         :type external_upload_restricted: boolean
         :param database_results_restricted: If provided, minimum amount of data that project members with VIEW access can see from databases in the project
         :type database_results_restricted: int
+        :param unset_database_results_restricted: If provided, removes any restrictions set by database_results_restricted
+        :type unset_database_results_restricted: boolean
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
 
