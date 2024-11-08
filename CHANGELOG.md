@@ -6,7 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [385.0] - beta
+## [386.0] - beta
+
+### Added
+
+* `--database-results-restricted` `--unset-database-results-restricted` for `dx new project`
+
+### Fixed
+
+* Remove pipes import for Python 3.13 compatibility
+
+## [385.0] - 2024.11.8
 
 ### Added
 
