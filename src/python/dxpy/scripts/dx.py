@@ -2481,7 +2481,7 @@ def find_data(args):
                                          visibility=args.visibility,
                                          properties=args.properties,
                                          name=args.name,
-                                         name_mode='glob',
+                                         name_mode=args.name_mode,
                                          typename=args.type,
                                          tags=args.tag, link=args.link,
                                          project=args.project,
@@ -6143,7 +6143,8 @@ parser_find_data.add_argument('--class', dest='classname', choices=['record', 'f
 )
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
-parser_find_data.add_argument('--name', help='Name of the object')
+parser_find_data.add_argument('--name', help='Search criteria for the object name, interpreted according to the --name-mode')
+parser_find_data.add_argument('--name-mode', default='glob', help='Name mode to use for searching', choices=['glob', 'exact', 'regexp'])
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
 parser_find_data.add_argument('--all-projects', '--allprojects', help='Extend search to all projects (excluding public projects)', action='store_true')
