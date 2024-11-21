@@ -139,7 +139,7 @@ class TestDXProject(unittest.TestCase):
             self.assertEqual(desc["databaseUIViewOnly"], False)
             self.assertEqual(desc["externalUploadRestricted"], False)
             self.assertEqual(desc["tags"], [])
-            self.assertTrue("databaseResultsRestricted" not in desc)
+            self.assertEqual(desc["databaseResultsRestricted"], None)
             prop = dxpy.api.project_describe(dxproject.get_id(),
                                              {'fields': {'properties': True}})
             self.assertEqual(prop['properties'], {})
@@ -213,7 +213,7 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["restricted"], False)
         self.assertEqual(desc["downloadRestricted"], False)
         self.assertTrue("allowedExecutables" not in desc)
-        self.assertTrue("databaseResultsRestricted" not in desc)
+        self.assertEqual(desc["databaseResultsRestricted"], None)
 
     def test_new_list_remove_folders(self):
         dxproject = dxpy.DXProject()
