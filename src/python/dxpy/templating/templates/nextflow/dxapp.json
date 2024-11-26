@@ -94,7 +94,7 @@
     "interpreter": "bash",
     "execDepends": [],
     "distribution": "Ubuntu",
-    "release": "20.04",
+    "release": "24.04",
     "version": "0"
   },
   "details": {
