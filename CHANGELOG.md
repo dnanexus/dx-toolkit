@@ -6,7 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [386.0] - beta
+## [387.0] - beta
+
+### Added
+
+* `--name-mode` parameter for `dx find data`
+
+### Fixed
+
+* Nonce generation for python 3
+
+## [386.0] - 2024.12.2
 
 ### Added
 
