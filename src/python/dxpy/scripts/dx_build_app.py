@@ -516,7 +516,7 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
 
     app_spec = _parse_app_spec(src_dir)
     builder_versions = {"12.04": "", "14.04": "_trusty", "16.04": "_xenial",
-                        "20.04": "_focal"}
+                        "20.04": "_focal", "24.04": "_noble"}
     release = app_spec['runSpec'].get('release')
     # Remote builder app/applet for 16.04 version 1
     if release == "16.04" and app_spec['runSpec'].get('version', '0') == '1':
