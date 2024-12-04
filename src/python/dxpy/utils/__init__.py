@@ -292,10 +292,10 @@ class Nonce:
     '''
     def __init__(self):
         try:
-            self.nonce = "%s%f" % (str(binascii.hexlify(os.urandom(32))), time.time())
+            self.nonce = "%s%f" % (binascii.hexlify(os.urandom(32)).decode('utf-8'), time.time())
         except:
             random.seed(time.time())
-            self.nonce = "%s%f" % (str(random.getrandbits(8*26)), time.time())
+            self.nonce = "%s%f" % (random.getrandbits(8*26), time.time())
 
     def __str__(self):
         return self.nonce

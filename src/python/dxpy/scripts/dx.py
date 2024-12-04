@@ -1432,6 +1432,8 @@ def new_project(args):
         inputs["containsPHI"] = True
     if args.database_ui_view_only:
         inputs["databaseUIViewOnly"] = True
+    if args.database_results_restricted is not None:
+        inputs["databaseResultsRestricted"] = args.database_results_restricted
     if args.monthly_compute_limit is not None:
         inputs["monthlyComputeLimit"] = args.monthly_compute_limit
     if args.monthly_egress_bytes_limit is not None:
@@ -2479,7 +2481,7 @@ def find_data(args):
                                          visibility=args.visibility,
                                          properties=args.properties,
                                          name=args.name,
-                                         name_mode='glob',
+                                         name_mode=args.name_mode,
                                          typename=args.type,
                                          tags=args.tag, link=args.link,
                                          project=args.project,
@@ -5427,6 +5429,9 @@ parser_update_project.add_argument('--bill-to', help="Update the user or org ID 
 allowed_executables_group = parser_update_project.add_mutually_exclusive_group()
 allowed_executables_group.add_argument('--allowed-executables', help='Executable ID(s) this project is allowed to run.  This operation overrides any existing list of executables.', type=str, nargs="+")
 allowed_executables_group.add_argument('--unset-allowed-executables', help='Removes any restriction to run executables as set by --allowed-executables', action='store_true')
+database_results_restricted_group = parser_update_project.add_mutually_exclusive_group()
+database_results_restricted_group.add_argument('--database-results-restricted', help='Viewers on the project can access only more than specified size of visual data from databases', type=positive_integer)
+database_results_restricted_group.add_argument('--unset-database-results-restricted', help='Removes any restriction to return data from databases as set by --database-results-restricted', action='store_true')
 
 parser_update_project.set_defaults(func=update_project)
 register_parser(parser_update_project, subparsers_action=subparsers_update, categories="metadata")
@@ -5813,6 +5818,7 @@ parser_new_project.add_argument('--phi', help='Add PHI protection to project', d
                                 action='store_true')
 parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the project cannot access database data directly', default=False,
                                 action='store_true')
+parser_new_project.add_argument('--database-results-restricted', help='Viewers on the project can access only more than specified size of visual data from databases', type=positive_integer)
 parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly project spending limit for compute')
 parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly project spending limit for egress (in Bytes)')
 parser_new_project.add_argument('--monthly-storage-limit', type=positive_number, help='Monthly project spending limit for storage')
@@ -6137,7 +6143,8 @@ parser_find_data.add_argument('--class', dest='classname', choices=['record', 'f
 )
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
-parser_find_data.add_argument('--name', help='Name of the object')
+parser_find_data.add_argument('--name', help='Search criteria for the object name, interpreted according to the --name-mode')
+parser_find_data.add_argument('--name-mode', default='glob', help='Name mode to use for searching', choices=['glob', 'exact', 'regexp'])
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
 parser_find_data.add_argument('--all-projects', '--allprojects', help='Extend search to all projects (excluding public projects)', action='store_true')
