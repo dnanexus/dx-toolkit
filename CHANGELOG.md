@@ -8,6 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
+* `dx build_asset` supports new Application Execution Environment based on Ubuntu 24.04
 * `dx build --remote` supports new Application Execution Environment based on Ubuntu 24.04
 
 ## [387.0] - beta
