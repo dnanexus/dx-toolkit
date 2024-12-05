@@ -1037,7 +1037,8 @@ def mv(args):
                 if src_results[0]['describe']['folder'] != dest_folder:
                     dxpy.api.project_move(src_proj,
                                           {"objects": [result['id'] for result in src_results],
-                                           "destination": dest_folder})
+                                           "destination": dest_folder,
+                                           "targetFileRelocation": args.target_file_relocation})
                 for result in src_results:
                     dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
                                        {"project": src_proj,
@@ -4803,6 +4804,7 @@ cp_sources_action = parser_cp.add_argument('sources', help='Objects and/or folde
                                            nargs='+')
 cp_sources_action.completer = DXPathCompleter()
 parser_cp.add_argument('destination', help=fill('Folder into which to copy the sources or new pathname (if only one source is provided).  Must be in a different project/container than all source paths.', width_adjustment=-15))
+parser_cp.add_argument('--target-file-relocation', help='Flag to allow symlink target file relocation in external storage while cloning a symlink.', default=False)
 parser_cp.set_defaults(func=cp)
 register_parser(parser_cp, categories='fs')
 
@@ -4818,6 +4820,7 @@ mv_sources_action = parser_mv.add_argument('sources', help='Objects and/or folde
                                            nargs='+')
 mv_sources_action.completer = DXPathCompleter()
 parser_mv.add_argument('destination', help=fill('Folder into which to move the sources or new pathname (if only one source is provided).  Must be in the same project/container as all source paths.', width_adjustment=-15))
+parser_mv.add_argument('--target-file-relocation', help='Flag to allow symlink target file relocation in external storage while moving a symlink.', default=False)
 parser_mv.set_defaults(func=mv)
 register_parser(parser_mv, categories='fs')
 
