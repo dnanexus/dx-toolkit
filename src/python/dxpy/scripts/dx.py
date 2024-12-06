@@ -1038,7 +1038,7 @@ def mv(args):
                     dxpy.api.project_move(src_proj,
                                           {"objects": [result['id'] for result in src_results],
                                            "destination": dest_folder,
-                                           "targetFileRelocation": args.target_file_relocation})
+                                           "targetFileRelocation": str(args.target_file_relocation).lower()})
                 for result in src_results:
                     dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
                                        {"project": src_proj,
@@ -1066,7 +1066,8 @@ def mv(args):
         dxpy.api.project_move(src_proj,
                               {"objects": src_objects,
                                "folders": src_folders,
-                               "destination": dest_path})
+                               "destination": dest_path,
+                               "targetFileRelocation": str(args.target_file_relocation).lower()})
     except:
         err_exit()
 

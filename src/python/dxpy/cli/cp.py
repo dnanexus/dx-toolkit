@@ -152,7 +152,7 @@ def cp(args):
                                      "folders": src_folders,
                                      "project": dest_proj,
                                      "destination": dest_path,
-                                     "targetFileRelocation": args.target_file_relocation})['exists']
+                                     "targetFileRelocation": str(args.target_file_relocation).lower()})['exists']
         if len(exists) > 0:
             print(fill('The following objects already existed in the destination container ' +
                        'and were left alone:') + '\n ' + '\n '.join(exists))
