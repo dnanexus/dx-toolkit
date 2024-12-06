@@ -4821,7 +4821,7 @@ mv_sources_action = parser_mv.add_argument('sources', help='Objects and/or folde
                                            nargs='+')
 mv_sources_action.completer = DXPathCompleter()
 parser_mv.add_argument('destination', help=fill('Folder into which to move the sources or new pathname (if only one source is provided).  Must be in the same project/container as all source paths.', width_adjustment=-15))
-parser_mv.add_argument('--target-file-relocation', help='Flag to allow symlink target file relocation in external storage while moving a symlink.', default=False)
+parser_mv.add_argument('--target-file-relocation', help='Allow symlink target file relocation in external storage while moving a symlink.', default=False)
 parser_mv.set_defaults(func=mv)
 register_parser(parser_mv, categories='fs')
 
