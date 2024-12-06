@@ -446,6 +446,10 @@ def get_update_project_args(args):
         input_params['allowedExecutables'] = args.allowed_executables
     if args.unset_allowed_executables:
         input_params['allowedExecutables'] = None
+    if args.database_results_restricted is not None:
+        input_params['databaseResultsRestricted'] = args.database_results_restricted
+    if args.unset_database_results_restricted:
+        input_params['databaseResultsRestricted'] = None
     if args.external_upload_restricted is not None:
         input_params['externalUploadRestricted'] = args.external_upload_restricted == 'true'
     return input_params

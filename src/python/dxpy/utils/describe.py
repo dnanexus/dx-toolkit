@@ -415,7 +415,7 @@ def print_project_desc(desc, verbose=False):
         'containsPHI', 'databaseUIViewOnly', 'externalUploadRestricted', 'region', 'storageCost', 'pendingTransfer',
         'atSpendingLimit', 'currentMonthComputeAvailableBudget', 'currentMonthEgressBytesAvailableBudget',
         'currentMonthStorageAvailableBudget', 'currentMonthComputeUsage', 'currentMonthEgressBytesUsage', 
-        'currentMonthExpectedStorageUsage', 'defaultSymlink'
+        'currentMonthExpectedStorageUsage', 'defaultSymlink', 'databaseResultsRestricted',
         # Following are app container-specific
         'destroyAt', 'project', 'type', 'app', 'appName'
     ]
@@ -455,6 +455,8 @@ def print_project_desc(desc, verbose=False):
         print_json_field('External Upload Restricted', desc['externalUploadRestricted'])
     if 'defaultSymlink' in desc and verbose:
         print_json_field('Default Symlink', desc['defaultSymlink'])
+    if 'databaseResultsRestricted' in desc and desc['databaseResultsRestricted']:
+        print_json_field('Database Results Restricted', desc['databaseResultsRestricted'])
 
     # Usage
     print_field("Created", render_timestamp(desc['created']))

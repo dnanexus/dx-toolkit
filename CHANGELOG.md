@@ -6,7 +6,32 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [385.0] - beta
+### Added
+
+* `dx build_asset` supports new Application Execution Environment based on Ubuntu 24.04
+* `dx build --remote` supports new Application Execution Environment based on Ubuntu 24.04
+
+## [387.0] - beta
+
+### Added
+
+* `--name-mode` parameter for `dx find data`
+
+### Fixed
+
+* Nonce generation for python 3
+
+## [386.0] - 2024.12.2
+
+### Added
+
+* `--database-results-restricted` `--unset-database-results-restricted` for `dx new project`
+
+### Fixed
+
+* Remove pipes import for Python 3.13 compatibility
+
+## [385.0] - 2024.11.8
 
 ### Added
 
