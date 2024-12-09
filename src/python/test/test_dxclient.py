@@ -738,6 +738,7 @@ class TestDXClient(DXTestCase):
         except:
             print("*** TODO: FIXME: Unable to verify that grandchild subprocess inherited session")
 
+    @pytest.mark.usefixtures("serial")
     def test_dx_ssh_config_revoke(self):
         original_ssh_public_key = None
 
@@ -792,6 +793,7 @@ class TestDXClient(DXTestCase):
     @testutil.update_traceability_matrix(["DNA_CLI_AUTH_CONFIGURE_SSH",
                                           "DNA_API_USR_MGMT_ADD_SSH_KEY",
                                           "DNA_API_EXE_ENABLE_SSH_ACCESS"])
+    @pytest.mark.usefixtures("serial")
     def test_dx_ssh_config(self):
         original_ssh_public_key = None
         try:
@@ -965,10 +967,12 @@ class TestDXClient(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_CONNECT_RUNNING_JOB"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @pytest.mark.usefixtures("serial")
     def test_dx_ssh(self):
         self._test_dx_ssh(self.project, "mem2_ssd1_v2_x2")
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS and testutil.TEST_AZURE, "Skipping test that would run jobs in Azure")
+    @pytest.mark.usefixtures("serial")
     def test_dx_ssh_azure(self):
         azure_project = dxpy.api.project_new({"name": "test_dx_ssh_azure", "region": testutil.TEST_AZURE})['id']
         try:
@@ -1099,6 +1103,7 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                          'skipping HTTP Proxy support test that needs squid3')
+    @pytest.mark.usefixtures("serial")
     def test_dx_ssh_proxy(self):
         self._test_dx_ssh_proxy(self.project, "mem2_ssd1_v2_x2")
 
@@ -1107,6 +1112,7 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_HTTP_PROXY,
                          'skipping HTTP Proxy support test that needs squid3')
     @unittest.skipUnless(testutil.TEST_AZURE, 'skipping test that runs on Azure')
+    @pytest.mark.usefixtures("serial")
     def test_dx_ssh_proxy_azure(self):
         azure_project = dxpy.api.project_new({"name": "test_dx_ssh_azure", "region": testutil.TEST_AZURE})['id']
         try:
@@ -1117,6 +1123,7 @@ class TestDXClient(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_API_EXE_ENABLE_DEBUG_HOLD"])
+    @pytest.mark.usefixtures("serial")
     def test_dx_run_debug_on(self):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
@@ -1147,6 +1154,7 @@ class TestDXClient(DXTestCase):
             dx.expect("dnanexus@", timeout=1200)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @pytest.mark.usefixtures("serial")
     def test_dx_run_debug_on_all(self):
         with self.configure_ssh() as wd:
             crash_applet = dxpy.api.applet_new(dict(name="crash",
@@ -1163,6 +1171,7 @@ class TestDXClient(DXTestCase):
             self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'ExecutionError'])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @pytest.mark.usefixtures("serial")
     def test_dx_run_allow_ssh(self):
         with self.configure_ssh() as wd:
             applet_id = dxpy.api.applet_new({"project": self.project,
@@ -1213,6 +1222,7 @@ class TestDXClient(DXTestCase):
             run("dx terminate {}".format(job_id), env=override_environment(HOME=wd))
     
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @pytest.mark.usefixtures("serial")
     def test_dx_ssh_allow_ssh(self):
         with self.configure_ssh() as wd:
             applet_id = dxpy.api.applet_new({"project": self.project,
@@ -1280,6 +1290,7 @@ class TestDXClient(DXTestCase):
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_HELP_JUPYTER_NOTEBOOK"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    @pytest.mark.usefixtures("serial")
     def test_dx_notebook(self):
         with self.configure_ssh() as wd:
             run("dx notebook jupyter_notebook --only_check_config", env=override_environment(HOME=wd))
@@ -2947,6 +2958,7 @@ dx-jobutil-add-output record_array $second_record --array
     @testutil.update_traceability_matrix(["DNA_CLI_EXE_WATCH_LOGS", "DNA_CLI_EXE_TERMINATE"])
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
+    @pytest.mark.usefixtures("serial")
     def test_dx_run_priority(self):
         ### Helper functions
         def _get_analysis_id(dx_run_output):
