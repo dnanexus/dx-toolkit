@@ -6,13 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [388.0] - beta
+
 ### Added
 
 * `dx build_asset` supports new Application Execution Environment based on Ubuntu 24.04
 * `dx build --remote` supports new Application Execution Environment based on Ubuntu 24.04
 * Nextflow support added in new region aws:me-south-1
+* `--target-file-relocation` parameter for `dx mv` and `dx cp`
 
-## [387.0] - beta
+## [387.0] - 2024.12.16
 
 ### Added
 
