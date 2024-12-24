@@ -24,28 +24,21 @@
     "aws:us-east-1": {
       "systemRequirements": {
         "*": {
-          "instanceType": "mem2_ssd1_x2"
+          "instanceType": "mem2_ssd1_v2_x2"
         }
       }
     },
     "aws:ap-southeast-2": {
       "systemRequirements": {
         "*": {
-          "instanceType": "mem2_ssd1_x2"
-        }
-      }
-    },
-    "aws:cn-north-1": {
-      "systemRequirements": {
-        "*": {
-          "instanceType": "mem2_ssd1_x2"
+          "instanceType": "mem2_ssd1_v2_x2"
         }
       }
     },
     "aws:eu-central-1": {
       "systemRequirements": {
         "*": {
-          "instanceType": "mem2_ssd1_x2"
+          "instanceType": "mem2_ssd1_v2_x2"
         }
       }
     },

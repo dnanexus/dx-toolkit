@@ -4,7 +4,7 @@
 Documentation on classes and methods:
 
 .. toctree::
-   :maxdepth: 9
+   :maxdepth: 1
 
    dxpy_bindings
    dxpy_functions

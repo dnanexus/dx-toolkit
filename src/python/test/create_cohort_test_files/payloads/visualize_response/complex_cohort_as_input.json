@@ -1,0 +1,32 @@
+{
+    "dataset": "record-GYK2zyQ0g1bx86fBp2X8KpjY",
+    "schema": "create_cohort_schema",
+    "version": "3.0",
+    "datasetVersion": "3.0",
+    "url": "https://vizserver.us-east-1-stg.apollo.dnanexus.com",
+    "datasetLoaded": false,
+    "datasetUpdated": true,
+    "description": "",
+    "recordName": "complex_cohort",
+    "recordState": "closed",
+    "recordTypes": [
+        "DatabaseQuery",
+        "CohortBrowser"
+    ],
+    "recordProject": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "datasetName": "create_cohort_pheno_dataset",
+    "datasetDescription": "Dataset: create_cohort_pheno_dataset",
+    "datasetRecordName": "create_cohort_pheno_dataset",
+    "datasetRecordState": "closed",
+    "datasetRecordProject": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "databases": [
+        "database-GYK2yg00vGPpzj7YGY3VJxb9"
+    ],
+    "dashboardViews": [],
+    "sql": "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN (SELECT `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` WHERE `patient_id` in ('patient_1', 'patient_2', 'patient_3'))",
+    "baseSql": "SELECT `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` WHERE `patient_id` in ('patient_1', 'patient_2', 'patient_3')",
+    "downloadRestricted": false,
+    "containsPHI": false,
+    "restrictedProjects": [],
+    "clipboardRestricted": false
+}

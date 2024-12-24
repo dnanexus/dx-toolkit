@@ -1,0 +1,118 @@
+{
+    "dataset": "record-GYK2zyQ0g1bx86fBp2X8KpjY",
+    "schema": "create_cohort_schema",
+    "version": "3.0",
+    "datasetVersion": "3.0",
+    "url": "https://vizserver.us-east-1-stg.apollo.dnanexus.com",
+    "datasetLoaded": false,
+    "datasetUpdated": true,
+    "name": "pheno_cohort_primary_key_not_in_logic_and_as_input",
+    "description": "",
+    "recordName": "pheno_cohort_primary_key_not_in_logic_and_as_input",
+    "recordState": "closed",
+    "recordTypes": [
+        "DatabaseQuery",
+        "CohortBrowser"
+    ],
+    "recordProject": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "datasetName": "create_cohort_pheno_dataset",
+    "datasetDescription": "Dataset: create_cohort_pheno_dataset",
+    "datasetRecordName": "create_cohort_pheno_dataset",
+    "datasetRecordState": "closed",
+    "datasetRecordProject": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "databases": [
+        "database-GYK2yg00vGPpzj7YGY3VJxb9"
+    ],
+    "dashboardViews": [],
+    "dashboardConfig": {
+        "cohort_browser": {
+            "config": {
+                "showHeader": true,
+                "showFooter": true,
+                "showFilter": true
+            },
+            "id": "cohort_browser",
+            "type": "cohort_browser",
+            "containers": [
+                {
+                    "id": "dashboard_tiles",
+                    "title": "Overview",
+                    "tiles": [],
+                    "type": "FieldsAsTiles",
+                    "options": {}
+                },
+                {
+                    "id": "ted_container",
+                    "title": "Data Preview",
+                    "tiles": [
+                        {
+                            "id": "ted@patient",
+                            "title": "Patients",
+                            "type": "Table",
+                            "dataQuery": {
+                                "fields": {
+                                    "patient$patient_id": "patient$patient_id"
+                                },
+                                "entity": "patient"
+                            },
+                            "options": {
+                                "columns": [
+                                    {
+                                        "id": "patient$patient_id",
+                                        "title": "Patient ID",
+                                        "isPinned": true,
+                                        "isPrimary": true
+                                    }
+                                ]
+                            },
+                            "layout": {
+                                "height": 1,
+                                "width": 1
+                            }
+                        }
+                    ],
+                    "type": "TedContainer",
+                    "options": {}
+                }
+            ]
+        }
+    },
+    "filters": {
+        "pheno_filters": {
+            "compound": [
+                {
+                    "name": "phenotype",
+                    "logic": "and",
+                    "filters": {
+                        "patient$patient_id": [
+                            {
+                                "condition": "not-in",
+                                "values": [
+                                    "patient_8",
+                                    "patient_9"
+                                ]
+                            }
+                        ]
+                    },
+                    "entity": {
+                        "logic": "and",
+                        "name": "patient",
+                        "operator": "exists",
+                        "children": []
+                    }
+                }
+            ],
+            "logic": "and"
+        },
+        "assay_filters": {
+            "compound": [],
+            "logic": "and"
+        },
+        "logic": "and"
+    },
+    "sql": "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_gyk2yg00vgppzj7ygy3vjxb9__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` NOT IN ('patient_8', 'patient_9') OR `patient_1`.`patient_id` IS NULL",
+    "downloadRestricted": false,
+    "containsPHI": false,
+    "restrictedProjects": [],
+    "clipboardRestricted": false
+}

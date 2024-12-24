@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # coding: utf-8
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
@@ -20,9 +20,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, datetime, getpass, collections, re, json, argparse, copy, hashlib, io, time, subprocess, glob, logging, functools
-import shlex # respects quoted substrings when splitting
 
-import requests
 import csv
 
 logging.basicConfig(level=logging.INFO)
@@ -36,25 +34,26 @@ decode_command_line_args()
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy import workflow_builder
-from dxpy.exceptions import PermissionDenied
+from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
+from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic, create_cohort, extract_assay_expression
 from ..cli.download import (download_one_file, download_one_database_file, download)
-from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, parser_dataobject_args,
+from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
                            process_single_dataobject_output_args, find_executions_args, add_find_executions_search_gp,
                            set_env_from_args, extra_args, process_extra_args, DXParserError, exec_input_args,
-                           instance_type_arg, process_instance_type_arg, process_instance_count_arg, get_update_project_args,
-                           property_args, tag_args, contains_phi, process_phi_param)
+                           instance_type_arg, process_instance_type_arg, process_instance_type_by_executable_arg, process_instance_count_arg, get_update_project_args,
+                           property_args, tag_args, contains_phi, process_phi_param, process_external_upload_restricted_param)
 from ..cli.exec_io import (ExecutableInputs, format_choices_or_suggestions)
 from ..cli.org import (get_org_invite_args, add_membership, remove_membership, update_membership, new_org, update_org,
                        find_orgs, org_find_members, org_find_projects, org_find_apps)
 from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exceptions, default_expected_exceptions,
                           format_exception)
-from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input
+from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input, merge
 from ..utils.batch_utils import (batch_run, batch_launch_args)
 
 from ..app_categories import APP_CATEGORIES
@@ -62,7 +61,7 @@ from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, 
                               DNANEXUS_X, set_colors, set_delimiter, get_delimiter, DELIMITER, fill,
                               tty_rows, tty_cols, pager, format_find_results, nostderr)
 from ..utils.pretty_print import format_tree, format_table
-from ..utils.resolver import (pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
+from ..utils.resolver import (clean_folder_path, pick, paginate_and_pick, is_hashid, is_data_obj_id, is_container_id, is_job_id,
                               is_analysis_id, get_last_pos_of_char, resolve_container_id_or_name, resolve_path,
                               resolve_existing_path, get_app_from_path, resolve_app, resolve_global_executable, get_exec_handler,
                               split_unescaped, ResolutionError, resolve_to_objects_or_project, is_project_explicit,
@@ -72,7 +71,11 @@ from ..utils.completer import (path_completer, DXPathCompleter, DXAppCompleter, 
 from ..utils.describe import (print_data_obj_desc, print_desc, print_ls_desc, get_ls_l_desc, print_ls_l_header,
                               print_ls_l_desc, get_ls_l_desc_fields, get_io_desc, get_find_executions_string)
 from ..system_requirements import SystemRequirementsDict
-
+try:
+   from urllib.parse import urlparse
+except:
+    # Python 2
+   from urlparse import urlparse
 try:
     import colorama
     colorama.init()
@@ -92,16 +95,14 @@ if '_ARGCOMPLETE' not in os.environ:
         if 'TERM' in os.environ and os.environ['TERM'].startswith('xterm'):
             old_term_setting = os.environ['TERM']
             os.environ['TERM'] = 'vt100'
-        # gnureadline required on macos
         try:
+            # Import gnureadline if installed for macOS
             import gnureadline as readline
-        except ImportError:
+        except ImportError as e:
             import readline
         if old_term_setting:
             os.environ['TERM'] = old_term_setting
 
-        if readline.__doc__ and 'libedit' in readline.__doc__:
-            print('Warning: incompatible readline module detected (libedit), tab completion disabled', file=sys.stderr)
     except ImportError:
         if os.name != 'nt':
             print('Warning: readline module is not available, tab completion disabled', file=sys.stderr)
@@ -716,7 +717,7 @@ def cd(args):
 
     try:
         dxproj = dxpy.get_handler(dxpy.WORKSPACE_ID)
-        dxproj.list_folder(folder=folderpath)
+        dxproj.list_folder(folder=folderpath, only='folders')
     except:
         err_exit(fill(folderpath + ': No such file or directory found in project ' + dxpy.WORKSPACE_ID), 3)
 
@@ -1036,7 +1037,8 @@ def mv(args):
                 if src_results[0]['describe']['folder'] != dest_folder:
                     dxpy.api.project_move(src_proj,
                                           {"objects": [result['id'] for result in src_results],
-                                           "destination": dest_folder})
+                                           "destination": dest_folder,
+                                           "targetFileRelocation": args.target_file_relocation})
                 for result in src_results:
                     dxpy.DXHTTPRequest('/' + result['id'] + '/rename',
                                        {"project": src_proj,
@@ -1064,7 +1066,8 @@ def mv(args):
         dxpy.api.project_move(src_proj,
                               {"objects": src_objects,
                                "folders": src_folders,
-                               "destination": dest_path})
+                               "destination": dest_path,
+                               "targetFileRelocation": args.target_file_relocation})
     except:
         err_exit()
 
@@ -1137,9 +1140,10 @@ def describe(args):
                 print(get_result_str())
                 print_desc(desc, args.verbose)
             found_match = True
-        except dxpy.DXAPIError as details:
-            if details.code != requests.codes.not_found:
-                raise
+        except dxpy.DXAPIError as e:
+            if not isinstance(e, ResourceNotFound):
+                raise e
+
         return found_match
 
     def find_global_executable(json_output, args):
@@ -1176,22 +1180,48 @@ def describe(args):
         # Attempt to resolve name
         # First, if it looks like a hash id, do that.
         json_input = {}
+        extra_fields = []
         json_input["properties"] = True
         if args.name and (args.verbose or args.details or args.json):
             raise DXCLIError('Cannot request --name in addition to one of --verbose, --details, or --json')
         # Always retrieve details too (just maybe don't render them)
         json_input["details"] = True
         if is_data_obj_id(args.path):
-            # Should prefer the current project's version if possible
+            # Prefer the current project's version if possible
             if dxpy.WORKSPACE_ID is not None:
                 try:
-                    # But only put it in the JSON if you still have
-                    # access.
-                    dxpy.api.project_list_folder(dxpy.WORKSPACE_ID)
+                    # But only put it in the JSON if you still have access
+                    dxpy.api.project_describe(dxpy.WORKSPACE_ID, input_params={"fields": {"id": True}})
                     json_input['project'] = dxpy.WORKSPACE_ID
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
+
+        if is_job_id(args.path):
+            extra_fields.append('spotCostSavings')
+            if args.verbose:
+                extra_fields.append('internetUsageIPs')
+                extra_fields.append('runSystemRequirements')
+                extra_fields.append('runSystemRequirementsByExecutable')
+                extra_fields.append('mergedSystemRequirementsByExecutable')
+                extra_fields.append('jobLogsForwardingStatus')
+
+        if is_analysis_id(args.path):
+            extra_fields.append('spotCostSavings')
+            if args.verbose:
+                extra_fields.append('runSystemRequirements')
+                extra_fields.append('runSystemRequirementsByExecutable')
+                extra_fields.append('mergedSystemRequirementsByExecutable')
+                extra_fields.append('runStageSystemRequirements')
+
+        if len(extra_fields) > 0:
+            json_input['defaultFields'] = True
+            json_input['fields'] = {field: True for field in extra_fields}
+
+        if args.job_try is not None:
+            if not is_job_id(args.path):
+                err_exit('Parameter --try T can be used only when describing jobs')
+            json_input['try'] = args.job_try
 
         # Otherwise, attempt to look for it as a data object or
         # execution
@@ -1237,9 +1267,9 @@ def describe(args):
                     else:
                         print(get_result_str())
                         print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
             elif is_container_id(args.path):
                 try:
                     desc = dxpy.api.project_describe(args.path, json_input)
@@ -1251,15 +1281,18 @@ def describe(args):
                     else:
                         print(get_result_str())
                         print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
 
         # Found data object or is an id
         if entity_results is not None:
             if len(entity_results) > 0:
                 found_match = True
             for result in entity_results:
+                if is_analysis_id(result['id']) and args.verbose:
+                    default_analysis_desc = dxpy.DXAnalysis(result['id']).describe()
+                    result['describe'].update(default_analysis_desc)
                 if args.json:
                     json_output.append(result['describe'])
                 elif args.name:
@@ -1290,9 +1323,9 @@ def describe(args):
                     else:
                         print(get_result_str())
                         print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
             elif args.path.startswith('org-') or args.path.startswith('team-'):
                 # Org or team
                 try:
@@ -1305,9 +1338,9 @@ def describe(args):
                     else:
                         print(get_result_str())
                         print_desc(desc, args.verbose)
-                except dxpy.DXAPIError as details:
-                    if details.code != requests.codes.not_found:
-                        raise
+                except dxpy.DXAPIError as e:
+                    if not isinstance(e, ResourceNotFound):
+                        raise e
 
         if args.json:
             if args.multi:
@@ -1356,6 +1389,8 @@ def _get_user_new_args(args):
         user_new_args["occupation"] = args.occupation
     if args.set_bill_to is True:
         user_new_args["billTo"] = args.org
+    if args.on_behalf_of is not None:
+        user_new_args["provisioningOrg"] = args.on_behalf_of
     return user_new_args
 
 
@@ -1399,7 +1434,18 @@ def new_project(args):
         inputs["containsPHI"] = True
     if args.database_ui_view_only:
         inputs["databaseUIViewOnly"] = True
-
+    if args.database_results_restricted is not None:
+        inputs["databaseResultsRestricted"] = args.database_results_restricted
+    if args.monthly_compute_limit is not None:
+        inputs["monthlyComputeLimit"] = args.monthly_compute_limit
+    if args.monthly_egress_bytes_limit is not None:
+        inputs["monthlyEgressBytesLimit"] = args.monthly_egress_bytes_limit
+    if args.monthly_storage_limit is not None:
+        inputs["monthlyStorageLimit"] = args.monthly_storage_limit
+    if args.default_symlink is not None:
+        inputs["defaultSymlink"] = json.loads(args.default_symlink)
+    if args.drive is not None:
+        inputs["drive"] = args.drive
     try:
         resp = dxpy.api.project_new(inputs)
         if args.brief:
@@ -1471,14 +1517,18 @@ def set_visibility(args):
 
 def get_details(args):
     # Attempt to resolve name
-    _project, _folderpath, entity_result = try_call(resolve_existing_path,
+    project, _folderpath, entity_result = try_call(resolve_existing_path,
                                                     args.path, expected='entity')
 
     if entity_result is None:
         err_exit(fill('Could not resolve "' + args.path + '" to a name or ID'), 3)
+    
+    input_params = {}
+    if project is not None:
+        input_params['project'] = project
 
     try:
-        print(json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', {}), indent=4))
+        print(json.dumps(dxpy.DXHTTPRequest('/' + entity_result['id'] + '/getDetails', input_params), indent=4))
     except:
         err_exit()
 
@@ -1578,11 +1628,16 @@ def add_tags(args):
                                                     args.all)
 
     if entity_results is not None:
+        payload = {"project": project, "tags": args.tags}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/addTags',
-                                   {"project": project,
-                                    "tags": args.tags})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/addTags', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1591,6 +1646,9 @@ def add_tags(args):
     elif not project.startswith('project-'):
         err_exit('Cannot add tags to a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
+
         try:
             dxpy.DXHTTPRequest('/' + project + '/addTags',
                                {"tags": args.tags})
@@ -1605,11 +1663,16 @@ def remove_tags(args):
                                                     args.all)
 
     if entity_results is not None:
+        payload = {"project": project, "tags": args.tags}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags',
-                                   {"project": project,
-                                    "tags": args.tags})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/removeTags', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1618,6 +1681,9 @@ def remove_tags(args):
     elif not project.startswith('project-'):
         err_exit('Cannot remove tags from a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
+
         try:
             dxpy.DXHTTPRequest('/' + project + '/removeTags',
                                {"tags": args.tags})
@@ -1659,11 +1725,16 @@ def set_properties(args):
 
     try_call(process_properties_args, args)
     if entity_results is not None:
+        payload = {"project": project, "properties": args.properties}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
-                                   {"project": project,
-                                    "properties": args.properties})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1672,6 +1743,8 @@ def set_properties(args):
     elif not project.startswith('project-'):
         err_exit('Cannot set properties on a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
         try:
             dxpy.api.project_set_properties(project, {"properties": args.properties})
         except:
@@ -1687,11 +1760,16 @@ def unset_properties(args):
     for prop in args.properties:
         properties[prop] = None
     if entity_results is not None:
+        payload = {"project": project, "properties": properties}
+
+        if args.job_try is not None and any(map(lambda x: not is_job_id(x['id']), entity_results)):
+            err_exit('Parameter --try T can be used only with jobs')
+
         for result in entity_results:
+            if args.job_try is not None:
+                payload['try'] = args.job_try
             try:
-                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties',
-                                   {"project": project,
-                                    "properties": properties})
+                dxpy.DXHTTPRequest('/' + result['id'] + '/setProperties', payload)
             except (dxpy.DXAPIError,) + network_exceptions as details:
                 print(format_exception(details), file=sys.stderr)
                 had_error = True
@@ -1700,6 +1778,8 @@ def unset_properties(args):
     elif not project.startswith('project-'):
         err_exit('Cannot unset properties on a non-project data container', 3)
     else:
+        if args.job_try is not None:
+            err_exit('Parameter --try T can be used only with jobs')
         try:
             dxpy.api.project_set_properties(project, {"properties": properties})
         except:
@@ -2093,7 +2173,25 @@ def find_executions(args):
     origin = None
     more_results = False
     include_io = (args.verbose and args.json) or args.show_outputs
+    include_internet_usage_ips = args.verbose and args.json
+    include_restarted = args.include_restarted
+    if args.classname == 'job':
+        describe_args = {
+        "defaultFields": True,
+        "fields": {
+            "runInput": include_io,
+            "originalInput": include_io,
+            "input": include_io,
+            "output": include_io,
+            "internetUsageIPs": include_internet_usage_ips
+        }
+    }
+    else:
+        describe_args = {"io": include_io}
     id_desc = None
+
+    # DEVEX-2277: Increase limit by max number of retries (10) for resorting
+    jobs_to_fetch = args.num_results if args.trees else args.num_results + 10
 
     # Now start parsing flags
     if args.id is not None:
@@ -2123,7 +2221,7 @@ def find_executions(args):
              'state': args.state,
              'origin_job': origin,
              'parent_job': "none" if args.origin_jobs else args.parent,
-             'describe': {"io": include_io},
+             'describe': describe_args,
              'created_after': args.created_after,
              'created_before': args.created_before,
              'name': args.name,
@@ -2131,46 +2229,99 @@ def find_executions(args):
              'tags': args.tag,
              'properties': args.properties,
              'include_subjobs': False if args.no_subjobs else True,
-             'root_execution': args.root_execution}
-    if args.num_results < 1000 and not args.trees:
-        query['limit'] = args.num_results + 1
+             'root_execution': args.root_execution,
+             'include_restarted': include_restarted}
+    if jobs_to_fetch < 1000 and not args.trees:
+        query['limit'] = jobs_to_fetch + 1
 
     json_output = []                        # for args.json
 
-    def build_tree(root, executions_by_parent, execution_descriptions, is_cached_result=False):
+    class ExecutionId:
+
+        def __init__(self, id, try_num=None):
+            self.id = id
+            self.try_num = try_num if try_num is not None else -1
+
+        def __eq__(self, other):
+            if not isinstance(other, ExecutionId):
+                return NotImplemented
+
+            return self.id == other.id and self.try_num == other.try_num
+
+        def __hash__(self):
+            return hash((self.id, self.try_num))
+
+        def __str__(self):
+            return "%s_%d" % (self.id, self.try_num)
+
+        def __repr__(self):
+            return "ExecutionId(execution_id='%s',retry_num=%d)" % (self.id, self.try_num)
+
+    def print_brief(job_id, job_try, has_retries):
+        print(job_id + (" try %d" % job_try if has_retries and include_restarted and job_try is not None else ""))
+
+    def build_tree(root, root_try, executions_by_parent, execution_descriptions, execution_retries):
         tree, root_string = {}, ''
+        # When try is not explicitly specified, use the most recent try
+        execution_id = ExecutionId(root, root_try if root_try is not None else execution_retries[root][0])
+        root_has_retries = len(execution_retries[root]) > 1
+        root_has_children = execution_id in executions_by_parent
+        root_has_reused_output = execution_descriptions[execution_id].get('outputReusedFrom') is not None
+
+        if root_try is None:
+            if root_has_retries:
+                if not args.json and not args.brief:
+                    root_string = get_find_executions_string(execution_descriptions[execution_id],
+                                                        has_children=root_has_children,
+                                                        show_outputs=args.show_outputs,
+                                                        is_cached_result=root_has_reused_output,
+                                                        show_try=include_restarted,
+                                                        as_try_group_root=True)
+                    tree[root_string] = collections.OrderedDict()
+                for rtry in execution_retries[root]:
+                    subtree, _ = build_tree(root, rtry, executions_by_parent, execution_descriptions, execution_retries)
+                    if tree:
+                        tree[root_string].update(subtree)
+                return tree, root_string
+            else:
+                return build_tree(root, execution_retries[root][0], executions_by_parent, execution_descriptions, execution_retries)
+
         if args.json:
-            json_output.append(execution_descriptions[root])
+            json_output.append(execution_descriptions[execution_id])
         elif args.brief:
-            print(root)
+            print_brief(root, root_try, root_has_retries)
         else:
-            root_string = get_find_executions_string(execution_descriptions[root],
-                                                     has_children=root in executions_by_parent,
+            root_string = get_find_executions_string(execution_descriptions[execution_id],
+                                                     has_children=root_has_children,
                                                      show_outputs=args.show_outputs,
-                                                     is_cached_result=is_cached_result)
+                                                     is_cached_result=root_has_reused_output,
+                                                     show_try=include_restarted and root_has_retries)
             tree[root_string] = collections.OrderedDict()
-        for child_execution in executions_by_parent.get(root, {}):
-            child_is_cached_result = is_cached_result or (execution_descriptions[child_execution].get('outputReusedFrom') is not None)
+        for child_execution in executions_by_parent.get(execution_id, {}):
             subtree, _subtree_root = build_tree(child_execution,
+                                                execution_retries[child_execution][0] if len(execution_retries[child_execution]) == 1 else None,
                                                 executions_by_parent,
                                                 execution_descriptions,
-                                                is_cached_result=child_is_cached_result)
+                                                execution_retries)
             if tree:
                 tree[root_string].update(subtree)
+
         return tree, root_string
 
-    def process_tree(result, executions_by_parent, execution_descriptions):
-        is_cached_result = False
-        if 'outputReusedFrom' in result and result['outputReusedFrom'] is not None:
-            is_cached_result = True
-        tree, root = build_tree(result['id'], executions_by_parent, execution_descriptions, is_cached_result)
+    def process_tree(root_id, executions_by_parent, execution_descriptions, executions_retries):
+        tree, root = build_tree(root_id, None, executions_by_parent, execution_descriptions, executions_retries)
         if tree:
             print(format_tree(tree[root], root))
 
     try:
         num_processed_results = 0
         roots = collections.OrderedDict()
+        execution_retries = collections.defaultdict(set)
+        executions_cache = []
+
         for execution_result in dxpy.find_executions(**query):
+            execution_id = ExecutionId(execution_result['id'], execution_result['describe'].get('try'))
+
             if args.trees:
                 if args.classname == 'job':
                     root = execution_result['describe']['originJob']
@@ -2180,33 +2331,52 @@ def find_executions(args):
                     num_processed_results += 1
             else:
                 num_processed_results += 1
+                executions_cache.append(execution_result)
 
-            if (num_processed_results > args.num_results):
+            execution_retries[execution_id.id].add(execution_id.try_num)
+
+            if num_processed_results > jobs_to_fetch:
                 more_results = True
                 break
 
-            if args.json:
-                json_output.append(execution_result['describe'])
-            elif args.trees:
+            if args.trees:
                 roots[root] = root
                 if args.classname == 'analysis' and root.startswith('job-'):
                     # Analyses in trees with jobs at their root found in "dx find analyses" are displayed unrooted,
                     # and only the last analysis found is displayed.
                     roots[root] = execution_result['describe']['id']
-            elif args.brief:
-                print(execution_result['id'])
-            elif not args.trees:
-                print(format_tree({}, get_find_executions_string(execution_result['describe'],
-                                                                 has_children=False,
-                                                                 single_result=True,
-                                                                 show_outputs=args.show_outputs)))
-        if args.trees:
+
+        if not args.trees:
+            # Handle situations where the number of results is between args.num_results and args.num_results + 10
+            if len(executions_cache) > args.num_results:
+                more_results = True
+
+            executions = sorted(executions_cache, key=lambda x: (-x['describe']['created'], -x['describe'].get('try', 0)))[:args.num_results]
+
+            for execution_result in executions:
+                execution_id = execution_result['id']
+                execution_try = execution_result['describe'].get('try')
+                execution_max_try = max(execution_retries[execution_id])
+                show_try = include_restarted and execution_max_try > 0
+
+                if args.json:
+                    json_output.append(execution_result['describe'])
+                elif args.brief:
+                    print_brief(execution_id, execution_try, show_try)
+                else:
+                    print(format_tree({}, get_find_executions_string(execution_result['describe'],
+                                                                    has_children=False,
+                                                                    single_result=True,
+                                                                    show_outputs=args.show_outputs,
+                                                                    show_try=show_try)))
+        else:
             executions_by_parent, descriptions = collections.defaultdict(list), {}
             root_field = 'origin_job' if args.classname == 'job' else 'root_execution'
             parent_field = 'masterJob' if args.no_subjobs else 'parentJob'
             query = {'classname': args.classname,
-                     'describe': {"io": include_io},
+                     'describe': describe_args,
                      'include_subjobs': False if args.no_subjobs else True,
+                     'include_restarted': include_restarted,
                      root_field: list(roots.keys())}
             if not args.all_projects:
                 # If the query doesn't specify a project, the server finds all projects to which the user has explicit
@@ -2221,20 +2391,30 @@ def find_executions(args):
 
             def process_execution_result(execution_result):
                 execution_desc = execution_result['describe']
-                parent = execution_desc.get(parent_field) or execution_desc.get('parentAnalysis')
-                descriptions[execution_result['id']] = execution_desc
-                if parent:
-                    executions_by_parent[parent].append(execution_result['id'])
+                execution_id = ExecutionId(execution_result['id'], execution_desc.get('try'))
+
+                if execution_desc.get(parent_field) or execution_desc.get('parentAnalysis'):
+                    if parent_field == 'parentJob' and execution_desc.get(parent_field):
+                        parent = ExecutionId(execution_desc.get(parent_field), execution_desc.get('parentJobTry'))
+                    else:
+                        parent = ExecutionId(execution_desc.get(parent_field) or execution_desc.get('parentAnalysis'))
+                    if execution_id.id not in executions_by_parent[parent]:
+                        executions_by_parent[parent].append(execution_id.id)
+
+                descriptions[execution_id] = execution_desc
+                execution_retries[execution_id.id].add(execution_id.try_num)
 
                 # If an analysis with cached children, also insert those
                 if execution_desc['class'] == 'analysis':
                     for stage_desc in execution_desc['stages']:
                         if 'parentAnalysis' in stage_desc['execution'] and stage_desc['execution']['parentAnalysis'] != execution_result['id'] and \
                            (args.classname != 'analysis' or stage_desc['execution']['class'] == 'analysis'):
-                            # this is a cached stage (with a different parent)
-                            executions_by_parent[execution_result['id']].append(stage_desc['execution']['id'])
-                            if stage_desc['execution']['id'] not in descriptions:
-                                descriptions[stage_desc['execution']['id']] = stage_desc['execution']
+                            stage_execution_id = stage_desc['execution']['id']
+                            if stage_execution_id not in executions_by_parent[execution_id.id]:
+                                # this is a cached stage (with a different parent)
+                                executions_by_parent[execution_id.id].append(stage_execution_id)
+                            if stage_execution_id not in descriptions:
+                                descriptions[stage_execution_id] = stage_desc['execution']
 
             # Short-circuit the find_execution API call(s) if there are
             # no root executions (and therefore we would have gotten 0
@@ -2243,11 +2423,17 @@ def find_executions(args):
                 for execution_result in dxpy.find_executions(**query):
                     process_execution_result(execution_result)
 
+                # ensure tries are sorted from newest to oldest
+                execution_retries = {k: sorted(v, reverse=True) for k, v in execution_retries.items()}
+
                 # ensure roots are sorted by their creation time
-                sorted_roots = sorted(roots, key=lambda root: -descriptions[roots[root]]['created'])
+                sorted_roots = sorted(
+                    roots.keys(),
+                    key=lambda root: -descriptions[ExecutionId(roots[root], execution_retries[roots[root]][-1])]['created']
+                )
 
                 for root in sorted_roots:
-                    process_tree(descriptions[roots[root]], executions_by_parent, descriptions)
+                    process_tree(roots[root], executions_by_parent, descriptions, execution_retries)
         if args.json:
             print(json.dumps(json_output, indent=4))
 
@@ -2297,7 +2483,7 @@ def find_data(args):
                                          visibility=args.visibility,
                                          properties=args.properties,
                                          name=args.name,
-                                         name_mode='glob',
+                                         name_mode=args.name_mode,
                                          typename=args.type,
                                          tags=args.tag, link=args.link,
                                          project=args.project,
@@ -2329,6 +2515,8 @@ def find_data(args):
 def find_projects(args):
     try_call(process_find_by_property_args, args)
     try_call(process_phi_param, args)
+    try_call(process_external_upload_restricted_param, args)
+
     try:
         results = dxpy.find_projects(name=args.name, name_mode='glob',
                                      properties=args.properties, tags=args.tag,
@@ -2339,7 +2527,8 @@ def find_projects(args):
                                      created_after=args.created_after,
                                      created_before=args.created_before,
                                      region=args.region,
-                                     containsPHI=args.containsPHI)
+                                     containsPHI=args.containsPHI,
+                                     externalUploadRestricted=args.external_upload_restricted)
     except:
         err_exit()
     format_find_results(args, results)
@@ -2524,26 +2713,57 @@ def wait(args):
 def build(args):
     sys.argv = ['dx build'] + sys.argv[2:]
 
+    def get_source_exec_desc(source_exec_path):
+        """
+        Return source executable description when --from option is used
+
+        Accecptable format of source_exec_path:
+            - applet-ID/workflow-ID
+            - project-ID-or-name:applet-ID/workflow-ID
+            - project-ID-or-name:folder/path/to/exec-name
+              where exec-name must be the name of only one applet or workflow
+
+        :param source_exec_path: applet/workflow path given using --from
+        :type source_exec_path: string
+        :return: applet/workflow description
+        :rtype: dict
+        """
+        exec_describe_fields={'fields':{"properties":True, "details":True},'defaultFields':True}
+        _, _, exec_result = try_call(resolve_existing_path,
+                                     source_exec_path,
+                                     expected='entity',
+                                     ask_to_resolve=False,
+                                     expected_classes=["applet", "workflow"],
+                                     all_mult=False,
+                                     allow_mult=False,
+                                     describe=exec_describe_fields)
+
+        if exec_result is None:
+            err_exit('Could not resolve {} to an existing applet or workflow.'.format(source_exec_path), 3)
+        elif len(exec_result)>1:
+            err_exit('More than one match found for {}. Please use an applet/workflow ID instead.'.format(source_exec_path), 3)
+        else:
+            if exec_result[0]["id"].startswith("applet") or exec_result[0]["id"].startswith("workflow"):
+                return exec_result[0]["describe"]
+            else:
+                err_exit('Could not resolve {} to a valid applet/workflow ID'.format(source_exec_path), 3)
+
     def get_mode(args):
         """
         Returns an applet or a workflow mode based on whether
         the source directory contains dxapp.json or dxworkflow.json.
 
         If --from option is used, it will set it to:
-        app if --from=applet-xxxx
-        globalworkflow if --from=workflow-xxxx
+        app if --from has been resolved to applet-xxxx
+        globalworkflow if --from has been resolved to workflow-xxxx
         Note: dictionaries of regional options that can replace optionally
         ID strings will be supported in the future
         """
         if args._from is not None:
-            if not is_hashid(args._from):
-                build_parser.error('--from option only accepts a DNAnexus applet ID')
-            if args._from.startswith("applet"):
+            if args._from["id"].startswith("applet"):
                 return "app"
-            elif args._from.startswith("workflow"):
-                build_parser.error('--from option with a workflow is not supported')
-            else:
-                build_parser.error('--from option only accepts a DNAnexus applet ID')
+            elif args._from["id"].startswith("workflow"):
+                return "globalworkflow"
 
         if not os.path.isdir(args.src_dir):
             parser.error("{} is not a directory".format(args.src_dir))
@@ -2573,6 +2793,9 @@ def build(args):
         if args.mode == "app" and args.destination != '.':
             build_parser.error("--destination cannot be used when creating an app (only an applet)")
 
+        if args.mode == "globalworkflow" and args.destination != '.':
+            build_parser.error("--destination cannot be used when creating a global workflow (only a workflow)")
+
         if args.mode == "applet" and args.region:
             build_parser.error("--region cannot be used when creating an applet (only an app)")
 
@@ -2587,9 +2810,6 @@ def build(args):
 
         # conflicts and incompatibilities with --from
 
-        if args._from is not None and args.region:
-            build_parser.error("Options --from and --region cannot be specified together. The app will be enabled only in the region of the project in which the applet is stored")
-
         if args._from is not None and args.ensure_upload:
             build_parser.error("Options --from and --ensure-upload cannot be specified together")
 
@@ -2599,29 +2819,54 @@ def build(args):
         if args._from is not None and args.remote:
             build_parser.error("Options --from and --remote cannot be specified together")
 
-        if args._from is not None and not args.dx_toolkit_autodep:
-            build_parser.error("Options --from and --no-dx-toolkit-autodep cannot be specified together")
-
         if args._from is not None and not args.parallel_build:
             build_parser.error("Options --from and --no-parallel-build cannot be specified together")
 
-        if args._from is not None and args.mode == "globalworkflow":
-            build_parser.error("building a global workflow using --from is not supported")
+        if args._from is not None and (args.mode != "app" and args.mode != "globalworkflow"):
+            build_parser.error("--from can only be used to build an app from an applet or a global workflow from a project-based workflow")
 
-        if args._from is not None and args.mode != "app":
-            build_parser.error("--from can only be used to build an app from an applet")
+        if args._from is not None and not args.version_override:
+            build_parser.error("--version must be specified when using the --from option")
 
-        if args.mode == "app" and args._from is not None and not args._from.startswith("applet"):
+        if args.mode == "app" and args._from is not None and not args._from["id"].startswith("applet"):
             build_parser.error("app can only be built from an applet (--from should be set to an applet ID)")
 
-        if args.mode == "app" and args._from is not None and not args.version_override:
-            build_parser.error("--version must be specified when using the --from option")
+        if args.mode == "globalworkflow" and args._from is not None and not args._from["id"].startswith("workflow"):
+            build_parser.error("globalworkflow can only be built from an workflow (--from should be set to a workflow ID)")
 
         if args._from and args.dry_run:
             build_parser.error("Options --dry-run and --from cannot be specified together")
 
         if args.mode in ("globalworkflow", "applet", "app") and args.keep_open:
             build_parser.error("Global workflows, applets and apps cannot be kept open")
+
+        if args.repository and not args.nextflow:
+            build_parser.error("Repository argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
+
+        if args.repository and args.remote:
+            build_parser.error("Nextflow pipeline built from a remote Git repository is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
+
+        if args.cache_docker and args.remote:
+            build_parser.error("Nextflow pipeline built with an option to cache the docker images is always built using the Nextflow Pipeline Importer app. This is not compatible with --remote.")
+
+        if args.git_credentials and not args.repository:
+            build_parser.error("Git credentials can be supplied only when building Nextflow pipeline from a Git repository.")
+
+        if args.nextflow and args.mode == "app":
+            build_parser.error("Building Nextflow apps is not supported. Build applet instead.")
+
+        if args.cache_docker and not args.nextflow:
+            build_parser.error(
+                "Docker caching argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
+
+        if args.cache_docker:
+            logging.warning(
+                "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
+                "Intellectual Property agreements of the software within the Docker container. You are also "
+                "responsible for remediating the security vulnerabilities of the Docker images of the pipeline."
+                "Also, cached images will be accessible by the users with VIEW permissions to the projects where the "
+                "cached images will be stored."
+            )
 
         # options not supported by workflow building
 
@@ -2640,7 +2885,6 @@ def build(args):
                 # True by default and will be currently silently ignored
                 #'--[no-]watch': args.watch,
                 #'--parallel-build': args.parallel_build,
-                #'--dx-toolkit[-stable][-legacy-git]-autodep': args.dx_toolkit_autodep,
                 #'--[no]version-autonumbering': args.version_autonumbering,
                 #'--[no]update': args.update,
                 '--region': args.region,
@@ -2658,12 +2902,14 @@ def build(args):
     try:
         args.src_dir = get_validated_source_dir(args)
 
-        # If mode is not specified, determine it by the json file
+        if args._from is not None:
+            args._from = get_source_exec_desc(args._from)
+
+        # If mode is not specified, determine it by the json file or by --from
         if args.mode is None:
             args.mode = get_mode(args)
 
         handle_arg_conflicts(args)
-
         if args.mode in ("app", "applet"):
             dx_build_app.build(args)
         elif args.mode in ("workflow", "globalworkflow"):
@@ -2749,8 +2995,28 @@ def render_timestamp(epochSeconds):
 
 def list_database_files(args):
     try:
+        # check if database was given as an object hash id
+        if is_hashid(args.database):
+            desc = dxpy.api.database_describe(args.database)
+            entity_result = {"id": desc["id"], "describe": desc}
+        else:
+        # otherwise it was provided as a path, so try and resolve
+            project, _folderpath, entity_result = try_call(resolve_existing_path,
+                                                           args.database,
+                                                           expected='entity')
+
+        # if we couldn't resolved the entity, fail
+        if entity_result is None:
+            err_exit('Could not resolve ' + args.database + ' to a data object', 3)
+        else:
+        # else check and verify that the found entity is a database object
+            entity_result_class = entity_result['describe']['class']
+            if entity_result_class != 'database':
+                err_exit('Error: The given object is of class ' + entity_result_class +
+                 ' but an object of class database was expected', 3)
+
         results = dxpy.api.database_list_folder(
-            args.database,
+            entity_result['id'],
             input_params={"folder": args.folder, "recurse": args.recurse, "timeout": args.timeout})
         for r in results["results"]:
             date_str = render_timestamp(r["modified"]) if r["modified"] != 0 else ''
@@ -2814,7 +3080,7 @@ def _get_input_for_run(args, executable, preset_inputs=None, input_name_prefix=N
     if args.input_json is None and args.filename is None:
         # --input-json and --input-json-file completely override input
         # from the cloned job
-        exec_inputs.update(args.input_from_clone, strip_prefix=False)
+        exec_inputs.update(args.cloned_job_desc.get("runInput", {}), strip_prefix=False)
 
     # Update with inputs passed to the this function
     if preset_inputs is not None:
@@ -2924,28 +3190,90 @@ def run_batch_all_steps(args, executable, dest_proj, dest_path, input_json, run_
 def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_name_prefix=None):
     input_json = _get_input_for_run(args, executable, preset_inputs)
 
-    if args.sys_reqs_from_clone and not isinstance(args.instance_type, str):
-        args.instance_type = dict({stage: reqs['instanceType'] for stage, reqs in list(args.sys_reqs_from_clone.items())},
-                                  **(args.instance_type or {}))
-
-    if args.sys_reqs_from_clone and not isinstance(args.instance_count, str):
-        # extract instance counts from cloned sys reqs and override them with args provided with "dx run"
-        args.instance_count = dict({fn: reqs['clusterSpec']['initialInstanceCount']
-                                        for fn, reqs in list(args.sys_reqs_from_clone.items()) if 'clusterSpec' in reqs},
-                                   **(args.instance_count or {}))
-
+    requested_instance_type, requested_cluster_spec, requested_system_requirements_by_executable = {}, {}, {}
     executable_describe = None
-    srd_cluster_spec = SystemRequirementsDict(None)
-    if args.instance_count is not None:
+
+    if args.cloned_job_desc:
+        # override systemRequirements and systemRequirementsByExecutable mapping with cloned job description
+        # Note: when cloning from a job, we have 1)runtime 2)cloned 3) default runSpec specifications, and we need to merge the first two to make the new request
+        # however when cloning from an analysis, the temporary workflow already has the cloned spec as its default, so no need to merge 1) and 2) here
+        cloned_system_requirements = copy.deepcopy(args.cloned_job_desc).get("systemRequirements", {})
+        cloned_instance_type = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceType')
+        cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='clusterSpec')
+        cloned_fpga_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='fpgaDriver')
+        cloned_nvidia_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='nvidiaDriver')
+        cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}) or {}
+    else:
+        cloned_system_requirements = {}
+        cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver, cloned_nvidia_driver = (
+            SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}))
+        cloned_system_requirements_by_executable = {}
+
+    # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
+    # here the args.instance_type no longer contains specifications for stage sys reqs
+    if args.instance_type:
+        requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
+        if not isinstance(args.instance_type, basestring):
+            requested_instance_type = SystemRequirementsDict(merge(cloned_instance_type.as_dict(), requested_instance_type.as_dict()))
+    else:
+        requested_instance_type = cloned_instance_type
+
+    # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
+    if args.instance_count:
+        # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
+        # and overwrite the field initialInstanceCount with the runtime mapping
+        requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)        
         executable_describe = executable.describe()
-        srd_default = SystemRequirementsDict.from_sys_requirements(
-            executable_describe['runSpec'].get('systemRequirements', {}), _type='clusterSpec')
-        srd_requested = SystemRequirementsDict.from_instance_count(args.instance_count)
-        srd_cluster_spec = srd_default.override_cluster_spec(srd_requested)
+        cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable_describe.get('runSpec',{}).get('systemRequirements', {}),_type='clusterSpec')
+
+        if not isinstance(args.instance_count, basestring):
+            if cloned_cluster_spec.as_dict():
+                requested_instance_count = SystemRequirementsDict(merge(cloned_cluster_spec.as_dict(), requested_instance_count.as_dict()))
+                cluster_spec_to_override = SystemRequirementsDict(merge(cluster_spec_to_override.as_dict(), cloned_cluster_spec.as_dict()))
+        
+        requested_cluster_spec = cluster_spec_to_override.override_cluster_spec(requested_instance_count)
+    else:
+        requested_cluster_spec = cloned_cluster_spec
+
+    # fpga/nvidia driver now does not have corresponding dx run option,
+    # so it can only be requested using the cloned value
+    requested_fpga_driver = cloned_fpga_driver
+    requested_nvidia_driver = cloned_nvidia_driver
+
+    # combine the requested instance type, full cluster spec, fpga spec, nvidia spec
+    # into the runtime systemRequirements
+    requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver +
+                                     requested_nvidia_driver).as_dict()
+
+    if (args.instance_type and cloned_system_requirements_by_executable):
+        warning = BOLD("WARNING") + ": --instance-type argument: {} may get overridden by".format(args.instance_type) 
+        warning += " {} mergedSystemRequirementsByExecutable: {}".format(args.cloned_job_desc.get('id'), json.dumps(cloned_system_requirements_by_executable))
+        if (args.instance_type_by_executable):
+            warning += " and runtime --instance-type-by-executable argument:{}\n".format(json.dumps(args.instance_type_by_executable))
+        print(fill(warning))
+        print()
+
+    # store runtime --instance-type-by-executable {executable:{entrypoint:xxx}} as systemRequirementsByExecutable
+    # Note: currently we don't have -by-executable options for other fields, for example --instance-count-by-executable
+    # so this runtime systemRequirementsByExecutable double mapping only contains instanceType under each executable.entrypoint
+    if args.instance_type_by_executable:
+        requested_system_requirements_by_executable = {exec: SystemRequirementsDict.from_instance_type(sys_req_by_exec).as_dict(
+        ) for exec, sys_req_by_exec in args.instance_type_by_executable.items()}
+        requested_system_requirements_by_executable = SystemRequirementsDict(merge(
+            cloned_system_requirements_by_executable, requested_system_requirements_by_executable)).as_dict()
+    else:
+        requested_system_requirements_by_executable = cloned_system_requirements_by_executable
+
 
     if args.debug_on:
         if 'All' in args.debug_on:
             args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
+
+    preserve_job_outputs = None
+    if args.preserve_job_outputs:
+        preserve_job_outputs = True
+    elif args.preserve_job_outputs_folder is not None:
+        preserve_job_outputs = {"folder": args.preserve_job_outputs_folder}
 
     run_kwargs = {
         "project": dest_proj,
@@ -2960,16 +3288,38 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         "ignore_reuse_stages": args.ignore_reuse_stages or None,
         "debug": {"debugOn": args.debug_on} if args.debug_on else None,
         "delay_workspace_destruction": args.delay_workspace_destruction,
-        "priority": ("high" if args.watch or args.ssh or args.allow_ssh else args.priority),
-        "instance_type": args.instance_type,
+        "priority": args.priority,
+        "system_requirements": requested_system_requirements or None,
+        "system_requirements_by_executable": requested_system_requirements_by_executable or None,
+        "instance_type": None,
+        "cluster_spec": None,
+        "fpga_driver": None,
+        "nvidia_driver": None,
         "stage_instance_types": args.stage_instance_types,
         "stage_folders": args.stage_folders,
         "rerun_stages": args.rerun_stages,
-        "cluster_spec": srd_cluster_spec.as_dict(),
         "detach": args.detach,
         "cost_limit": args.cost_limit,
+        "rank": args.rank,
+        "detailed_job_metrics": args.detailed_job_metrics,
+        "max_tree_spot_wait_time": normalize_timedelta(args.max_tree_spot_wait_time)//1000 if args.max_tree_spot_wait_time else None,
+        "max_job_spot_wait_time": normalize_timedelta(args.max_job_spot_wait_time)//1000 if args.max_job_spot_wait_time else None,
+        "preserve_job_outputs": preserve_job_outputs,
         "extra_args": args.extra_args
     }
+
+    if isinstance(executable, dxpy.DXApplet) or isinstance(executable, dxpy.DXApp):
+        run_kwargs["head_job_on_demand"] = args.head_job_on_demand
+
+    if any([args.watch or args.ssh or args.allow_ssh]):
+        if run_kwargs["priority"] in ["low", "normal"]:
+            if not args.brief:
+                print(fill(BOLD("WARNING") + ": You have requested that jobs be run under " +
+                        BOLD(run_kwargs["priority"]) +
+                        " priority, which may cause them to be restarted at any point, interrupting interactive work."))
+                print()
+        else: # if run_kwargs["priority"] is None
+            run_kwargs["priority"] = "high"
 
     if run_kwargs["priority"] in ["low", "normal"] and not args.brief:
         special_access = set()
@@ -3221,15 +3571,24 @@ SPECIFYING JSON INPUT
 def run(args):
     if args.help:
         print_run_help(args.executable, args.alias)
-
+    client_ip = None
     if args.allow_ssh is not None:
-        args.allow_ssh = [i for i in args.allow_ssh if i is not None]
-    if args.allow_ssh == [] or ((args.ssh or args.debug_on) and not args.allow_ssh):
-        args.allow_ssh = ['*']
+        # --allow-ssh without IP retrieves client IP
+        if any(ip is None for ip in args.allow_ssh):
+            args.allow_ssh = list(filter(None, args.allow_ssh))
+            client_ip = get_client_ip()
+            args.allow_ssh.append(client_ip)
+    if args.allow_ssh is None and ((args.ssh or args.debug_on) and not args.allow_ssh):
+        client_ip = get_client_ip()
+        args.allow_ssh = [client_ip]
     if args.ssh_proxy and not args.ssh:
         err_exit(exception=DXCLIError("Option --ssh-proxy cannot be specified without --ssh"))
+    if args.ssh_proxy:
+        args.allow_ssh.append(args.ssh_proxy.split(':'[0]))
     if args.ssh or args.allow_ssh or args.debug_on:
         verify_ssh_config()
+    if not args.brief and client_ip is not None:
+        print("Detected client IP as '{}'. Setting allowed IP ranges to '{}'. To change the permitted IP addresses use --allow-ssh.".format(client_ip, ', '.join(args.allow_ssh)))
 
     try_call(process_extra_args, args)
     try_call(process_properties_args, args)
@@ -3237,8 +3596,6 @@ def run(args):
     if args.clone is None and args.executable == "":
         err_exit(parser_map['run'].format_help() +
                  fill("Error: Either the executable must be specified, or --clone must be used to indicate a job or analysis to clone"), 2)
-
-    args.input_from_clone, args.sys_reqs_from_clone = {}, {}
 
     dest_proj, dest_path = None, None
 
@@ -3272,10 +3629,15 @@ def run(args):
             args.stage_folders = stage_folders
 
     clone_desc = None
+    args.cloned_job_desc = {}
     if args.clone is not None:
-        # Resolve job ID or name
+        # Resolve job ID or name; both job-id and analysis-id can be described using job_describe()
         if is_job_id(args.clone) or is_analysis_id(args.clone):
-            clone_desc = dxpy.api.job_describe(args.clone)
+            clone_desc = dxpy.api.job_describe(args.clone, {"defaultFields": True, 
+                                                            "fields": {"runSystemRequirements": True, 
+                                                                       "runSystemRequirementsByExecutable": True, 
+                                                                       "mergedSystemRequirementsByExecutable": True}})
+
         else:
             iterators = []
             if ":" in args.clone:
@@ -3334,10 +3696,9 @@ def run(args):
                 setattr(args, metadata, clone_desc.get(metadata))
 
         if clone_desc['class'] == 'job':
+            args.cloned_job_desc = clone_desc
             if args.executable == "":
                 args.executable = clone_desc.get("applet", clone_desc.get("app", ""))
-            args.input_from_clone = clone_desc["runInput"]
-            args.sys_reqs_from_clone = clone_desc["systemRequirements"]
             if args.details is None:
                 args.details = {
                     "clonedFrom": {
@@ -3367,8 +3728,10 @@ def run(args):
     is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
 
     if args.depends_on and (is_workflow or is_global_workflow):
-
         err_exit(exception=DXParserError("-d/--depends-on cannot be supplied when running workflows."),
+                 expected_exceptions=(DXParserError,))
+    if args.head_job_on_demand and (is_workflow or is_global_workflow):
+        err_exit(exception=DXParserError("--head-job-on-demand cannot be used when running workflows"),
                  expected_exceptions=(DXParserError,))
 
     # if the destination project has still not been set, use the
@@ -3381,8 +3744,6 @@ def run(args):
                 'Please run "dx select" to set the working project, or use --folder=project:path'
             ))
 
-    is_workflow = isinstance(handler, dxpy.DXWorkflow)
-    is_global_workflow = isinstance(handler, dxpy.DXGlobalWorkflow)
 
     # Get region from the project context
     args.region = None
@@ -3403,6 +3764,8 @@ def run(args):
 
     process_instance_type_arg(args, is_workflow or is_global_workflow)
 
+    try_call(process_instance_type_by_executable_arg, args)
+
     # Validate and process instance_count argument
     if args.instance_count:
         if is_workflow or is_global_workflow:
@@ -3421,10 +3784,44 @@ def terminate(args):
             err_exit()
 
 def watch(args):
-    level_colors = {level: RED() for level in ("EMERG", "ALERT", "CRITICAL", "ERROR")}
-    level_colors.update({level: YELLOW() for level in ("WARNING", "STDERR")})
-    level_colors.update({level: GREEN() for level in ("NOTICE", "INFO", "DEBUG", "STDOUT")})
+    level_color_mapping = (
+        (("EMERG", "ALERT", "CRITICAL", "ERROR"), RED(), 2),
+        (("WARNING", "STDERR"), YELLOW(), 3),
+        (("NOTICE", "INFO", "DEBUG", "STDOUT", "METRICS"), GREEN(), 4),
+    )
+    level_colors = {lvl: item[1] for item in level_color_mapping for lvl in item[0]}
+    level_colors_curses = {lvl: item[2] for item in level_color_mapping for lvl in item[0]}
 
+    def check_args_compatibility(incompatible_list):
+        for adest, aarg in map(lambda arg: arg if isinstance(arg, tuple) else (arg, arg), incompatible_list):
+            if getattr(args, adest) != parser_watch.get_default(adest):
+                return "--" + (aarg.replace("_", "-"))
+
+    incompatible_args = None
+    if args.levels and "METRICS" in args.levels and args.metrics == "none":
+        incompatible_args = ("--levels METRICS", "--metrics none")
+    elif args.metrics == "top":
+        if args.levels and "METRICS" not in args.levels:
+            err_exit(exception=DXCLIError("'--metrics' is specified, but METRICS level is not included"))
+
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", ("tail", "no-wait"), "tree", "num_recent_messages"])
+        if iarg:
+            incompatible_args = ("--metrics top", iarg)
+    elif args.metrics == "csv":
+        iarg = check_args_compatibility(["get_stdout", "get_stderr", "get_streams", "tree", "num_recent_messages", "levels", ("timestamps", "no_timestamps"), "job_ids", "format"])
+        if iarg:
+            incompatible_args = ("--metrics csv", iarg)
+
+    if incompatible_args:
+        err_exit(exception=DXCLIError("Can not specify both '%s' and '%s'" % incompatible_args))
+
+    def enrich_msg(log_client, message):
+        message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
+        message['level_color'] = level_colors.get(message.get('level', ''), '')
+        message['level_color_curses'] = level_colors_curses.get(message.get('level', ''), 0)
+        message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
+
+    is_try_provided = args.job_try is not None
     msg_callback, log_client = None, None
     if args.get_stdout:
         args.levels = ['STDOUT']
@@ -3438,49 +3835,79 @@ def watch(args):
         args.levels = ['STDOUT', 'STDERR']
         args.format = "{msg}"
         args.job_info = False
+    elif args.metrics == "csv":
+        args.levels = ['METRICS']
+        args.format = "{msg}"
+        args.job_info = False
+        args.quiet = True
     elif args.format is None:
         if args.job_ids:
-            args.format = BLUE("{job_name} ({job})") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name} ({job}" + (" try {jobTry}" if is_try_provided else "") + ")") + " {level_color}{level}" + ENDC() + " {msg}"
         else:
-            args.format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
+            format = BLUE("{job_name}") + " {level_color}{level}" + ENDC() + " {msg}"
         if args.timestamps:
-            args.format = "{timestamp} " + args.format
+            format = "{timestamp} " + format
 
         def msg_callback(message):
-            message['timestamp'] = str(datetime.datetime.fromtimestamp(message.get('timestamp', 0)//1000))
-            message['level_color'] = level_colors.get(message.get('level', ''), '')
-            message['job_name'] = log_client.seen_jobs[message['job']]['name'] if message['job'] in log_client.seen_jobs else message['job']
-            print(args.format.format(**message))
+            enrich_msg(log_client, message)
+            print(format.format(**message))
 
-    from dxpy.utils.job_log_client import DXJobLogStreamClient
+    from dxpy.utils.job_log_client import DXJobLogStreamClient, metrics_top
 
     input_params = {"numRecentMessages": args.num_recent_messages,
                     "recurseJobs": args.tree,
                     "tail": args.tail}
 
-    if args.levels:
-        input_params['levels'] = args.levels
+    if is_try_provided:
+        input_params['try'] = args.job_try
 
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.jobid):
         err_exit(args.jobid + " does not look like a DNAnexus job ID")
 
     job_describe = dxpy.describe(args.jobid)
+
+    # For finished jobs and --metrics top, behave like --metrics none
+    if args.metrics == "top" and job_describe['state'] in ('terminated', 'failed', 'done'):
+        args.metrics = "none"
+        if args.levels and "METRICS" in args.levels:
+            args.levels.remove("METRICS")
+
     if 'outputReusedFrom' in job_describe and job_describe['outputReusedFrom'] is not None:
       args.jobid = job_describe['outputReusedFrom']
       if not args.quiet:
-        print("Output reused from %s" %(args.jobid))
+        print("Output reused from %s" % args.jobid)
 
-    log_client = DXJobLogStreamClient(args.jobid, input_params=input_params, msg_callback=msg_callback,
-                                      msg_output_format=args.format, print_job_info=args.job_info)
+    if args.levels:
+        input_params['levels'] = args.levels
+
+    if args.metrics == "none":
+        input_params['excludeMetrics'] = True
+    elif args.metrics == "csv":
+        input_params['metricsFormat'] = "csv"
+    else:
+        input_params['metricsFormat'] = "text"
 
     # Note: currently, the client is synchronous and blocks until the socket is closed.
     # If this changes, some refactoring may be needed below
     try:
-        if not args.quiet:
-            print("Watching job %s%s. Press Ctrl+C to stop." % (args.jobid, (" and sub-jobs" if args.tree else "")), file=sys.stderr)
-        log_client.connect()
+        if args.metrics == "top":
+            metrics_top(args, input_params, enrich_msg)
+        else:
+            log_client = DXJobLogStreamClient(args.jobid, job_try=args.job_try, input_params=input_params, msg_callback=msg_callback,
+                                              msg_output_format=args.format, print_job_info=args.job_info)
+
+            if not args.quiet:
+                print("Watching job %s%s. Press Ctrl+C to stop watching." % (
+                    args.jobid + (" try %d" % args.job_try if is_try_provided else ""),
+                    (" and sub-jobs" if args.tree else "")
+                ), file=sys.stderr)
+
+            log_client.connect()
     except Exception as details:
         err_exit(fill(str(details)), 3)
+
+def get_client_ip():
+    return dxpy.api.system_whoami({"fields": {"clientIp": True}}).get('clientIp')
 
 def ssh_config(args):
     user_id = try_call(dxpy.whoami)
@@ -3569,35 +3996,67 @@ def verify_ssh_config():
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
         err_exit(args.job_id + " does not look like a DNAnexus job ID")
-    job_desc = try_call(dxpy.describe, args.job_id)
+    ssh_desc_fields = {"state":True, "sshHostKey": True, "httpsApp": True, "sshPort": True, "host": True, "allowSSH": True}
+    job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
-        err_exit(args.job_id + " is in a terminal state, and you cannot connect to it")
+        err_exit(f"{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
 
     if not ssh_config_verified:
         verify_ssh_config()
 
+    job_allow_ssh = job_desc.get('allowSSH', [])
+
+    # Check requested IPs (--allow-ssh or client IP) against job's allowSSH field and update if necessary
+    if not args.no_firewall_update:
+        if args.allow_ssh is not None:
+            args.allow_ssh = [i for i in args.allow_ssh if i is not None]
+        else:
+            # Get client IP from API if --allow-ssh not provided
+            args.allow_ssh = [get_client_ip()]
+        if args.ssh_proxy:
+            args.allow_ssh.append(args.ssh_proxy.split(':')[0])
+        # If client IP or args.allow_ssh already exist in job's allowSSH, skip firewall update
+        if not all(ip in job_allow_ssh for ip in args.allow_ssh):
+            # Append new IPs to existing job allowSSH
+            for ip in args.allow_ssh:
+                if ip not in job_allow_ssh:
+                    job_allow_ssh.append(ip)
+            sys.stdout.write("Updating allowed IP ranges for SSH to '{}'\n".format(', '.join(job_allow_ssh)))
+            dxpy.api.job_update(object_id=args.job_id, input_params={"allowSSH": job_allow_ssh})
+
     sys.stdout.write("Waiting for {} to start...".format(args.job_id))
     sys.stdout.flush()
     while job_desc['state'] not in ['running', 'debug_hold']:
+        if job_desc['state'] in ['done', 'failed', 'terminated']:
+            err_exit(f"\n{args.job_id} is in terminal state {job_desc['state']}, and you cannot connect to it")
         time.sleep(1)
-        job_desc = dxpy.describe(args.job_id)
+        job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         sys.stdout.write(".")
         sys.stdout.flush()
     sys.stdout.write("\n")
 
     sys.stdout.write("Resolving job hostname and SSH host key...")
     sys.stdout.flush()
+
+    known_host = "{job_id}.dnanex.us".format(job_id=args.job_id)
     host, host_key, ssh_port = None, None, None
     for i in range(90):
         host = job_desc.get('host')
-        host_key = job_desc.get('sshHostKey') or job_desc['properties'].get('ssh_host_rsa_key')
+        url = job_desc.get('httpsApp', {}).get('dns', {}).get('url')
+        if url is not None:
+            https_host = urlparse(url).hostname
+            # If the hostname is not parsed properly revert back to default behavior
+            if https_host is not None:
+                host = https_host
+                known_host = https_host
+        host_key = job_desc.get('sshHostKey')
         ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
             break
         else:
             time.sleep(1)
-            job_desc = dxpy.describe(args.job_id)
+            job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
             sys.stdout.write(".")
             sys.stdout.flush()
     sys.stdout.write("\n")
@@ -3608,7 +4067,7 @@ def ssh(args, ssh_config_verified=False):
 
     known_hosts_file = os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_known_hosts')
     with open(known_hosts_file, 'a') as fh:
-        fh.write("{job_id}.dnanex.us {key}\n".format(job_id=args.job_id, key=host_key.rstrip()))
+        fh.write("{known_host} {key}\n".format(known_host=known_host, key=host_key.rstrip()))
 
     import socket
     connected = False
@@ -3618,7 +4077,7 @@ def ssh(args, ssh_config_verified=False):
         sys.stdout.write(" through proxy {}".format(proxy_args[0]))
     sys.stdout.write("...")
     sys.stdout.flush()
-    for i in range(12):
+    for i in range(20):
         try:
             if args.ssh_proxy:
             # Test connecting to host through proxy
@@ -3632,7 +4091,7 @@ def ssh(args, ssh_config_verified=False):
             connected = True
             break
         except Exception:
-            time.sleep(2)
+            time.sleep(3)
             sys.stdout.write(".")
             sys.stdout.flush()
     if args.ssh_proxy:
@@ -3648,13 +4107,13 @@ def ssh(args, ssh_config_verified=False):
     if connected:
         sys.stdout.write(GREEN("OK") + "\n")
     else:
-        msg = "Failed to connect to {h}. Please check your connectivity and try {cmd} again."
-        err_exit(msg.format(h=host, cmd=BOLD("dx ssh {}".format(args.job_id))),
+        msg = "Failed to connect to {h}. Please check your connectivity, verify your ssh client IP is added to job's allowedSSH list by describing the job and if needed, retry the command with additional --allow-ssh ADDRESS argument."
+        err_exit(msg.format(h=host, job_id=args.job_id, cmd=BOLD("dx ssh {}".format(args.job_id))),
                  exception=DXCLIError())
 
     print("Connecting to {}:{}".format(host, ssh_port))
     ssh_args = ['ssh', '-i', os.path.join(dxpy.config.get_user_conf_dir(), 'ssh_id'),
-                '-o', 'HostKeyAlias={}.dnanex.us'.format(args.job_id),
+                '-o', 'HostKeyAlias={}'.format(known_host),
                 '-o', 'UserKnownHostsFile={}'.format(known_hosts_file),
                 '-p', str(ssh_port), '-l', 'dnanexus', host]
     if args.ssh_proxy:
@@ -3663,7 +4122,7 @@ def ssh(args, ssh_config_verified=False):
     ssh_args += args.ssh_args
     exit_code = subprocess.call(ssh_args)
     try:
-        job_desc = dxpy.describe(args.job_id)
+        job_desc = dxpy.describe(args.job_id, fields=ssh_desc_fields)
         if args.check_running and job_desc['state'] == 'running':
             msg = "Job {job_id} is still running. Terminate now?".format(job_id=args.job_id)
             if prompt_for_yn(msg, default=False):
@@ -3674,27 +4133,6 @@ def ssh(args, ssh_config_verified=False):
               " to stop it if necessary."
         print(fill(tip.format(job_id=args.job_id)))
     exit(exit_code)
-
-def upgrade(args):
-    if len(args.args) == 0:
-        try:
-            greeting = dxpy.api.system_greet({'client': 'dxclient', 'version': 'v'+dxpy.TOOLKIT_VERSION}, auth=None)
-            if greeting['update']['available']:
-                recommended_version = greeting['update']['version']
-            else:
-                err_exit("Your SDK is up to date.", code=0)
-        except default_expected_exceptions as e:
-            print(e)
-            recommended_version = "current"
-        print("Upgrading to", recommended_version)
-        args.args = [recommended_version]
-
-    try:
-        cmd = os.path.join(os.environ['DNANEXUS_HOME'], 'build', 'upgrade.sh')
-        args.args.insert(0, cmd)
-        os.execv(cmd, args.args)
-    except:
-        err_exit()
 
 def generate_batch_inputs(args):
 
@@ -3786,6 +4224,175 @@ def publish(args):
         eprint("  dx remove users {} user-yyyy".format(desc['name']))
     except:
         err_exit()
+
+def archive(args):
+    def send_archive_request(target_project, request_input, request_func):
+        api_errors = [InvalidState, ResourceNotFound, PermissionDenied]
+        try:
+            res = request_func(target_project, request_input)
+        except Exception as e:
+            eprint("Failed request: {}".format(request_input))
+            if type(e) in api_errors:
+                eprint("     API error: {}. {}".format(e.name, e.msg))
+            else:
+                eprint("     Unexpected error: {}".format(format_exception(e)))
+
+            err_exit("Failed request: {}. {}".format(request_input, format_exception(e)), code=3)
+        return res
+
+    def get_valid_archival_input(args, target_files, target_folder, target_project):
+        request_input = {}
+        if target_files:
+            target_files = list(target_files)
+            request_input = {"files": target_files}
+        elif target_folder:
+            request_input = {"folder": target_folder, "recurse":args.recurse}
+        else:
+            err_exit("No input file/folder is found in project {}".format(target_project), code=3)
+
+        request_mode = args.request_mode
+        options = {}
+        if request_mode == "archival":
+            options = {"allCopies": args.all_copies}
+            request_func = dxpy.api.project_archive
+        elif request_mode == "unarchival":
+            options = {"rate": args.rate}
+            request_func = dxpy.api.project_unarchive
+
+        request_input.update(options)
+        return request_mode, request_func, request_input
+
+    def get_archival_paths(args):
+        target_project = None
+        target_folder = None
+        target_files = set()
+
+        paths = [split_unescaped(':', path, include_empty_strings=True) for path in args.path]
+        possible_projects = set()
+        possible_folder = set()
+        possible_files = set()
+
+        # Step 0: parse input paths into projects and objects
+        for p in paths:
+            if len(p)>2:
+                err_exit("Path '{}' is invalid. Please check the inputs or check --help for example inputs.".format(":".join(p)), code=3)
+            elif len(p) == 2:
+                possible_projects.add(p[0])
+            elif len(p) == 1:
+                possible_projects.add('')
+
+            obj = p[-1]
+            if obj[-1] == '/':
+                folder, entity_name = clean_folder_path(('' if obj.startswith('/') else '/') + obj)
+                if entity_name:
+                    possible_files.add(obj)
+                else:
+                    possible_folder.add(folder)
+            else:
+                possible_files.add(obj)
+
+        # Step 1: find target project
+        for proj in possible_projects:
+            # is project ID
+            if is_container_id(proj) and proj.startswith('project-'):
+                pass
+            # is "": use current project
+            elif proj == '':
+                if not dxpy.PROJECT_CONTEXT_ID:
+                    err_exit("Cannot find current project. Please check the environment.", code=3)
+                proj = dxpy.PROJECT_CONTEXT_ID
+            # name is given
+            else:
+                try:
+                    project_results = list(dxpy.find_projects(name=proj, describe=True))
+                except:
+                    err_exit("Cannot find project with name {}".format(proj), code=3)
+
+                if project_results:
+                    choice = pick(["{} ({})".format(result['describe']['name'], result['id']) for result in project_results], allow_mult=False)
+                    proj = project_results[choice]['id']
+                else:
+                    err_exit("Cannot find project with name {}".format(proj), code=3)
+
+            if target_project and proj!= target_project:
+                err_exit("All paths must refer to files/folder in a single project, but two project ids: '{}' and '{}' are given. ".format(
+                                target_project, proj), code=3)
+            elif not target_project:
+                target_project = proj
+
+        # Step 2: check 1) target project
+        #               2) either one folder or a list of files
+        if not target_project:
+            err_exit('No target project has been set. Please check the input or check your permission to the given project.', code=3)
+        if len(possible_folder) >1:
+            err_exit("Only one folder is allowed for each request. Please check the inputs or check --help for example inputs.".format(p), code=3)
+        if possible_folder and possible_files:
+            err_exit('Expecting either a single folder or a list of files for each API request', code=3)
+
+        # Step 3: assign target folder or target files
+        if possible_folder:
+            target_folder = possible_folder.pop()
+        else:
+            for fp in possible_files:
+                # find a filename
+                # is file ID
+                if is_data_obj_id(fp) and fp.startswith("file-"):
+                    target_files.add(fp)
+                # is folderpath/filename
+                else:
+                    folderpath, filename = clean_folder_path(('' if obj.startswith('/') else '/') + fp)
+                    try:
+                        file_results = list(dxpy.find_data_objects(classname="file", name=filename,project=target_project,folder=folderpath,describe=True,recurse=False))
+                    except:
+                        err_exit("Input '{}' is not found as a file in project '{}'".format(fp, target_project), code=3)
+
+                    if not file_results:
+                        err_exit("Input '{}' is not found as a file in project '{}'".format(fp, target_project), code=3)
+                    # elif file_results
+                    if not args.all:
+                        choice = pick([ "{} ({})".format(result['describe']['name'], result['id']) for result in file_results],allow_mult=True)
+                        if choice == "*" :
+                            target_files.update([file['id'] for file in file_results])
+                        else:
+                            target_files.add(file_results[choice]['id'])
+                    else:
+                        target_files.update([file['id'] for file in file_results])
+
+        return target_files, target_folder, target_project
+
+    # resolve paths  
+    target_files, target_folder, target_project = get_archival_paths(args)
+
+    # set request command and add additional options
+    request_mode, request_func, request_input = get_valid_archival_input(args, target_files, target_folder, target_project)
+
+    # ask for confirmation if needed
+    if args.confirm and INTERACTIVE_CLI:
+        if request_mode == "archival":
+            if target_files:
+                counts = len(target_files)
+                print('Will tag {} file(s) for archival in {}'.format(counts,target_project))
+            else:
+                print('Will tag file(s) for archival in folder {}:{} {}recursively'.format(target_project, target_folder, 'non-' if not args.recurse else ''))
+        elif request_mode == "unarchival":
+            dryrun_request_input = copy.deepcopy(request_input)
+            dryrun_request_input.update(dryRun=True)
+            dryrun_res = send_archive_request(target_project, dryrun_request_input, request_func)
+            print('Will tag {} file(s) for unarchival in {}, totalling {} GB, costing ${}'.format(dryrun_res["files"], target_project, dryrun_res["size"],dryrun_res["cost"]/1000))
+
+        if not prompt_for_yn('Confirm all paths?', default=True):
+            parser.exit(0)
+
+    # send request and display final results
+    res = send_archive_request(target_project, request_input, request_func)
+
+    if not args.quiet:
+        print()
+        if request_mode == "archival":
+            print('Tagged {} file(s) for archival in {}'.format(res["count"],target_project))
+        elif request_mode == "unarchival":
+            print('Tagged {} file(s) for unarchival, totalling {} GB, costing ${}'.format(res["files"], res["size"],res["cost"]/1000))
+        print()
 
 def print_help(args):
     if args.command_or_category is None:
@@ -3960,6 +4567,17 @@ def register_parser(parser, subparsers_action=None, categories=('other', ), add_
         for category in categories:
             parser_categories[category]['cmds'].append((name, _help))
 
+def positive_integer(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
+    return ivalue
+
+def positive_number(value):
+    number_value = float(value)
+    if number_value <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid positive number value" % value)
+    return number_value
 
 parser = DXArgumentParser(description=DNANEXUS_LOGO() + ' Command-Line Client, API v%s, client v%s' % (dxpy.API_VERSION, dxpy.TOOLKIT_VERSION) + '\n\n' + fill('dx is a command-line client for interacting with the DNAnexus platform.  You can log in, navigate, upload, organize and share your data, launch analyses, and more.  For a quick tour of what the tool can do, see') + '\n\n  https://documentation.dnanexus.com/getting-started/tutorials/cli-quickstart#quickstart-for-cli\n\n' + fill('For a breakdown of dx commands by category, run "dx help".') + '\n\n' + fill('dx exits with exit code 3 if invalid input is provided or an invalid operation is requested, and exit code 1 if an internal error is encountered.  The latter usually indicate bugs in dx; please report them at') + "\n\n  https://github.com/dnanexus/dx-toolkit/issues",
                           formatter_class=argparse.RawTextHelpFormatter,
@@ -4187,6 +4805,7 @@ cp_sources_action = parser_cp.add_argument('sources', help='Objects and/or folde
                                            nargs='+')
 cp_sources_action.completer = DXPathCompleter()
 parser_cp.add_argument('destination', help=fill('Folder into which to copy the sources or new pathname (if only one source is provided).  Must be in a different project/container than all source paths.', width_adjustment=-15))
+parser_cp.add_argument('--target-file-relocation', help='Allow symlink target file relocation in external storage while cloning a symlink.', action='store_true', default=False)
 parser_cp.set_defaults(func=cp)
 register_parser(parser_cp, categories='fs')
 
@@ -4202,6 +4821,7 @@ mv_sources_action = parser_mv.add_argument('sources', help='Objects and/or folde
                                            nargs='+')
 mv_sources_action.completer = DXPathCompleter()
 parser_mv.add_argument('destination', help=fill('Folder into which to move the sources or new pathname (if only one source is provided).  Must be in the same project/container as all source paths.', width_adjustment=-15))
+parser_mv.add_argument('--target-file-relocation', help='Allow symlink target file relocation in external storage while moving a symlink.', action='store_true', default=False)
 parser_mv.set_defaults(func=mv)
 register_parser(parser_mv, categories='fs')
 
@@ -4254,10 +4874,13 @@ parser_describe = subparsers.add_parser('describe', help='Describe a remote obje
                                         parents=[json_arg, no_color_arg, delim_arg, env_args],
                                         prog='dx describe')
 parser_describe.add_argument('--details', help='Include details of data objects', action='store_true')
-parser_describe.add_argument('--verbose', help='Include all possible metadata', action='store_true')
+parser_describe.add_argument('--verbose', help='Include additional metadata', action='store_true')
 parser_describe.add_argument('--name', help='Only print the matching names, one per line', action='store_true')
 parser_describe.add_argument('--multi', help=fill('If the flag --json is also provided, then returns a JSON array of describe hashes of all matching results', width_adjustment=-24),
                              action='store_true')
+parser_describe.add_argument('--try', metavar="T", dest="job_try", type=int,
+                             help=fill('When describing a job that was restarted, describe job try T. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
+
 describe_path_action = parser_describe.add_argument('path', help=fill('Object ID or path to an object (possibly in another project) to describe.', width_adjustment=-24))
 describe_path_action.completer = DXPathCompleter()
 parser_describe.set_defaults(func=describe)
@@ -4305,6 +4928,9 @@ parser_download.add_argument('--no-progress', help='Do not show a progress bar',
                              action='store_false', default=sys.stderr.isatty())
 parser_download.add_argument('--lightweight', help='Skip some validation steps to make fewer API calls',
                              action='store_true')
+parser_download.add_argument('--symlink-max-tries', help='Set maximum number of tries for downloading symlinked files using aria2c',
+                             type=positive_integer,
+                             default=15)
 parser_download.add_argument('--unicode', help='Display the characters as text/unicode when writing to stdout',
                              dest="unicode_text", action='store_true')
 parser_download.set_defaults(func=download_or_cat)
@@ -4316,7 +4942,7 @@ register_parser(parser_download, categories='data')
 parser_make_download_url = subparsers.add_parser('make_download_url', help='Create a file download link for sharing',
                                                  description='Creates a pre-authenticated link that can be used to download a file without logging in.',
                                                  prog='dx make_download_url')
-path_action = parser_make_download_url.add_argument('path', help='Data object ID or name to access')
+path_action = parser_make_download_url.add_argument('path', help='Project-qualified data object ID or name, e.g. project-xxxx:file-yyyy, or project-xxxx:/path/to/file.txt')
 path_action.completer = DXPathCompleter(classes=['file'])
 parser_make_download_url.add_argument('--duration', help='Time for which the URL will remain valid (in seconds, or use suffix s, m, h, d, w, M, y). Default: 1 day')
 parser_make_download_url.add_argument('--filename', help='Name that the server will instruct the client to save the file as (default is the filename)')
@@ -4358,8 +4984,9 @@ build_parser = subparsers.add_parser('build', help='Create a new applet/app, or 
                                      prog='dx build',
                                      parents=[env_args, stdout_args])
 
-app_options = build_parser.add_argument_group('options for creating apps', '(Only valid when --app/--create-app is specified)')
-applet_and_workflow_options = build_parser.add_argument_group('options for creating applets or workflows', '(Only valid when --app/--create-app is NOT specified)')
+app_and_globalworkflow_options = build_parser.add_argument_group('Options for creating apps or globalworkflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is specified)')
+applet_and_workflow_options = build_parser.add_argument_group('Options for creating applets or workflows', '(Only valid when --app/--create-app/--globalworkflow/--create-globalworkflow is NOT specified)')
+nextflow_options = build_parser.add_argument_group('Options for creating Nextflow applets', '(Only valid when --nextflow is specified)')
 
 # COMMON OPTIONS
 build_parser.add_argument("--ensure-upload", help="If specified, will bypass computing checksum of " +
@@ -4376,7 +5003,7 @@ build_parser.add_argument("--force-symlinks", help="If specified, will not attem
                                             "will cause an error).",
                     action="store_true")
 
-src_dir_action = build_parser.add_argument("src_dir", help="App, applet, or workflow source directory (default: current directory)", nargs='?')
+src_dir_action = build_parser.add_argument("src_dir", help="Source directory that contains dxapp.json, dxworkflow.json or *.nf (for --nextflow option). (default: current directory)", nargs='?')
 src_dir_action.completer = LocalCompleter()
 
 build_parser.add_argument("--app", "--create-app", help="Create an app.", action="store_const", dest="mode", const="app")
@@ -4402,48 +5029,47 @@ build_parser.add_argument("--dry-run", "-n", help="Do not create an app(let): on
 build_parser.add_argument("--no-dry-run", help=argparse.SUPPRESS, action="store_false", dest="dry_run")
 
 # --[no-]publish
-app_options.set_defaults(publish=False)
-app_options.add_argument("--publish", help="Publish the resulting app and make it the default.", action="store_true",
+app_and_globalworkflow_options.set_defaults(publish=False)
+app_and_globalworkflow_options.add_argument("--publish", help="Publish the resulting app/globalworkflow and make it the default.", action="store_true",
                          dest="publish")
-app_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
-app_options.add_argument("--from", help="ID of an applet to create an app from. Source directory cannot be given with this option",
-                          dest="_from").completer = DXPathCompleter(classes=['applet'])
+app_and_globalworkflow_options.add_argument("--no-publish", help=argparse.SUPPRESS, action="store_false", dest="publish")
+app_and_globalworkflow_options.add_argument("--from", help="ID or path of the source applet/workflow to create an app/globalworkflow from. Source directory src_dir cannot be given when using this option",
+                          dest="_from").completer = DXPathCompleter(classes=['applet','workflow'])
 
 
 # --[no-]remote
 build_parser.set_defaults(remote=False)
 build_parser.add_argument("--remote", help="Build the app remotely by uploading the source directory to the DNAnexus Platform and building it there. This option is useful if you would otherwise need to cross-compile the app(let) to target the Execution Environment.", action="store_true", dest="remote")
-build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder. (This option only applicable if --remote was specified).", action="store_false", dest="watch")
+build_parser.add_argument("--no-watch", help="Don't watch the real-time logs of the remote builder (this option is only applicable if --remote or --repository is specified).", action="store_false", dest="watch")
 build_parser.add_argument("--no-remote", help=argparse.SUPPRESS, action="store_false", dest="remote")
 
 applet_and_workflow_options.add_argument("-f", "--overwrite", help="Remove existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
                             action="store_true", default=False)
 applet_and_workflow_options.add_argument("-a", "--archive", help="Archive existing applet(s) of the same name in the destination folder. This option is not yet supported for workflows.",
                             action="store_true", default=False)
-build_parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest.", default=None,
+build_parser.add_argument("-v", "--version", help="Override the version number supplied in the manifest. This option needs to be specified when using --from option.", default=None,
                     dest="version_override", metavar='VERSION')
-app_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app.",
+app_and_globalworkflow_options.add_argument("-b", "--bill-to", help="Entity (of the form user-NAME or org-ORGNAME) to bill for the app/globalworkflow.",
                          default=None, dest="bill_to", metavar='USER_OR_ORG')
 
 # --[no-]check-syntax
 build_parser.set_defaults(check_syntax=True)
 build_parser.add_argument("--check-syntax", help=argparse.SUPPRESS, action="store_true", dest="check_syntax")
-build_parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors)", action="store_false", dest="check_syntax")
+build_parser.add_argument("--no-check-syntax", help="Warn but do not fail when syntax problems are found (default is to fail on such errors).", action="store_false", dest="check_syntax")
 
 # --[no-]version-autonumbering
-app_options.set_defaults(version_autonumbering=True)
-app_options.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
-app_options.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
+app_and_globalworkflow_options.set_defaults(version_autonumbering=True)
+app_and_globalworkflow_options.add_argument("--version-autonumbering", help=argparse.SUPPRESS, action="store_true", dest="version_autonumbering")
+app_and_globalworkflow_options.add_argument("--no-version-autonumbering", help="Only attempt to create the version number supplied in the manifest (that is, do not try to create an autonumbered version such as 1.2.3+git.ab1b1c1d if 1.2.3 already exists and is published).", action="store_false", dest="version_autonumbering")
 # --[no-]update
-app_options.set_defaults(update=True)
-app_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
-app_options.add_argument("--no-update", help="Never update an existing unpublished app in place.", action="store_false", dest="update")
+app_and_globalworkflow_options.set_defaults(update=True)
+app_and_globalworkflow_options.add_argument("--update", help=argparse.SUPPRESS, action="store_true", dest="update")
+app_and_globalworkflow_options.add_argument("--no-update", help="Never update an existing unpublished app/globalworkflow in place.", action="store_false", dest="update")
 # --[no-]dx-toolkit-autodep
-build_parser.set_defaults(dx_toolkit_autodep="stable")
 build_parser.add_argument("--dx-toolkit-legacy-git-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="git")
 build_parser.add_argument("--dx-toolkit-stable-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
 build_parser.add_argument("--dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_const", dest="dx_toolkit_autodep", const="stable")
-build_parser.add_argument("--no-dx-toolkit-autodep", help="Do not auto-insert the dx-toolkit dependency (default is to add it if it would otherwise be absent from the runSpec)", action="store_false", dest="dx_toolkit_autodep")
+build_parser.add_argument("--no-dx-toolkit-autodep", help=argparse.SUPPRESS, action="store_false", dest="dx_toolkit_autodep")
 
 # --[no-]parallel-build
 build_parser.set_defaults(parallel_build=True)
@@ -4451,12 +5077,12 @@ build_parser.add_argument("--parallel-build", help=argparse.SUPPRESS, action="st
 build_parser.add_argument("--no-parallel-build", help="Build with " + BOLD("make") + " instead of " + BOLD("make -jN") + ".", action="store_false",
                     dest="parallel_build")
 
-app_options.set_defaults(use_temp_build_project=True)
+app_and_globalworkflow_options.set_defaults(use_temp_build_project=True)
 # Original help: "When building an app, build its applet in the current project instead of a temporary project".
-app_options.add_argument("--no-temp-build-project", help=argparse.SUPPRESS, action="store_false", dest="use_temp_build_project")
+app_and_globalworkflow_options.add_argument("--no-temp-build-project", help="When building an app in a single region, build its applet in the current project instead of a temporary project.", action="store_false", dest="use_temp_build_project")
 
 # --yes
-app_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
+app_and_globalworkflow_options.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation for potentially dangerous operations', action='store_false')
 
 # --[no-]json (undocumented): dumps the JSON describe of the app or
 # applet that was created. Useful for tests.
@@ -4464,14 +5090,49 @@ build_parser.set_defaults(json=False)
 build_parser.add_argument("--json", help=argparse.SUPPRESS, action="store_true", dest="json")
 build_parser.add_argument("--no-json", help=argparse.SUPPRESS, action="store_false", dest="json")
 build_parser.add_argument("--extra-args", help="Arguments (in JSON format) to pass to the /applet/new API method, overriding all other settings")
-build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default)", nargs=argparse.REMAINDER)
+build_parser.add_argument("--run", help="Run the app or applet after building it (options following this are passed to "+BOLD("dx run")+"; run at high priority by default).", nargs=argparse.REMAINDER)
 
 # --region
-app_options.add_argument("--region", action="append", help="Enable the app in this region. This flag can be specified multiple times to enable the app in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
+app_and_globalworkflow_options.add_argument("--region", action="append", help="Enable the app/globalworkflow in this region. This flag can be specified multiple times to enable the app/globalworkflow in multiple regions. If --region is not specified, then the enabled region(s) will be determined by 'regionalOptions' in dxapp.json, or the project context.")
 
 # --keep-open
 build_parser.add_argument('--keep-open', help=fill("Do not close workflow after building it. Cannot be used when building apps, applets or global workflows.",
                                                    width_adjustment=-24), action='store_true')
+
+# --nextflow
+build_parser.add_argument('--nextflow', help=fill("Build Nextflow applet.",
+                                                   width_adjustment=-24), action='store_true')
+
+# --profile
+nextflow_options.add_argument('--profile', help=fill("Default profile for the Nextflow pipeline.",
+                                                   width_adjustment=-24), dest="profile")
+
+# --repository
+nextflow_options.add_argument('--repository', help=fill("Specifies a Git repository of a Nextflow pipeline. Incompatible with --remote.",
+                                                   width_adjustment=-24), dest="repository")
+
+# --repository-tag
+nextflow_options.add_argument('--repository-tag', help=fill("Specifies tag for Git repository. Can be used only with --repository.",
+                                                   width_adjustment=-24), dest="tag")
+
+# --git-credentials
+nextflow_options.add_argument('--git-credentials', help=fill("Git credentials used to access Nextflow pipelines from private Git repositories. "
+                                                        "Can be used only with --repository. More information about the file syntax can be found"
+                                                        " at https://www.nextflow.io/blog/2021/configure-git-repositories-with-nextflow.html.",
+                                                   width_adjustment=-24), dest="git_credentials").completer = DXPathCompleter(classes=['file'])
+# --cache-docker
+nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project "
+                                                          "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote, --force, --archive, --dry-run, --json.",
+                                                   width_adjustment=-24), action="store_true", dest="cache_docker")
+
+# --docker-secrets
+nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "
+                                                            "docker repository.",
+                                                   width_adjustment=-24), dest="docker_secrets")
+
+# --nextflow-pipeline-params
+nextflow_options.add_argument('--nextflow-pipeline-params', help=fill("Custom pipeline parameters to be referenced when collecting the docker images.",
+                                                   width_adjustment=-24), dest="nextflow_pipeline_params")
 
 build_parser.set_defaults(func=build)
 register_parser(build_parser, categories='exec')
@@ -4611,7 +5272,7 @@ parser_list_database_files = subparsers_list_database.add_parser(
     parents=[env_args],
     prog='dx list database files'
 )
-parser_list_database_files.add_argument('database', help='ID of the database.')
+parser_list_database_files.add_argument('database', help='Data object ID or path of the database.')
 parser_list_database_files.add_argument('--folder', default='/', help='Name of folder (directory) in which to start searching for database files. This will typically match the name of the table whose files are of interest. The default value is "/" which will start the search at the root folder of the database.')
 parser_list_database_files.add_argument("--recurse", default=False, help='Look for files recursively down the directory structure. Otherwise, by default, only look on one level.', action='store_true')
 parser_list_database_files.add_argument("--csv", default=False, help='Write output as comma delimited fields, suitable as CSV format.', action='store_true')
@@ -4690,9 +5351,11 @@ parser_update_org.add_argument('--name', help='New name of the org')
 parser_update_org.add_argument('--member-list-visibility', help='New org membership level that is required to be able to view the membership level and/or permissions of any other member in the specified org (corresponds to the memberListVisibility org policy)', choices=['ADMIN', 'MEMBER', 'PUBLIC'])
 parser_update_org.add_argument('--project-transfer-ability', help='New org membership level that is required to be able to change the billing account of a project that is billed to the specified org, to some other entity (corresponds to the restrictProjectTransfer org policy)', choices=['ADMIN', 'MEMBER'])
 parser_update_org.add_argument('--saml-idp', help='New SAML identity provider')
+parser_update_org.add_argument('--detailed-job-metrics-collect-default', choices=['true', 'false'], help='If set to true, jobs launched in the projects billed to this org will collect detailed job metrics by default')
 update_job_reuse_args = parser_update_org.add_mutually_exclusive_group(required=False)
 update_job_reuse_args.add_argument('--enable-job-reuse', action='store_true',  help='Enable job reuse for projects where the org is the billTo')
 update_job_reuse_args.add_argument('--disable-job-reuse', action='store_true', help='Disable job reuse for projects where the org is the billTo')
+parser_update_org.add_argument('--job-logs-forwarding-json', metavar='JLF', help='JLF is a JSON string with url and token enabling forwarding of job logs to Splunk, e.g. \'{"url":"https://http-inputs-acme.splunkcloud.com/event/collector","token":"splunk-hec-token"}\'')
 parser_update_org.set_defaults(func=update_org)
 register_parser(parser_update_org, subparsers_action=subparsers_update, categories='org')
 
@@ -4762,15 +5425,21 @@ parser_update_project.add_argument('--download-restricted', choices=["true", "fa
                                    help="Whether the project should be DOWNLOAD RESTRICTED")
 parser_update_project.add_argument('--containsPHI', choices=["true"],
                                    help="Flag to tell if project contains PHI")
+parser_update_project.add_argument('--external-upload-restricted', choices=["true", "false"],
+                                   help="Whether uploads of file and table data to the project should be restricted")
 parser_update_project.add_argument('--database-ui-view-only', choices=["true", "false"],
                                    help="Whether the viewers on the project can access the database data directly")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
 allowed_executables_group = parser_update_project.add_mutually_exclusive_group()
 allowed_executables_group.add_argument('--allowed-executables', help='Executable ID(s) this project is allowed to run.  This operation overrides any existing list of executables.', type=str, nargs="+")
 allowed_executables_group.add_argument('--unset-allowed-executables', help='Removes any restriction to run executables as set by --allowed-executables', action='store_true')
+database_results_restricted_group = parser_update_project.add_mutually_exclusive_group()
+database_results_restricted_group.add_argument('--database-results-restricted', help='Viewers on the project can access only more than specified size of visual data from databases', type=positive_integer)
+database_results_restricted_group.add_argument('--unset-database-results-restricted', help='Removes any restriction to return data from databases as set by --database-results-restricted', action='store_true')
 
 parser_update_project.set_defaults(func=update_project)
 register_parser(parser_update_project, subparsers_action=subparsers_update, categories="metadata")
+
 
 #####################################
 # install
@@ -4821,7 +5490,7 @@ parser_run.add_argument('-h', '--help', help='show this help message and exit', 
 parser_run.add_argument('--clone', help=fill('Job or analysis ID or name from which to use as default options (will use the exact same executable ID, destination project and folder, job input, instance type requests, and a similar name unless explicitly overridden by command-line arguments. When using an analysis with --clone a workflow executable cannot be overriden and should not be provided.)', width_adjustment=-24))
 parser_run.add_argument('--alias', '--version', dest='alias',
                         help=fill('Alias (tag) or version of the app to run (default: "default" if an app)', width_adjustment=-24))
-parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results.  By default, the current working directory will be used.', width_adjustment=-24))
+parser_run.add_argument('--destination', '--folder', metavar='PATH', dest='folder', help=fill('The full project:folder path in which to output the results. By default, the current working directory will be used.', width_adjustment=-24))
 parser_run.add_argument('--batch-folders', dest='batch_folders',
                         help=fill('Output results to separate folders, one per batch, using batch ID as the name of the output folder. The batch output folder location will be relative to the path set in --destination', width_adjustment=-24),
                         action='store_true')
@@ -4849,19 +5518,24 @@ parser_run.add_argument('--delay-workspace-destruction',
                         action='store_true')
 parser_run.add_argument('--priority',
                         choices=['low', 'normal', 'high'],
-                        help='Request a scheduling priority for all resulting jobs. Will be overriden (set to high) ' +
-                             'when either --watch, --ssh, or --allow-ssh flags are used')
+                        help=fill('Request a scheduling priority for all resulting jobs. ' +
+                                  'Defaults to high when --watch, --ssh, or --allow-ssh flags are used.',
+                                  width_adjustment=-24))
+parser_run.add_argument('--head-job-on-demand', action='store_true',
+                        help=fill('Requests that the head job of an app or applet be run in an on-demand instance. ' +
+                                  'Note that --head-job-on-demand option will override the --priority setting for the head job',
+                                  width_adjustment=-24))
 parser_run.add_argument('-y', '--yes', dest='confirm', help='Do not ask for confirmation', action='store_false')
 parser_run.add_argument('--wait', help='Wait until the job is done before returning', action='store_true')
-parser_run.add_argument('--watch', help="Watch the job after launching it; sets --priority high", action='store_true')
+parser_run.add_argument('--watch', help="Watch the job after launching it. Defaults --priority to high.", action='store_true')
 parser_run.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
-                        help=fill('Configure the job to allow SSH access; sets --priority high. If an argument is ' +
-                                  'supplied, it is interpreted as an IP or hostname mask to allow connections from, ' +
-                                  'e.g. "--allow-ssh 1.2.3.4 --allow-ssh berkeley.edu"',
+                        help=fill('Configure the job to allow SSH access. Defaults --priority to high. If an argument is ' +
+                                  'supplied, it is interpreted as an IP range, e.g. "--allow-ssh 1.2.3.4". ' +
+                                  'If no argument is supplied then the client IP visible to the DNAnexus API server will be used by default',
                                   width_adjustment=-24))
 parser_run.add_argument('--ssh',
-                        help=fill("Configure the job to allow SSH access and connect to it after launching; " +
-                                  "sets --priority high",
+                        help=fill("Configure the job to allow SSH access and connect to it after launching. " +
+                                  "Defaults --priority to high.",
                                   width_adjustment=-24),
                         action='store_true')
 parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
@@ -4910,23 +5584,46 @@ parser_run.add_argument('--detach', help=fill("When invoked from a job, detaches
 parser_run.add_argument('--cost-limit', help=fill("Maximum cost of the job before termination. In case of workflows it is cost of the "
                                                   "entire analysis job. For batch run, this limit is applied per job.",
                                               width_adjustment=-24), metavar='cost_limit', type=float)
+parser_run.add_argument('-r', '--rank', type=int, default=None, help=fill('Set the rank of the root execution, integer between -1024 and 1023. Requires executionRankEnabled license feature for the billTo. Default is 0.', width_adjustment=-24))
+parser_run.add_argument('--max-tree-spot-wait-time', help=fill('The amount of time allocated to each path in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_run.add_argument('--max-job-spot-wait-time', help=fill('The amount of time allocated to each job in the root execution\'s tree to wait for Spot (in seconds, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+parser_run.add_argument('--detailed-job-metrics', action='store_true', default=None, help=fill('Collect CPU, memory, network and disk metrics every 60 seconds', width_adjustment=-24))
+
+preserve_outputs = parser_run.add_mutually_exclusive_group()
+preserve_outputs.add_argument('--preserve-job-outputs', action='store_true',
+                              help=fill("Copy cloneable outputs of every non-reused job entering \"done\" state in this "
+                                        "root execution R into the \"intermediateJobOutputs\" subfolder under R's output "
+                                        "folder.  As R's root job or root analysis' stages complete, R's regular outputs "
+                                        "will be moved to R's regular output folder.",
+                                        width_adjustment=-24))
+preserve_outputs.add_argument('--preserve-job-outputs-folder', metavar="JOB_OUTPUTS_FOLDER",
+                              help=fill("Similar to --preserve-job-outputs, copy cloneable outputs of every non-reused "
+                                        "job entering \"done\" state in this root execution to the specified folder in "
+                                        "the project.  JOB_OUTPUTS_FOLDER starting with '/' refers to an absolute path "
+                                        "within the project, otherwise, it refers to a subfolder under root execution's "
+                                        "output folder.",
+                                        width_adjustment=-24))
+
 parser_run.set_defaults(func=run, verbose=False, help=False, details=None,
-                        stage_instance_types=None, stage_folders=None)
+                        stage_instance_types=None, stage_folders=None, head_job_on_demand=None)
 register_parser(parser_run, categories='exec')
 
 #####################################
 # watch
 #####################################
 parser_watch = subparsers.add_parser('watch', help='Watch logs of a job and its subjobs', prog='dx watch',
-                                     description='Monitors logging output from a running job',
+                                     description='Monitors logging output from a running or finished job',
                                      parents=[env_args, no_color_arg])
 parser_watch.add_argument('jobid', help='ID of the job to watch')
 # .completer = TODO
 parser_watch.add_argument('-n', '--num-recent-messages', help='Number of recent messages to get',
                           type=int, default=1024*256)
-parser_watch.add_argument('--tree', help='Include the entire job tree', action='store_true')
+parser_watch_trygroup = parser_watch.add_mutually_exclusive_group()
+parser_watch_trygroup.add_argument('--tree', help='Include the entire job tree', action='store_true')
+parser_watch_trygroup.add_argument('--try', metavar="T", dest="job_try", type=int,
+                                   help=fill('Allows to watch older tries of a restarted job. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
 parser_watch.add_argument('-l', '--levels', action='append', choices=["EMERG", "ALERT", "CRITICAL", "ERROR", "WARNING",
-                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT"])
+                                                                      "NOTICE", "INFO", "DEBUG", "STDERR", "STDOUT", "METRICS"])
 parser_watch.add_argument('--get-stdout', help='Extract stdout only from this job', action='store_true')
 parser_watch.add_argument('--get-stderr', help='Extract stderr only from this job', action='store_true')
 parser_watch.add_argument('--get-streams', help='Extract only stdout and stderr from this job', action='store_true')
@@ -4936,9 +5633,66 @@ parser_watch.add_argument('--job-ids', help='Print job ID in each message', acti
 parser_watch.add_argument('--no-job-info', help='Omit job info and status updates', action='store_false',
                           dest='job_info')
 parser_watch.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
-parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, level, msg, date')
+parser_watch.add_argument('-f', '--format', help='Message format. Available fields: job, try, level, msg, date')
 parser_watch.add_argument('--no-wait', '--no-follow', action='store_false', dest='tail',
                           help='Exit after the first new message is received, instead of waiting for all logs')
+parser_watch.add_argument('--metrics', help=fill('Select display mode for detailed job metrics if they were collected and are available based on retention policy; see --metrics-help for details', width_adjustment=-24),
+                          choices=["interspersed", "none", "top", "csv"], default="interspersed")
+
+class MetricsHelpAction(argparse.Action):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(
+"""Help: Displaying detailed job metrics
+Detailed job metrics describe job's consumption of CPU, memory, disk, network, etc at 60 second intervals.
+If collection of job metrics was enabled for a job (e.g with dx run --detailed-job-metrics), the metrics can be displayed by "dx watch" for 15 days from the time the job started running.
+
+Note that all reported data-related values are in base 2 units - i.e. 1 MB = 1024 * 1024 bytes.
+
+The "interspersed" default mode shows METRICS job log messages interspersed with other jog log messages.
+
+The "none" mode omits all METRICS messages from "dx watch" output.
+
+The "top" mode interactively shows the latest METRICS message at the top of the screen and updates it for running jobs instead of showing every METRICS message interspersed with the currently-displayed job log messages. For completed jobs, this mode does not show any metrics. Built-in help describing key bindings is available by pressing "?".
+
+The "csv" mode outputs the following columns with headers in csv format to stdout:
+- timestamp: An integer number representing the number of milliseconds since the Unix epoch.
+- cpuCount: A number of CPUs available on the instance that ran the job.
+- cpuUsageUser: The percentage of cpu time spent in user mode on the instance during the metric collection period.
+- cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period.
+- cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory).
+- memoryTotalBytes: Total memory available on the instance that ran the job.
+- diskUsedBytes: Bytes of storage allocated to the AEE that are used by the filesystem.
+- diskTotalBytes: Total bytes of disk space available to the job within the AEE.
+- networkOutBytes: Total network bytes transferred out from AEE since the job started. Includes "dx upload" bytes.
+- networkInBytes: Total network bytes transferred into AEE since the job started. Includes "dx download" bytes.
+- diskReadBytes: Total bytes read from the AEE-accessible disks since the job started.
+- diskWriteBytes: Total bytes written to the AEE-accessible disks since the job started.
+- diskReadOpsCount: Total disk read operation count against AEE-accessible disk since the job started.
+- diskWriteOpsCount: Total disk write operation count against AEE-accessible disk since the job started.
+
+Note 1: cpuUsageUser, cpuUsageSystem, cpuUsageIowait, cpuUsageIdle and memoryUsedBytes metrics reflect usage by processes inside and outside of the AEE which include DNAnexus services responsible for proxying DNAnexus data.
+Note 2: cpuUsageUser + cpuUsageSystem + cpuUsageIowait + cpuUsageIdle + cpuUsageSteal = 100. cpuUsageSteal is unreported, but can be derived from the other 4 quantities given that they add up to 100.
+Note 3: cpuUsage numbers are rounded to 2 decimal places.
+Note 4: networkOutBytes may be larger than job's egressReport which does not include "dx upload" bytes.
+
+The format of METRICS job log lines is defined as follows using the example below:
+
+2023-03-15 12:23:44 some-job-name METRICS ** CPU usr/sys/idl/wai: 24/11/1/64% (4 cores) * Memory: 1566/31649MB * Storage: 19/142GB * Net: 10↓/0↑MBps * Disk: r/w 20/174 MBps iops r/w 8/1300
+
+"2023-03-15 12:23:44" is the metrics collection time.
+"METRICS" is a type of job log line containing detailed job metrics.
+"CPU usr/sys/idl/wai: 24/11/1/64%" maps to cpuUsageUser, cpuUsageSystem, cpuUsageIdle, cpuUsageIowait values.
+"(4 cores)" maps to cpuCount.
+"Memory: 1566/31649MB" maps to memoryUsedBytes and memoryTotalBytes.
+"Storage: 19/142GB" maps to diskUsedBytes and diskTotalBytes.
+"Net: 10↓/0↑MBps" is derived from networkOutBytes and networkInBytes cumulative totals by subtracting previous measurement from the measurement at the metric collection time, and dividing the difference by the time span between the two measurements.
+"Disk: r/w 20/174 MBps iops r/w 8/1300" is derived similar to "Net:" from diskReadBytes, diskWriteBytes, diskReadOpsCount, and diskWriteOpsCount.""")
+        parser.exit(0)
+
+parser_watch.add_argument('--metrics-help', action=MetricsHelpAction, nargs=0, help='Print help for displaying detailed job metrics')
 parser_watch.set_defaults(func=watch)
 register_parser(parser_watch, categories='exec')
 
@@ -4969,6 +5723,12 @@ parser_ssh.add_argument('job_id', help='Name of job to connect to')
 parser_ssh.add_argument('ssh_args', help='Command-line arguments to pass to the SSH client', nargs=argparse.REMAINDER)
 parser_ssh.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
                         help='SSH connect via proxy, argument supplied is used as the proxy address and port')
+parser_ssh_firewall = parser_ssh.add_mutually_exclusive_group()
+parser_ssh_firewall.add_argument('--no-firewall-update', help='Do not update the allowSSH allowed IP ranges before connecting with ssh', action='store_true', default=False)
+parser_ssh_firewall.add_argument('--allow-ssh', action='append', nargs='?', metavar='ADDRESS',
+                        help=fill('Configure the job to allow SSH access from an IP range, e.g. "--allow-ssh 1.2.3.4". ' +
+                                  'If no argument is supplied then the client IP visible to the DNAnexus API server will be used by default',
+                                  width_adjustment=-24))
 # If ssh is run with the  supress-running-check flag, then dx won't prompt
 # the user whether they would like to terminate the currently running job
 # after they exit ssh.  Among other things, this will allow users to setup
@@ -5025,6 +5785,7 @@ parser_new_user_user_opts.add_argument("--middle", help="Middle name")
 parser_new_user_user_opts.add_argument("--last", help="Last name")
 parser_new_user_user_opts.add_argument("--token-duration", help='Time duration for which the newly generated auth token for the new user will be valid (default 30 days; max 30 days). An integer will be interpreted as seconds; you can append a suffix (s, m, h, d) to indicate different units (e.g. "--token-duration 10m" to indicate 10 minutes).')
 parser_new_user_user_opts.add_argument("--occupation", help="Occupation")
+parser_new_user_user_opts.add_argument("--on-behalf-of", help="On behalf of which org is the account provisioned")
 parser_new_user_org_opts = parser_new_user.add_argument_group("Org options", "Optionally invite the new user to an org with the specified parameters")
 parser_new_user_org_opts.add_argument("--org", help="ID of the org")
 parser_new_user_org_opts.add_argument("--level", choices=["ADMIN", "MEMBER"], default="MEMBER", action=DXNewUserOrgArgsAction, help="Org membership level that will be granted to the new user; default MEMBER")
@@ -5059,8 +5820,14 @@ parser_new_project.add_argument('-s', '--select', help='Select the new project a
 parser_new_project.add_argument('--bill-to', help='ID of the user or org to which the project will be billed. The default value is the billTo of the requesting user.')
 parser_new_project.add_argument('--phi', help='Add PHI protection to project', default=False,
                                 action='store_true')
-parser_new_project.add_argument('--database-ui-view-only', help='If set to true, viewers of the project will not be able to access database data directly', default=False,
+parser_new_project.add_argument('--database-ui-view-only', help='Viewers on the project cannot access database data directly', default=False,
                                 action='store_true')
+parser_new_project.add_argument('--database-results-restricted', help='Viewers on the project can access only more than specified size of visual data from databases', type=positive_integer)
+parser_new_project.add_argument('--monthly-compute-limit', type=positive_integer, help='Monthly project spending limit for compute')
+parser_new_project.add_argument('--monthly-egress-bytes-limit', type=positive_integer, help='Monthly project spending limit for egress (in Bytes)')
+parser_new_project.add_argument('--monthly-storage-limit', type=positive_number, help='Monthly project spending limit for storage')
+parser_new_project.add_argument('--default-symlink', help='Default symlink for external storage account')
+parser_new_project.add_argument('--drive', help='Drive for external storage account')
 parser_new_project.set_defaults(func=new_project)
 register_parser(parser_new_project, subparsers_action=subparsers_new, categories='fs')
 
@@ -5154,7 +5921,7 @@ register_parser(parser_remove_types, categories='metadata')
 #####################################
 parser_tag = subparsers.add_parser('tag', help='Tag a project, data object, or execution', prog='dx tag',
                                    description='Tag a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
-                                   parents=[env_args, all_arg])
+                                   parents=[env_args, all_arg, try_arg])
 parser_tag.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_tag.add_argument('tags', nargs='+', metavar='tag', help='Tags to add')
 parser_tag.set_defaults(func=add_tags)
@@ -5165,7 +5932,7 @@ register_parser(parser_tag, categories='metadata')
 #####################################
 parser_untag = subparsers.add_parser('untag', help='Untag a project, data object, or execution', prog='dx untag',
                                      description='Untag a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
-                                     parents=[env_args, all_arg])
+                                     parents=[env_args, all_arg, try_arg])
 parser_untag.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_untag.add_argument('tags', nargs='+', metavar='tag', help='Tags to remove')
 parser_untag.set_defaults(func=remove_tags)
@@ -5190,7 +5957,7 @@ register_parser(parser_rename, categories='metadata')
 #####################################
 parser_set_properties = subparsers.add_parser('set_properties', help='Set properties of a project, data object, or execution',
                                               description='Set properties of a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.', prog='dx set_properties',
-                                              parents=[env_args, all_arg])
+                                              parents=[env_args, all_arg, try_arg])
 parser_set_properties.add_argument('path', help='ID or path to project, data object, or execution to modify').completer = DXPathCompleter()
 parser_set_properties.add_argument('properties', nargs='+', metavar='propertyname=value',
                                    help='Key-value pairs of property names and their new values')
@@ -5203,7 +5970,7 @@ register_parser(parser_set_properties, categories='metadata')
 parser_unset_properties = subparsers.add_parser('unset_properties', help='Unset properties of a project, data object, or execution',
                                                 description='Unset properties of a project, data object, or execution.  Note that a project context must be either set or specified for data object IDs or paths.',
                                                 prog='dx unset_properties',
-                                                parents=[env_args, all_arg])
+                                                parents=[env_args, all_arg, try_arg])
 path_action = parser_unset_properties.add_argument('path', help='ID or path to project, data object, or execution to modify')
 path_action.completer = DXPathCompleter()
 parser_unset_properties.add_argument('properties', nargs='+', metavar='propertyname', help='Property names to unset')
@@ -5284,14 +6051,10 @@ parser_find_apps.add_argument('--installed', help='Return only installed apps', 
 parser_find_apps.add_argument('--billed-to', help='User or organization responsible for the app')
 parser_find_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_apps.add_argument('--developer', help='Developer of the app')
-parser_find_apps.add_argument('--created-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                         Negative input example "--created-after=-2d"''')
-parser_find_apps.add_argument('--created-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                        Negative input example "--created-before=-2d"''')
-parser_find_apps.add_argument('--mod-after',help='''Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                    Negative input example "--mod-after=-2d"''')
-parser_find_apps.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                      Negative input example "--mod-before=-2d"''')
+parser_find_apps.add_argument('--created-after', help='''Date (e.g. --created-after="2021-12-01" or --created-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-after=1642196636000) after which the app created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-after=-2d for apps created in the last 2 days)''')
+parser_find_apps.add_argument('--created-before', help='''Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the app was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for apps created earlier than 2 days ago)''')
+parser_find_apps.add_argument('--mod-after',help='''Date (e.g. --mod-after="2021-12-01" or --mod-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --mod-after=1642196636000) after which the app modified. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --mod-after=-2d for apps modified in the last 2 days)''')
+parser_find_apps.add_argument('--mod-before', help='''Date (e.g. --mod-before="2021-12-01" or --mod-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --mod-before=1642196636000) after which the app modified. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --mod-before=-2d for apps modified earlier than 2 days ago)''')
 parser_find_apps.set_defaults(func=find_apps)
 register_parser(parser_find_apps, subparsers_action=subparsers_find, categories='exec')
 
@@ -5314,14 +6077,10 @@ parser_find_globalworkflows.add_argument('--unpublished', help='Return only unpu
 parser_find_globalworkflows.add_argument('--billed-to', help='User or organization responsible for the workflow')
 parser_find_globalworkflows.add_argument('--creator', help='Creator of the workflow version')
 parser_find_globalworkflows.add_argument('--developer', help='Developer of the workflow')
-parser_find_globalworkflows.add_argument('--created-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                         Negative input example "--created-after=-2d"''')
-parser_find_globalworkflows.add_argument('--created-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the workflow version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                        Negative input example "--created-before=-2d"''')
-parser_find_globalworkflows.add_argument('--mod-after',help='''Date (e.g. 2012-01-01) or integer timestamp after which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                    Negative input example "--mod-after=-2d"''')
-parser_find_globalworkflows.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the workflow was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                      Negative input example "--mod-before=-2d"''')
+parser_find_globalworkflows.add_argument('--created-after', help='''Date (e.g. --created-after="2021-12-01" or --created-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-after=1642196636000) after which the workflow was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-after=-2d for workflows created in the last 2 days).''')
+parser_find_globalworkflows.add_argument('--created-before', help='''Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the workflow was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for workflows created earlier than 2 days ago)''')
+parser_find_globalworkflows.add_argument('--mod-after',help='''Date (e.g. --mod-after="2021-12-01" or --mod-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --mod-after=1642196636000) after which the workflow was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --mod-after=-2d for workflows modified in the last 2 days)''')
+parser_find_globalworkflows.add_argument('--mod-before', help='''Date (e.g. --mod-before="2021-12-01" or --mod-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --mod-before=1642196636000) before which the workflow was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --mod-before=-2d for workflows modified earlier than 2 days ago)''')
 parser_find_globalworkflows.set_defaults(func=find_global_workflows)
 register_parser(parser_find_globalworkflows, subparsers_action=subparsers_find, categories='exec')
 
@@ -5388,7 +6147,8 @@ parser_find_data.add_argument('--class', dest='classname', choices=['record', 'f
 )
 parser_find_data.add_argument('--state', choices=['open', 'closing', 'closed', 'any'], help='State of the object')
 parser_find_data.add_argument('--visibility', choices=['hidden', 'visible', 'either'], default='visible', help='Whether the object is hidden or not')
-parser_find_data.add_argument('--name', help='Name of the object')
+parser_find_data.add_argument('--name', help='Search criteria for the object name, interpreted according to the --name-mode')
+parser_find_data.add_argument('--name-mode', default='glob', help='Name mode to use for searching', choices=['glob', 'exact', 'regexp'])
 parser_find_data.add_argument('--type', help='Type of the data object')
 parser_find_data.add_argument('--link', help='Object ID that the data object links to')
 parser_find_data.add_argument('--all-projects', '--allprojects', help='Extend search to all projects (excluding public projects)', action='store_true')
@@ -5397,14 +6157,10 @@ parser_find_data.add_argument('--folder', help=argparse.SUPPRESS).completer = DX
 parser_find_data.add_argument('--path', help='Project and/or folder in which to restrict the results',
                               metavar='PROJECT:FOLDER').completer = DXPathCompleter(expected='folder')
 parser_find_data.add_argument('--norecurse', dest='recurse', help='Do not recurse into subfolders', action='store_false')
-parser_find_data.add_argument('--created-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                         Negative input example "--created-after=-2d"''')
-parser_find_data.add_argument('--created-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the object was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                        Negative input example "--created-before=-2d"''')
-parser_find_data.add_argument('--mod-after',help='''Date (e.g. 2012-01-01) or integer timestamp after which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                    Negative input example "--mod-after=-2d"''')
-parser_find_data.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the object was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
-                                                      Negative input example "--mod-before=-2d"''')
+parser_find_data.add_argument('--created-after', help='''Date (e.g. --created-after="2021-12-01" or --created-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-after=1642196636000) after which the object was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-after=-2d for objects created in the last 2 days).''')
+parser_find_data.add_argument('--created-before', help='''Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the object was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for objects created earlier than 2 days ago)''')
+parser_find_data.add_argument('--mod-after',help='''Date (e.g. --mod-after="2021-12-01" or --mod-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --mod-after=1642196636000) after which the object was modified. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --mod-after=-2d for objects modified in the last 2 days)''')
+parser_find_data.add_argument('--mod-before', help='''Date (e.g. --mod-before="2021-12-01" or --mod-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --mod-before=1642196636000) before which the object was modified. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --mod-before=-2d for objects modified earlier than 2 days ago)''')
 parser_find_data.add_argument('--region', help='Restrict the search to the provided region')
 
 parser_find_data.set_defaults(func=find_data)
@@ -5425,14 +6181,12 @@ parser_find_projects.add_argument('--public',
                                   help='Include ONLY public projects (will automatically set --level to VIEW)',
                                   action='store_true')
 parser_find_projects.add_argument('--created-after',
-                                  help='''Date (e.g. 2012-01-01) or integer timestamp after which the project was 
-                                  created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)
-                                  Negative input example "--created-after=-2d"''')
+                                  help='''Date (e.g. --created-after="2021-12-01" or --created-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-after=1642196636000) after which the project was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-after=-2d for projects created in the last 2 days).''')
 parser_find_projects.add_argument('--created-before',
-                                  help='''Date (e.g. 2012-01-01) or integer timestamp after which the project was 
-                                  created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)
-                                  Negative input example "--created-before=-2d"''')
+                                  help='''Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the project was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for projects created earlier than 2 days ago)''')
 parser_find_projects.add_argument('--region', help='Restrict the search to the provided region')
+parser_find_projects.add_argument('--external-upload-restricted', choices=["true", "false"],
+                                   help="If set to true, only externalUploadRestricted projects will be retrieved. If set to false, only projects that are not externalUploadRestricted will be retrieved.")
 parser_find_projects.set_defaults(func=find_projects)
 register_parser(parser_find_projects, subparsers_action=subparsers_find, categories='data')
 
@@ -5478,10 +6232,8 @@ parser_find_org_projects.add_argument('--ids', nargs='+', help='Possible project
 find_org_projects_public = parser_find_org_projects.add_mutually_exclusive_group()
 find_org_projects_public.add_argument('--public-only', dest='public', help='Include only public projects', action='store_true', default=None)
 find_org_projects_public.add_argument('--private-only', dest='public', help='Include only private projects', action='store_false', default=None)
-parser_find_org_projects.add_argument('--created-after', help='''Date (e.g. 2012-01-31) or integer timestamp after which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch. 
-                                                                 Negative input example "--created-after=-2d"''')
-parser_find_org_projects.add_argument('--created-before', help='''Date (e.g. 2012-01-31) or integer timestamp before which the project was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch. 
-                                                                  Negative input example "--created-before=-2d"''')
+parser_find_org_projects.add_argument('--created-after', help='''Date (e.g. --created-after="2021-12-01" or --created-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-after=1642196636000) after which the project was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-after=-2d for projects created in the last 2 days).''')
+parser_find_org_projects.add_argument('--created-before', help='''Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the project was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for projects created earlier than 2 days ago)''')
 parser_find_org_projects.add_argument('--region', help='Restrict the search to the provided region')
 parser_find_org_projects.set_defaults(func=org_find_projects)
 register_parser(parser_find_org_projects, subparsers_action=subparsers_find_org, categories=('data', 'org'))
@@ -5508,13 +6260,11 @@ parser_find_org_apps.add_argument('--unpublished', help='Return only unpublished
 parser_find_org_apps.add_argument('--installed', help='Return only installed apps', action='store_true')
 parser_find_org_apps.add_argument('--creator', help='Creator of the app version')
 parser_find_org_apps.add_argument('--developer', help='Developer of the app')
-parser_find_org_apps.add_argument('--created-after', help='''Date (e.g. 2012-01-31) or integer timestamp after which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch. 
-                                                             Negative input example "--created-after=-2d"''')
-parser_find_org_apps.add_argument('--created-before', help='''Date (e.g. 2012-01-31) or integer timestamp before which the app version was created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y). Integer timestamps will be parsed as milliseconds since epoch. 
-                                                              Negative input example "--created-before=-2d"''')
-parser_find_org_apps.add_argument('--mod-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+parser_find_org_apps.add_argument('--created-after', help='''Date (e.g. --created-after="2021-12-01" or --created-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-after=1642196636000) after which the app was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-after=-2d for apps created in the last 2 days).''')
+parser_find_org_apps.add_argument('--created-before', help='''Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the app was created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for apps created earlier than 2 days ago)''')
+parser_find_org_apps.add_argument('--mod-after', help='''Date (e.g. 2012-01-01) or integer timestamp after which the app was last modified (negative number means seconds in the past, or use suffix s, m, h, d, w, M, y) 
                                                          Negative input example "--mod-after=-2d"''')
-parser_find_org_apps.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means ms in the past, or use suffix s, m, h, d, w, M, y) 
+parser_find_org_apps.add_argument('--mod-before', help='''Date (e.g. 2012-01-01) or integer timestamp before which the app was last modified (negative number means seconds in the past, or use suffix s, m, h, d, w, M, y) 
                                                           Negative input example "--mod-before=-2d"''')
 parser_find_org_apps.set_defaults(func=org_find_apps)
 register_parser(parser_find_org_apps, subparsers_action=subparsers_find_org, categories=('exec', 'org'))
@@ -5599,16 +6349,6 @@ parser_api.set_defaults(func=api)
 register_parser(parser_api)
 
 #####################################
-# upgrade
-#####################################
-parser_upgrade = subparsers.add_parser('upgrade', help='Upgrade dx-toolkit (the DNAnexus SDK and this program)',
-                                       description='Upgrades dx-toolkit (the DNAnexus SDK and this program) to the latest recommended version, or to a specified version and platform.',
-                                       prog='dx upgrade')
-parser_upgrade.add_argument('args', nargs='*')
-parser_upgrade.set_defaults(func=upgrade)
-register_parser(parser_upgrade)
-
-#####################################
 # generate_batch_inputs
 #####################################
 
@@ -5635,6 +6375,431 @@ parser_publish.add_argument('--no-default',
                             action='store_false', dest='make_default')
 parser_publish.set_defaults(func=publish)
 register_parser(parser_publish)
+
+#####################################
+# archive
+#####################################
+
+parser_archive = subparsers.add_parser(
+    'archive',
+    help='Requests for the specified set files or for the files in a single specified folder in one project to be archived on the platform',
+    description=
+'''
+Requests for {} or for the files in {} in {} to be archived on the platform.
+For each file, if this is the last copy of a file to have archival requested, it will trigger the full archival of the object. 
+Otherwise, the file will be marked in an archival state denoting that archival has been requested.
+'''.format(BOLD('the specified set files'), BOLD('a single specified folder'), BOLD('ONE project')) +
+'''
+The input paths should be either 1 folder path or up to 1000 files, and all path(s) need to be in the same project. 
+To specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon. 
+
+EXAMPLES:
+
+    # archive 3 files in project "FirstProj" with project ID project-B0VK6F6gpqG6z7JGkbqQ000Q
+    $ dx archive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+    
+    # archive 2 files in current project. Specifying file ids saves time by avoiding file name resolution.
+    $ dx select FirstProj
+    $ dx archive file-A00000ygpqGK8ZPjbk0Q000Q file-B00000ygpqGK8ZPjbk0Q000Q
+
+    # archive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q
+    $ dx archive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
+  ''',
+  formatter_class=argparse.RawTextHelpFormatter,
+  parents=[all_arg],
+  prog='dx archive')
+
+parser_archive.add_argument('-q', '--quiet', help='Do not print extra info messages',
+                            action='store_true')
+parser_archive.add_argument(
+    '--all-copies',
+    dest = "all_copies",
+    help=fill('If true, archive all the copies of files in projects with the same billTo org.' ,width_adjustment=-24)+ '\n'+ fill('See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-archive for details.',width_adjustment=-24),
+                            default=False, action='store_true')
+parser_archive.add_argument(
+    '-y','--yes', dest='confirm',
+    help=fill('Do not ask for confirmation.' , width_adjustment=-24),
+    default=True, action='store_false')
+parser_archive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be archived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+
+parser_archive.add_argument(
+    'path',
+    help=fill('May refer to a single folder or specify up to 1000 files inside a project.',width_adjustment=-24),
+    default=[], nargs='+').completer = DXPathCompleter()
+
+parser_archive_output = parser_archive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <count> file(s) for archival"')
+
+parser_archive.set_defaults(func=archive, request_mode = "archival")
+register_parser(parser_archive, categories='fs')
+
+#####################################
+# unarchive
+#####################################
+
+parser_unarchive = subparsers.add_parser(
+    'unarchive',
+    help='Requests for the specified set files or for the files in a single specified folder in one project to be unarchived on the platform.',
+    description=
+'''
+Requests for {} or for the files in {} in {} to be unarchived on the platform.
+The requested copy will eventually be transitioned over to the live state while all other copies will move over to the archival state.
+'''.format(BOLD('a specified set files'), BOLD('a single specified folder'), BOLD('ONE project')) +
+'''
+The input paths should be either 1 folder path or up to 1000 files, and all path(s) need to be in the same project. 
+To specify which project to use, prepend the path or ID of the file/folder with the project ID or name and a colon.
+
+EXAMPLES:
+
+    # unarchive 3 files in project "FirstProj" with project ID project-B0VK6F6gpqG6z7JGkbqQ000Q 
+    $ dx unarchive FirstProj:file-B0XBQFygpqGK8ZPjbk0Q000Q FirstProj:/path/to/file1 project-B0VK6F6gpqG6z7JGkbqQ000Q:/file2
+ 
+    # unarchive 2 files in current project. Specifying file ids saves time by avoiding file name resolution.
+    $ dx select FirstProj
+    $ dx unarchive file-A00000ygpqGK8ZPjbk0Q000Q file-B00000ygpqGK8ZPjbk0Q000Q
+
+    # unarchive all files recursively in project-B0VK6F6gpqG6z7JGkbqQ000Q
+    $ dx unarchive project-B0VK6F6gpqG6z7JGkbqQ000Q:/
+  ''',
+    formatter_class=argparse.RawTextHelpFormatter,
+    parents=[all_arg],
+    prog='dx unarchive')
+
+parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+
+fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
+
+parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
+parser_unarchive.add_argument(
+    '-y','--yes', dest='confirm',
+    help=fill('Do not ask for confirmation.' , width_adjustment=-24),
+    default=True, action='store_false')
+parser_unarchive.add_argument('--no-recurse', dest='recurse',help=fill('When `path` refers to a single folder, this flag causes only files in the specified folder and not its subfolders to be unarchived. This flag has no impact when `path` input refers to a collection of files.', width_adjustment=-24), action='store_false')
+
+parser_unarchive.add_argument(
+    'path',
+    help=fill('May refer to a single folder or specify up to 1000 files inside a project.', width_adjustment=-24),
+    default=[], nargs='+').completer = DXPathCompleter()
+
+parser_unarchive.add_argument_group(title='Output', description='If -q option is not specified, prints "Tagged <> file(s) for unarchival, totalling <> GB, costing <> "')
+parser_unarchive.set_defaults(func=archive, request_mode="unarchival")
+register_parser(parser_unarchive, categories='fs')
+
+#####################################
+# extract_dataset
+#####################################
+parser_extract_dataset = subparsers.add_parser('extract_dataset', help="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data. Listing options enable enumeration of the entities and their respective fields in the dataset.",
+                                   description="Retrieves the data or generates SQL to retrieve the data from a dataset or cohort for a set of entity.fields. Additionally, the dataset's dictionary can be extracted independently or in conjunction with data. Provides listing options for entities and fields.",
+                                   prog='dx extract_dataset')
+parser_extract_dataset.add_argument('path', help='v3.0 Dataset or Cohort object ID (project-id:record-id where "record-id" indicates the record ID in the currently selected project) or name')
+parser_extract_dataset.add_argument('-ddd', '--dump-dataset-dictionary', action="store_true", default=False, help='If provided, the three dictionary files, <record_name>.data_dictionary.csv, <record_name>.entity_dictionary.csv, and <record_name>.codings.csv will be generated. Files will be comma delimited and written to the local working directory, unless otherwise specified using --delimiter and --output arguments. If stdout is specified with the output argument, the data dictionary, entity dictionary, and coding are output in succession, without separators. If any of the three dictionary files does not contain data (i.e. the dictionary is empty), then that particular file will not be created (or be output if the output is stdout).')
+parser_extract_dataset.add_argument('--fields', type=str, help='A comma-separated string where each value is the phenotypic entity name and field name, separated by a dot. For example: "<entity_name>.<field_name>,<entity_name>.<field_name>". Internal spaces are permitted. If multiple entities are provided, field values will be automatically inner joined. If only the --fields argument is provided, data will be retrieved and returned. If both --fields and --sql arguments are provided, a SQL statement to retrieve the specified field data will be automatically generated and returned. Alternatively, use --fields-file option when the number of fields to be retrieved is large.')
+parser_extract_dataset.add_argument('--fields-file', type=str, help='A file with no header and one entry per line where every entry is the phenotypic entity name and field name, separated by a dot. For example: <entity_name>.<field_name>. If multiple entities are provided, field values will be automatically inner joined. If only the --fields-file argument is provided, data will be retrieved and returned. If both --fields-file and --sql arguments are provided, a SQL statement to retrieve the specified field data will be automatically generated and returned. May not be used in conjunction with the argument --fields.')
+parser_extract_dataset.add_argument('--sql', action="store_true", default=False, help='If provided, a SQL statement (string) will be returned to query the set of entity.fields, instead of returning stored values from the set of entity.fields')
+parser_extract_dataset.add_argument('--delim', '--delimiter', nargs='?', const=',', default=',', help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used')
+parser_extract_dataset.add_argument('-o', '--output', help='Local filename or directory to be used ("-" indicates stdout output). If not supplied, output will create a file with a default name in the current folder')
+parser_extract_dataset.add_argument( "--list-fields", action="store_true", default=False, help='List the names and titles of all fields available in the dataset specified. When not specified together with "–-entities", it will return all the fields from the main entity. Output will be a two column table, field names and field titles, separated by a tab, where field names will be of the format, "<entity name>.<field name>" and field titles will be of the format, "<field title>".')
+parser_extract_dataset.add_argument( "--list-entities", action="store_true", default=False, help='List the names and titles of all the entities available in the dataset specified. Output will be a two column table, entity names and entity titles, separated by a tab.')
+parser_extract_dataset.add_argument("--entities", help='Similar output to "--list-fields", however using "--entities" will allow for specific entities to be specified. When multiple entities are specified, use comma as the delimiter. For example: "--list-fields --entities entityA,entityB,entityC"')
+parser_extract_dataset.set_defaults(func=extract_dataset)
+register_parser(parser_extract_dataset)
+
+#####################################
+# extract_assay
+#####################################
+parser_extract_assay = subparsers.add_parser(
+    "extract_assay",
+    help="Retrieve the selected data or generate SQL to retrieve the data from a genetic variant or somatic assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from a genetic variant or somatic assay in a dataset or cohort based on provided rules.",
+    prog="dx extract_assay",
+)
+subparsers_extract_assay = parser_extract_assay.add_subparsers(
+    parser_class=DXArgumentParser
+)
+parser_extract_assay.metavar = "class"
+register_parser(parser_extract_assay)
+
+#####################################
+# germline
+#####################################
+parser_extract_assay_germline = subparsers_extract_assay.add_parser(
+    "germline",
+    help="Query a Dataset or Cohort for an instance of a germline variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.",
+    description="Query a Dataset or Cohort for an instance of a germline variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.",
+    
+)
+
+parser_extract_assay_germline.add_argument(
+    "path",
+    type=str,
+    help='v3.0 Dataset or Cohort object ID (project-id:record-id, where ":record-id" indicates the record-id in the currently selected project) or name.'
+)
+
+
+parser_extract_assay_germline.add_argument(
+    "--assay-name",
+    default=None,
+    help='Specify the genetic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays."'
+)
+
+parser_e_a_g_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=True)
+parser_e_a_g_mutex_group.add_argument(
+    "--list-assays",
+    action="store_true",
+    help='List genetic variant assays available for query in the specified Dataset or Cohort object.'
+)
+
+parser_e_a_g_mutex_group.add_argument(
+    "--retrieve-allele",
+    type=str,
+    const='{}', 
+    default=None,
+    nargs='?',
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of alleles to retrieve. Returns a list of allele IDs with additional information. Use --json-help with this option to get detailed information on the JSON format and filters'
+)
+parser_e_a_g_mutex_group.add_argument(
+    "--retrieve-annotation",
+    type=str,
+    const='{}',
+    default=None,
+    nargs='?',
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria to retrieve corresponding alleles and their annotation. Use --json-help with this option to get detailed information on the JSON format and filters.'
+)
+parser_e_a_g_mutex_group.add_argument(
+    "--retrieve-genotype",
+    type=str,
+    const='{}',
+    default=None,
+    nargs='?',
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of samples to retrieve. Returns a list of genotypes and associated sample IDs and allele IDs. Genotype types "ref" and "no-call" have no allele ID, and "half" types where the genotype is half reference and half no-call also have no allele ID. All other genotype types have an allele ID, including "half" types where the genotype is half alternate allele and half no-call. Use --json-help with this option to get detailed information on the JSON format and filters.'
+)
+
+parser_e_a_g_infer_new_mutex_group = parser_extract_assay_germline.add_mutually_exclusive_group(required=False)
+parser_e_a_g_infer_new_mutex_group.add_argument(
+    "--infer-nocall",
+    action="store_true",
+    help='When using the "--retrieve-genotype" option, infer genotypes with type "no-call" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=true", "exclude_halfref=false", and "exclude_refdata=false".')
+parser_e_a_g_infer_new_mutex_group.add_argument(
+    "--infer-ref",
+    action="store_true",
+    help='When using the "--retrieve-genotype" option, infer genotypes with type "ref" if they were excluded when the dataset was created. This option is only valid if the exclusion parameters at ingestion were set to "exclude_nocall=false", "exclude_halfref=false", and "exclude_refdata=true".'
+)
+
+parser_extract_assay_germline.add_argument(
+    '--json-help',
+    help=argparse.SUPPRESS,
+    action="store_true",
+)
+parser_extract_assay_germline.add_argument(
+    "--sql",
+    action="store_true",
+    help='If the flag is provided, a SQL statement, returned as a string, will be provided to query the specified data instead of returning data.'
+)
+parser_extract_assay_germline.add_argument(
+    "-o", "--output", 
+    type=str,
+    default=None,
+    help = 'A local filename or directory to be used, where "-" indicates printing to STDOUT. If -o/--output is not supplied, default behavior is to create a file with a constructed name in the current folder.'
+)
+parser_extract_assay_germline.set_defaults(func=extract_assay_germline)
+register_parser(parser_extract_assay_germline)
+
+#####################################
+# somatic
+#####################################
+parser_extract_assay_somatic = subparsers_extract_assay.add_parser(
+    "somatic",
+    help='Query a Dataset or Cohort for an instance of a somatic variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.',
+    description='Query a Dataset or Cohort for an instance of a somatic variant assay and retrieve data, or generate SQL to retrieve data, as defined by user-provided filters.'    
+)
+
+parser_extract_assay_somatic.add_argument(
+    "path",
+    type=str,
+    help='v3.0 Dataset or Cohort object ID (project-id:record-id, where ":record-id" indicates the record-id in the currently selected project) or name.'
+)
+
+parser_e_a_s_mutex_group = parser_extract_assay_somatic.add_mutually_exclusive_group(required=True)
+parser_e_a_s_mutex_group.add_argument(
+    "--list-assays",
+    action="store_true",
+    help='List somatic variant assays available for query in the specified Dataset or Cohort object.'
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--retrieve-meta-info",
+    action="store_true",
+    help='List meta information, as it exists in the original VCF headers for both INFO and FORMAT fields.'
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--retrieve-variant",
+    type=str,
+    const='{}',
+    default=None,
+    nargs='?',
+    help='A JSON object, either in a file (.json extension) or as a string (‘<JSON object>’), specifying criteria of somatic variants to retrieve. Retrieves rows from the variant table, optionally extended with sample and annotation information (the extension is inline without affecting row count). By default returns the following set of fields; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", and "allele". Additional fields may be returned using --additional-fields. Use --json-help with this option to get detailed information on the JSON format and filters. When filtering, the user must supply one, and only one of "location", "annotation.symbol", "annotation.gene", "annotation.feature", "allele.allele_id".'
+)
+
+parser_e_a_s_mutex_group.add_argument(
+    "--additional-fields-help",
+    action="store_true",
+    help="List all fields available for output.",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--include-normal-sample",
+    action="store_true",
+    help='Include variants associated with normal samples in the assay. If no flag is supplied, variants from normal samples will not be supplied.'
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--additional-fields",
+    type=str,
+    default=None,
+    help='A set of fields to return, in addition to the default set; "assay_sample_id", "allele_id", "CHROM", "POS", "REF", "allele". Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, "fieldA,fieldB,fieldC."  Internal spaces are permitted.  Use --additional-fields-help with this option to get detailed information and the full list of output fields available.'
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--assay-name",
+    default=None,
+    help='Specify the somatic variant assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays."'
+)
+
+parser_extract_assay_somatic.add_argument(
+    '--json-help',
+    help=argparse.SUPPRESS,
+    action="store_true",
+)
+
+parser_extract_assay_somatic.add_argument(
+    "--sql",
+    action="store_true",
+    help='If the flag is provided, a SQL statement, returned as a string, will be provided to query the specified data instead of returning data.'
+)
+parser_extract_assay_somatic.add_argument(
+    "-o", "--output", 
+    type=str,
+    default=None,
+    help='A local filename or directory to be used, where "-" indicates printing to STDOUT. If -o/--output is not supplied, default behavior is to create a file with a constructed name in the current folder.'
+)
+
+parser_extract_assay_somatic.set_defaults(func=extract_assay_somatic)
+register_parser(parser_extract_assay_somatic)
+
+#####################################
+# expression
+#####################################
+parser_extract_assay_expression = subparsers_extract_assay.add_parser(
+    "expression",
+    help="Retrieve the selected data or generate SQL to retrieve the data from a molecular expression assay in a dataset or cohort based on provided rules.",
+    description="Retrieve the selected data or generate SQL to retrieve the data from a molecular expression assay in a dataset or cohort based on provided rules.",
+)
+
+parser_extract_assay_expression.add_argument(
+    "path",
+    nargs='?',
+    type=str,
+    help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--list-assays",
+    action="store_true",
+    help="List molecular expression assays available for query in the specified Dataset or Cohort object",
+)
+
+parser_extract_assay_expression.add_argument(
+    "--retrieve-expression",
+    action="store_true",
+    help='A flag to support, specifying criteria of molecular expression to retrieve. Retrieves rows from the expression table, optionally extended with sample and annotation information where the extension is inline without affecting row count. By default returns the following set of fields; "sample_id", "feature_id", and "value". Additional fields may be returned using "--additional-fields". Must be used with either "--filter-json" or "--filter-json-file". Specify "--json-help" following this option to get detailed information on the json format and filters. When filtering, one, and only one of "location", "annotation.feature_id", or "annotation.feature_name" may be supplied. If a Cohort object is supplied, returned samples will be initially filtered to match the cohort-defined set of samples, and any additional filters will only further refine the cohort-defined set.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--additional-fields-help",
+    action="store_true",
+    help="List all fields available for output.",
+)
+
+parser_extract_assay_expression.add_argument(
+    "--assay-name",
+    type=str,
+    help='Specify a specific molecular expression assay to query. If the argument is not specified, the default assay used is the first assay listed when using the argument, "--list-assays"',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--filter-json",
+    "-j",
+    type=str,
+    help='The full input JSON object as a string and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--filter-json" or "--filter-json-file" may be supplied, not both.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--filter-json-file",
+    "-f",
+    type=str,
+    help='The full input JSON object as a file and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--filter-json" or "--filter-json-file" may be supplied, not both.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--json-help",
+    help='When set, return a json template of "--retrieve-expression" and a list of filters with definitions.',
+    action="store_true",
+)
+
+parser_extract_assay_expression.add_argument(
+    "--sql",
+    action="store_true",
+    help='If the flag is provided, a SQL statement (as a string) will be returned for the user to further query the specified data, instead of returning actual data values. Use of "--sql" is not supported when also using the flag, --expression-matrix/-em',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--additional-fields",
+    nargs="+",
+    default=None,
+    help='A set of fields to return, in addition to the default set; "sample_id", "feature_id", and "value".  Fields must be represented as field names and supplied as a single string, where each field name is separated by a single comma. For example, fieldA,fieldB,fieldC. Use "--additional-fields-help" to get the full list of output fields available.',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--expression-matrix",
+    "-em",
+    action="store_true",
+    help='If the flag is provided with "--retrieve-expression", the returned data will be a matrix of sample IDs (rows) by feature IDs (columns), where each cell is the respective pairwise value. The flag is not compatible with "--additional-fields". Additionally, the flag is not compatible with an "expression" filter. If the underlying expression value is missing, the value will be empty in returned data. Use of --expression-matrix/-em is not supported when also using the flag, "--sql".',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--delim",
+    "--delimiter",
+    type=lambda d: '\t' if d == '\\t' else str(d),
+    help='Always use exactly one of DELIMITER to separate fields to be printed; if no delimiter is provided with this flag, COMMA will be used. If a file is specified and no --delim argument is passed or is COMMA, the file suffix will be ".csv". If a file is specified and the --delim argument is TAB, the file suffix will be ".tsv". Otherwise, if a file is specified and "--delim" is neither COMMA or TAB file suffix will be ".txt".',
+)
+
+parser_extract_assay_expression.add_argument(
+    "--output",
+    "-o",
+    type=str,
+    help='A local filename to be used, where "-" indicates printing to STDOUT. If -o/--output is not supplied, default behavior is to create a file with a constructed name in the current folder.',
+)
+
+parser_extract_assay_expression.set_defaults(func=extract_assay_expression)
+register_parser(parser_extract_assay_expression)
+
+#####################################
+# create_cohort
+#####################################
+parser_create_cohort = subparsers.add_parser('create_cohort', help='Generates a new Cohort object on the platform from an existing Dataset or Cohort object and using list of IDs.',
+                                   description='Generates a new Cohort object on the platform from an existing Dataset or Cohort object and using list of IDs.',
+                                   prog="dx create_cohort",
+                                   parents=[stdout_args],
+                                   add_help=False)
+
+parser_create_cohort.add_argument('PATH', nargs='?', type=str, help='DNAnexus path for the new data object. If not provided, default behavior uses current project and folder, and will name the object identical to the assigned record-id.')
+parser_create_cohort.add_argument('--from', required=True, type=str, help='v3.0 Dataset or Cohort object ID, project-id:record-id, where ":record-id" indicates the record-id in current selected project, or name')
+parser_create_c_mutex_group = parser_create_cohort.add_mutually_exclusive_group(required=True)
+parser_create_c_mutex_group.add_argument('--cohort-ids', type=str, help='A set of IDs used to subset the Dataset or Cohort object as a comma-separated string. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
+parser_create_c_mutex_group.add_argument('--cohort-ids-file', type=str, help='A set of IDs used to subset the Dataset or Cohort object in a file with one ID per line and no header. IDs must match identically in the supplied Dataset. If a Cohort is supplied instead of a Dataset, the intersection of supplied and existing cohort IDs will be used to create the new cohort.')
+parser_create_cohort.add_argument('-h','--help', help='Return the docstring and exit', action='help')
+
+parser_create_cohort.set_defaults(func=create_cohort)
+register_parser(parser_create_cohort)
 
 
 #####################################

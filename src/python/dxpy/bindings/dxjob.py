@@ -38,13 +38,15 @@ from ..system_requirements import SystemRequirementsDict
 from ..utils.local_exec_utils import queue_entry_point
 from ..compat import basestring
 
+
 #########
 # DXJob #
 #########
 
-def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=None,
-              instance_type=None, depends_on=None,
-              **kwargs):
+
+def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=None, instance_type=None,
+              depends_on=None, cluster_spec=None, fpga_driver=None, system_requirements=None,
+              system_requirements_by_executable=None, nvidia_driver=None, **kwargs):
     '''
     :param fn_input: Function input
     :type fn_input: dict
@@ -62,6 +64,16 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
     :type instance_type: string or dict
     :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
     :type depends_on: list
+    :param cluster_spec: a dict mapping function names to cluster spec requests
+    :type cluster_spec: dict
+    :param fpga_driver: a dict mapping function names to fpga driver requests
+    :type fpga_driver: dict
+    :param system_requirements: System requirement single mapping
+    :type system_requirements: dict
+    :param system_requirements_by_executable: System requirement by executable double mapping
+    :type system_requirements_by_executable: dict
+    :param nvidia_driver: a dict mapping function names to nvidia driver requests
+    :type nvidia_driver: dict
     :rtype: :class:`~dxpy.bindings.dxjob.DXJob`
 
     Creates and enqueues a new job that will execute a particular
@@ -85,9 +97,12 @@ def new_dxjob(fn_input, fn_name, name=None, tags=None, properties=None, details=
 
     '''
     dxjob = DXJob()
-    dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties,
-              details=details, instance_type=instance_type, depends_on=depends_on, **kwargs)
+    dxjob.new(fn_input, fn_name, name=name, tags=tags, properties=properties, details=details,
+              instance_type=instance_type, depends_on=depends_on, cluster_spec=cluster_spec, fpga_driver=fpga_driver,
+              system_requirements=system_requirements, system_requirements_by_executable=system_requirements_by_executable,
+              nvidia_driver=nvidia_driver, **kwargs)
     return dxjob
+
 
 class DXJob(DXObject):
     '''
@@ -101,9 +116,9 @@ class DXJob(DXObject):
         DXObject.__init__(self, dxid=dxid)
         self.set_id(dxid)
 
-    def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None,
-            instance_type=None, depends_on=None,
-            **kwargs):
+    def new(self, fn_input, fn_name, name=None, tags=None, properties=None, details=None, instance_type=None,
+            depends_on=None, cluster_spec=None, fpga_driver=None, system_requirements=None,
+            system_requirements_by_executable=None, nvidia_driver=None, **kwargs):
         '''
         :param fn_input: Function input
         :type fn_input: dict
@@ -121,6 +136,16 @@ class DXJob(DXObject):
         :type instance_type: string or dict
         :param depends_on: List of data objects or jobs to wait that need to enter the "closed" or "done" states, respectively, before the new job will be run; each element in the list can either be a dxpy handler or a string ID
         :type depends_on: list
+        :param cluster_spec: a dict mapping function names to cluster spec requests
+        :type cluster_spec: dict
+        :param fpga_driver: a dict mapping function names to fpga driver requests
+        :type fpga_driver: dict
+        :param system_requirements: System requirement single mapping
+        :type system_requirements: dict
+        :param system_requirements_by_executable: System requirement by executable double mapping
+        :type system_requirements_by_executable: dict
+        :param nvidia_driver: a dict mapping function names to nvidia driver requests
+        :type nvidia_driver: dict
 
         Creates and enqueues a new job that will execute a particular
         function (from the same app or applet as the one the current job
@@ -159,8 +184,16 @@ class DXJob(DXObject):
                 req_input["tags"] = tags
             if properties is not None:
                 req_input["properties"] = properties
-            if instance_type is not None:
-                req_input["systemRequirements"] = SystemRequirementsDict.from_instance_type(instance_type, fn_name).as_dict()
+            if any(requirement is not None for requirement in [instance_type, cluster_spec, fpga_driver, nvidia_driver]):
+                instance_type_srd = SystemRequirementsDict.from_instance_type(instance_type, fn_name)
+                cluster_spec_srd = SystemRequirementsDict(cluster_spec)
+                fpga_driver_srd = SystemRequirementsDict(fpga_driver)
+                nvidia_driver_srd = SystemRequirementsDict(nvidia_driver)
+                req_input["systemRequirements"] = (instance_type_srd + cluster_spec_srd + fpga_driver_srd + nvidia_driver_srd).as_dict()
+            if system_requirements is not None:
+                req_input["systemRequirements"] = system_requirements
+            if system_requirements_by_executable is not None:
+                req_input["systemRequirementsByExecutable"] = system_requirements_by_executable
             if depends_on is not None:
                 req_input["dependsOn"] = final_depends_on
             if details is not None:
@@ -187,12 +220,14 @@ class DXJob(DXObject):
                 verify_string_dxid(dxid, self._class)
         self._dxid = dxid
 
-    def describe(self, fields=None, io=None, **kwargs):
+    def describe(self, fields=None, defaultFields=None, io=None, **kwargs):
         """
         :param fields: dict where the keys are field names that should
             be returned, and values should be set to True (by default,
             all fields are returned)
         :type fields: dict
+        :param defaultFields: include default fields when fields is supplied
+        :type defaultFields: bool
         :param io: Include input and output fields in description;
             cannot be provided with *fields*; default is True if
             *fields* is not provided (deprecated)
@@ -213,6 +248,8 @@ class DXJob(DXObject):
         describe_input = {}
         if fields is not None:
             describe_input['fields'] = fields
+        if defaultFields is not None:
+            describe_input['defaultFields'] = defaultFields
         if io is not None:
             describe_input['io'] = io
         self._desc = dxpy.api.job_describe(self._dxid, describe_input, **kwargs)
@@ -241,6 +278,18 @@ class DXJob(DXObject):
         """
 
         dxpy.api.job_remove_tags(self._dxid, {"tags": tags}, **kwargs)
+
+    def update(self, allow_ssh, **kwargs):
+        """
+        :param allow_ssh: Allowable IP ranges to set for SSH access to the job
+        :type allow_ssh: list of strings
+
+        Updates a job's allowSSH field, overwrites existing values
+
+        """
+
+        dxpy.api.job_update(self._dxid, {"allowSSH": allow_ssh}, **kwargs)
+
 
     def set_properties(self, properties, **kwargs):
         """

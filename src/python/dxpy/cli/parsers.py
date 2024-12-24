@@ -56,6 +56,10 @@ delim_arg.add_argument('--delimiter', '--delim',
 json_arg = argparse.ArgumentParser(add_help=False)
 json_arg.add_argument('--json', help='Display return value in JSON', action='store_true')
 
+try_arg = argparse.ArgumentParser(add_help=False)
+try_arg.add_argument('--try', metavar="T", dest="job_try", type=int,
+                     help=fill('When modifying a job that was restarted, apply the change to try T of the restarted job. T=0 refers to the first try. Default is the last job try.', width_adjustment=-24))
+
 stdout_args = argparse.ArgumentParser(add_help=False)
 stdout_args_gp = stdout_args.add_mutually_exclusive_group()
 stdout_args_gp.add_argument('--brief', help=fill('Display a brief version of the return value; for most commands, prints a DNAnexus ID per line', width_adjustment=-24), action='store_true')
@@ -94,12 +98,13 @@ find_executions_args.add_argument('--app', '--applet', '--executable', dest='exe
 find_executions_args.add_argument('--state', help=fill('State of the job, e.g. \"done\", \"failed\"', width_adjustment=-24))
 find_executions_args.add_argument('--origin', help=fill('Job ID of the top-level job', width_adjustment=-24)) # Redundant but might as well
 find_executions_args.add_argument('--parent', help=fill('Job ID of the parent job; implies --all-jobs', width_adjustment=-24))
-find_executions_args.add_argument('--created-after', help=fill('Date (e.g. 2012-01-01) or integer timestamp after which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
-find_executions_args.add_argument('--created-before', help=fill('Date (e.g. 2012-01-01) or integer timestamp before which the job was last created (negative number means ms in the past, or use suffix s, m, h, d, w, M, y)', width_adjustment=-24))
+find_executions_args.add_argument('--created-after', help=fill('Date (e.g. --created-after="2021-12-01" or --created-after="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-after=1642196636000) after which the job was last created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-after=-2d for executions created in the last 2 days)', width_adjustment=-24))
+find_executions_args.add_argument('--created-before', help=fill('Date (e.g. --created-before="2021-12-01" or --created-before="2021-12-01 19:01:33") or integer Unix epoch timestamp in milliseconds (e.g. --created-before=1642196636000) before which the job was last created. You can also specify negative numbers to indicate a time period in the past suffixed by s, m, h, d, w, M or y to indicate seconds, minutes, hours, days, weeks, months or years (e.g. --created-before=-2d for executions created earlier than 2 days ago)', width_adjustment=-24))
 find_executions_args.add_argument('--no-subjobs', help=fill('Do not show any subjobs', width_adjustment=-24), action='store_true')
 find_executions_args.add_argument('--root-execution', '--root', help=fill('Execution ID of the top-level (user-initiated) job or analysis', width_adjustment=-24))
 find_executions_args.add_argument('-n', '--num-results', metavar='N', type=int, help=fill('Max number of results (trees or jobs, as according to the search mode) to return (default 10)', width_adjustment=-24), default=10)
 find_executions_args.add_argument('-o', '--show-outputs', help=fill('Show job outputs in results', width_adjustment=-24), action='store_true')
+find_executions_args.add_argument('--include-restarted', help=fill('if specified, results will include restarted jobs and job trees rooted in restarted jobs', width_adjustment=-24), action='store_true')
 
 def add_find_executions_search_gp(parser):
     find_executions_search_gp = parser.add_argument_group('Search mode')
@@ -144,7 +149,7 @@ def process_dataobject_args(args):
     process_properties_args(args)
 
     # Visibility
-    args.hidden = (args.hidden == 'hidden')
+    args.hidden = (args.hidden == 'hidden' or args.hidden is True)
 
     # Details
     if args.details is not None:
@@ -226,23 +231,85 @@ class PrintInstanceTypeHelp(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         print("Help: Specifying instance types for " + parser.prog)
         print()
+        print(fill('Instance types can be requested with --instance-type-by-executable and ' +
+                   '--instance-type arguments, with --instance-type-by-executable specification ' +
+                   'taking priority over --instance-type, workflow\'s stageSystemRequirements, ' +
+                   'and specifications provided during app and applet creation.'))
+        print()
+        print(fill('--instance-type specifications do not propagate to subjobs and sub-analyses ' +
+                   'launched from a job with a /executable-xxxx/run call, but --instance-type-by-executable do ' +
+                   '(where executable refers to an app, applet or workflow).'))
+        print()
+        print(fill('When running an app or an applet, --instance-type lets you specify the ' +
+                    'instance type to be used by each entry point.'))
         print(fill('A single instance type can be requested to be used by all entry points by providing the instance type name.  Different instance types can also be requested for different entry points of an app or applet by providing a JSON string mapping from function names to instance types, e.g.'))
         print()
         print('    {"main": "mem2_hdd2_v2_x2", "other_function": "mem1_ssd1_v2_x2"}')
         if parser.prog == 'dx run':
             print()
-            print(fill('If running a workflow, different stages can have different instance type ' +
-                       'requests by prepending the request with "<stage identifier>=" (where a ' +
-                       'stage identifier is an ID, a numeric index, or a unique stage name) and ' +
+            print(fill('When running a workflow, --instance-type lets you specify instance types for ' +
+                       'each entry point of each workflow stage by prepending the request with "<stage identifier>=" ' +
+                       '(where a stage identifier is an ID, a numeric index, or a unique stage name) and ' +
                        'repeating the argument for as many stages as desired.  If no stage ' +
                        'identifier is provided, the value is applied as a default for all stages.'))
             print()
-            print(fill('The following example runs all entry points of the first stage with ' +
-                       'mem2_hdd2_v2_x2, the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
+            print('Examples')
+            print()
+            print(fill('1. Run the main entry point of applet-xxxx on mem1_ssd1_v2_x2, and '
+                        'all other entry points on mem1_ssd1_v2_x4'))
+            print('    dx run applet-xxxx --instance-type \'{"main": "mem1_ssd1_v2_x2",\n' +
+                  '                                         "*":    "mem1_ssd1_v2_x4"}\'')
+            print()
+            print(fill('2. Runs all entry points of the first stage with ' +
+                       'mem2_hdd2_v2_x2, the main entry point of the second stage with mem1_ssd1_v2_x4, ' +
+                       'the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
                        'stages with mem2_hdd2_v2_x4'))
             print()
-            print('    Example: dx run workflow --instance-type 0=mem2_hdd2_v2_x2 \\')
-            print('               --instance-type BWA=mem1_ssd1_v2_x2 --instance-type mem2_hdd2_v2_x4')
+            print('    dx run workflow-xxxx \\\n' +
+                  '     --instance-type 0=mem2_hdd2_v2_x2 \\\n' +
+                  '     --instance-type 1=\'{"main": "mem1_ssd1_v2_x4"}\' \\\n' +
+                  '     --instance-type BWA=mem1_ssd1_v2_x2 \\\n' +
+                  '     --instance-type mem2_hdd2_v2_x4')
+            print()
+            print(fill('--instance-type-by-executable argument is a JSON string with a double mapping that ' +
+                       'specifies instance types by app or applet id, then by entry point within the executable.' +
+                       'This specification applies across the entire nested execution tree and is propagated ' +
+                       'across /executable-xxxx/run calls issued with the execution tree.'))
+            print()
+            print('More examples')
+            print(fill('3. Force every job in the execution tree to use mem2_ssd1_v2_x2'))
+            print()
+            print(
+                '    dx run workflow-xxxx --instance-type-by-executable \'{"*": {"*": "mem2_ssd1_v2_x2"}}\'')
+            print()
+            print(fill(
+                '4. Force every job in the execution tree executing applet-xyz1 to use mem2_ssd1_v2_x2'))
+            print()
+            print(
+                '    dx run workflow-xxxx --instance-type-by-executable \'{"applet-xyz1":{"*": "mem2_ssd1_v2_x2"}}\'')
+            print()
+            print(fill('5. Force every job executing applet-xyz1 to use mem2_ssd1_v2_x4 ' +
+                       'for the main entry point and mem2_ssd1_v2_x2 for all other entry points.' +
+                       'Also force the collect entry point of all executables other than applet-xyz1 to use mem2_ssd1_v2_x8.' +
+                       'Other entry points of executable other than applet-xyz1 may be overridden by ' +
+                       'lower-priority mechanisms'))
+            print()
+            print('    dx run workflow-xxxx --instance-type-by-executable \\\n' +
+                  '           \'{"applet-xyz1":  {"main":    "mem2_ssd1_v2_x4", "*": "mem2_ssd1_v2_x2"},\n' +
+                  '             "*":            {"collect": "mem2_ssd1_v2_x8"}}\'')
+            print()
+            print(fill('6. Force every job executing applet-xxxx to use mem2_ssd1_v2_x2 for all entry points ' +
+                       'in the entire execution tree. ' +
+                       'Also force stage 0 executable to run on mem2_ssd1_v2_x4, unless stage 0 invokes ' +
+                       'applet-xxxx, in which case applet-xxxx\'s jobs will use mem2_ssd1_v2_x2 as specified by ' +
+                       '--instance-type-by-executable.'))
+            print()
+            print('    dx run workflow-xxxx \\\n' +
+                  '     --instance-type-by-executable  \'{"applet-xxxx": {"*": "mem2_ssd1_v2_x2"}}\' \\\n' +
+                  '     --instance-type 0=mem2_ssd1_v2_x4')
+            print()
+            print(fill(
+                'See "Requesting Instance Types" in DNAnexus documentation for more details.'))
         print()
         print('Available instance types:')
         print()
@@ -253,8 +320,25 @@ class PrintInstanceTypeHelp(argparse.Action):
 instance_type_arg = argparse.ArgumentParser(add_help=False)
 instance_type_arg.add_argument('--instance-type',
                                metavar='INSTANCE_TYPE_OR_MAPPING',
-                               help=fill('Specify instance type(s) for jobs this executable will run; see --instance-type-help for more details', width_adjustment=-24),
+                               help=fill('''When running an app or applet, the mapping lists executable's entry points or "*" as keys, and instance types to use for these entry points as values.  
+When running a workflow, the specified instance types can be prefixed by a stage name or stage index followed by "=" to apply to a specific stage, or apply to all workflow stages without such prefix. 
+The instance type corresponding to the "*" key is applied to all entry points not explicitly mentioned in the --instance-type mapping. Specifying a single instance type is equivalent to using it for all entry points, so "--instance-type mem1_ssd1_v2_x2" is same as "--instance-type '{"*":"mem1_ssd1_v2_x2"}'. 
+Note that "dx run" calls within the execution subtree may override the values specified at the root of the execution tree.
+See dx run --instance-type-help for details.
+''', width_adjustment=-24, replace_whitespace=False),
                                action='append').completer = InstanceTypesCompleter()
+
+instance_type_arg.add_argument('--instance-type-by-executable',
+                               metavar='DOUBLE_MAPPING',
+                               help=fill(
+                                   '''Specifies instance types by app or applet id, then by entry point within the executable.
+The order of priority for this specification is:
+  * --instance-type, systemRequirements and stageSystemRequirements specified at runtime
+  * stage's systemRequirements, systemRequirements supplied to /app/new and /applet/new at workflow/app/applet build time
+  * systemRequirementsByExecutable specified in downstream executions (if any)
+See dx run --instance-type-help for details.
+''', width_adjustment=-24, replace_whitespace=False))
+
 instance_type_arg.add_argument('--instance-type-help',
                                nargs=0,
                                help=fill('Print help for specifying instance types'),
@@ -317,6 +401,17 @@ def process_instance_type_arg(args, for_workflow=False):
             # is a string
             args.instance_type = _parse_inst_type(args.instance_type)
 
+def process_instance_type_by_executable_arg(args):
+    if args.instance_type_by_executable:
+        if args.instance_type_by_executable.strip().startswith('{'):
+            # expects a map, e.g of entry point to instance type or instance count
+            try:
+                args.instance_type_by_executable = json.loads(args.instance_type_by_executable)
+            except ValueError:
+                raise DXParserError('Error while parsing JSON value for --instance-type-by-executable')
+        else:
+            raise DXParserError('Value given for --instance-type-by-executable could not be parsed as JSON')
+
 def process_instance_count_arg(args):
     if args.instance_count:
         # If --instance-count was used multiple times, the last one
@@ -336,23 +431,28 @@ def get_update_project_args(args):
     if args.description is not None:
         input_params["description"] = args.description
     if args.protected is not None:
-        input_params["protected"] = True if args.protected == 'true' else False
+        input_params["protected"] = args.protected == 'true'
     if args.restricted is not None:
-        input_params["restricted"] = True if args.restricted == 'true' else False
+        input_params["restricted"] = args.restricted == 'true'
     if args.download_restricted is not None:
-        input_params["downloadRestricted"] = True if args.download_restricted == 'true' else False
+        input_params["downloadRestricted"] = args.download_restricted == 'true'
     if args.containsPHI is not None:
-        input_params["containsPHI"] = True if args.containsPHI == 'true' else False
+        input_params["containsPHI"] = args.containsPHI == 'true'
     if args.database_ui_view_only is not None:
-        input_params["databaseUIViewOnly"] = True if args.database_ui_view_only == 'true' else False
+        input_params["databaseUIViewOnly"] = args.database_ui_view_only == 'true'
     if args.bill_to is not None:
         input_params["billTo"] = args.bill_to
     if args.allowed_executables is not None:
         input_params['allowedExecutables'] = args.allowed_executables
     if args.unset_allowed_executables:
         input_params['allowedExecutables'] = None
+    if args.database_results_restricted is not None:
+        input_params['databaseResultsRestricted'] = args.database_results_restricted
+    if args.unset_database_results_restricted:
+        input_params['databaseResultsRestricted'] = None
+    if args.external_upload_restricted is not None:
+        input_params['externalUploadRestricted'] = args.external_upload_restricted == 'true'
     return input_params
-
 
 def process_phi_param(args):
     if args.containsPHI is not None:
@@ -360,3 +460,7 @@ def process_phi_param(args):
             args.containsPHI = True
         elif args.containsPHI == "false":
             args.containsPHI = False
+
+def process_external_upload_restricted_param(args):
+    if args.external_upload_restricted is not None:
+        args.external_upload_restricted = (args.external_upload_restricted == "true")

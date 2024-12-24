@@ -114,7 +114,7 @@ def find_data_objects(classname=None, state=None, visibility=None,
                       modified_after=None, modified_before=None,
                       created_after=None, created_before=None,
                       describe=False, limit=None, level=None, region=None,
-                      return_handler=False, first_page_size=100,
+                      archival_state=None, return_handler=False, first_page_size=100,
                       **kwargs):
     """
     :param classname:
@@ -160,9 +160,11 @@ def find_data_objects(classname=None, state=None, visibility=None,
         things, be used to customize the set of fields that is returned)
     :type describe: bool or dict
     :param level: The minimum permissions level for which results should be returned (one of "VIEW", "UPLOAD", "CONTRIBUTE", or "ADMINISTER")
+    :type level: string
     :param region: Filter on result set by the given region(s).
     :type region: string or list of strings
-    :type level: string
+    :param archival_state: Filter by the given archival state (one of "archived", "live", "archival", "unarchiving", or "any"). Requires classname="file", project, and folder arguments to be provided.
+    :type archival_state: string 
     :param limit: The maximum number of results to be returned (if not specified, the number of results is unlimited)
     :type limit: int
     :param first_page_size: The number of results that the initial API call will return. Subsequent calls will raise this by multiplying by 2 up to a maximum of 1000.
@@ -260,6 +262,8 @@ def find_data_objects(classname=None, state=None, visibility=None,
         query['level'] = level
     if region is not None:
         query['region'] = region
+    if archival_state is not None:
+        query['archivalState'] = archival_state
     if limit is not None:
         query["limit"] = limit
 
@@ -272,7 +276,7 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
                     created_after=None, created_before=None, describe=False,
                     name=None, name_mode="exact", tags=None, properties=None, limit=None,
                     first_page_size=100, return_handler=False, include_subjobs=True,
-                    **kwargs):
+                    include_restarted=None, **kwargs):
     '''
     :param classname:
         Class with which to restrict the search, i.e. one of "job",
@@ -326,6 +330,8 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
     :type return_handler: boolean
     :param include_subjobs: If False, no subjobs will be returned by the API
     :type include_subjobs: boolean
+    :param include_restarted: If True, API response will include restarted jobs and job trees rooted in restarted jobs
+    :type include_restarted: boolean
     :rtype: generator
 
     Returns a generator that yields all executions (jobs or analyses) that match the query. It transparently handles
@@ -412,6 +418,8 @@ def find_executions(classname=None, launched_by=None, executable=None, project=N
         query['properties'] = properties
     if include_subjobs is not True:
         query["includeSubjobs"] = include_subjobs
+    if include_restarted is not None:
+        query["includeRestarted"] = include_restarted
     if limit is not None:
         query["limit"] = limit
 
@@ -434,7 +442,7 @@ def find_analyses(*args, **kwargs):
 def find_projects(name=None, name_mode='exact', properties=None, tags=None,
                   level=None, describe=False, explicit_perms=None, region=None,
                   public=None, created_after=None, created_before=None, billed_to=None,
-                  limit=None, return_handler=False, first_page_size=100, containsPHI=None, **kwargs):
+                  limit=None, return_handler=False, first_page_size=100, containsPHI=None, externalUploadRestricted=None, **kwargs):
     """
     :param name: Name of the project (also see *name_mode*)
     :type name: string
@@ -476,6 +484,9 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
     :param containsPHI: If set to true, only returns projects that contain PHI.
         If set to false, only returns projects that do not contain PHI.
     :type containsPHI: boolean
+    :param externalUploadRestricted: If set to true, only returns projects with externalUploadRestricted enabled. 
+        If set to false, only returns projects that do not have externalUploadRestricted enabled. 
+    :type externalUploadRestricted: boolean
     :rtype: generator
 
     Returns a generator that yields all projects that match the query.
@@ -523,6 +534,8 @@ def find_projects(name=None, name_mode='exact', properties=None, tags=None,
         query["limit"] = limit
     if containsPHI is not None:
         query["containsPHI"] = containsPHI
+    if externalUploadRestricted is not None:
+        query["externalUploadRestricted"] = externalUploadRestricted
 
     return _find(dxpy.api.system_find_projects, query, limit, return_handler, first_page_size, **kwargs)
 
@@ -662,6 +675,9 @@ def find_global_workflows(name=None, name_mode='exact', category=None,
                                   first_page_size=first_page_size, **kwargs)
 
 def _find_one(method, zero_ok=False, more_ok=True, **kwargs):
+    # users often incorrectly pass strings to zero_ok, fail fast in that case
+    if not isinstance(zero_ok, bool):
+        raise DXError('_find_one: Unexpected value found for argument zero_ok, it should be a bool')
     kwargs["limit"] = 1 if more_ok else 2
     response = method(**kwargs)
     result = next(response, None)
@@ -683,6 +699,7 @@ def find_one_data_object(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -703,6 +720,7 @@ def find_one_project(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -723,6 +741,7 @@ def find_one_app(zero_ok=False, more_ok=True, **kwargs):
         If False (default), :class:`~dxpy.exceptions.DXSearchError` is
         raised if the search has 0 results; if True, returns None if the
         search has 0 results
+        If not boolean, :class:`~dxpy.exceptions.DXError` is raised
     :type zero_ok: bool
     :param more_ok:
         If False, :class:`~dxpy.exceptions.DXSearchError` is raised if
@@ -843,7 +862,7 @@ def org_find_projects(org_id=None, name=None, name_mode='exact', ids=None, prope
         if len(properties.keys()) == 1:
             query["properties"] = properties
         else:
-            query["properties"] = {"$and": [{k: v} for (k, v) in properties.iteritems()]}
+            query["properties"] = {"$and": [{k: v} for (k, v) in properties.items()]}
     if tags is not None:
         if len(tags) == 1:
             query["tags"] = tags[0]

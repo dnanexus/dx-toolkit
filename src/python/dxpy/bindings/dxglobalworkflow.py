@@ -262,7 +262,7 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
         region = dxpy.api.project_describe(project,
                                            input_params={"fields": {"region": True}})["region"]
         dxworkflow = self.get_underlying_workflow(region)
-        return dxworkflow._get_run_input(workflow_input, **kwargs)
+        return dxworkflow._get_run_input(workflow_input, project=project, **kwargs)
 
     def _run_impl(self, run_input, **kwargs):
         if self._dxid is not None:

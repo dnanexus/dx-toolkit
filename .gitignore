@@ -71,6 +71,7 @@ dxR.Rcheck
 /bin/proot
 /bin/pbr
 /bin/xattr
+/bin/normalizer
 /bin/wsdump.py
 /bin/dx-su-contrib
 /src/python/test/*.traceability.*.csv
@@ -90,3 +91,5 @@ test-job-workspaces
 *.traceability.*.csv
 
 .vscode/
+.metals/
+

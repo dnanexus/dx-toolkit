@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
@@ -19,7 +19,6 @@
 
 import os, sys, unittest, json, tempfile, subprocess
 import pexpect
-import pipes
 
 from dxpy_testutil import DXTestCase, check_output
 import dxpy_testutil as testutil

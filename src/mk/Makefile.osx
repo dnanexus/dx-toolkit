@@ -15,31 +15,14 @@
 #   under the License.
 
 $(DNANEXUS_HOME)/bin/dx: $(shell find python/{dxpy,scripts,requirements*,setup*} -not -name toolkit_version*)
-	python -c 'import sys; exit("dx-toolkit is not compatible with Python < 2.7" if sys.version_info < (2, 7) else 0)'
-	rm -rf "$(PYTHON_LIBDIR)" "$(DX_PY_ENV)" python/dist
-	mkdir -p "$$(dirname '$(PYTHON_LIBDIR)')"
+	python3 -c 'import sys; exit("dx-toolkit is not compatible with Python < 3.8" if sys.version_info < (3, 8) else 0)'
+	rm -rf "$(DX_PY_ENV)" python/dist
 	$(VIRTUAL_ENV) "$(DX_PY_ENV)"
 
 	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ${PIP} install --upgrade -r python/requirements_setuptools.txt
 
 	# Build the dxpy wheel and move it into place
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; cd python; python setup.py bdist_wheel
-	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; pip install --ignore-installed --prefix="$(DNANEXUS_HOME)" python/dist/*.whl
-	mv "$(DNANEXUS_HOME)"/lib/python?.?/site-packages "${PYTHON_LIBDIR}"
-	rm -f "$(DNANEXUS_HOME)/bin/xattr"
-
-
-# Bundled utilities
-# =================
-
-jq: git_submodules ../bin/jq
-
-../bin/jq: jq/
-	(cd jq; autoreconf --install; ./configure)
-	(if [[ ! "$(CC)" == clang ]] && ! (gcc --version | grep -q LLVM); then export LDFLAGS="$$LDFLAGS -lgcc_eh"; fi; \
-	 cd jq; ./configure --disable-docs)
-	$(MAKE) -C jq -j PATH=$$(brew --prefix bison || echo .)/bin:$$PATH
-	cp -f jq/jq ../bin/
+	unset PYTHONPATH; source "$(DX_PY_ENV)/$(ACTIVATE)"; ls -l; ${PIP} install python/
 
 # System dependencies
 # ===================

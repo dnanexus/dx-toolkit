@@ -1,0 +1,50 @@
+{
+    "title": "Retrieve Genotype Schema",
+    "$id": "/retrieve_genotype_schema",
+    "description": "A description of the retrieve sample JSON file",
+    "type": "object",
+    "additionalProperties": false,
+    "oneOf": [
+        {
+            "required": [
+                "allele_id"
+            ]
+        },
+        {
+            "required": [
+                "location"
+            ]
+        }
+    ],
+    "properties": {
+        "allele_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 1000
+        },
+        "sample_id": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "maxItems": 1000
+        },
+        "genotype_type": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "enum": [
+                    "hom",
+                    "het-ref",
+                    "het-alt",
+                    "half",
+                    "ref",
+                    "no-call"
+                ]
+            },
+            "maxItems": 6
+        }
+    }
+}

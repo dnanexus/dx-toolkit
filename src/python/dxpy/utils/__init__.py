@@ -20,11 +20,11 @@ Utilities shared by dxpy modules.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, json, collections, concurrent.futures, traceback, sys, time, gc
+import os, json, collections, concurrent.futures, traceback, sys, time, gc, platform
 from multiprocessing import cpu_count
 import dateutil.parser
 from .. import logger
-from ..compat import basestring, THREAD_TIMEOUT_MAX
+from ..compat import basestring, THREAD_TIMEOUT_MAX, Mapping
 from ..exceptions import DXError
 import numbers
 import binascii
@@ -248,7 +248,7 @@ def merge(d, u):
     Example: merge({"a": {"b": 1, "c": 2}}, {"a": {"b": 3}}) = {"a": {"b": 3, "c": 2}}
     """
     for k, v in u.items():
-        if isinstance(v, collections.Mapping):
+        if isinstance(v, Mapping):
             r = merge(d.get(k, {}), v)
             d[k] = r
         else:
@@ -292,10 +292,10 @@ class Nonce:
     '''
     def __init__(self):
         try:
-            self.nonce = "%s%f" % (str(binascii.hexlify(os.urandom(32))), time.time())
+            self.nonce = "%s%f" % (binascii.hexlify(os.urandom(32)).decode('utf-8'), time.time())
         except:
             random.seed(time.time())
-            self.nonce = "%s%f" % (str(random.getrandbits(8*26)), time.time())
+            self.nonce = "%s%f" % (random.getrandbits(8*26), time.time())
 
     def __str__(self):
         return self.nonce

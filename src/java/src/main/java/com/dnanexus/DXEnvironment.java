@@ -31,8 +31,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -67,7 +67,7 @@ public class DXEnvironment implements AutoCloseable {
 
         /**
          * Creates a Builder object using the JSON config in the file
-         * <tt>~/.dnanexus_config/environment.json</tt>.
+         * <code>~/.dnanexus_config/environment.json</code>.
          *
          * @return new Builder object
          */
@@ -115,7 +115,7 @@ public class DXEnvironment implements AutoCloseable {
 
         /**
          * Initializes a Builder object using JSON config in the file
-         * <tt>~/.dnanexus_config/environment.json</tt>.
+         * <code>~/.dnanexus_config/environment.json</code>.
          *
          * @deprecated Use {@link #fromDefaults()} instead
          */
@@ -386,8 +386,6 @@ public class DXEnvironment implements AutoCloseable {
 
         /**
          * Disables automatic retry of HTTP requests.
-         *
-         * @param disableRetryLogic boolean
          *
          * @return the same Builder object
          */
@@ -766,7 +764,7 @@ public class DXEnvironment implements AutoCloseable {
         httpclient.close();
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(DXEnvironment.class);
+    private static final Logger LOG = LogManager.getLogger(DXEnvironment.class);
 
     private static boolean isDebug() {
         return LOG.isDebugEnabled();

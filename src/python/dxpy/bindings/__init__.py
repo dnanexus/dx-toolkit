@@ -549,10 +549,10 @@ class DXDataObject(DXObject):
 
     def list_projects(self, **kwargs):
         """
-        :rtype: list of strings
+        :rtype: dict
 
-        Returns a list of project IDs of the projects that contain this
-        object and are visible to the requesting user.
+        Returns a dict of project IDs of the projects that contain this
+        object and the permission level of the requesting user.
 
         """
 
@@ -651,6 +651,30 @@ class DXDataObject(DXObject):
 
             if elapsed >= timeout or elapsed < 0:
                 raise DXError("Reached timeout while waiting for the remote object to close")
+
+            wait = min(2**7, 2**i)
+            time.sleep(wait)
+            i += 1
+            elapsed += wait
+
+    def _wait_until_parts_uploaded(self, timeout=255, **kwargs):
+        elapsed = 0
+        i = 0
+        describe_input = {"fields": {"parts": True, "state": True}}
+        if self._proj is not None:
+            describe_input["project"] = self._proj
+        while True:
+            describe = self._describe(self._dxid, describe_input, **kwargs)
+            state, parts = describe["state"], describe["parts"]
+            if state == "closed" or not parts:
+                # parts of closed files must have been uploaded successfully
+                break
+            else:
+                is_uploaded = not any(parts[key].get("state", "complete") != "complete" for key in parts)
+                if is_uploaded:
+                    break
+            if elapsed >= timeout or elapsed < 0:
+                raise DXError("Reached timeout while waiting for parts of the file ({}) to be uploaded".format(self.get_id()))
 
             wait = min(2**7, 2**i)
             time.sleep(wait)

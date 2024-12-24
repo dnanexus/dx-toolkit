@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
@@ -121,6 +121,7 @@ class TestDXUtils(unittest.TestCase):
                          '{"a": [{"b": {"$dnanexus_link": "file-xxxxxxxxxxxxxxxxxxxxxxxx"}}, {"$dnanexus_link": "record-rrrrrrrrrrrrrrrrrrrrrrrr"}]}')
 
 class TestEDI(DXExecDependencyInstaller):
+    __test__ = False
     def __init__(self, *args, **kwargs):
         self.command_log, self.message_log = [], []
         DXExecDependencyInstaller.__init__(self, *args, **kwargs)
@@ -154,9 +155,9 @@ class TestDXExecDependsUtils(testutil.DXTestCaseCompat):
                            job_desc={"region": "azure:westus"})
         with self.assertRaisesRegex(DXError, 'file-assetwest'):
             edi.install()
-        with self.assertRaisesRegex(KeyError, 'aws:cn-north-1'):
+        with self.assertRaisesRegex(KeyError, 'aws:eu-central-1'):
             self.get_edi({"bundledDependsByRegion": bundled_depends_by_region},
-                         job_desc={"region": "aws:cn-north-1"})
+                         job_desc={"region": "aws:eu-central-1"})
 
     def test_dx_execdepends_installer(self):
         def assert_cmd_ran(edi, regexp):
@@ -223,7 +224,7 @@ class TestDXExecDependsUtils(testutil.DXTestCaseCompat):
         self.assertNotRegex("\n".join(edi.command_log), "w00t")
         for name in "w00t", "f1":
             assert_log_contains(edi,
-                                "Skipping dependency {} because it is inactive in stage \(function\) main".format(name))
+                                r"Skipping dependency {} because it is inactive in stage \(function\) main".format(name))
 
         edi = self.get_edi({"execDepends": [{"name": "git", "stages": ["foo", "bar"]}]},
                            job_desc={"function": "foo"})

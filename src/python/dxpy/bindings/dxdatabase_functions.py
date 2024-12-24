@@ -36,7 +36,7 @@ from .. import logger
 from . import dxfile, DXFile
 from . import dxdatabase, DXDatabase
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..compat import open, USING_PYTHON2
+from ..compat import open, USING_PYTHON2, md5_hasher
 from ..exceptions import DXFileError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 import subprocess
@@ -220,10 +220,7 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
         url, headers = dxdatabase.get_download_url(src_filename=src_filename, project=project, **kwargs)
         # No sub ranges for database file downloads
         sub_range = False
-        data_url = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
-        do_debug("dxdatabase_functions.py get_chunk - data_url = {}".format(data_url))
-        # 'data_url' is the s3 URL, so read again, just like in DNAxFileSystem
-        data = dxpy._dxhttp_read_range(data_url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
+        data = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
         return part_id_to_get, data
 
     def chunk_requests():
@@ -257,7 +254,8 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
                 if chunk_part != cur_part:
                     # TODO: remove permanently if we don't find use for this
                     # verify_part(cur_part, got_bytes, hasher)
-                    cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
+
+                    cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
                 fh.write(chunk_data)

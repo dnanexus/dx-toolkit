@@ -29,7 +29,9 @@ from contextlib import contextmanager
 
 import dxpy
 from dxpy.compat import str, basestring, USING_PYTHON2
+from pathlib import Path
 
+THIS_DIR = Path(__file__).parent
 _run_all_tests = 'DXTEST_FULL' in os.environ
 TEST_AZURE = ((os.environ.get('DXTEST_AZURE', '').startswith('azure:') and os.environ['DXTEST_AZURE']) or
               (os.environ.get('DXTEST_AZURE') and 'azure:westus'))
@@ -47,6 +49,7 @@ TEST_RUN_JOBS = _run_all_tests or 'DXTEST_RUN_JOBS' in os.environ
 TEST_TCSH = _run_all_tests or 'DXTEST_TCSH' in os.environ
 TEST_WITH_AUTHSERVER = _run_all_tests or 'DXTEST_WITH_AUTHSERVER' in os.environ
 TEST_WITH_SMOKETEST_APP = _run_all_tests or 'DXTEST_WITH_SMOKETEST_APP' in os.environ
+TEST_NF_DOCKER = _run_all_tests or 'DXTEST_NF_DOCKER' in os.environ
 
 
 def _transform_words_to_regexp(s):
@@ -573,7 +576,7 @@ class DXTestCaseBuildWorkflows(DXTestCase):
                             "executable": self.test_applet_id,
                             "input": {"number": 777},
                             "folder": "/stage_0_output",
-                            "executionPolicy": {"restartOn": {}, "onNonRestartableFailure": "failStage"},
+                            "executionPolicy": {"onNonRestartableFailure": "failStage"},
                             "systemRequirements": {"main": {"instanceType": "mem1_ssd1_x2"}}},
                            {"id": "stage_1",
                             "executable": self.test_applet_id,
@@ -594,10 +597,10 @@ class DXTestCaseBuildApps(DXTestCase):
         "dxapi": "1.0.0",
         "runSpec": {
           "file": "code.py",
-          "interpreter": "python2.7",
+          "interpreter": "python3",
           "distribution": "Ubuntu",
-          "release": "14.04",
-          "version": '0'
+          "release": "20.04",
+          "version": "0"
           },
         "inputSpec": [],
         "outputSpec": [],
@@ -649,6 +652,53 @@ class DXTestCaseBuildApps(DXTestCase):
                 code_file.write(code_content)
         return p
 
+
+class DXTestCaseBuildNextflowApps(DXTestCase):
+    """
+    This class adds methods to ``DXTestCase`` related to app creation,
+    app destruction, and extraction of app data as local files.
+    """
+
+    base_nextflow_nf = THIS_DIR / "nextflow/hello/main.nf"
+    base_nextflow_docker = THIS_DIR / "nextflow/profile_with_docker"
+
+    def setUp(self):
+        super(DXTestCaseBuildNextflowApps, self).setUp()
+        self.temp_file_path = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_file_path)
+        super(DXTestCaseBuildNextflowApps, self).tearDown()
+
+    def write_nextflow_applet_directory_from_folder(self, applet_name, existing_nf_directory_path):
+        p = os.path.join(self.temp_file_path, applet_name)
+        try:
+            shutil.copytree(existing_nf_directory_path, p)
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        return p
+
+
+    def write_nextflow_applet_directory(self, applet_name, existing_nf_file_path=None, nf_file_name="main.nf", nf_file_content="\n"):
+        # Note: if called twice with the same app_name, will overwrite
+        # the dxapp.json and the nf file (if specified) but will not
+        # remove any other files that happened to be present;
+        # applet_name will be the name of the folder storing the pipeline
+        p = os.path.join(self.temp_file_path, applet_name)
+        pb = p.encode("utf-8")
+        try:
+            os.mkdir(pb)
+        except OSError as e:
+            if e.errno != 17:  # directory already exists
+                raise e
+        if existing_nf_file_path:
+            # copy the nf file to the temporary pipeline directory
+            shutil.copyfile(existing_nf_file_path, p + "/" + os.path.basename(existing_nf_file_path))
+        else:
+            with open(os.path.join(pb, nf_file_name.encode("utf-8")), 'w') as nf_file:
+                nf_file.write(nf_file_content)
+        return p
 
 class TemporaryFile:
     ''' A wrapper class around a NamedTemporaryFile. Intended for use inside a 'with' statement.

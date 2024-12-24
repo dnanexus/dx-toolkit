@@ -25,12 +25,14 @@ containers, dataobjects, apps, and jobs).
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import datetime, time, json, math, sys, copy
+import locale
 import subprocess
 from collections import defaultdict
 
 import dxpy
 from .printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter, fill)
-from ..compat import basestring
+from .pretty_print import format_timedelta
+from ..compat import basestring, USING_PYTHON2
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -317,20 +319,19 @@ def render_bundleddepends(thing):
     from ..exceptions import DXError
     bundles = []
     for item in thing:
-        bundle_asset_record = dxpy.DXFile(item["id"]["$dnanexus_link"]).get_properties().get("AssetBundle")
+        bundle_dxlink = item["id"]["$dnanexus_link"]
         asset = None
-
-        if bundle_asset_record:
-            asset = dxpy.DXRecord(bundle_asset_record)
-
-        if asset:
+        if bundle_dxlink.startswith("file-"):
             try:
-                bundles.append(asset.describe().get("name") + " (" + asset.get_id() + ")")
+                bundle_asset_record = dxpy.DXFile(bundle_dxlink).get_properties().get("AssetBundle")
+                if bundle_asset_record:
+                    asset = dxpy.DXRecord(bundle_asset_record)
+                    bundles.append(asset.describe().get("name") + " (" + asset.get_id() + ")")
             except DXError:
                 asset = None
 
         if not asset:
-            bundles.append(item["name"] + " (" + item["id"]["$dnanexus_link"] + ")")
+            bundles.append(item["name"] + " (" + bundle_dxlink + ")")
 
     return bundles
 
@@ -380,7 +381,7 @@ def render_timestamp(timestamp):
     return datetime.datetime.fromtimestamp(timestamp//1000).ctime()
 
 
-FIELD_NAME_WIDTH = 22
+FIELD_NAME_WIDTH = 34
 
 
 def print_field(label, value):
@@ -389,8 +390,9 @@ def print_field(label, value):
     else:
         sys.stdout.write(
             label + " " * (FIELD_NAME_WIDTH-len(label)) + fill(value,
-                                                               subsequent_indent=' '*FIELD_NAME_WIDTH,
-                                                               width_adjustment=-FIELD_NAME_WIDTH) +
+                                                               width=100, # revert back to width_adjustment=-FIELD_NAME_WIDTH when printing.std_width is increased
+                                                               initial_indent=' '*FIELD_NAME_WIDTH,
+                                                               subsequent_indent=' '*FIELD_NAME_WIDTH).lstrip() +
             '\n')
 
 
@@ -410,7 +412,10 @@ def print_project_desc(desc, verbose=False):
         'id', 'class', 'name', 'summary', 'description', 'protected', 'restricted', 'created', 'modified',
         'dataUsage', 'sponsoredDataUsage', 'tags', 'level', 'folders', 'objects', 'permissions', 'properties',
         'appCaches', 'billTo', 'version', 'createdBy', 'totalSponsoredEgressBytes', 'consumedSponsoredEgressBytes',
-        'containsPHI', 'databaseUIViewOnly', 'region', 'storageCost', 'pendingTransfer','atSpendingLimit',
+        'containsPHI', 'databaseUIViewOnly', 'externalUploadRestricted', 'region', 'storageCost', 'pendingTransfer',
+        'atSpendingLimit', 'currentMonthComputeAvailableBudget', 'currentMonthEgressBytesAvailableBudget',
+        'currentMonthStorageAvailableBudget', 'currentMonthComputeUsage', 'currentMonthEgressBytesUsage', 
+        'currentMonthExpectedStorageUsage', 'defaultSymlink', 'databaseResultsRestricted',
         # Following are app container-specific
         'destroyAt', 'project', 'type', 'app', 'appName'
     ]
@@ -446,6 +451,12 @@ def print_project_desc(desc, verbose=False):
         print_json_field('Contains PHI', desc['containsPHI'])
     if 'databaseUIViewOnly' in desc and desc['databaseUIViewOnly']:
         print_json_field('Database UI View Only', desc['databaseUIViewOnly'])
+    if 'externalUploadRestricted' in desc and desc['externalUploadRestricted']:
+        print_json_field('External Upload Restricted', desc['externalUploadRestricted'])
+    if 'defaultSymlink' in desc and verbose:
+        print_json_field('Default Symlink', desc['defaultSymlink'])
+    if 'databaseResultsRestricted' in desc and desc['databaseResultsRestricted']:
+        print_json_field('Database Results Restricted', desc['databaseResultsRestricted'])
 
     # Usage
     print_field("Created", render_timestamp(desc['created']))
@@ -464,6 +475,33 @@ def print_project_desc(desc, verbose=False):
                               if 'consumedSponsoredEgressBytes' in desc else '??'
         print_field('Sponsored egress',
                     ('%s used of %s total' % (consumed_egress_str, total_egress_str)))
+    if 'currentMonthComputeUsage' in desc:
+        current_usage = format_currency(desc['currentMonthComputeUsage'] if desc['currentMonthComputeUsage'] is not None else 0, meta=desc['currency'])
+        if desc.get('currentMonthComputeUsage') is None and desc.get('currentMonthComputeAvailableBudget') is None:
+            msg = '-'
+        elif desc.get('currentMonthComputeAvailableBudget') is not None:
+            msg = '%s of %s total' % (current_usage, format_currency(desc['currentMonthComputeAvailableBudget'], meta=desc['currency']))
+        else:
+            msg = '%s of unlimited' % current_usage
+        print_field('Compute usage for current month', msg)
+    if 'currentMonthEgressBytesUsage' in desc:
+        current_usage = desc['currentMonthEgressBytesUsage'] if desc['currentMonthEgressBytesUsage'] is not None else 0
+        if desc.get('currentMonthEgressBytesUsage') is None and desc.get('') is None:
+            msg = '-'
+        elif desc.get('currentMonthEgressBytesAvailableBudget') is not None:
+            msg = '%s Bytes of %s Bytes total' % (current_usage, desc['currentMonthEgressBytesAvailableBudget'])
+        else:
+            msg = '%s Bytes of unlimited' % current_usage
+        print_field('Egress usage for current month', msg)
+    if 'currentMonthExpectedStorageUsage' in desc:
+        current_usage = format_currency(desc['currentMonthExpectedStorageUsage'] if desc['currentMonthExpectedStorageUsage'] is not None else 0, meta=desc['currency'])
+        if desc.get('currentMonthExpectedStorageUsage') is None and desc.get('currentMonthStorageAvailableBudget') is None:
+            msg = '-'
+        elif desc.get('currentMonthStorageAvailableBudget') is not None:
+            msg = '%s of %s total' % (current_usage, format_currency(desc['currentMonthStorageAvailableBudget'], meta=desc['currency']))
+        else:
+            msg = '%s of unlimited' % current_usage
+        print_field('Expected storage usage for current month', msg)
     if 'atSpendingLimit' in desc:
         print_json_field("At spending limit?", desc['atSpendingLimit'])
 
@@ -509,7 +547,7 @@ def get_advanced_inputs(desc, verbose):
 
 def print_app_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created', 'modified', 'deleted', 'published', 'title', 'subtitle', 'description', 'categories', 'access', 'dxapi', 'inputSpec', 'outputSpec', 'runSpec', 'resources', 'billTo', 'installed', 'openSource', 'summary', 'applet', 'installs', 'billing', 'details', 'developerNotes',
-                         'authorizedUsers']
+                         'authorizedUsers', 'treeTurnaroundTimeThreshold']
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
     if 'billTo' in desc:
@@ -521,6 +559,8 @@ def print_app_desc(desc, verbose=False):
     print_field("Created", render_timestamp(desc['created']))
     print_field("Last modified", render_timestamp(desc['modified']))
     print_field("Created from", desc["applet"])
+    if 'treeTurnaroundTimeThreshold' in desc:
+        print_field("Tree TAT threshold", str(desc["treeTurnaroundTimeThreshold"]) if desc["treeTurnaroundTimeThreshold"] is not None else "-")
     print_json_field('Installed', desc['installed'])
     print_json_field('Open source', desc['openSource'])
     print_json_field('Deleted', desc['deleted'])
@@ -574,7 +614,7 @@ def print_globalworkflow_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'name', 'version', 'aliases', 'createdBy', 'created',
                          'modified', 'deleted', 'published', 'title', 'description',
                          'categories', 'dxapi', 'billTo', 'summary', 'billing', 'developerNotes',
-                         'authorizedUsers', 'regionalOptions']
+                         'authorizedUsers', 'regionalOptions', 'treeTurnaroundTimeThreshold']
     is_locked_workflow = False
     print_field("ID", desc["id"])
     print_field("Class", desc["class"])
@@ -586,6 +626,8 @@ def print_globalworkflow_desc(desc, verbose=False):
     print_field("Created by", desc["createdBy"][5 if desc['createdBy'].startswith('user-') else 0:])
     print_field("Created", render_timestamp(desc['created']))
     print_field("Last modified", render_timestamp(desc['modified']))
+    if 'treeTurnaroundTimeThreshold' in desc:
+        print_field("Tree TAT threshold", str(desc["treeTurnaroundTimeThreshold"]) if desc["treeTurnaroundTimeThreshold"] is not None else "-")
     # print_json_field('Open source', desc['openSource'])
     print_json_field('Deleted', desc.get('deleted', False))
     if not desc.get('deleted', False):
@@ -641,7 +683,8 @@ def get_col_str(col_desc):
 
 def print_data_obj_desc(desc, verbose=False):
     recognized_fields = ['id', 'class', 'project', 'folder', 'name', 'properties', 'tags', 'types', 'hidden', 'details', 'links', 'created', 'modified', 'state', 'title', 'subtitle', 'description', 'inputSpec', 'outputSpec', 'runSpec', 'summary', 'dxapi', 'access', 'createdBy', 'summary', 'sponsored', 'developerNotes',
-                         'stages', 'inputs', 'outputs', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom', 'temporary']
+                         'stages', 'inputs', 'outputs', 'latestAnalysis', 'editVersion', 'outputFolder', 'initializedFrom', 'temporary',
+                         'treeTurnaroundTimeThreshold']
 
     is_locked_workflow = False
     print_field("ID", desc["id"])
@@ -685,6 +728,8 @@ def print_data_obj_desc(desc, verbose=False):
         print_field("Description", desc["description"])
     if 'outputFolder' in desc:
         print_field("Output Folder", desc["outputFolder"] if desc["outputFolder"] is not None else "-")
+    if 'treeTurnaroundTimeThreshold' in desc:
+        print_field("Tree TAT threshold", str(desc["treeTurnaroundTimeThreshold"]) if desc["treeTurnaroundTimeThreshold"] is not None else "-")
     if 'access' in desc:
         print_json_field("Access", desc["access"])
     if 'dxapi' in desc:
@@ -755,28 +800,39 @@ def print_data_obj_desc(desc, verbose=False):
 def printable_ssh_host_key(ssh_host_key):
     try:
         keygen = subprocess.Popen(["ssh-keygen", "-lf", "/dev/stdin"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        (stdout, stderr) = keygen.communicate(ssh_host_key)
+        if USING_PYTHON2:
+            (stdout, stderr) = keygen.communicate(ssh_host_key)
+        else:
+            (stdout, stderr) = keygen.communicate(ssh_host_key.encode())
     except:
         return ssh_host_key.strip()
     else:
+        if not USING_PYTHON2:
+            stdout =  stdout.decode()
         return stdout.replace(" no comment", "").strip()
 
 
-def print_execution_desc(desc):
-    recognized_fields = ['id', 'class', 'project', 'workspace', 'region',
+def print_execution_desc(desc, verbose=False):
+    recognized_fields = ['id', 'try', 'class', 'project', 'workspace', 'region',
                          'app', 'applet', 'executable', 'workflow',
                          'state',
-                         'rootExecution', 'parentAnalysis', 'parentJob', 'originJob', 'analysis', 'stage',
+                         'rootExecution', 'parentAnalysis', 'parentJob', 'parentJobTry', 'originJob', 'analysis', 'stage',
                          'function', 'runInput', 'originalInput', 'input', 'output', 'folder', 'launchedBy', 'created',
                          'modified', 'failureReason', 'failureMessage', 'stdout', 'stderr', 'waitingOnChildren',
                          'dependsOn', 'resources', 'projectCache', 'details', 'tags', 'properties',
                          'name', 'instanceType', 'systemRequirements', 'executableName', 'failureFrom', 'billTo',
-                         'startedRunning', 'stoppedRunning', 'stateTransitions',
+                         'tryCreated', 'startedRunning', 'stoppedRunning', 'stateTransitions',
                          'delayWorkspaceDestruction', 'stages', 'totalPrice', 'isFree', 'invoiceMetadata',
-                         'priority', 'sshHostKey']
+                         'priority', 'sshHostKey', 'internetUsageIPs', 'spotWaitTime', 'maxTreeSpotWaitTime',
+                         'maxJobSpotWaitTime', 'spotCostSavings', 'preserveJobOutputs', 'treeTurnaroundTime',
+                         'selectedTreeTurnaroundTimeThreshold', 'selectedTreeTurnaroundTimeThresholdFrom',
+                         'runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']
 
     print_field("ID", desc["id"])
+    if desc.get('try') is not None:
+        print_field("Try", str(desc['try']))
     print_field("Class", desc["class"])
+
     if "name" in desc and desc['name'] is not None:
         print_field("Job name", desc['name'])
     if "executableName" in desc and desc['executableName'] is not None:
@@ -815,6 +871,8 @@ def print_execution_desc(desc):
         print_field("Parent job", "-")
     else:
         print_field("Parent job", desc["parentJob"])
+    if desc.get("parentJobTry") is not None:
+        print_field("Parent job try", str(desc["parentJobTry"]))
     if "parentAnalysis" in desc:
         if desc["parentAnalysis"] is not None:
             print_field("Parent analysis", desc["parentAnalysis"])
@@ -842,8 +900,11 @@ def print_execution_desc(desc):
     print_nofill_field("Output", get_io_field(desc["output"]))
     if 'folder' in desc:
         print_field('Output folder', desc['folder'])
+    print_field('Preserve Job Outputs Folder', desc['preserveJobOutputs']['folder'] if desc.get('preserveJobOutputs') and 'folder' in desc['preserveJobOutputs'] else '-')
     print_field("Launched by", desc["launchedBy"][5:])
     print_field("Created", render_timestamp(desc['created']))
+    if desc.get('tryCreated') is not None:
+        print_field("Try created", render_timestamp(desc['tryCreated']))
     if 'startedRunning' in desc:
         if 'stoppedRunning' in desc:
             print_field("Started running", render_timestamp(desc['startedRunning']))
@@ -870,9 +931,10 @@ def print_execution_desc(desc):
     if "failureMessage" in desc:
         print_field("Failure message", desc["failureMessage"])
     if "failureFrom" in desc and desc['failureFrom'] is not None and desc['failureFrom']['id'] != desc['id']:
-        print_field("Failure is from", desc['failureFrom']['id'])
-    if 'systemRequirements' in desc:
-        print_json_field("Sys Requirements", desc['systemRequirements'])
+        failure_from = desc['failureFrom']['id']
+        if desc['failureFrom'].get('try') is not None:
+            failure_from += " try %d" % desc['failureFrom']['try']
+        print_field("Failure is from", failure_from)
     if "tags" in desc:
         print_list_field("Tags", desc["tags"])
     if "properties" in desc:
@@ -908,19 +970,105 @@ def print_execution_desc(desc):
                 else:
                     print_nofill_field(" sys reqs", YELLOW() + json.dumps(cloned_sys_reqs) + ENDC())
     if not desc.get('isFree') and desc.get('totalPrice') is not None:
-        print_field('Total Price', "$%.2f" % desc['totalPrice'])
+        print_field('Total Price', format_currency(desc['totalPrice'], meta=desc['currency']))
+    if desc.get('spotCostSavings') is not None:
+        print_field('Spot Cost Savings', format_currency(desc['spotCostSavings'], meta=desc['currency']))
+    if desc.get('spotWaitTime') is not None:
+        print_field('Spot Wait Time', format_timedelta(desc.get('spotWaitTime'), in_seconds=True))
+    if desc.get('maxTreeSpotWaitTime') is not None:
+        print_field('Max Tree Spot Wait Time', format_timedelta(desc.get('maxTreeSpotWaitTime'), in_seconds=True))
+    if desc.get('maxJobSpotWaitTime') is not None:
+        print_field('Max Job Spot Wait Time', format_timedelta(desc.get('maxJobSpotWaitTime'), in_seconds=True))
     if desc.get('invoiceMetadata'):
         print_json_field("Invoice Metadata", desc['invoiceMetadata'])
     if desc.get('sshHostKey'):
         print_nofill_field("SSH Host Key", printable_ssh_host_key(desc['sshHostKey']))
+    if 'internetUsageIPs' in desc:
+        print_json_field("Internet Usage IPs", desc['internetUsageIPs'])
+    if 'treeTurnaroundTime' in desc:
+        print_field("Tree TAT", str(desc['treeTurnaroundTime']))
+    if 'selectedTreeTurnaroundTimeThreshold' in desc:
+        print_field("Selected tree TAT threshold", str(desc['selectedTreeTurnaroundTimeThreshold']))
+    if 'selectedTreeTurnaroundTimeThresholdFrom' in desc:
+        print_field("Selected tree TAT from", desc['selectedTreeTurnaroundTimeThresholdFrom'])
+
+    if 'systemRequirements' in desc:
+        print_json_field("Sys Requirements", desc['systemRequirements'])
+    if 'runSystemRequirements'  in desc:
+        print_json_field("Run Sys Reqs", desc['runSystemRequirements'])
+    if 'runSystemRequirementsByExecutable' in desc:
+        print_json_field("Run Sys Reqs by Exec", desc['runSystemRequirementsByExecutable'])
+    if 'mergedSystemRequirementsByExecutable' in desc:
+        print_json_field("Merged Sys Reqs By Exec", desc['mergedSystemRequirementsByExecutable'])
+    if 'runStageSystemRequirements' in desc:
+        print_json_field("Run Stage Sys Reqs", desc['runStageSystemRequirements'])
 
     for field in desc:
         if field not in recognized_fields:
             print_json_field(field, desc[field])
 
+
+def locale_from_currency_code(dx_code):
+    """
+    This is a (temporary) hardcoded mapping between currency_list.json in nucleus and standard
+    locale string useful for further formatting
+
+    :param dx_code: An id of nucleus/commons/pricing_models/currency_list.json collection
+    :return: standardised locale, eg 'en_US'; None when no mapping found
+    """
+    currency_locale_map = {0: 'en_US', 1: 'en_GB'}
+    return currency_locale_map[dx_code] if dx_code in currency_locale_map else None
+
+
+def format_currency_from_meta(value, meta):
+    """
+    Formats currency value into properly decorated currency string based on provided currency metadata.
+    Please note that this is very basic solution missing some of the localisation features (such as
+    negative symbol position and type.
+
+    Better option is to use 'locale' module to reflect currency string decorations more accurately.
+
+    See 'format_currency'
+
+    :param value:
+    :param meta:
+    :return:
+    """
+    prefix = '-' if value < 0 else ''  # .. TODO: some locales position neg symbol elsewhere, missing meta
+    prefix += meta['symbol'] if meta['symbolPosition'] == 'left' else ''
+    suffix = ' %s' % meta["symbol"] if meta['symbolPosition'] == 'right' else ''
+    # .. TODO: take the group and decimal separators from meta into account (US & UK are the same, so far we're safe)
+    formatted_value = '{:,.2f}'.format(abs(value))
+    return prefix + formatted_value + suffix
+
+
+def format_currency(value, meta, currency_locale=None):
+    """
+    Formats currency value into properly decorated currency string based on either locale (preferred)
+    or if that is not available then currency metadata. Until locale is provided from the server
+    a crude mapping between `currency.dxCode` and a locale string is used instead (eg 0: 'en_US')
+
+    :param value: amount
+    :param meta: server metadata (`currency`)
+    :return: formatted currency string
+    """
+    try:
+        if currency_locale is None:
+            currency_locale = locale_from_currency_code(meta['dxCode'])
+        if currency_locale is None:
+            return format_currency_from_meta(value, meta)
+        else:
+            locale.setlocale(locale.LC_ALL, currency_locale)
+            return locale.currency(value, grouping=True)
+    except locale.Error:
+        # .. locale is probably not available -> fallback to format manually
+        return format_currency_from_meta(value, meta)
+
+
 def print_user_desc(desc):
     print_field("ID", desc["id"])
-    print_field("Name", desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"])
+    if "first" in desc and "middle" in desc and "last" in desc: 
+        print_field("Name", desc["first"] + " " + ((desc["middle"] + " ") if desc["middle"] != '' else '') + desc["last"])
     if "email" in desc:
         print_field("Email", desc["email"])
 
@@ -943,6 +1091,11 @@ def print_desc(desc, verbose=False):
     Depending on the class of the entity, this method will print a
     formatted and human-readable string containing the data in *desc*.
     '''
+    if isinstance(desc, dict) and not desc.get('class'):
+        from ..utils.resolver import is_hashid
+        if is_hashid(desc.get('id')):
+            desc['class'] = desc['id'].split("-")[0]
+
     if desc['class'] in ['project', 'workspace', 'container']:
         print_project_desc(desc, verbose=verbose)
     elif desc['class'] == 'app':
@@ -950,7 +1103,7 @@ def print_desc(desc, verbose=False):
     elif desc['class'] == 'globalworkflow':
         print_globalworkflow_desc(desc, verbose=verbose)
     elif desc['class'] in ['job', 'analysis']:
-        print_execution_desc(desc)
+        print_execution_desc(desc, verbose=verbose)
     elif desc['class'] == 'user':
         print_user_desc(desc)
     elif desc['class'] in ['org', 'team']:
@@ -1043,12 +1196,14 @@ def print_ls_l_desc(desc, **kwargs):
 
 
 def get_find_executions_string(desc, has_children, single_result=False, show_outputs=True,
-                               is_cached_result=False):
+                               is_cached_result=False, show_try=False, as_try_group_root=False):
     '''
     :param desc: hash of execution's describe output
     :param has_children: whether the execution has children to be printed
     :param single_result: whether the execution is displayed as a single result or as part of an execution tree
     :param is_cached_result: whether the execution should be formatted as a cached result
+    :param show_try: whether to include also try no
+    :param as_try_group_root: whether the execution should be formatted as an artifical root for multiple tries
     '''
     is_not_subjob = desc['parentJob'] is None or desc['class'] == 'analysis' or single_result
     result = ("* " if is_not_subjob and get_delimiter() is None else "")
@@ -1074,6 +1229,12 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
     # Format state
     result += DELIMITER(' (') + JOB_STATES(desc['state']) + DELIMITER(') ') + desc['id']
 
+    if as_try_group_root:
+        return result + ' tries'
+
+    if show_try and desc.get('try') is not None:
+        result += ' try %d' % desc.get('try')
+
     # Add unicode pipe to child if necessary
     result += DELIMITER('\n' + (u'│ ' if is_not_subjob and has_children else ("  " if is_not_subjob else "")))
     result += desc['launchedBy'][5:] + DELIMITER(' ')
@@ -1087,7 +1248,7 @@ def get_find_executions_string(desc, has_children, single_result=False, show_out
     if desc['class'] == 'job':
         # Only print runtime if it ever started running
         if desc.get('startedRunning'):
-            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output']:
+            if desc['state'] in ['done', 'failed', 'terminated', 'waiting_on_output'] and desc.get('stoppedRunning'):
                 runtime = datetime.timedelta(seconds=int(desc['stoppedRunning']-desc['startedRunning'])//1000)
                 cached_and_runtime_strs.append("runtime " + str(runtime))
             elif desc['state'] == 'running':

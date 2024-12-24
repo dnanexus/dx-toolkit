@@ -16,7 +16,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, json, subprocess, pipes
+import os, sys, json, subprocess, shlex
 import collections, datetime
 
 import dxpy
@@ -351,9 +351,9 @@ def run_one_entry_point(job_id, function, input_hash, run_spec, depends_on, name
           if [[ $(type -t {function}) == "function" ]];
           then {function};
           else echo "$0: Global scope execution complete. Not invoking entry point function {function} because it was not found" 1>&2;
-          fi'''.format(homedir=pipes.quote(job_homedir),
-                       env_path=pipes.quote(os.path.join(job_env['HOME'], 'environment')),
-                       code_path=pipes.quote(environ['DX_TEST_CODE_PATH']),
+          fi'''.format(homedir=shlex.quote(job_homedir),
+                       env_path=shlex.quote(os.path.join(job_env['HOME'], 'environment')),
+                       code_path=shlex.quote(environ['DX_TEST_CODE_PATH']),
                        function=function)
         invocation_args = ['bash', '-c', '-e'] + (['-x'] if environ.get('DX_TEST_X_FLAG') else []) + [script]
     elif run_spec['interpreter'] == 'python2.7':

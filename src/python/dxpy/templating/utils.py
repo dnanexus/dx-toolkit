@@ -20,12 +20,17 @@ Miscellaneous utility classes and functions for the dx-app-wizard command-line t
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, shutil, subprocess, re, json
+import os, sys, shutil, subprocess, re, json
 import stat
 
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
 from ..cli import prompt_for_yn
 from ..compat import input, open
+try:
+    # Import gnureadline if installed for macOS
+    import gnureadline as readline
+except ImportError as e:
+    import readline
 
 from . import python
 from . import bash
@@ -40,12 +45,7 @@ completer_state = {
 }
 
 try:
-    try:
-        import gnureadline as readline
-    except ImportError:
-        import readline
-    import rlcompleter
-    readline.parse_and_bind("tab: complete")
+    readline.parse_and_bind("bind ^I rl_complete" if "libedit" in (readline.__doc__ or "") else "tab: complete")
     readline.set_completer_delims("")
     completer_state['available'] = True
 except ImportError:
@@ -58,8 +58,8 @@ class Completer():
 
     def complete(self, text, state):
         if state == 0:
-            self.matches = filter(lambda choice: choice.startswith(text),
-                                  self.choices)
+            self.matches = list(filter(lambda choice: choice.startswith(text),
+                                  self.choices))
 
         if self.matches is not None and state < len(self.matches):
             return self.matches[state]
@@ -291,7 +291,6 @@ def create_files_from_templates(template_dir, app_json, language,
             if any(template_filename.endswith(ext) for ext in ('~', '.pyc', '.pyo', '__pycache__')):
                 continue
             use_template_file(os.path.join('test', template_filename))
-
     for template_filename in os.listdir(os.path.join(template_dir, 'src')):
         if template_filename.endswith('~'):
             continue

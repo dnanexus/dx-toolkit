@@ -22,7 +22,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 # TODO: refactor all dx run helper functions here
 
-import os, sys, json, collections, pipes
+import os, sys, json, collections, shlex
 from ..bindings.dxworkflow import DXWorkflow
 
 import dxpy
@@ -35,8 +35,9 @@ from ..utils.resolver import (parse_input_keyval, is_hashid, is_job_id, is_local
 from ..utils import OrderedDefaultdict
 from ..compat import input, str, shlex, basestring, USING_PYTHON2
 try:
+    # Import gnureadline if installed for macOS
     import gnureadline as readline
-except ImportError:
+except ImportError as e:
     import readline
 ####################
 # -i Input Parsing #
@@ -326,7 +327,7 @@ def format_choices_or_suggestions(header, items, obj_class, initial_indent=' ' *
         # TODO: in interactive prompts the quotes here may be a bit
         # misleading. Perhaps it should be a separate mode to print
         # "interactive-ready" suggestions.
-        return fill(header + ' ' + ', '.join([pipes.quote(str(item)) for item in items]),
+        return fill(header + ' ' + ', '.join([shlex.quote(str(item)) for item in items]),
                     initial_indent=initial_indent,
                     subsequent_indent=subsequent_indent)
 
@@ -675,8 +676,7 @@ class ExecutableInputs(object):
 
     def init_completer(self):
         try:
-            import rlcompleter
-            readline.parse_and_bind("tab: complete")
+            readline.parse_and_bind("bind ^I rl_complete" if "libedit" in (readline.__doc__ or "") else "tab: complete")
 
             readline.set_completer_delims("")
 

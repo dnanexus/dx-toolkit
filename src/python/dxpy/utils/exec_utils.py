@@ -23,10 +23,10 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, sys, json, re, collections, logging, argparse, string, itertools, subprocess, tempfile
 from functools import wraps
 from collections import namedtuple
-import pipes
+import shlex
 
 import dxpy
-from ..compat import USING_PYTHON2, open
+from ..compat import USING_PYTHON2, open, Mapping
 from ..exceptions import AppInternalError
 
 ENTRY_POINT_TABLE = {}
@@ -191,7 +191,7 @@ def save_error(e, working_dir, error_type="AppInternalError"):
 def convert_handlers_to_dxlinks(x):
     if isinstance(x, dxpy.DXObject):
         x = dxpy.dxlink(x)
-    elif isinstance(x, collections.Mapping):
+    elif isinstance(x, Mapping):
         for key, value in x.items():
             x[key] = convert_handlers_to_dxlinks(value)
     elif isinstance(x, list):
@@ -349,11 +349,9 @@ class DXExecDependencyInstaller(object):
     def generate_shellcode(self, dep_group):
         base_apt_shellcode = "export DEBIAN_FRONTEND=noninteractive && apt-get install --yes --no-install-recommends {p}"
         dx_apt_update_shellcode = "apt-get update -o Dir::Etc::sourcelist=sources.list.d/nucleus.list -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0"
-        change_apt_archive = r"sed -i -e s?http://.*.ec2.archive.ubuntu.com?http://us.archive.ubuntu.com? /etc/apt/sources.list"
-        apt_err_msg = "APT failed, retrying with full update against ubuntu.com"
-        apt_shellcode_template = "({dx_upd} && {inst}) || (echo {e}; {change_apt_archive} && apt-get update && {inst})"
+        apt_err_msg = "APT failed, retrying with full update against official package repository"
+        apt_shellcode_template = "({dx_upd} && {inst}) || (echo {e}; apt-get update && {inst})"
         apt_shellcode = apt_shellcode_template.format(dx_upd=dx_apt_update_shellcode,
-                                                      change_apt_archive=change_apt_archive,
                                                       inst=base_apt_shellcode,
                                                       e=apt_err_msg)
         def make_pm_atoms(packages, version_separator="="):
@@ -437,7 +435,7 @@ class DXExecDependencyInstaller(object):
                 dxpy.download_dxfile(bundle["id"], bundle["name"], project=dxpy.WORKSPACE_ID)
             except dxpy.exceptions.ResourceNotFound:
                 dxpy.download_dxfile(bundle["id"], bundle["name"])
-            self.run("dx-unpack {}".format(pipes.quote(bundle["name"])))
+            self.run("dx-unpack {}".format(shlex.quote(bundle["name"])))
         else:
             self.log('Skipping bundled dependency "{name}" because it does not refer to a file'.format(**bundle))
 

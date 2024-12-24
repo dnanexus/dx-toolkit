@@ -1,0 +1,10 @@
+patient.patient_id
+patient.name
+patient.weight
+patient.date_of_birth
+patient.verified_dtm
+test.test_id
+trial_visit.visit_id
+baseline.baseline_id
+hospital.hospital_id
+doctor.doctor_id

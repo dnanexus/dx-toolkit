@@ -18,7 +18,7 @@
 include mk/config.mk
 include mk/Makefile.${PLATFORM}
 
-all: api_wrappers cpp src_libs python dx-verify-file jq dx-docker
+all: api_wrappers cpp src_libs python dx-verify-file dx-docker
 
 python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 
@@ -136,18 +136,10 @@ install: base_install
 
 doc: doc_python doc_dxcpp doc_dxjson doc_java
 
-setup_doc_virtualenv: .setup_doc_virtualenv
-
-.setup_doc_virtualenv: ../build/doc_build_requirements.txt
-	@if ! which pip > /dev/null; then echo "pip not found, please run apt-get install python-pip"; exit 1; fi
-	@if ! which virtualenv > /dev/null; then echo "virtualenv not found, please run apt-get install python-virtualenv"; exit 1; fi
-	(unset PYTHONPATH; $(VIRTUAL_ENV) ../build/doc_env; source ../build/doc_env/$(ACTIVATE); pip install --find-links=http://dnanexus-pypi2.s3.amazonaws.com/index.html --requirement=../build/doc_build_requirements.txt)
-	$(VIRTUAL_ENV) --relocatable ../build/doc_env
-	touch .setup_doc_virtualenv
-
-doc_python: python setup_doc_virtualenv
+doc_python: python 
 	rm -rf ../doc/python/*
-	source ../build/doc_env/$(ACTIVATE); source "../environment"; export PYTHONPATH="$${PYTHONPATH}:../lib"; $(MAKE) -C python/doc html
+	${PIP} install --requirement=../build/doc_build_requirements.txt
+	$(MAKE) -C python/doc html
 
 doc_dxcpp:
 	mkdir -p ../doc/cpp/dxcpp
@@ -298,7 +290,7 @@ CARES_PV=1.13.0
 CARES_SHA=dde50284cc3d505fb2463ff6276e61d5531b1d68
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
-	curl https://c-ares.haxx.se/download/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
+	curl https://c-ares.org/archive/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
 	cd c-ares; ./configure --prefix=/
@@ -328,18 +320,14 @@ git_submodules:
 	fi)
 
 
-jq: git_submodules ../bin/jq
-
-
 # Clean
 # =====
 
 distclean: clean
 
-clean: clean_jq
+clean:
 	$(MAKE) -C dx-verify-file clean
 	$(MAKE) -C ua clean
-	-rm -f ../bin/jq
 	-find ../bin -type f \( -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -not -name 'dx-su-*' -delete
 	-rm -f ../bin/docker2aci ../bin/proot
 	-rm -rf python/{build,*.{egg,egg-info}}
@@ -350,12 +338,4 @@ clean: clean_jq
 	-rm -rf "$(DX_PY_ENV)"
 	-rm -rf boost c-ares curl file openssl
 
-# Check that the 'jq' makefile exists, before trying to clean up.
-# We checkout and build the 'jq' package, it is an external
-# package.
-clean_jq:
-	(if [ -e jq/Makefile ]; then \
-		$(MAKE) -C jq clean; \
-	fi)
-
-.PHONY: all toolkit_version api_wrappers src_libs python pynsist_installer java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps
+.PHONY: all toolkit_version api_wrappers src_libs python java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps

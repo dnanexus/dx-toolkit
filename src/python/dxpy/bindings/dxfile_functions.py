@@ -37,8 +37,8 @@ import dxpy
 from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..compat import open, USING_PYTHON2
-from ..exceptions import DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..compat import open, md5_hasher, USING_PYTHON2
 from ..utils import response_iterator
 import subprocess
 
@@ -97,7 +97,7 @@ def new_dxfile(mode=None, write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE, expected
 
 
 def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                    project=None, describe_output=None, **kwargs):
+                    project=None, describe_output=None, symlink_max_tries=15, **kwargs):
     '''
     :param dxid: DNAnexus file ID or DXFile (file handler) object
     :type dxid: string or DXFile
@@ -114,6 +114,8 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
             It should contain the default fields of the describe API call output and
             the "parts" field, not included in the output by default.
     :type describe_output: dict or None
+    :param symlink_max_tries: Maximum amount of tries when downloading a symlink with aria2c.
+    :type symlink_max_tries: int or None
 
     Downloads the remote file referenced by *dxid* and saves it to *filename*.
 
@@ -134,6 +136,7 @@ def download_dxfile(dxid, filename, chunksize=dxfile.DEFAULT_BUFFER_SIZE, append
                                    show_progress=show_progress,
                                    project=project,
                                    describe_output=describe_output,
+                                   symlink_max_tries=symlink_max_tries,
                                    **kwargs)
 
 
@@ -173,67 +176,59 @@ def _verify(filename, md5digest):
         err_exit("Checksum doesn't match " + str(actual_md5) + "  expected:" + str(md5digest))
     print("Checksum correct")
 
+
 # [dxid] is a symbolic link. Create a preauthenticated URL,
 # and download it
-def _download_symbolic_link(dxid, md5digest, project, dest_filename):
-    dxfile = dxpy.DXFile(dxid)
-    url, _headers = dxfile.get_download_url(preauthenticated=True,
+def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max_tries=15):
+    if symlink_max_tries < 1:
+        raise dxpy.exceptions.DXError("symlink_max_tries argument has to be positive integer")
+
+    # Check if aria2 present, if not, error.
+    aria2c_exe = _which("aria2c")
+
+    if aria2c_exe is None:
+        err_exit("aria2c must be installed on this system to download this data. " + \
+                 "Please see the documentation at https://aria2.github.io/.")
+        return
+
+    if isinstance(dxid, DXFile):
+        dxf = dxid
+    else:
+        dxf = dxpy.DXFile(dxid)
+
+    url, _headers = dxf.get_download_url(preauthenticated=True,
                                             duration=6*3600,
                                             project=project)
 
-    def call_cmd(cmd, max_retries=6, num_attempts=0):
-        try:
-            if aria2c_exe is not None:
-                print("Downloading symbolic link with aria2c")
-            else:
-                print("Downloading symbolic link with wget")
-            subprocess.check_call(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            msg = ""
-            if e and e.output:
-                msg = e.output.strip()
-            if e.returncode == 22 and num_attempts <= max_retries:  # hotfix, DEVEX-1779
-                time_to_wait = 1 if num_attempts <= 2 else min(randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1)), 60)
-                print("Download failed with code 22. Retrying after {} seconds... Error details: cmd: {}\nmsg: {}\n".format(str(time_to_wait), str(cmd), msg))
-                sleep(time_to_wait)
-                call_cmd(cmd, max_retries, num_attempts + 1)
-            err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
+    # aria2c does not allow more than 16 connections per server
+    max_connections = min(16, multiprocessing.cpu_count())
+    cmd = [
+        "aria2c",
+        "-c",                        # continue downloading a partially downloaded file
+        "-s", str(max_connections),  # number of concurrent downloads (split file)
+        "-x", str(max_connections),  # maximum number of connections to one server for  each  download
+        "--retry-wait=10"            # time to wait before retrying
+    ]
+    cmd.extend(["-m", str(symlink_max_tries)])
 
-    # Follow the redirection
-    print('Following redirect for ' + url)
+    # Split path properly for aria2c
+    # If '-d' arg not provided, aria2c uses current working directory
+    cwd = os.getcwd()
+    directory, filename = os.path.split(dest_filename)
+    directory = cwd if directory in ["", cwd] else directory
+    cmd += ["-o", filename, "-d", os.path.abspath(directory), url]
 
-    # Check if aria2 present
-    # Use that instead of wget
-    aria2c_exe = _which("aria2c")
-    if aria2c_exe is None:
-        wget_exe = _which("wget")
-        if wget_exe is None:
-            err_exit("wget is not installed on this system")
-
-        cmd = ["wget", "--tries=20", "--quiet"]
-        if os.path.isfile(dxid):
-            # file already exists, resume upload.
-            cmd += ["--continue"]
-        cmd += ["-O", dest_filename, url]
-    else:
-        print("aria2c found in path so using that instead of wget \n")
-        # aria2c does not allow more than 16 connections per server
-        max_connections = min(16, multiprocessing.cpu_count())
-        cmd = ["aria2c", "--check-certificate=false", "-s", str(max_connections), "-x", str(max_connections), "--retry-wait=10", "--max-tries=15"]
-        # Split path properly for aria2c
-        # If '-d' arg not provided, aria2c uses current working directory
-        cwd = os.getcwd()
-        directory, filename = os.path.split(dest_filename)
-        directory = cwd if directory in ["", cwd] else directory
-        cmd += ["-o", filename, "-d", os.path.abspath(directory), url]
-    call_cmd(cmd)
+    try:
+        subprocess.check_call(cmd, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        err_exit("Failed to call download: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=e))
 
     if md5digest is not None:
         _verify(dest_filename, md5digest)
 
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
-                     project=None, describe_output=None, **kwargs):
+                     project=None, describe_output=None, symlink_max_tries=15, **kwargs):
     '''
     Core of download logic. Download file-id *dxid* and store it in
     a local file *filename*.
@@ -279,13 +274,15 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         dxfile_desc = describe_output
     else:
         dxfile_desc = dxfile.describe(fields={"parts"}, default_fields=True, **kwargs)
-    if 'drive' in dxfile_desc:
-        # A symbolic link. Get the MD5 checksum, if we have it
+
+    # handling of symlinked files.
+    if 'drive' in dxfile_desc and 'parts' not in dxfile_desc \
+            or 'drive' in dxfile_desc and dxfile_desc["drive"] == "drive-PUBLISHED":
         if 'md5' in dxfile_desc:
             md5 = dxfile_desc['md5']
         else:
             md5 = None
-        _download_symbolic_link(dxid, md5, project, filename)
+        _download_symbolic_link(dxid, md5, project, filename, symlink_max_tries=symlink_max_tries)
         return True
 
     parts = dxfile_desc["parts"]
@@ -350,7 +347,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                     if "md5" not in part_info:
                         raise DXFileError("File {} does not contain part md5 checksums".format(dxfile.get_id()))
                     bytes_to_read = part_info["size"]
-                    hasher = hashlib.md5()
+                    hasher = md5_hasher()
                     while bytes_to_read > 0:
                         chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
                         if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
@@ -384,7 +381,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
                 if chunk_part != cur_part:
                     verify_part(cur_part, got_bytes, hasher)
-                    cur_part, got_bytes, hasher = chunk_part, 0, hashlib.md5()
+                    cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
                 fh.write(chunk_data)
@@ -452,48 +449,10 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
 
     '''
     fd = file if filename is None else open(filename, 'rb')
-
     try:
         file_size = os.fstat(fd.fileno()).st_size
     except:
         file_size = 0
-
-    file_is_mmapd = hasattr(fd, "fileno")
-
-    if write_buffer_size is None:
-        write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE
-
-    if use_existing_dxfile:
-        handler = use_existing_dxfile
-    else:
-        # Set a reasonable name for the file if none has been set
-        # already
-        creation_kwargs = kwargs.copy()
-        if 'name' not in kwargs:
-            if filename is not None:
-                creation_kwargs['name'] = os.path.basename(filename)
-            else:
-                # Try to get filename from file-like object
-                try:
-                    local_file_name = file.name
-                except AttributeError:
-                    pass
-                else:
-                    creation_kwargs['name'] = os.path.basename(local_file_name)
-
-        # Use 'a' mode because we will be responsible for closing the file
-        # ourselves later (if requested).
-        handler = new_dxfile(mode='a', media_type=media_type, write_buffer_size=write_buffer_size,
-                             expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
-
-    # For subsequent API calls, don't supply the dataobject metadata
-    # parameters that are only needed at creation time.
-    _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
-
-    num_ticks = 60
-    offset = 0
-
-    handler._ensure_write_bufsize(**remaining_kwargs)
 
     def can_be_mmapd(fd):
         if not hasattr(fd, "fileno"):
@@ -510,15 +469,13 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
         # If file cannot be mmap'd (e.g. is stdin, or a fifo), fall back
         # to doing an actual read from the file.
         if not can_be_mmapd(fd):
-            return fd.read(handler._write_bufsize)
+            return fd.read(num_bytes)
 
         bytes_available = max(file_size - offset, 0)
         if bytes_available == 0:
             return b""
 
-        return mmap.mmap(fd.fileno(), min(handler._write_bufsize, bytes_available), offset=offset, access=mmap.ACCESS_READ)
-
-    handler._num_bytes_transmitted = 0
+        return mmap.mmap(fd.fileno(), min(num_bytes, bytes_available), offset=offset, access=mmap.ACCESS_READ)
 
     def report_progress(handler, num_bytes):
         handler._num_bytes_transmitted += num_bytes
@@ -537,29 +494,87 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             sys.stderr.write("\r")
             sys.stderr.flush()
 
-    if show_progress:
-        report_progress(handler, 0)
+    def get_new_handler(filename):
+        # Set a reasonable name for the file if none has been set
+        # already
+        creation_kwargs = kwargs.copy()
+        if 'name' not in kwargs:
+            if filename is not None:
+                creation_kwargs['name'] = os.path.basename(filename)
+            else:
+                # Try to get filename from file-like object
+                try:
+                    local_file_name = file.name
+                except AttributeError:
+                    pass
+                else:
+                    creation_kwargs['name'] = os.path.basename(local_file_name)
 
-    while True:
-        buf = read(handler._write_bufsize)
-        offset += len(buf)
+        # Use 'a' mode because we will be responsible for closing the file
+        # ourselves later (if requested).
+        return new_dxfile(mode='a', media_type=media_type, write_buffer_size=write_buffer_size,
+                             expected_file_size=file_size, file_is_mmapd=file_is_mmapd, **creation_kwargs)
 
-        if len(buf) == 0:
-            break
+    retries = 0
+    max_retries = 2
+    file_is_mmapd = hasattr(fd, "fileno")
 
-        handler.write(buf,
-                      report_progress_fn=report_progress if show_progress else None,
-                      multithread=multithread,
-                      **remaining_kwargs)
+    if write_buffer_size is None:
+        write_buffer_size=dxfile.DEFAULT_BUFFER_SIZE
 
-    if filename is not None:
-        fd.close()
+    # APPS-650 file upload would occasionally fail due to some parts not being uploaded correctly. This will try to re-upload in case this happens.
+    while retries <= max_retries:
+        retries += 1
 
-    handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+        if use_existing_dxfile:
+            handler = use_existing_dxfile
+        else:
+            handler = get_new_handler(filename)
 
-    if show_progress:
-        sys.stderr.write("\n")
-        sys.stderr.flush()
+        # For subsequent API calls, don't supply the dataobject metadata
+        # parameters that are only needed at creation time.
+        _, remaining_kwargs = dxpy.DXDataObject._get_creation_params(kwargs)
+
+        num_ticks = 60
+        offset = 0
+
+        handler._ensure_write_bufsize(**remaining_kwargs)
+
+        handler._num_bytes_transmitted = 0
+
+        if show_progress:
+            report_progress(handler, 0)
+
+        while True:
+            buf = read(handler._write_bufsize)
+            offset += len(buf)
+
+            if len(buf) == 0:
+                break
+
+            handler.write(buf,
+                          report_progress_fn=report_progress if show_progress else None,
+                          multithread=multithread,
+                          **remaining_kwargs)
+
+        handler.flush(report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
+
+        if show_progress:
+            sys.stderr.write("\n")
+            sys.stderr.flush()
+        try:
+            handler.wait_until_parts_uploaded()
+        except DXError:
+            if show_progress:
+                logger.warning("File {} was not uploaded correctly!".format(filename))
+            if retries > max_retries:
+                raise
+            if show_progress:
+                logger.warning("Retrying...({}/{})".format(retries, max_retries))
+            continue
+        if filename is not None:
+            fd.close()
+        break
 
     if not keep_open:
         handler.close(block=wait_on_close, report_progress_fn=report_progress if show_progress else None, **remaining_kwargs)
@@ -619,10 +634,10 @@ def list_subfolders(project, path, recurse=True):
 
     '''
     project_folders = dxpy.get_handler(project).describe(input_params={'folders': True})['folders']
-    # TODO: support shell-style path globbing (i.e. /a*/c matches /ab/c but not /a/b/c)
-    # return pathmatch.filter(project_folders, os.path.join(path, '*'))
+    # If path is '/', return all folders
+    # If path is '/foo', return '/foo' and all subfolders of '/foo/'
     if recurse:
-        return (f for f in project_folders if f.startswith(path))
+        return (f for f in project_folders if path == '/' or (f == path or f.startswith(path + '/')))
     else:
         return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
 

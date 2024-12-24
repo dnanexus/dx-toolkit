@@ -1,0 +1,222 @@
+{
+    "dataset": "record-GYgzjV80yB6QPJJ6kk40bBFy",
+    "schema": "create_cohort_schema",
+    "version": "3.0",
+    "datasetVersion": "3.0",
+    "url": "https://vizserver.us-east-1-stg.apollo.dnanexus.com",
+    "datasetLoaded": false,
+    "datasetUpdated": true,
+    "name": "pheno_geno_merged_dataset",
+    "description": "Dataset: pheno_geno_merged_dataset",
+    "recordName": "pheno_geno_merged_dataset",
+    "recordState": "closed",
+    "recordTypes": [
+        "Dataset"
+    ],
+    "recordProject": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "datasetName": "pheno_geno_merged_dataset",
+    "datasetDescription": "Dataset: pheno_geno_merged_dataset",
+    "datasetRecordName": "pheno_geno_merged_dataset",
+    "datasetRecordState": "closed",
+    "datasetRecordProject": "project-G9j1pX00vGPzF2XQ7843k2Jq",
+    "databases": [
+        "database-GYK2yg00vGPpzj7YGY3VJxb9",
+        "database-FkypXj80bgYvQqyqBx1FJG6y",
+        "database-GYK3JJj0vGPQ2Y1y98pj8pGg",
+        "database-GYgzGf80vGPvvQG47p5bpX7x"
+    ],
+    "dashboardViews": [
+        {
+            "name": "pheno_geno_merged_dataset",
+            "record": "record-GYgzjV80yB6zV109Xb0ZJZzx",
+            "project": "project-G9j1pX00vGPzF2XQ7843k2Jq"
+        }
+    ],
+    "dashboardConfig": {
+        "cohort_browser": {
+            "type": "CohortBrowser",
+            "containers": [
+                {
+                    "type": "FieldSelector",
+                    "id": "field_selector",
+                    "title": "Field Selector",
+                    "options": {
+                        "search_string": "",
+                        "selected": []
+                    }
+                },
+                {
+                    "type": "FieldsAsTiles",
+                    "id": "dashboard_tiles",
+                    "title": "Overview",
+                    "options": {}
+                },
+                {
+                    "type": "Accordion",
+                    "id": "cohort_table_container",
+                    "tiles": [
+                        {
+                            "type": "Table",
+                            "id": "cohort_table",
+                            "dataQuery": {
+                                "fields": {
+                                    "cohort_id": "patient$patient_id"
+                                },
+                                "isCohort": true,
+                                "limit": 30000
+                            },
+                            "options": {
+                                "columns": [
+                                    {
+                                        "id": "cohort_id",
+                                        "title": "Cohort ID",
+                                        "isStatic": true
+                                    }
+                                ]
+                            },
+                            "layout": {
+                                "height": 1,
+                                "width": 1
+                            },
+                            "title": "Cohort Table"
+                        }
+                    ],
+                    "title": "Data Preview",
+                    "options": {
+                        "showDownloadButton": true,
+                        "showCopyButton": true
+                    }
+                },
+                {
+                    "type": "GenomeBrowser",
+                    "id": "variant_browser_container",
+                    "tiles": [
+                        {
+                            "type": "Lollipop",
+                            "id": "variant_browser_plots_lollipop",
+                            "title": "Variant Browser Lollipop Plot",
+                            "dataQuery": {
+                                "computeAlleleFrequency": "genotype$type",
+                                "fields": {
+                                    "allele_frequency": "allele$gnomad201_alt_freq",
+                                    "allele_type": "allele$allele_type",
+                                    "alt": "allele$alt",
+                                    "alt_count": "allele$alt_count",
+                                    "chr": "allele$chr",
+                                    "consequence": "allele$worst_effect",
+                                    "id": "allele$a_id",
+                                    "locus": "allele$locus_id",
+                                    "pos": "allele$pos",
+                                    "ref": "allele$ref",
+                                    "rsid": "allele$dbsnp151_rsid",
+                                    "y": "allele$alt_freq"
+                                },
+                                "isCohort": true,
+                                "limit": 10000
+                            }
+                        },
+                        {
+                            "type": "Transcript",
+                            "id": "variant_browser_plots_transcript",
+                            "title": "Variant Browser Transcript Plot",
+                            "dataQuery": {
+                                "fields": {
+                                    "id": "transcript$transcript_name",
+                                    "gene": "transcript$gene_name",
+                                    "chr": "transcript$chr",
+                                    "pos": "transcript$pos",
+                                    "pos_end": "transcript$end_pos",
+                                    "exons": "transcript$exon",
+                                    "strand": "transcript$strand"
+                                },
+                                "isCohort": false,
+                                "limit": 10000
+                            }
+                        },
+                        {
+                            "type": "Table",
+                            "id": "variant_browser_table",
+                            "dataQuery": {
+                                "fields": {}
+                            },
+                            "options": {
+                                "columns": [
+                                    {
+                                        "id": "id",
+                                        "title": "Location",
+                                        "isStatic": true
+                                    },
+                                    {
+                                        "id": "rsid",
+                                        "title": "RSID"
+                                    },
+                                    {
+                                        "id": "ref",
+                                        "title": "Reference"
+                                    },
+                                    {
+                                        "id": "alt",
+                                        "title": "Alternate"
+                                    },
+                                    {
+                                        "id": "alleleType",
+                                        "title": "Type"
+                                    },
+                                    {
+                                        "id": "consequence",
+                                        "title": "Consequence (Most severe by gene)"
+                                    },
+                                    {
+                                        "id": "cohortAlleleFrequency",
+                                        "title": "Cohort AF"
+                                    },
+                                    {
+                                        "id": "y",
+                                        "title": "Population AF"
+                                    },
+                                    {
+                                        "id": "alleleFrequency",
+                                        "title": "GnomAD AF"
+                                    }
+                                ]
+                            },
+                            "layout": {
+                                "height": 1,
+                                "width": 1
+                            },
+                            "dataID": "variant_browser_plots_lollipop",
+                            "title": "Variant Browser Table"
+                        }
+                    ],
+                    "title": "Genomics",
+                    "options": {
+                        "genomicRangeSearch": {
+                            "chr": "1",
+                            "end": 55065852,
+                            "start": 55038548
+                        }
+                    }
+                }
+            ],
+            "id": "cohort_browser",
+            "title": "Cohort Browser",
+            "config": {
+                "showHeader": true,
+                "showFooter": true,
+                "showFilter": true
+            }
+        },
+        "locus_detail": {
+            "type": "LocusDetails",
+            "containers": [],
+            "id": "locus_details",
+            "title": "Locus Detail",
+            "config": null
+        }
+    },
+    "dashboardConfigRecord": "record-GYgzjV80yB6zV109Xb0ZJZzx",
+    "downloadRestricted": false,
+    "containsPHI": false,
+    "restrictedProjects": [],
+    "clipboardRestricted": false
+}

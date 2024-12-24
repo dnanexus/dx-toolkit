@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (C) 2013-2016 DNAnexus, Inc.
 #
@@ -25,13 +25,14 @@ from dxpy.utils import merge
 from dxpy.system_requirements import SystemRequirementsDict
 from dxpy.cli.exec_io import *
 from dxpy.cli import try_call
-from dxpy.cli.parsers import (exec_input_args, process_instance_type_arg, instance_type_arg, process_properties_args, property_args, tag_args, extra_args, process_extra_args)
+from dxpy.cli.parsers import (exec_input_args, process_instance_type_arg, process_instance_type_by_executable_arg, instance_type_arg, process_properties_args, property_args, tag_args, extra_args, process_extra_args)
 
 parser = argparse.ArgumentParser(description='Creates a new job to run the named function with the specified input.  If successful, prints the ID of the new job.',
                                  parents=[exec_input_args, instance_type_arg, extra_args, property_args, tag_args])
 parser.add_argument('function', help='Name of the function to run')
 parser.add_argument('--name', help='Name for the new job (default is the current job name, plus ":<function>")')
 parser.add_argument('--depends-on', metavar='JOB_OR_OBJECT_ID', nargs='*', help='Job and/or data object IDs that must finish or close before the new job should be run.  WARNING: For proper parsing, do not use this flag directly before the *function* parameter.')
+parser.add_argument('--head-job-on-demand', help='Whether the head job should be run on an on-demand instance', action='store_true', default=None)
 # --test: Specify to print the JSON mapping that would have been supplied to
 # the /job/new API call, and additionally short-circuit before issuing the API
 # request.
@@ -53,6 +54,16 @@ def get_job_new_input(args):
     if args.instance_type is not None:
         try_call(process_instance_type_arg, args, False)
         job_new_input["systemRequirements"] = SystemRequirementsDict.from_instance_type(args.instance_type, args.function).as_dict()
+
+    if args.instance_type_by_executable is not None:
+        try_call(process_instance_type_by_executable_arg, args)
+        job_new_input["systemRequirementsByExecutable"] = {
+            exec: SystemRequirementsDict.from_instance_type(sys_req_by_exec).as_dict()
+            for exec, sys_req_by_exec in args.instance_type_by_executable.items()
+        }
+
+    if args.head_job_on_demand is not None:
+        job_new_input['headJobOnDemand'] = args.head_job_on_demand
 
     if args.properties is not None:
         try_call(process_properties_args, args)

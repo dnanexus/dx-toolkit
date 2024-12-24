@@ -1,8 +1,8 @@
-node{
+node('22.04-agent'){
     deleteDir()
     stage 'Git'
         dir('dx-toolkit'){
-            git url: 'git://github.com/dnanexus/dx-toolkit.git', branch: 'master', poll: false
+            git url: 'https://github.com/dnanexus/dx-toolkit.git', branch: 'master', poll: false
             sh "git checkout \"${commit_id}\""
             sh 'git describe > commit_hash'
             env.commit_hash = readFile('commit_hash').trim()
@@ -20,87 +20,8 @@ node{
 
 stage 'Build'
     parallel (
-        "source" : {
-            node('master'){
-                deleteDir()
-                sh """
-                    commit_hash=\"${env.commit_hash}\"
-                    working_dir=\$(pwd)
-                    mkdir \$commit_hash
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:16.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
-                        git checkout \$commit_hash; make toolkit_version git_submodules; rm -rf .git src/jq/.git; cd ..; \\
-                        tar -czf dx-toolkit-\$commit_hash-source.tar.gz dx-toolkit; \\
-                        tar -C dx-toolkit/src/R -czf dxR_\$commit_hash.tar.gz dxR; \\
-                        zip -r dx-toolkit-\$commit_hash-source.zip dx-toolkit; mv /*.{zip,tar.gz} /\$commit_hash/\"
-                    """
-                archive "${env.commit_hash}/dx*"
-                deleteDir()
-            }
-        },
-        "16.04-amd64" : { 
-            node('master'){
-                deleteDir()
-                sh  """
-                    commit_hash=\"${env.commit_hash}\"
-                    mkdir \$commit_hash
-                    working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:16.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
-                        git checkout \$commit_hash; build/package.sh ubuntu-16.04-amd64; \\
-                        mv dx-toolkit-*.tar.gz /\$commit_hash/\"
-                    """
-                archive "${env.commit_hash}/dx-toolkit-*.tar.gz"
-                deleteDir()
-            }
-        },
-        "20.04-amd64" : { 
-            node('master'){
-                deleteDir()
-                sh  """
-                    commit_hash=\"${env.commit_hash}\"
-                    mkdir \$commit_hash
-                    working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:20.04 /bin/bash -c \"git clone https://github.com/dnanexus/dx-toolkit.git; cd dx-toolkit; \\
-                        git checkout \$commit_hash; build/package.sh ubuntu-20.04-amd64; \\
-                        mv dx-toolkit-*.tar.gz /\$commit_hash/\"
-                    """
-                archive "${env.commit_hash}/dx-toolkit-*.tar.gz"
-                deleteDir()
-            }
-        },
-        "centos-amd64" : { 
-            node('master'){
-                deleteDir()
-                sh  """
-                    commit_hash=\"${env.commit_hash}\"
-                    mkdir \$commit_hash
-                    working_dir=\$(pwd)
-                    docker run -v \$working_dir/\$commit_hash:/\$commit_hash --rm dnanexus/dx-toolkit:centos6 \\
-                        /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
-                        cd dx-toolkit; git checkout \$commit_hash; build/package.sh centos-amd64; \\
-                        mv dx-toolkit-*.tar.gz /\$commit_hash/\"
-                    """
-                archive "${env.commit_hash}/dx-toolkit-*.tar.gz"
-                deleteDir()
-            }
-        },
-        "xenial-deb" : { 
-            node('master'){
-                deleteDir()
-                sh  """
-                    commit_hash=\"${env.commit_hash}\"
-                    working_dir=\$(pwd)
-                    mkdir -p \$working_dir/\$commit_hash/xenial
-                    docker run -v \$working_dir/\$commit_hash/xenial:/\$commit_hash/xenial --rm dnanexus/dx-toolkit:16.04 \\
-                        /bin/bash -xc \"git clone https://github.com/dnanexus/dx-toolkit.git; \\
-                        cd dx-toolkit; git checkout \$commit_hash; build/build-dx-toolkit-debs.sh; \\
-                        mv /*.{changes,deb,dsc,tar.xz} /\$commit_hash/xenial\"
-                    """
-                archive "${env.commit_hash}/xenial/dx*"
-                deleteDir()
-            }
-        },
         "focal-deb" : { 
-            node('master'){
+            node('22.04-agent'){
                 deleteDir()
                 sh  """
                     commit_hash=\"${env.commit_hash}\"
@@ -112,54 +33,6 @@ stage 'Build'
                         mv /dx-java-bindings*.deb /\$commit_hash/focal\"
                     """
                 archive "${env.commit_hash}/focal/dx*"
-                deleteDir()
-            }
-        },
-        "osx-10.10" : {
-            node('idna'){
-                deleteDir()
-                sh """
-                    git clone https://github.com/dnanexus/dx-toolkit.git
-                    commit_hash=\"${env.commit_hash}\"
-                    mkdir \"${env.commit_hash}\"
-                    cd dx-toolkit
-                    
-                    git checkout \$commit_hash
-                    export LC_ALL=en.UTF-8
-                    
-                    export CPATH=/opt/local/include
-                    export CC=clang
-                    export CXX=clang++
-                    export CXXFLAGS="-stdlib=libc++ -mmacosx-version-min=10.7"
-
-                    # For the Python cryptography package:
-                    export CRYPTOGRAPHY_OSX_NO_LINK_FLAGS=1
-                    export LDFLAGS="/opt/local/lib/libssl.a /opt/local/lib/libcrypto.a"
-                    export CPPFLAGS="-I/opt/local/include"
-
-                    build/package.sh osx
-                    mv dx-toolkit-*-osx.tar.gz ../\$commit_hash/
-                """
-                archive "${env.commit_hash}/dx-toolkit-*-osx.tar.gz"
-                deleteDir()
-            }
-        },
-        "windows" : {
-            node('windowsprodbuilds') {
-                echo "Deleting workspace"
-                deleteDir()
-                
-                git credentialsId: '3c90bb4c-14c0-4745-9156-ae2b99668b6b',
-                    url: 'git@github.com:dnanexus/dx-toolkit.git'
-                
-                bat "git checkout ${env.commit_hash}"
-                
-                bat "make DLL_DEPS_FOLDER=${dll_deps_folder} pynsist_installer"
-
-                bat "mkdir ${env.commit_hash}"
-                bat "xcopy dx-toolkit-*.exe .\\${env.commit_hash}"
-                
-                archive "${env.commit_hash}\\dx-toolkit-*.exe"
                 deleteDir()
             }
         }

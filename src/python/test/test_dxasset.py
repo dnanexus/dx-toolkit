@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2016 DNAnexus, Inc.
@@ -102,7 +102,7 @@ class TestDXBuildAsset(DXTestCase):
 
     def test_build_asset_with_malformed_dxasset_json(self):
         asset_dir = self.write_asset_directory("asset_with_malform_json", "{")
-        with self.assertSubprocessFailure(stderr_regexp='Could not parse dxasset\.json', exit_code=1):
+        with self.assertSubprocessFailure(stderr_regexp=r'Could not parse dxasset\.json', exit_code=1):
             run("dx build_asset " + asset_dir)
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
@@ -362,17 +362,20 @@ class TestDXBuildAsset(DXTestCase):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_get_appet_with_asset(self):
         bundle_name = "test-bundle-depends.tar.gz"
+        asset_name = "test-asset-depends.tar.gz"
         bundle_tmp_dir = tempfile.mkdtemp()
         os.mkdir(os.path.join(bundle_tmp_dir, "a"))
         with open(os.path.join(bundle_tmp_dir, 'a', 'foo.txt'), 'w') as file_in_bundle:
             file_in_bundle.write('foo\n')
         subprocess.check_call(['tar', '-czf', os.path.join(bundle_tmp_dir, bundle_name),
                                '-C', os.path.join(bundle_tmp_dir, 'a'), '.'])
+        subprocess.check_call(['tar', '-czf', os.path.join(bundle_tmp_dir, asset_name),
+                               '-C', os.path.join(bundle_tmp_dir, 'a'), '.'])
         bundle_file = dxpy.upload_local_file(filename=os.path.join(bundle_tmp_dir, bundle_name),
                                              project=self.project,
                                              wait_on_close=True)
 
-        asset_file = dxpy.upload_local_file(filename=os.path.join(bundle_tmp_dir, bundle_name),
+        asset_file = dxpy.upload_local_file(filename=os.path.join(bundle_tmp_dir, asset_name),
                                             project=self.project,
                                             wait_on_close=True)
 
@@ -413,14 +416,12 @@ class TestDXBuildAsset(DXTestCase):
             self.assertTrue(os.path.exists(os.path.join("asset_depends", "dxapp.json")))
             with open(os.path.join("asset_depends", "dxapp.json")) as fh:
                 applet_spec = json.load(fh)
-            self.assertEqual([{"name": "asset-lib-test",
-                               "project": self.project,
-                               "folder": "/",
-                               "version": "0.0.1"}
-                              ],
-                             applet_spec["runSpec"]["assetDepends"])
-            self.assertEqual([{"name": bundle_name, "id": {"$dnanexus_link": bundle_file.get_id()}}],
-                             applet_spec["runSpec"]["bundledDepends"])
+            current_region = dxpy.describe(self.project).get("region")
+            regional_options = applet_spec["regionalOptions"][current_region]
+            self.assertIn({"name": bundle_name, "id": {"$dnanexus_link": bundle_file.get_id()}},
+                             regional_options["bundledDepends"])
+            self.assertIn({"name": asset_name, "id": {"$dnanexus_link": asset_file.get_id()}},
+                             regional_options["bundledDepends"])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, 'skipping test that would run jobs')
     def test_set_assetbundle_tarball_property(self):

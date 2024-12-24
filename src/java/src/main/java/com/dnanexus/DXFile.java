@@ -40,7 +40,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
 
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -176,6 +175,8 @@ public class DXFile extends DXDataObject {
         private Map<Integer, PartValue> parts;
         @JsonProperty
         private Long size;
+        @JsonProperty
+        private ArchivalState archivalState;
 
         private Describe() {
             super();
@@ -247,6 +248,17 @@ public class DXFile extends DXDataObject {
                     "file size is not accessible because it was not retrieved with the describe call");
             return size;
         }
+
+        /**
+         * Returns the archival state of the file.
+         *
+         * @return archival state of file
+         */
+        public ArchivalState getArchivalState() {
+            Preconditions.checkState(this.archivalState != null,
+                    "archival state is not accessible because it was not retrieved with the describe call");
+            return archivalState;
+        }
     }
 
     private class FileApiInputStream extends InputStream {
@@ -276,10 +288,12 @@ public class DXFile extends DXDataObject {
         private final long readStart;
         // Counter used for ramping
         private int request = 1;
+        // File size
+        private final long fileSize;
 
         private FileApiInputStream(long readStart, long readEnd, PartDownloader downloader) {
             // API call returns URL and headers for HTTP GET requests
-            JsonNode output = apiCallOnObject("download", MAPPER.valueToTree(new FileDownloadRequest(true)),
+            JsonNode output = apiCallOnObject("download", MAPPER.valueToTree(new FileDownloadRequest(true, getProjectReference().getId())),
                     RetryStrategy.SAFE_TO_RETRY);
             try {
                 apiResponse = MAPPER.treeToValue(output, FileDownloadResponse.class);
@@ -287,13 +301,15 @@ public class DXFile extends DXDataObject {
                 throw new RuntimeException(e);
             }
 
-            partsMetadata = describe(DXDataObject.DescribeOptions.get().withCustomFields("parts"));
+            partsMetadata = describe(DXDataObject.DescribeOptions.get().withCustomFields("parts", "size"));
 
+            // Get file size to avoid additional describe calls
+            fileSize = partsMetadata.getSize();
             // Get a sorted list of file parts
             fileParts = partsMetadata.getFilePartsList();
 
             if (readEnd == -1) {
-                readEnd = describe().getSize();
+                readEnd = fileSize;
             }
             Preconditions.checkArgument(readEnd >= readStart, "The start byte cannot be larger than the end byte");
             this.readStart = readStart;
@@ -372,7 +388,7 @@ public class DXFile extends DXDataObject {
                     long chunkSize = getNextChunkSize();
 
                     // API request to download bytes
-                    long endRange = Math.min(nextByteFromApi + chunkSize, describe().getSize());
+                    long endRange = Math.min(nextByteFromApi + chunkSize, fileSize);
                     byte[] bytesFromApiCall = this.downloader.get(apiResponse.url, nextByteFromApi, endRange - 1);
 
                     // Stream of bytes retrieved from the API call pre-checksum
@@ -497,9 +513,12 @@ public class DXFile extends DXDataObject {
     private static class FileDownloadRequest {
         @JsonProperty("preauthenticated")
         private boolean preauth;
+        @JsonProperty("project")
+        private String project;
 
-        private FileDownloadRequest(boolean preauth) {
+        private FileDownloadRequest(boolean preauth, String project) {
             this.preauth = preauth;
+            this.project = project;
         }
     }
 
@@ -748,6 +767,14 @@ public class DXFile extends DXDataObject {
         }
     }
 
+    /*
+    Project or container reference in case it was not provided during initialisation.
+
+    Necessary to decrease workload of API server for file-xxx/describe and file-xxx/download calls which are expensive
+    when project/container ID is not provided in a request.
+     */
+    private DXContainer localProjectReference;
+
     // Variables for download
     private final int maxDownloadChunkSize = 16 * 1024 * 1024;
     private final int minDownloadChunkSize = 64 * 1024;
@@ -769,6 +796,19 @@ public class DXFile extends DXDataObject {
         super(fileId, "file", env, null);
     }
 
+    private DXContainer getProjectReference() {
+        if (getProject() != null) {
+            return getProject();
+        }
+
+        if (localProjectReference == null) {
+            DescribeOptions options = DXDataObject.DescribeOptions.get().withCustomFields("project");
+            this.localProjectReference = DXJSON.safeTreeToValue(apiCallOnObject("describe", MAPPER.valueToTree(options), RetryStrategy.SAFE_TO_RETRY), Describe.class).getProject();
+        }
+
+        return this.localProjectReference;
+    }
+
     @Override
     public DXFile close() {
         super.close();
@@ -783,11 +823,13 @@ public class DXFile extends DXDataObject {
 
     @Override
     public Describe describe() {
-        return DXJSON.safeTreeToValue(apiCallOnObject("describe", RetryStrategy.SAFE_TO_RETRY), Describe.class);
+        DescribeOptions options = DXDataObject.DescribeOptions.get().inProject(getProjectReference());
+        return DXJSON.safeTreeToValue(apiCallOnObject("describe", MAPPER.valueToTree(options), RetryStrategy.SAFE_TO_RETRY), Describe.class);
     }
 
     @Override
     public Describe describe(DXDataObject.DescribeOptions options) {
+        options = options.inProject(getProjectReference());
         return DXJSON.safeTreeToValue(
                 apiCallOnObject("describe", MAPPER.valueToTree(options), RetryStrategy.SAFE_TO_RETRY), Describe.class);
     }

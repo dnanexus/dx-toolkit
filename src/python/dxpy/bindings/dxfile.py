@@ -34,7 +34,7 @@ from . import DXDataObject
 from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO, basestring, USING_PYTHON2
+from ..compat import BytesIO, basestring, USING_PYTHON2, md5_hasher
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -658,7 +658,7 @@ class DXFile(DXDataObject):
         :type display_progress: boolean
         :param report_progress_fn: Optional: a function to call that takes in two arguments (self, # bytes transmitted)
         :type report_progress_fn: function or None
-        :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is not in the correct range, :exc:`requests.exceptions.HTTPError` if upload fails
+        :raises: :exc:`dxpy.exceptions.DXFileError` if *index* is given and is not in the correct range, :exc:`urllib3.exceptions.HTTPError` if upload fails
 
         Uploads the data in *data* as part number *index* for the
         associated file. If no value for *index* is given, *index*
@@ -673,7 +673,7 @@ class DXFile(DXDataObject):
         if index is not None:
             req_input["index"] = int(index)
 
-        md5 = hashlib.md5()
+        md5 = md5_hasher()
         if hasattr(data, 'seek') and hasattr(data, 'tell'):
             # data is a buffer; record initial position (so we can rewind back)
             rewind_input_buffer_offset = data.tell()
@@ -709,6 +709,7 @@ class DXFile(DXDataObject):
         # The file upload API requires us to get a pre-authenticated upload URL (and headers for it) every time we
         # attempt an upload. Because DXHTTPRequest will retry requests under retryable conditions, we give it a callback
         # to ask us for a new upload URL every time it attempts a request (instead of giving them directly).
+
         dxpy.DXHTTPRequest(get_upload_url_and_headers,
                            data,
                            jsonify_data=False,
@@ -725,6 +726,10 @@ class DXFile(DXDataObject):
 
         if report_progress_fn is not None:
             report_progress_fn(self, len(data))
+
+    def wait_until_parts_uploaded(self, **kwargs):
+        self._wait_until_parts_uploaded(**kwargs)
+
 
     def get_download_url(self, duration=None, preauthenticated=False, filename=None, project=None, **kwargs):
         """
@@ -759,39 +764,39 @@ class DXFile(DXDataObject):
         file.
 
         """
-        args = {"preauthenticated": preauthenticated}
-
-        if duration is not None:
-            args["duration"] = duration
-        if filename is not None:
-            args["filename"] = filename
-
-        # If project=None, we fall back to the project attached to this handler
-        # (if any). If this is supplied, it's treated as a hint: if it's a
-        # project in which this file exists, it's passed on to the
-        # apiserver. Otherwise, NO hint is supplied. In principle supplying a
-        # project in the handler that doesn't contain this file ought to be an
-        # error, but it's this way for backwards compatibility. We don't know
-        # who might be doing downloads and creating handlers without being
-        # careful that the project encoded in the handler contains the file
-        # being downloaded. They may now rely on such behavior.
-        if project is None and 'DX_JOB_ID' not in os.environ:
-            project_from_handler = self.get_proj_id()
-            if project_from_handler and object_exists_in_project(self.get_id(), project_from_handler):
-                project = project_from_handler
-
-        if project is not None and project is not DXFile.NO_PROJECT_HINT:
-            args["project"] = project
-
-        # Test hook to write 'project' argument passed to API call to a
-        # local file
-        if '_DX_DUMP_BILLED_PROJECT' in os.environ:
-            with open(os.environ['_DX_DUMP_BILLED_PROJECT'], "w") as fd:
-                if project is not None and project != DXFile.NO_PROJECT_HINT:
-                    fd.write(project)
-
         with self._url_download_mutex:
+            # Only generate URL if not already cached or expired
             if self._download_url is None or self._download_url_expires < time.time():
+                args = {"preauthenticated": preauthenticated}
+                if duration is not None:
+                    args["duration"] = duration
+                if filename is not None:
+                    args["filename"] = filename
+
+                # If project=None, we fall back to the project attached to this handler
+                # (if any). If this is supplied, it's treated as a hint: if it's a
+                # project in which this file exists, it's passed on to the
+                # apiserver. Otherwise, NO hint is supplied. In principle supplying a
+                # project in the handler that doesn't contain this file ought to be an
+                # error, but it's this way for backwards compatibility. We don't know
+                # who might be doing downloads and creating handlers without being
+                # careful that the project encoded in the handler contains the file
+                # being downloaded. They may now rely on such behavior.
+                if project is None and 'DX_JOB_ID' not in os.environ:
+                    project_from_handler = self.get_proj_id()
+                    # object_exists_in_project will call /file-xxxx/describe, which is skipped if the URL is cached
+                    if project_from_handler and object_exists_in_project(self.get_id(), project_from_handler):
+                        project = project_from_handler
+
+                if project is not None and project is not DXFile.NO_PROJECT_HINT:
+                    args["project"] = project
+
+                # Test hook to write 'project' argument passed to API call to a
+                # local file
+                if '_DX_DUMP_BILLED_PROJECT' in os.environ:
+                    with open(os.environ['_DX_DUMP_BILLED_PROJECT'], "w") as fd:
+                        if project is not None and project != DXFile.NO_PROJECT_HINT:
+                            fd.write(project)
                 # The idea here is to cache a download URL for the entire file, that will
                 # be good for a few minutes. This avoids each thread having to ask the
                 # server for a URL, increasing server load.
