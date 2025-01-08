@@ -20,6 +20,8 @@ class VizClient(object):
                     )
                 elif response["error"]["type"] == "QueryTimeOut":
                     err_message = "Please consider using --sql option to generate the SQL query and execute query via a private compute cluster."
+                elif response["error"]["type"] == "DataTooLarge":
+                    err_message = "Please consider using --sql option to generate the SQL query and execute query via a private compute cluster."
                 else:
                     err_message = response["error"]
                 self.error_handler(str(err_message))
