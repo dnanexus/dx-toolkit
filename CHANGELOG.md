@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Fix so that DXFile.read() respects the provided project context
+
 ## [388.0] - beta
 
 ### Added
