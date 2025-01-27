@@ -960,6 +960,8 @@ class DXFile(DXDataObject):
         # return response.read()
 
     def read(self, length=None, use_compression=None, project=None, **kwargs):
+        if project is None:
+            project = self.get_proj_id()
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
         if USING_PYTHON2:
             return data
