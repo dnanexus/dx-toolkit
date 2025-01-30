@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [388.0] - beta
+## [389.0] - beta
+
+### Fixed
+
+* Handle DataTooLarge error from vizserver
+
+## [388.0] - 2025.01.30
 
 ### Added
 
