@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Security
 
-* Updated dependencies in Java wrapper: jackson-core 2.18.2, jackson-databind 2.18.2, commons-io 2.18.0
+* Updated dependencies in Java wrapper: jackson-core 2.18.2, jackson-databind 2.18.2
 
 ## [389.0] - beta
 
