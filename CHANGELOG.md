@@ -6,7 +6,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-4.5.14
+### Security
+
+* Updated dependencies in Java wrapper: httpclient 4.5.14
 
 ## [389.0] - beta
 
