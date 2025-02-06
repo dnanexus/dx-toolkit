@@ -6,9 +6,11 @@ import argparse
 from glob import glob
 import shutil
 import tempfile
+from functools import partial
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
-from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, create_readme)
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
+                                          create_readme, get_nested, get_allowed_extra_fields_mapping)
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
@@ -49,45 +51,44 @@ def build_pipeline_with_npi(
     Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
     """
 
-    def parse_extra_args(extra_args):
-        dx_input = {}
-        if extra_args.get("name") is not None:
-            dx_input["name"] = extra_args.get("name")
-        if extra_args.get("title") is not None:
-            dx_input["title"] = extra_args.get("title")
-        if extra_args.get("summary") is not None:
-            dx_input["summary"] = extra_args.get("summary")
-        if extra_args.get("runSpec", {}).get("timeoutPolicy") is not None:
-            dx_input["timeout_policy"] = extra_args.get("runSpec", {}).get("timeoutPolicy")
-        if extra_args.get("details", {}).get("whatsNew") is not None:
-            dx_input["whats_new"] = extra_args.get("details", {}).get("whatsNew")
-        return dx_input
+    def parse_extra_args(args):
+        """
+        Returns overridable fields from extra_args
+        :param args: extra args from command input
+        :return:
+        """
+        return {
+            target_key: val
+            for arg_path, target_key in get_allowed_extra_fields_mapping()
+            if (val := get_nested(args, arg_path)) is not None
+        }
 
     extra_args = extra_args or {}
     build_project_id = dxpy.WORKSPACE_ID
     build_folder = None
     input_hash = parse_extra_args(extra_args)
     input_hash["repository_url"] = repository
-    if tag:
-        input_hash["repository_tag"] = tag
-    if profile:
-        input_hash["config_profile"] = profile
-    if git_creds:
-        input_hash["github_credentials"] = parse_obj(git_creds, "file")
+
+    # { NPI_input_name: (raw value, transformation function),...}
+    input_updates = {
+        "repository_tag": (tag, None),
+        "config_profile": (profile, None),
+        "cache_docker": (cache_docker, None),
+        "nextflow_pipeline_params": (nextflow_pipeline_params, None),
+        "docker_secrets": (docker_secrets, partial(parse_obj, klass="file")),
+        "github_credentials": (git_creds, partial(parse_obj, klass="file")),
+    }
+    for key, (raw_value, transform) in input_updates.items():
+        if raw_value:
+            input_hash[key] = transform(raw_value) if transform else raw_value
+
     if destination:
         build_project_id, build_folder, _ = try_call(resolve_existing_path, destination, expected='folder')
-    if docker_secrets:
-        input_hash["docker_secrets"] = parse_obj(docker_secrets, "file")
-    if cache_docker:
-        input_hash["cache_docker"] = cache_docker
-    if nextflow_pipeline_params:
-        input_hash["nextflow_pipeline_params"] = nextflow_pipeline_params
-
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
 
-    nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id,
+    nf_builder_job = dxpy.DXApplet("applet-GyXBgzj01xy03BB454gXJxP8").run(applet_input=input_hash, project=build_project_id,
                                                               folder=build_folder,
                                                               name="Nextflow build of %s" % (repository), detach=True)
 
