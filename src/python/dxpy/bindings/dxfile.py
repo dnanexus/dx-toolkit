@@ -47,6 +47,7 @@ if dxpy.JOB_ID:
 
 MD5_READ_CHUNK_SIZE = 1024*1024*4
 FILE_REQUEST_TIMEOUT = 60
+PART_UPLOAD_REQUEST_TIMEOUT_SECONDS = 300
 
 
 def _validate_headers(headers):
@@ -715,7 +716,7 @@ class DXFile(DXDataObject):
                            jsonify_data=False,
                            prepend_srv=False,
                            always_retry=True,
-                           timeout=FILE_REQUEST_TIMEOUT,
+                           timeout=PART_UPLOAD_REQUEST_TIMEOUT_SECONDS,
                            auth=None,
                            method='PUT')
 
