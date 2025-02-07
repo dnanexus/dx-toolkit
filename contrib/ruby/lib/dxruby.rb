@@ -23,7 +23,7 @@ module DX
     env_json = nil
     if File.exist?(user_env_file)
       begin
-        env_json = JSON.parse(IO.read(user_env_file))
+        env_json = JSON.parse(File.read(user_env_file))
       rescue
         $stderr.puts("WARNING: The contents of file '#{user_env_file}' cannot be parsed as a valid JSON, ignoring")
         env_json = nil

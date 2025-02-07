@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Security
+
+* Replaced use of IO.read with File.read in Ruby wrapper
+
 ## [389.0] - beta
 
 ### Fixed
