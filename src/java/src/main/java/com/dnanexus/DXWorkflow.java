@@ -354,6 +354,12 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         reqInput.editVersion = editVersion;
         reqInput.name = name;
         reqInput.input = MAPPER.valueToTree(stageInputs);
+
+        System.err.println("~~~~~~~~~~~~~~ stageInputs");
+        System.err.println(stageInputs);
+        System.err.println("~~~~~~~~~~~~~~ valueToTree inputs");
+        System.err.println(reqInput.input);
+
         reqInput.executable = applet.getId();
         WorkflowAddStageOutput reqOutput = DXAPI.workflowAddStage(this.getId(),
                                                                   reqInput, WorkflowAddStageOutput.class);
