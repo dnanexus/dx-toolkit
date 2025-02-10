@@ -8,7 +8,9 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Security
 
-* Updated dependencies in Java wrapper: commons-io 2.18.0
+* Updated dependencies in Java wrapper
+  * commons-io 2.18.0
+  * httpclient 4.5.14
 
 ## [389.0] - beta
 
