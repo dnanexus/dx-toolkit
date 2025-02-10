@@ -172,7 +172,7 @@ def get_nested(d, path):
 
 def get_allowed_extra_fields_mapping():
     """
-    :return: tuple (arg_path, target_key)
+    :returns: tuple (arg_path, target_key)
         arg_path is a list of a dxapp.json location of an allowed extra_arg, target_key is name of an argument for a remote build
     """
     return [
