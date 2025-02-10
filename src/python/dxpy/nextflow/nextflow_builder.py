@@ -53,9 +53,8 @@ def build_pipeline_with_npi(
 
     def parse_extra_args(args):
         """
-        Returns overridable fields from extra_args
         :param args: extra args from command input
-        :return:
+        :returns: overridable fields from extra_args
         """
         return {
             target_key: val
