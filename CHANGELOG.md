@@ -6,13 +6,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [389.0] - beta
+
+### Changed
+
+* Increase dxpy part upload timeout to 300 seconds
+
 ### Security
 
 * Updated dependencies in Java wrapper
   * commons-io 2.18.0
   * httpclient 4.5.14
 
-## [389.0] - beta
+## [389.0] - 2025.02.10
 
 ### Fixed
 
