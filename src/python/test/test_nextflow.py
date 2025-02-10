@@ -241,7 +241,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
             pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
 
         # Override metadata values
-        extra_args = '{"name": "name-9Oxvx2tCZe", "title": "Title VsnhPeFBqt", "summary": "Summary 3E7fFfEXdB", "runSpec":{"release":"20.04"}}'
+        extra_args = '{"name": "name-9Oxvx2tCZe", "title": "Title VsnhPeFBqt", "summary": "Summary 3E7fFfEXdB", "runSpec": {"release": "20.04"}}'
         applet_id = json.loads(run(
             "dx build --nextflow '{}' --json --extra-args '{}'".format(applet_dir, extra_args)))["id"]
 
