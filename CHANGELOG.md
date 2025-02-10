@@ -8,9 +8,24 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Security
 
-* Updated dependencies in Java wrapper: jackson-core 2.18.2, jackson-databind 2.18.2
+* Updated dependencies in Java wrapper
+  * guava 33.4.0-jre
+  * jackson-core // version tbd
+  * jackson-databind  // version tbd
 
 ## [389.0] - beta
+
+### Changed
+
+* Increase dxpy part upload timeout to 300 seconds
+
+### Security
+
+* Updated dependencies in Java wrapper
+  * commons-io 2.18.0
+  * httpclient 4.5.14
+
+## [389.0] - 2025.02.10
 
 ### Fixed
 
