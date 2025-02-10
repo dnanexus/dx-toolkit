@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Security
+
+* Updated dependencies in Java wrapper: commons-io 2.18.0
+
 ## [389.0] - beta
 
 ### Fixed
