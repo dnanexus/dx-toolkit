@@ -8,7 +8,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Security
 
-* Updated dependencies in Java wrapper: guava 33.4.0-jre
+* Updated dependencies in Java wrapper
+  * guava 33.4.0-jre
 
 ## [389.0] - beta
 
