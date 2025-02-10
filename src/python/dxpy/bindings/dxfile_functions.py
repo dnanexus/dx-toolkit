@@ -32,6 +32,7 @@ from collections import defaultdict
 import multiprocessing
 from random import randint
 from time import sleep
+import crc32c
 
 import dxpy
 from .. import logger
@@ -288,6 +289,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     parts = dxfile_desc["parts"]
     parts_to_get = sorted(parts, key=int)
     file_size = dxfile_desc.get("size")
+    per_part_checksum = dxfile_desc.get('perPartCheckSum')
 
     offset = 0
     for part_id in parts_to_get:
@@ -333,6 +335,31 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             msg = "Checksum mismatch in {} part {} (expected {}, got {})"
             msg = msg.format(dxfile.get_id(), _part_id, parts[_part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
+        
+    def verify_per_part_checksum(_part_id, chunk_data, per_part_checksum):
+        if per_part_checksum is None:
+            return
+        part = parts[_part_id]
+        checksum = part.get('checksum')
+        if per_part_checksum not in ['CRC32', 'CRC32C', 'SHA1', 'SHA256']:
+            raise DXFileError("Unsupported per-part checksum type: {}".format(per_part_checksum))
+        if checksum is None:
+            raise DXChecksumMismatchError("{} checksum not found in part {}".format(per_part_checksum, _part_id))
+
+        checksum = None
+
+        if per_part_checksum == 'CRC32':
+            checksum = crc32c.crc32(chunk_data)
+        elif per_part_checksum == 'CRC32C':
+            checksum = crc32c.crc32c(chunk_data)
+        elif per_part_checksum == 'SHA1':
+            checksum = hashlib.sha1(chunk_data).hexdigest()
+        elif per_part_checksum == 'SHA256':
+            checksum = hashlib.sha256(chunk_data).hexdigest()
+        
+        if checksum != part['checksum']:
+            raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}").format(dxfile.get_id(), _part_id, part['checksum'], checksum)
+        
 
     with fh:
         last_verified_pos = 0
@@ -384,6 +411,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                     cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
+                verify_per_part_checksum(chunk_part, chunk_data, per_part_checksum)
                 fh.write(chunk_data)
                 if show_progress:
                     _bytes += len(chunk_data)
