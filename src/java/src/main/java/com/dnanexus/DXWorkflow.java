@@ -332,14 +332,6 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         public String executable;
     }
 
-    static class NonNullJsonNodeFilter {
-        @Override
-        public boolean equals(Object o) {
-            JsonNode o1 = (JsonNode) o;
-            return o1.isNull();
-        }
-    }
-
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class WorkflowAddStageOutput {
         @JsonProperty
@@ -368,7 +360,6 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         reqInput.name = name;
         reqInput.input = MAPPER.valueToTree(stageInputs);
         reqInput.executable = applet.getId();
-
         WorkflowAddStageOutput reqOutput = DXAPI.workflowAddStage(this.getId(),
                                                                   reqInput, WorkflowAddStageOutput.class);
         return new Modification<Stage> (reqOutput.editVersion,
