@@ -33935,10 +33935,6 @@ public final class DXAPI {
      */
     public static <T> T workflowAddStage(String objectId, Object inputObject, Class<T> outputClass) {
         JsonNode input = mapper.valueToTree(inputObject);
-        System.err.println("~~~~~~~~~~~~~~~ inputObject");
-        System.err.println(inputObject);
-        System.err.println("~~~~~~~~~~~~~~~ valueToTree input");
-        System.err.println(input.toString());
         return DXJSON.safeTreeToValue(
                 new DXHTTPRequest().request("/" + objectId + "/" + "addStage",
                         input, RetryStrategy.SAFE_TO_RETRY), outputClass);
