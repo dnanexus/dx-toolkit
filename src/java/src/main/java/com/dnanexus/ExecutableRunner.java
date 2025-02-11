@@ -421,9 +421,16 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      * @return the same runner object
      */
     public ExecutableRunner<T> setRawInput(JsonNode inputHash) {
+        System.err.println("~~~~~~~~~~~~~~ inputHash");
+        System.err.println(inputHash);
+
         Preconditions.checkState(this.input == null,
                 "withInput or withRawInput cannot be called more than once");
         this.input = Preconditions.checkNotNull(inputHash, "input hash may not be null");
+
+        System.err.println("~~~~~~~~~~~~~~ this.input");
+        System.err.println(this.input);
+
         return this;
     }
 
