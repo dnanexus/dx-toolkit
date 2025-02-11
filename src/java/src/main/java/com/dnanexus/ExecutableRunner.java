@@ -381,6 +381,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      * @return the same runner object
      */
     public ExecutableRunner<T> setInput(Object inputObject) {
+        Preconditions.checkNotNull(inputObject);
         return setRawInput(MAPPER.valueToTree(inputObject));
     }
 
