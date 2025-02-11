@@ -10,8 +10,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Updated dependencies in Java wrapper
   * guava 33.4.0-jre
-  * jackson-core // version tbd
-  * jackson-databind  // version tbd
+  * jackson-core 2.18.2
+  * jackson-databind 2.18.2
 
 ## [389.0] - beta
 
