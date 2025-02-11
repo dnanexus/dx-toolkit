@@ -81,7 +81,6 @@ public abstract class ExecutableRunner<T extends DXExecution> {
         @JsonProperty
         private final Boolean delayWorkspaceDestruction;
         @JsonProperty
-        @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = NonNullJsonNodeFilter.class)
         private final JsonNode details;
         @JsonProperty
         private final List<String> tags;
