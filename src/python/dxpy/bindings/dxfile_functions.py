@@ -341,7 +341,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         if per_part_checksum is None:
             return
         part = parts[part_id]
-        expected_checksum = part['checksum']
+        expected_checksum = part.get('checksum')
 
         if per_part_checksum not in ['CRC32', 'CRC32C', 'SHA1', 'SHA256']:
             raise DXFileError("Unsupported per-part checksum type: {}".format(per_part_checksum))
