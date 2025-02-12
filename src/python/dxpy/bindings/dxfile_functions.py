@@ -348,7 +348,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         if expected_checksum is None:
             raise DXFileError("{} checksum not found in part {}".format(per_part_checksum, part_id))
 
-        expected_checksum = str(expected_checksum)
         got_checksum = None
 
         if per_part_checksum == 'CRC32':
