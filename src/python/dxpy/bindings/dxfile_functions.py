@@ -340,6 +340,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     def verify_per_part_checksum(part_id, chunk_data, per_part_checksum):
         if per_part_checksum is None:
             return
+    
         part = parts[part_id]
         expected_checksum = part.get('checksum')
 
