@@ -26,13 +26,15 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, math, mmap, stat
 import hashlib
+import crc32c
 import traceback
 import warnings
 from collections import defaultdict
 import multiprocessing
 from random import randint
 from time import sleep
-import crc32c
+import zlib
+
 
 import dxpy
 from .. import logger
@@ -351,7 +353,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         got_checksum = None
 
         if per_part_checksum == 'CRC32':
-            got_checksum = str(crc32c.crc32(chunk_data))
+            got_checksum = str(zlib.crc32(chunk_data))
         elif per_part_checksum == 'CRC32C':
             got_checksum = str(crc32c.crc32c(chunk_data))
         elif per_part_checksum == 'SHA1':
