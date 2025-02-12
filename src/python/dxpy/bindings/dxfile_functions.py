@@ -35,7 +35,6 @@ from random import randint
 from time import sleep
 import zlib
 
-
 import dxpy
 from .. import logger
 from . import dxfile, DXFile
@@ -347,9 +346,9 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         if per_part_checksum not in ['CRC32', 'CRC32C', 'SHA1', 'SHA256']:
             raise DXFileError("Unsupported per-part checksum type: {}".format(per_part_checksum))
         if expected_checksum is None:
-            raise DXChecksumMismatchError("{} checksum not found in part {}".format(per_part_checksum, part_id))
-        expected_checksum = str(expected_checksum)
+            raise DXFileError("{} checksum not found in part {}".format(per_part_checksum, part_id))
 
+        expected_checksum = str(expected_checksum)
         got_checksum = None
 
         if per_part_checksum == 'CRC32':
@@ -362,7 +361,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             got_checksum = hashlib.sha256(chunk_data).hexdigest()
         
         if got_checksum != expected_checksum:
-            raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}".format(dxfile.get_id(), _part_id, expected_checksum, got_checksum))
+            raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}".format(dxfile.get_id(), part_id, expected_checksum, got_checksum))
         
 
     with fh:
