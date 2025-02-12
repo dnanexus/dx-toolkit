@@ -18,7 +18,11 @@ package com.dnanexus;
 
 import java.util.Map;
 
+import com.dnanexus.DXDataObject.DataObjectNewRequest;
+import com.dnanexus.DXDataObject.DescribeOptions;
 import com.dnanexus.DXHTTPRequest.RetryStrategy;
+import com.dnanexus.DXWorkflow.Modification;
+import com.dnanexus.DXWorkflow.Stage;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -321,6 +325,7 @@ public class DXWorkflow extends DXDataObject implements DXExecutable<DXAnalysis>
         public String name;
 
         @JsonProperty
+        @JsonInclude(value = JsonInclude.Include.CUSTOM, valueFilter = NonNullJsonNodeFilter.class)
         private JsonNode input;
 
         @JsonProperty

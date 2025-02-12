@@ -155,3 +155,35 @@ def get_nextflow_assets(region):
 
         with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f, open(awscli_assets, 'r') as awscli_f:
             return json.load(nextaur_f)[region], json.load(nextflow_f)[region], json.load(awscli_f)[region]
+
+def get_nested(args, arg_path):
+    """
+    :param args: extra args from command input
+    :type args: dict
+    :param arg_path: list of a dxapp.json location of an allowed extra_arg (eg. ["runSpec", "timeoutPolicy"])
+    :type arg_path: tuple/list
+    :returns: nested arg value if it exists in args, otherwise None
+    """
+    for key in arg_path:
+        if not isinstance(args, dict):
+            return None
+        args = args.get(key)
+        if args is None:
+            return None
+    return args
+
+
+def get_allowed_extra_fields_mapping():
+    """
+    :returns: tuple (arg_path, target_key)
+        arg_path is a list of a dxapp.json location of an allowed extra_arg, target_key is name of an argument for a remote build
+    """
+    return [
+        (["name"], "name"),
+        (["title"], "title"),
+        (["summary"], "summary"),
+        (["runSpec", "timeoutPolicy"], "timeout_policy"),
+        (["runSpec", "release"], "release"),
+        (["details", "whatsNew"], "whats_new"),
+    ]
+

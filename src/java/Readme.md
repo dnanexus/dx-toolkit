@@ -12,7 +12,15 @@ Development
 
 ### Build dependencies
 
-* Maven (`apt-get install maven`)
+* Maven
+
+```bash
+apt-get install maven
+````
+
+```bash
+brew install maven
+```
 
 ### Building
 
