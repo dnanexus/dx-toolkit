@@ -13,8 +13,27 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Default Ubuntu version of Nextflow pipelines is now 24.04
-* 
+
+### Security
+
+* Updated dependencies in Java wrapper
+  * guava 33.4.0-jre
+  * jackson-core 2.18.2
+  * jackson-databind 2.18.2
+
 ## [389.0] - beta
+
+### Changed
+
+* Increase dxpy part upload timeout to 300 seconds
+
+### Security
+
+* Updated dependencies in Java wrapper
+  * commons-io 2.18.0
+  * httpclient 4.5.14
+
+## [389.0] - 2025.02.10
 
 ### Fixed
 
