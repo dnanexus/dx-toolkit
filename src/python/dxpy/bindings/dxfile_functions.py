@@ -336,29 +336,31 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             msg = msg.format(dxfile.get_id(), _part_id, parts[_part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
         
-    def verify_per_part_checksum(_part_id, chunk_data, per_part_checksum):
+    def verify_per_part_checksum(part_id, chunk_data, per_part_checksum):
         if per_part_checksum is None:
             return
-        part = parts[_part_id]
-        checksum = part.get('checksum')
+        part = parts[part_id]
+        expected_checksum = part['checksum']
+
         if per_part_checksum not in ['CRC32', 'CRC32C', 'SHA1', 'SHA256']:
             raise DXFileError("Unsupported per-part checksum type: {}".format(per_part_checksum))
-        if checksum is None:
-            raise DXChecksumMismatchError("{} checksum not found in part {}".format(per_part_checksum, _part_id))
+        if expected_checksum is None:
+            raise DXChecksumMismatchError("{} checksum not found in part {}".format(per_part_checksum, part_id))
+        expected_checksum = str(expected_checksum)
 
-        checksum = None
+        got_checksum = None
 
         if per_part_checksum == 'CRC32':
-            checksum = crc32c.crc32(chunk_data)
+            got_checksum = str(crc32c.crc32(chunk_data))
         elif per_part_checksum == 'CRC32C':
-            checksum = crc32c.crc32c(chunk_data)
+            got_checksum = str(crc32c.crc32c(chunk_data))
         elif per_part_checksum == 'SHA1':
-            checksum = hashlib.sha1(chunk_data).hexdigest()
+            got_checksum = hashlib.sha1(chunk_data).hexdigest()
         elif per_part_checksum == 'SHA256':
-            checksum = hashlib.sha256(chunk_data).hexdigest()
+            got_checksum = hashlib.sha256(chunk_data).hexdigest()
         
-        if checksum != part['checksum']:
-            raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}").format(dxfile.get_id(), _part_id, part['checksum'], checksum)
+        if got_checksum != expected_checksum:
+            raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}".format(dxfile.get_id(), _part_id, expected_checksum, got_checksum))
         
 
     with fh:
@@ -380,6 +382,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                         if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
                             raise DXFileError("Local data for part {} is truncated".format(part_id))
                         hasher.update(chunk)
+                        verify_per_part_checksum(part_id, chunk, per_part_checksum)
                         bytes_to_read -= max_verify_chunk_size
                     if hasher.hexdigest() != part_info["md5"]:
                         raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
