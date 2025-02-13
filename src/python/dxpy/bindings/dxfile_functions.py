@@ -351,7 +351,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             'SHA256': lambda data: hashlib.sha256(data).digest()
         }
 
-        if per_part_checksum not in verifiers.keys():
+        if per_part_checksum not in verifiers:
             raise DXFileError("Unsupported per-part checksum type: {}".format(per_part_checksum))
         if expected_checksum is None:
             raise DXFileError("{} checksum not found in part {}".format(per_part_checksum, part_id))
