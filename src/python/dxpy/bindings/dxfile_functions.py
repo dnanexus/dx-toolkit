@@ -343,22 +343,19 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     
         part = parts[part_id]
         expected_checksum = part.get('checksum')
+        verifiers = {
+            'CRC32': lambda data: "%08x" % zlib.crc32(data),
+            'CRC32C': lambda data: "%08x" % crc32c.crc32c(data),
+            'SHA1': lambda data: hashlib.sha1(data).hexdigest(),
+            'SHA256': lambda data: hashlib.sha256(data).hexdigest()
+        }
 
-        if per_part_checksum not in ['CRC32', 'CRC32C', 'SHA1', 'SHA256']:
+        if per_part_checksum not in verifiers.keys():
             raise DXFileError("Unsupported per-part checksum type: {}".format(per_part_checksum))
         if expected_checksum is None:
             raise DXFileError("{} checksum not found in part {}".format(per_part_checksum, part_id))
 
-        got_checksum = None
-
-        if per_part_checksum == 'CRC32':
-            got_checksum = str(zlib.crc32(chunk_data))
-        elif per_part_checksum == 'CRC32C':
-            got_checksum = str(crc32c.crc32c(chunk_data))
-        elif per_part_checksum == 'SHA1':
-            got_checksum = hashlib.sha1(chunk_data).hexdigest()
-        elif per_part_checksum == 'SHA256':
-            got_checksum = hashlib.sha256(chunk_data).hexdigest()
+        got_checksum = verifiers[per_part_checksum](chunk_data)
         
         if got_checksum != expected_checksum:
             raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}".format(dxfile.get_id(), part_id, expected_checksum, got_checksum))
