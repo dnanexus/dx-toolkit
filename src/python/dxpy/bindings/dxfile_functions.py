@@ -358,7 +358,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
         expected_checksum = base64.b64decode(expected_checksum)
         got_checksum = verifiers[per_part_checksum](chunk_data)
-
         if got_checksum != expected_checksum:
             raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}".format(dxfile.get_id(), part_id, expected_checksum, got_checksum))
         
