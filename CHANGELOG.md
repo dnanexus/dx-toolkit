@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Ubuntu version can be overridden for Nextflow pipelines during build time with `dx build --nextflow --extra-args={"runSpec":{"release":"..."}}`
+
+### Changed
+
+* Default Ubuntu version of Nextflow pipelines is now 24.04
+
 ### Security
 
 * Updated dependencies in Java wrapper
