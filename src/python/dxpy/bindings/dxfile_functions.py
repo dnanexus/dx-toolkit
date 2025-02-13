@@ -253,8 +253,8 @@ def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_pro
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [executor.submit(read_chunk, filename, start, size, part_id) for start, size, part_id in chunks]
-            results = [future.result() for future in concurrent.futures.as_completed(futures)]
-            return results
+            for future in concurrent.futures.as_completed(futures):
+                yield future.result()
 
     for (chunk, part_id) in process_file_in_parallel(filename):
         _verify_per_part_checksum(parts, part_id, chunk, per_part_checksum)
@@ -466,8 +466,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                       file=sys.stderr)
                 return False
             raise
-
-        _verify_per_part_checksum_downloaded(filename, dxfile_desc, show_progress)
 
         if show_progress:
             sys.stderr.write("\n")
