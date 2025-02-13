@@ -26,14 +26,15 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, math, mmap, stat
 import hashlib
-import crc32c
 import traceback
 import warnings
 from collections import defaultdict
 import multiprocessing
 from random import randint
 from time import sleep
+import crc32c
 import zlib
+import base64
 
 import dxpy
 from .. import logger
@@ -344,10 +345,10 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         part = parts[part_id]
         expected_checksum = part.get('checksum')
         verifiers = {
-            'CRC32': lambda data: "%08x" % zlib.crc32(data),
-            'CRC32C': lambda data: "%08x" % crc32c.crc32c(data),
-            'SHA1': lambda data: hashlib.sha1(data).hexdigest(),
-            'SHA256': lambda data: hashlib.sha256(data).hexdigest()
+            'CRC32': lambda data: zlib.crc32(data).to_bytes(4, 'big'),
+            'CRC32C': lambda data: crc32c.crc32c(data).to_bytes(4, 'big'),
+            'SHA1': lambda data: hashlib.sha1(data).digest(),
+            'SHA256': lambda data: hashlib.sha256(data).digest()
         }
 
         if per_part_checksum not in verifiers.keys():
@@ -355,8 +356,9 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         if expected_checksum is None:
             raise DXFileError("{} checksum not found in part {}".format(per_part_checksum, part_id))
 
+        expected_checksum = base64.b64decode(expected_checksum)
         got_checksum = verifiers[per_part_checksum](chunk_data)
-        
+
         if got_checksum != expected_checksum:
             raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}".format(dxfile.get_id(), part_id, expected_checksum, got_checksum))
         
