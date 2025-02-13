@@ -44,6 +44,7 @@ from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChec
 from ..compat import open, md5_hasher, USING_PYTHON2
 from ..utils import response_iterator
 import subprocess
+import concurrent.futures
 
 def open_dxfile(dxid, project=None, mode=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
@@ -228,34 +229,38 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max
     if md5digest is not None:
         _verify(dest_filename, md5digest)
 
-
-def _verify_per_part_checksum_downloaded(filename, dxfile_desc, show_progress=False):
-    parts = dxfile_desc["parts"]
+def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_progress=False):
+    parts = dxfile_desc.get("parts")
     parts_to_get = sorted(parts, key=int)
     per_part_checksum = dxfile_desc.get('perPartCheckSum')
     file_size = dxfile_desc.get("size")
-
-    if per_part_checksum is None:
-        return
-
-    max_verify_chunk_size = 1024*1024
     _bytes = 0
-    with open(filename, 'rb') as fh:
-        try:
-            for part_id in parts_to_get:
-                part_info = parts[part_id]
-                bytes_to_read = part_info["size"]
-                while bytes_to_read > 0:
-                    chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
-                    if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
-                        raise DXFileError("Local data for part {} is truncated".format(part_id))
-                    _verify_per_part_checksum(parts, part_id, chunk, per_part_checksum)
-                    bytes_to_read -= max_verify_chunk_size
-                if show_progress:
-                    _bytes += part_info["size"]
-                    _print_progress(_bytes, file_size, filename, action="Verified")
-        except (IOError, DXFileError) as e:
-            logger.debug(e)
+
+    def read_chunk(filename, start, size, part_id):
+        with open(filename, 'rb') as f:
+            f.seek(start)
+            chunk = f.read(size)
+            return (chunk, part_id)
+
+
+    def process_file_in_parallel(filename):
+        chunks = []
+        for part_id in parts_to_get:
+            part_info = parts[part_id]
+            start = part_info["start"]
+            size = part_info["size"]
+            chunks.append((start, size, part_id))
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(read_chunk, filename, start, size, part_id) for start, size, part_id in chunks]
+            results = [future.result() for future in concurrent.futures.as_completed(futures)]
+            return results
+
+    for (chunk, part_id) in process_file_in_parallel(filename):
+        _verify_per_part_checksum(parts, part_id, chunk, per_part_checksum)
+        if show_progress:
+            _bytes += parts[part_id]["size"]
+            _print_progress(_bytes, file_size, filename, action="Verified")
 
 
 def _verify_per_part_checksum(parts, part_id, chunk_data, per_part_checksum):
@@ -340,7 +345,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         else:
             md5 = None
         _download_symbolic_link(dxid, md5, project, filename, symlink_max_tries=symlink_max_tries)
-        _verify_per_part_checksum_downloaded(filename, dxfile_desc, show_progress)
+        _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_progress)
         return True
 
     parts = dxfile_desc["parts"]
@@ -461,6 +466,8 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                       file=sys.stderr)
                 return False
             raise
+
+        _verify_per_part_checksum_downloaded(filename, dxfile_desc, show_progress)
 
         if show_progress:
             sys.stderr.write("\n")
