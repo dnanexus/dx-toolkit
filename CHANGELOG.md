@@ -20,6 +20,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
   * guava 33.4.0-jre
   * jackson-core 2.18.2
   * jackson-databind 2.18.2
+* Specified certifi dependency version >= 2024.7.4
 
 ## [389.0] - beta
 
