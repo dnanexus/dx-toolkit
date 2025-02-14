@@ -233,17 +233,16 @@ def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_pro
     parts = dxfile_desc["parts"]
     parts_to_get = sorted(parts, key=int)
     file_size = dxfile_desc.get("size")
-
-    offset = 0
-    for part_id in parts_to_get:
-        parts[part_id]["start"] = offset
-        offset += parts[part_id]["size"]
-
     per_part_checksum = dxfile_desc.get('perPartCheckSum')
     _bytes = 0
 
     if per_part_checksum is None:
         return
+    
+    offset = 0
+    for part_id in parts_to_get:
+        parts[part_id]["start"] = offset
+        offset += parts[part_id]["size"]
 
     def read_chunk(filename, start, size, part_id):
         with open(filename, 'rb') as f:
