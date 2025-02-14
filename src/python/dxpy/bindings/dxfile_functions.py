@@ -236,6 +236,9 @@ def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_pro
     file_size = dxfile_desc.get("size")
     _bytes = 0
 
+    if per_part_checksum is None:
+        return
+
     def read_chunk(filename, start, size, part_id):
         with open(filename, 'rb') as f:
             f.seek(start)
@@ -351,7 +354,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     parts = dxfile_desc["parts"]
     parts_to_get = sorted(parts, key=int)
     file_size = dxfile_desc.get("size")
-    per_part_checksum = dxfile_desc.get('perPartCheckSum')
 
     offset = 0
     for part_id in parts_to_get:
@@ -418,7 +420,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                         if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
                             raise DXFileError("Local data for part {} is truncated".format(part_id))
                         hasher.update(chunk)
-                        _verify_per_part_checksum(parts, part_id, chunk, per_part_checksum)
                         bytes_to_read -= max_verify_chunk_size
                     if hasher.hexdigest() != part_info["md5"]:
                         raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
@@ -450,7 +451,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                     cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
-                _verify_per_part_checksum(parts, chunk_part, chunk_data, per_part_checksum)
                 fh.write(chunk_data)
                 if show_progress:
                     _bytes += len(chunk_data)
