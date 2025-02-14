@@ -230,10 +230,16 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max
         _verify(dest_filename, md5digest)
 
 def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_progress=False):
-    parts = dxfile_desc.get("parts")
+    parts = dxfile_desc["parts"]
     parts_to_get = sorted(parts, key=int)
-    per_part_checksum = dxfile_desc.get('perPartCheckSum')
     file_size = dxfile_desc.get("size")
+
+    offset = 0
+    for part_id in parts_to_get:
+        parts[part_id]["start"] = offset
+        offset += parts[part_id]["size"]
+
+    per_part_checksum = dxfile_desc.get('perPartCheckSum')
     _bytes = 0
 
     if per_part_checksum is None:
