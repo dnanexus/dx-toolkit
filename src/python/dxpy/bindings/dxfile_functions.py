@@ -251,7 +251,6 @@ def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_pro
             chunk = f.read(size)
             return (chunk, part_id)
 
-
     def process_file_in_parallel(filename):
         chunks = []
         for part_id in parts_to_get:
