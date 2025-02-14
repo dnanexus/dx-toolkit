@@ -266,13 +266,13 @@ def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_pro
                 yield future.result()
 
     for (chunk, part_id) in process_file_in_parallel(filename):
-        _verify_per_part_checksum(parts, part_id, chunk, per_part_checksum)
+        _verify_per_part_checksum(parts, part_id, chunk, per_part_checksum, dxfile_desc['id'])
         if show_progress:
             _bytes += parts[part_id]["size"]
             _print_progress(_bytes, file_size, filename, action="Verified")
 
 
-def _verify_per_part_checksum(parts, part_id, chunk_data, per_part_checksum):
+def _verify_per_part_checksum(parts, part_id, chunk_data, per_part_checksum, dxfile_id):
     if per_part_checksum is None:
         return
 
@@ -293,7 +293,7 @@ def _verify_per_part_checksum(parts, part_id, chunk_data, per_part_checksum):
     expected_checksum = base64.b64decode(expected_checksum)
     got_checksum = verifiers[per_part_checksum](chunk_data)
     if got_checksum != expected_checksum:
-        raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {}".format(dxfile.get_id(), part_id, expected_checksum, got_checksum))
+        raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {})".format(dxfile_id, part_id, expected_checksum, got_checksum))
 
 def _print_progress(bytes_downloaded, file_size, filename, action="Downloaded"):
     num_ticks = 60
@@ -354,7 +354,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         else:
             md5 = None
         _download_symbolic_link(dxid, md5, project, filename, symlink_max_tries=symlink_max_tries)
-        _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_progress)
+        _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, dxfile, show_progress)
         return True
 
     parts = dxfile_desc["parts"]
