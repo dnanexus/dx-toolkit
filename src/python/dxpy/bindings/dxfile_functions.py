@@ -229,6 +229,7 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max
     if md5digest is not None:
         _verify(dest_filename, md5digest)
 
+
 def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_progress=False):
     parts = dxfile_desc["parts"]
     parts_to_get = sorted(parts, key=int)
@@ -293,6 +294,7 @@ def _verify_per_part_checksum(parts, part_id, chunk_data, per_part_checksum, dxf
     got_checksum = verifiers[per_part_checksum](chunk_data)
     if got_checksum != expected_checksum:
         raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {})".format(dxfile_id, part_id, expected_checksum, got_checksum))
+
 
 def _print_progress(bytes_downloaded, file_size, filename, action="Downloaded"):
     num_ticks = 60
