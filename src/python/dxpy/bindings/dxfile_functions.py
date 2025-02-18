@@ -32,6 +32,9 @@ from collections import defaultdict
 import multiprocessing
 from random import randint
 from time import sleep
+import crc32c
+import zlib
+import base64
 
 import dxpy
 from .. import logger
@@ -41,6 +44,7 @@ from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChec
 from ..compat import open, md5_hasher, USING_PYTHON2
 from ..utils import response_iterator
 import subprocess
+import concurrent.futures
 
 def open_dxfile(dxid, project=None, mode=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
@@ -176,7 +180,6 @@ def _verify(filename, md5digest):
         err_exit("Checksum doesn't match " + str(actual_md5) + "  expected:" + str(md5digest))
     print("Checksum correct")
 
-
 # [dxid] is a symbolic link. Create a preauthenticated URL,
 # and download it
 def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max_tries=15):
@@ -226,6 +229,98 @@ def _download_symbolic_link(dxid, md5digest, project, dest_filename, symlink_max
     if md5digest is not None:
         _verify(dest_filename, md5digest)
 
+
+def _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, show_progress=False):
+    parts = dxfile_desc["parts"]
+    parts_to_get = sorted(parts, key=int)
+    file_size = dxfile_desc.get("size")
+    per_part_checksum = dxfile_desc.get('perPartCheckSum')
+    _bytes = 0
+
+    if per_part_checksum is None:
+        return
+    
+    offset = 0
+    for part_id in parts_to_get:
+        parts[part_id]["start"] = offset
+        offset += parts[part_id]["size"]
+
+    def read_chunk(filename, start, size, part_id):
+        with open(filename, 'rb') as f:
+            f.seek(start)
+            chunk = f.read(size)
+            return (chunk, part_id)
+
+    def process_file_in_parallel(filename):
+        chunks = []
+        for part_id in parts_to_get:
+            part_info = parts[part_id]
+            start = part_info["start"]
+            size = part_info["size"]
+            chunks.append((start, size, part_id))
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            futures = [executor.submit(read_chunk, filename, start, size, part_id) for start, size, part_id in chunks]
+            for future in concurrent.futures.as_completed(futures):
+                yield future.result()
+
+    for (chunk, part_id) in process_file_in_parallel(filename):
+        _verify_per_part_checksum(parts, part_id, chunk, per_part_checksum, dxfile_desc['id'])
+        if show_progress:
+            _bytes += parts[part_id]["size"]
+            _print_progress(_bytes, file_size, filename, action="Verified")
+
+
+def _verify_per_part_checksum(parts, part_id, chunk_data, per_part_checksum, dxfile_id):
+    if per_part_checksum is None:
+        return
+
+    part = parts[part_id]
+    expected_checksum = part.get('checksum')
+    verifiers = {
+        'CRC32': lambda data: zlib.crc32(data).to_bytes(4, 'big'),
+        'CRC32C': lambda data: crc32c.crc32c(data).to_bytes(4, 'big'),
+        'SHA1': lambda data: hashlib.sha1(data).digest(),
+        'SHA256': lambda data: hashlib.sha256(data).digest()
+    }
+
+    if per_part_checksum not in verifiers:
+        raise DXFileError("Unsupported per-part checksum type: {}".format(per_part_checksum))
+    if expected_checksum is None:
+        raise DXFileError("{} checksum not found in part {}".format(per_part_checksum, part_id))
+
+    expected_checksum = base64.b64decode(expected_checksum)
+    got_checksum = verifiers[per_part_checksum](chunk_data)
+    if got_checksum != expected_checksum:
+        raise DXChecksumMismatchError("Checksum mismatch in {} part {} (expected {}, got {})".format(dxfile_id, part_id, expected_checksum, got_checksum))
+
+
+def _print_progress(bytes_downloaded, file_size, filename, action="Downloaded"):
+    num_ticks = 60
+
+    effective_file_size = file_size or 1
+    if bytes_downloaded > effective_file_size:
+        effective_file_size = bytes_downloaded
+
+    ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
+    percent = int(math.floor((bytes_downloaded / float(effective_file_size)) * 100))
+
+    fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
+    # Erase the line and return the cursor to the start of the line.
+    # The following VT100 escape sequence will erase the current line.
+    sys.stderr.write("\33[2K")
+    sys.stderr.write(fmt.format(action=action,
+                                done=("=" * (ticks - 1) + ">") if ticks > 0 else "",
+                                pending=" " * (num_ticks - ticks),
+                                done_bytes=bytes_downloaded,
+                                remaining=" of {size:,}".format(size=file_size) if file_size else "",
+                                percent=percent,
+                                name=filename))
+    sys.stderr.flush()
+    sys.stderr.write("\r")
+    sys.stderr.flush()
+
+
 def _download_dxfile(dxid, filename, part_retry_counter,
                      chunksize=dxfile.DEFAULT_BUFFER_SIZE, append=False, show_progress=False,
                      project=None, describe_output=None, symlink_max_tries=15, **kwargs):
@@ -238,30 +333,6 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     - False means the download was stopped because of a retryable error
     - Exception raised for other errors
     '''
-    def print_progress(bytes_downloaded, file_size, action="Downloaded"):
-        num_ticks = 60
-
-        effective_file_size = file_size or 1
-        if bytes_downloaded > effective_file_size:
-            effective_file_size = bytes_downloaded
-
-        ticks = int(round((bytes_downloaded / float(effective_file_size)) * num_ticks))
-        percent = int(math.floor((bytes_downloaded / float(effective_file_size)) * 100))
-
-        fmt = "[{done}{pending}] {action} {done_bytes:,}{remaining} bytes ({percent}%) {name}"
-        # Erase the line and return the cursor to the start of the line.
-        # The following VT100 escape sequence will erase the current line.
-        sys.stderr.write("\33[2K")
-        sys.stderr.write(fmt.format(action=action,
-                                    done=("=" * (ticks - 1) + ">") if ticks > 0 else "",
-                                    pending=" " * (num_ticks - ticks),
-                                    done_bytes=bytes_downloaded,
-                                    remaining=" of {size:,}".format(size=file_size) if file_size else "",
-                                    percent=percent,
-                                    name=filename))
-        sys.stderr.flush()
-        sys.stderr.write("\r")
-        sys.stderr.flush()
 
     _bytes = 0
 
@@ -283,6 +354,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         else:
             md5 = None
         _download_symbolic_link(dxid, md5, project, filename, symlink_max_tries=symlink_max_tries)
+        _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, dxfile, show_progress)
         return True
 
     parts = dxfile_desc["parts"]
@@ -303,7 +375,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             fh = open(filename, "wb")
 
     if show_progress:
-        print_progress(0, None)
+        _print_progress(0, None, filename)
 
     def get_chunk(part_id_to_get, start, end):
         url, headers = dxfile.get_download_url(project=project, **kwargs)
@@ -333,6 +405,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             msg = "Checksum mismatch in {} part {} (expected {}, got {})"
             msg = msg.format(dxfile.get_id(), _part_id, parts[_part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
+        
 
     with fh:
         last_verified_pos = 0
@@ -361,7 +434,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                         last_verified_pos = fh.tell()
                         if show_progress:
                             _bytes += part_info["size"]
-                            print_progress(_bytes, file_size, action="Verified")
+                            _print_progress(_bytes, file_size, filename, action="Verified")
             except (IOError, DXFileError) as e:
                 logger.debug(e)
             fh.seek(last_verified_pos)
@@ -369,7 +442,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             if last_verified_part is not None:
                 del parts_to_get[:parts_to_get.index(last_verified_part)+1]
             if show_progress and len(parts_to_get) < len(parts):
-                print_progress(last_verified_pos, file_size, action="Resuming at")
+                _print_progress(last_verified_pos, file_size, filename, action="Resuming at")
             logger.debug("Verified %s/%d downloaded parts", last_verified_part, len(parts_to_get))
 
         try:
@@ -387,10 +460,10 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                 fh.write(chunk_data)
                 if show_progress:
                     _bytes += len(chunk_data)
-                    print_progress(_bytes, file_size)
+                    _print_progress(_bytes, file_size, filename)
             verify_part(cur_part, got_bytes, hasher)
             if show_progress:
-                print_progress(_bytes, file_size, action="Completed")
+                _print_progress(_bytes, file_size, filename, action="Completed")
         except DXFileError:
             print(traceback.format_exc(), file=sys.stderr)
             part_retry_counter[cur_part] -= 1
