@@ -783,7 +783,7 @@ class DXFile(DXDataObject):
                 # who might be doing downloads and creating handlers without being
                 # careful that the project encoded in the handler contains the file
                 # being downloaded. They may now rely on such behavior.
-                if project is None and 'DX_JOB_ID' not in os.environ:
+                if project is None:
                     project_from_handler = self.get_proj_id()
                     # object_exists_in_project will call /file-xxxx/describe, which is skipped if the URL is cached
                     if project_from_handler and object_exists_in_project(self.get_id(), project_from_handler):
