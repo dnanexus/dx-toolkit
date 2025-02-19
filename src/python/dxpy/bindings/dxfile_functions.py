@@ -354,7 +354,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         else:
             md5 = None
         _download_symbolic_link(dxid, md5, project, filename, symlink_max_tries=symlink_max_tries)
-        _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, dxfile, show_progress)
+        _verify_per_part_checksum_on_downloaded_file(filename, dxfile_desc, dxfile, show_progress=show_progress)
         return True
 
     parts = dxfile_desc["parts"]
