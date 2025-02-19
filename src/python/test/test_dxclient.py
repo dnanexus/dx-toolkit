@@ -47,11 +47,8 @@ from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS,
 from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
-if USING_PYTHON2:
-    spawn_extra_args = {}
-else:
-    # Python 3 requires specifying the encoding
-    spawn_extra_args = {"encoding" : "utf-8" }
+
+spawn_extra_args = {"encoding" : "utf-8", "logfile": sys.stdout }
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
     data = "foo"
@@ -699,23 +696,65 @@ class TestDXClient(DXTestCase):
         run("dx mkdir -p mkdirtest/b/c")
         run("dx rm -r mkdirtest")
 
-    @unittest.skip('PTFM-16383 Disable flaky test')
+    def test_dxpy_session_collisions(self):
+        # Testing SCI-1334 bug where changes in one session affect others
+        def expect_dx_wd(shell, proj_name, wd):
+            shell.sendline("dx pwd")
+            shell.expect(proj_name + ":/" + wd + "\r\n")  # default timeout from shell used
+
+        # Spawn a new shell, select a project, make a directory
+        shell1 = pexpect.spawn("bash", **spawn_extra_args)
+        shell1.sendline("dx select " + self.project)
+        shell1.sendline("dx mkdir test_dir")
+        expect_dx_wd(shell=shell1, proj_name=self.proj_name, wd="")
+
+        # Spawn a second shell, the working directory should be the same as the first shell
+        shell2 = pexpect.spawn("bash", **spawn_extra_args)
+        expect_dx_wd(shell=shell2, proj_name=self.proj_name, wd="")
+
+        # Change directories in shell 1
+        shell1.sendline("dx cd test_dir/")
+        expect_dx_wd(shell=shell1, proj_name=self.proj_name, wd="test_dir")
+
+        # Shell2 should not be affected by the change in directory
+        expect_dx_wd(shell=shell2, proj_name=self.proj_name, wd="")
+
     def test_dxpy_session_isolation(self):
         for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
             if var in os.environ:
                 del os.environ[var]
         shell1 = pexpect.spawn("bash", **spawn_extra_args)
         shell2 = pexpect.spawn("bash", **spawn_extra_args)
-        shell1.logfile = shell2.logfile = sys.stdout
-        shell1.setwinsize(20, 90)
-        shell2.setwinsize(20, 90)
+
+        def expect_dx_wd(shell, proj_name, wd):
+            shell.sendline("dx pwd")
+            shell.expect(proj_name + ":/" + wd)
+
+        proj_name = 'test_proj1'
+        with temporary_project(proj_name, select=True) as proj:
+            shell1.sendline("dx select " + proj_name)
+            shell1.sendline("dx mkdir -p /A")
+            shell1.sendline("dx cd /A")
+
+            shell2.sendline("dx mkdir -p /B")
+            shell2.sendline("dx cd /B")
+
+            expect_dx_wd(shell1, proj_name, "A")
+            expect_dx_wd(shell2, self.proj_name, "B")
+
+    def test_dxpy_session_isolation_grandchildren(self):
+        for var in 'DX_PROJECT_CONTEXT_ID', 'DX_PROJECT_CONTEXT_NAME', 'DX_CLI_WD':
+            if var in os.environ:
+                del os.environ[var]
+        shell1 = pexpect.spawn("bash", **spawn_extra_args)
+        shell2 = pexpect.spawn("bash", **spawn_extra_args)
 
         def expect_dx_env_cwd(shell, wd):
             shell.expect(self.project)
             shell.expect(wd)
             shell.expect([">", "#", "$"]) # prompt
 
-        shell1.sendline("dx select "+self.project)
+        shell1.sendline("dx select " + self.project)
         shell1.sendline("dx mkdir /sessiontest1")
         shell1.sendline("dx cd /sessiontest1")
         shell1.sendline("dx env")
@@ -732,11 +771,8 @@ class TestDXClient(DXTestCase):
         shell1.sendline("dx env")
         expect_dx_env_cwd(shell1, "sessiontest1")
         # Grandchild subprocess inherits session
-        try:
-            shell1.sendline("bash -c 'dx env'")
-            expect_dx_env_cwd(shell1, "sessiontest1")
-        except:
-            print("*** TODO: FIXME: Unable to verify that grandchild subprocess inherited session")
+        shell1.sendline("bash -c 'dx env'")
+        expect_dx_env_cwd(shell1, "sessiontest1")
 
     def test_dx_ssh_config_revoke(self):
         original_ssh_public_key = None
@@ -754,7 +790,6 @@ class TestDXClient(DXTestCase):
             dx_ssh_config = pexpect.spawn("dx ssh_config",
                                           env=override_environment(HOME=wd),
                                           **spawn_extra_args)
-            dx_ssh_config.logfile = sys.stdout
             dx_ssh_config.expect("Select an SSH key pair")
             dx_ssh_config.sendline("0")
             dx_ssh_config.expect("Enter passphrase")
@@ -803,7 +838,6 @@ class TestDXClient(DXTestCase):
                 dx_ssh_config = pexpect.spawn("dx ssh_config",
                                               env=override_environment(HOME=wd),
                                               **spawn_extra_args)
-                dx_ssh_config.logfile = sys.stdout
                 dx_ssh_config.setwinsize(20, 90)
                 return dx_ssh_config
 
@@ -812,12 +846,6 @@ class TestDXClient(DXTestCase):
 
                 with open(os.path.join(wd, ".dnanexus_config/ssh_id.pub")) as fh:
                     self.assertEqual(fh.read(), dxpy.api.user_describe(user_id).get('sshPublicKey'))
-
-            dx_ssh_config = get_dx_ssh_config()
-            dx_ssh_config.expect("The DNAnexus configuration directory")
-            dx_ssh_config.expect("does not exist")
-
-            os.mkdir(os.path.join(wd, ".dnanexus_config"))
 
             dx_ssh_config = get_dx_ssh_config()
             dx_ssh_config.expect("Select an SSH key pair")
@@ -881,7 +909,6 @@ class TestDXClient(DXTestCase):
             dx_ssh_config = pexpect.spawn("dx ssh_config",
                                           env=override_environment(HOME=wd),
                                           **spawn_extra_args)
-            dx_ssh_config.logfile = sys.stdout
             dx_ssh_config.setwinsize(20, 90)
             dx_ssh_config.expect("Select an SSH key pair")
             dx_ssh_config.sendline("0")
@@ -910,7 +937,6 @@ class TestDXClient(DXTestCase):
                 dx = pexpect.spawn("dx run {} --yes --ssh".format(sleep_applet),
                                    env=override_environment(HOME=wd),
                                    **spawn_extra_args)
-                dx.logfile = sys.stdout
                 dx.setwinsize(20, 90)
                 dx.expect("Waiting for job")
                 dx.expect("Resolving job hostname and SSH host key", timeout=1200)
@@ -918,12 +944,8 @@ class TestDXClient(DXTestCase):
                 dx.expect("This is the DNAnexus Execution Environment", timeout=600)
                 # Check for job name (e.g. "Job: sleep")
                 #dx.expect("Job: \x1b\[1msleep", timeout=5)
-                if USING_PYTHON2:
-                    # \xf6 is ö
-                    project_line = "Project: dxclient_test_pr\xf6ject".encode(sys_encoding)
-                else:
-                    project_line = "Project: dxclient_test_pröject"
-                dx.expect(project_line)
+
+                dx.expect("Project: dxclient_test_pröject")
 
                 dx.expect("The job is running in terminal 1.", timeout=5)
                 # Check for terminal prompt and verify we're in the container
@@ -944,7 +966,6 @@ class TestDXClient(DXTestCase):
                 # Make sure the job can be connected to using 'dx ssh <job id>'
                 dx2 = pexpect.spawn("dx ssh " + job_id, env=override_environment(HOME=wd),
                                     **spawn_extra_args)
-                dx2.logfile = sys.stdout
                 dx2.setwinsize(20, 90)
                 dx2.expect("Waiting for job")
                 dx2.expect("Resolving job hostname and SSH host key", timeout=1200)
@@ -1032,7 +1053,6 @@ class TestDXClient(DXTestCase):
                                       p=proxy_port),
                                env=override_environment(HOME=wd),
                                **spawn_extra_args)
-            dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("The job is running in terminal 1.", timeout=1200)
             # Check for terminal prompt and verify we're in the container
@@ -1142,7 +1162,6 @@ class TestDXClient(DXTestCase):
             dx = pexpect.spawn("dx ssh " + job_id,
                                env=override_environment(HOME=wd),
                                **spawn_extra_args)
-            dx.logfile = sys.stdout
             dx.setwinsize(20, 90)
             dx.expect("dnanexus@", timeout=1200)
 
@@ -1294,7 +1313,6 @@ class TestDXClient(DXTestCase):
             dx_setenv = pexpect.spawn("dx setenv" + opts,
                                       env=override_environment(HOME=wd),
                                       **spawn_extra_args)
-            dx_setenv.logfile = sys.stdout
             dx_setenv.setwinsize(20, 90)
             return dx_setenv
 
@@ -1319,7 +1337,6 @@ class TestDXClient(DXTestCase):
             dx_login = pexpect.spawn("dx login" + opts,
                                      env=override_environment(HOME=wd),
                                      **spawn_extra_args)
-            dx_login.logfile = sys.stdout
             dx_login.setwinsize(20, 90)
             return dx_login
 
@@ -7144,7 +7161,6 @@ class TestDXClientMembership(DXTestCase):
 
         dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
                                          **spawn_extra_args)
-        dx_rm_member_int.logfile = sys.stdout
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendline("y")
         dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
@@ -7176,7 +7192,6 @@ class TestDXClientMembership(DXTestCase):
 
         dx_rm_member_int = pexpect.spawn("dx remove member {o} {u}".format(o=self.org_id, u=self.username),
                                          **spawn_extra_args)
-        dx_rm_member_int.logfile = sys.stdout
         dx_rm_member_int.expect("Please confirm")
         dx_rm_member_int.sendline("y")
         dx_rm_member_int.expect("Removed user-{u}".format(u=self.username))
@@ -10967,7 +10982,6 @@ class TestTcshEnvironment(unittest.TestCase):
     def test_tcsh_source_environment(self):
         tcsh = pexpect.spawn("env - HOME=$HOME PATH=/usr/local/bin:/usr/bin:/bin tcsh",
                              **spawn_extra_args)
-        tcsh.logfile = sys.stdout
         tcsh.setwinsize(20, 90)
         tcsh.sendline("source /etc/csh.cshrc")
         tcsh.sendline("source /etc/csh.login")

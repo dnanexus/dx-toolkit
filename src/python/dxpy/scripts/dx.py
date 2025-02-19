@@ -3917,9 +3917,6 @@ def ssh_config(args):
         print(fill("SSH public key has been revoked"))
     else:
         dnanexus_conf_dir = dxpy.config.get_user_conf_dir()
-        if not os.path.exists(dnanexus_conf_dir):
-            msg = "The DNAnexus configuration directory {d} does not exist. Use {c} to create it."
-            err_exit(msg.format(d=dnanexus_conf_dir, c=BOLD("dx login")))
 
         print(fill("Select an SSH key pair to use when connecting to DNAnexus jobs. The public key will be saved to your " +
                    "DNAnexus account (readable only by you). The private key will remain on this computer.") + "\n")

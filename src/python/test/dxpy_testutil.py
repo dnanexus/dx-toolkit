@@ -294,7 +294,7 @@ def without_project_context():
         del os.environ['DX_WORKSPACE_ID']
     if prev_proj_context_id is not None:
         del os.environ['DX_PROJECT_CONTEXT_ID']
-    subprocess.check_call("dx clearenv", shell=True)
+    dxpy.config.clear()
     try:
         yield
     finally:
@@ -302,6 +302,7 @@ def without_project_context():
             os.environ['DX_WORKSPACE_ID'] = prev_workspace_id
         if prev_proj_context_id:
             os.environ['DX_PROJECT_CONTEXT_ID'] = prev_proj_context_id
+        dxpy.config.save()
 
 
 # Note: clobbers the local environment! All tests that use this should
@@ -312,16 +313,16 @@ def without_auth():
     possibly other variables) are unset.
 
     """
-    prev_security_context = os.environ.get('DX_SECURITY_CONTEXT', None)
+    prev_security_context = dxpy.config.get('DX_SECURITY_CONTEXT')
     if prev_security_context is not None:
-        del os.environ['DX_SECURITY_CONTEXT']
-    subprocess.check_call("dx clearenv", shell=True)
+        del dxpy.config['DX_SECURITY_CONTEXT']
+    dxpy.config.clear()
     try:
         yield
     finally:
         if prev_security_context:
             os.environ['DX_SECURITY_CONTEXT'] = prev_security_context
-
+        dxpy.config.save()
 
 class DXTestCaseCompat(unittest.TestCase):
     # method removed in python3
@@ -343,8 +344,8 @@ class DXTestCaseCompat(unittest.TestCase):
 
 class DXTestCase(DXTestCaseCompat):
     def setUp(self):
-        proj_name = u"dxclient_test_pröject"
-        self.project = dxpy.api.project_new({"name": proj_name})['id']
+        self.proj_name = u"dxclient_test_pröject"
+        self.project = dxpy.api.project_new({"name": self.proj_name})['id']
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = self.project
         cd(self.project + ":/")
         dxpy.config.__init__(suppress_warning=True)
