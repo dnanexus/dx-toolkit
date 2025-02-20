@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Ubuntu version can be overridden for Nextflow pipelines during build time with `dx build --nextflow --extra-args={"runSpec":{"release":"..."}}`
+* Nextaur 1.10.1: Default version of Ubuntu is 24.04, assets built on Ubuntu 24.04
 
 ### Changed
 
