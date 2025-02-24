@@ -6,8 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [391.0] - beta
+
 ### Added
 
+* dxpy download of symlink files verify per part checksums
 * Ubuntu version can be overridden for Nextflow pipelines during build time with `dx build --nextflow --extra-args={"runSpec":{"release":"..."}}`
 * Nextaur 1.10.1: Default version of Ubuntu is 24.04, assets built on Ubuntu 24.04
 
@@ -23,7 +26,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
   * jackson-databind 2.18.2
 * Specified certifi dependency version >= 2024.7.4
 
-## [389.0] - beta
+## [390.0] - 2025.02.24
 
 ### Changed
 
