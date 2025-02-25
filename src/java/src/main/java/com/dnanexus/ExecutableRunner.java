@@ -352,8 +352,8 @@ public abstract class ExecutableRunner<T extends DXExecution> {
     public ExecutableRunner<T> setDetails(Object details) {
         Preconditions.checkState(this.details == null,
                 "withDetails cannot be called more than once");
+        Preconditions.checkNotNull(details, "details object must not be null");
         JsonNode serializedDetails = MAPPER.valueToTree(details);
-        Preconditions.checkNotNull(serializedDetails, "details may not serialize to null");
         Preconditions.checkArgument(serializedDetails.isArray() || serializedDetails.isObject(),
                 "details must serialize to an object or array");
         this.details = serializedDetails;
@@ -381,6 +381,7 @@ public abstract class ExecutableRunner<T extends DXExecution> {
      * @return the same runner object
      */
     public ExecutableRunner<T> setInput(Object inputObject) {
+        Preconditions.checkNotNull(inputObject, "input object must not be null");
         return setRawInput(MAPPER.valueToTree(inputObject));
     }
 

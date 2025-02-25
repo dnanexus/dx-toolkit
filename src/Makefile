@@ -54,7 +54,6 @@ R/dxR/R/api.R: api_wrappers/wrapper_table.json api_wrappers/generateRAPIWrappers
 	cat api_wrappers/wrapper_table.json | api_wrappers/generateRAPIWrappers.py > R/dxR/R/api.R
 
 api_wrappers: toolkit_version python/dxpy/api.py cpp/dxcpp/api.h cpp/dxcpp/api.cc java/src/main/java/com/dnanexus/DXAPI.java R/dxR/R/api.R
-	$(MAKE) -C ../contrib api_wrappers
 
 cpp: api_wrappers
 	mkdir -p "$(DNANEXUS_HOME)/share/dnanexus/src"
