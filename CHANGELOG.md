@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `DXFile.read()` respects provided project context
 
+### Changed
+
+* dx-app-wizard generates template with AEE 24.04 by default
+
 ## [391.0] - beta
 
 ### Added
