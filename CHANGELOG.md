@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* `DXFile.read()` respects provided project context
+* `DXFile.read()` respects constructor provided project context
 
 ### Changed
 
