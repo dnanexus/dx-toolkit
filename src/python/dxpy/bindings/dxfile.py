@@ -323,8 +323,8 @@ class DXFile(DXDataObject):
                 break
             _buffer += more
             parts = _buffer.split("\n")
-            for line in parts[:-1]:
-                yield line
+            for i in range(len(parts) - 1):
+                yield parts[i]
             # The final piece may be incomplete, so keep it in the buffer
             _buffer = parts[-1]
         if _buffer:
