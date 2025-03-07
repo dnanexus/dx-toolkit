@@ -314,39 +314,19 @@ class DXFile(DXDataObject):
             raise
 
     def __iter__(self):
-        _buffer = self.read(self._read_bufsize)
-        done = False
-        if USING_PYTHON2:
-            while not done:
-                if b"\n" in _buffer:
-                    lines = _buffer.splitlines()
-                    for i in range(len(lines) - 1):
-                        yield lines[i]
-                    _buffer = lines[len(lines) - 1]
-                else:
-                    more = self.read(self._read_bufsize)
-                    if more == b"":
-                        done = True
-                    else:
-                        _buffer = _buffer + more
-        else:
-            if self._binary_mode:
-                raise DXFileError("Cannot read lines when file opened in binary mode")
-            # python3 is much stricter about distinguishing
-            # 'bytes' from 'str'.
-            while not done:
-                if "\n" in _buffer:
-                    lines = _buffer.splitlines()
-                    for i in range(len(lines) - 1):
-                        yield lines[i]
-                    _buffer = lines[len(lines) - 1]
-                else:
-                    more = self.read(self._read_bufsize)
-                    if more == "":
-                        done = True
-                    else:
-                        _buffer = _buffer + more
-
+        _buffer = ""
+        if self._binary_mode:
+            raise DXFileError("Cannot read lines when file opened in binary mode")
+        while True:
+            more = self.read(self._read_bufsize)
+            if not more:
+                break
+            _buffer += more
+            parts = _buffer.split("\n")
+            for i in range(len(parts) - 1):
+                yield parts[i]
+            # The final piece may be incomplete, so keep it in the buffer
+            _buffer = parts[-1]
         if _buffer:
             yield _buffer
 

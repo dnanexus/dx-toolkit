@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Preserve newlines in file iterator for large files
+
 ## [392.0] - beta
 
 ### Fixed
