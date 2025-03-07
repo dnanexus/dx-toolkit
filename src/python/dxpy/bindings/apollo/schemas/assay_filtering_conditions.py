@@ -1,4 +1,4 @@
-EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS = {
+EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0 = {
     "version": "1.0",
     "output_fields_mapping": {
         "default": [
