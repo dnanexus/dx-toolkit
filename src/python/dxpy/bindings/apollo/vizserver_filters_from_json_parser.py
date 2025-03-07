@@ -66,7 +66,7 @@ class JSONFiltersValidator(object):
 
     def parse(self):
         self.is_valid_json(self.schema)
-        if self.get_schema_version(self.schema) == "1.0":
+        if self.get_schema_version(self.schema).startswith("1."):
             return self.parse_v1()
         else:
             raise NotImplementedError

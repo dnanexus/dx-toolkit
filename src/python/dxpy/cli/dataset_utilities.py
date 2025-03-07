@@ -73,7 +73,7 @@ from ..bindings.apollo.json_validation_by_schema import JSONValidator
 
 from ..bindings.apollo.schemas.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.schemas.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
-from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
 
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
@@ -1485,16 +1485,26 @@ def extract_assay_expression(args):
                 check_each_separately=False,
             )
 
+
+    # TODO test model version here
+    # if DATA_IS_PARTITIONED, generalized_assay_model_version = "1.1", schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
+
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
-        schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
+        # schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
+        schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
         error_handler=err_exit,
     )
     vizserver_raw_filters = input_json_parser.parse()
 
-    _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS[
+    # _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS[
+    #     "output_fields_mapping"
+    # ].get("default")
+
+    _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1[
         "output_fields_mapping"
     ].get("default")
+
 
     if args.additional_fields:
         # All three of the following should work:
@@ -1509,9 +1519,16 @@ def extract_assay_expression(args):
             field = [x.strip() for x in item.split(",") if x.strip()]
             additional_fields.extend(field)
 
-        all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS[
+        # TODO test model version here
+
+        # all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS[
+        #     "output_fields_mapping"
+        # ].get("additional")
+
+        all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1[
             "output_fields_mapping"
         ].get("additional")
+
         incorrect_cols = set(additional_fields) - set(
             {k for d in all_additional_cols for k in d.keys()}
         )
@@ -1535,6 +1552,7 @@ def extract_assay_expression(args):
         error_handler=err_exit,
     )
 
+
     DATASET_DESCRIPTOR = dataset.descriptor_file_dict
     ASSAY_NAME = (
         args.assay_name if args.assay_name else dataset.assay_names_list("molecular_expression")[0]
@@ -1554,6 +1572,10 @@ def extract_assay_expression(args):
         assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters
     )
     vizserver_payload = viz.build()
+
+    print("vizserver_payload: ", vizserver_payload)
+    err_exit("Exiting")
+
 
     # Get the record ID and vizserver URL from the Dataset object
     record_id = dataset.detail_describe["id"]
