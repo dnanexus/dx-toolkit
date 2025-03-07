@@ -77,7 +77,7 @@ class Dataset(DXRecord):
     @property
     def version(self):
         return self.detail_describe.get("details").get("version")
-    
+
     @property
     def detail_describe(self):
         if self._detail_describe is None:
@@ -98,6 +98,9 @@ class Dataset(DXRecord):
                 "index": index,
                 "uuid": assays[index]["uuid"],
                 "reference": assays[index].get("reference"),
+                "generalized_assay_model_version": assays[index].get(
+                    "generalized_assay_model_version"
+                ),
             }
 
             if model not in assays_info_dict.keys():
@@ -106,6 +109,12 @@ class Dataset(DXRecord):
             assays_info_dict[model].append(assay_dict)
 
         return assays_info_dict
+
+    def assay_info_dict(self, assay_uuid):
+        for assay_list in self.assays_info_dict.values():
+            for assay in assay_list:
+                if assay["uuid"] == assay_uuid:
+                    return assay
 
     def assay_names_list(self, assay_type):
         assay_names_list = []
