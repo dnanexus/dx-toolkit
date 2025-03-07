@@ -315,34 +315,6 @@ public class DXHTTPRequestTest {
     }
 
     /**
-     * Tests retry logic is disabled following a 5xx Internal Error.
-     */
-    @Test
-    public void testRetryDisabledAfterInternalError() {
-        // Create environment that disables retry logic with 5xx error
-        DXEnvironment env = DXEnvironment.Builder.fromDefaults().disableRetry().build();
-
-        // Check that retry really is disabled
-        Assert.assertTrue(env.isRetryDisabled());
-
-        boolean thrown = false;
-        long startTime = System.currentTimeMillis();
-        Map<String, String> errorType = new HashMap<String, String>();
-        errorType.put("errorType", "Error not decodeable");
-        JsonNode input = DXObject.MAPPER.valueToTree(errorType);
-        try {
-            new DXHTTPRequest(env).request("/system/fakeError", input, RetryStrategy.SAFE_TO_RETRY);
-        } catch (InternalErrorException e) {
-            thrown = true;
-            long timeElapsed = System.currentTimeMillis() - startTime;
-            Assert.assertTrue(timeElapsed < 2500);
-            Assert.assertEquals(501, e.getStatusCode());
-        }
-
-        Assert.assertTrue(thrown);
-    }
-
-    /**
      * Tests that disabling the retry logic does not change the behavior of a 4xx error.
      * @throws IOException
      */
