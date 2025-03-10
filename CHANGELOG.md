@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [393.0] - beta
+
 ### Fixed
 
-* Preserve newlines in file iterator for large files
+* Preserve newlines in dxpy file iterator for large files
 
-## [392.0] - beta
+## [392.0] - 2024.03.10
 
 ### Fixed
 
