@@ -86,7 +86,7 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1 = {
         ],
         "additional": [
             {"feature_name": "expression_read_optimized$gene_name"},
-            {"chrom": "expression_read_optimized$chr"},
+            {"chr": "expression_read_optimized$CHROM"},
             {"start": "expression_read_optimized$start"},
             {"end": "expression_read_optimized$end"},
             {"strand": "expression_read_optimized$strand"},
@@ -101,7 +101,7 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1 = {
                 {
                     "key": "chromosome",
                     "condition": "is",
-                    "table_column": "expression_read_optimized$chr",
+                    "table_column": "expression_read_optimized$CHROM",
                 },
                 {
                     "keys": ["starting_position", "ending_position"],
