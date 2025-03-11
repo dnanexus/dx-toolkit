@@ -1504,9 +1504,6 @@ def extract_assay_expression(args):
     }
     schema = conditions_mapping.get(generalized_assay_model_version)
 
-    # Forcing model version for testing purposes
-    schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
-
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
         schema=schema,
@@ -1569,10 +1566,6 @@ def extract_assay_expression(args):
         assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters
     )
     vizserver_payload = viz.build()
-
-    print("vizserver_payload: ", vizserver_payload)
-    err_exit("Exiting")
-
 
     # Get the record ID and vizserver URL from the Dataset object
     record_id = dataset.detail_describe["id"]

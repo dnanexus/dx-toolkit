@@ -86,7 +86,7 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1 = {
         ],
         "additional": [
             {"feature_name": "expression_read_optimized$gene_name"},
-            {"chr": "expression_read_optimized$CHROM"},
+            {"chrom": "expression_read_optimized$CHROM"},
             {"start": "expression_read_optimized$start"},
             {"end": "expression_read_optimized$end"},
             {"strand": "expression_read_optimized$strand"},
