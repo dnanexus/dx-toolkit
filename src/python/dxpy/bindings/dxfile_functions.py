@@ -364,6 +364,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             msg = msg.format(dxfile.get_id(), _part_id, parts[_part_id]["md5"], hasher.hexdigest())
             raise DXChecksumMismatchError(msg)
 
+
     with fh:
         last_verified_pos = 0
 
