@@ -30,8 +30,6 @@ import traceback
 import warnings
 from collections import defaultdict
 import multiprocessing
-from random import randint
-from time import sleep
 import crc32c
 import zlib
 import base64
@@ -40,7 +38,7 @@ import dxpy
 from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, err_exit
 from ..compat import open, md5_hasher, USING_PYTHON2
 from ..utils import response_iterator
 import subprocess
