@@ -1500,7 +1500,7 @@ def extract_assay_expression(args):
     generalized_assay_model_version = dataset.assay_info_dict(ASSAY_ID).get("generalized_assay_model_version")
 
     # in case location filter is used, queries should not use optimized table
-    #TODO test
+    #TODO test once model is updated
     if "location" in user_filters_json:
         filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
     else:
@@ -1509,12 +1509,6 @@ def extract_assay_expression(args):
             "1.1": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
         }
         filter_schema = conditions_mapping.get(generalized_assay_model_version)
-
-
-    # Forcing model version for testing purposes
-    # filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0
-    # filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
-    # filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
 
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
