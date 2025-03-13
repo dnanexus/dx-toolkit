@@ -16,7 +16,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Retry requests when received 429 response status code
 
-## [392.0] - 2024.03.10
+## [392.0] - 2025.03.10
 
 ### Fixed
 
@@ -26,7 +26,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dx-app-wizard generates template with AEE 24.04 by default
 
-## [391.0] - 2024.03.03
+## [391.0] - 2025.03.03
 
 ### Added
 
