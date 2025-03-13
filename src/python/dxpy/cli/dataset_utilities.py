@@ -73,7 +73,7 @@ from ..bindings.apollo.json_validation_by_schema import JSONValidator
 
 from ..bindings.apollo.schemas.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.schemas.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
-from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
+from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
 
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
@@ -1496,22 +1496,34 @@ def extract_assay_expression(args):
     else:
         ASSAY_ID = dataset.assays_info_dict["molecular_expression"][0]["uuid"]
 
-    # Getting generalized_assay_model_version to match conditions schema
+    # Getting generalized_assay_model_version to match filter schema
     generalized_assay_model_version = dataset.assay_info_dict(ASSAY_ID).get("generalized_assay_model_version")
-    conditions_mapping = {
-        "1.0": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
-        "1.1": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
-    }
-    schema = conditions_mapping.get(generalized_assay_model_version)
+
+    # in case location filter is used, queries should not use optimized table
+    #TODO test
+    if "location" in user_filters_json:
+        filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+    else:
+        conditions_mapping = {
+            "1.0": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
+            "1.1": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+        }
+        filter_schema = conditions_mapping.get(generalized_assay_model_version)
+
+
+    # Forcing model version for testing purposes
+    # filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0
+    # filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
+    # filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
 
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
-        schema=schema,
+        schema=filter_schema,
         error_handler=err_exit,
     )
     vizserver_raw_filters = input_json_parser.parse()
 
-    _db_columns_list = schema[
+    _db_columns_list = filter_schema[
         "output_fields_mapping"
     ].get("default")
 
@@ -1529,7 +1541,7 @@ def extract_assay_expression(args):
             field = [x.strip() for x in item.split(",") if x.strip()]
             additional_fields.extend(field)
 
-        all_additional_cols = schema[
+        all_additional_cols = filter_schema[
             "output_fields_mapping"
         ].get("additional")
 
@@ -1549,7 +1561,7 @@ def extract_assay_expression(args):
         project_context=project,
         output_fields_mapping=_db_columns_list,
         filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
-        order_by=schema["order_by"],
+        order_by=filter_schema["order_by"],
         limit=None,
         base_sql=BASE_SQL,
         is_cohort=IS_COHORT,
