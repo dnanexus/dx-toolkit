@@ -12,6 +12,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Preserve newlines in dxpy file iterator for large files
 
+### Changed
+
+* Retry requests when received 429 response status code
+
 ## [392.0] - 2024.03.10
 
 ### Fixed
