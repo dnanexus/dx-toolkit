@@ -78,7 +78,7 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0 = {
 
 # EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1 does not handle optimization of location filters
 EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1 = {
-    "version": "1.0",
+    "version": "1.1",
     "output_fields_mapping": {
         "default": [
             {"feature_id": "expression_read_optimized$feature_id"},
@@ -135,7 +135,7 @@ EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1 = {
 }
 
 EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized = {
-    "version": "1.0",
+    "version": "1.1",
     "output_fields_mapping": {
         "default": [
             {"feature_id": "expression$feature_id"},

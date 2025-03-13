@@ -1480,10 +1480,15 @@ def extract_assay_expression(args):
         ASSAY_ID = dataset.assays_info_dict["molecular_expression"][0]["uuid"]
 
     # Getting generalized_assay_model_version to match filter schema
-    generalized_assay_model_version = dataset.assay_info_dict(ASSAY_ID).get("generalized_assay_model_version")
-    # in case location filter is used, queries should not use optimized table
     #TODO test once model is updated
-    if "location" in user_filters_json:
+
+    generalized_assay_model_version = dataset.assay_info_dict(ASSAY_ID).get("generalized_assay_model_version")
+    conditions_mapping = {
+            "1.0": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
+            "1.1": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+        }
+    # in case location filter is used and version is 1.1, queries should not use optimized table
+    if "location" in user_filters_json and generalized_assay_model_version == "1.1":
         filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
     else:
         conditions_mapping = {
