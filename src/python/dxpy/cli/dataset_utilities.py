@@ -1468,23 +1468,6 @@ def extract_assay_expression(args):
     )
     input_json_validator.validate(input_json=user_filters_json)
 
-    if "location" in user_filters_json:
-        if args.sql:
-            # The behavior of the dx extract_assay expression --sql flag must remain unchanged and follow the pre-MEAL-BIN payloads
-            EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0["filtering_conditions"][
-                "location"
-            ]["max_item_limit"] = None
-
-        else:
-            # Genomic range adding together across multiple contigs should be smaller than 250 Mbps
-            input_json_validator.are_list_items_within_range(
-                input_json=user_filters_json,
-                key="location",
-                start_subkey="starting_position",
-                end_subkey="ending_position",
-                window_width=250000000,
-                check_each_separately=False,
-            )
 
     if args.assay_name:
         # Assumption: assay names are unique in a dataset descriptor
@@ -1498,7 +1481,6 @@ def extract_assay_expression(args):
 
     # Getting generalized_assay_model_version to match filter schema
     generalized_assay_model_version = dataset.assay_info_dict(ASSAY_ID).get("generalized_assay_model_version")
-
     # in case location filter is used, queries should not use optimized table
     #TODO test once model is updated
     if "location" in user_filters_json:
@@ -1509,6 +1491,24 @@ def extract_assay_expression(args):
             "1.1": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
         }
         filter_schema = conditions_mapping.get(generalized_assay_model_version)
+
+    # Genomic range limits must be applied. However, when using --sql limits may be ignored.
+    if "location" in user_filters_json:
+        if args.sql:
+            filter_schema["filtering_conditions"][
+                "location"
+            ]["max_item_limit"] = None
+
+        else:
+            # Genomic range adding together across multiple contigs should be smaller than 250 Mbps
+            input_json_validator.are_list_items_within_range(
+                input_json=user_filters_json,
+                key="location",
+                start_subkey="starting_position",
+                end_subkey="ending_position",
+                window_width=250000000,
+                check_each_separately=False,
+            )
 
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
