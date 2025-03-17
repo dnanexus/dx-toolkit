@@ -1485,7 +1485,7 @@ def extract_assay_expression(args):
     generalized_assay_model_version = dataset.assay_info_dict(ASSAY_ID).get("generalized_assay_model_version")
     if generalized_assay_model_version not in accepted_versions:
         err_exit(
-            "Generalized assay model version {} is not supported by dx extract_assay expression. Please ingest your expression data with current version of Molecular Expression Assay Loader".format(
+            "Generalized assay model version {} is not supported by dx extract_assay expression. Please ingest your expression data with current version of Molecular Expression Assay Loader.".format(
                 generalized_assay_model_version
             )
         )
@@ -1512,6 +1512,8 @@ def extract_assay_expression(args):
                 window_width=250000000,
                 check_each_separately=False,
             )
+
+    print(filter_schema)
 
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
