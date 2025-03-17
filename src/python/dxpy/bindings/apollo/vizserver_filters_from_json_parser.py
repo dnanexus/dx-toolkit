@@ -5,15 +5,16 @@ class JSONFiltersValidator(object):
     """
     A specialized class that parses user input JSON according to a schema to prepare vizserver-compliant compound filters.
 
-    See assay_filtering_conditions.py for current schemas.
+    See assay_filtering_conditions.py for current schemas, which include optimized schema EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
+    and non-optimized EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized to handle location filters.
 
     Filters must be defined in schema["filtering_conditions"]
 
-    There are currently three ways to define filtering_conditions when version is 1.0:
+    There are currently three ways to define filtering_conditions when version is 1.1:
     1. Basic use-case: no "properties" are defined. Only "condition", "table_column" and optionally "max_item_limit" are defined.
                        In this case, there are no sub-keys for the current key in input_json.
-                       (see 'sample_id' in 'assay_filtering_conditions.EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0')
-    2. Properties defined as dict of dicts (see 'annotation' and 'expression' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0)
+                       (see 'sample_id' in 'assay_filtering_conditions.EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1')
+    2. Properties defined as dict of dicts (see 'annotation' and 'expression' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1)
         2.1. If filters_combination_operator is not defined, the assumption is that there is only one sub-key in input_json
 
     3. Complex use-case: Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that needs translation)
@@ -21,7 +22,7 @@ class JSONFiltersValidator(object):
         In this case, the schema must define "items_combination_operator" and "filters_combination_operator".
         items_combination_operator: how to combine filters for list items in input_json
         filters_combination_operator: how to combine filters within each item
-        (see 'location' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0)
+        (see 'location' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized)
 
         Within 'properties' if "key" is defined, then a generic one-key filter is built.
         If "keys" is defined, then more complex use-cases are handled via special conditions that are defined in condition_function_mapping.
@@ -73,7 +74,7 @@ class JSONFiltersValidator(object):
 
     def parse_v1(self):
         """
-        Parse input_json according to schema version 1.0, and build vizserver compound filters.
+        Parse input_json according to schema version 1.1, and build vizserver compound filters.
         """
 
         try:
@@ -85,8 +86,8 @@ class JSONFiltersValidator(object):
 
             # Go through the input_json (iterate through keys and values in user input JSON)
             for filter_key, filter_values in self.input_json.items():
-                # Example: if schema is EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0
-                # Then input JSON would probably contain location or annotation
+                # Example: if schema is EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+                # Then input JSON would contain location and maybe others such as annotation
                 # In this case:
                 # filter_key -> location
                 # filter_values -> list of dicts (where each dict contains "chromosome", "starting_position", "ending_position")
@@ -111,7 +112,7 @@ class JSONFiltersValidator(object):
                 self.validate_max_item_limit(current_filters, filter_values, filter_key)
 
                 # There are several ways filtering_conditions can be defined
-                # 1. Basic use-case: no properties, just condition (see 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0')
+                # 1. Basic use-case: no properties, just condition (see 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1')
                 # 2. Properties defined as dict of dicts (see 'annotation' and 'expression')
                 # 3. Properties defined as list of dicts (more advanced, special use-case with complex conditional logics that needs translation)
                 # For more information see the docstring of the class
@@ -146,7 +147,7 @@ class JSONFiltersValidator(object):
                     # no properties, so just apply conditions
                     # In other words .get("properties") returns None
                     # Therefore we are dealing with a basic use-case scenario
-                    # (See 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0' for an example)
+                    # (See 'sample_id' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1' for an example)
                     filters = self.build_one_key_generic_filter(
                         current_filters.get("table_column"),
                         current_filters.get("condition"),
@@ -262,7 +263,7 @@ class JSONFiltersValidator(object):
 
                 # check if there are two filtering conditions that need to be applied on the same table_column
                 # check if both of those are defined in input_json
-                # an example of such a case is 'expression' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0
+                # an example of such a case is 'expression' in EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
                 # where we might have a `max_value` and a `min_value`
                 # however providing both is not mandatory
 
@@ -311,7 +312,7 @@ class JSONFiltersValidator(object):
 
         else:
             # There's no filtering logic, in other words, filters_combination_operator is not defined at this level
-            # (see 'annotation' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0' for an example)
+            # (see 'annotation' in 'EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1' for an example)
             if len(current_properties) > 1:
                 if len(filter_values) > 1:
                     # if there are also more than 1 in input_json
