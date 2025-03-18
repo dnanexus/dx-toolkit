@@ -387,7 +387,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                         bytes_to_read -= max_verify_chunk_size
                     if hasher.hexdigest() != part_info["md5"]:
                         raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
-                    if dxfile_desc['drive'] is not None:
+                    if dxfile_desc.get('drive') is not None:
                         _verify_per_part_checksum(parts, part_id, chunk, per_part_checksum, dxfile.get_id())
                     else:
                         last_verified_part = part_id
@@ -422,7 +422,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                     _bytes += len(chunk_data)
                     _print_progress(_bytes, file_size, filename)
             verify_part(cur_part, got_bytes, hasher)
-            if dxfile_desc['drive'] is not None:
+            if dxfile_desc.get('drive') is not None:
                 _verify_per_part_checksum(parts, cur_part, chunk_data, per_part_checksum, dxfile.get_id())
             if show_progress:
                 _print_progress(_bytes, file_size, filename, action="Completed")
