@@ -182,7 +182,8 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
 
     with open(schema_file, "r") as fh:
         schema = json.load(fh)
-    for d_key, d_schema in schema.get("definitions", {}).items():
+    defs_key = "definitions" if "definitions" in schema else "$defs"
+    for d_key, d_schema in schema.get(defs_key, {}).items():
         required_inputs = d_schema.get("required", [])
         for property_key, property in d_schema.get("properties", {}).items():
             dx_input = {}
