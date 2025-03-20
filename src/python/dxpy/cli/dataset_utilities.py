@@ -73,7 +73,7 @@ from ..bindings.apollo.json_validation_by_schema import JSONValidator
 
 from ..bindings.apollo.schemas.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.schemas.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
-from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
 
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
@@ -1479,24 +1479,26 @@ def extract_assay_expression(args):
     else:
         ASSAY_ID = dataset.assays_info_dict["molecular_expression"][0]["uuid"]
 
-    accepted_versions = ["1.1"]
-
     # Getting generalized_assay_model_version to match filter schema
+    conditions_mapping = {
+            "1.0": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
+            "1.1": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+        }
     generalized_assay_model_version = dataset.assay_info_dict(ASSAY_ID).get("generalized_assay_model_version")
-    if generalized_assay_model_version not in accepted_versions:
-        err_exit(
-            "Generalized assay model version {} is not supported by dx extract_assay expression. Please ingest your expression data with current version of Molecular Expression Assay Loader.".format(
-                generalized_assay_model_version
-            )
-        )
+    filter_schema = conditions_mapping.get(generalized_assay_model_version)
 
+    # Genomic range limits must be applied. However, when using --sql limits may be ignored.
     if generalized_assay_model_version == "1.1":
-        filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
+        if "location" in user_filters_json:
+            filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+        else:
+            filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
 
     # When location filter is used and version is 1.1, queries should not use optimized table
     # Genomic range limits must be applied. However, when using --sql limits may be ignored.
     if "location" in user_filters_json:
-        filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+        if generalized_assay_model_version == "1.1":
+            filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
         if args.sql:
             filter_schema["filtering_conditions"][
                 "location"
@@ -1512,8 +1514,6 @@ def extract_assay_expression(args):
                 window_width=250000000,
                 check_each_separately=False,
             )
-
-    print(filter_schema)
 
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
