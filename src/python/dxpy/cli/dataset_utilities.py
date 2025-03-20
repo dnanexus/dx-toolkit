@@ -1497,13 +1497,14 @@ def extract_assay_expression(args):
     # When location filter is used and version is 1.1, queries should not use optimized table
     # Genomic range limits must be applied. However, when using --sql limits may be ignored.
     if "location" in user_filters_json:
+
         if generalized_assay_model_version == "1.1":
             filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+            
         if args.sql:
             filter_schema["filtering_conditions"][
                 "location"
             ]["max_item_limit"] = None
-
         else:
             # Genomic range adding together across multiple contigs should be smaller than 250 Mbps
             input_json_validator.are_list_items_within_range(
