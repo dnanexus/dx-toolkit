@@ -34,7 +34,7 @@
   <packaging>jar</packaging>
   <version>0.1.0-SNAPSHOT</version>
   <name>dnanexus-api</name>
-  <url>https://wiki.dnanexus.com/</url>
+  <url>https://documentation.dnanexus.com/</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
