@@ -254,7 +254,7 @@ class DXFile(DXDataObject):
         self._cur_part = 1
         self._num_uploaded_parts = 0
         # Cache for object existence in project
-        self._exists_in_project = None  
+        self._exists_in_proj = None  
 
     def _new(self, dx_hash, media_type=None, **kwargs):
         """
@@ -938,10 +938,10 @@ class DXFile(DXDataObject):
 
     def read(self, length=None, use_compression=None, project=None, **kwargs):
         # Check if the file is present in dxfile project attribute if the project arg not specified 
-        if project is None and not self._exists_in_project and self.get_proj_id() is not None:
-            self._exists_in_project = object_exists_in_project(self.get_id(), self.get_proj_id())
+        if project is None and not self._exists_in_proj and self.get_proj_id() is not None:
+            self._exists_in_proj = object_exists_in_project(self.get_id(), self.get_proj_id())
         # Use the dxfile attribute if the project arg is not specified
-        if project is None and self._exists_in_project:
+        if project is None and self._exists_in_proj:
             project = self.get_proj_id()
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
         if USING_PYTHON2:
