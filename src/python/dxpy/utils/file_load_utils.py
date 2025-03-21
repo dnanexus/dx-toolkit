@@ -91,7 +91,7 @@ import collections
 import errno
 
 import dxpy
-from ..compat import environ, open, basestring
+from ..compat import basestring
 from ..exceptions import DXError
 
 
@@ -106,7 +106,7 @@ def get_input_dir(job_homedir=None):
     if job_homedir is not None:
         home_dir = job_homedir
     else:
-        home_dir = environ.get('HOME')
+        home_dir = os.environ.get('HOME')
     idir = os.path.join(home_dir, 'in')
     return idir
 
@@ -123,7 +123,7 @@ def get_output_dir(job_homedir=None):
     if job_homedir is not None:
         home_dir = job_homedir
     else:
-        home_dir = environ.get('HOME')
+        home_dir = os.environ.get('HOME')
     odir = os.path.join(home_dir, 'out')
     return odir
 
@@ -133,7 +133,7 @@ def get_input_json_file():
     :rtype: string
     :returns: path to input JSON file
     """
-    home_dir = environ.get('HOME')
+    home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_input.json")
 
 
@@ -142,7 +142,7 @@ def get_output_json_file():
     :rtype: string
     :returns: Path to output JSON file
     """
-    home_dir = environ.get('HOME')
+    home_dir = os.environ.get('HOME')
     return os.path.join(home_dir, "job_output.json")
 
 
@@ -278,7 +278,7 @@ def get_input_spec_patterns():
     input parameter names.
     '''
     input_spec = None
-    if 'DX_JOB_ID' in environ:
+    if 'DX_JOB_ID' in os.environ:
         # works in the cloud, not locally
         job_desc = dxpy.describe(dxpy.JOB_ID)
         if job_desc["function"] == "main":
@@ -286,9 +286,9 @@ def get_input_spec_patterns():
             desc = dxpy.describe(job_desc.get("app", job_desc.get("applet")))
             if "inputSpec" in desc:
                 input_spec = desc["inputSpec"]
-    elif 'DX_TEST_DXAPP_JSON' in environ:
+    elif 'DX_TEST_DXAPP_JSON' in os.environ:
         # works only locally
-        path_to_dxapp_json = environ['DX_TEST_DXAPP_JSON']
+        path_to_dxapp_json = os.environ['DX_TEST_DXAPP_JSON']
         with open(path_to_dxapp_json) as fd:
             dxapp_json = json.load(fd)
             input_spec = dxapp_json.get('inputSpec')
@@ -438,7 +438,7 @@ def gen_bash_vars(job_input_file, job_homedir=None, check_name_collision=True):
         ''' In the absence of a name collision, create a line describing a bash variable.
         '''
         if check_name_collision:
-            if key not in environ and key not in var_defs_hash:
+            if key not in os.environ and key not in var_defs_hash:
                 var_defs_hash[key] = val
             else:
                 sys.stderr.write(dxpy.utils.printing.fill(
