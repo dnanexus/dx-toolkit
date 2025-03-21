@@ -24,23 +24,16 @@ import unittest
 
 from parameterized import parameterized
 from dxpy_testutil import DXTestCase
-from dxpy.compat import USING_PYTHON2
 from dxpy.nextflow.ImageRefFactory import ImageRefFactory, ImageRefFactoryError
 from dxpy.nextflow.ImageRef import DockerImageRef
 
-if USING_PYTHON2:
-    spawn_extra_args = {}
-else:
-    # Python 3 requires specifying the encoding
-    spawn_extra_args = {"encoding": "utf-8"}
+spawn_extra_args = {"encoding": "utf-8"}
 
 
 class TestImageRef(DXTestCase):
     @parameterized.expand([
         [{"engine": "docker", "process": "proc1", "digest": "sha256aasdfadfadfafddasfdsfa"}]
     ])
-    @unittest.skipIf(USING_PYTHON2,
-        'Skipping Python 3 code')
     def test_ImageRefFactory(self, image_ref):
         image_ref_factory = ImageRefFactory(image_ref)
         image = image_ref_factory.get_image()
@@ -50,8 +43,6 @@ class TestImageRef(DXTestCase):
         [{"process": "proc1", "digest": "sha256aasdfadfadfafddasfdsfa"}, "Provide the container engine"],
         [{"engine": "singularity", "process": "proc1", "digest": "sha256aasdfadfadfafddasfdsfa"}, "Unsupported container engine: singularity"]
     ])
-    @unittest.skipIf(USING_PYTHON2,
-        'Skipping Python 3 code')
     def test_ImageRefFactory_errors(self, image_ref, exception):
         with self.assertRaises(ImageRefFactoryError) as err:
             image_ref_factory = ImageRefFactory(image_ref)

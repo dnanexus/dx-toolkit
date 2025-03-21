@@ -20,13 +20,12 @@ Utilities used in the DNAnexus execution environment and test harness.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, json, re, collections, logging, argparse, string, itertools, subprocess, tempfile
+import os, sys, json, re, logging, argparse, string, itertools, subprocess, tempfile
+from collections.abc import Mapping
 from functools import wraps
-from collections import namedtuple
 import shlex
 
 import dxpy
-from ..compat import USING_PYTHON2, open, Mapping
 from ..exceptions import AppInternalError
 
 ENTRY_POINT_TABLE = {}
@@ -40,22 +39,7 @@ def _safe_unicode(o):
     Returns an equivalent unicode object, trying harder to avoid
     dependencies on the Python default encoding.
     """
-    def clean(s):
-        return u''.join([c if c in ASCII_PRINTABLE else '?' for c in s])
-    if USING_PYTHON2:
-        try:
-            return unicode(o)
-        except:
-            try:
-                s = str(o)
-                try:
-                    return s.decode("utf-8")
-                except:
-                    return clean(s[:2048]) + u" [Raw error message: " + unicode(s.encode("hex"), 'utf-8') + u"]"
-            except:
-                return u"(Unable to decode Python exception message)"
-    else:
-        return str(o)
+    return str(o)
 
 def _format_exception_message(e):
     """
@@ -65,10 +49,7 @@ def _format_exception_message(e):
     # and then this formatted string
     if isinstance(e, dxpy.AppError):
         return _safe_unicode(e)
-    if USING_PYTHON2:
-        return unicode(e.__class__.__name__, 'utf-8') + ": " + _safe_unicode(e)
-    else:
-        return e.__class__.__name__ + ": " + _safe_unicode(e)
+    return e.__class__.__name__ + ": " + _safe_unicode(e)
 
 
 def run(function_name=None, function_input=None):
@@ -158,13 +139,7 @@ def run(function_name=None, function_input=None):
     if result is not None:
         # TODO: protect against client removing its original working directory
         os.chdir(dx_working_dir)
-        if USING_PYTHON2:
-            # On python-2 we need to use binary mode
-            with open("job_output.json", "wb") as fh:
-                json.dump(result, fh, indent=2, cls=DXJSONEncoder)
-                fh.write(b"\n")
-        else:
-            with open("job_output.json", "w") as fh:
+        with open("job_output.json", "w") as fh:
                 json.dump(result, fh, indent=2, cls=DXJSONEncoder)
                 fh.write("\n")
 
@@ -177,13 +152,7 @@ def save_error(e, working_dir, error_type="AppInternalError"):
             os.unlink("job_error_reserved_space")
         except:
             pass
-        if USING_PYTHON2:
-            # We need to use binary mode on python2
-            with open("job_error.json", "wb") as fh:
-                json.dump({"error": {"type": error_type, "message": _format_exception_message(e)}}, fh)
-                fh.write(b"\n")
-        else:
-            with open("job_error.json", "w") as fh:
+        with open("job_error.json", "w") as fh:
                 json.dump({"error": {"type": error_type, "message": _format_exception_message(e)}}, fh)
                 fh.write("\n")
 

@@ -25,11 +25,7 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-from ..compat import (USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args,
-                      unwrap_stream, sys_encoding)
-
-wrap_stdio_in_codecs()
-decode_command_line_args()
+from ..compat import (unwrap_stream, sys_encoding)
 
 import dxpy
 from dxpy.scripts import dx_build_app
@@ -416,9 +412,8 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
-            if not USING_PYTHON2:
-                # python 3 requires conversion to bytes before hashing
-                token = token.encode(sys_encoding)
+            # python 3 requires conversion to bytes before hashing
+            token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
                                           dict(tokenSignature=token_sig),
@@ -2782,8 +2777,6 @@ def build(args):
         src_dir = args.src_dir
         if src_dir is None:
             src_dir = os.getcwd()
-            if USING_PYTHON2:
-                src_dir = src_dir.decode(sys.getfilesystemencoding())
         return src_dir
 
     def handle_arg_conflicts(args):
@@ -3213,7 +3206,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     # here the args.instance_type no longer contains specifications for stage sys reqs
     if args.instance_type:
         requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
-        if not isinstance(args.instance_type, basestring):
+        if not isinstance(args.instance_type, (str, bytes)):
             requested_instance_type = SystemRequirementsDict(merge(cloned_instance_type.as_dict(), requested_instance_type.as_dict()))
     else:
         requested_instance_type = cloned_instance_type
@@ -3226,7 +3219,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         executable_describe = executable.describe()
         cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable_describe.get('runSpec',{}).get('systemRequirements', {}),_type='clusterSpec')
 
-        if not isinstance(args.instance_count, basestring):
+        if not isinstance(args.instance_count, (str, bytes)):
             if cloned_cluster_spec.as_dict():
                 requested_instance_count = SystemRequirementsDict(merge(cloned_cluster_spec.as_dict(), requested_instance_count.as_dict()))
                 cluster_spec_to_override = SystemRequirementsDict(merge(cluster_spec_to_override.as_dict(), cloned_cluster_spec.as_dict()))
@@ -4170,12 +4163,8 @@ def generate_batch_inputs(args):
         batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
 
         # In python-3 we need to open the file in textual mode.
-        if USING_PYTHON2:
-            write_mode = 'wb'
-            delimiter = '\t'.encode('ascii')
-        else:
-            write_mode = 'w'
-            delimiter = '\t'
+        write_mode = 'w'
+        delimiter = '\t'
 
         with open(batch_fname, write_mode) as csvfile:
             batchwriter = csv.writer(csvfile, delimiter=delimiter)
@@ -4523,14 +4512,10 @@ class DXArgumentParser(argparse.ArgumentParser):
                     msg += "\n\nDid you mean: " + BOLD("dx " + suggestion)
 
             err = argparse.ArgumentError(action, msg)
-            if USING_PYTHON2:
-                err.message = err.message.encode(sys_encoding)
-                if err.argument_name is not None:
-                    err.argument_name = err.argument_name.encode(sys_encoding)
             raise err
 
     def exit(self, status=0, message=None):
-        if isinstance(status, basestring):
+        if isinstance(status, (str, bytes)):
             message = message + status if message else status
             status = 1
         if message:
@@ -4538,8 +4523,6 @@ class DXArgumentParser(argparse.ArgumentParser):
         sys.exit(status)
 
     def error(self, message):
-        if USING_PYTHON2:
-            message = message.decode(sys_encoding)
         self.exit(2, '{help}\n{prog}: error: {msg}\n'.format(help=self.format_help(),
                                                              prog=self.prog,
                                                              msg=message))
@@ -4557,7 +4540,7 @@ def register_parser(parser, subparsers_action=None, categories=('other', ), add_
     name = re.sub('^dx ', '', parser.prog)
     if subparsers_action is None:
         subparsers_action = subparsers
-    if isinstance(categories, basestring):
+    if isinstance(categories, (str, bytes)):
         categories = (categories, )
 
     parser_map[name] = parser
@@ -6837,10 +6820,7 @@ def main():
         import argcomplete
 
         # In python-3 we need to use a binary output stream
-        if USING_PYTHON2:
-            output_stream = sys.stdout
-        else:
-            output_stream = sys.stdout.buffer
+        output_stream = sys.stdout.buffer
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
                                  exclude=['gtable', 'export'],

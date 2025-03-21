@@ -28,7 +28,6 @@ import datetime
 from contextlib import contextmanager
 
 import dxpy
-from dxpy.compat import str, basestring, USING_PYTHON2
 from pathlib import Path
 
 THIS_DIR = Path(__file__).parent
@@ -54,14 +53,6 @@ TEST_NF_DOCKER = _run_all_tests or 'DXTEST_NF_DOCKER' in os.environ
 
 def _transform_words_to_regexp(s):
     return r"\s+".join(re.escape(word) for word in s.split())
-
-
-def host_is_centos_5():
-    if USING_PYTHON2:
-        distro = platform.linux_distribution()
-        if distro[0] == 'CentOS' and distro[1].startswith('5.'):
-            return True
-    return False
 
 class DXCalledProcessError(subprocess.CalledProcessError):
     def __init__(self, returncode, cmd, output=None, stderr=None):
@@ -200,7 +191,7 @@ def select_project(project_or_project_id):
     :type project_or_project_id: str or DXProject
 
     """
-    if isinstance(project_or_project_id, basestring) or project_or_project_id is None:
+    if isinstance(project_or_project_id, (str, bytes)) or project_or_project_id is None:
         project_id = project_or_project_id
     else:
         project_id = project_or_project_id.get_id()
@@ -234,7 +225,7 @@ def cd(directory):
 
 # Wait for all jobs in analysis to be created (see PTFM-14462)
 def analysis_describe_with_retry(analysis_id_or_handler):
-    if isinstance(analysis_id_or_handler, basestring):
+    if isinstance(analysis_id_or_handler, (str, bytes)):
         handler = dxpy.get_handler(analysis_id_or_handler)
     else:
         handler = analysis_id_or_handler
@@ -328,18 +319,9 @@ class DXTestCaseCompat(unittest.TestCase):
     def assertItemsEqual(self, a, b):
         self.assertEqual(sorted(a), sorted(b))
 
-    # methods with different names in python 2 and 3
-    # For example:
-    # v2  assertRaisesRegexp
-    # v3  assertRaisesRegex
-    if USING_PYTHON2:
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegexp
-        assertRegex = unittest.TestCase.assertRegexpMatches
-        assertNotRegex = unittest.TestCase.assertNotRegexpMatches
-    else:
-        assertRaisesRegex = unittest.TestCase.assertRaisesRegex
-        assertRegex = unittest.TestCase.assertRegex
-        assertNotRegex = unittest.TestCase.assertNotRegex
+    assertRaisesRegex = unittest.TestCase.assertRaisesRegex
+    assertRegex = unittest.TestCase.assertRegex
+    assertNotRegex = unittest.TestCase.assertNotRegex
 
 class DXTestCase(DXTestCaseCompat):
     def setUp(self):
@@ -707,10 +689,7 @@ class TemporaryFile:
         'close' determines if the file is returned closed or open.
     '''
     def __init__(self, mode='w+', bufsize=-1, suffix='', prefix='tmp', dir=None, delete=True, close=False):
-        if USING_PYTHON2:
-            self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, suffix, prefix, dir, delete=False)
-        else:
-            self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, "utf-8", None, suffix, prefix, dir, delete=False)
+        self.temp_file = tempfile.NamedTemporaryFile(mode, bufsize, "utf-8", None, suffix, prefix, dir, delete=False)
         self.name = self.temp_file.name
         self.delete = delete
         if (close):

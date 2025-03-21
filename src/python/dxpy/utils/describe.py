@@ -32,7 +32,6 @@ from collections import defaultdict
 import dxpy
 from .printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter, fill)
 from .pretty_print import format_timedelta
-from ..compat import basestring, USING_PYTHON2
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -77,7 +76,7 @@ def get_size_str(size):
 
 
 def parse_typespec(thing):
-    if isinstance(thing, basestring):
+    if isinstance(thing, (str, bytes)):
         return thing
     elif '$and' in thing:
         return '(' + ' AND '.join(map(parse_typespec, thing['$and'])) + ')'
@@ -169,12 +168,12 @@ def is_job_ref(thing, reftype=dict):
     '''
     return isinstance(thing, reftype) and \
         ((len(thing) == 2 and \
-              isinstance(thing.get('field'), basestring) and \
-              isinstance(thing.get('job'), basestring)) or \
+              isinstance(thing.get('field'), (str, bytes)) and \
+              isinstance(thing.get('job'), (str, bytes))) or \
              (len(thing) == 1 and \
                   isinstance(thing.get('$dnanexus_link'), reftype) and \
-                  isinstance(thing['$dnanexus_link'].get('field'), basestring) and \
-                  isinstance(thing['$dnanexus_link'].get('job'), basestring)))
+                  isinstance(thing['$dnanexus_link'].get('field'), (str, bytes)) and \
+                  isinstance(thing['$dnanexus_link'].get('job'), (str, bytes))))
 
 def get_job_from_jbor(thing):
     '''
@@ -213,7 +212,7 @@ def is_metadata_ref(thing, reftype=dict):
     return isinstance(thing, reftype) and \
         len(thing) == 1 and \
         isinstance(thing.get('$dnanexus_link'), reftype) and \
-        isinstance(thing['$dnanexus_link'].get('metadata'), basestring)
+        isinstance(thing['$dnanexus_link'].get('metadata'), (str, bytes))
 
 def jbor_to_str(val):
     ans = get_job_from_jbor(val) + ':' + get_field_from_jbor(val)
@@ -228,7 +227,7 @@ def io_val_to_str(val):
         return jbor_to_str(val)
     elif isinstance(val, dict) and '$dnanexus_link' in val:
         # DNAnexus link
-        if isinstance(val['$dnanexus_link'], basestring):
+        if isinstance(val['$dnanexus_link'], (str, bytes)):
             # simple link
             return val['$dnanexus_link']
         elif 'project' in val['$dnanexus_link'] and 'id' in val['$dnanexus_link']:
@@ -800,15 +799,11 @@ def print_data_obj_desc(desc, verbose=False):
 def printable_ssh_host_key(ssh_host_key):
     try:
         keygen = subprocess.Popen(["ssh-keygen", "-lf", "/dev/stdin"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        if USING_PYTHON2:
-            (stdout, stderr) = keygen.communicate(ssh_host_key)
-        else:
-            (stdout, stderr) = keygen.communicate(ssh_host_key.encode())
+        (stdout, stderr) = keygen.communicate(ssh_host_key.encode())
     except:
         return ssh_host_key.strip()
     else:
-        if not USING_PYTHON2:
-            stdout =  stdout.decode()
+        stdout =  stdout.decode()
         return stdout.replace(" no comment", "").strip()
 
 

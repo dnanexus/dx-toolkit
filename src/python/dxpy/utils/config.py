@@ -25,18 +25,13 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, json, time
 import platform
-try:
-    # Python 3
-    from collections.abc import MutableMapping
-except ImportError:
-    # Python 2.7
-    from collections import MutableMapping
+from collections.abc import MutableMapping
 from shutil import rmtree
 
 import dxpy
 from . import warn
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
-from ..compat import environ, expanduser, open, USING_PYTHON2, sys_encoding
+from ..compat import environ, expanduser
 from ..exceptions import format_exception
 from .printing import fill
 
@@ -313,7 +308,7 @@ class DXConfig(MutableMapping):
             # Make sure the file has 600 permissions
             with _open_for_writing_with_permissions(os.path.join(conf_dir, var), 0o600) as fd:
                 value = self.get(var, self.defaults.get(var, ""))
-                fd.write(value.encode(sys_encoding) if USING_PYTHON2 else value)
+                fd.write(value)
 
     def clear(self, reset=False):
         rmtree(self.get_session_conf_dir(), ignore_errors=True)
