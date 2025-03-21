@@ -24,11 +24,12 @@ import time
 import random
 import functools
 import datetime
+from pathlib import Path
 
 from contextlib import contextmanager
 
 import dxpy
-from pathlib import Path
+from dxpy.compat import basestring
 
 THIS_DIR = Path(__file__).parent
 _run_all_tests = 'DXTEST_FULL' in os.environ
@@ -191,7 +192,7 @@ def select_project(project_or_project_id):
     :type project_or_project_id: str or DXProject
 
     """
-    if isinstance(project_or_project_id, (str, bytes)) or project_or_project_id is None:
+    if isinstance(project_or_project_id, basestring) or project_or_project_id is None:
         project_id = project_or_project_id
     else:
         project_id = project_or_project_id.get_id()
@@ -225,7 +226,7 @@ def cd(directory):
 
 # Wait for all jobs in analysis to be created (see PTFM-14462)
 def analysis_describe_with_retry(analysis_id_or_handler):
-    if isinstance(analysis_id_or_handler, (str, bytes)):
+    if isinstance(analysis_id_or_handler, basestring):
         handler = dxpy.get_handler(analysis_id_or_handler)
     else:
         handler = analysis_id_or_handler

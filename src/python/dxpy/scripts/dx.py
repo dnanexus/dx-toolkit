@@ -25,7 +25,7 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-from ..compat import (unwrap_stream, sys_encoding)
+from ..compat import unwrap_stream, sys_encoding, basestring
 
 import dxpy
 from dxpy.scripts import dx_build_app
@@ -3206,7 +3206,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     # here the args.instance_type no longer contains specifications for stage sys reqs
     if args.instance_type:
         requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
-        if not isinstance(args.instance_type, (str, bytes)):
+        if not isinstance(args.instance_type, basestring):
             requested_instance_type = SystemRequirementsDict(merge(cloned_instance_type.as_dict(), requested_instance_type.as_dict()))
     else:
         requested_instance_type = cloned_instance_type
@@ -3219,7 +3219,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         executable_describe = executable.describe()
         cluster_spec_to_override = SystemRequirementsDict.from_sys_requirements(executable_describe.get('runSpec',{}).get('systemRequirements', {}),_type='clusterSpec')
 
-        if not isinstance(args.instance_count, (str, bytes)):
+        if not isinstance(args.instance_count, basestring):
             if cloned_cluster_spec.as_dict():
                 requested_instance_count = SystemRequirementsDict(merge(cloned_cluster_spec.as_dict(), requested_instance_count.as_dict()))
                 cluster_spec_to_override = SystemRequirementsDict(merge(cluster_spec_to_override.as_dict(), cloned_cluster_spec.as_dict()))
@@ -4515,7 +4515,7 @@ class DXArgumentParser(argparse.ArgumentParser):
             raise err
 
     def exit(self, status=0, message=None):
-        if isinstance(status, (str, bytes)):
+        if isinstance(status, basestring):
             message = message + status if message else status
             status = 1
         if message:
@@ -4540,7 +4540,7 @@ def register_parser(parser, subparsers_action=None, categories=('other', ), add_
     name = re.sub('^dx ', '', parser.prog)
     if subparsers_action is None:
         subparsers_action = subparsers
-    if isinstance(categories, (str, bytes)):
+    if isinstance(categories, basestring):
         categories = (categories, )
 
     parser_map[name] = parser

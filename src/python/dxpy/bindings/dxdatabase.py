@@ -32,6 +32,7 @@ import dxpy
 from . import DXDataObject
 from ..utils.resolver import object_exists_in_project
 from .. import logger
+from ..compat import basestring
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -48,9 +49,9 @@ FILE_REQUEST_TIMEOUT = 60
 
 def _validate_headers(headers):
     for key, value in headers.items():
-        if not isinstance(key, (str, bytes)):
+        if not isinstance(key, basestring):
             raise ValueError("Expected key %r of headers to be a string" % (key,))
-        if not isinstance(value, (str, bytes)):
+        if not isinstance(value, basestring):
             raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
                              % (value, key))
     return headers

@@ -32,6 +32,7 @@ from collections import defaultdict
 import dxpy
 from .printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter, fill)
 from .pretty_print import format_timedelta
+from ..compat import basestring
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -76,7 +77,7 @@ def get_size_str(size):
 
 
 def parse_typespec(thing):
-    if isinstance(thing, (str, bytes)):
+    if isinstance(thing, basestring):
         return thing
     elif '$and' in thing:
         return '(' + ' AND '.join(map(parse_typespec, thing['$and'])) + ')'
@@ -168,12 +169,12 @@ def is_job_ref(thing, reftype=dict):
     '''
     return isinstance(thing, reftype) and \
         ((len(thing) == 2 and \
-              isinstance(thing.get('field'), (str, bytes)) and \
-              isinstance(thing.get('job'), (str, bytes))) or \
+              isinstance(thing.get('field'), basestring) and \
+              isinstance(thing.get('job'), basestring)) or \
              (len(thing) == 1 and \
                   isinstance(thing.get('$dnanexus_link'), reftype) and \
-                  isinstance(thing['$dnanexus_link'].get('field'), (str, bytes)) and \
-                  isinstance(thing['$dnanexus_link'].get('job'), (str, bytes))))
+                  isinstance(thing['$dnanexus_link'].get('field'), basestring) and \
+                  isinstance(thing['$dnanexus_link'].get('job'), basestring)))
 
 def get_job_from_jbor(thing):
     '''
@@ -212,7 +213,7 @@ def is_metadata_ref(thing, reftype=dict):
     return isinstance(thing, reftype) and \
         len(thing) == 1 and \
         isinstance(thing.get('$dnanexus_link'), reftype) and \
-        isinstance(thing['$dnanexus_link'].get('metadata'), (str, bytes))
+        isinstance(thing['$dnanexus_link'].get('metadata'), basestring)
 
 def jbor_to_str(val):
     ans = get_job_from_jbor(val) + ':' + get_field_from_jbor(val)
@@ -227,7 +228,7 @@ def io_val_to_str(val):
         return jbor_to_str(val)
     elif isinstance(val, dict) and '$dnanexus_link' in val:
         # DNAnexus link
-        if isinstance(val['$dnanexus_link'], (str, bytes)):
+        if isinstance(val['$dnanexus_link'], basestring):
             # simple link
             return val['$dnanexus_link']
         elif 'project' in val['$dnanexus_link'] and 'id' in val['$dnanexus_link']:

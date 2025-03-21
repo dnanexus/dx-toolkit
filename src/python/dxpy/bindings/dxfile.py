@@ -35,7 +35,7 @@ from . import DXDataObject
 from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import md5_hasher
+from ..compat import md5_hasher, basestring
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -53,9 +53,9 @@ PART_UPLOAD_REQUEST_TIMEOUT_SECONDS = 300
 
 def _validate_headers(headers):
     for key, value in headers.items():
-        if not isinstance(key, (str, bytes)):
+        if not isinstance(key, basestring):
             raise ValueError("Expected key %r of headers to be a string" % (key,))
-        if not isinstance(value, (str, bytes)):
+        if not isinstance(value, basestring):
             raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
                              % (value, key))
     return headers
