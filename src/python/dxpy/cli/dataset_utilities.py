@@ -1524,10 +1524,6 @@ def extract_assay_expression(args):
                 window_width=250000000,
                 check_each_separately=False,
             )
-
-    print(f"return_all_data = {return_all_data}\n")
-    print(f"filter_schema = {filter_schema}\n")
-
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
         schema=filter_schema,
