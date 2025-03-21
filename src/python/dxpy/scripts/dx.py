@@ -6748,7 +6748,7 @@ parser_extract_assay_expression.add_argument(
 parser_extract_assay_expression.add_argument(
     "--sql",
     action="store_true",
-    help='If the flag is provided, a SQL statement (as a string) will be returned for the user to further query the specified data, instead of returning actual data values. Use of "--sql" is not supported when also using the flag, --expression-matrix/-em',
+    help='If the flag is provided, a SQL statement (as a string) will be returned for the user to further query the specified data, instead of returning actual data values. If used without a json filter, returns all data. Use of "--sql" is not supported when also using the flag, --expression-matrix/-em',
 )
 
 parser_extract_assay_expression.add_argument(
