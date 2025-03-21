@@ -25,13 +25,12 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, json, time
 import platform
-from collections.abc import MutableMapping
 from shutil import rmtree
 
 import dxpy
 from . import warn
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
-from ..compat import environ, expanduser
+from ..compat import MutableMapping
 from ..exceptions import format_exception
 from .printing import fill
 
@@ -93,17 +92,17 @@ class DXConfig(MutableMapping):
         :type suppress_warning: boolean
         """
         try:
-            dxpy._DEBUG = int(environ.get("_DX_DEBUG", 0))
+            dxpy._DEBUG = int(os.environ.get("_DX_DEBUG", 0))
         except ValueError as e:
-            warn("WARNING: Expected _DX_DEBUG to be an integer, but got", environ["_DX_DEBUG"])
+            warn("WARNING: Expected _DX_DEBUG to be an integer, but got", os.environ["_DX_DEBUG"])
             dxpy._DEBUG = 0
 
         try:
-            dxpy._INJECT_ERROR = bool(environ.get("_DX_INJECT_ERROR", 0))
+            dxpy._INJECT_ERROR = bool(os.environ.get("_DX_INJECT_ERROR", 0))
         except:
             dxpy._INJECT_ERROR = False
 
-        self._user_conf_dir = expanduser(environ.get("DX_USER_CONF_DIR", "~/.dnanexus_config"))
+        self._user_conf_dir = os.path.expanduser(os.environ.get("DX_USER_CONF_DIR", "~/.dnanexus_config"))
 
         dxpy._UPGRADE_NOTIFY = os.path.join(self._user_conf_dir, ".upgrade_notify")
         # If last upgrade notification was less than 24 hours ago, disable it
@@ -115,14 +114,14 @@ class DXConfig(MutableMapping):
         env_vars.update(self._read_conf_dir(self.get_session_conf_dir(cleanup=True)))
         env_overrides = []
         for var in self.VAR_NAMES:
-            if var in environ:
-                if var in env_vars and env_vars.get(var) != environ[var]:
+            if var in os.environ:
+                if var in env_vars and env_vars.get(var) != os.environ[var]:
                     env_overrides.append(var)
-                env_vars[var] = environ[var]
+                env_vars[var] = os.environ[var]
 
         for var in env_vars:
             if env_vars[var] is not None:
-                environ[var] = env_vars[var]
+                os.environ[var] = env_vars[var]
 
         if sys.stdout.isatty():
             if not suppress_warning and len(env_overrides) > 0:
@@ -136,26 +135,26 @@ class DXConfig(MutableMapping):
         self._sync_dxpy_state()
 
     def _sync_dxpy_state(self):
-        dxpy.set_api_server_info(host=environ.get("DX_APISERVER_HOST", None),
-                                 port=environ.get("DX_APISERVER_PORT", None),
-                                 protocol=environ.get("DX_APISERVER_PROTOCOL", None))
+        dxpy.set_api_server_info(host=os.environ.get("DX_APISERVER_HOST", None),
+                                 port=os.environ.get("DX_APISERVER_PORT", None),
+                                 protocol=os.environ.get("DX_APISERVER_PROTOCOL", None))
 
-        if "DX_SECURITY_CONTEXT" in environ:
-            dxpy.set_security_context(json.loads(environ["DX_SECURITY_CONTEXT"]))
+        if "DX_SECURITY_CONTEXT" in os.environ:
+            dxpy.set_security_context(json.loads(os.environ["DX_SECURITY_CONTEXT"]))
 
-        if "DX_JOB_ID" in environ:
-            dxpy.set_job_id(environ["DX_JOB_ID"])
-            dxpy.set_workspace_id(environ.get("DX_WORKSPACE_ID"))
+        if "DX_JOB_ID" in os.environ:
+            dxpy.set_job_id(os.environ["DX_JOB_ID"])
+            dxpy.set_workspace_id(os.environ.get("DX_WORKSPACE_ID"))
         else:
             dxpy.set_job_id(None)
-            dxpy.set_workspace_id(environ.get("DX_PROJECT_CONTEXT_ID"))
+            dxpy.set_workspace_id(os.environ.get("DX_PROJECT_CONTEXT_ID"))
         
-        if "DX_WATCH_PORT" in environ:
-            dxpy.set_watch_port(environ.get("DX_WATCH_PORT"))
+        if "DX_WATCH_PORT" in os.environ:
+            dxpy.set_watch_port(os.environ.get("DX_WATCH_PORT"))
         else:
             dxpy.set_watch_port(None)
 
-        dxpy.set_project_context(environ.get("DX_PROJECT_CONTEXT_ID"))
+        dxpy.set_project_context(os.environ.get("DX_PROJECT_CONTEXT_ID"))
 
     def get_global_conf_dir(self):
         return self._global_conf_dir
@@ -241,31 +240,31 @@ class DXConfig(MutableMapping):
     def __getitem__(self, item):
         if item not in self.VAR_NAMES:
             raise KeyError(item)
-        return environ[item]
+        return os.environ[item]
 
     def __setitem__(self, key, value):
         if key not in self.VAR_NAMES:
             raise KeyError(key)
         if value is None:
             value = self.defaults.get(key, "")
-        environ[key] = value
+        os.environ[key] = value
         if key in self.CORE_VAR_NAMES:
             self._sync_dxpy_state()
 
     def __delitem__(self, key):
         if key not in self.VAR_NAMES:
             raise KeyError(key)
-        del environ[key]
+        del os.environ[key]
         if key in self.CORE_VAR_NAMES:
             self._sync_dxpy_state()
 
     def __iter__(self):
         for item in self.VAR_NAMES:
-            if item in environ:
+            if item in os.environ:
                 yield item
 
     def __len__(self):
-        return len([var for var in self.VAR_NAMES if var in environ])
+        return len([var for var in self.VAR_NAMES if var in os.environ])
 
     def __repr__(self):
         desc = "<{module}.{classname} object at 0x{mem_loc:x}: {data}>"

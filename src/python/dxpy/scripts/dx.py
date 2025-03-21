@@ -25,7 +25,7 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-from ..compat import unwrap_stream, sys_encoding, basestring
+from ..compat import sys_encoding, basestring
 
 import dxpy
 from dxpy.scripts import dx_build_app
@@ -307,8 +307,7 @@ def login(args):
                     else:
                         username = input('Username: ')
                 dxpy.config.write("DX_USERNAME", username)
-                with unwrap_stream('stdin'):
-                    password = getpass.getpass()
+                password = getpass.getpass()
 
             otp = input('Verification code: ') if get_otp else None
             return dict(username=username, password=password, otp=otp)
