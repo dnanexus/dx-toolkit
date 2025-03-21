@@ -938,7 +938,7 @@ class DXFile(DXDataObject):
 
     def read(self, length=None, use_compression=None, project=None, **kwargs):
         # Check if the file is present in dxfile project attribute if the project arg not specified 
-        if project is None and not self._exists_in_proj and self.get_proj_id() is not None:
+        if project is None and self._exists_in_proj is None and self.get_proj_id() is not None:
             self._exists_in_proj = object_exists_in_project(self.get_id(), self.get_proj_id())
         # Use the DXFile attribute if the project arg is not provided
         if project is None and self._exists_in_proj:
