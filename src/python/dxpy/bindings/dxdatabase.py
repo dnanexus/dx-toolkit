@@ -23,18 +23,14 @@ This remote database handler is a Python database-like object.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, logging, traceback, hashlib, copy, time
-import math
-import mmap
+import os, copy, time
+from io import BytesIO
 from threading import Lock
 from multiprocessing import cpu_count
 
 import dxpy
 from . import DXDataObject
-from ..exceptions import DXFileError, DXIncompleteReadsError
-from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO, basestring, USING_PYTHON2
 from .. import logger
 
 
@@ -52,9 +48,9 @@ FILE_REQUEST_TIMEOUT = 60
 
 def _validate_headers(headers):
     for key, value in headers.items():
-        if not isinstance(key, basestring):
+        if not isinstance(key, (str, bytes)):
             raise ValueError("Expected key %r of headers to be a string" % (key,))
-        if not isinstance(value, basestring):
+        if not isinstance(value, (str, bytes)):
             raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
                              % (value, key))
     return headers

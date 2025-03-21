@@ -23,7 +23,8 @@ This remote file handler is a Python file-like object.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, logging, traceback, hashlib, copy, time
+import os, sys, traceback, copy, time
+from io import BytesIO
 import math
 import mmap
 from threading import Lock
@@ -34,7 +35,7 @@ from . import DXDataObject
 from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO, basestring, USING_PYTHON2, md5_hasher
+from ..compat import md5_hasher
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -52,9 +53,9 @@ PART_UPLOAD_REQUEST_TIMEOUT_SECONDS = 300
 
 def _validate_headers(headers):
     for key, value in headers.items():
-        if not isinstance(key, basestring):
+        if not isinstance(key, (str, bytes)):
             raise ValueError("Expected key %r of headers to be a string" % (key,))
-        if not isinstance(value, basestring):
+        if not isinstance(value, (str, bytes)):
             raise ValueError("Expected value %r of headers (associated with key %r) to be a string"
                              % (value, key))
     return headers
@@ -486,8 +487,7 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
-        if not USING_PYTHON2:
-            assert(isinstance(data, bytes))
+        assert(isinstance(data, bytes))
 
         self._ensure_write_bufsize(**kwargs)
 
@@ -544,31 +544,28 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
-        if USING_PYTHON2:
-            self._write2(data, multithread=multithread, **kwargs)
-        else:
-            # In python3, the underlying system methods use the 'bytes' type, not 'string'
-            #
-            # This is, hopefully, a temporary hack. It is not a good idea for two reasons:
-            # 1) Performance, we need to make a pass on the data, and need to allocate
-            #    another buffer of similar size
-            # 2) The types are wrong. The "bytes" type should be visible to the caller
-            #    of the write method, instead of being hidden.
+        # In python3, the underlying system methods use the 'bytes' type, not 'string'
+        #
+        # This is, hopefully, a temporary hack. It is not a good idea for two reasons:
+        # 1) Performance, we need to make a pass on the data, and need to allocate
+        #    another buffer of similar size
+        # 2) The types are wrong. The "bytes" type should be visible to the caller
+        #    of the write method, instead of being hidden.
 
-            # Should we throw an exception if the file is opened in binary mode,
-            # and the data is unicode/text?
-            if isinstance(data, str):
-                bt = data.encode("utf-8")
-            elif isinstance(data, bytearray):
-                bt = bytes(data)
-            elif isinstance(data, bytes):
-                bt = data
-            elif isinstance(data, mmap.mmap):
-                bt = bytes(data)
-            else:
-                raise DXFileError("Invalid type {} for write data argument".format(type(data)))
-            assert(isinstance(bt, bytes))
-            self._write2(bt, multithread=multithread, **kwargs)
+        # Should we throw an exception if the file is opened in binary mode,
+        # and the data is unicode/text?
+        if isinstance(data, str):
+            bt = data.encode("utf-8")
+        elif isinstance(data, bytearray):
+            bt = bytes(data)
+        elif isinstance(data, bytes):
+            bt = data
+        elif isinstance(data, mmap.mmap):
+            bt = bytes(data)
+        else:
+            raise DXFileError("Invalid type {} for write data argument".format(type(data)))
+        assert(isinstance(bt, bytes))
+        self._write2(bt, multithread=multithread, **kwargs)
 
     def closed(self, **kwargs):
         '''
@@ -604,10 +601,7 @@ class DXFile(DXDataObject):
             # settings allow last empty part upload, try to upload
             # an empty part (otherwise files with 0 parts cannot be closed).
             try:
-                if USING_PYTHON2:
-                    self.upload_part('', 1, **kwargs)
-                else:
-                    self.upload_part(b'', 1, **kwargs)
+                self.upload_part(b'', 1, **kwargs)
             except dxpy.exceptions.InvalidState:
                 pass
 
@@ -646,9 +640,7 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-        if not USING_PYTHON2:
-            # In python3, the underlying system methods use the 'bytes' type, not 'string'
-            assert(isinstance(data, bytes))
+        assert(isinstance(data, bytes))
 
         req_input = {}
         if index is not None:
@@ -944,8 +936,6 @@ class DXFile(DXDataObject):
         if project is None and object_exists_in_project(self.get_id(), self.get_proj_id()):
             project = self.get_proj_id()
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
-        if USING_PYTHON2:
-            return data
         # In python3, the underlying system methods use the 'bytes' type, not 'string'
         if self._binary_mode is True:
             return data

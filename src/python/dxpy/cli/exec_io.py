@@ -33,7 +33,6 @@ from ..utils.describe import (get_find_executions_string, get_ls_l_desc, get_ls_
 from ..utils.resolver import (parse_input_keyval, is_hashid, is_job_id, is_localjob_id, paginate_and_pick, pick,
                               resolve_existing_path, resolve_multiple_existing_paths, split_unescaped, is_analysis_id)
 from ..utils import OrderedDefaultdict
-from ..compat import input, str, shlex, basestring, USING_PYTHON2
 try:
     # Import gnureadline if installed for macOS
     import gnureadline as readline
@@ -513,7 +512,7 @@ class ExecutableInputs(object):
             entity_result = results[input_value]['name']
             if input_class is None:
                 if entity_result is not None:
-                    if isinstance(entity_result, basestring):
+                    if isinstance(entity_result, (str, bytes)):
                         # Case: -ifoo=job-012301230123012301230123
                         # Case: -ifoo=analysis-012301230123012301230123
                         assert(is_job_id(entity_result) or
@@ -604,8 +603,6 @@ class ExecutableInputs(object):
                 try:
                     parsed_input_value = json.loads(input_value, object_pairs_hook=collections.OrderedDict)
                     immediate_types = {collections.OrderedDict, list, int, float}
-                    if USING_PYTHON2:
-                        immediate_types.add(long) # noqa
                     if type(parsed_input_value) not in immediate_types:
                         raise Exception()
                 except:

@@ -46,10 +46,9 @@ from ..utils.completer import LocalCompleter
 from ..app_categories import APP_CATEGORIES
 from ..exceptions import err_exit
 from ..utils.printing import BOLD
-from ..compat import open, USING_PYTHON2, decode_command_line_args, basestring
+from ..compat import USING_PYTHON2
 from ..cli.parsers import process_extra_args
 
-decode_command_line_args()
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 
@@ -133,7 +132,7 @@ def _check_suggestions(app_json, publish=False):
                                 if e.code == 404:
                                     logger.warn('Suggested project {name} does not exist, or not accessible by user'.format(
                                                  name=suggestion['value']['$dnanexus_link']['project']))
-                    elif isinstance(suggestion['value']['$dnanexus_link'], basestring):
+                    elif isinstance(suggestion['value']['$dnanexus_link'], (str, bytes)):
                         if suggestion['value']['$dnanexus_link'].startswith(('file-', 'record-')):
                             try:
                                 dnanexus_link = dxpy.describe(suggestion['value']['$dnanexus_link'])
@@ -274,8 +273,6 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         # problems.
         pyc_path = os.path.join(temp_dir, os.path.basename(filename) + ".pyc")
         try:
-            if USING_PYTHON2:
-                filename = filename.encode(sys.getfilesystemencoding())
             py_compile.compile(filename, cfile=pyc_path, doraise=True)
         finally:
             try:
@@ -300,8 +297,6 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         # don't enforce and ignore if the shebang is ambiguous and we're not sure
         # that the file version is the same as the one we're running
         read_mode = "r"
-        if USING_PYTHON2:
-            read_mode = "rb"
         with open(filename, read_mode) as f:
             first_line = f.readline()
             if not (('python3' in first_line and not USING_PYTHON2) or
@@ -322,10 +317,7 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         checker_fn(filename)
     except subprocess.CalledProcessError as e:
         print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
-        if USING_PYTHON2:
-            errmsg = e.output
-        else:
-            errmsg = _error_message_to_string(e, e.output)
+        errmsg = _error_message_to_string(e, e.output)
         for line in errmsg.strip("\n").split("\n"):
             print("  " + line.rstrip("\n"), file=sys.stderr)
         if enforce:
@@ -334,10 +326,7 @@ def _check_file_syntax(filename, temp_dir, override_lang=None, enforce=True):
         if python_unsure:
             print("Unsure if " + filename + " is using Python 2 or Python 3, the following error might not be relevant", file=sys.stderr)
         print(filename + " has a syntax error! Interpreter output:", file=sys.stderr)
-        if USING_PYTHON2:
-            errmsg = e.msg
-        else:
-            errmsg = _error_message_to_string(e, e.msg)
+        errmsg = _error_message_to_string(e, e.msg)
         print("  " + errmsg.strip(), file=sys.stderr)
         if enforce:
             raise DXSyntaxError(e.msg.strip())
@@ -407,10 +396,10 @@ def _verify_app_source_dir_impl(src_dir, temp_dir, mode, enforce=True):
                     raise dxpy.app_builder.AppBuilderException(msg)
 
     if 'authorizedUsers' in manifest:
-        if not isinstance(manifest['authorizedUsers'], list) or isinstance(manifest['authorizedUsers'], basestring):
+        if not isinstance(manifest['authorizedUsers'], list) or isinstance(manifest['authorizedUsers'], (str, bytes)):
             raise dxpy.app_builder.AppBuilderException('Expected authorizedUsers to be a list of strings')
         for thing in manifest['authorizedUsers']:
-            if thing != 'PUBLIC' and (not isinstance(thing, basestring) or not re.match("^(org-|user-)", thing)):
+            if thing != 'PUBLIC' and (not isinstance(thing, (str, bytes)) or not re.match("^(org-|user-)", thing)):
                 raise dxpy.app_builder.AppBuilderException('authorizedUsers field contains an entry which is not either the string "PUBLIC" or a user or org ID')
 
     if "pricingPolicy" in manifest:
