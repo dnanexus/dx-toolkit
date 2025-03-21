@@ -19,9 +19,9 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import re, collections
+import re
+from collections.abc import Mapping
 from .printing import (GREEN, BLUE, YELLOW, WHITE, BOLD, ENDC)
-from ..compat import str, Mapping
 
 TIME_UNITS = [
     ('miliseconds', 1000),

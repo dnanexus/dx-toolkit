@@ -22,9 +22,10 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, json, collections, concurrent.futures, traceback, sys, time, gc, platform
 from multiprocessing import cpu_count
+from collections.abc import Mapping
 import dateutil.parser
 from .. import logger
-from ..compat import basestring, THREAD_TIMEOUT_MAX, Mapping
+from ..compat import basestring, THREAD_TIMEOUT_MAX
 from ..exceptions import DXError
 import numbers
 import binascii

@@ -26,11 +26,11 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import os, sys, json, time
 import platform
 from shutil import rmtree
+from collections.abc import MutableMapping
 
 import dxpy
 from . import warn
 from .. import DEFAULT_APISERVER_PROTOCOL, DEFAULT_APISERVER_HOST, DEFAULT_APISERVER_PORT
-from ..compat import MutableMapping
 from ..exceptions import format_exception
 from .printing import fill
 

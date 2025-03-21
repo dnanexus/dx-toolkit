@@ -17,11 +17,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import sys, locale, threading, hashlib
-try:
-    # Python >= 3.9 
-    from collections.abc import MutableMapping
-except ImportError:
-    from collections import MutableMapping
+
 try:
     sys_encoding = locale.getdefaultlocale()[1] or "UTF-8"
 except Exception:
