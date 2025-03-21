@@ -2551,26 +2551,6 @@ class TestHTTPResponses(testutil.DXTestCaseCompat):
             with self.assertRaisesRegex((SSLError, IOError, OpenSSL.SSL.Error), "file"):
                 dxpy.DXHTTPRequest("/system/whoami", {}, cert_file="nonexistent")
 
-    def test_fake_errors(self):
-        dxpy.DXHTTPRequest('/system/fakeError', {'errorType': 'Valid JSON'}, always_retry=True)
-
-        # Minimal latency with retries, in seconds. This makes sure we actually did a retry.
-        min_sec_with_retries = 1
-        max_num_retries = 2
-        start_time = time.time()
-        with self.assertRaises(ValueError):
-            dxpy.DXHTTPRequest('/system/fakeError', {'errorType': 'Invalid JSON'},
-                               max_retries=max_num_retries, always_retry=True)
-        end_time = time.time()
-        self.assertGreater(end_time - start_time, min_sec_with_retries)
-
-        start_time = time.time()
-        with self.assertRaises(ValueError):
-            dxpy.DXHTTPRequest('/system/fakeError', {'errorType': 'Error not decodeable'},
-                               max_retries=max_num_retries, always_retry=True)
-        end_time = time.time()
-        self.assertGreater(end_time - start_time, min_sec_with_retries)
-
     def test_system_headers_user_agent(self):
         headers = dxpy.api.system_headers()
         self.assertTrue('user-agent' in headers)

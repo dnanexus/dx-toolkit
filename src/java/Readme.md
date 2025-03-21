@@ -19,7 +19,18 @@ apt-get install maven
 ````
 
 ```bash
+# if you don't have openjdk installed maven installation will install the latest version
 brew install maven
+
+# if you already have one jdk and don't want to have multiple versions
+brew install --ignore-dependencies maven
+
+# if Java was installed with brew check that symlink is correct, e.g. for openjdk@11
+sudo ln -sfn /opt/homebrew/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
+# verify with
+java -version
+# Make sure you have JAVA_HOME set for Maven
+export JAVA_HOME=$(/usr/libexec/java_home -V)
 ```
 
 ### Building

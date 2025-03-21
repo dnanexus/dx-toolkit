@@ -8,9 +8,19 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
-* Preserve newlines in file iterator for large files
+* Update parsing of nextflow_schema.json file to be compatible with new schema convention
 
-## [392.0] - beta
+## [393.0] - beta
+
+### Fixed
+
+* Preserve newlines in dxpy file iterator for large files
+
+### Changed
+
+* Retry requests when received 429 response status code in Python, Java SDKs
+
+## [392.0] - 2025.03.10
 
 ### Fixed
 
@@ -20,7 +30,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dx-app-wizard generates template with AEE 24.04 by default
 
-## [391.0] - 2024.03.03
+## [391.0] - 2025.03.03
 
 ### Added
 
