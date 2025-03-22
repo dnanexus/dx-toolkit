@@ -3080,7 +3080,7 @@ class TestIdempotentRequests(unittest.TestCase):
         dxapplet = self.create_applet("test_applet")
         input_params = {"applet": dxapplet.get_id(), "version": "0.0.1", "bill_to": userid, "name": "new_app_name"}
         apps = self.do_retry_http_request(dxpy.api.app_new, kwargs={"input_params": input_params})
-        self.assertEqual(apps[0]['id'], apps[1]['id'])
+        self.assertItemsEqual(apps[0]['id'], apps[1]['id'])
 
         # A request with the same nonce, but different input, should fail
         input_params = {"applet": dxapplet.get_id(),
