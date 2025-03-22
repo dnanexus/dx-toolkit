@@ -1964,6 +1964,25 @@ dxpy.run()
         run("cd {wd}; rm test; touch test".format(wd=wd))
         run("cd {wd}; dx download -f test".format(wd=wd))
         assert_md5_checksum(os.path.join(wd, "test"), hashlib.md5(part1 + part2))
+        
+    def test_dx_download_api_call_count(self):
+        """
+        Ensure that dx download does not make more than 4 API calls as observed in _DX_DEBUG output.
+        """
+        with chdir(tempfile.mkdtemp()):
+            # Create a test file and upload it
+            test_file = dxpy.upload_string("test content", name="test_file", project=self.project, wait_on_close=True)
+            test_file_id = test_file.get_id()
+
+            # Run dx download with _DX_DEBUG enabled
+            (stdout, stderr) = run(f"_DX_DEBUG=1 dx download {test_file_id}", also_return_stderr=True)
+
+            # Count the number of API calls in the debug output
+            api_call_count = len([line for line in stderr.splitlines() if line.startswith(">") and dxpy.APISERVER in line])
+
+            # Assert that no more than 4 API calls were made
+            self.assertLessEqual(api_call_count, 4, f"dx download made {api_call_count} API calls, exceeding the limit of 4.\n_DX_DEBUG:\n{stderr}")
+
 
 
 class TestDXClientDownloadDataEgressBilling(DXTestCase):
