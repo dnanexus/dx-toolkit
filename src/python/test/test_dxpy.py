@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, unittest, tempfile, filecmp, time, json, sys
+import os, unittest, tempfile, filecmp, time, json, sys, random
 import shutil
 import string
 import subprocess
@@ -27,6 +27,7 @@ import platform
 import pytest
 import re
 import certifi
+from mock import patch
 
 from urllib3.exceptions import SSLError, NewConnectionError
 
@@ -859,6 +860,47 @@ class TestDXFile(testutil.DXTestCaseCompat):
             dxpy.WORKSPACE_ID = workspace_id
 
         del os.environ['DX_JOB_ID']
+    
+    def test_dxfile_read_api_call_count(self):
+        """
+        Ensure that dxfile.read() does not make more than 4 API calls by counting DXHTTPRequest invocations
+        """
+        print(sys.version)
+        with testutil.temporary_project() as project:
+            # Create a random 1KiB upload string
+            upload_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=1024))
+            dxfile = dxpy.upload_string(upload_string, project=project.get_id(), wait_on_close=True)
+
+            # Patch DXHTTPRequest to count its invocations
+            with patch("dxpy.DXHTTPRequest", wraps=dxpy.DXHTTPRequest) as mock_request:
+                # DXFile instantiated with project-id
+                dxfile.read()
+                # Count the number of DXHTTPRequest calls
+                api_call_count = mock_request.call_count
+                print(f"dxfile.read() made {api_call_count} API calls")
+                self.assertLessEqual(api_call_count, 4, f"dxfile.read() made {api_call_count} API calls, exceeding the limit.")
+                mock_request.reset_mock()
+
+                # DXFile instantiated without project-id
+                dxfile = dxpy.DXFile(dxfile.get_id(), project=None)
+                dxfile.read()
+                api_call_count = mock_request.call_count
+                print(f"dxfile.read() made {api_call_count} API calls")
+                self.assertLessEqual(api_call_count, 4, f"dxfile.read() made {api_call_count} API calls, exceeding the limit.")
+                mock_request.reset_mock()
+
+                # Call DXFile.read() 1024 times
+                dxfile = dxpy.DXFile(dxfile.get_id(), project=project.get_id())
+                while True:
+                    data = dxfile.read(1)
+                    if not data:
+                        break
+                api_call_count = mock_request.call_count
+                print(f"dxfile.read() made {api_call_count} API calls")
+                self.assertLessEqual(api_call_count, 4, f"dxfile.read() made {api_call_count} API calls, exceeding the limit.")
+                mock_request.reset_mock()
+
+    
 
 
 class TestFolder(unittest.TestCase):
