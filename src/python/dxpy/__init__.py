@@ -353,11 +353,12 @@ def _calculate_retry_delay(response, num_attempts):
     '''
     if response is not None and response.status in (503, 429) and 'retry-after' in response.headers:
         try:
-            suggested_delay = int(response.headers['retry-after']) # 20-30 seconds
+            suggested_delay = int(response.headers['retry-after'])
 
             # By default, apiserver doesn't track attempts and doesn't provide increased timeout over attempts.
             # So, increasing backoff for throttled requests up to x5 times from the original one.
-            # After 20th attempt delay will be from 100 to 150 seconds.
+            # The current implementation of apiserver returns a retry-after header ranging from 20 to 30 seconds.
+            # Thus, after the 20th attempt the delay will always be between 100 and 150 seconds.
             return suggested_delay if suggested_delay >= 60 \
                 else suggested_delay + 0.25 * min(num_attempts - 1, 20) * suggested_delay
         except ValueError:
@@ -367,7 +368,8 @@ def _calculate_retry_delay(response, num_attempts):
             pass
     if num_attempts <= 1:
         return 1
-    num_attempts = min(num_attempts, 8) # after 8th attempt delay will be from 64 to 128 seconds
+    num_attempts = min(num_attempts, 8)
+    # After the 8th attempt the delay will always be between 64 and 128 seconds
     return randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1))
 
 
