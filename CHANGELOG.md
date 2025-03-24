@@ -22,6 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Retry requests when received 429 response status code in Python, Java SDKs
+* Increased timeout to retry throttled requests over attempts 
 
 ## [392.0] - 2025.03.10
 
