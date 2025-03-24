@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Update parsing of nextflow_schema.json file to be compatible with new schema convention
 
+### Changed
+
+* Optimized `dx extract_assay expression` to match assays with new generalized_assay_model_version 1.1. Backwards compatible.
+
 ## [393.0] - beta
 
 ### Fixed
