@@ -12,7 +12,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [394.0] - beta
 
-* 
 ### Fixed
 
 * Update parsing of nextflow_schema.json file to be compatible with new schema convention
