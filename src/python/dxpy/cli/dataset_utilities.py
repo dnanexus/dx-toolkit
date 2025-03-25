@@ -1434,7 +1434,14 @@ def extract_assay_expression(args):
         except Exception as e:
             err_exit(str(e))
 
-    if user_filters_json == {}:
+    # If --sql flag is provided, filter JSON is optional. If not present, all data must be returned
+    if args.sql and not args.filter_json and not args.filter_json_file:
+        return_all_data = True
+        user_filters_json = {}
+    else:
+        return_all_data = False
+
+    if not user_filters_json and not return_all_data:
         err_exit(
             "No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information."
         )
@@ -1462,11 +1469,13 @@ def extract_assay_expression(args):
             "ending_position"
         ]["type"] = unicode
 
-    # Validate filters JSON provided by the user according to a predefined schema
-    input_json_validator = JSONValidator(
-        schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit
-    )
-    input_json_validator.validate(input_json=user_filters_json)
+    # In case --sql flag is provided but no input json, function should return all data
+    if user_filters_json:
+        # Validate filters JSON provided by the user according to a predefined schema
+        input_json_validator = JSONValidator(
+            schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit
+        )
+        input_json_validator.validate(input_json=user_filters_json)
 
 
     if args.assay_name:
@@ -1494,9 +1503,9 @@ def extract_assay_expression(args):
         else:
             filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
 
-    # When location filter is used and version is 1.1, queries should not use optimized table
+    # When location filter is used and version is 1.1, or all data must be returned queries should not use optimized table
     # Genomic range limits must be applied. However, when using --sql limits may be ignored.
-    if "location" in user_filters_json:
+    if "location" in user_filters_json or return_all_data:
 
         if generalized_assay_model_version == "1.1":
             filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
@@ -1515,7 +1524,6 @@ def extract_assay_expression(args):
                 window_width=250000000,
                 check_each_separately=False,
             )
-
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
         schema=filter_schema,
