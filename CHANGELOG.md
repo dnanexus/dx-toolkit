@@ -6,11 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [394.0] - beta
+
 ### Fixed
 
 * Update parsing of nextflow_schema.json file to be compatible with new schema convention
+* `DXFile.read()` increase in API calls introduced in 392.0
 
-## [393.0] - beta
+## [393.0] - 2025.03.24
 
 ### Fixed
 
