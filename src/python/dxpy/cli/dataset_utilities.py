@@ -1441,7 +1441,7 @@ def extract_assay_expression(args):
     else:
         return_all_data = False
 
-    if user_filters_json == {} and not return_all_data:
+    if not user_filters_json and not return_all_data:
         err_exit(
             "No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information."
         )
@@ -1470,7 +1470,7 @@ def extract_assay_expression(args):
         ]["type"] = unicode
 
     # In case --sql flag is provided but no input json, function should return all data
-    if not return_all_data:
+    if user_filters_json:
         # Validate filters JSON provided by the user according to a predefined schema
         input_json_validator = JSONValidator(
             schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit
