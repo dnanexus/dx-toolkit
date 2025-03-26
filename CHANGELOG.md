@@ -6,23 +6,30 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-### Fixed
+### Changed
 
-* Update parsing of nextflow_schema.json file to be compatible with new schema convention
+* Increased timeout to retry throttled requests over attempts
 
 ### Added
 
 * Released Nextaur 1.10.1: Added limit for number of upload retries
 
-## [393.0] - beta
+## [394.0] - beta
+
+### Fixed
+
+* Update parsing of nextflow_schema.json file to be compatible with new schema convention
+* `DXFile.read()` increase in API calls introduced in 392.0
+
+### Changed
+
+* Retry requests when received 429 response status code in Python, Java SDKs
+
+## [393.0] - 2025.03.24
 
 ### Fixed
 
 * Preserve newlines in dxpy file iterator for large files
-
-### Changed
-
-* Retry requests when received 429 response status code
 
 ## [392.0] - 2025.03.10
 
