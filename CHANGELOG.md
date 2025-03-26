@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Increased timeout to retry throttled requests over attempts
 
+### Added
+
+* Released Nextaur 1.10.1: Added limit for number of upload retries
+
 ## [394.0] - beta
 
 ### Fixed
@@ -43,7 +47,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dxpy download of symlink files verify per part checksums
 * Ubuntu version can be overridden for Nextflow pipelines during build time with `dx build --nextflow --extra-args={"runSpec":{"release":"..."}}`
-* Nextaur 1.10.1: Default version of Ubuntu is 24.04, assets built on Ubuntu 24.04
+* Nextaur 1.10.0: Default version of Ubuntu is 24.04, assets built on Ubuntu 24.04
 
 ### Changed
 
