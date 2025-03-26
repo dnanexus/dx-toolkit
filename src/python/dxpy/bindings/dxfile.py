@@ -253,6 +253,8 @@ class DXFile(DXDataObject):
         self._file_length = None
         self._cur_part = 1
         self._num_uploaded_parts = 0
+        # Cache for object existence in project
+        self._exists_in_proj = None  
 
     def _new(self, dx_hash, media_type=None, **kwargs):
         """
@@ -314,39 +316,19 @@ class DXFile(DXDataObject):
             raise
 
     def __iter__(self):
-        _buffer = self.read(self._read_bufsize)
-        done = False
-        if USING_PYTHON2:
-            while not done:
-                if b"\n" in _buffer:
-                    lines = _buffer.splitlines()
-                    for i in range(len(lines) - 1):
-                        yield lines[i]
-                    _buffer = lines[len(lines) - 1]
-                else:
-                    more = self.read(self._read_bufsize)
-                    if more == b"":
-                        done = True
-                    else:
-                        _buffer = _buffer + more
-        else:
-            if self._binary_mode:
-                raise DXFileError("Cannot read lines when file opened in binary mode")
-            # python3 is much stricter about distinguishing
-            # 'bytes' from 'str'.
-            while not done:
-                if "\n" in _buffer:
-                    lines = _buffer.splitlines()
-                    for i in range(len(lines) - 1):
-                        yield lines[i]
-                    _buffer = lines[len(lines) - 1]
-                else:
-                    more = self.read(self._read_bufsize)
-                    if more == "":
-                        done = True
-                    else:
-                        _buffer = _buffer + more
-
+        _buffer = ""
+        if self._binary_mode:
+            raise DXFileError("Cannot read lines when file opened in binary mode")
+        while True:
+            more = self.read(self._read_bufsize)
+            if not more:
+                break
+            _buffer += more
+            parts = _buffer.split("\n")
+            for i in range(len(parts) - 1):
+                yield parts[i]
+            # The final piece may be incomplete, so keep it in the buffer
+            _buffer = parts[-1]
         if _buffer:
             yield _buffer
 
@@ -954,18 +936,14 @@ class DXFile(DXDataObject):
             buf.seek(orig_buf_pos)
             return buf.read()
 
-        # Debug fallback
-        # import urllib2
-        # req = urllib2.Request(url, headers=headers)
-        # response = urllib2.urlopen(req)
-        # return response.read()
-
     def read(self, length=None, use_compression=None, project=None, **kwargs):
-        if project is None and object_exists_in_project(self.get_id(), self.get_proj_id()):
+        # Check if the file is present in dxfile project attribute if the project arg not specified 
+        if project is None and self._exists_in_proj is None and self.get_proj_id() is not None:
+            self._exists_in_proj = object_exists_in_project(self.get_id(), self.get_proj_id())
+        # Use the DXFile attribute if the project arg is not provided
+        if project is None and self._exists_in_proj:
             project = self.get_proj_id()
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
-        if USING_PYTHON2:
-            return data
         # In python3, the underlying system methods use the 'bytes' type, not 'string'
         if self._binary_mode is True:
             return data

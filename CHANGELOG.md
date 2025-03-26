@@ -6,7 +6,32 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [392.0] - beta
+### Changed
+
+* Increased timeout to retry throttled requests over attempts
+
+### Added
+
+* Released Nextaur 1.10.1: Added limit for number of upload retries
+
+## [394.0] - beta
+
+### Fixed
+
+* Update parsing of nextflow_schema.json file to be compatible with new schema convention
+* `DXFile.read()` increase in API calls introduced in 392.0
+
+### Changed
+
+* Retry requests when received 429 response status code in Python, Java SDKs
+
+## [393.0] - 2025.03.24
+
+### Fixed
+
+* Preserve newlines in dxpy file iterator for large files
+
+## [392.0] - 2025.03.10
 
 ### Fixed
 
@@ -16,13 +41,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dx-app-wizard generates template with AEE 24.04 by default
 
-## [391.0] - 2024.03.03
+## [391.0] - 2025.03.03
 
 ### Added
 
 * dxpy download of symlink files verify per part checksums
 * Ubuntu version can be overridden for Nextflow pipelines during build time with `dx build --nextflow --extra-args={"runSpec":{"release":"..."}}`
-* Nextaur 1.10.1: Default version of Ubuntu is 24.04, assets built on Ubuntu 24.04
+* Nextaur 1.10.0: Default version of Ubuntu is 24.04, assets built on Ubuntu 24.04
 
 ### Changed
 

@@ -351,9 +351,16 @@ def _calculate_retry_delay(response, num_attempts):
         resource, including the most recent failed one
     :type num_attempts: int
     '''
-    if response is not None and response.status == 503 and 'retry-after' in response.headers:
+    if response is not None and response.status in (503, 429) and 'retry-after' in response.headers:
         try:
-            return int(response.headers['retry-after'])
+            suggested_delay = int(response.headers['retry-after'])
+
+            # By default, apiserver doesn't track attempts and doesn't provide increased timeout over attempts.
+            # So, increasing backoff for throttled requests up to x5 times from the original one.
+            # The current implementation of apiserver returns a retry-after header ranging from 20 to 30 seconds.
+            # Thus, after the 20th attempt the delay will always be between 100 and 150 seconds.
+            return suggested_delay if suggested_delay >= 60 \
+                else suggested_delay + 0.25 * min(num_attempts - 1, 20) * suggested_delay
         except ValueError:
             # In RFC 2616, retry-after can be formatted as absolute time
             # instead of seconds to wait. We don't bother to parse that,
@@ -361,7 +368,8 @@ def _calculate_retry_delay(response, num_attempts):
             pass
     if num_attempts <= 1:
         return 1
-    num_attempts = min(num_attempts, 7)
+    num_attempts = min(num_attempts, 8)
+    # After the 8th attempt the delay will always be between 64 and 128 seconds
     return randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1))
 
 
@@ -553,10 +561,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
     # Maintain two separate counters for the number of tries...
 
-    try_index = 0  # excluding 503 errors. The number of tries as given here
+    try_index = 0  # excluding 503/429 errors. The number of tries as given here
                    # cannot exceed (max_retries + 1).
-    try_index_including_503 = 0  # including 503 errors. This number is used to
-                                 # do exponential backoff.
+    try_index_including_throttled = 0  # including 503/429 errors. This number is used to
+                                       # do exponential backoff.
 
     retried_responses = []
     _url = None
@@ -730,7 +738,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                        or isinstance(e, _RETRYABLE_WITH_RESPONSE)):
                         ok_to_retry = is_retryable
                     else:
-                        ok_to_retry = 500 <= response.status < 600
+                        ok_to_retry = response.status == 429 or 500 <= response.status < 600
 
                     # The server has closed the connection prematurely
                     if (response is not None
@@ -753,10 +761,10 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     if rewind_input_buffer_offset is not None:
                         data.seek(rewind_input_buffer_offset)
 
-                    delay = _calculate_retry_delay(response, try_index_including_503 + 1)
+                    delay = _calculate_retry_delay(response, try_index_including_throttled + 1)
 
                     range_str = (' (range=%s)' % (headers['Range'],)) if 'Range' in headers else ''
-                    if response is not None and response.status == 503:
+                    if response is not None and response.status in (503, 429):
                         waiting_msg = 'Waiting %d seconds before retry...' % (delay,)
                     else:
                         waiting_msg = 'Waiting %d seconds before retry %d of %d...' % (
@@ -768,8 +776,8 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
 
                     logger.warning(log_msg)
                     time.sleep(delay)
-                    try_index_including_503 += 1
-                    if response is None or response.status != 503:
+                    try_index_including_throttled += 1
+                    if response is None or response.status not in (503, 429):
                         try_index += 1
                     continue
 
