@@ -20,7 +20,7 @@
 dxEnv <- new.env()
 
 kAPIVersion <- '1.0.0'
-kNumMaxRetries <- 5
+kNumMaxRetries <- 10
 
 envVariables <- c('DX_APISERVER_HOST',
                   'DX_APISERVER_PORT',
@@ -167,10 +167,14 @@ dxHTTPRequest <- function(resource, data,
 
   h <- RCurl::basicTextGatherer()
   d <- RCurl::basicHeaderGatherer()
-  secondsToWait <- 2
-  for (i in 1:(kNumMaxRetries + 1)) {
+  exponentialSecondsToWait <- 2
+  attempts <- 0
+  attemptsWithThrottling <- 0
+  while (TRUE) {
+    secondsToWait <- exponentialSecondsToWait
     toRetry <- FALSE
     curlRetry <- FALSE
+    isThrottlingError <- FALSE
 
     curlResult <- tryCatch({
       RCurl::curlPerform(url=url,
@@ -220,8 +224,23 @@ dxHTTPRequest <- function(resource, data,
           # No Content-Length header && invalid JSON -> retry
           toRetry <- TRUE
         }
-      } else if (statusCode >= 500 && statusCode <= 599) {
+      } else if (statusCode == 429 || statusCode >= 500) {
         toRetry <- TRUE
+
+        if ('retry-after' %in% names(d$value())) {
+          suggestSecondsToWait <- as.numeric(d$value()['retry-after'])
+
+          if (!is.na(suggestSecondsToWait) && suggestSecondsToWait < 120) {
+            isThrottlingError <- TRUE
+
+            # By default, apiserver doesn't track attempts and doesn't provide increased timeout over attempts.
+            # So, increasing backoff for throttled requests up to x5 times from the original one.
+            # The current implementation of apiserver returns a Retry-After header ranging from 20 to 30 seconds.
+            # Thus, after the 20th attempt the delay will always be between 100 and 150 seconds.
+            incrementedBackoff <- as.integer(0.25 * min(20, attemptsWithThrottling) * suggestSecondsToWait)
+            secondsToWait <- suggestSecondsToWait + incrementedBackoff
+          }
+        }
       } else {
         if (RJSONIO::isValidJSON(h$value(), TRUE)) {
           errorHash <- RJSONIO::fromJSON(h$value())
@@ -241,26 +260,39 @@ dxHTTPRequest <- function(resource, data,
       }
     }
 
-    if (toRetry && i < kNumMaxRetries) {
-      if (curlRetry) {
-        write(paste("WARNING: POST", url, "had an error:", curlResult$message),
-              stderr())
-      } else {
-        write(paste("WARNING: POST", url, "returned with HTTP code",
-                    statusCode, "and body", h$value()),
-              stderr())
-      }
-      write(paste("Waiting", secondsToWait, "seconds before retry",
-                  i, "of", kNumMaxRetries, "..."),
-            stderr())
-      Sys.sleep(secondsToWait)
-    } else if (toRetry) {
-      stop(paste("POST", url, "was unsuccessful; out of retries"),
-           call.=FALSE)
+    # Throttling errors can be retried indefinitely if there is alwaysRetry
+    if (
+      !toRetry ||
+      (attempts >= kNumMaxRetries && (!isThrottlingError || !alwaysRetry))
+    ) {
+      stop(paste("POST", url, "was unsuccessful; out of retries"), call.=FALSE)
     }
 
-    secondsToWait <- 2 * secondsToWait
-    # Reset gatherers for next retry
+    errorMsg <- ifelse(
+      curlRetry,
+      paste("WARNING: POST", url, "had an error:", curlResult$message),
+      paste("WARNING: POST", url, "returned with HTTP code", statusCode, "and body", h$value())
+    )
+    throttlingErrorMsg <- ifelse(
+      isThrottlingError && alwaysRetry,
+      paste("Waiting", secondsToWait, "seconds before retry after", attemptsWithThrottling + 1, "attempts ..."),
+      paste("Waiting", secondsToWait, "seconds before retry", attempts + 1, "of", kNumMaxRetries, "...")
+    )
+
+    write(errorMsg, stderr())
+    write(throttlingErrorMsg, stderr())
+    Sys.sleep(secondsToWait)
+
+    attemptsWithThrottling <- attemptsWithThrottling + 1
+    if (!isThrottlingError || !alwaysRetry) {
+      attempts <- attempts + 1
+
+      if (attempts < 7) {
+        # Max exponential backoff is 64 seconds
+        exponentialSecondsToWait <- 2 * exponentialSecondsToWait
+      }
+    }
+
     h$reset()
     d$reset()
   }
