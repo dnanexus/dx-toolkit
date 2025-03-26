@@ -42,9 +42,10 @@ Supported languages
 
 The Platform SDK contains API language bindings for the following platforms:
 
-* [Python](src/python/Readme.md) (requires Python 3.8 or higher)
-* C++
-* [Java](src/java/Readme.md) (requires Java 7 or higher)
+* [Python](src/python) (requires Python 3.8 or higher)
+* [C++](src/cpp)
+* [Java](src/java) (requires Java 7 or higher)
+* [R](src/R)
 
 Build dependencies for C++ and Java
 ------------------

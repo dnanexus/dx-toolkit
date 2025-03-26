@@ -8,6 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
+* Retry requests when received 429 response status code in R SDK
 * Increased timeout to retry throttled requests over attempts
 
 ### Added

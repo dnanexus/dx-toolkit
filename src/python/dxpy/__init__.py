@@ -360,7 +360,7 @@ def _calculate_retry_delay(response, num_attempts):
             # The current implementation of apiserver returns a retry-after header ranging from 20 to 30 seconds.
             # Thus, after the 20th attempt the delay will always be between 100 and 150 seconds.
             return suggested_delay if suggested_delay >= 60 \
-                else suggested_delay + 0.25 * min(num_attempts - 1, 20) * suggested_delay
+                else suggested_delay + int(0.25 * min(num_attempts - 1, 20) * suggested_delay)
         except ValueError:
             # In RFC 2616, retry-after can be formatted as absolute time
             # instead of seconds to wait. We don't bother to parse that,
