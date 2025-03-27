@@ -24,7 +24,7 @@ from .describe import (get_field_from_jbor, get_job_from_jbor, get_index_from_jb
                        is_job_ref, job_output_to_str, JOB_STATES)
 from .printing import (GREEN, BLUE, BOLD, ENDC, fill)
 from .resolver import is_localjob_id
-from ..compat import USING_PYTHON2, basestring
+from ..compat import basestring
 from . import file_load_utils
 
 write_mode = 'w'
@@ -366,11 +366,7 @@ if dxpy.utils.exec_utils.RUN_COUNT == 0:
         job_env['DX_TEST_FUNCTION'] = function
         invocation_args = ['python', '-c', script]
 
-    if USING_PYTHON2:
-        invocation_args = [arg.encode(sys.stdout.encoding) for arg in invocation_args]
-        env = {k: v.encode(sys.stdout.encoding) for k, v in job_env.items()}
-    else:
-        env = job_env
+    env = job_env
 
     fn_process = subprocess.Popen(invocation_args, env=env)
 
