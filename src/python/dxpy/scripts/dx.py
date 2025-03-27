@@ -25,11 +25,7 @@ import csv
 
 logging.basicConfig(level=logging.INFO)
 
-from ..compat import (USING_PYTHON2, basestring, str, input, wrap_stdio_in_codecs, decode_command_line_args,
-                      unwrap_stream, sys_encoding)
-
-wrap_stdio_in_codecs()
-decode_command_line_args()
+from ..compat import sys_encoding, basestring
 
 import dxpy
 from dxpy.scripts import dx_build_app
@@ -311,8 +307,7 @@ def login(args):
                     else:
                         username = input('Username: ')
                 dxpy.config.write("DX_USERNAME", username)
-                with unwrap_stream('stdin'):
-                    password = getpass.getpass()
+                password = getpass.getpass()
 
             otp = input('Verification code: ') if get_otp else None
             return dict(username=username, password=password, otp=otp)
@@ -416,9 +411,8 @@ def logout(args):
         print("Deleting credentials from {}...".format(authserver))
         token = dxpy.AUTH_HELPER.security_context["auth_token"]
         try:
-            if not USING_PYTHON2:
-                # python 3 requires conversion to bytes before hashing
-                token = token.encode(sys_encoding)
+            # python 3 requires conversion to bytes before hashing
+            token = token.encode(sys_encoding)
             token_sig = hashlib.sha256(token).hexdigest()
             response = dxpy.DXHTTPRequest(authserver + "/system/destroyAuthToken",
                                           dict(tokenSignature=token_sig),
@@ -2782,8 +2776,6 @@ def build(args):
         src_dir = args.src_dir
         if src_dir is None:
             src_dir = os.getcwd()
-            if USING_PYTHON2:
-                src_dir = src_dir.decode(sys.getfilesystemencoding())
         return src_dir
 
     def handle_arg_conflicts(args):
@@ -4170,12 +4162,8 @@ def generate_batch_inputs(args):
         batch_fname = "{}.{:04d}.tsv".format(args.output_prefix, i)
 
         # In python-3 we need to open the file in textual mode.
-        if USING_PYTHON2:
-            write_mode = 'wb'
-            delimiter = '\t'.encode('ascii')
-        else:
-            write_mode = 'w'
-            delimiter = '\t'
+        write_mode = 'w'
+        delimiter = '\t'
 
         with open(batch_fname, write_mode) as csvfile:
             batchwriter = csv.writer(csvfile, delimiter=delimiter)
@@ -4523,10 +4511,6 @@ class DXArgumentParser(argparse.ArgumentParser):
                     msg += "\n\nDid you mean: " + BOLD("dx " + suggestion)
 
             err = argparse.ArgumentError(action, msg)
-            if USING_PYTHON2:
-                err.message = err.message.encode(sys_encoding)
-                if err.argument_name is not None:
-                    err.argument_name = err.argument_name.encode(sys_encoding)
             raise err
 
     def exit(self, status=0, message=None):
@@ -4538,8 +4522,6 @@ class DXArgumentParser(argparse.ArgumentParser):
         sys.exit(status)
 
     def error(self, message):
-        if USING_PYTHON2:
-            message = message.decode(sys_encoding)
         self.exit(2, '{help}\n{prog}: error: {msg}\n'.format(help=self.format_help(),
                                                              prog=self.prog,
                                                              msg=message))
@@ -6837,10 +6819,7 @@ def main():
         import argcomplete
 
         # In python-3 we need to use a binary output stream
-        if USING_PYTHON2:
-            output_stream = sys.stdout
-        else:
-            output_stream = sys.stdout.buffer
+        output_stream = sys.stdout.buffer
         argcomplete.autocomplete(parser,
                                  always_complete_options=False,
                                  exclude=['gtable', 'export'],

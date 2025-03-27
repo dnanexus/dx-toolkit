@@ -23,7 +23,8 @@ This remote file handler is a Python file-like object.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, logging, traceback, hashlib, copy, time
+import os, sys, traceback, copy, time
+from io import BytesIO
 import math
 import mmap
 from threading import Lock
@@ -34,7 +35,7 @@ from . import DXDataObject
 from ..exceptions import DXFileError, DXIncompleteReadsError
 from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO, basestring, USING_PYTHON2, md5_hasher
+from ..compat import md5_hasher, basestring
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)
@@ -253,6 +254,8 @@ class DXFile(DXDataObject):
         self._file_length = None
         self._cur_part = 1
         self._num_uploaded_parts = 0
+        # Cache for object existence in project
+        self._exists_in_proj = None  
 
     def _new(self, dx_hash, media_type=None, **kwargs):
         """
@@ -486,8 +489,7 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
-        if not USING_PYTHON2:
-            assert(isinstance(data, bytes))
+        assert(isinstance(data, bytes))
 
         self._ensure_write_bufsize(**kwargs)
 
@@ -544,31 +546,28 @@ class DXFile(DXDataObject):
             does not affect where the next :meth:`write` will occur.
 
         '''
-        if USING_PYTHON2:
-            self._write2(data, multithread=multithread, **kwargs)
-        else:
-            # In python3, the underlying system methods use the 'bytes' type, not 'string'
-            #
-            # This is, hopefully, a temporary hack. It is not a good idea for two reasons:
-            # 1) Performance, we need to make a pass on the data, and need to allocate
-            #    another buffer of similar size
-            # 2) The types are wrong. The "bytes" type should be visible to the caller
-            #    of the write method, instead of being hidden.
+        # In python3, the underlying system methods use the 'bytes' type, not 'string'
+        #
+        # This is, hopefully, a temporary hack. It is not a good idea for two reasons:
+        # 1) Performance, we need to make a pass on the data, and need to allocate
+        #    another buffer of similar size
+        # 2) The types are wrong. The "bytes" type should be visible to the caller
+        #    of the write method, instead of being hidden.
 
-            # Should we throw an exception if the file is opened in binary mode,
-            # and the data is unicode/text?
-            if isinstance(data, str):
-                bt = data.encode("utf-8")
-            elif isinstance(data, bytearray):
-                bt = bytes(data)
-            elif isinstance(data, bytes):
-                bt = data
-            elif isinstance(data, mmap.mmap):
-                bt = bytes(data)
-            else:
-                raise DXFileError("Invalid type {} for write data argument".format(type(data)))
-            assert(isinstance(bt, bytes))
-            self._write2(bt, multithread=multithread, **kwargs)
+        # Should we throw an exception if the file is opened in binary mode,
+        # and the data is unicode/text?
+        if isinstance(data, str):
+            bt = data.encode("utf-8")
+        elif isinstance(data, bytearray):
+            bt = bytes(data)
+        elif isinstance(data, bytes):
+            bt = data
+        elif isinstance(data, mmap.mmap):
+            bt = bytes(data)
+        else:
+            raise DXFileError("Invalid type {} for write data argument".format(type(data)))
+        assert(isinstance(bt, bytes))
+        self._write2(bt, multithread=multithread, **kwargs)
 
     def closed(self, **kwargs):
         '''
@@ -604,10 +603,7 @@ class DXFile(DXDataObject):
             # settings allow last empty part upload, try to upload
             # an empty part (otherwise files with 0 parts cannot be closed).
             try:
-                if USING_PYTHON2:
-                    self.upload_part('', 1, **kwargs)
-                else:
-                    self.upload_part(b'', 1, **kwargs)
+                self.upload_part(b'', 1, **kwargs)
             except dxpy.exceptions.InvalidState:
                 pass
 
@@ -646,9 +642,7 @@ class DXFile(DXDataObject):
         defaults to 1. This probably only makes sense if this is the
         only part to be uploaded.
         """
-        if not USING_PYTHON2:
-            # In python3, the underlying system methods use the 'bytes' type, not 'string'
-            assert(isinstance(data, bytes))
+        assert(isinstance(data, bytes))
 
         req_input = {}
         if index is not None:
@@ -934,18 +928,14 @@ class DXFile(DXDataObject):
             buf.seek(orig_buf_pos)
             return buf.read()
 
-        # Debug fallback
-        # import urllib2
-        # req = urllib2.Request(url, headers=headers)
-        # response = urllib2.urlopen(req)
-        # return response.read()
-
     def read(self, length=None, use_compression=None, project=None, **kwargs):
-        if project is None and object_exists_in_project(self.get_id(), self.get_proj_id()):
+        # Check if the file is present in dxfile project attribute if the project arg not specified 
+        if project is None and self._exists_in_proj is None and self.get_proj_id() is not None:
+            self._exists_in_proj = object_exists_in_project(self.get_id(), self.get_proj_id())
+        # Use the DXFile attribute if the project arg is not provided
+        if project is None and self._exists_in_proj:
             project = self.get_proj_id()
         data = self._read2(length=length, use_compression=use_compression, project=project, **kwargs)
-        if USING_PYTHON2:
-            return data
         # In python3, the underlying system methods use the 'bytes' type, not 'string'
         if self._binary_mode is True:
             return data

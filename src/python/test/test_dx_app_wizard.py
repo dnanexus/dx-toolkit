@@ -24,17 +24,12 @@ from dxpy_testutil import DXTestCase, check_output
 import dxpy_testutil as testutil
 
 import dxpy
-from dxpy.compat import USING_PYTHON2
 from dxpy.utils.completer import InstanceTypesCompleter
 import pytest
 
 supported_languages = ['Python', 'bash']
 
-if USING_PYTHON2:
-    spawn_extra_args = {}
-else:
-    # Python 3 requires specifying the encoding
-    spawn_extra_args = {"encoding" : "utf-8" }
+spawn_extra_args = {"encoding" : "utf-8" }
 
 def run_dx_app_wizard(instance_type=None):
     old_cwd = os.getcwd()
@@ -235,8 +230,7 @@ class TestDXAppWizard(DXTestCase):
         for lang in supported_languages:
             appdir = create_app_dir_with_dxapp_json(dxapp_json, lang)
 
-            # See PTFM-13697 for CentOS 5 details
-            if testutil.TEST_RUN_JOBS and not testutil.host_is_centos_5():
+            if testutil.TEST_RUN_JOBS:
                 # Now actually make it an applet and run it
                 applet_name = dxapp_json['name'] + '-' + lang
                 subprocess.check_output(['dx', 'build', appdir, '--destination', applet_name])

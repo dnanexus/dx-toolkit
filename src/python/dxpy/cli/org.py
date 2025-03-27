@@ -20,7 +20,6 @@ the org-based commands of the dx command-line client.
 '''
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-from ..compat import input
 import dxpy
 from . import try_call, prompt_for_yn, INTERACTIVE_CLI
 from .parsers import process_find_by_property_args, process_phi_param

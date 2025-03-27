@@ -5,7 +5,6 @@ from .nextflow_utils import (get_template_dir, get_source_file_name, get_resourc
 import json
 import os
 from dxpy import TOOLKIT_VERSION
-from dxpy.compat import USING_PYTHON2, sys_encoding
 
 
 def get_nextflow_dxapp(
@@ -94,11 +93,7 @@ def get_nextflow_src(custom_inputs=None, profile=None, resources_dir=None):
     src = src.replace("@@PROFILE_ARG@@", profile_arg)
     src = src.replace("@@EXCLUDE_INPUT_DOWNLOAD@@", exclude_input_download)
     src = src.replace("@@DXPY_BUILD_VERSION@@", TOOLKIT_VERSION)
-    if USING_PYTHON2:
-        src = src.replace("@@RESOURCES_SUBPATH@@",
-                          get_resources_subpath(resources_dir).encode(sys_encoding))
-    else:
-        src = src.replace("@@RESOURCES_SUBPATH@@",
+    src = src.replace("@@RESOURCES_SUBPATH@@",
                           get_resources_subpath(resources_dir))
 
     return src

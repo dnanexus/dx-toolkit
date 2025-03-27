@@ -38,8 +38,8 @@ import dxpy
 from .. import logger
 from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, err_exit
-from ..compat import open, md5_hasher, USING_PYTHON2
+from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
+from ..compat import md5_hasher
 from ..utils import response_iterator
 import subprocess
 

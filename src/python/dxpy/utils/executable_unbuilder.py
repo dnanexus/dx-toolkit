@@ -34,7 +34,6 @@ import shutil
 
 import dxpy
 from .. import get_handler, download_dxfile
-from ..compat import open
 from ..exceptions import err_exit, DXError
 from .pretty_print import flatten_json_array
 
