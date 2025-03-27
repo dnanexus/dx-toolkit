@@ -27,7 +27,6 @@ from dxpy.utils import (exec_utils, genomic_utils, response_iterator, get_future
                         normalize_timedelta, normalize_time_input, config, Nonce)
 from dxpy.utils.exec_utils import DXExecDependencyInstaller
 from dxpy.utils.pretty_print import flatten_json_array
-from dxpy.compat import USING_PYTHON2
 import dxpy_testutil as testutil
 from dxpy.system_requirements import SystemRequirementsDict
 
@@ -40,14 +39,11 @@ class TestErrorSanitizing(unittest.TestCase):
         self.assertEqual(exec_utils._safe_unicode(ValueError("foo")), "foo")
         # UTF-8 encoded str
         self.assertEqual(exec_utils._safe_unicode(ValueError("crème".encode("utf-8"))),
-                         "cr\xe8me" if USING_PYTHON2 else "b'cr\\xc3\\xa8me'")
+                         "b'cr\\xc3\\xa8me'")
         # Unicode obj
         self.assertEqual(exec_utils._safe_unicode(ValueError("brûlée")), "br\xfbl\xe9e")
         # Not UTF-8
-        if USING_PYTHON2:
-            expected = "Invalid read name: D??n?x?s [Raw error message: 496e76616c69642072656164206e616d653a2044d1c16ee878fb73]"
-        else:
-            expected = "b'Invalid read name: D\\xd1\\xc1n\\xe8x\\xfbs'"
+        expected = "b'Invalid read name: D\\xd1\\xc1n\\xe8x\\xfbs'"
         self.assertEqual(exec_utils._safe_unicode(ValueError("Invalid read name: DÑÁnèxûs".encode("ISO-8859-1"))), expected)
 
     def test_formatting_exceptions(self):

@@ -44,14 +44,9 @@ from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkf
                            without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
-from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
-if USING_PYTHON2:
-    spawn_extra_args = {}
-else:
-    # Python 3 requires specifying the encoding
-    spawn_extra_args = {"encoding" : "utf-8" }
+spawn_extra_args = {"encoding" : "utf-8" }
 
 def create_file_in_project(fname, trg_proj_id, folder=None):
     data = "foo"
@@ -224,11 +219,7 @@ class TestApiDebugOutput(DXTestCase):
         (stdout, stderr) = run("_DX_DEBUG=1 dx new project --brief dx_debug_test", also_return_stderr=True)
         proj_id = stdout.strip()
         self.assertIn("/project/new", stderr)
-        if USING_PYTHON2:
-            # python 2 requires the "u" for unicode
-            self.assertIn("{u'name': u'dx_debug_test'}", stderr)
-        else:
-            self.assertIn("{'name': 'dx_debug_test'}", stderr)
+        self.assertIn("{'name': 'dx_debug_test'}", stderr)
         self.assertIn(proj_id[-4:], stderr)  # repr can ellipsize the output
 
         (stdout, stderr) = run("_DX_DEBUG=2 dx new project --brief dx_debug_test", also_return_stderr=True)
@@ -343,12 +334,8 @@ class TestDXClient(DXTestCase):
                 run(("dx uninvite "+query).format(p=self.project))
 
     def test_dx_add_missing_arguments(self):
-        if USING_PYTHON2:
-            with self.assertSubprocessFailure(exit_code=2):
-                run("dx add")
-        else:
-            output = run("dx add")
-            self.assertIn("usage: dx add [-h]", output)
+        output = run("dx add")
+        self.assertIn("usage: dx add [-h]", output)
 
     @pytest.mark.TRACEABILITY_MATRIX
     @testutil.update_traceability_matrix(["DNA_CLI_DATA_OBJ_ADD_TYPES", "DNA_CLI_DATA_OBJ_REMOVE_TYPES"])
@@ -918,11 +905,7 @@ class TestDXClient(DXTestCase):
                 dx.expect("This is the DNAnexus Execution Environment", timeout=600)
                 # Check for job name (e.g. "Job: sleep")
                 #dx.expect("Job: \x1b\[1msleep", timeout=5)
-                if USING_PYTHON2:
-                    # \xf6 is ö
-                    project_line = "Project: dxclient_test_pr\xf6ject".encode(sys_encoding)
-                else:
-                    project_line = "Project: dxclient_test_pröject"
+                project_line = "Project: dxclient_test_pröject"
                 dx.expect(project_line)
 
                 dx.expect("The job is running in terminal 1.", timeout=5)
@@ -1863,10 +1846,7 @@ dxpy.run()
 
         def gen_file_gzip(fname, proj_id):
             with gzip.open(fname, 'wb') as f:
-                if USING_PYTHON2:
-                    f.write(data)
-                else:
-                    f.write(data.encode('utf-8'))
+                f.write(data.encode('utf-8'))
 
             dxfile = dxpy.upload_local_file(fname, name=fname, project=proj_id,
                                             media_type="application/gzip", wait_on_close=True)
@@ -3819,10 +3799,7 @@ def main():
                               **spawn_extra_args)
         shell.expect("Warning:")
         shell.sendline("N")
-        if USING_PYTHON2:
-            shell.expect("IOError")
-        else:
-            shell.expect("FileNotFoundError")
+        shell.expect("FileNotFoundError")
         shell.expect(pexpect.EOF)
         shell.wait()
         shell.close()
@@ -9221,11 +9198,8 @@ class TestDXBuildApp(DXTestCaseBuildApps):
 
     def test_syntax_checks(self):
         app_spec = dict(self.base_app_spec, name="syntax_checks")
-        if USING_PYTHON2:
-            app_spec['runSpec']['interpreter'] = 'python2.7'
-        else:
-            app_spec['runSpec']['interpreter'] = 'python3'
-            app_spec['runSpec']['release'] = '20.04'
+        app_spec['runSpec']['interpreter'] = 'python3'
+        app_spec['runSpec']['release'] = '20.04'
 
         app_dir = self.write_app_directory("syntax_checks",
                                            json.dumps(app_spec),

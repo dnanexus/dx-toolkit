@@ -3,8 +3,8 @@ from collections import defaultdict
 import copy
 
 from .utils import merge
-from .compat import basestring
 from .exceptions import (err_exit, DXError, DXCLIError)
+from .compat import basestring
 
 '''
 System Requirements

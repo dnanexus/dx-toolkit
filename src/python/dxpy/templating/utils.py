@@ -25,7 +25,6 @@ import stat
 
 from ..utils.printing import (BOLD, DNANEXUS_LOGO, ENDC, fill)
 from ..cli import prompt_for_yn
-from ..compat import input, open
 try:
     # Import gnureadline if installed for macOS
     import gnureadline as readline

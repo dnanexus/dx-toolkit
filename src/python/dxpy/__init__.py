@@ -136,9 +136,11 @@ import socket
 import threading
 import certifi
 from collections import namedtuple
+from http.client import BadStatusLine
+from io import StringIO
+from reprlib import Repr
 
 from . import exceptions
-from .compat import BadStatusLine, StringIO, bytes, Repr
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 
 from random import randint

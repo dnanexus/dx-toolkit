@@ -41,7 +41,6 @@ import argparse
 import dxpy
 from dxpy.utils import file_load_utils
 from dxpy.utils.printing import fill, refill_paragraphs, BOLD, RED
-from dxpy.compat import USING_PYTHON2
 
 description = BOLD('Note') + ''': this is a utility for use by bash apps
 running in the DNAnexus Platform.
@@ -300,8 +299,7 @@ def return_xattr_as_properties(file):
     for attribute in xattr.listxattr(file):
         if attribute.startswith('user.'):
             value = xattr.getxattr(file, attribute)
-            if not USING_PYTHON2:
-                value = value.decode()
+            value = value.decode()
             properties[attribute[5:]] = value
     return properties
 

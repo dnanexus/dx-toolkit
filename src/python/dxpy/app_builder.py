@@ -49,7 +49,6 @@ import dxpy.executable_builder
 from . import logger
 from .utils import merge
 from .utils.printing import fill
-from .compat import input
 from .cli import INTERACTIVE_CLI
 
 NUM_CORES = multiprocessing.cpu_count()

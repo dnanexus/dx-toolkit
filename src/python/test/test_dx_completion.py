@@ -23,7 +23,6 @@ import pytest
 import dxpy
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXError
-from dxpy.compat import USING_PYTHON2
 
 # TODO: unit tests for dxpy.utils.completer
 
@@ -70,10 +69,8 @@ class TestDXTabCompletion(unittest.TestCase):
         os.environ['COMP_POINT'] = point if point else str(len(line))
         p = subprocess.Popen('dx', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
-        if not USING_PYTHON2:
-            # python-3 requires converting from bytes to strings
-            out = out.decode("utf-8")
-            err = err.decode("utf-8")
+        out = out.decode("utf-8")
+        err = err.decode("utf-8")
         self.assertIn(stderr_contains, err)
         return out.split(IFS)
 
