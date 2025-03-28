@@ -450,7 +450,7 @@ public class DXHTTPRequest {
             attemptsWithThrottled++;
             // Retries due to 429 or 503 Service Unavailable and Retry-After do NOT count against the
             // allowed number of retries.
-            if (statusCode != 503 && statusCode != 429) {
+            if (statusCode == null || (statusCode != 503 && statusCode != 429)) {
                 attempts++;
             }
 
