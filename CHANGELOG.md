@@ -10,6 +10,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Retry requests when received 429 response status code in R SDK
 * Increased timeout to retry throttled requests over attempts
+* Fix Java SDK exception `java.lang.NullPointerException` when could not receive response in `com.dnanexus.DXHTTPRequest`
 
 ### Added
 
