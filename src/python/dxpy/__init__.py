@@ -779,7 +779,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                     logger.warning(log_msg)
                     time.sleep(delay)
                     try_index_including_throttled += 1
-                    if response is None or response.status not in (503, 429):
+                    if response is None or response.status not in (503, 429) or not always_retry:
                         try_index += 1
                     continue
 
