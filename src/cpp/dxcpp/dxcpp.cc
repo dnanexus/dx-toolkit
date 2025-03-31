@@ -164,10 +164,8 @@ namespace dx {
     bool reqCompleted; // did last request actually went through, i.e., some response was received)
     bool contentLengthMismatch;
     bool contentLengthMissing;
-    
-    // here...
     unsigned int retryAfterSeconds = 60u; // Number of seconds to retry after,
-                                          // in the event of a 503 response
+                                          // in the event of a 503 or 429 responses
     HttpRequestException hre;
 
     // The HTTP Request is always executed at least once,
@@ -265,7 +263,11 @@ namespace dx {
       // 503 or 429 with Retry-After-- do not count such responses against the allowed
       // number of retries
       if (req.responseCode == 503 || req.responseCode == 429) {
-        DXLOG(logWARNING) << (req.responseCode == 503) ? "Service unavailable" : "Service throttled" << ", waiting for " << retryAfterSeconds << " seconds : POST '" << url << "'";
+        if (req.responseCode == 503) {
+          DXLOG(logWARNING) << "Service unavailable, waiting for " << retryAfterSeconds << " seconds (Retry #" << countTries + 1 << ") : POST '" << url << "'";
+        } else {
+          DXLOG(logWARNING) << "Service throttled, waiting for " << retryAfterSeconds << " seconds (Retry #" << countTries + 1 << ") : POST '" << url << "'";
+        }
         boost::this_thread::interruption_point();
         _internal::sleepUsingNanosleep(retryAfterSeconds);
         DXLOG(logDEBUG) << "Sleep finished, rechecking the service status";
