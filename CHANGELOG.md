@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [395.0] - beta
+
 ### Changed
 
 * Retry requests when received 429 response status code in R SDK
@@ -16,7 +18,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.10.1: Added limit for number of upload retries
 
-## [394.0] - beta
+## [394.0] - 2025.03.31
 
 ### Fixed
 
