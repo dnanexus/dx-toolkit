@@ -176,10 +176,6 @@ namespace dx {
       // Note: Initial value of "false" is just a dummy value, toRetry will always be re-init before being used.
       //       This dummy initial value is provided, to prevent some spurious warnings from clang
       bool toRetry = false;
-      // True if the request returns with a 503
-      // bool serviceUnavailable = false;
-      // bool servicdThrottled = false; // 429
-
       reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
       try {
         DXLOG(logDEBUG) << "Attempting the actual HTTP request (countTries = " << countTries << ")...";
@@ -207,8 +203,6 @@ namespace dx {
           toRetry = isAlwaysRetryableHttpCode(req.responseCode);
           if (req.responseCode == 503 || req.responseCode == 429) {
             // 503 Service Unavailable or 429 Too Many Requests
-            // serviceUnavailable = req.responseCode == 503;
-            // serviceThrottled = req.responseCode == 429;
             string retryAfterHeader;
             bool retryAfterMissing;
             retryAfterMissing = !req.respHeader.getHeaderString("Retry-After", retryAfterHeader);
