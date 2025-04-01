@@ -69,7 +69,7 @@ number of retries) if any of the following are true:
 * A response is received from the server, and the response has an HTTP
   status code in 5xx range.
     * This may indicate that the server encountered a transient error.
-    * If the status code is 503 (Service Unavailable) and Retry-After is
+    * If the status code is 429 (Too Many Requests) or 503 (Service Unavailable) and Retry-After is
       set, the failure should not count against the maximum allowed
       number of retries.
 * *safe_to_retry* (caller-supplied parameter; for compatibility reasons
