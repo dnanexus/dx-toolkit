@@ -203,14 +203,14 @@ BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_tim
 
 ifeq ($(UNAME)$(CC), Darwinclang)
 	BOOST_MAJOR=1
-	BOOST_MINOR=70
+	BOOST_MINOR=56
 	BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
 	BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
 	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
 else
 	BOOST_PV=1.70
-	BOOST_URL=${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2
-	BOOST_SHA=430ae8354789de4fd19ee52f3b1f739e1fba576f0aded0897c3c2bc00fb38778
+	BOOST_URL=https://archives.boost.io/release/1.70.0/source/boost_1_70_0.tar.bz2
+	BOOST_SHA=5b2e5ccc454503cfbba6c1221f5d495f0de279ea
 endif
 
 boost: boost/stage
