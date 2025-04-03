@@ -208,9 +208,9 @@ ifeq ($(UNAME)$(CC), Darwinclang)
 	BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
 	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
 else
-	BOOST_PV=1.70
-	BOOST_URL=https://archives.boost.io/release/1.70.0/source/boost_1_70_0.tar.bz2
-	BOOST_SHA=5b2e5ccc454503cfbba6c1221f5d495f0de279ea
+	BOOST_PV=1.55
+	BOOST_URL=${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2
+	BOOST_SHA=cef9a0cc7084b1d639e06cd3bc34e4251524c840
 endif
 
 boost: boost/stage
