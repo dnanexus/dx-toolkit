@@ -122,8 +122,8 @@ printenv <- function() {
 ##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on \code{data} to
 ##' create the JSON string or pass through the value of \code{data} directly.
 ##' (Default is \code{TRUE}.)
-##' @param alwaysRetry Whether to always retry the API call (assuming
-##' a non-error status code was received).
+##' @param alwaysRetry Whether is it safe to retry the API call, meaning request
+##' is idempotent (assuming a non-error status code was received).
 ##' @return If the API call is successful, the parsed JSON of the API
 ##' server response is returned (using \code{RJSONIO::fromJSON}).
 ##' @seealso \code{\link{printenv}}
@@ -139,6 +139,8 @@ dxHTTPRequest <- function(resource, data,
                           headers=list(),
                           jsonifyData=TRUE,
                           alwaysRetry=FALSE) {
+  # option wasn't named correctly, so to not break existing clients rename it locally
+  safeToRetry=alwaysRetry
   url <- paste(dxEnv$DX_APISERVER_PROTOCOL, "://",
                dxEnv$DX_APISERVER_HOST, ':', dxEnv$DX_APISERVER_PORT,
                resource,
@@ -175,6 +177,7 @@ dxHTTPRequest <- function(resource, data,
     toRetry <- FALSE
     curlRetry <- FALSE
     isThrottlingError <- FALSE
+    errorMsg <- ""
 
     curlResult <- tryCatch({
       RCurl::curlPerform(url=url,
@@ -209,7 +212,8 @@ dxHTTPRequest <- function(resource, data,
         if ('Content-Length' %in% names(d$value())) {
           if (as.numeric(d$value()['Content-Length']) != nchar(h$value(), type="bytes")) {
             # Content-Length mismatch -> retry
-            toRetry <- TRUE
+            errorMsg <- "Content-Length mismatch"
+            toRetry <- safeToRetry
           } else if (RJSONIO::isValidJSON(h$value(), TRUE)) {
             # Content-Length match && valid JSON
             return (RJSONIO::fromJSON(h$value()))
@@ -221,13 +225,14 @@ dxHTTPRequest <- function(resource, data,
           # No Content-Length header && valid JSON
           return (RJSONIO::fromJSON(h$value()))
         } else {
-          # No Content-Length header && invalid JSON -> retry
-          toRetry <- TRUE
+          errorMsg <- "No Content-Length header && invalid JSON"
+          toRetry <- safeToRetry
         }
       } else if (statusCode == 429 || statusCode >= 500) {
-        toRetry <- TRUE
+        toRetry <- safeToRetry
 
         if ('retry-after' %in% names(d$value())) {
+          toRetry <- TRUE
           suggestSecondsToWait <- as.numeric(d$value()['retry-after'])
 
           if (!is.na(suggestSecondsToWait) && suggestSecondsToWait < 120) {
@@ -260,31 +265,32 @@ dxHTTPRequest <- function(resource, data,
       }
     }
 
-    # Throttling errors can be retried indefinitely if there is alwaysRetry
+    errorMsg <- ifelse(
+      curlRetry,
+      paste("WARNING: POST", url, "had an error:", curlResult$message),
+      paste("WARNING: POST", url, "returned with HTTP code", statusCode, errorMsg, "and body", h$value())
+    )
+
+    write(errorMsg, stderr())
+
+    # Throttling errors can be retried indefinitely
     if (
-      !toRetry ||
-      (attempts >= kNumMaxRetries && (!isThrottlingError || !alwaysRetry))
+      !toRetry || (attempts >= kNumMaxRetries && !isThrottlingError)
     ) {
       stop(paste("POST", url, "was unsuccessful; out of retries"), call.=FALSE)
     }
 
-    errorMsg <- ifelse(
-      curlRetry,
-      paste("WARNING: POST", url, "had an error:", curlResult$message),
-      paste("WARNING: POST", url, "returned with HTTP code", statusCode, "and body", h$value())
-    )
     throttlingErrorMsg <- ifelse(
-      isThrottlingError && alwaysRetry,
+      isThrottlingError,
       paste("Waiting", secondsToWait, "seconds before retry after", attemptsWithThrottling + 1, "attempts ..."),
       paste("Waiting", secondsToWait, "seconds before retry", attempts + 1, "of", kNumMaxRetries, "...")
     )
 
-    write(errorMsg, stderr())
     write(throttlingErrorMsg, stderr())
     Sys.sleep(secondsToWait)
 
     attemptsWithThrottling <- attemptsWithThrottling + 1
-    if (!isThrottlingError || !alwaysRetry) {
+    if (!isThrottlingError) {
       attempts <- attempts + 1
 
       if (attempts < 7) {
