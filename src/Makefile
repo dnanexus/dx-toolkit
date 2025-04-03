@@ -178,8 +178,8 @@ build_git:
 	(cd git && autoreconf --install && ./configure && $(MAKE) && $(MAKE) install)
 	(cd ../build/bin && ln -s ../../src/git/git)
 
-OPENSSL_PV=3.4.1
-OPENSSL_SHA=d3469baf41823a28ad71aae12b2fbb9fe3b19a0d
+OPENSSL_PV=1.0.2g
+OPENSSL_SHA=36af23887402a5ea4ebef91df8e61654906f58f2
 openssl: shasum
 	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(CENTOS_MAJOR_VERSION)" == "5" || "$(RHEL_MAJOR_VERSION)" == "7" ]]; then \
 	    $(MAKE) build_openssl; \

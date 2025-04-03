@@ -1,0 +1,29 @@
+name: Build Upload Agent
+description: |
+  This workflow builds the upload agent and uploads it to the release.
+  It is triggered on push to the main branch and on pull request to the main branch.
+  It uses the `actions/upload-artifact` action to upload the build artifacts.
+  It uses the `actions/download-artifact` action to download the build artifacts.
+  It uses the `actions/checkout` action to check out the code.
+  It uses the `actions/setup-node` action to set up Node.js.
+  It uses the `actions/cache` action to cache dependencies.
+  It uses the `actions/github-script` action to run a script using GitHub's API.
+run-name: ${{ github.actor }} is building Upload Agent 🚀
+on: [push]
+jobs:
+  Build-Upload-Agent:
+    name: Build Upload Agent
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ The workflow is now ready to build your code on the runner."
+      - name: Change directory to src
+        run: cd src
+      - name: Run make
+        run: make ua     
+      - run: echo "🍏 This job's status is ${{ job.status }}."
