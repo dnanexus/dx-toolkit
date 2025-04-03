@@ -209,8 +209,8 @@ ifeq ($(UNAME)$(CC), Darwinclang)
 	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
 else
 	BOOST_PV=1.55
-	BOOST_URL=${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2
-	BOOST_SHA=cef9a0cc7084b1d639e06cd3bc34e4251524c840
+	BOOST_URL=https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.bz2
+	BOOST_SHA=acf19e9d53f0b6db8e85452978eb9c731ef8b865
 endif
 
 boost: boost/stage
