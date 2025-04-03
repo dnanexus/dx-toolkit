@@ -199,7 +199,7 @@ else
 endif
 	$(MAKE) -C openssl -j1 install
 
-BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams,signals2
+BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams,signals
 
 ifeq ($(UNAME)$(CC), Darwinclang)
 	BOOST_MAJOR=1
