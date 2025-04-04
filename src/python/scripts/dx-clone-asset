@@ -56,6 +56,10 @@ def _parse_args():
                     help='Print only a mapping with the regions as keys and the cloned record ids as the values to stdout',
                     action="store_true",
                     required=False)
+    ap.add_argument('--clone-to-all-regions',
+                    help='Clone assets to all regions. By default the current region is skipped.',
+                    action="store_true",
+                    required=False)
 
     return ap.parse_args()
 
@@ -130,7 +134,7 @@ def _clone_asset_into_region(region, record_name, asset_properties, asset_file_n
     return {region: record_id}
 
 
-def clone_asset(record_id, regions, num_retries=0, priority=None, brief=False):
+def clone_asset(record_id, regions, num_retries=0, priority=None, brief=False, clone_to_all_regions=False):
     """
     This function will attempt to clone the given record into all of the given regions.
     It will return a dictionary with the regions as keys and the record-ids of the
@@ -142,8 +146,8 @@ def clone_asset(record_id, regions, num_retries=0, priority=None, brief=False):
     fid = record.get_details()['archiveFileId']['$dnanexus_link']
     curr_region = dxpy.describe(record.project)['region']
 
-    # Only run once per region
-    regions = set(regions) - set([curr_region])
+    # Only run once per region by default
+    regions = set(regions) if clone_to_all_regions else set(regions) - {curr_region}
     app_supported_regions = set(CLONE_ASSET_APP.describe()['regionalOptions'].keys())
     if len(regions - app_supported_regions) > 0:
         print('Currently no support for the following region(s): [{regions}]'.format(regions=', '.join(regions - app_supported_regions)), file=sys.stderr)
@@ -204,8 +208,8 @@ def clone_asset(record_id, regions, num_retries=0, priority=None, brief=False):
     return record_ids
 
 
-def main(record, regions, num_retries=0, priority=None, brief=False):
-    record_ids = clone_asset(record, regions, num_retries, priority, brief)
+def main(record, regions, num_retries=0, priority=None, brief=False, clone_to_all_regions=False):
+    record_ids = clone_asset(record, regions, num_retries, priority, brief, clone_to_all_regions)
 
     for region in record_ids:
         record_id = 'Failed' if record_ids[region] is None else record_ids[region]
@@ -217,4 +221,4 @@ def main(record, regions, num_retries=0, priority=None, brief=False):
 
 if __name__ == '__main__':
     args = _parse_args()
-    main(args.record, args.regions, args.num_retries, args.priority, args.brief)
+    main(args.record, args.regions, args.num_retries, args.priority, args.brief, args.clone_to_all_regions)
