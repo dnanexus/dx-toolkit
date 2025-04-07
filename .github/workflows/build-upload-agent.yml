@@ -1,7 +1,6 @@
 name: Build Upload Agent
 description: |
   This workflow builds the upload agent and uploads it to the release.
-  It is triggered on push to the main branch and on pull request to the main branch.
   It uses the `actions/upload-artifact` action to upload the build artifacts.
   It uses the `actions/download-artifact` action to download the build artifacts.
   It uses the `actions/checkout` action to check out the code.
@@ -9,7 +8,9 @@ description: |
   It uses the `actions/cache` action to cache dependencies.
   It uses the `actions/github-script` action to run a script using GitHub's API.
 run-name: ${{ github.actor }} is building Upload Agent 🚀
-on: [push]
+on:
+  # manual trigger for now, not to run on every push
+  workflow_dispatch:
 jobs:
   Build-Upload-Agent:
     name: Build Upload Agent
