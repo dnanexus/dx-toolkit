@@ -168,7 +168,7 @@ shasum:
 git: shasum
 	if ! hash git; then $(MAKE) build_git; fi
 
-GIT_PV=1.8.4
+GIT_PV=1.8.4 # https://www.kernel.org/pub/software/scm/git/git-2.49.0.tar.gz
 GIT_SHA=6b3924a5e7a05893670ca9744b7f5166cf03193b
 build_git:
 	mkdir -p git
@@ -209,6 +209,7 @@ ifeq ($(UNAME)$(CC), Darwinclang)
 	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
 else
 	BOOST_PV=1.55
+	#TODO: un-hard cod the url
 	BOOST_URL=https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.bz2
 	BOOST_SHA=acf19e9d53f0b6db8e85452978eb9c731ef8b865
 endif
@@ -285,11 +286,11 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
-CARES_PV=1.13.0
-CARES_SHA=dde50284cc3d505fb2463ff6276e61d5531b1d68
+CARES_PV=1.34.4 # https://github.com/c-ares/c-ares/releases/download/v1.34.4/c-ares-1.34.4.tar.gz
+CARES_SHA=da39a3ee5e6b4b0d3255bfef95601890afd80709
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
-	curl https://c-ares.org/archive/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
+	curl https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
 	cd c-ares; ./configure --prefix=/
