@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
-docker build -t ua-builder -f $(pwd)/_work_/Dockerfile .
+# Prepare Docker image
+docker build -t ua-builder -f "$(pwd)/_work_/Dockerfile" .
 
-docker run --rm -v "$(pwd)/src:/dx-toolkit/src" -w /dx-toolkit/src ua-builder bash -c "make ua"
+# Build upload agent in the Docker container
+docker run --rm \
+    -v "$(pwd):/dx-toolkit" \
+    -w /dx-toolkit/src \
+    ua-builder \
+    bash -c "source ../environment && make ua"
