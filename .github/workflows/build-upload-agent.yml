@@ -27,5 +27,5 @@ jobs:
       - name: Change directory to src
         run: cd src
       - name: Run make
-        run: sudo make ua     
+        run: sudo make ua
       - run: echo "🍏 This job's status is ${{ job.status }}."

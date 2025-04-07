@@ -288,7 +288,7 @@ curl/stage/lib/libcurl.la: shasum openssl
 
 # https://github.com/c-ares/c-ares/releases/download/v1.34.4/c-ares-1.34.4.tar.gz
 CARES_PV=1.34.4
-CARES_SHA=da39a3ee5e6b4b0d3255bfef95601890afd80709
+CARES_SHA=aae099416701afd6eb8da4bdcb563ace54ef4a2f
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
 	curl -L https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
