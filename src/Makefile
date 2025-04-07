@@ -262,7 +262,7 @@ else ifeq ($(UNAME), Darwin)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Linux)
-	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
+	CURL_WITH_SSL=--with-openssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=no
 else
 	CURL_WITH_SSL=--with-ssl
@@ -274,6 +274,7 @@ curl/stage/lib/libcurl.la: shasum openssl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
 	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
 	tar -xzf curl-$(CURL_PV).tar.gz -C curl --strip-components=1
+	echo ">>>>> curl with ssl flag is: $(CURL_WITH_SSL)"
 	cd curl; ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
