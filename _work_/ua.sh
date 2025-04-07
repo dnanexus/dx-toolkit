@@ -8,4 +8,4 @@ docker run --rm \
     -v "$(pwd):/dx-toolkit" \
     -w /dx-toolkit/src \
     ua-builder \
-    bash -c "source ../environment && make ua"
+    bash -c "make ua"
