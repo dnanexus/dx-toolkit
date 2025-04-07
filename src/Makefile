@@ -247,24 +247,21 @@ boost_build:
 
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
-CURL_MAJOR=7
-CURL_MINOR=45
+CURL_MAJOR=8
+CURL_MINOR=13
 CURL_MICRO=0
 CURL_PV=$(CURL_MAJOR).$(CURL_MINOR).$(CURL_MICRO)
 CURL_PV_UNDERSCORES=$(CURL_MAJOR)_$(CURL_MINOR)_$(CURL_MICRO)
 CURL_MIRROR=https://github.com/bagder/curl/releases/download
 CURL_URL=$(CURL_MIRROR)/curl-$(CURL_PV_UNDERSCORES)/curl-$(CURL_PV).tar.gz
-CURL_SHA=e44fc290844c1e3c9b7f6ef9926d4366d0600514
+CURL_SHA=07d4eae21a532e6b9736009bcb96140e6f03abc7
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Darwin)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=yes
-else ifeq ($(CENTOS_MAJOR_VERSION), 5)
-	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
-	CURL_SHARED_LIBS=--enable-shared=no
-else ifeq ($(RHEL_MAJOR_VERSION), 7)
+else ifeq ($(UNAME), Linux)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=no
 else
