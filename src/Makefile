@@ -181,7 +181,7 @@ build_git:
 OPENSSL_PV=3.4.1
 OPENSSL_SHA=d3469baf41823a28ad71aae12b2fbb9fe3b19a0d
 openssl: shasum
-	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(CENTOS_MAJOR_VERSION)" == "5" || "$(RHEL_MAJOR_VERSION)" == "7" ]]; then \
+	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(UNAME)" == Linux ]]; then \
 	    $(MAKE) build_openssl; \
 	fi
 
@@ -291,7 +291,7 @@ CARES_PV=1.34.4
 CARES_SHA=da39a3ee5e6b4b0d3255bfef95601890afd80709
 c-ares/stage/lib/libcares.la: shasum
 	mkdir -p c-ares
-	curl https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
+	curl -L https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
 	cd c-ares; ./configure --prefix=/
