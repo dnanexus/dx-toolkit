@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     zlib1g-dev \
+    vim \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set Python 3 as the default python command
