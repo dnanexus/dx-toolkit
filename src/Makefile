@@ -26,6 +26,7 @@ python: api_wrappers toolkit_version $(DNANEXUS_HOME)/bin/dx
 # ============================
 
 toolkit_version:
+	echo ">>>> Running  $@ <<<<"
 	(if [ ! -e "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py" ]; then \
 	    echo "version = 'UNKNOWN_VERSION'" > "$(DNANEXUS_HOME)/src/python/dxpy/toolkit_version.py"; \
 	    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"0.0.0\";\n}" > "$(DNANEXUS_HOME)/src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
@@ -84,6 +85,7 @@ dx-verify-file: api_wrappers
 	$(MAKE) -C dx-verify-file install DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 ua: toolkit_version ua_deps
+	echo ">>>> Running  $@ <<<<"
 	$(MAKE) -C ua install dist DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 dx-docker: bin/proot bin/docker2aci
@@ -180,14 +182,10 @@ build_git:
 
 OPENSSL_PV=3.4.1
 OPENSSL_SHA=d3469baf41823a28ad71aae12b2fbb9fe3b19a0d
-openssl: shasum
-	if [[ "$(OS)" == Windows_NT || "$(UNAME)" == Darwin || "$(UNAME)" == Linux ]]; then \
-	    $(MAKE) build_openssl; \
-	fi
-
-build_openssl: openssl/libssl.a
+openssl: shasum openssl/libssl.a
 
 openssl/libssl.a:
+	echo ">>>> Running $@ <<<<"
 	mkdir -p openssl
 	curl ${UBUNTU_MIRROR}/pool/main/o/openssl/openssl_${OPENSSL_PV}.orig.tar.gz > openssl-${OPENSSL_PV}.tar.gz
 	[[ $$(shasum openssl-${OPENSSL_PV}.tar.gz|cut -f 1 -d ' ') == $(OPENSSL_SHA) ]]
@@ -208,7 +206,7 @@ ifeq ($(UNAME)$(CC), Darwinclang)
 	BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
 	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
 else
-	BOOST_PV=1.55
+	BOOST_PV=1.87
 	#TODO: un-hard cod the url
 	BOOST_URL=https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.bz2
 	BOOST_SHA=acf19e9d53f0b6db8e85452978eb9c731ef8b865
@@ -217,14 +215,17 @@ endif
 boost: boost/stage
 
 boost-$(BOOST_PV).tar.bz2:
+	echo ">>>> Running  $@ <<<<""
 	curl -L ${BOOST_URL} > boost-$(BOOST_PV).tar.bz2
 
 boost.download-shasum-checked: boost-$(BOOST_PV).tar.bz2 shasum
+	echo ">>>> Running  $@ <<<<"
 	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
 	touch boost.download-shasum-checked
 
 # See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
 boost/stage: boost.download-shasum-checked
+	echo ">>>> Running  $@ <<<<"
 	mkdir -p boost
 	tar -xjf boost-$(BOOST_PV).tar.bz2 -C boost --strip-components=1
 ifeq ($(OS), Windows_NT)
@@ -242,6 +243,7 @@ else
 endif
 
 boost_build:
+	echo ">>>> Running  $@ <<<<"
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
 	cd boost; ./b2 --layout=tagged -j8 stage
 
@@ -270,6 +272,7 @@ else
 endif
 
 curl/stage/lib/libcurl.la: shasum openssl
+	echo ">>>> Running  $@ <<<<"
 	mkdir -p curl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
 	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
@@ -288,6 +291,7 @@ curl/stage/lib/libcurl.la: shasum openssl
 CARES_PV=1.34.4
 CARES_SHA=aae099416701afd6eb8da4bdcb563ace54ef4a2f
 c-ares/stage/lib/libcares.la: shasum
+	echo ">>>> Running  $@ <<<<"
 	mkdir -p c-ares
 	curl -L https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
@@ -299,6 +303,7 @@ c-ares/stage/lib/libcares.la: shasum
 FILE_PV=5.32
 FILE_SHA=6a84bddca6fa9bcf6882832ccece38cf22b9b600
 file/stage/lib/libmagic.la: shasum
+	echo ">>>> Running  $@ <<<<"
 	mkdir -p file
 	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.xz > file-${FILE_PV}.tar.xz
 	[[ $$(shasum file-${FILE_PV}.tar.xz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
