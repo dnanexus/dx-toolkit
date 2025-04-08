@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     python3-venv \
     pkg-config \
     libssl-dev \
+    libpsl-dev \
     zlib1g-dev \
     vim \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
