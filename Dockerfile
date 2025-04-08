@@ -29,11 +29,5 @@ RUN python --version && \
     g++ --version && \
     cmake --version
 
-# Set the working directory inside the container
-WORKDIR /app
-
-# Clone dx-toolkit repo
-RUN git clone https://github.com/dnanexus/dx-toolkit.git
-
 # Default command to run when the container starts
 CMD ["/bin/bash"]
