@@ -215,7 +215,7 @@ endif
 boost: boost/stage
 
 boost-$(BOOST_PV).tar.bz2:
-	echo ">>>> Running  $@ <<<<""
+	echo ">>>> Running  $@ <<<<"
 	curl -L ${BOOST_URL} > boost-$(BOOST_PV).tar.bz2
 
 boost.download-shasum-checked: boost-$(BOOST_PV).tar.bz2 shasum
