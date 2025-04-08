@@ -287,9 +287,9 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --enable-static=yes $(CURL_SHARED_LIBS) --with-openssl --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
-# https://github.com/c-ares/c-ares/releases/download/v1.34.4/c-ares-1.34.4.tar.gz
-CARES_PV=1.34.4
-CARES_SHA=aae099416701afd6eb8da4bdcb563ace54ef4a2f
+# https://github.com/c-ares/c-ares/releases/download/v1.34.5/c-ares-1.34.5.tar.gz
+CARES_PV=1.34.5
+CARES_SHA=2ae693c5be7e79240003c98e3becde2d3a65f8fb
 c-ares/stage/lib/libcares.la: shasum
 	echo ">>>> Running  $@ <<<<"
 	mkdir -p c-ares
