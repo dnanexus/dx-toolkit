@@ -8,4 +8,4 @@ docker run --rm \
     -v "$(pwd):/dx-toolkit" \
     -w /dx-toolkit/src \
     ua-builder \
-    bash -c "make ua"
+    bash -c "make ua 2>&1 | tee make.log"
