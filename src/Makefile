@@ -264,8 +264,8 @@ else ifeq ($(UNAME), Darwin)
 	CURL_WITH_SSL=--with-ssl=$$(pwd)/../openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Linux)
-	CURL_WITH_SSL=--with-openssl=$$(pwd)/../openssl/stage
-	CURL_SHARED_LIBS=--enable-shared=no
+	#CURL_WITH_SSL=--with-openssl=$$(pwd)/../openssl/stage
+	CURL_SHARED_LIBS=--enable-shared=yes
 else
 	CURL_WITH_SSL=--with-ssl
 	CURL_SHARED_LIBS=--enable-shared=no
@@ -284,7 +284,7 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
 	    --without-nss --without-libssh2 --without-librtmp \
 	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
-	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
+	    --enable-static=yes $(CURL_SHARED_LIBS) --with-openssl --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
 # https://github.com/c-ares/c-ares/releases/download/v1.34.4/c-ares-1.34.4.tar.gz
