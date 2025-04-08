@@ -20,7 +20,8 @@
 /src/openssl*.tar.gz
 /src/openssl
 /src/boost*.tar.bz2
-/src/boost
+/src/boost/*
+/src/boost*
 /src/file*.tar.gz
 /src/file
 /src/curl*.tar.gz
