@@ -30,8 +30,5 @@ RUN python --version && \
     g++ --version && \
     cmake --version
 
-# Set the working directory inside the container
-WORKDIR /app
-
 # Default command to run when the container starts
 CMD ["/bin/bash"]
