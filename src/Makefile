@@ -296,7 +296,7 @@ c-ares/stage/lib/libcares.la: shasum
 	curl -L https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
-	cd c-ares; ./configure --prefix=/
+	cd c-ares; ./configure --enable-static=yes --prefix=/
 	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
 
 # what is this file lib?
