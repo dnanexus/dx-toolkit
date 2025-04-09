@@ -197,7 +197,6 @@ else
 endif
 	$(MAKE) -C openssl -j1 install
 
-# TODO check error re: "signals" not valid
 BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams, signals
 
 ifeq ($(UNAME)$(CC), Darwinclang)

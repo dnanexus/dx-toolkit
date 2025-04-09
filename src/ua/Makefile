@@ -72,19 +72,19 @@ else
 	LDFLAGS += -pthread -lcurl -lcares -lboost_program_options-mt -lboost_filesystem-mt -lboost_system-mt -lboost_thread-mt -lboost_regex-mt
 
 	ifeq ($(UNAME), Darwin)
-		CXXFLAGS += -DMAC_BUILD=1 -std=c++14
+		CXXFLAGS += -DMAC_BUILD=1 -std=c++0x
 		LDFLAGS += -Wl,-headerpad,100
 		ifeq ($(CC), clang)
 			CXXFLAGS += -stdlib=libc++
 		endif
         else ifeq ($(RHEL_MAJOR_VERSION), 7)
-		CXXFLAGS += -DLINUX_BUILD=1 -std=c++14
+		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -static
         else ifeq ($(RHSL_MAJOR_VERSION), 7)
-		CXXFLAGS += -DLINUX_BUILD=1 -std=c++14
+		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -static
 	else
-		CXXFLAGS += -DLINUX_BUILD=1 -std=c++14
+		CXXFLAGS += -DLINUX_BUILD=1 -std=c++0x
 		LDFLAGS += -lrt -lidn -static
 	endif
 endif
