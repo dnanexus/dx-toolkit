@@ -212,7 +212,7 @@ else
 	BOOST_SHA=acf19e9d53f0b6db8e85452978eb9c731ef8b865
 endif
 
-boost: boost_build
+boost: boost/stage
 
 boost-$(BOOST_PV).tar.bz2:
 	echo ">>>> Running  $@ <<<<"
@@ -223,13 +223,29 @@ boost.download-shasum-checked: boost-$(BOOST_PV).tar.bz2 shasum
 	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
 	touch boost.download-shasum-checked
 
-# TODO put back build for other target platforms as needed
-boost_build: boost.download-shasum-checked
+# See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
+boost/stage: boost.download-shasum-checked
 	echo ">>>> Running  $@ <<<<"
 	mkdir -p boost
 	tar -xjf boost-$(BOOST_PV).tar.bz2 -C boost --strip-components=1
+ifeq ($(OS), Windows_NT)
+	cd boost; ./bootstrap.sh --with-toolset=mingw --with-libraries=${BOOST_LIBS}
+	sed -i -e s/mingw/gcc/ boost/project-config.jam
+	cd boost; ./b2 --build-type=complete --layout=tagged -j8 stage
+else ifeq ($(CENTOS_MAJOR_VERSION), 5)
+	echo 'using gcc : 4.4 : g++44 ;' >> boost/tools/build/v2/user-config.jam
+	$(MAKE) boost_build
+else ifeq ($(UNAME)$(CC), Darwinclang)
+	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS} --with-toolset=clang
+	cd boost; ./b2 --layout=tagged -j8 stage cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" toolset=clang
+else
+	$(MAKE) boost_build
+endif
+
+boost_build:
+	echo ">>>> Running  $@ <<<<"
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
-	cd boost; ./b2 --layout=tagged -j8 stage cxxflags="-std=c++14"
+	cd boost; ./b2 --layout=tagged -j8 stage
 
 curl: curl/stage/lib/libcurl.la
 
