@@ -9,3 +9,6 @@ docker run --rm \
     -w /dx-toolkit \
     ua-builder \
     bash -c "make ua 2>&1 | tee make.log"
+
+# Run interactive
+# docker run -it -v "$(pwd):/dx-toolkit" -w /dx-toolkit ua-builder
