@@ -18,6 +18,7 @@
 
 #include <boost/thread.hpp>
 #include <curl/curl.h>
+#include <set>
 
 #include "dxjson/dxjson.h"
 #include "dxcpp/dxcpp.h"
@@ -166,7 +167,7 @@ string resolveProject(const string &projectSpec) {
     return cache[projectSpec];
   }
   string projectID;
-  map<string, string> matchingProjectIdToName;
+  std::map<string, string> matchingProjectIdToName;
 
   try {
     JSON desc = projectDescribe(urlEscape(projectSpec));
@@ -201,7 +202,7 @@ string resolveProject(const string &projectSpec) {
   if (matchingProjectIdToName.size() > 1) {
     DXLOG(logINFO) << "failure. " << matchingProjectIdToName.size() << " projects (with >=UPLOAD access) match the identifier: \"" + projectSpec + "\":";
     int i =  1;
-    for (map<string, string>::const_iterator it = matchingProjectIdToName.begin(); it != matchingProjectIdToName.end(); ++it, ++i) {
+    for (std::map<string, string>::const_iterator it = matchingProjectIdToName.begin(); it != matchingProjectIdToName.end(); ++it, ++i) {
       DXLOG(logINFO) << "\t" << i << ". \"" << it->second << "\" (ID = \"" << it->first << "\")";
     }
     throw runtime_error("\"" + projectSpec + "\" does not uniquely identify a project (multiple matches found)");
@@ -238,7 +239,7 @@ void createFolder(const string &projectID, const string &folder) {
 void createFolders(const vector<string> &projects, const vector<string> &folders) {
   // Maps each project ID to the set of folders to be created in that
   // project.
-  map<string, set<string> > uniqueFolders;
+  std::map<string, std::set<string> > uniqueFolders;
 
   // This should probably be checked in Options
   assert(projects.size() == folders.size());
@@ -248,10 +249,10 @@ void createFolders(const vector<string> &projects, const vector<string> &folders
     uniqueFolders[projectID].insert(folders[i]);
   }
 
-  for (map<string, set<string> >::iterator i = uniqueFolders.begin(); i != uniqueFolders.end(); ++i) {
+  for (std::map<string, std::set<string> >::iterator i = uniqueFolders.begin(); i != uniqueFolders.end(); ++i) {
     string projectID = i->first;
-    set<string> folders = i->second;
-    for (set<string>::iterator j = folders.begin(); j != folders.end(); ++j) {
+    std::set<string> folders = i->second;
+    for (std::set<string>::iterator j = folders.begin(); j != folders.end(); ++j) {
       string folder = (*j);
       createFolder(projectID, folder);
     }
