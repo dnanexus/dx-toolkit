@@ -23,7 +23,7 @@
 /src/boost/*
 /src/boost*
 /src/file*.tar.gz
-/src/file*
+/src/file
 /src/curl*.tar.gz
 /src/curl
 /src/c-ares*.tar.gz
