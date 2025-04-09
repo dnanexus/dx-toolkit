@@ -237,7 +237,7 @@ else ifeq ($(CENTOS_MAJOR_VERSION), 5)
 	$(MAKE) boost_build
 else ifeq ($(UNAME)$(CC), Darwinclang)
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS} --with-toolset=clang
-	cd boost; ./b2 --layout=tagged -j8 stage cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" toolset=clang
+	cd boost; ./b2 --layout=tagged -j8 stage cxxflags="-std=c++14 -stdlib=libc++" linkflags="-stdlib=libc++" toolset=clang
 else
 	$(MAKE) boost_build
 endif
@@ -245,7 +245,7 @@ endif
 boost_build:
 	echo ">>>> Running  $@ <<<<"
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
-	cd boost; ./b2 --layout=tagged -j8 stage
+	cd boost; ./b2 --layout=tagged -j8 stage cxxflags="-std=c++14 -stdlib=libc++"
 
 # curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
