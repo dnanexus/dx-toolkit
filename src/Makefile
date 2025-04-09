@@ -247,7 +247,7 @@ boost_build:
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
 	cd boost; ./b2 --layout=tagged -j8 stage
 
-curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
+curl: curl/stage/lib/libcurl.la
 
 CURL_MAJOR=8
 CURL_MINOR=13
@@ -283,21 +283,9 @@ curl/stage/lib/libcurl.la: shasum openssl
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
 	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
 	    --without-nss --without-libssh2 --without-librtmp \
-	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
+	    --without-winidn --without-libidn --enable-ares \
 	    --enable-static=yes $(CURL_SHARED_LIBS) --with-openssl --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
-
-# https://github.com/c-ares/c-ares/releases/download/v1.34.5/c-ares-1.34.5.tar.gz
-CARES_PV=1.34.5
-CARES_SHA=2ae693c5be7e79240003c98e3becde2d3a65f8fb
-c-ares/stage/lib/libcares.la: shasum
-	echo ">>>> Running  $@ <<<<"
-	mkdir -p c-ares
-	curl -L https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
-	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
-	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
-	cd c-ares; ./configure --prefix=/
-	$(MAKE) -C c-ares install DESTDIR="$(DNANEXUS_HOME)/src/c-ares/stage"
 
 # what is this file lib?
 FILE_PV=5.32
