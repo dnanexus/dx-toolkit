@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Released Nextaur 1.11.0: Update nextflow to 24.10.5
+
 ## [395.0] - beta
 
 ### Changed
