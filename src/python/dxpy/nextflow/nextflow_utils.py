@@ -40,17 +40,16 @@ def get_template_dir():
 
 def get_project_with_assets(region):
     nextflow_basepath = path.join(path.dirname(dxpy.__file__), 'nextflow')
+    projects_path = path.join(nextflow_basepath, "app_asset_projects_ids_prod.json")
 
-    if 'stagingapi' in dxpy.APISERVER_HOST:
+    try:
+        with open(projects_path, 'r') as projects_f:
+            project = json.load(projects_f)[region]
+            dxpy.describe(project, fields={})  # existence check
+    except ResourceNotFound:
         projects_path = path.join(nextflow_basepath, "app_asset_projects_ids_staging.json")
-    elif 'api' in dxpy.APISERVER_HOST:
-        projects_path = path.join(nextflow_basepath, "app_asset_projects_ids_prod.json")
-    else:
-        logging.error("Login to DNAnexus before running this function.")
-        raise Exception("Unknown environment")
-
-    with open(projects_path, 'r') as projects_f:
-        project = json.load(projects_f)[region]
+        with open(projects_path, 'r') as projects_f:
+            project = json.load(projects_f)[region]
 
     return project
 
