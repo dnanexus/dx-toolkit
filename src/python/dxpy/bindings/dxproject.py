@@ -367,7 +367,7 @@ class DXProject(DXContainer):
                allowed_executables=None, unset_allowed_executables=None,
                database_ui_view_only=None, external_upload_restricted=None,
                database_results_restricted=None, unset_database_results_restricted=None,
-               **kwargs):
+               https_app_isolated_browsing=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -395,6 +395,9 @@ class DXProject(DXContainer):
         :type unset_database_results_restricted: boolean
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
+        :param https_app_isolated_browsing: Whether all https access to jobs in this project should be wrapped in isolated browsing.
+                                            If true, httpsApp-enabled executables must have httpsApp.shared_access set to 'NONE' to run in this project.
+        :type https_app_isolated_browsing: boolean
 
         Updates the project with the new fields. All fields are
         optional. Fields that are not provided are not changed.
@@ -430,6 +433,8 @@ class DXProject(DXContainer):
             update_hash["databaseResultsRestricted"] = database_results_restricted
         if unset_database_results_restricted is not None:
             update_hash["databaseResultsRestricted"] = None
+        if https_app_isolated_browsing is not None:
+            update_hash["httpsAppIsolatedBrowsing"] = https_app_isolated_browsing
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):

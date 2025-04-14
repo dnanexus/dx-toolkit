@@ -452,6 +452,8 @@ def get_update_project_args(args):
         input_params['databaseResultsRestricted'] = None
     if args.external_upload_restricted is not None:
         input_params['externalUploadRestricted'] = args.external_upload_restricted == 'true'
+    if args.https_app_isolated_browsing is not None:
+        input_params['httpsAppIsolatedBrowsing'] = args.https_app_isolated_browsing == 'true'
     return input_params
 
 def process_phi_param(args):
