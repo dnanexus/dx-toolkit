@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Use full path for assetDepends when building nextflow applet
+
 ## [395.0] - beta
 
 ### Changed
