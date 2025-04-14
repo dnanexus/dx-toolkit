@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.11.0: Update nextflow to 24.10.5
 
+### Fixed
+
+* Use full path for assetDepends when building nextflow applet
+
 ## [395.0] - beta
 
 ### Changed

@@ -5,6 +5,7 @@ import errno
 import dxpy
 import json
 import shutil
+import logging
 from dxpy.exceptions import ResourceNotFound
 from dxpy.nextflow.collect_images import run_nextaur_collect, bundle_docker_images
 
@@ -35,6 +36,22 @@ def get_importer_name():
 
 def get_template_dir():
     return path.join(path.dirname(dxpy.__file__), 'templating', 'templates', 'nextflow')
+
+
+def get_project_with_assets(region):
+    nextflow_basepath = path.join(path.dirname(dxpy.__file__), 'nextflow')
+    projects_path = path.join(nextflow_basepath, "app_asset_projects_ids_prod.json")
+
+    try:
+        with open(projects_path, 'r') as projects_f:
+            project = json.load(projects_f)[region]
+            dxpy.describe(project, fields={})  # existence check
+    except ResourceNotFound:
+        projects_path = path.join(nextflow_basepath, "app_asset_projects_ids_staging.json")
+        with open(projects_path, 'r') as projects_f:
+            project = json.load(projects_f)[region]
+
+    return project
 
 
 def is_importer_job():
@@ -102,6 +119,8 @@ def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_
         image_bundled = bundle_docker_images(image_refs)
     else:
         image_bundled = {}
+
+    project_with_assets = get_project_with_assets(region)
     regional_options = {
         region: {
             "systemRequirements": {
@@ -110,9 +129,18 @@ def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_
                 }
             },
             "assetDepends": [
-                {"id": nextaur_asset},
-                {"id": nextflow_asset},
-                {"id": awscli_asset}
+                {"id": {"$dnanexus_link": {
+                    "id": nextaur_asset,
+                    "project": project_with_assets
+                }}},
+                {"id": {"$dnanexus_link": {
+                    "id": nextflow_asset,
+                    "project": project_with_assets
+                }}},
+                {"id": {"$dnanexus_link": {
+                    "id": awscli_asset,
+                    "project": project_with_assets
+                }}}
             ],
             "bundledDepends": image_bundled
         }
