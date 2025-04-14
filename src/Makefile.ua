@@ -126,6 +126,7 @@ libcurl: shasum openssl
 	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
 	tar -xzf curl-$(CURL_PV).tar.gz -C curl --strip-components=1
 	echo ">>>> $@ - Configureing... <<<<"
+# TODO: the path for --enable-ares is hardcoded, should be fixed later after we succussfully build everything.
 	cd curl; ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi \
