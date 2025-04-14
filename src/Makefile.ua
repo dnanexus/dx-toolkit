@@ -23,7 +23,7 @@ UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu
 
 ua: ua_deps
 	echo ">>>> Running  $@ <<<<"
-	$(MAKE) -C ua install dist DESTDIR=$(DNANEXUS_HOME) PREFIX=/
+	$(MAKE) -C ua install dist DESTDIR=/opt/dnanexus PREFIX=/
 
 # Upload Agent dependencies
 # =========================
@@ -41,12 +41,13 @@ openssl: shasum
 ifeq ($(UNAME), Darwin)
 	cd openssl; ./Configure darwin64-x86_64-cc -shared --openssldir="$$(pwd)/stage"
 else
-	cd openssl; ./Configure -static
+	echo ">>>> $@ - Configureing... <<<<"
+	cd openssl; ./Configure
 endif
+	echo ">>>> $@ - Installing... <<<<"
 	$(MAKE) -C openssl -j1 install
 
 # Boost
-# TODO: Use `all` instead
 BOOST_LIBS=all
 BOOST_MAJOR=1
 BOOST_MINOR=87
@@ -56,26 +57,26 @@ BOOST_SHA=acf19e9d53f0b6db8e85452978eb9c731ef8b865
 
 # See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
 boost: shasum
-	echo ">>>> Running  $@ <<<<"
+	echo ">>>> Running $@ <<<<"
 	curl -L ${BOOST_URL} > boost-$(BOOST_PV).tar.bz2
 	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
 	mkdir -p boost
 	tar -xjf boost-$(BOOST_PV).tar.bz2 -C boost --strip-components=1
+	echo ">>>> $@ - Installing... <<<<"
 ifeq ($(OS), Windows_NT)
+	echo ">>>> $@ - Building for Windows <<<<"
 	cd boost; ./bootstrap.sh --with-toolset=mingw --with-libraries=${BOOST_LIBS}
 	sed -i -e s/mingw/gcc/ boost/project-config.jam
 	cd boost; ./b2 --build-type=complete --layout=tagged -j8 stage
 else ifeq ($(UNAME)$(CC), Darwinclang)
+	echo ">>>> $@ - Building for Macosx <<<<"
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS} --with-toolset=clang
 	cd boost; ./b2 --layout=tagged -j8 stage cxxflags="-stdlib=libc++" linkflags="-stdlib=libc++" toolset=clang
 else
-	$(MAKE) boost_build
-endif
-
-boost_build:
-	echo ">>>> Running  $@ <<<<"
+	echo ">>>> $@ - Building for Linux <<<<"
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
 	cd boost; ./b2 --layout=tagged -j8 stage
+endif
 
 # curl
 curl: c-ares libcurl
@@ -85,13 +86,14 @@ curl: c-ares libcurl
 CARES_PV=1.34.5
 CARES_SHA=2ae693c5be7e79240003c98e3becde2d3a65f8fb
 c-ares: shasum
-	echo ">>>> Running  $@ <<<<"
+	echo ">>>> Running $@ <<<<"
 	mkdir -p c-ares
 	curl -L https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
+	echo ">>>> $@ - Configureing... <<<<"
 	cd c-ares; ./configure
-# echo ">>>> From $@ --> DESTDIR for c-ares is: $(DNANEXUS_HOME)/src/c-ares"
+	echo ">>>> $@ - Installing... <<<<"
 	$(MAKE) -C c-ares install
 
 # libcurl
@@ -123,14 +125,14 @@ libcurl: shasum openssl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
 	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
 	tar -xzf curl-$(CURL_PV).tar.gz -C curl --strip-components=1
-#echo ">>>> From $@ --> curl with ssl flag is: $(CURL_WITH_SSL)"
-#echo ">>>> From $@ --> enable-ares flag value is: $(DNANEXUS_HOME)/src/c-ares"
+	echo ">>>> $@ - Configureing... <<<<"
 	cd curl; ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi \
 	    --disable-tls-srp --without-gnutls --without-libssh2 --without-librtmp \
-	    --without-winidn --enable-ares \
-	    --enable-static --disable-shared $(CURL_WITH_SSL)
+	    --without-winidn --enable-ares="/opt/dnanexus/usr/local" \
+	    --disable-static --enable-shared $(CURL_WITH_SSL)
+	echo ">>>> $@ - Installing... <<<<"
 	$(MAKE) -C curl install
 
 # what is this file lib?
@@ -142,7 +144,9 @@ file/stage/lib/libmagic.la: shasum
 	curl ${UBUNTU_MIRROR}/pool/main/f/file/file_${FILE_PV}.orig.tar.xz > file-${FILE_PV}.tar.xz
 	[[ $$(shasum file-${FILE_PV}.tar.xz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
 	tar -xf file-${FILE_PV}.tar.xz -C file --strip-components=1
-	cd file; ./configure --enable-static=yes --prefix=/
+	echo ">>>> $@ - Configureing... <<<<"
+	cd file; ./configure --enable-static=no --prefix=/
+	echo ">>>> $@ - Installing... <<<<"
 	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)/src/file/stage"
 
 # Clean

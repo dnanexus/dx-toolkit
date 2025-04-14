@@ -11,14 +11,11 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     curl \
+    libpsl-dev \
+    libidn11-dev \
     python3 \
     python3-pip \
     python3-venv \
-    pkg-config \
-    libssl-dev \
-    libpsl-dev \
-    libc-ares-dev \
-    zlib1g-dev \
     vim \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
