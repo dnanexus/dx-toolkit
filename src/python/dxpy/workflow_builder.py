@@ -32,7 +32,6 @@ import dxpy
 from .cli import INTERACTIVE_CLI
 from .cli.parsers import process_extra_args
 from .utils.printing import fill
-from .compat import input
 from .utils import json_load_raise_on_duplicates
 from .exceptions import err_exit
 from . import logger

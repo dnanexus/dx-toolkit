@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, unittest, tempfile, filecmp, time, json, sys
+import os, unittest, tempfile, filecmp, time, json, sys, random
 import shutil
 import string
 import subprocess
@@ -27,6 +27,7 @@ import platform
 import pytest
 import re
 import certifi
+from mock import patch
 
 from urllib3.exceptions import SSLError, NewConnectionError
 
@@ -39,7 +40,6 @@ import dxpy.app_builder as app_builder
 import dxpy.executable_builder as executable_builder
 import dxpy.workflow_builder as workflow_builder
 
-from dxpy.compat import USING_PYTHON2
 
 def get_objects_from_listf(listf):
     objects = []
@@ -392,11 +392,7 @@ class TestDXFile(testutil.DXTestCaseCompat):
     def setUpClass(cls):
         cls.foo_str = "foo\n"
         cls.foo_file = tempfile.NamedTemporaryFile(delete=False)
-        if USING_PYTHON2:
-            bt = cls.foo_str
-        else:
-            # python-3 requires converting from string to bytes
-            bt = cls.foo_str.encode("utf-8")
+        bt = cls.foo_str.encode("utf-8")
         cls.foo_file.write(bt)
         cls.foo_file.close()
 
@@ -577,20 +573,13 @@ class TestDXFile(testutil.DXTestCaseCompat):
 
             same_dxfile.seek(0, 2)
             buf = same_dxfile.read()
-            if USING_PYTHON2:
-                self.assertEqual(b"", buf)
-            else:
-                self.assertEqual("", buf)
+            self.assertEqual("", buf)
 
             same_dxfile.seek(-1, 2)
             buf = same_dxfile.read()
             self.assertEqual(self.foo_str[-1:], buf)
 
     def test_write_read_binary_dxfile(self):
-        # This test is run ONLY for python-3.
-        # It fails on python-2.
-        if USING_PYTHON2:
-            return
         dxid = ""
         data = "ไนความจริงสิ่งคาด"  # unicode characters
 
@@ -616,9 +605,6 @@ class TestDXFile(testutil.DXTestCaseCompat):
             self.assertEqual(binary, buf)
 
     def test_write_read_unicode_dxfile(self):
-        # Not expected to work for python-2
-        if USING_PYTHON2:
-            return
         data = "ไนความจริงสิ่งคาด"  # unicode characters
 
         # using upload_string to upload unicode
@@ -721,10 +707,7 @@ class TestDXFile(testutil.DXTestCaseCompat):
                 fh.seek(cptr)
                 read_after_seek = fh.read(2 ** 16)
                 self.assertEqual(next_read, read_after_seek)
-                if USING_PYTHON2:
-                    self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16].encode('utf-8'))
-                else:
-                    self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16])
+                self.assertEqual(next_read, data[first_read_length:first_read_length + 2 ** 16])
         finally:
             dxpy.set_job_id(previous_job_id)
 
@@ -859,6 +842,47 @@ class TestDXFile(testutil.DXTestCaseCompat):
             dxpy.WORKSPACE_ID = workspace_id
 
         del os.environ['DX_JOB_ID']
+    
+    def test_dxfile_read_api_call_count(self):
+        """
+        Ensure that dxfile.read() does not make more than 4 API calls by counting DXHTTPRequest invocations
+        """
+        print(sys.version)
+        with testutil.temporary_project() as project:
+            # Create a random 1KiB upload string
+            upload_string = ''.join(random.choices(string.ascii_lowercase + string.digits, k=1024))
+            dxfile = dxpy.upload_string(upload_string, project=project.get_id(), wait_on_close=True)
+
+            # Patch DXHTTPRequest to count its invocations
+            with patch("dxpy.DXHTTPRequest", wraps=dxpy.DXHTTPRequest) as mock_request:
+                # DXFile instantiated with project-id
+                dxfile.read()
+                # Count the number of DXHTTPRequest calls
+                api_call_count = mock_request.call_count
+                print(f"dxfile.read() made {api_call_count} API calls")
+                self.assertLessEqual(api_call_count, 4, f"dxfile.read() made {api_call_count} API calls, exceeding the limit.")
+                mock_request.reset_mock()
+
+                # DXFile instantiated without project-id
+                dxfile = dxpy.DXFile(dxfile.get_id(), project=None)
+                dxfile.read()
+                api_call_count = mock_request.call_count
+                print(f"dxfile.read() made {api_call_count} API calls")
+                self.assertLessEqual(api_call_count, 4, f"dxfile.read() made {api_call_count} API calls, exceeding the limit.")
+                mock_request.reset_mock()
+
+                # Call DXFile.read() 1024 times
+                dxfile = dxpy.DXFile(dxfile.get_id(), project=project.get_id())
+                while True:
+                    data = dxfile.read(1)
+                    if not data:
+                        break
+                api_call_count = mock_request.call_count
+                print(f"dxfile.read() made {api_call_count} API calls")
+                self.assertLessEqual(api_call_count, 4, f"dxfile.read() made {api_call_count} API calls, exceeding the limit.")
+                mock_request.reset_mock()
+
+    
 
 
 class TestFolder(unittest.TestCase):

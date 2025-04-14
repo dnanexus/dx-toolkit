@@ -32,17 +32,13 @@ from dxpy.nextflow.collect_images import bundle_docker_images
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
 import dxpy_testutil as testutil
-from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
 from dxpy.utils.resolver import ResolutionError
 import dxpy
 from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
 from dxpy.nextflow.nextflow_utils import find_readme
-if USING_PYTHON2:
-    spawn_extra_args = {}
-else:
-    # Python 3 requires specifying the encoding
-    spawn_extra_args = {"encoding": "utf-8"}
 from pathlib import Path
+
+spawn_extra_args = {"encoding": "utf-8"}
 
 THIS_DIR = Path(__file__).parent
 
@@ -115,21 +111,15 @@ class TestNextflowTemplates(DXTestCase):
         dxapp = get_nextflow_dxapp(custom_inputs=inputs)
         self.assertEqual(dxapp.get("inputSpec"), inputs + default_dxapp.get("inputSpec"))
 
-    @unittest.skipIf(USING_PYTHON2,
-        'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
     def test_src_basic(self):
         src = get_nextflow_src()
         self.assertTrue("#!/usr/bin/env bash" in src)
         self.assertTrue("nextflow" in src)
 
-    @unittest.skipIf(USING_PYTHON2,
-        'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
     def test_src_profile(self):
         src = get_nextflow_src(profile="test_profile")
         self.assertTrue("-profile test_profile" in src)
 
-    @unittest.skipIf(USING_PYTHON2,
-        'Skipping as the Nextflow template from which applets are built is for Py3 interpreter only')
     def test_src_inputs(self):
         '''
         Tests that code that handles custom nextflow input parameters (e.g. from nextflow schema) with different classes

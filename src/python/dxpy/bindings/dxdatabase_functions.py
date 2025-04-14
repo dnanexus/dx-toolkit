@@ -36,7 +36,7 @@ from .. import logger
 from . import dxfile, DXFile
 from . import dxdatabase, DXDatabase
 from .dxfile import FILE_REQUEST_TIMEOUT
-from ..compat import open, USING_PYTHON2, md5_hasher
+from ..compat import md5_hasher
 from ..exceptions import DXFileError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..utils import response_iterator
 import subprocess

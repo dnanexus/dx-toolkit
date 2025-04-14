@@ -23,7 +23,6 @@ import tempfile
 import shutil
 import json
 
-from .compat import open
 from .exceptions import err_exit
 from .utils import json_load_raise_on_duplicates
 from .utils.resolver import is_container_id, resolve_path

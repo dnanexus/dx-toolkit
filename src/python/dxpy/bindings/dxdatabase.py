@@ -23,19 +23,16 @@ This remote database handler is a Python database-like object.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import os, sys, logging, traceback, hashlib, copy, time
-import math
-import mmap
+import os, copy, time
+from io import BytesIO
 from threading import Lock
 from multiprocessing import cpu_count
 
 import dxpy
 from . import DXDataObject
-from ..exceptions import DXFileError, DXIncompleteReadsError
-from ..utils import warn
 from ..utils.resolver import object_exists_in_project
-from ..compat import BytesIO, basestring, USING_PYTHON2
 from .. import logger
+from ..compat import basestring
 
 
 DXFILE_HTTP_THREADS = min(cpu_count(), 8)

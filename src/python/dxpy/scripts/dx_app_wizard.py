@@ -31,8 +31,6 @@ from dxpy.utils.printing import fill, BOLD, UNDERLINE, DNANEXUS_LOGO, ENDC
 from dxpy.app_categories import APP_CATEGORIES
 from dxpy.utils.completer import InstanceTypesCompleter
 from dxpy.utils.pretty_print import format_table
-from dxpy.compat import wrap_stdio_in_codecs
-wrap_stdio_in_codecs()
 
 try:
     import colorama

@@ -26,8 +26,7 @@ import csv
 import dxpy
 import json
 
-from ..compat import USING_PYTHON2, open
-from ..exceptions import err_exit, DXError
+from ..exceptions import err_exit
 
 
 # Informational columns in the TSV file, which we want to ignore
@@ -139,8 +138,6 @@ def batch_launch_args(executable, input_json, batch_tsv_file):
     header_line = []
     lines = []
     read_mode = "r"
-    if USING_PYTHON2:
-        read_mode = "rb"
     with open(batch_tsv_file, read_mode) as f:
         reader = csv.reader(f, delimiter=str(u'\t'))
         header_line = next(reader)

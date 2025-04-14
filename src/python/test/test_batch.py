@@ -27,15 +27,9 @@ from dxpy_testutil import (DXTestCase, check_output, temporary_project,
                            run, DXCalledProcessError)
 import dxpy_testutil as testutil
 from dxpy.exceptions import DXAPIError, DXSearchError, EXPECTED_ERR_EXIT_STATUS, HTTPError
-from dxpy.compat import USING_PYTHON2, str, sys_encoding, open
-# from dxpy.utils.resolver import ResolutionError, _check_resolution_needed as check_resolution
 
-if USING_PYTHON2:
-    delimiter = '\t'.encode("utf-8")
-    write_mode = 'wb'
-else:
-    write_mode = 'w'
-    delimiter = '\t'
+write_mode = 'w'
+delimiter = '\t'
 
 @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                      'skipping test that would run jobs')

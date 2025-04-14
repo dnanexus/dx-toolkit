@@ -32,7 +32,7 @@ from collections import defaultdict
 import dxpy
 from .printing import (RED, GREEN, BLUE, YELLOW, WHITE, BOLD, UNDERLINE, ENDC, DELIMITER, get_delimiter, fill)
 from .pretty_print import format_timedelta
-from ..compat import basestring, USING_PYTHON2
+from ..compat import basestring
 
 def JOB_STATES(state):
     if state == 'failed':
@@ -800,15 +800,11 @@ def print_data_obj_desc(desc, verbose=False):
 def printable_ssh_host_key(ssh_host_key):
     try:
         keygen = subprocess.Popen(["ssh-keygen", "-lf", "/dev/stdin"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        if USING_PYTHON2:
-            (stdout, stderr) = keygen.communicate(ssh_host_key)
-        else:
-            (stdout, stderr) = keygen.communicate(ssh_host_key.encode())
+        (stdout, stderr) = keygen.communicate(ssh_host_key.encode())
     except:
         return ssh_host_key.strip()
     else:
-        if not USING_PYTHON2:
-            stdout =  stdout.decode()
+        stdout =  stdout.decode()
         return stdout.replace(" no comment", "").strip()
 
 

@@ -10,15 +10,34 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Support for `--https-app-isolated-browsing` in `dx update project`
 
-## [393.0] - beta
+## [395.0] - beta
+
+### Changed
+
+* Retry requests when received 429 response status code in R SDK
+* Increased timeout to retry throttled requests over attempts
+* Fix Java SDK exception `java.lang.NullPointerException` when could not receive response in `com.dnanexus.DXHTTPRequest`
+
+### Added
+
+* Released Nextaur 1.10.1: Added limit for number of upload retries
+
+## [394.0] - 2025.03.31
+
+### Fixed
+
+* Update parsing of nextflow_schema.json file to be compatible with new schema convention
+* `DXFile.read()` increase in API calls introduced in 392.0
+
+### Changed
+
+* Retry requests when received 429 response status code in Python, Java SDKs
+
+## [393.0] - 2025.03.24
 
 ### Fixed
 
 * Preserve newlines in dxpy file iterator for large files
-
-### Changed
-
-* Retry requests when received 429 response status code
 
 ## [392.0] - 2025.03.10
 
@@ -36,7 +55,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * dxpy download of symlink files verify per part checksums
 * Ubuntu version can be overridden for Nextflow pipelines during build time with `dx build --nextflow --extra-args={"runSpec":{"release":"..."}}`
-* Nextaur 1.10.1: Default version of Ubuntu is 24.04, assets built on Ubuntu 24.04
+* Nextaur 1.10.0: Default version of Ubuntu is 24.04, assets built on Ubuntu 24.04
 
 ### Changed
 

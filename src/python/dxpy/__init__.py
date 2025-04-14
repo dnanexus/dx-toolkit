@@ -136,9 +136,11 @@ import socket
 import threading
 import certifi
 from collections import namedtuple
+from http.client import BadStatusLine
+from io import StringIO
+from reprlib import Repr
 
 from . import exceptions
-from .compat import BadStatusLine, StringIO, bytes, Repr
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
 
 from random import randint
@@ -353,7 +355,14 @@ def _calculate_retry_delay(response, num_attempts):
     '''
     if response is not None and response.status in (503, 429) and 'retry-after' in response.headers:
         try:
-            return int(response.headers['retry-after'])
+            suggested_delay = int(response.headers['retry-after'])
+
+            # By default, apiserver doesn't track attempts and doesn't provide increased timeout over attempts.
+            # So, increasing backoff for throttled requests up to x5 times from the original one.
+            # The current implementation of apiserver returns a retry-after header ranging from 20 to 30 seconds.
+            # Thus, after the 20th attempt the delay will always be between 100 and 150 seconds.
+            return suggested_delay if suggested_delay >= 60 \
+                else suggested_delay + int(0.25 * min(num_attempts - 1, 20) * suggested_delay)
         except ValueError:
             # In RFC 2616, retry-after can be formatted as absolute time
             # instead of seconds to wait. We don't bother to parse that,
@@ -361,7 +370,8 @@ def _calculate_retry_delay(response, num_attempts):
             pass
     if num_attempts <= 1:
         return 1
-    num_attempts = min(num_attempts, 7)
+    num_attempts = min(num_attempts, 8)
+    # After the 8th attempt the delay will always be between 64 and 128 seconds
     return randint(2 ** (num_attempts - 2), 2 ** (num_attempts - 1))
 
 
@@ -514,6 +524,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
        through to :func:`DXHTTPRequest`.
 
     '''
+    # option wasn't named correctly, so to not break existing clients rename it locally for clarity
+    safe_to_retry = always_retry
+
     if headers is None:
         headers = {}
 
@@ -719,7 +732,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # up to (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
                 ok_to_retry = False
-                is_retryable = always_retry or (method == 'GET') or _is_retryable_exception(e)
+                is_retryable = safe_to_retry or (method == 'GET') or _is_retryable_exception(e)
                 # Because try_index is not incremented until we escape
                 # this iteration of the loop, try_index is equal to the
                 # number of tries that have failed so far, minus one.
@@ -800,7 +813,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                              want_full_response=want_full_response,
                              decode_response_body=decode_response_body, prepend_srv=prepend_srv,
                              session_handler=session_handler,
-                             max_retries=max_retries, always_retry=always_retry, **kwargs)
+                             max_retries=max_retries, always_retry=safe_to_retry, **kwargs)
     raise AssertionError('Should never reach this line: should never break out of loop')
 
 

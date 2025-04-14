@@ -40,7 +40,6 @@ from __future__ import print_function
 
 import sys, logging, argparse
 
-USING_PYTHON2 = True if sys.version_info < (3, 0) else False
 
 logging.basicConfig(level=logging.DEBUG, format="%(message)s")
 

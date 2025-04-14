@@ -21,7 +21,7 @@ This submodule gives basic utilities for printing to the terminal.
 import textwrap, subprocess, os, sys
 import json
 import platform
-from ..compat import USING_PYTHON2, sys_encoding
+from ..compat import sys_encoding
 from ..exceptions import DXCLIError
 import contextlib
 import io
@@ -168,7 +168,7 @@ def pager(content, pager=None, file=None):
         if pager_process.returncode != os.EX_OK:
             raise DXCLIError() # Pager had a problem, print the content without it
     except:
-        file.write(content.encode(sys_encoding) if USING_PYTHON2 else content)
+        file.write(content)
     finally:
         try:
             pager_process.terminate()
