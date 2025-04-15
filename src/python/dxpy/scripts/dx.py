@@ -5413,7 +5413,7 @@ parser_update_project.add_argument('--database-ui-view-only', choices=["true", "
                                    help="Whether the viewers on the project can access the database data directly")
 parser_update_project.add_argument('--bill-to', help="Update the user or org ID of the billing account", type=str)
 parser_update_project.add_argument('--https-app-isolated-browsing',
-                                   help="Whether all https access to jobs in this project should be wrapped in isolated browsing."
+                                   help="Whether all https access to jobs in this project should be wrapped in Isolated Browsing."
                                         " If true, httpsApp-enabled executables must have httpsApp.shared_access set to 'NONE' to run in this project.",
                                    choices=["true", "false"])
 allowed_executables_group = parser_update_project.add_mutually_exclusive_group()

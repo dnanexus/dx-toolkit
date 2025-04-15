@@ -395,7 +395,7 @@ class DXProject(DXContainer):
         :type unset_database_results_restricted: boolean
         :param version: If provided, the update will only occur if the value matches the current project's version number
         :type version: int
-        :param https_app_isolated_browsing: Whether all https access to jobs in this project should be wrapped in isolated browsing.
+        :param https_app_isolated_browsing: Whether all https access to jobs in this project should be wrapped in Isolated Browsing.
                                             If true, httpsApp-enabled executables must have httpsApp.shared_access set to 'NONE' to run in this project.
         :type https_app_isolated_browsing: boolean
 
