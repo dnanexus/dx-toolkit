@@ -21,9 +21,28 @@ include mk/Makefile.${PLATFORM}
 # Global variables
 UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu
 
-ua: ua_deps
+ua: print_vars ua_deps
 	echo ">>>> Running  $@ <<<<"
-	$(MAKE) -C ua install dist DESTDIR=/opt/dnanexus PREFIX=/
+	$(MAKE) -C ua install dist DESTDIR=$(DESTDIR) PREFIX=$(PREFIX)
+
+print_vars:
+	echo "#############################################################"
+	echo ">>>> Running  $@ <<<<"
+	echo "MAKE=${MAKE}"
+	echo "MAKEOPTS=${MAKEOPTS}"
+	echo "UNAME=${UNAME}"
+	echo "OS=${OS}"
+	echo "PLATFORM=${PLATFORM}"
+	echo "DNANEXUS_HOME=${DNANEXUS_HOME}"
+	echo "DNANEXUS_LIBDIR=${DNANEXUS_LIBDIR}"
+	echo "PATH=${PATH}"
+	echo "DESTDIR=${DESTDIR}"
+	echo "PREFIX=${PREFIX}"
+	echo "CENTOS_MAJOR_VERSION=${CENTOS_MAJOR_VERSION}"
+	echo "FEDORA_MAJOR_VERSION=${FEDORA_MAJOR_VERSION}"
+	echo "UBUNTU_VERSION=${UBUNTU_VERSION}"
+	echo "RHEL_MAJOR_VERSION=${RHEL_MAJOR_VERSION}"
+	echo "#############################################################"
 
 # Upload Agent dependencies
 # =========================
@@ -32,7 +51,7 @@ ua_deps: openssl boost curl file/stage/lib/libmagic.la
 # OpenSSL
 OPENSSL_PV=3.4.1
 OPENSSL_SHA=d3469baf41823a28ad71aae12b2fbb9fe3b19a0d
-openssl: shasum
+openssl: print_vars shasum
 	echo ">>>> Running $@ <<<<"
 	mkdir -p openssl
 	curl ${UBUNTU_MIRROR}/pool/main/o/openssl/openssl_${OPENSSL_PV}.orig.tar.gz > openssl-${OPENSSL_PV}.tar.gz
@@ -42,7 +61,7 @@ ifeq ($(UNAME), Darwin)
 	cd openssl; ./Configure darwin64-x86_64-cc -shared --openssldir="$$(pwd)/stage"
 else
 	echo ">>>> $@ - Configureing... <<<<"
-	cd openssl; ./Configure
+	cd openssl; ./Configure --prefix=$(PREFIX) --openssldir=$(PREFIX)
 endif
 	echo ">>>> $@ - Installing... <<<<"
 	$(MAKE) -C openssl -j1 install
@@ -56,7 +75,7 @@ BOOST_URL=https://archives.boost.io/release/${BOOST_PV}.0/source/boost_${BOOST_M
 BOOST_SHA=acf19e9d53f0b6db8e85452978eb9c731ef8b865
 
 # See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
-boost: shasum
+boost: print_vars shasum
 	echo ">>>> Running $@ <<<<"
 	curl -L ${BOOST_URL} > boost-$(BOOST_PV).tar.bz2
 	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
@@ -75,7 +94,7 @@ else ifeq ($(UNAME)$(CC), Darwinclang)
 else
 	echo ">>>> $@ - Building for Linux <<<<"
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
-	cd boost; ./b2 --layout=tagged -j8 stage
+	cd boost; ./b2 --prefix=$(PREFIX) --layout=tagged -j8 stage cxxflags="-std=c++14 -stdlib=libc++"
 endif
 
 # curl
@@ -85,14 +104,14 @@ curl: c-ares libcurl
 # https://github.com/c-ares/c-ares/releases/download/v1.34.5/c-ares-1.34.5.tar.gz
 CARES_PV=1.34.5
 CARES_SHA=2ae693c5be7e79240003c98e3becde2d3a65f8fb
-c-ares: shasum
+c-ares: print_vars shasum
 	echo ">>>> Running $@ <<<<"
 	mkdir -p c-ares
 	curl -L https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
 	echo ">>>> $@ - Configureing... <<<<"
-	cd c-ares; ./configure
+	cd c-ares; ./configure --prefix=$(PREFIX) --enable-static=no --enable-shared=yes
 	echo ">>>> $@ - Installing... <<<<"
 	$(MAKE) -C c-ares install
 
@@ -112,14 +131,14 @@ else ifeq ($(UNAME), Darwin)
 	CURL_WITH_SSL=--with-ssl=$(DNANEXUS_HOME)/src/openssl
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Linux)
-	CURL_WITH_SSL=--with-openssl=$(DNANEXUS_HOME)/src/openssl
+	CURL_WITH_SSL=--with-openssl=$(DESTDIR)$(PREFIX)
 	CURL_SHARED_LIBS=--enable-shared=yes
 else
 	CURL_WITH_SSL=--with-ssl
 	CURL_SHARED_LIBS=--enable-shared=no
 endif
 
-libcurl: shasum openssl
+libcurl: print_vars shasum openssl
 	echo ">>>> Running  $@ <<<<"
 	mkdir -p curl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
@@ -131,7 +150,7 @@ libcurl: shasum openssl
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi \
 	    --disable-tls-srp --without-gnutls --without-libssh2 --without-librtmp \
-	    --without-winidn --enable-ares="/opt/dnanexus/usr/local" \
+	    --without-winidn --enable-ares=$(DESTDIR)$(prefix) \
 	    --disable-static --enable-shared $(CURL_WITH_SSL)
 	echo ">>>> $@ - Installing... <<<<"
 	$(MAKE) -C curl install
@@ -146,9 +165,9 @@ file/stage/lib/libmagic.la: shasum
 	[[ $$(shasum file-${FILE_PV}.tar.xz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
 	tar -xf file-${FILE_PV}.tar.xz -C file --strip-components=1
 	echo ">>>> $@ - Configureing... <<<<"
-	cd file; ./configure --enable-static=no --prefix=/
+	cd file; ./configure --enable-static=no --enable-shared=yes --prefix=$(PREFIX)
 	echo ">>>> $@ - Installing... <<<<"
-	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)/src/file/stage"
+	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)src/file/stage"
 
 # Clean
 # =====
