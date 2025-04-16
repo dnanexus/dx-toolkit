@@ -7,6 +7,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Update the package list and install development essentials
 RUN apt-get update && apt-get install -y \
     build-essential \
+    g++ \
+    gcc \
+    libbz2-dev \
+    libicu-dev \
+    zlib1g-dev \
     cmake \
     git \
     wget \
@@ -17,6 +22,8 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-venv \
     vim \
+    libopenmpi-dev \
+    openmpi-bin \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set Python 3 as the default python command

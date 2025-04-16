@@ -23,7 +23,7 @@ UBUNTU_MIRROR=http://archive.ubuntu.com/ubuntu
 
 ua: print_vars ua_deps
 	echo ">>>> Running  $@ <<<<"
-	$(MAKE) -C ua install dist DESTDIR=$(DESTDIR) PREFIX=$(PREFIX)
+	$(MAKE) -C ua install dist DESTDIR=$(DNANEXUS_HOME) PREFIX=/
 
 print_vars:
 	echo "#############################################################"
@@ -51,7 +51,11 @@ ua_deps: openssl boost curl file/stage/lib/libmagic.la
 # OpenSSL
 OPENSSL_PV=3.4.1
 OPENSSL_SHA=d3469baf41823a28ad71aae12b2fbb9fe3b19a0d
-openssl: print_vars shasum
+openssl: shasum build_openssl
+
+build_openssl: openssl/libssl.a
+
+openssl/libssl.a:
 	echo ">>>> Running $@ <<<<"
 	mkdir -p openssl
 	curl ${UBUNTU_MIRROR}/pool/main/o/openssl/openssl_${OPENSSL_PV}.orig.tar.gz > openssl-${OPENSSL_PV}.tar.gz
@@ -61,10 +65,10 @@ ifeq ($(UNAME), Darwin)
 	cd openssl; ./Configure darwin64-x86_64-cc -shared --openssldir="$$(pwd)/stage"
 else
 	echo ">>>> $@ - Configureing... <<<<"
-	cd openssl; ./Configure --prefix=$(PREFIX) --openssldir=$(PREFIX)
+	cd openssl; ./config shared --prefix="$$(pwd)/stage" --openssldir="$$(pwd)/stage"
 endif
 	echo ">>>> $@ - Installing... <<<<"
-	$(MAKE) -C openssl -j1 install
+	$(MAKE) -C openssl -j1 install DESTDIR="$$(pwd)/stage"
 
 # Boost
 BOOST_LIBS=all
@@ -74,8 +78,10 @@ BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
 BOOST_URL=https://archives.boost.io/release/${BOOST_PV}.0/source/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
 BOOST_SHA=acf19e9d53f0b6db8e85452978eb9c731ef8b865
 
+boost: boost/stage
+
 # See https://svn.boost.org/trac/boost/ticket/5680 for Windows/MinGW details
-boost: print_vars shasum
+boost/stage: shasum
 	echo ">>>> Running $@ <<<<"
 	curl -L ${BOOST_URL} > boost-$(BOOST_PV).tar.bz2
 	[[ $$(shasum boost-$(BOOST_PV).tar.bz2|cut -f 1 -d ' ') == $(BOOST_SHA) ]]
@@ -94,25 +100,26 @@ else ifeq ($(UNAME)$(CC), Darwinclang)
 else
 	echo ">>>> $@ - Building for Linux <<<<"
 	cd boost; ./bootstrap.sh --with-libraries=${BOOST_LIBS}
-	cd boost; ./b2 --prefix=$(PREFIX) --layout=tagged -j8 stage cxxflags="-std=c++14 -stdlib=libc++"
+	cd boost; ./b2 --layout=tagged -j8 stage cxxflags="-std=c++14" --without-locale --without-context --without-mpi
 endif
 
 # curl
-curl: c-ares libcurl
+curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
 # c-ares
 # https://github.com/c-ares/c-ares/releases/download/v1.34.5/c-ares-1.34.5.tar.gz
 CARES_PV=1.34.5
 CARES_SHA=2ae693c5be7e79240003c98e3becde2d3a65f8fb
-c-ares: print_vars shasum
+c-ares/stage/lib/libcares.la: shasum
 	echo ">>>> Running $@ <<<<"
 	mkdir -p c-ares
 	curl -L https://github.com/c-ares/c-ares/releases/download/v${CARES_PV}/c-ares-${CARES_PV}.tar.gz > c-ares-${CARES_PV}.tar.gz
 	[[ $$(shasum c-ares-${CARES_PV}.tar.gz|cut -f 1 -d ' ') == $(CARES_SHA) ]]
 	tar -xzf c-ares-${CARES_PV}.tar.gz -C c-ares --strip-components=1
 	echo ">>>> $@ - Configureing... <<<<"
-	cd c-ares; ./configure --prefix=$(PREFIX) --enable-static=no --enable-shared=yes
+	cd c-ares; ./configure --prefix=/ --enable-static=no --enable-shared=yes
 	echo ">>>> $@ - Installing... <<<<"
+# TODO: Should we set DESTDIR here?
 	$(MAKE) -C c-ares install
 
 # libcurl
@@ -124,21 +131,22 @@ CURL_PV_UNDERSCORES=$(CURL_MAJOR)_$(CURL_MINOR)_$(CURL_MICRO)
 CURL_MIRROR=https://github.com/bagder/curl/releases/download
 CURL_URL=$(CURL_MIRROR)/curl-$(CURL_PV_UNDERSCORES)/curl-$(CURL_PV).tar.gz
 CURL_SHA=07d4eae21a532e6b9736009bcb96140e6f03abc7
+# TODO: Remove CURL_SHARED_LIBS when we are sure that it is not needed
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Darwin)
-	CURL_WITH_SSL=--with-ssl=$(DNANEXUS_HOME)/src/openssl
+	CURL_WITH_SSL=--with-ssl=$(DNANEXUS_HOME)/src/openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=yes
 else ifeq ($(UNAME), Linux)
-	CURL_WITH_SSL=--with-openssl=$(DESTDIR)$(PREFIX)
+	CURL_WITH_SSL=--with-openssl=$(DNANEXUS_HOME)/src/openssl/stage
 	CURL_SHARED_LIBS=--enable-shared=yes
 else
-	CURL_WITH_SSL=--with-ssl
-	CURL_SHARED_LIBS=--enable-shared=no
+	CURL_WITH_SSL=--with-openssl=$(DNANEXUS_HOME)/src/openssl/stage
+	CURL_SHARED_LIBS=--enable-shared=yes
 endif
 
-libcurl: print_vars shasum openssl
+curl/stage/lib/libcurl.la: shasum openssl
 	echo ">>>> Running  $@ <<<<"
 	mkdir -p curl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
@@ -150,10 +158,10 @@ libcurl: print_vars shasum openssl
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi \
 	    --disable-tls-srp --without-gnutls --without-libssh2 --without-librtmp \
-	    --without-winidn --enable-ares=$(DESTDIR)$(prefix) \
+	    --without-winidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
 	    --disable-static --enable-shared $(CURL_WITH_SSL)
 	echo ">>>> $@ - Installing... <<<<"
-	$(MAKE) -C curl install
+	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
 # what is this file lib?
 FILE_PV=5.32
@@ -165,7 +173,7 @@ file/stage/lib/libmagic.la: shasum
 	[[ $$(shasum file-${FILE_PV}.tar.xz|cut -f 1 -d ' ') == $(FILE_SHA) ]]
 	tar -xf file-${FILE_PV}.tar.xz -C file --strip-components=1
 	echo ">>>> $@ - Configureing... <<<<"
-	cd file; ./configure --enable-static=no --enable-shared=yes --prefix=$(PREFIX)
+	cd file; ./configure --enable-static=no --enable-shared=yes --prefix=/
 	echo ">>>> $@ - Installing... <<<<"
 	$(MAKE) -C file install DESTDIR="$(DNANEXUS_HOME)src/file/stage"
 
@@ -192,4 +200,4 @@ clean:
 shasum:
 	if ! hash shasum; then cd "${DNANEXUS_HOME}/build/bin"; ln -s "$$(command -v sha1sum)" shasum; fi
 
-.PHONY: all toolkit_version api_wrappers src_libs python java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps
+.PHONY: all print_vars toolkit_version api_wrappers src_libs python java ua test test_python install base_install debian_install doc setup_doc_build_virtualenv doc_python doc_dxcpp doc_dxjson doc_java R doc_R boost boost_build install_sysdeps

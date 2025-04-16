@@ -1,0 +1,72 @@
+# Globals
+
+OPENSSL_VERSION := 3.5.0
+STATGING_ROOT=/root/staging
+OPENSSL_DIR=$(STATGING_ROOT)/openssl
+BOOST_DIR=$(STATGING_ROOT)/boost
+
+all: ua
+
+prepare:
+# Create a staging dirctory for all the build artifacts
+	mkdir -p $(STATGING_ROOT)
+
+
+ua: prepare openssl boost curl
+
+openssl:
+# Download openssl 3.5.0 (LTS)
+	curl -L https://github.com/openssl/openssl/releases/download/openssl-3.5.0/openssl-3.5.0.tar.gz > openssl.tar.gz
+# Verify the SHA256 checksum of the downloaded file
+	# OPENSSL_SHA=$(curl -L https://github.com/openssl/openssl/releases/download/openssl-3.5.0/openssl-3.5.0.tar.gz.sha256 | cut -f 1 -d ' ')
+	# echo "sha=$(OPENSSL_SHA)"
+	# [[ $$(sha256sum openssl.tar.gz|cut -f 1 -d ' ') == $(OPENSSL_SHA) ]]
+# Extract the tarball
+	mkdir -p openssl
+	tar -xzf openssl.tar.gz -C openssl --strip-components=1
+# Configure the build
+	cd openssl; ./config shared --prefix=$(OPENSSL_DIR) --openssldir=$(OPENSSL_DIR)
+# Build and install OpenSSL
+	$(MAKE) -C openssl all
+	$(MAKE) -C openssl install
+
+boost: prepare boost-pre
+# Download boost 1.88.0
+	curl -L https://archives.boost.io/release/1.88.0/source/boost_1_88_0.tar.bz2 > boost.tar.bz2
+# Verify the SHA256 checksum of the downloaded file
+# Extract the tarball
+	mkdir -p boost
+	tar -xjf boost.tar.bz2 -C boost --strip-components=1
+# Configure the build
+	cd boost; ./bootstrap.sh --prefix=$(BOOST_DIR)
+# Build and install Boost
+	cd boost; ./b2 install -j8 --prefix=$(BOOST_DIR) toolset=gcc architecture=arm address-model=64
+# Update the PATH to include the Boost binaries
+	PATH=$(BOOST_DIR)/bin:${PATH}
+	echo "PATH=$(PATH)"
+
+boost-pre:
+# Make sure that MPI is installed
+	which mpicc
+
+curl: c-ares curl-build
+	mkdir -p curl
+
+c-ares:
+	mkdir -p c-ares
+
+curl-build: openssl
+	mkdir -p curl-build
+
+clean:
+	-find ../bin -type f \( -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -not -name 'dx-su-*' -delete
+	-rm -f ../bin/docker2aci ../bin/proot
+	-rm -rf python/{build,*.{egg,egg-info}}
+	-rm -rf java/target
+	-rm -rf ../lib
+	-rm -rf ../share
+	-rm -f ../build/info/version
+	-rm -rf "$(DX_PY_ENV)"ma
+	-rm -rf boost c-ares curl file openssl
+
+
