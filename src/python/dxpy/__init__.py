@@ -524,6 +524,9 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
        through to :func:`DXHTTPRequest`.
 
     '''
+    # option wasn't named correctly, so to not break existing clients rename it locally for clarity
+    safe_to_retry = always_retry
+
     if headers is None:
         headers = {}
 
@@ -729,7 +732,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                 # up to (max_retries) subsequent retries.
                 total_allowed_tries = max_retries + 1
                 ok_to_retry = False
-                is_retryable = always_retry or (method == 'GET') or _is_retryable_exception(e)
+                is_retryable = safe_to_retry or (method == 'GET') or _is_retryable_exception(e)
                 # Because try_index is not incremented until we escape
                 # this iteration of the loop, try_index is equal to the
                 # number of tries that have failed so far, minus one.
@@ -810,7 +813,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
                              want_full_response=want_full_response,
                              decode_response_body=decode_response_body, prepend_srv=prepend_srv,
                              session_handler=session_handler,
-                             max_retries=max_retries, always_retry=always_retry, **kwargs)
+                             max_retries=max_retries, always_retry=safe_to_retry, **kwargs)
     raise AssertionError('Should never reach this line: should never break out of loop')
 
 

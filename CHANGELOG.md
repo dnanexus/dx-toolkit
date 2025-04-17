@@ -6,16 +6,27 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Released Nextaur 1.11.0: Update nextflow to 24.10.5
+
+### Fixed
+
+* Use full path for assetDepends when building nextflow applet
+
+## [395.0] - beta
+
 ### Changed
 
 * Retry requests when received 429 response status code in R SDK
 * Increased timeout to retry throttled requests over attempts
+* Fix Java SDK exception `java.lang.NullPointerException` when could not receive response in `com.dnanexus.DXHTTPRequest`
 
 ### Added
 
 * Released Nextaur 1.10.1: Added limit for number of upload retries
 
-## [394.0] - beta
+## [394.0] - 2025.03.31
 
 ### Fixed
 
