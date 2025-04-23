@@ -1587,6 +1587,11 @@ def extract_assay_expression(args):
     )
     vizserver_payload = viz.build()
 
+    print("vizserver_payload:\n")
+    print(vizserver_payload)
+    print("\n")
+
+
     # Get the record ID and vizserver URL from the Dataset object
     record_id = dataset.detail_describe["id"]
     url = dataset.vizserver_url
