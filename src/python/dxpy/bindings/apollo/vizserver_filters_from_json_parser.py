@@ -68,10 +68,6 @@ class JSONFiltersValidator(object):
     def parse(self):
         self.is_valid_json(self.schema)
         if self.get_schema_version(self.schema).startswith("1."):
-
-            # print(f"PRE:\n{self.parse_v1()}\n\n")
-            # print(f"POS:\n{self.merge_duplicate_filters(self.parse_v1())}\n\n")
-
             return self.parse_v1_1()
         else:
             raise NotImplementedError
