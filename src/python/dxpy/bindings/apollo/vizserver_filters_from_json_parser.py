@@ -68,7 +68,16 @@ class JSONFiltersValidator(object):
     def parse(self):
         self.is_valid_json(self.schema)
         if self.get_schema_version(self.schema).startswith("1."):
-            return self.parse_v1_1()
+            # return self.parse_v1_1()
+            # print(f"pre processed:{self.parse_v1()}\n\n")
+            # print(f"flattened:{self.flatten_all_compounds(self.parse_v1())}\n\n")
+            # self.flatten_all_compounds(self.parse_v1())
+            print(f"PRE:\n{self.parse_v1()}\n\n")
+            print(f"POS:\n{self.merge_duplicate_filters(self.parse_v1())}\n\n")
+
+
+            # return self.parse_v1()
+            return self.merge_duplicate_filters(self.parse_v1())
         else:
             raise NotImplementedError
 
@@ -530,18 +539,95 @@ class JSONFiltersValidator(object):
         # }
 
         return filter_structure
+    
 
-    def flatten_compound_filters(self, raw_compound):
+
+    def merge_duplicate_filters(self, compound_block):
         """
-        Flatten the filter structure to a single level.
+        Recursively walk the compound tree and merge duplicate 'filters' blocks
+        at the same compound level.
         """
-        filter_list = raw_compound.get("compound")
-        if len(filter_list) > 1:
-            compound_dict = {"filters": {}}
-            for filter in filter_list:
-                # add each filter to the compound dict
-                compound_dict["filters"].update(filter.get("filters"))
+        if "compound" in compound_block:
+            new_compound = []
+            merged_filters = {}
+            
+            for item in compound_block["compound"]:
+                self.merge_duplicate_filters(item)
 
-            raw_compound["compound"] = [compound_dict]
+                if "filters" in item and len(item) == 1:
+                    # Merge filters into the accumulating dict
+                    for key, conditions in item["filters"].items():
+                        if key not in merged_filters:
+                            merged_filters[key] = []
+                        merged_filters[key].extend(conditions)
+                else:
+                    if merged_filters:
+                        new_compound.append({"filters": merged_filters})
+                        merged_filters = {}
+                    new_compound.append(item)
 
-        return raw_compound
+            if merged_filters:
+                new_compound.append({"filters": merged_filters})
+
+            compound_block["compound"] = new_compound
+
+        return compound_block
+
+
+
+
+    # def flatten_all_compounds(self, raw_compound, level = 0):
+    #     """
+    #     Recursively flatten the compound structure.
+    #     """
+    #     print(f"raw_compound: {raw_compound}")
+        
+    #     compound = raw_compound.get("compound")
+    #     if compound:
+    #         level += 1
+    #         print(f"Level {level} compound: {compound}")
+    #         for sub_compound in compound:
+    #             if "compound" in sub_compound:
+    #                 self.flatten_all_compounds(sub_compound, level)
+    #             else:
+    #                 break
+
+
+
+        # print(f"raw_compound: {raw_compound}")
+        # compound = raw_compound.get("compound")
+        # if compound:
+        #     level += 1
+        #     print(f"level {level} compound: {compound}")
+        #     self.flatten_compound_filters(compound[0], level=level)
+            
+    # def flatten_compound_filters(self, raw_compound):
+    #     """
+    #     Flatten the filter structure to a single level.
+    #     """
+    #     print(f"raw_compound COMING: {raw_compound}")
+    #     if len(raw_compound) > 1:
+    #         compound_dict = {"filters": {}}
+    #         for filter in filter_list:
+    #             # add each filter to the compound dict
+    #             compound_dict["filters"].update(filter.get("filters"))
+
+    #         raw_compound["compound"] = [compound_dict]
+
+    #     return raw_compound
+
+    # def flatten_compound_filters(self, raw_compound):
+    #     """
+    #     Flatten the filter structure to a single level.
+    #     """
+    #     filter_list = raw_compound.get("compound")
+    #     # print(filter_list)
+    #     if len(filter_list) > 1:
+    #         compound_dict = {"filters": {}}
+    #         for filter in filter_list:
+    #             # add each filter to the compound dict
+    #             compound_dict["filters"].update(filter.get("filters"))
+
+    #         raw_compound["compound"] = [compound_dict]
+
+    #     return raw_compound
