@@ -78,8 +78,7 @@ class JSONFiltersValidator(object):
         compound filters are built in one hash.
         """
         pre_processed_vizserver_compound_filters = self.parse_v1()
-        processed_vizserver_compound_filters = self.flatten_compound_filters(pre_processed_vizserver_compound_filters)
-        return processed_vizserver_compound_filters
+        return self.flatten_compound_filters(pre_processed_vizserver_compound_filters)
 
     def parse_v1(self):
         """
@@ -538,32 +537,11 @@ class JSONFiltersValidator(object):
         """
         filter_list = raw_compound.get("compound")
         if len(filter_list) > 1:
-            # add elements from list into dict key 'filters'
-            compound_dict = {'filters': {}}
+            compound_dict = {"filters": {}}
             for filter in filter_list:
                 # add each filter to the compound dict
                 compound_dict["filters"].update(filter.get("filters"))
 
-        new_compound = raw_compound.copy()
-        new_compound["compound"] = [compound_dict]
-        return new_compound
+            raw_compound["compound"] = [compound_dict]
 
-
-
-
-        # if len(filter_list) > 1:
-        #     # flattening into a list for easier handling of elements
-        #     flattened_filters = []
-        #     for filter in filter_list:
-        #         flattened_filters.append(filter.get("filters"))
-        
-        # # updating the filter structure
-        # flattened_filters_merged = ','.join(str(d) for d in flattened_filters)
-        # # print("flattened_filters_merged", flattened_filters_merged)
-        
-        # flattened_compound = {'filters': {flattened_filters_merged}}
-        # raw_compound["compound"] = flattened_compound
-        # print("raw_compound", raw_compound)
-
-
-
+        return raw_compound
