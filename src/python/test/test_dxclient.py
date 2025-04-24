@@ -6848,7 +6848,8 @@ class TestDXClientNewUser(DXTestCase):
             "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
-            "id": user_id
+            "id": user_id,
+            "treManagement": False
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -6867,7 +6868,8 @@ class TestDXClientNewUser(DXTestCase):
             "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
-            "id": user_id
+            "id": user_id,
+            "treManagement": False
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -6884,7 +6886,8 @@ class TestDXClientNewUser(DXTestCase):
             "cloudIntegrationManagement": False,
             "appAccess": False,
             "projectAccess": "VIEW",
-            "id": user_id
+            "id": user_id,
+            "treManagement": False
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -6902,7 +6905,8 @@ class TestDXClientNewUser(DXTestCase):
             "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
-            "id": user_id
+            "id": user_id,
+            "treManagement": False
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -7016,7 +7020,8 @@ class TestDXClientMembership(DXTestCase):
                           "allowBillableActivities": True,
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
-                          "projectAccess": "ADMINISTER"}
+                          "projectAccess": "ADMINISTER",
+                          "treManagement": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7028,7 +7033,8 @@ class TestDXClientMembership(DXTestCase):
                           "allowBillableActivities": False,
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
-                          "projectAccess": "CONTRIBUTE"}
+                          "projectAccess": "CONTRIBUTE",
+                          "treManagement": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7089,7 +7095,8 @@ class TestDXClientMembership(DXTestCase):
                           "allowBillableActivities": True,
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
-                          "projectAccess": "ADMINISTER"}
+                          "projectAccess": "ADMINISTER",
+                          "treManagement": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7216,7 +7223,8 @@ class TestDXClientMembership(DXTestCase):
                           "allowBillableActivities": True,
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
-                          "projectAccess": "ADMINISTER"}
+                          "projectAccess": "ADMINISTER",
+                          "treManagement": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7227,7 +7235,8 @@ class TestDXClientMembership(DXTestCase):
                           "allowBillableActivities": False,
                           "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
-                          "appAccess": True}
+                          "appAccess": True,
+                          "treManagement": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7238,7 +7247,8 @@ class TestDXClientMembership(DXTestCase):
                           "allowBillableActivities": True,
                           "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
-                          "appAccess": False}
+                          "appAccess": False,
+                          "treManagement": False}
 
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
