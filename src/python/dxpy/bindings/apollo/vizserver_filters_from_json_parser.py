@@ -534,6 +534,47 @@ class JSONFiltersValidator(object):
         """
         Recursively walk the compound tree and merge duplicate 'filters' blocks
         at the same compound level.
+
+        Example usage:
+        # For
+        compound_block = 
+                    {
+                "logic": "and",
+                "compound": [
+                    {
+                        "filters": {
+                            "expression_read_optimized$value": [
+                                {"condition": "greater-than-eq", "values": 2000}
+                            ]
+                        }
+                    },
+                    {
+                        "filters": {
+                            "expression_read_optimized$gene_name": [
+                                {"condition": "in", "values": ["FAM229B", "TRAIP", "PLEC"]}
+                            ]
+                        }
+                    },
+                ],
+            }
+        merged_block = merge_duplicate_filters(compound_block)
+
+        # merged_block will be:
+        {
+            "logic": "and",
+            "compound": [
+                {
+                    "filters": {
+                        "expression_read_optimized$value": [
+                            {"condition": "greater-than-eq", "values": 2000}
+                        ],
+                        "expression_read_optimized$gene_name": [
+                            {"condition": "in", "values": ["FAM229B", "TRAIP", "PLEC"]}
+                        ],
+                    }
+                }
+            ],
+        }
         """
         if "compound" in compound_block:
             new_compound = []
