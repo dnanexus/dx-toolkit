@@ -56,7 +56,10 @@ from dxpy.bindings.apollo.dataset import Dataset
 
 from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from dxpy.bindings.apollo.schemas.assay_filtering_conditions import (
-    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
+    # EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
+    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
+    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized,
 )
 from dxpy.bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from dxpy.exceptions import err_exit
@@ -1005,7 +1008,11 @@ class TestDXExtractExpression(unittest.TestCase):
             )
 
     def common_vizpayloadbuilder_test_helper_method(
-        self, record_path, test_name, data_test=True
+        self,
+        record_path,
+        test_name,
+        data_test=True,
+        schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
     ):
         _, _, entity = resolve_existing_path(record_path)
         entity_describe = entity["describe"]
@@ -1028,7 +1035,6 @@ class TestDXExtractExpression(unittest.TestCase):
         project = dataset.project_id
 
         # vizserver_filters_from_json_parser.JSONFiltersValidator using the CLIEXPRESS schema
-        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
         _db_columns_list = schema["output_fields_mapping"].get("default")
 
         # JSONFiltersValidator to build the complete payload
@@ -1043,7 +1049,7 @@ class TestDXExtractExpression(unittest.TestCase):
             project_context=project,
             output_fields_mapping=_db_columns_list,
             filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
-            order_by=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["order_by"],
+            order_by=schema["order_by"],
             limit=None,
             base_sql=BASE_SQL,
             is_cohort=IS_COHORT,
@@ -1235,6 +1241,151 @@ class TestDXExtractExpression(unittest.TestCase):
             subprocess_run=True,
         )
         self.assertIn(expected_error, response.stderr)
+
+    def test_merge_duplicate_filters_schema_1_0(self):
+        json_input = VIZPAYLOADERBUILDER_TEST_INPUT[
+            "test_vizpayloadbuilder_expression_max"
+        ]
+        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0
+        input_json_parser = JSONFiltersValidator(json_input, schema)
+
+        raw_compound_filter = input_json_parser.parse_v1()
+
+        # For context, in this case:
+        # raw_compound_filter = {
+        #     "logic": "and",
+        #     "compound": [
+        #         {
+        #             "filters": {
+        #                 "expression$value": [{"condition": "less-than-eq", "values": 10}]
+        #             }
+        #         },
+        #         {
+        #             "filters": {
+        #                 "expr_annotation$gene_name": [{"condition": "in", "values": ["BRCA2"]}]
+        #             }
+        #         },
+        #     ],
+        # }
+
+        expected_merged_compound_block = {
+            "logic": "and",
+            "compound": [
+                {
+                    "filters": {
+                        "expression$value": [
+                            {"condition": "less-than-eq", "values": 10}
+                        ],
+                        "expr_annotation$gene_name": [
+                            {"condition": "in", "values": ["BRCA2"]}
+                        ],
+                    }
+                }
+            ],
+        }
+
+        merged_compound_block = input_json_parser.merge_duplicate_filters(
+            raw_compound_filter
+        )
+        assert merged_compound_block == expected_merged_compound_block
+
+    def test_merge_duplicate_filters_schema_1_1(self):
+        json_input = VIZPAYLOADERBUILDER_TEST_INPUT[
+            "test_vizpayloadbuilder_expression_max"
+        ]
+        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
+        input_json_parser = JSONFiltersValidator(json_input, schema)
+
+        raw_compound_filter = input_json_parser.parse_v1()
+
+        # For context, in this case:
+        # raw_compound_filter = {
+        #     "logic": "and",
+        #     "compound": [
+        #         {
+        #             "filters": {
+        #                 "expression_read_optimized$value": [
+        #                     {"condition": "less-than-eq", "values": 10}
+        #                 ]
+        #             }
+        #         },
+        #         {
+        #             "filters": {
+        #                 "expression_read_optimized$gene_name": [
+        #                     {"condition": "in", "values": ["BRCA2"]}
+        #                 ]
+        #             }
+        #         },
+        #     ],
+        # }
+
+        expected_merged_compound_block = {
+            "logic": "and",
+            "compound": [
+                {
+                    "filters": {
+                        "expression_read_optimized$value": [
+                            {"condition": "less-than-eq", "values": 10}
+                        ],
+                        "expression_read_optimized$gene_name": [
+                            {"condition": "in", "values": ["BRCA2"]}
+                        ],
+                    }
+                }
+            ],
+        }
+
+        merged_compound_block = input_json_parser.merge_duplicate_filters(
+            raw_compound_filter
+        )
+        assert merged_compound_block == expected_merged_compound_block
+
+    def test_merge_duplicate_filters_schema_1_1_non_optimized(self):
+        json_input = VIZPAYLOADERBUILDER_TEST_INPUT[
+            "test_vizpayloadbuilder_expression_max"
+        ]
+        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+        input_json_parser = JSONFiltersValidator(json_input, schema)
+
+        raw_compound_filter = input_json_parser.parse_v1()
+
+        # For context, in this case:
+        # raw_compound_filter = {
+        #     "compound": [
+        #         {
+        #             "filters": {
+        #                 "expression$value": [{"condition": "less-than-eq", "values": 10}]
+        #             }
+        #         },
+        #         {
+        #             "filters": {
+        #                 "expr_annotation$gene_name": [{"condition": "in", "values": [...]}]
+        #             }
+        #         },
+        #     ],
+        #     "logic": "and",
+        # }
+
+        expected_merged_compound_block = {
+            "logic": "and",
+            "compound": [
+                {
+                    "filters": {
+                        "expression$value": [
+                            {"condition": "less-than-eq", "values": 10}
+                        ],
+                        "expr_annotation$gene_name": [
+                            {"condition": "in", "values": ["BRCA2"]}
+                        ],
+                    }
+                }
+            ],
+        }
+
+        merged_compound_block = input_json_parser.merge_duplicate_filters(
+            raw_compound_filter
+        )
+        assert merged_compound_block == expected_merged_compound_block
 
 
 # Start the test

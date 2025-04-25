@@ -68,13 +68,20 @@ class JSONFiltersValidator(object):
     def parse(self):
         self.is_valid_json(self.schema)
         if self.get_schema_version(self.schema).startswith("1."):
-            return self.parse_v1()
+            return self.parse_v1_1()
         else:
             raise NotImplementedError
 
+    def parse_v1_1(self):
+        """
+        Parse input_json according to schema version 1.1 (optimized), and build vizserver compound filters. In this version,
+        compound filters are built in one hash.
+        """
+        return self.merge_duplicate_filters(self.parse_v1())
+
     def parse_v1(self):
         """
-        Parse input_json according to schema version 1.1, and build vizserver compound filters.
+        Parse input_json according to schema version 1.0 (non-optimized), and build vizserver compound filters.
         """
 
         try:
@@ -522,3 +529,74 @@ class JSONFiltersValidator(object):
         # }
 
         return filter_structure
+
+    def merge_duplicate_filters(self, compound_block):
+        """
+        Recursively walk the compound tree and merge duplicate 'filters' blocks
+        at the same compound level.
+
+        Example usage:
+        # For
+        compound_block = 
+                    {
+                "logic": "and",
+                "compound": [
+                    {
+                        "filters": {
+                            "expression_read_optimized$value": [
+                                {"condition": "greater-than-eq", "values": 2000}
+                            ]
+                        }
+                    },
+                    {
+                        "filters": {
+                            "expression_read_optimized$gene_name": [
+                                {"condition": "in", "values": ["FAM229B", "TRAIP", "PLEC"]}
+                            ]
+                        }
+                    },
+                ],
+            }
+        merged_block = merge_duplicate_filters(compound_block)
+
+        # merged_block will be:
+        {
+            "logic": "and",
+            "compound": [
+                {
+                    "filters": {
+                        "expression_read_optimized$value": [
+                            {"condition": "greater-than-eq", "values": 2000}
+                        ],
+                        "expression_read_optimized$gene_name": [
+                            {"condition": "in", "values": ["FAM229B", "TRAIP", "PLEC"]}
+                        ],
+                    }
+                }
+            ],
+        }
+        """
+        if "compound" in compound_block:
+            new_compound = []
+            merged_filters = {}
+
+            for item in compound_block["compound"]:
+                self.merge_duplicate_filters(item)
+
+                if "filters" in item and len(item) == 1:
+                    # Merge filters into the accumulating dict
+                    for key, conditions in item["filters"].items():
+                        merged_filters[key] = []
+                        merged_filters[key].extend(conditions)
+                else:
+                    if merged_filters:
+                        new_compound.append({"filters": merged_filters})
+                        merged_filters = {}
+                    new_compound.append(item)
+
+            if merged_filters:
+                new_compound.append({"filters": merged_filters})
+
+            compound_block["compound"] = new_compound
+
+        return compound_block
