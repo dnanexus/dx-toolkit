@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [396.0] - beta
+
 ### Added
 
 * Support for `--https-app-isolated-browsing` in `dx update project`
@@ -15,7 +17,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Use full path for assetDepends when building nextflow applet
 
-## [395.0] - beta
+## [395.0] - 2024.04.30
 
 ### Changed
 
