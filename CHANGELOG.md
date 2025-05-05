@@ -6,7 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [396.0] - beta
+## [397.0] - beta
+
+* No significant changes
+
+## [396.0] - 2025.05.05
 
 ### Added
 
@@ -17,7 +21,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Use full path for assetDepends when building nextflow applet
 
-## [395.0] - 2024.04.30
+## [395.0] - 2025.04.30
 
 ### Changed
 
