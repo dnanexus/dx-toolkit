@@ -6,7 +6,22 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [395.0] - beta
+## [397.0] - beta
+
+* No significant changes
+
+## [396.0] - 2025.05.05
+
+### Added
+
+* Support for `--https-app-isolated-browsing` in `dx update project`
+* Released Nextaur 1.11.0: Update nextflow to 24.10.5
+
+### Fixed
+
+* Use full path for assetDepends when building nextflow applet
+
+## [395.0] - 2025.04.30
 
 ### Changed
 
