@@ -18,7 +18,7 @@ positional arguments:
                         id, where ":record-id" indicates the record-id in
                         current selected project, or name
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --list-assays         List molecular expression assays available for query
                         in the specified Dataset or Cohort object
