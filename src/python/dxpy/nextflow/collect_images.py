@@ -79,7 +79,7 @@ def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
     print(process.args)
     print(process.returncode)
     if not os.path.exists(CONTAINERS_JSON):
-        raise ImageRefFactoryError(process.stdout)
+        raise ImageRefFactoryError(f"TEST DEBUG: process.stderr: {process.stderr};\nprocess.stdout: {process.stdout};\nprocess.args: {process.args};\nprocess.returncode: {process.returncode}")
     with open(CONTAINERS_JSON, "r") as json_file:
         image_refs = json.load(json_file).get("processes", None)
         if not image_refs:
