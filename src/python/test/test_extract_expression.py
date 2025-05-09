@@ -1010,14 +1010,14 @@ class TestDXExtractExpression(unittest.TestCase):
         )
 
     # Annotation_expression_sample_id (using flattened filters)
-    def test_annotation_expression_sample_id(self):
+    def test_vizpayloadbuilder_annotation_expression_sample_id(self):
         self.common_vizpayloadbuilder_test_helper_method(
             record_path=self.expression_dataset,
             test_name="test_vizpayloadbuilder_sample_annotation_expression_sample_id",
         )
 
     # 1.1
-    def test_annotation_expression_sample_id_1_1(self):
+    def test_vizpayloadbuilder_annotation_expression_sample_id_1_1(self):
         self.common_vizpayloadbuilder_test_helper_method(
             record_path=self.expression_dataset_1_1,
             test_name="test_vizpayloadbuilder_sample_annotation_expression_sample_id",
