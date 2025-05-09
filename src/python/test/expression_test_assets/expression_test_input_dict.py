@@ -223,6 +223,11 @@ VIZPAYLOADERBUILDER_TEST_INPUT = {
         "expression": {"max_value": 20},
         "sample_id": ["sample_1"],
     },
+    "test_vizpayloadbuilder_sample_annotation_expression_sample_id": {
+        "annotation": {"feature_id": ["ENST00000450305", "ENST00000456328"]},
+        "expression": {"min_value": 20, "max_value": 70},
+        "sample_id": ["sample_1", "sample_2", "sample_3", "sample_4"],
+    },
 }
 
 EXPRESSION_CLI_JSON_FILTERS = {
