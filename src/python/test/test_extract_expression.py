@@ -56,7 +56,6 @@ from dxpy.bindings.apollo.dataset import Dataset
 
 from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from dxpy.bindings.apollo.schemas.assay_filtering_conditions import (
-    # EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
     EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
     EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
     EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized,
@@ -67,26 +66,14 @@ from dxpy.exceptions import err_exit
 
 dirname = os.path.dirname(__file__)
 
-python_version = sys.version_info.major
-
-if python_version == 2:
-    sys.path.append("./expression_test_assets")
-    from expression_test_input_dict import (
-        CLIEXPRESS_TEST_INPUT,
-        VIZPAYLOADERBUILDER_TEST_INPUT,
-        EXPRESSION_CLI_JSON_FILTERS,
-    )
-    from expression_test_expected_output_dict import VIZPAYLOADERBUILDER_EXPECTED_OUTPUT
-
-else:
-    from expression_test_assets.expression_test_input_dict import (
-        CLIEXPRESS_TEST_INPUT,
-        VIZPAYLOADERBUILDER_TEST_INPUT,
-        EXPRESSION_CLI_JSON_FILTERS,
-    )
-    from expression_test_assets.expression_test_expected_output_dict import (
-        VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
-    )
+from expression_test_assets.expression_test_input_dict import (
+    CLIEXPRESS_TEST_INPUT,
+    VIZPAYLOADERBUILDER_TEST_INPUT,
+    EXPRESSION_CLI_JSON_FILTERS,
+)
+from expression_test_assets.expression_test_expected_output_dict import (
+    VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
+)
 
 
 class TestDXExtractExpression(unittest.TestCase):
@@ -117,8 +104,6 @@ class TestDXExtractExpression(unittest.TestCase):
         # In python3, str(type(object)) looks like <{0} 'obj_class'> but in python 2, it would be <type 'obj_class'>
         # This impacts our expected error messages
         cls.type_representation = "class"
-        if python_version == 2:
-            cls.type_representation = "type"
 
         cls.default_entity_describe = {
             "id": cls.expression_dataset,
@@ -437,8 +422,6 @@ class TestDXExtractExpression(unittest.TestCase):
             ENST00000488147,sample_2,20,-""".replace(
             " ", ""
         )
-        if python_version == 2:
-            expected_result = "feature_id,expression,strand,sample_id\nENST00000450305,50,+,sample_2\nENST00000456328,90,+,sample_2\nENST00000488147,20,-,sample_2"
         output_path = os.path.join(
             self.general_output_dir, "extract_assay_expression_data.csv"
         )
@@ -624,10 +607,7 @@ class TestDXExtractExpression(unittest.TestCase):
         actual_err_msg = process.communicate()[1]
         # print(actual_err_msg)
 
-        if python_version == 2:
-            self.assertIn("No such file or directory", actual_err_msg)
-        else:
-            self.assertIn(expected_error_message, actual_err_msg)
+        self.assertIn(expected_error_message, actual_err_msg)
 
     # EM-21
     # When --json-help is passed with another option from --assay-name, --sql, --additional-fields, --expression-matix, --output
@@ -844,8 +824,7 @@ class TestDXExtractExpression(unittest.TestCase):
         process = subprocess.check_output("dx extract_assay expression -h", shell=True)
         help_output = process.decode()
 
-        # In Python 3 self.assertEqual(file,help_output) passes,
-        # However in Python 2 it fails due to some differences in where linebreaks appear in the text
+        # self.assertEqual(file,help_output) fails due to some differences in where linebreaks appear in the text
         self.assertEqual(
             file.replace(" ", "").replace("\n", ""),
             help_output.replace(" ", "").replace("\n", ""),
@@ -980,32 +959,18 @@ class TestDXExtractExpression(unittest.TestCase):
 
     # General (mixed) filters
     def test_vizpayloadbuilder_location_sample_expression(self):
-        if python_version == 2:
-            # The expected query is essentially the same as the one in Python 3
-            # The only issue is that the order of sub-queries is slightly different in Python 2
-            # This is very likely due to the fact that Python 2 changes the order of keys in payload dict
-            # Therefore, the final query is constructred slightly differently
-            self.assertTrue(True)
-        else:
-            self.common_vizpayloadbuilder_test_helper_method(
-                self.expression_dataset,
-                "test_vizpayloadbuilder_location_sample_expression",
-                data_test=False,
-            )
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset,
+            "test_vizpayloadbuilder_location_sample_expression",
+            data_test=False,
+        )
 
     def test_vizpayloadbuilder_annotation_sample_expression(self):
-        if python_version == 2:
-            # The expected query is essentially the same as the one in Python 3
-            # The only issue is that the order of sub-queries is slightly different in Python 2
-            # This is very likely due to the fact that Python 2 changes the order of keys in payload dict
-            # Therefore, the final query is constructred slightly differently
-            self.assertTrue(True)
-        else:
-            self.common_vizpayloadbuilder_test_helper_method(
-                self.expression_dataset,
-                "test_vizpayloadbuilder_annotation_sample_expression",
-                data_test=False,
-            )
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset,
+            "test_vizpayloadbuilder_annotation_sample_expression",
+            data_test=False,
+        )
 
     def common_vizpayloadbuilder_test_helper_method(
         self,
