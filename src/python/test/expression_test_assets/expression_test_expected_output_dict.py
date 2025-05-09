@@ -200,6 +200,6 @@ VIZPAYLOADERBUILDER_EXPECTED_OUTPUT = {
         "expected_data_output": [
             {"feature_id": "ENST00000327669", "sample_id": "sample_1", "expression": 11}
         ],
-        "expected_sql_output": "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expr_annotation_1`.`feature_id` IN ('ENST00000327669', 'ENST00000456328') AND `expression_1`.`value` <= 20 AND `expression_1`.`sample_id` IN ('sample_1') ORDER BY `feature_id` ASC, `sample_id` ASC",
+        "expected_sql_output": "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expression_1`.`value` <= 20 AND `expr_annotation_1`.`feature_id` IN ('ENST00000327669', 'ENST00000456328') AND `expression_1`.`sample_id` IN ('sample_1') ORDER BY `feature_id` ASC, `sample_id` ASC"
     },
 }
