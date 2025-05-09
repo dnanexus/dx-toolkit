@@ -102,7 +102,9 @@ class TestDXExtractExpression(unittest.TestCase):
             cls.proj_id + ":/" + cls.combined_expression_cohort_name
         )
         cls.expression_dataset_1_1_name = "molecular_expression_1_1_dataset"
-        cls.expression_dataset_1_1 = cls.proj_id + ":/" + cls.expression_dataset_1_1_name
+        cls.expression_dataset_1_1 = (
+            cls.proj_id + ":/" + cls.expression_dataset_1_1_name
+        )
         # In python3, str(type(object)) looks like <{0} 'obj_class'>
         # This impacts our expected error messages
         cls.type_representation = "class"
@@ -881,7 +883,7 @@ class TestDXExtractExpression(unittest.TestCase):
         dataset, cohort, record = self.load_record_via_dataset_class(
             self.expression_dataset_1_1
         )
-        
+
         record_details = record.describe(
             default_fields=True, fields={"properties", "details"}
         )
@@ -897,7 +899,10 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn(
             "molecular_expression_1_1", dataset.assay_names_list("molecular_expression")
         )
-        assert dataset.descriptor_file_dict["assays"][0]["generalized_assay_model_version"] == "1.1"
+        assert (
+            dataset.descriptor_file_dict["assays"][0]["generalized_assay_model_version"]
+            == "1.1"
+        )
 
     def test_dataset_class_cohort_resolution(self):
         dataset, cohort, record = self.load_record_via_dataset_class(
@@ -933,6 +938,8 @@ class TestDXExtractExpression(unittest.TestCase):
 
     ### Test VizPayloadBuilder Class
     ### tests data model 1.0 and 1.1
+    ### For 1.1: when location EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized is used
+    ### otherwise EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
 
     # Genomic location filters
     # genomic + cohort
@@ -948,12 +955,15 @@ class TestDXExtractExpression(unittest.TestCase):
             self.expression_dataset, "test_vizpayloadbuilder_location_multiple"
         )
 
-    # # 1.1 when location EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized is used
-    # # otherwise EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
-    # def test_vizpayloadbuilder_location_cohort(self):
-    #     self.common_vizpayloadbuilder_test_helper_method(
-    #         self.combined_expression_cohort, "test_vizpayloadbuilder_location_cohort", True, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized)
-        
+    # 1.1
+    def test_vizpayloadbuilder_location_1_1(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            record_path=self.expression_dataset_1_1,
+            test_name="test_vizpayloadbuilder_location_cohort",
+            schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized,
+            model_version=1.1,
+        )
+
     # Annotation filters
     def test_vizpayloadbuilder_annotation_feature_name(self):
         self.common_vizpayloadbuilder_test_helper_method(
@@ -963,6 +973,15 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_vizpayloadbuilder_annotation_feature_id(self):
         self.common_vizpayloadbuilder_test_helper_method(
             self.expression_dataset, "test_vizpayloadbuilder_annotation_feature_id"
+        )
+
+    # 1.1
+    def test_vizpayloadbuilder_annotation_feature_name_1_1(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            record_path=self.expression_dataset_1_1,
+            test_name="test_vizpayloadbuilder_annotation_feature_name",
+            schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+            model_version=1.1,
         )
 
     # Expression filters (with location or annotation)
@@ -990,6 +1009,22 @@ class TestDXExtractExpression(unittest.TestCase):
             self.expression_dataset, "test_vizpayloadbuilder_sample", data_test=False
         )
 
+    # Annotation_expression_sample_id (using flattened filters)
+    def test_annotation_expression_sample_id(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            record_path=self.expression_dataset,
+            test_name="test_vizpayloadbuilder_sample_annotation_expression_sample_id",
+        )
+
+    # 1.1
+    def test_annotation_expression_sample_id_1_1(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            record_path=self.expression_dataset_1_1,
+            test_name="test_vizpayloadbuilder_sample_annotation_expression_sample_id",
+            schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+            model_version=1.1,
+        )
+
     # General (mixed) filters
     def test_vizpayloadbuilder_location_sample_expression(self):
         self.common_vizpayloadbuilder_test_helper_method(
@@ -1011,6 +1046,7 @@ class TestDXExtractExpression(unittest.TestCase):
         test_name,
         data_test=True,
         schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
+        model_version=1.0,
     ):
         _, _, entity = resolve_existing_path(record_path)
         entity_describe = entity["describe"]
@@ -1079,9 +1115,12 @@ class TestDXExtractExpression(unittest.TestCase):
             # assertCountEqual asserts that two iterables have the same elements, ignoring order
             self.assertCountEqual(data_output, exp_data_output)
 
-        exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
-            "expected_sql_output"
-        ]
+        if model_version == 1.0:
+            expected_sql = "expected_sql_output"
+        if model_version == 1.1:
+            expected_sql = "expected_sql_output_1_1"
+
+        exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][expected_sql]
         if isinstance(exp_sql_output, list):
             # Some of the sub-queries may have slightly different order due to the way the keys are ordered in the payload dict
             # In other words, the queries are still correct, but the order of sub-queries may be different
