@@ -96,7 +96,8 @@ namespace dx {
 
 
   static bool isAlwaysRetryableHttpCode(int c) {
-    return (c >= 500 && c<=599); // assumption: always retry if a 5xx HTTP status code is received (irrespective of the route)
+    // assumption: always retry if either a 429 or a 5xx HTTP status code is received (irrespective of the route)
+    return (c == 429 || (c >= 500 && c<=599));
   }
 
   static bool isAlwaysRetryableCurlError(int c) {
@@ -164,7 +165,7 @@ namespace dx {
     bool contentLengthMismatch;
     bool contentLengthMissing;
     unsigned int retryAfterSeconds = 60u; // Number of seconds to retry after,
-                                          // in the event of a 503 response
+                                          // in the event of a 503 or 429 responses
     HttpRequestException hre;
 
     // The HTTP Request is always executed at least once,
@@ -175,9 +176,6 @@ namespace dx {
       // Note: Initial value of "false" is just a dummy value, toRetry will always be re-init before being used.
       //       This dummy initial value is provided, to prevent some spurious warnings from clang
       bool toRetry = false;
-      // True if the request returns with a 503
-      bool serviceUnavailable = false;
-
       reqCompleted = true; // will explicitly set it to false in case request couldn't be completed
       try {
         DXLOG(logDEBUG) << "Attempting the actual HTTP request (countTries = " << countTries << ")...";
@@ -203,12 +201,12 @@ namespace dx {
         if (req.responseCode != 200) {
           DXLOG(logWARNING) << "POST '" << url << "' returned with HTTP code '" << req.responseCode << "'; and body: '" << req.respData << "'";
           toRetry = isAlwaysRetryableHttpCode(req.responseCode);
-          if (req.responseCode == 503) {
-            serviceUnavailable = true;
+          if (req.responseCode == 503 || req.responseCode == 429) {
+            // 503 Service Unavailable or 429 Too Many Requests
             string retryAfterHeader;
             bool retryAfterMissing;
             retryAfterMissing = !req.respHeader.getHeaderString("Retry-After", retryAfterHeader);
-            retryAfterSeconds = retryAfterMissing ? 60 : boost::lexical_cast<size_t>(retryAfterHeader);
+            retryAfterSeconds = retryAfterMissing ? retryAfterSeconds : boost::lexical_cast<size_t>(retryAfterHeader);
           }
         } else {
           // We are here => The request went thru, we got 200 and a response
@@ -256,13 +254,17 @@ namespace dx {
         break;
       }
 
-      // 503 with Retry-After-- do not count such responses against the allowed
+      // 503 or 429 with Retry-After-- do not count such responses against the allowed
       // number of retries
-      if (serviceUnavailable) {
-        DXLOG(logWARNING) << "Service unavailable, waiting for " << retryAfterSeconds << " seconds : POST '" << url << "'";
+      if (req.responseCode == 503 || req.responseCode == 429) {
+        if (req.responseCode == 503) {
+          DXLOG(logWARNING) << "Service unavailable, waiting for " << retryAfterSeconds << " seconds (Retry #" << countTries + 1 << ") : POST '" << url << "'";
+        } else {
+          DXLOG(logWARNING) << "Service throttled, waiting for " << retryAfterSeconds << " seconds (Retry #" << countTries + 1 << ") : POST '" << url << "'";
+        }
         boost::this_thread::interruption_point();
         _internal::sleepUsingNanosleep(retryAfterSeconds);
-        DXLOG(logDEBUG) << "Sleep finished, will recheck for service availability";
+        DXLOG(logDEBUG) << "Sleep finished, rechecking the service status";
         continue;
       }
 

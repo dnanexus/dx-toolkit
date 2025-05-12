@@ -21,7 +21,6 @@ import socket, json, time, os, logging
 from logging.handlers import SysLogHandler
 
 from dxpy.exceptions import DXError
-from dxpy.compat import USING_PYTHON2
 
 class DXLogHandler(SysLogHandler):
     '''
@@ -70,7 +69,7 @@ class DXLogHandler(SysLogHandler):
         return self.priority_names[self.priority_map.get(record.levelname, "warning")]
 
     def truncate_message(self, message):
-        msg_bytes = message if USING_PYTHON2 else message.encode('utf-8')
+        msg_bytes = message.encode('utf-8')
 
         if len(json.dumps(message)) <= 8015:
             return message
@@ -80,12 +79,9 @@ class DXLogHandler(SysLogHandler):
             msg_bytes = msg_bytes[:-1]
 
         message = _bytes2utf8(msg_bytes)
-        message = message.encode('utf-8') if USING_PYTHON2 else message
         return message + "... [truncated]"
 
     def is_resource_log(self, message):
-        if USING_PYTHON2:
-            return message.startswith(b"CPU: ")
         return message.startswith("CPU: ")
 
     def emit(self, record):
@@ -95,9 +91,6 @@ class DXLogHandler(SysLogHandler):
         # with the extra padding introduced by the log function, the
         # incoming message needs to be smaller - we truncate it to
         # at most 8015 bytes here.
-        # Note: we use Python 2 semantics here (byte strings). This
-        # script is not Python 3 ready. If *line* was a unicode string
-        # with wide chars, its byte length would exceed the limit.
         message = self.truncate_message(message)
 
         data = json.dumps({"source": self.source, "timestamp": int(round(time.time() * 1000)),

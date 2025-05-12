@@ -26,7 +26,6 @@ import sys
 INTERACTIVE_CLI = sys.stdin and sys.stdin.isatty() and sys.stdout and sys.stdout.isatty()
 
 from ..exceptions import err_exit, default_expected_exceptions, DXError
-from ..compat import input
 
 def try_call_err_exit():
     err_exit(expected_exceptions=default_expected_exceptions + (DXError,))

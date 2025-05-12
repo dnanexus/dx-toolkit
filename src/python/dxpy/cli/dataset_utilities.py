@@ -36,13 +36,11 @@ from ..bindings.dxfile import DXFile
 from ..utils.resolver import resolve_existing_path, is_hashid, ResolutionError, resolve_path, check_folder_exists
 from ..utils.file_handle import as_handle
 from ..utils.describe import print_desc
-from ..compat import USING_PYTHON2
 from ..exceptions import (
     err_exit,
     PermissionDenied,
     InvalidInput,
     InvalidState,
-    ResourceNotFound,
     default_expected_exceptions,
 )
 
@@ -1665,10 +1663,7 @@ def validate_cohort_ids(descriptor, project, resp, ids):
     gpk_type = descriptor.model["entities"][entity_name]["fields"][field_name]["mapping"]["column_sql_type"]
     # Prepare a payload to find entries matching the input ids in the dataset
     if gpk_type in ["integer", "bigint"]:
-        if USING_PYTHON2:
-            lambda_for_list_conv = lambda a, b: a+[long(b)]
-        else:
-            lambda_for_list_conv = lambda a, b: a+[int(b)]
+        lambda_for_list_conv = lambda a, b: a+[int(b)]
     elif gpk_type in ["float", "double"]:
         lambda_for_list_conv = lambda a, b: a+[float(b)]
     elif gpk_type in ["string"]:

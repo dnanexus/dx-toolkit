@@ -28,7 +28,6 @@ import socket
 from urllib3.exceptions import HTTPError
 
 import dxpy
-from .compat import USING_PYTHON2
 import urllib3
 import ssl
 
@@ -246,10 +245,8 @@ network_exceptions = (urllib3.exceptions.ProtocolError,
                       urllib3.exceptions.SSLError,
                       ssl.SSLError,
                       HTTPError,
-                      socket.error)
-if not USING_PYTHON2:
-    network_exceptions += (ConnectionResetError,)
-
+                      socket.error,
+                      ConnectionResetError,)
 
 try:
     json_exceptions = (json.decoder.JSONDecodeError,)

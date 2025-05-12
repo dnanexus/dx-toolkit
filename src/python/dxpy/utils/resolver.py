@@ -29,7 +29,7 @@ import os, sys, json, re
 
 import dxpy
 from .describe import get_ls_l_desc
-from ..compat import str, input, basestring
+from ..compat import basestring
 from ..cli import try_call, INTERACTIVE_CLI
 from ..exceptions import DXCLIError, DXError
 

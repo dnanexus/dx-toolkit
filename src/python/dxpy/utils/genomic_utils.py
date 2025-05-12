@@ -15,13 +15,8 @@
 #   under the License.
 
 import re
-from ..compat import USING_PYTHON2, str
 
-if USING_PYTHON2:
-    import string
-    maketrans = string.maketrans
-else:
-    maketrans = bytes.maketrans
+maketrans = bytes.maketrans
 
 COMPLEMENT = maketrans(b"ATGCatgc", b"TACGTACG")
 

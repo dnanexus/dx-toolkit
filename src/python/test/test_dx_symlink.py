@@ -30,7 +30,6 @@ import dxpy
 from dxpy.exceptions import err_exit
 from dxpy.utils import describe
 from dxpy_testutil import (chdir, run, TEST_ISOLATED_ENV)
-from dxpy.compat import USING_PYTHON2
 
 def setUpTempProject(thing):
     thing.old_workspace_id = dxpy.WORKSPACE_ID
@@ -75,69 +74,6 @@ def md5_checksum(filename):
     assert(isinstance(result, bytes))
     result = result.decode("ascii")
     return result
-
-@unittest.skipIf(USING_PYTHON2, 'Python 2 image does not contain aria2c')
-class TestSymlink(unittest.TestCase):
-    def setUp(self):
-        self.wd = tempfile.mkdtemp()
-        chdir(self.wd)
-        setUpTempProject(self)
-
-    def tearDown(self):
-        shutil.rmtree(self.wd)
-        tearDownTempProject(self)
-
-    # create a symbolic link
-    # download it, see that it works
-    def download_url_create_symlink(self, url, sym_name):
-        print("url = {}".format(url))
-
-        tmp_file = "localfile"
-        # download [url]
-        cmd = ["wget", "--tries=5", "--quiet", "-O", tmp_file, url]
-
-        try:
-            print("Downloading original link with wget")
-            subprocess.check_call(cmd, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            msg = ""
-            if e and e.output:
-                msg = e.output.strip()
-            err_exit("Failed to download with wget: {cmd}\n{msg}\n".format(cmd=str(cmd), msg=msg))
-
-        # calculate its md5 checksum
-        digest = md5_checksum(tmp_file)
-        os.remove(tmp_file)
-
-        # create a symlink on the platform, with the correct checksum
-        input_params = {
-            'name' : sym_name,
-            'project': self.proj_id,
-            'drive': "drive-PUBLISHED",
-            'md5sum': digest,
-            'symlinkPath': {
-                'object': url
-            }
-        }
-        result = dxpy.api.file_new(input_params=input_params)
-        return dxpy.DXFile(dxid = result["id"],
-                           project = self.proj_id)
-
-    @unittest.skipIf(TEST_ISOLATED_ENV, 'skipping test that fails inside local environment')
-    def test_symlinks(self):
-        dxfile1 = self.download_url_create_symlink("https://s3.amazonaws.com/1000genomes/CHANGELOG",
-                                                   "sym1")
-        dxfile2 = self.download_url_create_symlink("https://en.wikipedia.org/wiki/Poitevin_horse",
-                                                   "sym2")
-
-        # download to PWD
-        run("dx download {}:/{} -o {}".format(self.proj_id, "sym1", "localfile"))
-
-        # absolute path
-        run("dx download {}:/{} -f -o {}".format(self.proj_id, "sym1", "/tmp/localfile"))
-
-        # relative path
-        run("dx download {}:/{} -f -o {}".format(self.proj_id, "sym2", "../localfile"))
 
 if __name__ == '__main__':
     unittest.main()

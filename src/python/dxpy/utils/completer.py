@@ -28,7 +28,6 @@ import dxpy
 from .resolver import (get_first_pos_of_char, get_last_pos_of_char, clean_folder_path, resolve_path,
                        split_unescaped, ResolutionError)
 from .printing import fill
-from ..compat import str
 
 def startswith(text):
     return (lambda string: string.startswith(text))
