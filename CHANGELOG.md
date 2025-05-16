@@ -48,11 +48,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Retry requests when received 429 response status code in Python, Java SDKs
 
-
-
-
-
-
 ## [393.0] - 2025.03.24
 
 ### Fixed
