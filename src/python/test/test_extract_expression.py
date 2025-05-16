@@ -56,7 +56,9 @@ from dxpy.bindings.apollo.dataset import Dataset
 
 from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from dxpy.bindings.apollo.schemas.assay_filtering_conditions import (
-    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
+    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
+    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+    EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized,
 )
 from dxpy.bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
 from dxpy.exceptions import err_exit
@@ -64,26 +66,14 @@ from dxpy.exceptions import err_exit
 
 dirname = os.path.dirname(__file__)
 
-python_version = sys.version_info.major
-
-if python_version == 2:
-    sys.path.append("./expression_test_assets")
-    from expression_test_input_dict import (
-        CLIEXPRESS_TEST_INPUT,
-        VIZPAYLOADERBUILDER_TEST_INPUT,
-        EXPRESSION_CLI_JSON_FILTERS,
-    )
-    from expression_test_expected_output_dict import VIZPAYLOADERBUILDER_EXPECTED_OUTPUT
-
-else:
-    from expression_test_assets.expression_test_input_dict import (
-        CLIEXPRESS_TEST_INPUT,
-        VIZPAYLOADERBUILDER_TEST_INPUT,
-        EXPRESSION_CLI_JSON_FILTERS,
-    )
-    from expression_test_assets.expression_test_expected_output_dict import (
-        VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
-    )
+from expression_test_assets.expression_test_input_dict import (
+    CLIEXPRESS_TEST_INPUT,
+    VIZPAYLOADERBUILDER_TEST_INPUT,
+    EXPRESSION_CLI_JSON_FILTERS,
+)
+from expression_test_assets.expression_test_expected_output_dict import (
+    VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
+)
 
 
 class TestDXExtractExpression(unittest.TestCase):
@@ -111,11 +101,13 @@ class TestDXExtractExpression(unittest.TestCase):
         cls.combined_expression_cohort = (
             cls.proj_id + ":/" + cls.combined_expression_cohort_name
         )
-        # In python3, str(type(object)) looks like <{0} 'obj_class'> but in python 2, it would be <type 'obj_class'>
+        cls.expression_dataset_1_1_name = "molecular_expression_1_1_dataset"
+        cls.expression_dataset_1_1 = (
+            cls.proj_id + ":/" + cls.expression_dataset_1_1_name
+        )
+        # In python3, str(type(object)) looks like <{0} 'obj_class'>
         # This impacts our expected error messages
         cls.type_representation = "class"
-        if python_version == 2:
-            cls.type_representation = "type"
 
         cls.default_entity_describe = {
             "id": cls.expression_dataset,
@@ -434,8 +426,6 @@ class TestDXExtractExpression(unittest.TestCase):
             ENST00000488147,sample_2,20,-""".replace(
             " ", ""
         )
-        if python_version == 2:
-            expected_result = "feature_id,expression,strand,sample_id\nENST00000450305,50,+,sample_2\nENST00000456328,90,+,sample_2\nENST00000488147,20,-,sample_2"
         output_path = os.path.join(
             self.general_output_dir, "extract_assay_expression_data.csv"
         )
@@ -621,10 +611,7 @@ class TestDXExtractExpression(unittest.TestCase):
         actual_err_msg = process.communicate()[1]
         # print(actual_err_msg)
 
-        if python_version == 2:
-            self.assertIn("No such file or directory", actual_err_msg)
-        else:
-            self.assertIn(expected_error_message, actual_err_msg)
+        self.assertIn(expected_error_message, actual_err_msg)
 
     # EM-21
     # When --json-help is passed with another option from --assay-name, --sql, --additional-fields, --expression-matix, --output
@@ -841,8 +828,7 @@ class TestDXExtractExpression(unittest.TestCase):
         process = subprocess.check_output("dx extract_assay expression -h", shell=True)
         help_output = process.decode()
 
-        # In Python 3 self.assertEqual(file,help_output) passes,
-        # However in Python 2 it fails due to some differences in where linebreaks appear in the text
+        # self.assertEqual(file,help_output) fails due to some differences in where linebreaks appear in the text
         self.assertEqual(
             file.replace(" ", "").replace("\n", ""),
             help_output.replace(" ", "").replace("\n", ""),
@@ -893,6 +879,31 @@ class TestDXExtractExpression(unittest.TestCase):
         )
         self.assertEqual(dataset.detail_describe["types"], record_details["types"])
 
+    def test_dataset_class_basic_1_1(self):
+        dataset, cohort, record = self.load_record_via_dataset_class(
+            self.expression_dataset_1_1
+        )
+
+        record_details = record.describe(
+            default_fields=True, fields={"properties", "details"}
+        )
+
+        self.assertIsNone(cohort)
+        self.assertIn("vizserver", dataset.visualize_info["url"])
+        self.assertEqual("3.0", dataset.visualize_info["version"])
+        self.assertEqual("3.0", dataset.visualize_info["datasetVersion"])
+        self.assertEqual(
+            dataset.descriptor_file,
+            record_details["details"]["descriptor"]["$dnanexus_link"],
+        )
+        self.assertIn(
+            "molecular_expression_1_1", dataset.assay_names_list("molecular_expression")
+        )
+        assert (
+            dataset.descriptor_file_dict["assays"][0]["generalized_assay_model_version"]
+            == "1.1"
+        )
+
     def test_dataset_class_cohort_resolution(self):
         dataset, cohort, record = self.load_record_via_dataset_class(
             self.combined_expression_cohort
@@ -926,9 +937,14 @@ class TestDXExtractExpression(unittest.TestCase):
         self.assertIn("vizserver", dataset.vizserver_url)
 
     ### Test VizPayloadBuilder Class
+    ### tests data model 1.0 and 1.1
+    ### For 1.1: when location EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized is used
+    ### otherwise EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
 
     # Genomic location filters
     # genomic + cohort
+
+    # 1.0
     def test_vizpayloadbuilder_location_cohort(self):
         self.common_vizpayloadbuilder_test_helper_method(
             self.combined_expression_cohort, "test_vizpayloadbuilder_location_cohort"
@@ -937,6 +953,15 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_vizpayloadbuilder_location_multiple(self):
         self.common_vizpayloadbuilder_test_helper_method(
             self.expression_dataset, "test_vizpayloadbuilder_location_multiple"
+        )
+
+    # 1.1
+    def test_vizpayloadbuilder_location_1_1(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            record_path=self.expression_dataset_1_1,
+            test_name="test_vizpayloadbuilder_location_cohort",
+            schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized,
+            model_version=1.1,
         )
 
     # Annotation filters
@@ -948,6 +973,15 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_vizpayloadbuilder_annotation_feature_id(self):
         self.common_vizpayloadbuilder_test_helper_method(
             self.expression_dataset, "test_vizpayloadbuilder_annotation_feature_id"
+        )
+
+    # 1.1
+    def test_vizpayloadbuilder_annotation_feature_name_1_1(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            record_path=self.expression_dataset_1_1,
+            test_name="test_vizpayloadbuilder_annotation_feature_name",
+            schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+            model_version=1.1,
         )
 
     # Expression filters (with location or annotation)
@@ -975,37 +1009,44 @@ class TestDXExtractExpression(unittest.TestCase):
             self.expression_dataset, "test_vizpayloadbuilder_sample", data_test=False
         )
 
+    # Annotation_expression_sample_id (using flattened filters)
+    def test_vizpayloadbuilder_annotation_expression_sample_id(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            record_path=self.expression_dataset,
+            test_name="test_vizpayloadbuilder_sample_annotation_expression_sample_id",
+        )
+
+    # 1.1
+    def test_vizpayloadbuilder_annotation_expression_sample_id_1_1(self):
+        self.common_vizpayloadbuilder_test_helper_method(
+            record_path=self.expression_dataset_1_1,
+            test_name="test_vizpayloadbuilder_sample_annotation_expression_sample_id",
+            schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+            model_version=1.1,
+        )
+
     # General (mixed) filters
     def test_vizpayloadbuilder_location_sample_expression(self):
-        if python_version == 2:
-            # The expected query is essentially the same as the one in Python 3
-            # The only issue is that the order of sub-queries is slightly different in Python 2
-            # This is very likely due to the fact that Python 2 changes the order of keys in payload dict
-            # Therefore, the final query is constructred slightly differently
-            self.assertTrue(True)
-        else:
-            self.common_vizpayloadbuilder_test_helper_method(
-                self.expression_dataset,
-                "test_vizpayloadbuilder_location_sample_expression",
-                data_test=False,
-            )
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset,
+            "test_vizpayloadbuilder_location_sample_expression",
+            data_test=False,
+        )
 
     def test_vizpayloadbuilder_annotation_sample_expression(self):
-        if python_version == 2:
-            # The expected query is essentially the same as the one in Python 3
-            # The only issue is that the order of sub-queries is slightly different in Python 2
-            # This is very likely due to the fact that Python 2 changes the order of keys in payload dict
-            # Therefore, the final query is constructred slightly differently
-            self.assertTrue(True)
-        else:
-            self.common_vizpayloadbuilder_test_helper_method(
-                self.expression_dataset,
-                "test_vizpayloadbuilder_annotation_sample_expression",
-                data_test=False,
-            )
+        self.common_vizpayloadbuilder_test_helper_method(
+            self.expression_dataset,
+            "test_vizpayloadbuilder_annotation_sample_expression",
+            data_test=False,
+        )
 
     def common_vizpayloadbuilder_test_helper_method(
-        self, record_path, test_name, data_test=True
+        self,
+        record_path,
+        test_name,
+        data_test=True,
+        schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
+        model_version=1.0,
     ):
         _, _, entity = resolve_existing_path(record_path)
         entity_describe = entity["describe"]
@@ -1028,7 +1069,6 @@ class TestDXExtractExpression(unittest.TestCase):
         project = dataset.project_id
 
         # vizserver_filters_from_json_parser.JSONFiltersValidator using the CLIEXPRESS schema
-        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
         _db_columns_list = schema["output_fields_mapping"].get("default")
 
         # JSONFiltersValidator to build the complete payload
@@ -1043,7 +1083,7 @@ class TestDXExtractExpression(unittest.TestCase):
             project_context=project,
             output_fields_mapping=_db_columns_list,
             filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
-            order_by=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["order_by"],
+            order_by=schema["order_by"],
             limit=None,
             base_sql=BASE_SQL,
             is_cohort=IS_COHORT,
@@ -1075,9 +1115,12 @@ class TestDXExtractExpression(unittest.TestCase):
             # assertCountEqual asserts that two iterables have the same elements, ignoring order
             self.assertCountEqual(data_output, exp_data_output)
 
-        exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][
-            "expected_sql_output"
-        ]
+        if model_version == 1.0:
+            expected_sql = "expected_sql_output"
+        if model_version == 1.1:
+            expected_sql = "expected_sql_output_1_1"
+
+        exp_sql_output = VIZPAYLOADERBUILDER_EXPECTED_OUTPUT[test_name][expected_sql]
         if isinstance(exp_sql_output, list):
             # Some of the sub-queries may have slightly different order due to the way the keys are ordered in the payload dict
             # In other words, the queries are still correct, but the order of sub-queries may be different
@@ -1235,6 +1278,151 @@ class TestDXExtractExpression(unittest.TestCase):
             subprocess_run=True,
         )
         self.assertIn(expected_error, response.stderr)
+
+    def test_merge_duplicate_filters_schema_1_0(self):
+        json_input = VIZPAYLOADERBUILDER_TEST_INPUT[
+            "test_vizpayloadbuilder_expression_max"
+        ]
+        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0
+        input_json_parser = JSONFiltersValidator(json_input, schema)
+
+        raw_compound_filter = input_json_parser.parse_v1()
+
+        # For context, in this case:
+        # raw_compound_filter = {
+        #     "logic": "and",
+        #     "compound": [
+        #         {
+        #             "filters": {
+        #                 "expression$value": [{"condition": "less-than-eq", "values": 10}]
+        #             }
+        #         },
+        #         {
+        #             "filters": {
+        #                 "expr_annotation$gene_name": [{"condition": "in", "values": ["BRCA2"]}]
+        #             }
+        #         },
+        #     ],
+        # }
+
+        expected_merged_compound_block = {
+            "logic": "and",
+            "compound": [
+                {
+                    "filters": {
+                        "expression$value": [
+                            {"condition": "less-than-eq", "values": 10}
+                        ],
+                        "expr_annotation$gene_name": [
+                            {"condition": "in", "values": ["BRCA2"]}
+                        ],
+                    }
+                }
+            ],
+        }
+
+        merged_compound_block = input_json_parser.merge_duplicate_filters(
+            raw_compound_filter
+        )
+        assert merged_compound_block == expected_merged_compound_block
+
+    def test_merge_duplicate_filters_schema_1_1(self):
+        json_input = VIZPAYLOADERBUILDER_TEST_INPUT[
+            "test_vizpayloadbuilder_expression_max"
+        ]
+        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
+        input_json_parser = JSONFiltersValidator(json_input, schema)
+
+        raw_compound_filter = input_json_parser.parse_v1()
+
+        # For context, in this case:
+        # raw_compound_filter = {
+        #     "logic": "and",
+        #     "compound": [
+        #         {
+        #             "filters": {
+        #                 "expression_read_optimized$value": [
+        #                     {"condition": "less-than-eq", "values": 10}
+        #                 ]
+        #             }
+        #         },
+        #         {
+        #             "filters": {
+        #                 "expression_read_optimized$gene_name": [
+        #                     {"condition": "in", "values": ["BRCA2"]}
+        #                 ]
+        #             }
+        #         },
+        #     ],
+        # }
+
+        expected_merged_compound_block = {
+            "logic": "and",
+            "compound": [
+                {
+                    "filters": {
+                        "expression_read_optimized$value": [
+                            {"condition": "less-than-eq", "values": 10}
+                        ],
+                        "expression_read_optimized$gene_name": [
+                            {"condition": "in", "values": ["BRCA2"]}
+                        ],
+                    }
+                }
+            ],
+        }
+
+        merged_compound_block = input_json_parser.merge_duplicate_filters(
+            raw_compound_filter
+        )
+        assert merged_compound_block == expected_merged_compound_block
+
+    def test_merge_duplicate_filters_schema_1_1_non_optimized(self):
+        json_input = VIZPAYLOADERBUILDER_TEST_INPUT[
+            "test_vizpayloadbuilder_expression_max"
+        ]
+        schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+        input_json_parser = JSONFiltersValidator(json_input, schema)
+
+        raw_compound_filter = input_json_parser.parse_v1()
+
+        # For context, in this case:
+        # raw_compound_filter = {
+        #     "compound": [
+        #         {
+        #             "filters": {
+        #                 "expression$value": [{"condition": "less-than-eq", "values": 10}]
+        #             }
+        #         },
+        #         {
+        #             "filters": {
+        #                 "expr_annotation$gene_name": [{"condition": "in", "values": [...]}]
+        #             }
+        #         },
+        #     ],
+        #     "logic": "and",
+        # }
+
+        expected_merged_compound_block = {
+            "logic": "and",
+            "compound": [
+                {
+                    "filters": {
+                        "expression$value": [
+                            {"condition": "less-than-eq", "values": 10}
+                        ],
+                        "expr_annotation$gene_name": [
+                            {"condition": "in", "values": ["BRCA2"]}
+                        ],
+                    }
+                }
+            ],
+        }
+
+        merged_compound_block = input_json_parser.merge_duplicate_filters(
+            raw_compound_filter
+        )
+        assert merged_compound_block == expected_merged_compound_block
 
 
 # Start the test
