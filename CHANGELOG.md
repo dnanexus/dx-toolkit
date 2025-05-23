@@ -15,7 +15,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Support for `--https-app-isolated-browsing` in `dx update project`
-* Released Nextaur 1.11.0: Update nextflow to 24.10.5
+* Released Nextaur 1.11.0: Update nextflow to 24.10.5 (Known issue: Nextflow version 24.10.5 has a [reported bug](https://github.com/nextflow-io/nextflow/issues/6068) that breaks compatibility with the `Nextaur` plugin, specifically the `docker` command, which is required for the `--cache-docker` functionality. As a result, we are unable to update the `Nextflow Pipeline Importer` app to use Nextflow version 24.10.5. Currently, the app uses Nextflow 23.10.0, which does not support the `--cache-docker` option for the latest nf-core pipelines that require Nextflow 24.x or higher.)
 
 ### Fixed
 
