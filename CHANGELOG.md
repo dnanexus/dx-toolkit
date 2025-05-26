@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Optimized `dx extract_assay expression` to match assays with new generalized_assay_model_version 1.1. Backwards compatible.
+
 ## [397.0] - beta
 
 * No significant changes
