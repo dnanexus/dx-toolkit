@@ -637,8 +637,12 @@ def api(args):
                 err_exit('Error: file contents could not be parsed as JSON', 3)
     resp = None
     try:
-        resp = dxpy.DXHTTPRequest('/' + args.resource + '/' + args.method,
-                                  json_input)
+        url = '/' + args.resource + '/' + args.method
+        prepend_srv = True
+        if args.authserver:
+            url = dxpy.get_auth_server_name() + url
+            prepend_srv = False
+        resp = dxpy.DXHTTPRequest(url, json_input, prepend_srv=prepend_srv)
     except:
         err_exit()
     try:
@@ -6330,6 +6334,7 @@ parser_api.add_argument('resource', help=fill('One of "system", a class name (e.
 parser_api.add_argument('method', help=fill('Method name for the resource as documented by the API specification', width_adjustment=-17))
 parser_api.add_argument('input_json', nargs='?', default="{}", help='JSON input for the method (if not given, "{}" is used)')
 parser_api.add_argument('--input', help=fill('Load JSON input from FILENAME ("-" to use stdin)', width_adjustment=-17))
+parser_api.add_argument('--authserver', action='store_true', help=fill('Send this API request to authserver', width_adjustment=-17))
 parser_api.set_defaults(func=api)
 # parser_api.completer = TODO
 register_parser(parser_api)
