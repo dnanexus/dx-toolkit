@@ -59,11 +59,12 @@ EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA = {
                 "filter_json_file",
                 "json_help",
                 "additional_fields_help",
+                "sql"
             ],
         },
         "condition": "with_at_least_one_required",
         "error_message": {
-            "message": 'The flag "--retrieve_expression" must be followed by "--filter-json", "--filter-json-file", "--json-help", or "--additional-fields-help".'
+            "message": 'The flag "--retrieve_expression" must be followed by "--sql", "--filter-json", "--filter-json-file", "--json-help", or "--additional-fields-help".'
         },
     },
     "5_json_help_exclusive_with_exceptions": {
