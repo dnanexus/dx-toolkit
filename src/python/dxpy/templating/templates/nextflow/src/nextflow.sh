@@ -89,6 +89,8 @@ main() {
     dx upload "$CREDENTIALS" --path "$DX_WORKSPACE_ID:/dx_docker_creds" --brief --wait --no-progress || true
   fi
 
+  nextflow plugin nextaur@1.11.0:collect docker
+
   # First Nextflow run, only to parse & save config required for AWS login
   local env_job_suffix='-GET-ENV'
   declare -a NEXTFLOW_CMD_ENV="(nextflow \
