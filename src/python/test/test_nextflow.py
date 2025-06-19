@@ -169,6 +169,12 @@ class TestNextflowTemplates(DXTestCase):
     def test_prepare_inputs_large_file(self):
         inputs = prepare_custom_inputs(schema_file=THIS_DIR / "nextflow/schema1.json")
         self.assertEqual(len(inputs), 93)
+    
+    def test_type_with_multiple_values(self):
+        inputs = prepare_custom_inputs(schema_file=THIS_DIR / "nextflow/schema4.json")
+        self.assertEqual(len(inputs), 1)
+        i = inputs[0]
+        self.assertEqual(i["class"], "string")
 
 
 class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
