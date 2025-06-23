@@ -40,7 +40,7 @@ options:
                         returned samples will be initially filtered to match
                         the cohort-defined set of samples, and any additional
                         filters will only further refine the cohort-defined
-                        set. If no filter is provided, an SQL query returning
+                        set. If no filter is provided, a SQL query returning
                         all data will be generated. In this case, the --sql
                         parameter must be used.
   --additional-fields-help
@@ -55,7 +55,7 @@ options:
                         corresponding to "--retrieve-expression". Must be used
                         with "--retrieve-expression" flag. Either "--filter-
                         json" or "--filter-json-file" may be supplied, not
-                        both. If no filter is provided, an SQL query returning
+                        both. If no filter is provided, a SQL query returning
                         all data will be generated. In this case, the --sql
                         parameter must be used.
   --filter-json-file FILTER_JSON_FILE, -f FILTER_JSON_FILE
@@ -63,7 +63,7 @@ options:
                         to "--retrieve-expression". Must be used with "--
                         retrieve-expression" flag. Either "--filter-json" or "
                         --filter-json-file" may be supplied, not both. If no
-                        filter is provided, an SQL query returning all data
+                        filter is provided, a SQL query returning all data
                         will be generated. In this case, the --sql parameter
                         must be used.
   --json-help           When set, return a json template of "--retrieve-
