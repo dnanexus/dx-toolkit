@@ -354,14 +354,28 @@ class TestDXExtractAssay(unittest.TestCase):
                 self.assertEqual(cm.exception.code, 1)
 
     def test_bad_rsid(self):
-        filter = {"rsid": ["rs1342568097","rs1342568098"]}
+        filter = {"rsid": ["rs1342568097", "rs1342568098"]}
         test_project = "dx-toolkit_test_data"
-        test_record = "{}:Extract_Assay_Germline/test01_v1_0_1_dataset".format(test_project)
+        test_record = f"{test_project}:Extract_Assay_Germline/test01_v1_0_1_dataset"
 
-        command = ["dx", "extract_assay", "germline", test_record, "--retrieve-allele", json.dumps(filter)]
-        process = subprocess.Popen(command, stderr=subprocess.PIPE, universal_newlines=True)
-        expected_error_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
-        self.assertTrue(expected_error_message in process.communicate()[1])
+        command = [
+            "dx",
+            "extract_assay",
+            "germline",
+            test_record,
+            "--retrieve-allele",
+            json.dumps(filter),
+            "-o",
+            "-",
+        ]
+        process = subprocess.Popen(
+            command, stdout=subprocess.PIPE, universal_newlines=True
+        )
+        result = process.communicate()[0]
+        expected_result = (
+            '18_47359_G_T\t18\t47359\tG\tT\t["rs1342568097"]\tSNP\t0.2\t2.66771e-05'
+        )
+        self.assertIn(expected_result, result)
 
     def test_duplicate_rsid(self):
         table = "allele"
@@ -423,7 +437,7 @@ class TestDXExtractAssay(unittest.TestCase):
             )
             output = fake_err.getvalue().strip()
             self.assertEqual(output, "WARNING: No genotype type requested in the filter. All genotype types will be returned.  'half-ref' genotype entries (0/.) were not ingested in the provided dataset!")
-    
+
     def test_filter_results(self):
         # Define sample input data
         results = [
@@ -729,7 +743,6 @@ class TestDXExtractAssay(unittest.TestCase):
         process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
         self.assertEqual("test01_assay", process.communicate()[0].strip())
 
-
     def test_assay_name(self):
         """A test of the --assay-name functionality, returns the same output."""
         allele_rsid_filter = json.dumps({"rsid": ["rs1342568097"]})
@@ -738,7 +751,6 @@ class TestDXExtractAssay(unittest.TestCase):
         command2 = ["dx", "extract_assay", "germline", self.test_record, "--retrieve-allele", allele_rsid_filter, "-o", "-"]
         process2 = subprocess.Popen(command2, stdout=subprocess.PIPE, universal_newlines=True)
         self.assertEqual(process1.communicate(), process2.communicate())
-
 
     @parameterized.expand([
         ("test_record", ["ref", "het-ref", "hom", "het-alt", "half", "no-call"]),
@@ -754,7 +766,6 @@ class TestDXExtractAssay(unittest.TestCase):
         command = ["dx", "extract_assay", "germline", getattr(self, record), "--retrieve-genotype", allele_genotype_type_filter, "-o", "-"]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
         self.assertIn(expected_result, process.communicate()[0])
-
 
     @unittest.skip("Vizserver implementation of PMUX-1652 needs to be deployed")
     def test_retrieve_non_alt_genotype(self):
