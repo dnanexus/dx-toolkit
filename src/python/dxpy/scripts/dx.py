@@ -6696,7 +6696,7 @@ parser_extract_assay_expression.add_argument(
 parser_extract_assay_expression.add_argument(
     "--retrieve-expression",
     action="store_true",
-    help='A flag to support, specifying criteria of molecular expression to retrieve. Retrieves rows from the expression table, optionally extended with sample and annotation information where the extension is inline without affecting row count. By default returns the following set of fields; "sample_id", "feature_id", and "value". Additional fields may be returned using "--additional-fields". May be used with either "--filter-json" or "--filter-json-file". Specify "--json-help" following this option to get detailed information on the json format and filters. When filtering, one, and only one of "location", "annotation.feature_id", or "annotation.feature_name" may be supplied. If a Cohort object is supplied, returned samples will be initially filtered to match the cohort-defined set of samples, and any additional filters will only further refine the cohort-defined set. If no filter is provided, an SQL query returning all data will be generated. In this case, the --sql parameter must be used.',
+    help='A flag to support, specifying criteria of molecular expression to retrieve. Retrieves rows from the expression table, optionally extended with sample and annotation information where the extension is inline without affecting row count. By default returns the following set of fields; "sample_id", "feature_id", and "value". Additional fields may be returned using "--additional-fields". May be used with either "--filter-json" or "--filter-json-file". Specify "--json-help" following this option to get detailed information on the json format and filters. When filtering, one, and only one of "location", "annotation.feature_id", or "annotation.feature_name" may be supplied. If a Cohort object is supplied, returned samples will be initially filtered to match the cohort-defined set of samples, and any additional filters will only further refine the cohort-defined set. If no filter is provided, a SQL query returning all data will be generated. In this case, the --sql parameter must be used.',
 )
 
 parser_extract_assay_expression.add_argument(
@@ -6715,14 +6715,14 @@ parser_extract_assay_expression.add_argument(
     "--filter-json",
     "-j",
     type=str,
-    help='The full input JSON object as a string and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--filter-json" or "--filter-json-file" may be supplied, not both. If no filter is provided, an SQL query returning all data will be generated. In this case, the --sql parameter must be used.',
+    help='The full input JSON object as a string and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--filter-json" or "--filter-json-file" may be supplied, not both. If no filter is provided, a SQL query returning all data will be generated. In this case, the --sql parameter must be used.',
 )
 
 parser_extract_assay_expression.add_argument(
     "--filter-json-file",
     "-f",
     type=str,
-    help='The full input JSON object as a file and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--filter-json" or "--filter-json-file" may be supplied, not both. If no filter is provided, an SQL query returning all data will be generated. In this case, the --sql parameter must be used.',
+    help='The full input JSON object as a file and corresponding to "--retrieve-expression". Must be used with "--retrieve-expression" flag. Either "--filter-json" or "--filter-json-file" may be supplied, not both. If no filter is provided, a SQL query returning all data will be generated. In this case, the --sql parameter must be used.',
 )
 
 parser_extract_assay_expression.add_argument(
