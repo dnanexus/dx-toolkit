@@ -794,7 +794,7 @@ class TestDXExtractExpression(unittest.TestCase):
             "sample_id_only",
             "When sample_id is present, one of the following keys must be also present: expression, annotation, location.",
         )
-    
+
     def test_sample_id_location_annotation(self):
         self.common_negative_filter_test(
             "sample_id_location_annotation",
@@ -1436,7 +1436,6 @@ class TestDXExtractExpression(unittest.TestCase):
             raw_compound_filter
         )
         assert merged_compound_block == expected_merged_compound_block
-
 
 
 # Start the test
