@@ -993,7 +993,7 @@ def get_auth_server_name(host_override=None, port_override=None, protocol='https
         return 'https://stagingauth.cn.dnanexus.com:7001'
     elif APISERVER_HOST == 'api.cn.dnanexus.com':
         return 'https://auth.cn.dnanexus.com:8001'
-    elif APISERVER_HOST == "localhost" or APISERVER_HOST == "127.0.0.1":
+    elif APISERVER_HOST == "localhost" or APISERVER_HOST == "127.0.0.1" or APISERVER_HOST == "apiserver":
         if "DX_AUTHSERVER_HOST" not in os.environ or "DX_AUTHSERVER_PORT" not in os.environ:
             err_msg = "Must set authserver env vars (DX_AUTHSERVER_HOST, DX_AUTHSERVER_PORT) if apiserver is {apiserver}."
             raise exceptions.DXError(err_msg.format(apiserver=APISERVER_HOST))
