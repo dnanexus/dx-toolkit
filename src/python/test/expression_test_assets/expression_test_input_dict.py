@@ -100,6 +100,18 @@ CLIEXPRESS_TEST_INPUT = {
             ]
         },
         "location_item_type": {"location": [["shouldbedict"]]},
+        "sample_id_only": {"sample_id": ["sample_1", "sample_2"]},
+        "sample_id_location_annotation": {
+            "location": [
+                {
+                    "chromosome": "1",
+                    "starting_position": "10000",
+                    "ending_position": "20000",
+                }
+            ],
+            "annotation": {"feature_id": ["ENST00000450305", "ENST00000456328"]},
+            "sample_id": ["sample_1", "sample_2", "sample_3"],
+        },
     },
     "valid": {
         "multi_location": {
