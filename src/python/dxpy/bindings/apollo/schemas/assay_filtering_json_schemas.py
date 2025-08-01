@@ -9,7 +9,10 @@ EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA = {
     },
     "expression": {
         "type": dict,
-        "properties": {"min_value": {"type": (int, float)}, "max_value": {"type": (int, float)}},
+        "properties": {
+            "min_value": {"type": (int, float)},
+            "max_value": {"type": (int, float)},
+        },
     },
     "location": {
         "type": list,
@@ -26,5 +29,8 @@ EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA = {
         "type": list,
     },
     "conflicting_keys": [["location", "annotation"]],
-    "dependent_conditional_keys": {"expression": ["annotation", "location"]},
+    "dependent_conditional_keys": {
+        "expression": ["annotation", "location"],
+        "sample_id": ["expression", "annotation", "location"],
+    },
 }

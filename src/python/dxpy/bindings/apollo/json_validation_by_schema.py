@@ -99,7 +99,7 @@ class JSONValidator(object):
 
                 # Check for incompatible/conflicting subkeys defined at the key-level
                 if value.get("conflicting_keys"):
-                    self.check_incompatible_subkeys(input_json[key], key)
+                    self.check_incompatible_subkeys(input_json, key)
 
         self.check_incompatible_keys(input_json)
         self.check_dependent_key_combinations(input_json)
