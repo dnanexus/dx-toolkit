@@ -972,7 +972,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_vizpayloadbuilder_location_1_1(self):
         self.common_vizpayloadbuilder_test_helper_method(
             record_path=self.expression_dataset_1_1,
-            test_name="test_vizpayloadbuilder_location_1_1",
+            test_name="test_vizpayloadbuilder_location",
             schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized,
             model_version=1.1,
         )
@@ -992,7 +992,7 @@ class TestDXExtractExpression(unittest.TestCase):
     def test_vizpayloadbuilder_annotation_feature_name_1_1(self):
         self.common_vizpayloadbuilder_test_helper_method(
             record_path=self.expression_dataset_1_1,
-            test_name="test_vizpayloadbuilder_annotation_feature_name_1_1",
+            test_name="test_vizpayloadbuilder_annotation_feature_name",
             schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
             model_version=1.1,
         )
