@@ -265,7 +265,10 @@ EXPRESSION_CLI_JSON_FILTERS = {
             "expression": {"min_value": 25.63},
             "sample_id": ["sample_1", "sample_2"],
         },
-        "sample_id_with_additional_fields": {"sample_id": ["sample_1"]},
+        "additional_fields": {
+            "sample_id": ["sample_1"],
+            "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
+        },
     },
     "negative_test": {
         "empty_json": {},
@@ -280,7 +283,8 @@ EXPRESSION_CLI_JSON_FILTERS = {
             "expression": {"min_value": 9.1, "max_value": 50},
         },
         "sample_id_maxitem_limit": {
-            "sample_id": ["sample_" + str(i) for i in range(1, 200)]
+            "sample_id": ["sample_" + str(i) for i in range(1, 200)],
+            "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]},
         },
     },
 }
