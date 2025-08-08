@@ -13,4 +13,4 @@ make src_libs python
 source build/py_env/bin/activate
 
 #py.test -m TRACEABILITY_MATRIX src/python/test/test_dx_bash_helpers.py::TestDXBashHelpers::test_basic -sv
-py.test -vv -s -m TRACEABILITY_MATRIX ${TOOLKIT_ROOT_DIR}/src/python/test/
+py.test -vv -s -m TRACEABILITY_ISOLATED_ENV ${TOOLKIT_ROOT_DIR}/src/python/test/
