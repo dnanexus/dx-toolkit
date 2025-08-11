@@ -316,12 +316,12 @@ class PrintInstanceTypeHelp(argparse.Action):
         print(format_table(InstanceTypesCompleter.standard_instance_types.values(),
                            column_names=list(InstanceTypesCompleter.standard_instance_types.values())[0]._fields))
         print()
-        print('Available GPU instance types:')
+        print('GPU instance types:')
         print()
         print(format_table(InstanceTypesCompleter.gpu_instance_types.values(),
                            column_names=list(InstanceTypesCompleter.gpu_instance_types.values())[0]._fields))
         print()
-        print('Available FPGA instance types:')
+        print('FPGA instance types:')
         print()
         print(format_table(InstanceTypesCompleter.fpga_instance_types.values(),
                            column_names=list(InstanceTypesCompleter.fpga_instance_types.values())[0]._fields))

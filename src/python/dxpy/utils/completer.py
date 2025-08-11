@@ -540,9 +540,9 @@ class InstanceTypesCompleter():
         gpu_instance_types[i.Name] = i
 
     fpga_instance_types = OrderedDict()
-    for i in (FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x8', 122.0, 470, 8, 1),
-              FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x16', 244.0, 940, 16, 1),
-              FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x64', 976.0, 3760, 64, 1)):
+    for i in (FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x24', 256.0, 940, 24, 1),
+              FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x48', 512.0, 1880, 48, 2),
+              FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x192', 2048.0, 7520, 192, 8)):
         fpga_instance_types[i.Name] = i
 
     aws_other_instance_types = OrderedDict()
