@@ -410,7 +410,9 @@ class MultiCompleter():
             return None
 
 class InstanceTypesCompleter():
-    InstanceTypeSpec = namedtuple('InstanceTypeSpec', ('Name', 'Memory_GB', 'Storage_GB', 'CPU_Cores'))
+    InstanceTypeSpec = namedtuple('InstanceTypeSpec', ('Name', 'Memory_GiB', 'Storage_GB', 'CPU_Cores'))
+    GpuInstanceTypeSpec = namedtuple('GpuInstanceTypeSpec', ('Name', 'Memory_GiB', 'Storage_GB', 'CPU_Cores', 'GPU', 'GPU_Memory_GiB'))
+    FpgaInstanceTypeSpec = namedtuple('FpgaInstanceTypeSpec', ('Name', 'Memory_GiB', 'Storage_GB', 'CPU_Cores', 'FPGA'))
 
     # AWS
     aws_preferred_instance_types = OrderedDict()
@@ -421,6 +423,13 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem1_ssd1_v2_x36', 72.0, 900, 36),
               InstanceTypeSpec('mem1_ssd1_v2_x72', 144.0, 1800, 72),
 
+              InstanceTypeSpec('mem1_ssd2_v2_x2', 4.0, 160, 2),
+              InstanceTypeSpec('mem1_ssd2_v2_x4', 8.0, 320, 4),
+              InstanceTypeSpec('mem1_ssd2_v2_x8', 16.0, 640, 8),
+              InstanceTypeSpec('mem1_ssd2_v2_x16', 32.0, 1280, 16),
+              InstanceTypeSpec('mem1_ssd2_v2_x36', 72.0, 2880, 36),
+              InstanceTypeSpec('mem1_ssd2_v2_x72', 144.0, 5760, 72),
+
               InstanceTypeSpec('mem2_ssd1_v2_x2', 8.0, 75, 2),
               InstanceTypeSpec('mem2_ssd1_v2_x4', 16.0, 150, 4),
               InstanceTypeSpec('mem2_ssd1_v2_x8', 32.0, 300, 8),
@@ -429,6 +438,15 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem2_ssd1_v2_x48', 144.0, 1800, 48),
               InstanceTypeSpec('mem2_ssd1_v2_x64', 256.0, 2400, 64),
               InstanceTypeSpec('mem2_ssd1_v2_x96', 384.0, 3600, 96),
+
+              InstanceTypeSpec('mem2_ssd2_v2_x2', 8.0, 160, 2),
+              InstanceTypeSpec('mem2_ssd2_v2_x4', 16.0, 320, 4),
+              InstanceTypeSpec('mem2_ssd2_v2_x8', 32.0, 640, 8),
+              InstanceTypeSpec('mem2_ssd2_v2_x16', 64.0, 1280, 16),
+              InstanceTypeSpec('mem2_ssd2_v2_x32', 128.0, 2560, 32),
+              InstanceTypeSpec('mem2_ssd2_v2_x48', 192.0, 3840, 48),
+              InstanceTypeSpec('mem2_ssd2_v2_x64', 256.0, 5120, 64),
+              InstanceTypeSpec('mem2_ssd2_v2_x96', 384.0, 7480, 96),
 
               InstanceTypeSpec('mem3_ssd1_v2_x2', 16.0, 75, 2),
               InstanceTypeSpec('mem3_ssd1_v2_x4', 32.0, 150, 4),
@@ -439,6 +457,13 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem3_ssd1_v2_x64', 512.0, 3200, 64),
               InstanceTypeSpec('mem3_ssd1_v2_x96', 768.0, 3600, 96),
 
+              InstanceTypeSpec('mem3_ssd2_v2_x2', 15.25, 475, 2),
+              InstanceTypeSpec('mem3_ssd2_v2_x4', 30.5, 950, 4),
+              InstanceTypeSpec('mem3_ssd2_v2_x8', 61.0, 1900, 8),
+              InstanceTypeSpec('mem3_ssd2_v2_x16', 122.0, 3800, 16),
+              InstanceTypeSpec('mem3_ssd2_v2_x32', 244.0, 7600, 32),
+              InstanceTypeSpec('mem3_ssd2_v2_x64', 488.0, 15200, 64),
+
               InstanceTypeSpec('mem3_ssd3_x2', 16.0, 1250, 2),
               InstanceTypeSpec('mem3_ssd3_x4', 32.0, 2500, 4),
               InstanceTypeSpec('mem3_ssd3_x8', 64.0, 5000, 8),
@@ -447,14 +472,7 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem3_ssd3_x48', 384.0, 30000, 48),
               InstanceTypeSpec('mem3_ssd3_x96', 768.0, 60000, 96),
 
-              InstanceTypeSpec('mem4_ssd1_x128', 1952.0, 3840, 128),
-
-              InstanceTypeSpec('mem1_ssd2_v2_x2', 4.0, 160, 2),
-              InstanceTypeSpec('mem1_ssd2_v2_x4', 8.0, 320, 4),
-              InstanceTypeSpec('mem1_ssd2_v2_x8', 16.0, 640, 8),
-              InstanceTypeSpec('mem1_ssd2_v2_x16', 32.0, 1280, 16),
-              InstanceTypeSpec('mem1_ssd2_v2_x36', 72.0, 2880, 36),
-              InstanceTypeSpec('mem1_ssd2_v2_x72', 144.0, 5760, 72)):
+              InstanceTypeSpec('mem4_ssd1_x128', 1952.0, 3840, 128)):
         aws_preferred_instance_types[i.Name] = i
 
     # Azure
@@ -479,22 +497,77 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('azure:mem4_ssd1_x2', 28.0, 128, 2),
               InstanceTypeSpec('azure:mem4_ssd1_x4', 56.0, 128, 4),
               InstanceTypeSpec('azure:mem4_ssd1_x8', 112.0, 256, 8),
-              InstanceTypeSpec('azure:mem4_ssd1_x16', 224, 512, 16),
-              InstanceTypeSpec('azure:mem4_ssd1_x32', 448, 1024, 32)):
-        azure_preferred_instance_types[i.Name] = i
-    instance_types = OrderedDict()
-    instance_types.update(aws_preferred_instance_types)
-    instance_types.update(azure_preferred_instance_types)
+              InstanceTypeSpec('azure:mem4_ssd1_x16', 224.0, 512, 16),
+              InstanceTypeSpec('azure:mem4_ssd1_x32', 448.0, 1024, 32),
 
+              InstanceTypeSpec('azure:mem5_ssd2_x64', 1792.0, 8192, 64),
+              InstanceTypeSpec('azure:mem5_ssd2_x128', 3892.0, 16384, 128)):
+        azure_preferred_instance_types[i.Name] = i
+
+    gpu_instance_types = OrderedDict()
+    for i in (GpuInstanceTypeSpec('mem2_ssd1_gpu_x16', 64.0, 225, 16, '1 NVIDIA T4', 16.0),
+              GpuInstanceTypeSpec('mem2_ssd1_gpu_x32', 128.0, 900, 32, '1 NVIDIA T4', 16.0),
+              GpuInstanceTypeSpec('mem2_ssd1_gpu1_x32', 128.0, 900, 32, '1 NVIDIA T4', 16.0),
+              GpuInstanceTypeSpec('mem2_ssd1_gpu_x64', 256.0, 900, 64, '1 NVIDIA T4', 16.0),
+              GpuInstanceTypeSpec('mem2_ssd1_gpu1_x64', 256.0, 900, 64, '1 NVIDIA T4', 16.0),
+              GpuInstanceTypeSpec('mem2_ssd1_gpu_x48', 192.0, 900, 48, '4 NVIDIA T4', 64.0),
+              GpuInstanceTypeSpec('mem2_ssd1_gpu4_x48', 192.0, 900, 48, '4 NVIDIA T4', 64.0),
+
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_x4', 16.0, 250, 4, '1 NVIDIA A10G', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_x8', 32.0, 450, 8, '1 NVIDIA A10G', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_x16', 64.0, 600, 16, '1 NVIDIA A10G', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_x32', 128.0, 900, 32, '1 NVIDIA A10G', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_x64', 256.0, 1900, 64, '1 NVIDIA A10G', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu4_x48', 192.0, 3800, 48, '4 NVIDIA A10G', 96.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu4_x96', 384.0, 3800, 96, '4 NVIDIA A10G', 96.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu8_x192', 768.0, 7600, 192, '8 NVIDIA A10G', 192.0),
+
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_v2_x4', 16.0, 250, 4, '1 NVIDIA L4', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_v2_x8', 32.0, 450, 8, '1 NVIDIA L4', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_v2_x16', 64.0, 600, 16, '1 NVIDIA L4', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_v2_x32', 128.0, 900, 32, '1 NVIDIA L4', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu1_v2_x64', 256.0, 1880, 64, '1 NVIDIA L4', 24.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu4_v2_x48', 192.0, 3760, 48, '4 NVIDIA L4', 96.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu4_v2_x96', 384.0, 3760, 96, '4 NVIDIA L4', 96.0),
+              GpuInstanceTypeSpec('mem2_ssd2_gpu8_v2_x192', 768.0, 7520, 192, '8 NVIDIA L4', 192.0),
+              GpuInstanceTypeSpec('mem3_ssd1_gpu1_x16', 128.0, 600, 16, '1 NVIDIA L4', 24.0),
+              GpuInstanceTypeSpec('mem3_ssd1_gpu1_x32', 256.0, 900, 32, '1 NVIDIA L4', 24.0),
+
+              GpuInstanceTypeSpec('mem3_ssd1_gpu_x8', 61.0, 160, 8, '1 NVIDIA V100', 16.0),
+              GpuInstanceTypeSpec('mem3_ssd1_gpu_x32', 244.0, 640, 32, '4 NVIDIA V100', 64.0),
+              GpuInstanceTypeSpec('mem3_ssd1_gpu_x64', 488.0, 1280, 64, '8 NVIDIA V100', 128.0),
+              GpuInstanceTypeSpec('azure:mem3_ssd2_gpu4_x64', 488.0, 2048, 64, '4 NVIDIA V100', 64.0)):
+        gpu_instance_types[i.Name] = i
+
+    fpga_instance_types = OrderedDict()
+    for i in (FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x8', 122.0, 470, 8, 1),
+              FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x16', 244.0, 940, 16, 1),
+              FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x64', 976.0, 3760, 64, 1)):
+        fpga_instance_types[i.Name] = i
+
+    aws_other_instance_types = OrderedDict()
     for i in (InstanceTypeSpec('mem1_ssd1_x2', 3.8, 32, 2),
               InstanceTypeSpec('mem1_ssd1_x4', 7.5, 80, 4),
               InstanceTypeSpec('mem1_ssd1_x8', 15.0, 160, 8),
               InstanceTypeSpec('mem1_ssd1_x16', 30.0, 320, 16),
               InstanceTypeSpec('mem1_ssd1_x32', 60.0, 640, 32),
 
+              InstanceTypeSpec('mem1_ssd2_x2', 3.8, 160, 2),
+              InstanceTypeSpec('mem1_ssd2_x4', 7.5, 320, 4),
+              InstanceTypeSpec('mem1_ssd2_x8', 15, 640, 8),
+              InstanceTypeSpec('mem1_ssd2_x16', 30, 1280, 16),
+              InstanceTypeSpec('mem1_ssd2_x36', 60, 2880, 36),
+
               InstanceTypeSpec('mem2_ssd1_x2', 7.5, 32, 2),
               InstanceTypeSpec('mem2_ssd1_x4', 15.0, 80, 4),
               InstanceTypeSpec('mem2_ssd1_x8', 30.0, 160, 8),
+
+              InstanceTypeSpec('mem2_ssd2_x2', 8.0, 160, 2),
+              InstanceTypeSpec('mem2_ssd2_x4', 16.0, 320, 4),
+              InstanceTypeSpec('mem2_ssd2_x8', 32.0, 1280, 8),
+              InstanceTypeSpec('mem2_ssd2_x16', 64.0, 2560, 16),
+              InstanceTypeSpec('mem2_ssd2_x40', 160.0, 3200, 40),
+              InstanceTypeSpec('mem2_ssd2_x64', 256.0, 5120, 64),
 
               InstanceTypeSpec('mem3_ssd1_x2', 15.0, 32, 2),
               InstanceTypeSpec('mem3_ssd1_x4', 30.5, 80, 4),
@@ -502,19 +575,53 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem3_ssd1_x16', 122.0, 320, 16),
               InstanceTypeSpec('mem3_ssd1_x32', 244.0, 640, 32),
 
-              InstanceTypeSpec('mem1_ssd2_x2', 3.8, 160, 2),
-              InstanceTypeSpec('mem1_ssd2_x4', 7.5, 320, 4),
-              InstanceTypeSpec('mem1_ssd2_x8', 15, 640, 8),
-              InstanceTypeSpec('mem1_ssd2_x16', 30, 1280, 16),
-              InstanceTypeSpec('mem1_ssd2_x36', 60, 2880, 36),
+              InstanceTypeSpec('mem3_ssd2_x4', 30.5, 800, 4),
+              InstanceTypeSpec('mem3_ssd2_x8', 61.0, 1600, 8),
+              InstanceTypeSpec('mem3_ssd2_x16', 122.0, 3200, 16),
+              InstanceTypeSpec('mem3_ssd2_x32', 244.0, 6400, 32),
+
+              InstanceTypeSpec('mem1_hdd1_x2', 3.75, 200, 2),
+              InstanceTypeSpec('mem1_hdd1_x4', 7.5, 400, 4),
+              InstanceTypeSpec('mem1_hdd1_x8', 15.0, 800, 8),
+              InstanceTypeSpec('mem1_hdd1_x16', 30.0, 1600, 16),
+              InstanceTypeSpec('mem1_hdd1_x36', 60.0, 3200, 36),
+
+              InstanceTypeSpec('mem1_hdd1_v2_x2', 4.0, 200, 2),
+              InstanceTypeSpec('mem1_hdd1_v2_x4', 8.0, 400, 4),
+              InstanceTypeSpec('mem1_hdd1_v2_x8', 16.0, 800, 8),
+              InstanceTypeSpec('mem1_hdd1_v2_x16', 32.0, 1600, 16),
+              InstanceTypeSpec('mem1_hdd1_v2_x36', 72.0, 3600, 36),
+              InstanceTypeSpec('mem1_hdd1_v2_x72', 144.0, 7200, 72),
+              InstanceTypeSpec('mem1_hdd1_v2_x96', 192.0, 9600, 96),
+
+              InstanceTypeSpec('mem1_hdd2_x1', 1.7, 160, 1),
+              InstanceTypeSpec('mem1_hdd2_x8', 7.0, 1680, 8),
+              InstanceTypeSpec('mem1_hdd2_x32', 60.5, 3360, 32),
+
+              InstanceTypeSpec('mem2_hdd2_x1', 3.8, 410, 1),
+              InstanceTypeSpec('mem2_hdd2_x2', 7.5, 840, 2),
+              InstanceTypeSpec('mem2_hdd2_x4', 15.0, 1680, 4),
+
               InstanceTypeSpec('mem2_hdd2_v2_x2', 8.0, 1000, 2),
               InstanceTypeSpec('mem2_hdd2_v2_x4', 16.0, 2000, 4),
 
               InstanceTypeSpec('mem3_hdd2_v2_x2', 16.0, 500, 2),
               InstanceTypeSpec('mem3_hdd2_v2_x4', 32.0, 1000, 4),
               InstanceTypeSpec('mem3_hdd2_v2_x8', 64.0, 2000, 8)):
-        instance_types[i.Name] = i
+        aws_other_instance_types[i.Name] = i
+
     default_instance_type = aws_preferred_instance_types['mem1_ssd1_v2_x4']
+
+    standard_instance_types = OrderedDict()
+    standard_instance_types.update(aws_preferred_instance_types)
+    standard_instance_types.update(azure_preferred_instance_types)
+    standard_instance_types.update(aws_other_instance_types)
+
+    instance_types = OrderedDict()
+    instance_types.update(standard_instance_types)
+    instance_types.update(gpu_instance_types)
+    instance_types.update(fpga_instance_types)
+
     instance_type_names = instance_types.keys()
 
     def complete(self, text, state):
@@ -522,3 +629,7 @@ class InstanceTypesCompleter():
             return self.instance_type_names[state]
         except IndexError:
             return None
+
+    def __call__(self, prefix, parsed_args, **kwargs):
+        print(prefix)
+        return [name for name in self.instance_type_names if name.startswith(prefix)]
