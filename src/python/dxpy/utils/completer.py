@@ -631,5 +631,4 @@ class InstanceTypesCompleter():
             return None
 
     def __call__(self, prefix, parsed_args, **kwargs):
-        print(prefix)
         return [name for name in self.instance_type_names if name.startswith(prefix)]
