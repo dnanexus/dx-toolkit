@@ -79,6 +79,9 @@ class PermissionDenied(DXAPIError):
 class SpendingLimitExceeded(DXAPIError):
     ''' Raised when the spending limit has been reached for the account that would be billed for this action. '''
 
+class OrgExpired(DXAPIError):
+    ''' Raised when the organization that would be billed for this action has expired. '''
+
 class ResourceNotFound(DXAPIError):
     ''' Raised when a specified entity or resource could not be found. '''
 

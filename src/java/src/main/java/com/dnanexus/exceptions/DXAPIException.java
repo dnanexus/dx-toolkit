@@ -80,6 +80,12 @@ public class DXAPIException extends RuntimeException {
             DXAPIException generateException(String message, int statusCode) {
                 return new SpendingLimitExceededException(message, statusCode);
             }
+        },
+        OrgExpired("OrgExpired") {
+            @Override
+            DXAPIException generateException(String message, int statusCode) {
+                return new OrgExpiredException(message, statusCode);
+            }
         };
 
         private String errorType;
