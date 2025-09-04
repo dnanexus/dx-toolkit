@@ -350,6 +350,12 @@ aws_login() {
     # Clean up any old AWS config files to avoid conflicts. The SDK will now ignore ~/.aws/config and ~/.aws/credentials because the environment variables take precedence.
     rm -rf /home/dnanexus/.aws/
 
+    # This explicit check is added to ensure that existing pytest tests for invalid credentials still fail correctly.
+    # In the new model, the AWS SDK would normally handle this lazily, but the tests expect an immediate failure.
+    aws sts assume-role-with-web-identity --role-arn "$iamRoleArnToAssume" \
+      --role-session-name "dnanexus_${DX_JOB_ID}" \
+      --web-identity-token "$(cat "${web_identity_token_file}")" > /dev/null
+
     echo "Successfully configured AWS with Web Identity Token File."
     # Optional sanity check; SDK/CLI will now do STS AssumeRoleWithWebIdentity on demand
     aws sts get-caller-identity >/dev/null 2>&1 || echo "Note: initial STS call deferred to Nextflow/AWS SDK."
