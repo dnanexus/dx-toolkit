@@ -156,7 +156,8 @@ def get_instance_type(region):
         "aws:me-south-1": "mem2_ssd1_v2_x4",
         "azure:westeurope": "azure:mem2_ssd1_x4",
         "azure:westus": "azure:mem2_ssd1_x4",
-        "aws:eu-west-2-g": "mem2_ssd1_v2_x4"
+        "aws:eu-west-2-g": "mem2_ssd1_v2_x4",
+        "oci:us-ashburn-1": "oci:mem2_ssd1_v3i_x4"
     }.get(region)
     if not instance_type:
         raise dxpy.exceptions.ResourceNotFound("Instance type is not specified for region {}.".format(region))
