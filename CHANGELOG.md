@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Nextflow app template to use Web Identity Token File (WITF) flow instead of credentials files for AWS authentication within AWS SDK v2
 
+### Added
+
+* Support for OCI region in Nextflow applets
+ 
 ## [399.0] - beta
 
 ### Added
