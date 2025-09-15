@@ -200,7 +200,7 @@ def download(args):
                                              "size": True,
                                              "drive": True,
                                              "md5": True,
-                                             "perPartCheckSum": True
+                                             "checksumType": True
                                              }})
 
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
