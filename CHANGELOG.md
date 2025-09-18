@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Support for `--https-app-isolated-browsing-options` in `dx update project`
+
 ## [397.0] - beta
 
 * No significant changes
