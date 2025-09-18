@@ -71,7 +71,7 @@ from ..bindings.apollo.json_validation_by_schema import JSONValidator
 
 from ..bindings.apollo.schemas.input_arguments_validation_schemas import EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA
 from ..bindings.apollo.schemas.assay_filtering_json_schemas import EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA
-from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS
+from ..bindings.apollo.schemas.assay_filtering_conditions import EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1, EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
 
 from ..bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from ..bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
@@ -178,8 +178,6 @@ def raw_api_call(resp, payload, sql_message=True):
                 err_message = "Insufficient permissions due to the project policy.\n" + resp_raw["error"]["message"]
             elif sql_message and resp_raw["error"]["type"] == "QueryTimeOut":
                 err_message = "Please consider using `--sql` option to generate the SQL query and query via a private compute cluster.\n" + resp_raw["error"]["message"]        
-            elif resp_raw["error"]["type"] == "QueryBuilderError" and resp_raw["error"]["details"] == "rsid exists in request filters without rsid entries in rsid_lookup_table.":
-                err_message = "At least one rsID provided in the filter is not present in the provided dataset or cohort"
             elif resp_raw["error"]["type"] == "DxApiError":
                 err_message = resp_raw["error"]["message"]
             else:
@@ -1432,7 +1430,14 @@ def extract_assay_expression(args):
         except Exception as e:
             err_exit(str(e))
 
-    if user_filters_json == {}:
+    # If --sql flag is provided, filter JSON is optional. If not present, all data must be returned
+    if args.sql and not args.filter_json and not args.filter_json_file:
+        return_all_data = True
+        user_filters_json = {}
+    else:
+        return_all_data = False
+
+    if not user_filters_json and not return_all_data:
         err_exit(
             "No filter JSON is passed with --retrieve-expression or input JSON for --retrieve-expression does not contain valid filter information."
         )
@@ -1460,18 +1465,51 @@ def extract_assay_expression(args):
             "ending_position"
         ]["type"] = unicode
 
-    # Validate filters JSON provided by the user according to a predefined schema
-    input_json_validator = JSONValidator(
-        schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit
-    )
-    input_json_validator.validate(input_json=user_filters_json)
+    # In case --sql flag is provided but no input json, function should return all data
+    if user_filters_json:
+        # Validate filters JSON provided by the user according to a predefined schema
+        input_json_validator = JSONValidator(
+            schema=EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA, error_handler=err_exit
+        )
+        input_json_validator.validate(input_json=user_filters_json)
 
-    if "location" in user_filters_json:
+
+    if args.assay_name:
+        # Assumption: assay names are unique in a dataset descriptor
+        # i.e. there are never two assays of the same type with the same name in the same dataset
+        for molecular_assay in dataset.assays_info_dict["molecular_expression"]:
+            if molecular_assay["name"] == args.assay_name:
+                ASSAY_ID = molecular_assay["uuid"]
+                break
+    else:
+        ASSAY_ID = dataset.assays_info_dict["molecular_expression"][0]["uuid"]
+
+    # Getting generalized_assay_model_version to match filter schema
+    conditions_mapping = {
+            "1.0": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
+            "1.1": EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
+        }
+    generalized_assay_model_version = dataset.assay_info_dict(ASSAY_ID).get("generalized_assay_model_version")
+    filter_schema = conditions_mapping.get(generalized_assay_model_version)
+
+    # Genomic range limits must be applied. However, when using --sql limits may be ignored.
+    if generalized_assay_model_version == "1.1":
+        if "location" in user_filters_json:
+            filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+        else:
+            filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1
+
+    # When location filter is used and version is 1.1, or all data must be returned queries should not use optimized table
+    # Genomic range limits must be applied. However, when using --sql limits may be ignored.
+    if "location" in user_filters_json or return_all_data:
+
+        if generalized_assay_model_version == "1.1":
+            filter_schema = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized
+            
         if args.sql:
-            EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["filtering_conditions"][
+            filter_schema["filtering_conditions"][
                 "location"
             ]["max_item_limit"] = None
-
         else:
             # Genomic range adding together across multiple contigs should be smaller than 250 Mbps
             input_json_validator.are_list_items_within_range(
@@ -1482,17 +1520,17 @@ def extract_assay_expression(args):
                 window_width=250000000,
                 check_each_separately=False,
             )
-
     input_json_parser = JSONFiltersValidator(
         input_json=user_filters_json,
-        schema=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS,
+        schema=filter_schema,
         error_handler=err_exit,
     )
     vizserver_raw_filters = input_json_parser.parse()
 
-    _db_columns_list = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS[
+    _db_columns_list = filter_schema[
         "output_fields_mapping"
     ].get("default")
+
 
     if args.additional_fields:
         # All three of the following should work:
@@ -1507,9 +1545,10 @@ def extract_assay_expression(args):
             field = [x.strip() for x in item.split(",") if x.strip()]
             additional_fields.extend(field)
 
-        all_additional_cols = EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS[
+        all_additional_cols = filter_schema[
             "output_fields_mapping"
         ].get("additional")
+
         incorrect_cols = set(additional_fields) - set(
             {k for d in all_additional_cols for k in d.keys()}
         )
@@ -1526,27 +1565,18 @@ def extract_assay_expression(args):
         project_context=project,
         output_fields_mapping=_db_columns_list,
         filters={"filters": COHORT_FILTERS} if IS_COHORT else None,
-        order_by=EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS["order_by"],
+        order_by=filter_schema["order_by"],
         limit=None,
         base_sql=BASE_SQL,
         is_cohort=IS_COHORT,
         error_handler=err_exit,
     )
 
+
     DATASET_DESCRIPTOR = dataset.descriptor_file_dict
     ASSAY_NAME = (
         args.assay_name if args.assay_name else dataset.assay_names_list("molecular_expression")[0]
     )
-
-    if args.assay_name:
-        # Assumption: assay names are unique in a dataset descriptor
-        # i.e. there are never two assays of the same type with the same name in the same dataset
-        for molecular_assay in dataset.assays_info_dict["molecular_expression"]:
-            if molecular_assay["name"] == args.assay_name:
-                ASSAY_ID = molecular_assay["uuid"]
-                break
-    else:
-        ASSAY_ID = dataset.assays_info_dict["molecular_expression"][0]["uuid"]
 
     viz.assemble_assay_raw_filters(
         assay_name=ASSAY_NAME, assay_id=ASSAY_ID, filters=vizserver_raw_filters

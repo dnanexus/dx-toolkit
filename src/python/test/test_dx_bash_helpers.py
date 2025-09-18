@@ -992,12 +992,12 @@ class TestDXBashHelperMethods(unittest.TestCase):
         max_threads = 8
         for inst in instance_types.values():
             num_threads = _get_num_parallel_threads(
-                max_threads, inst.CPU_Cores, inst.Memory_GB * 1024
+                max_threads, inst.CPU_Cores, inst.Memory_GiB * 1024
             )
             self.assertTrue(num_threads >= 1 and num_threads <= max_threads)
             self.assertTrue(num_threads <= inst.CPU_Cores)
             self.assertTrue(
-                num_threads * 1200 <= inst.Memory_GB * 1024 or num_threads == 1
+                num_threads * 1200 <= inst.Memory_GiB * 1024 or num_threads == 1
             )
 
 

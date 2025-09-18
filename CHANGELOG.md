@@ -6,11 +6,28 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Nextflow app template to use Web Identity Token File (WITF) flow instead of credentials files for AWS authentication within AWS SDK v2
+
 ### Added
 
+* Support for OCI region in Nextflow applets
 * Support for `--https-app-isolated-browsing-options` in `dx update project`
+ 
+## [399.0] - beta
 
-## [397.0] - beta
+### Added
+
+* New instance types in `dx run --instance-type-help` corresponding to the [official docs](https://documentation.dnanexus.com/developer/api/running-analyses/instance-types)
+
+## [398.0] - 2025.08.19
+
+### Changed
+
+* Optimized `dx extract_assay expression` to match assays with new generalized_assay_model_version 1.1. Backwards compatible.
+
+## [397.0] - 2025.08.06
 
 * No significant changes
 

@@ -5,5 +5,6 @@
     "aws:me-south-1": "record-GzyJ2GV311jBJYzx2XpgZXQ0",
     "aws:us-east-1": "record-GzyJ08002j9B36YfkbQQxpkf",
     "azure:westeurope": "record-GzyJ4B8B095jZ8F4BF5p2Ggz",
-    "azure:westus": "record-GzyJ3q89X1QBpvfvgx9bZzgP"
+    "azure:westus": "record-GzyJ3q89X1QBpvfvgx9bZzgP",
+    "oci:us-ashburn-1": "record-J30XbBV6j7q0jq6q1Jfz5650"
 }
