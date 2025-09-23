@@ -464,6 +464,11 @@ def get_update_project_args(args):
         input_params['externalUploadRestricted'] = args.external_upload_restricted == 'true'
     if args.https_app_isolated_browsing is not None:
         input_params['httpsAppIsolatedBrowsing'] = args.https_app_isolated_browsing == 'true'
+    if args.https_app_isolated_browsing_options is not None:
+        try:
+            input_params['httpsAppIsolatedBrowsingOptions'] = json.loads(args.https_app_isolated_browsing_options)
+        except ValueError as e:
+            raise DXParserError('Error while parsing the value for --https-app-isolated-browsing-options') from e
     return input_params
 
 def process_phi_param(args):
