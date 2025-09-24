@@ -17,6 +17,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Support for OCI region in Nextflow applets
+* Support for `--https-app-isolated-browsing-options` in `dx update project`
  
 ## [399.0] - beta
 
