@@ -149,16 +149,14 @@ def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_
 
 
 def get_instance_type(region):
-    instance_type = {
-        "aws:ap-southeast-2": "mem2_ssd1_v2_x4",
-        "aws:eu-central-1": "mem2_ssd1_v2_x4",
-        "aws:us-east-1": "mem2_ssd1_v2_x4",
-        "aws:me-south-1": "mem2_ssd1_v2_x4",
-        "azure:westeurope": "azure:mem2_ssd1_x4",
-        "azure:westus": "azure:mem2_ssd1_x4",
-        "aws:eu-west-2-g": "mem2_ssd1_v2_x4",
-        "oci:us-ashburn-1": "oci:mem2_ssd1_v3i_x4"
-    }.get(region)
+    json_file_path = path.join(path.dirname(dxpy.__file__), 'nextflow', 'default_nextflow_instance_types.json')
+    try:
+        with open(json_file_path, 'r') as f:
+            instance_type_mapping = json.load(f)
+    except FileNotFoundError:
+        raise dxpy.exceptions.ResourceNotFound(f"Instance types file not found at {json_file_path}.")
+
+    instance_type = instance_type_mapping.get(region)
     if not instance_type:
         raise dxpy.exceptions.ResourceNotFound("Instance type is not specified for region {}.".format(region))
     return instance_type
@@ -184,6 +182,7 @@ def get_nextflow_assets(region):
 
         with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f, open(awscli_assets, 'r') as awscli_f:
             return json.load(nextaur_f)[region], json.load(nextflow_f)[region], json.load(awscli_f)[region]
+
 
 def get_nested(args, arg_path):
     """
