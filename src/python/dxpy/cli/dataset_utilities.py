@@ -441,6 +441,9 @@ def extract_dataset(args):
                 payload["base_sql"] = resp.get("baseSql")
             payload["filters"] = resp["filters"]
 
+        if args.use:
+            payload["use"] = args.use
+
         if args.sql:
             sql_results = raw_query_api_call(resp, payload)
             if print_to_stdout:
