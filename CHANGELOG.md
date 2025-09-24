@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Extract nextflow default instances to separate file
+
 ### Fixed
 
 * Nextflow app template to use Web Identity Token File (WITF) flow instead of credentials files for AWS authentication within AWS SDK v2
