@@ -164,14 +164,12 @@ def get_instance_type(region):
 
 def get_nextflow_assets(region):
     nextflow_basepath = path.join(path.dirname(dxpy.__file__), 'nextflow')
-    print(f"TEEEST nextflow_basepath: {nextflow_basepath}")
     # The order of assets in the tuple is: nextaur, nextflow
     nextaur_assets = path.join(nextflow_basepath, "nextaur_assets.json")
     nextflow_assets = path.join(nextflow_basepath, "nextflow_assets.json")
     awscli_assets = path.join(nextflow_basepath, "awscli_assets.json")
     try:
         with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f, open(awscli_assets, 'r') as awscli_f:
-            print(f"TEEEST nextaur_f before: {nextaur_f}")
             nextaur = json.load(nextaur_f)[region]
             nextflow = json.load(nextflow_f)[region]
             awscli = json.load(awscli_f)[region]
@@ -183,7 +181,6 @@ def get_nextflow_assets(region):
         awscli_assets = path.join(nextflow_basepath, "awscli_assets.staging.json")
 
         with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f, open(awscli_assets, 'r') as awscli_f:
-            print(f"TEEEST nextaur_f after: {nextaur_f}")
             return json.load(nextaur_f)[region], json.load(nextflow_f)[region], json.load(awscli_f)[region]
 
 
