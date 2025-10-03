@@ -11112,10 +11112,11 @@ class TestDXCp(DXTestCase):
         fname1 = self.gen_uniq_fname()
         create_file_in_project(fname1, self.proj_id1)
 
-        # The file {proj_id1}:/{f} exists, however, {proj_id1}/{f} does not
-        expected_err_msg = "Folder {f} does not exist in project {p}".format(p=self.project, f=fname1)
+        # The file {proj_id1}:/{f} exists, however, {proj_id1}/non_existing_folder/{f} does not
+        non_existing_folder_name = "/non_existing_folder"
+        expected_err_msg = "Folder \"{fn}\" does not exist in project \"{p1}\"".format(p1=self.proj_id1, fn=non_existing_folder_name)
         with self.assertSubprocessFailure(stderr_regexp=expected_err_msg, exit_code=3):
-            run("dx cp {p1}/{f} {p2}:/".format(p1=self.proj_id1, f=fname1, p2=self.proj_id2))
+            run("dx cp {p1}:{fn}/{f} {p2}:/".format(p1=self.proj_id1, fn=non_existing_folder_name , f=fname1, p2=self.proj_id2))
 
         with self.assertSubprocessFailure(stderr_regexp="The destination folder does not exist",
                                           exit_code=3):
