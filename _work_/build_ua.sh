@@ -8,7 +8,7 @@ docker run --rm \
     -v "$(pwd):/dx-toolkit" \
     -w /dx-toolkit \
     ua-builder \
-    bash -c "make ua 2>&1 | tee make.log"
+    bash -c "make ua 2>&1 | tee _work_/build.log"
 
 # Run interactive
 # docker run -it -v "$(pwd):/dx-toolkit" -w /dx-toolkit ua-builder
