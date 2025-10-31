@@ -8,7 +8,7 @@ docker run --rm \
     -v "$(pwd):/dx-toolkit" \
     -w /dx-toolkit/src \
     upload-agent-builder \
-    bash -c "make ua 2>&1 | tee ../_work_/build.txt"
+    bash -c "make clean && make ua 2>&1 | tee ../_work_/build.txt"
 
 # Run interactive
 # docker run -it -v "$(pwd):/dx-toolkit" -w /dx-toolkit/src upload-agent-builder
