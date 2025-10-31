@@ -201,19 +201,11 @@ endif
 
 BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams,signals
 
-ifeq ($(UNAME)$(CC), Darwinclang)
-	BOOST_MAJOR=1
-	BOOST_MINOR=56
-	BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
-	BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
-	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
-else
-	BOOST_MAJOR=1
-	BOOST_MINOR=56
-	BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
-	BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
-	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
-endif
+BOOST_MAJOR=1
+BOOST_MINOR=56
+BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
+BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
+BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
 
 boost: boost/stage
 
