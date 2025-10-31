@@ -241,13 +241,13 @@ boost_build:
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
 CURL_MAJOR=7
-CURL_MINOR=45
-CURL_MICRO=0
+CURL_MINOR=88
+CURL_MICRO=1
 CURL_PV=$(CURL_MAJOR).$(CURL_MINOR).$(CURL_MICRO)
 CURL_PV_UNDERSCORES=$(CURL_MAJOR)_$(CURL_MINOR)_$(CURL_MICRO)
 CURL_MIRROR=https://github.com/bagder/curl/releases/download
 CURL_URL=$(CURL_MIRROR)/curl-$(CURL_PV_UNDERSCORES)/curl-$(CURL_PV).tar.gz
-CURL_SHA=e44fc290844c1e3c9b7f6ef9926d4366d0600514
+CURL_SHA=6ae5229c36badb822641bb14958e7d227c57611d
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
@@ -273,8 +273,7 @@ curl/stage/lib/libcurl.la: shasum openssl
 	cd curl; ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
-	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
-	    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
+	    --disable-tls-srp --without-gnutls --without-libssh2 --without-librtmp \
 	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
 	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
