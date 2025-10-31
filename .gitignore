@@ -21,7 +21,7 @@
 /src/openssl
 /src/boost*.tar.bz2
 /src/boost
-/src/file*.tar.gz
+/src/file*.tar.xz
 /src/file
 /src/curl*.tar.gz
 /src/curl
