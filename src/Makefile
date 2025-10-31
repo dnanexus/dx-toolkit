@@ -276,7 +276,8 @@ curl/stage/lib/libcurl.la: shasum openssl c-ares
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
 	    --disable-tls-srp --without-gnutls --without-libssh2 --without-librtmp \
-	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
+	    --without-winidn --without-libidn --without-libpsl \
+	    --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
 	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
