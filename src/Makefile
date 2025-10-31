@@ -265,12 +265,14 @@ else
 	CURL_SHARED_LIBS=--enable-shared=no
 endif
 
-curl/stage/lib/libcurl.la: shasum openssl
+curl/stage/lib/libcurl.la: shasum openssl c-ares
 	mkdir -p curl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
 	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
 	tar -xzf curl-$(CURL_PV).tar.gz -C curl --strip-components=1
-	cd curl; ./configure --disable-ldap --disable-ldaps \
+	cd curl; CPPFLAGS="-I$(DNANEXUS_HOME)/src/c-ares/stage/include" \
+	    LDFLAGS="-L$(DNANEXUS_HOME)/src/c-ares/stage/lib" \
+	    ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
 	    --disable-tls-srp --without-gnutls --without-libssh2 --without-librtmp \
