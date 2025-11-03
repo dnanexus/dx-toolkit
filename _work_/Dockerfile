@@ -12,9 +12,9 @@ RUN apt-get update && apt-get install -y \
     # gcc \
     libbz2-dev \
     libicu-dev \
-    zlib1g-dev \
-    cmake \
-    git \
+    # zlib1g-dev \
+    # cmake \
+    # git \
     wget \
     curl \
     libpsl-dev \
