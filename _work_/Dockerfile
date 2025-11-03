@@ -8,8 +8,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Update the package list and install development essentials
 RUN apt-get update && apt-get install -y \
     # build-essential \
-    g++ \
-    gcc \
+    # g++ \
+    # gcc \
     libbz2-dev \
     libicu-dev \
     zlib1g-dev \
