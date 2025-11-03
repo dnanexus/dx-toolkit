@@ -21,4 +21,6 @@ while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
 root="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 make -C $root/../src api_wrappers toolkit_version
-(cd $root/../src/python; /usr/bin/python setup.py sdist; twine upload dist/*)
+(cd $root/../src/python; /usr/bin/python setup.py sdist)
+(cd $root/../src/python; script_count=$(tar -tzf dist/dxpy-*.tar.gz | grep "scripts/dx" | wc -l | tr -d ' '); [ "$script_count" -ge 20 ] || { echo "Error: Expected at least 20 scripts, found $script_count"; exit 1; })
+(cd $root/../src/python; twine upload dist/*)

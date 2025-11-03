@@ -1,3 +1,4 @@
 include requirements*.txt
 include Readme.md
 recursive-include dxpy/templating/templates *
+recursive-include scripts *
