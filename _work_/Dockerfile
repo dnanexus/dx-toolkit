@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Update the package list and install development essentials
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    # build-essential \
     g++ \
     gcc \
     libbz2-dev \
