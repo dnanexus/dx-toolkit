@@ -1,5 +1,8 @@
 FROM ubuntu:24.04
 
+# Docker image for building Upload Agent.
+# This could be extended to support building other dx-toolkit components.
+
 # Set environment variables to avoid interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 

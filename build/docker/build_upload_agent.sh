@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Script for building Upload Agent with builder image.
+# This could be extended to support building other dx-toolkit components.
+
 MAKE_CMD="make clean && make ua"
 
 # Prepare the builder image
