@@ -13,10 +13,11 @@ RUN apt-get update && apt-get install -y \
     libidn11-dev \
     libssl-dev \
     # libcurl4-openssl-dev \
+    make \
     python3 \
     python3-pip \
     python3-venv \
-    vim \
+    # vim \
     libopenmpi-dev \
     openmpi-bin \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
