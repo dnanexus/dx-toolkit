@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Selection of nextflow default OCI region instance type
+
 ## [401.0] - beta
 
 * No significant changes
