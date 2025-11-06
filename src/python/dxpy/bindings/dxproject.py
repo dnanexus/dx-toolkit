@@ -285,7 +285,7 @@ class DXProject(DXContainer):
             restricted=None, download_restricted=None, contains_phi=None,
             tags=None, properties=None, bill_to=None, database_ui_view_only=None,
             external_upload_restricted=None, default_symlink=None,
-            database_results_restricted=None,
+            database_results_restricted=None, drive=None,
             **kwargs):
         """
         :param name: The name of the project
@@ -318,6 +318,8 @@ class DXProject(DXContainer):
         :type database_results_restricted: int
         :param default_symlink: If provided, the details needed to have writable symlinks in the project. Dict must include drive, container, and optional prefix.
         :type default_symlink: dict
+        :param drive: If provided, this drive will associated with the project.
+        :type drive: string
 
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
@@ -357,6 +359,8 @@ class DXProject(DXContainer):
             input_hash["properties"] = properties
         if default_symlink is not None:
             input_hash["defaultSymlink"] = default_symlink
+        if drive is not None:
+            input_hash["drive"] = drive
 
         self.set_id(dxpy.api.project_new(input_hash, **kwargs)["id"])
         self._desc = {}
