@@ -67,53 +67,266 @@ VIZPAYLOADERBUILDER_EXPECTED_OUTPUT = {
     "test_vizpayloadbuilder_annotation_feature_name": {
         "expected_data_output": [
             {
-                "feature_id": "ENST00000318560",
+                "feature_id": "ENST00000300305",
+                "sample_id": "sample_1",
+                "expression": 57,
+            },
+            {
+                "feature_id": "ENST00000300305",
+                "sample_id": "sample_2",
+                "expression": 40,
+            },
+            {
+                "feature_id": "ENST00000300305",
+                "sample_id": "sample_3",
+                "expression": 87,
+            },
+            {
+                "feature_id": "ENST00000344691",
+                "sample_id": "sample_1",
+                "expression": 20,
+            },
+            {
+                "feature_id": "ENST00000344691",
+                "sample_id": "sample_2",
+                "expression": 39,
+            },
+            {
+                "feature_id": "ENST00000344691",
+                "sample_id": "sample_3",
+                "expression": 35,
+            },
+            {
+                "feature_id": "ENST00000358356",
+                "sample_id": "sample_1",
+                "expression": 41,
+            },
+            {
+                "feature_id": "ENST00000358356",
+                "sample_id": "sample_2",
+                "expression": 66,
+            },
+            {
+                "feature_id": "ENST00000358356",
                 "sample_id": "sample_3",
                 "expression": 56,
             },
             {
-                "feature_id": "ENST00000318560",
-                "sample_id": "sample_2",
-                "expression": 24,
-            },
-            {
-                "feature_id": "ENST00000318560",
+                "feature_id": "ENST00000399237",
                 "sample_id": "sample_1",
-                "expression": 39,
+                "expression": 35,
             },
             {
-                "feature_id": "ENST00000372348",
-                "sample_id": "sample_3",
-                "expression": 90,
-            },
-            {
-                "feature_id": "ENST00000372348",
+                "feature_id": "ENST00000399237",
                 "sample_id": "sample_2",
-                "expression": 40,
+                "expression": 30,
             },
             {
-                "feature_id": "ENST00000372348",
-                "sample_id": "sample_1",
-                "expression": 87,
-            },
-            {
-                "feature_id": "ENST00000393293",
-                "sample_id": "sample_2",
-                "expression": 11,
-            },
-            {
-                "feature_id": "ENST00000393293",
+                "feature_id": "ENST00000399237",
                 "sample_id": "sample_3",
-                "expression": 40,
+                "expression": 15,
             },
             {
-                "feature_id": "ENST00000393293",
+                "feature_id": "ENST00000399240",
                 "sample_id": "sample_1",
                 "expression": 17,
             },
+            {
+                "feature_id": "ENST00000399240",
+                "sample_id": "sample_2",
+                "expression": 40,
+            },
+            {
+                "feature_id": "ENST00000399240",
+                "sample_id": "sample_3",
+                "expression": 50,
+            },
+            {
+                "feature_id": "ENST00000416754",
+                "sample_id": "sample_1",
+                "expression": 73,
+            },
+            {
+                "feature_id": "ENST00000416754",
+                "sample_id": "sample_2",
+                "expression": 99,
+            },
+            {
+                "feature_id": "ENST00000416754",
+                "sample_id": "sample_3",
+                "expression": 68,
+            },
+            {
+                "feature_id": "ENST00000437180",
+                "sample_id": "sample_1",
+                "expression": 31,
+            },
+            {
+                "feature_id": "ENST00000437180",
+                "sample_id": "sample_2",
+                "expression": 62,
+            },
+            {
+                "feature_id": "ENST00000437180",
+                "sample_id": "sample_3",
+                "expression": 33,
+            },
+            {
+                "feature_id": "ENST00000455571",
+                "sample_id": "sample_1",
+                "expression": 40,
+            },
+            {
+                "feature_id": "ENST00000455571",
+                "sample_id": "sample_2",
+                "expression": 52,
+            },
+            {
+                "feature_id": "ENST00000455571",
+                "sample_id": "sample_3",
+                "expression": 51,
+            },
+            {
+                "feature_id": "ENST00000460207",
+                "sample_id": "sample_1",
+                "expression": 45,
+            },
+            {
+                "feature_id": "ENST00000460207",
+                "sample_id": "sample_2",
+                "expression": 87,
+            },
+            {"feature_id": "ENST00000460207", "sample_id": "sample_3", "expression": 9},
+            {
+                "feature_id": "ENST00000467577",
+                "sample_id": "sample_1",
+                "expression": 17,
+            },
+            {
+                "feature_id": "ENST00000467577",
+                "sample_id": "sample_2",
+                "expression": 64,
+            },
+            {
+                "feature_id": "ENST00000467577",
+                "sample_id": "sample_3",
+                "expression": 54,
+            },
+            {
+                "feature_id": "ENST00000467692",
+                "sample_id": "sample_1",
+                "expression": 61,
+            },
+            {
+                "feature_id": "ENST00000467692",
+                "sample_id": "sample_2",
+                "expression": 48,
+            },
+            {"feature_id": "ENST00000467692", "sample_id": "sample_3", "expression": 9},
+            {
+                "feature_id": "ENST00000468726",
+                "sample_id": "sample_1",
+                "expression": 65,
+            },
+            {
+                "feature_id": "ENST00000468726",
+                "sample_id": "sample_2",
+                "expression": 14,
+            },
+            {
+                "feature_id": "ENST00000468726",
+                "sample_id": "sample_3",
+                "expression": 81,
+            },
+            {
+                "feature_id": "ENST00000469087",
+                "sample_id": "sample_1",
+                "expression": 84,
+            },
+            {
+                "feature_id": "ENST00000469087",
+                "sample_id": "sample_2",
+                "expression": 14,
+            },
+            {
+                "feature_id": "ENST00000469087",
+                "sample_id": "sample_3",
+                "expression": 56,
+            },
+            {
+                "feature_id": "ENST00000475045",
+                "sample_id": "sample_1",
+                "expression": 93,
+            },
+            {
+                "feature_id": "ENST00000475045",
+                "sample_id": "sample_2",
+                "expression": 39,
+            },
+            {
+                "feature_id": "ENST00000475045",
+                "sample_id": "sample_3",
+                "expression": 48,
+            },
+            {
+                "feature_id": "ENST00000479325",
+                "sample_id": "sample_1",
+                "expression": 49,
+            },
+            {
+                "feature_id": "ENST00000479325",
+                "sample_id": "sample_2",
+                "expression": 85,
+            },
+            {
+                "feature_id": "ENST00000479325",
+                "sample_id": "sample_3",
+                "expression": 66,
+            },
+            {"feature_id": "ENST00000482318", "sample_id": "sample_1", "expression": 2},
+            {
+                "feature_id": "ENST00000482318",
+                "sample_id": "sample_2",
+                "expression": 64,
+            },
+            {
+                "feature_id": "ENST00000482318",
+                "sample_id": "sample_3",
+                "expression": 71,
+            },
+            {
+                "feature_id": "ENST00000494829",
+                "sample_id": "sample_1",
+                "expression": 76,
+            },
+            {
+                "feature_id": "ENST00000494829",
+                "sample_id": "sample_2",
+                "expression": 20,
+            },
+            {
+                "feature_id": "ENST00000494829",
+                "sample_id": "sample_3",
+                "expression": 32,
+            },
+            {
+                "feature_id": "ENST00000675419",
+                "sample_id": "sample_1",
+                "expression": 99,
+            },
+            {
+                "feature_id": "ENST00000675419",
+                "sample_id": "sample_2",
+                "expression": 54,
+            },
+            {
+                "feature_id": "ENST00000675419",
+                "sample_id": "sample_3",
+                "expression": 13,
+            },
         ],
-        "expected_sql_output": "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expr_annotation_1`.`gene_name` IN ('ABL1') ORDER BY `feature_id` ASC, `sample_id` ASC",
-        "expected_sql_output_1_1": "SELECT `expression_read_optimized_1`.`feature_id` AS `feature_id`, `expression_read_optimized_1`.`sample_id` AS `sample_id`, `expression_read_optimized_1`.`value` AS `expression` FROM `database_j29xxf80vgpgzv8x60bvfzzv__molecular_expression_1_1`.`expression_read_optimized` AS `expression_read_optimized_1` WHERE `expression_read_optimized_1`.`gene_name` IN ('ABL1') AND `expression_read_optimized_1`.`chr` = '9' AND `expression_read_optimized_1`.`bin` IN (52) ORDER BY `feature_id` ASC, `sample_id` ASC",
+        "expected_sql_output": "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expr_annotation_1`.`gene_name` IN ('RUNX1') ORDER BY `feature_id` ASC, `sample_id` ASC",
+        "expected_sql_output_1_1": "SELECT `expression_read_optimized_1`.`feature_id` AS `feature_id`, `expression_read_optimized_1`.`sample_id` AS `sample_id`, `expression_read_optimized_1`.`value` AS `expression` FROM `database_j29xxf80vgpgzv8x60bvfzzv__molecular_expression_1_1`.`expression_read_optimized` AS `expression_read_optimized_1` WHERE `expression_read_optimized_1`.`gene_name` IN ('RUNX1') AND `expression_read_optimized_1`.`chr` = '21' AND `expression_read_optimized_1`.`bin` IN (13, 14) ORDER BY `feature_id` ASC, `sample_id` ASC",
     },
     "test_vizpayloadbuilder_annotation_feature_id": {
         "expected_data_output": [
