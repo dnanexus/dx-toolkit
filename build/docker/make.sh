@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-# Script for building dx-toolkit components  Upload Agent with builder image.
-# This could be extended to support building other dx-toolkit components.
+# Script for building dx-toolkit components in builder container
 
 # MAKE_CMD="dx-verify-file"
 MAKE_CMD="${1:-all}"
