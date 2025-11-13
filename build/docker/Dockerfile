@@ -1,7 +1,9 @@
 FROM ubuntu:24.04
 
-# Docker image for building Upload Agent.
-# This could be extended to support building other dx-toolkit components.
+# Docker image for building dx-toolkit components,
+# tested so far for upload-agent, dx-verify-file. May need
+# additional work to support other components.
+
 # Same Dockerfile used in
 # 1. dx-toolkit/build/docker/Dockerfile
 # 2. ci-scripts/docker_images/upload-agent-tester/Dockerfile
