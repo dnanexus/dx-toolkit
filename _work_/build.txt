@@ -1,0 +1,265 @@
+Emulate Docker CLI using podman. Create /etc/containers/nodocker to quiet msg.
+STEP 1/4: FROM ubuntu:24.04
+WARNING: image platform (linux/amd64) does not match the expected platform (linux/arm64)
+STEP 2/4: ENV DEBIAN_FRONTEND=noninteractive
+--> Using cache 5e0c8cfe15ce8d13e31b67736b340897ff5a797ad77b7b49ad7e217b4d027757
+--> 5e0c8cfe15ce
+STEP 3/4: RUN apt-get update && apt-get install -y     cmake     curl     g++     gcc     git     libboost-all-dev     libbz2-dev     libicu-dev     libidn11-dev     libssl-dev     make     python3     python3-pip     python3-venv     virtualenv     zlib1g-dev     && apt-get clean && rm -rf /var/lib/apt/lists/*
+--> Using cache 615a0144894ce2ed383d1590c60b727e6a4d8293151517be0faed35a9bdcb5b6
+--> 615a0144894c
+STEP 4/4: CMD ["/bin/bash"]
+--> Using cache 11c79e38aa7a3c27c48710af133086f59e6b5732a1675acc44e6f1ee24e18b0e
+COMMIT dx-toolkit-builder
+--> 11c79e38aa7a
+Successfully tagged localhost/dx-toolkit-builder:latest
+Successfully tagged 263799606133.dkr.ecr.us-east-1.amazonaws.com/upload-agent-tester:7063444e19aad95f8a0e4057c97bf5908b8ab526
+Successfully tagged 263799606133.dkr.ecr.us-east-1.amazonaws.com/upload-agent-tester:latest
+11c79e38aa7a3c27c48710af133086f59e6b5732a1675acc44e6f1ee24e18b0e
+Emulate Docker CLI using podman. Create /etc/containers/nodocker to quiet msg.
+WARNING: image platform (linux/amd64) does not match the expected platform (linux/arm64)
+/usr/bin/make -j -l 2.0 -C dx-verify-file clean
+make[1]: Entering directory '/dx-toolkit/src/dx-verify-file'
+rm -rvf build/ build_static/
+removed directory 'build/dxcpp/CMakeFiles'
+removed directory 'build/dxcpp/dxjson/CMakeFiles'
+removed directory 'build/dxcpp/dxjson'
+removed directory 'build/dxcpp/SimpleHttpLib/CMakeFiles'
+removed directory 'build/dxcpp/SimpleHttpLib'
+removed directory 'build/dxcpp'
+removed 'build/CMakeFiles/cmake.check_cache'
+removed 'build/CMakeFiles/CMakeConfigureLog.yaml'
+removed directory 'build/CMakeFiles/CMakeScratch'
+removed directory 'build/CMakeFiles/pkgRedirects'
+removed 'build/CMakeFiles/3.28.3/CMakeDetermineCompilerABI_CXX.bin'
+removed 'build/CMakeFiles/3.28.3/CMakeDetermineCompilerABI_C.bin'
+removed 'build/CMakeFiles/3.28.3/CompilerIdC/CMakeCCompilerId.c'
+removed 'build/CMakeFiles/3.28.3/CompilerIdC/a.out'
+removed directory 'build/CMakeFiles/3.28.3/CompilerIdC/tmp'
+removed directory 'build/CMakeFiles/3.28.3/CompilerIdC'
+removed 'build/CMakeFiles/3.28.3/CompilerIdCXX/a.out'
+removed 'build/CMakeFiles/3.28.3/CompilerIdCXX/CMakeCXXCompilerId.cpp'
+removed directory 'build/CMakeFiles/3.28.3/CompilerIdCXX/tmp'
+removed directory 'build/CMakeFiles/3.28.3/CompilerIdCXX'
+removed 'build/CMakeFiles/3.28.3/CMakeCXXCompiler.cmake'
+removed 'build/CMakeFiles/3.28.3/CMakeCCompiler.cmake'
+removed 'build/CMakeFiles/3.28.3/CMakeSystem.cmake'
+removed directory 'build/CMakeFiles/3.28.3'
+removed directory 'build/CMakeFiles'
+removed 'build/CMakeCache.txt'
+removed directory 'build/'
+make[1]: Leaving directory '/dx-toolkit/src/dx-verify-file'
+/usr/bin/make -j -l 2.0 -C ua clean
+make[1]: Entering directory '/dx-toolkit/src/ua'
+rm -rf *.o ua ua.exe dist dnanexus-upload-agent-1.5.33*
+make[1]: Leaving directory '/dx-toolkit/src/ua'
+find ../bin -type f \( -name dx -or -name 'dx-*' \) -not -name 'dx-unpack*' -not -name 'dx-su-*' -delete
+rm -f ../bin/docker2aci ../bin/proot
+rm -rf python/{build,*.{egg,egg-info}}
+rm -rf java/target
+rm -rf ../lib
+rm -rf ../share
+rm -f ../build/info/version
+rm -rf "/dx-toolkit/src/../build/py_env"
+rm -rf boost c-ares curl file openssl
+(if [ ! -e "/dx-toolkit/src/../src/python/dxpy/toolkit_version.py" ]; then \
+    echo "version = 'UNKNOWN_VERSION'" > "/dx-toolkit/src/../src/python/dxpy/toolkit_version.py"; \
+    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"0.0.0\";\n}" > "/dx-toolkit/src/../src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
+    echo UNKNOWN_VERSION > "/dx-toolkit/src/../build/info/version"; \
+fi)
+(if [ -d "/dx-toolkit/src/../.git" ]; then \
+    export GIT_TOOLKIT_VERSION=$((git describe --match 'v*.*.*' || git rev-parse --short HEAD) | sed -e 's/-[0-9]-/+/'); \
+    echo "version = '${GIT_TOOLKIT_VERSION/#v/}'" > "/dx-toolkit/src/../src/python/dxpy/toolkit_version.py"; \
+    echo -e "package com.dnanexus;\nclass DXToolkitVersion {\n    public static final String TOOLKIT_VERSION = \"$GIT_TOOLKIT_VERSION\";\n}" > "/dx-toolkit/src/../src/java/src/main/java/com/dnanexus/DXToolkitVersion.java"; \
+    echo $GIT_TOOLKIT_VERSION > "/dx-toolkit/src/../build/info/version"; \
+fi)
+/usr/bin/make -j -l 2.0 -C dx-verify-file install DESTDIR=/dx-toolkit/src/.. PREFIX=/
+make[1]: Entering directory '/dx-toolkit/src/dx-verify-file'
+mkdir -pv build
+/usr/bin/mkdir: created directory 'build'
+cd build && cmake .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1 -DCMAKE_EXE_LINKER_FLAGS="-lpthread"
+CMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at CMakeLists.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+CMake Deprecation Warning at /dx-toolkit/src/cpp/cmake_include/set_compiler_flags.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+Call Stack (most recent call first):
+  CMakeLists.txt:11 (include)
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/cmake_include/set_compiler_flags.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+Call Stack (most recent call first):
+  CMakeLists.txt:11 (include)
+
+
+-- dx-verify-file says: Variable STATIC_BOOST is set, will turn on static linking for boost
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.83.0/BoostConfig.cmake (found suitable version "1.83.0", minimum required is "1.48") found components: thread program_options filesystem system 
+-- dx-verify-file CMakeLists.txt says: Boost libraries found
+-- 	** BOOST_INCLUDE_DIR="/usr/include"
+-- 	** BOOST_LIBRARY_DIRS="/usr/lib/x86_64-linux-gnu"
+-- 	** BOOST_LIBRARIES = "Boost::thread;Boost::program_options;Boost::filesystem;Boost::system"
+CMake Deprecation Warning at /dx-toolkit/src/cpp/dxcpp/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/dxcpp/CMakeLists.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/cmake_include/set_compiler_flags.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+Call Stack (most recent call first):
+  /dx-toolkit/src/cpp/dxcpp/CMakeLists.txt:11 (include)
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/cmake_include/set_compiler_flags.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+Call Stack (most recent call first):
+  /dx-toolkit/src/cpp/dxcpp/CMakeLists.txt:11 (include)
+
+
+-- dxcpp CMakeLists.txt says: libcrypto, and openssl/md5.h found!
+-- 	** OPENSSL_INCLUDE_DIR = "/usr/include"
+-- 	** CRYPTO_LIBRARY_PATH = "/usr/lib/x86_64-linux-gnu/libcrypto.so"
+-- dxcpp says: Variable STATIC_BOOST is set, will turn on static linking for boost
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.83.0/BoostConfig.cmake (found suitable version "1.83.0", minimum required is "1.48") found components: thread regex system 
+-- dxcpp CMakeLists.txt says: Boost libraries found
+-- 	** BOOST_INCLUDE_DIR="/usr/include"
+-- 	** BOOST_LIBRARY_DIRS="/usr/lib/x86_64-linux-gnu"
+-- 	** BOOST_LIBRARIES = "Boost::thread;Boost::regex;Boost::system"
+CMake Deprecation Warning at /dx-toolkit/src/cpp/dxjson/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/dxjson/CMakeLists.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+-- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.83.0/BoostConfig.cmake (found suitable version "1.83.0", minimum required is "1.48")  
+-- dxjson CMakeLists.txt says: Boost 1.48+ header files found in location /usr/include
+CMake Deprecation Warning at /dx-toolkit/src/cpp/cmake_include/set_compiler_flags.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+Call Stack (most recent call first):
+  /dx-toolkit/src/cpp/dxjson/CMakeLists.txt:21 (include)
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/cmake_include/set_compiler_flags.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+Call Stack (most recent call first):
+  /dx-toolkit/src/cpp/dxjson/CMakeLists.txt:21 (include)
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/SimpleHttpLib/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/SimpleHttpLib/CMakeLists.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/cmake_include/set_compiler_flags.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+Call Stack (most recent call first):
+  /dx-toolkit/src/cpp/SimpleHttpLib/CMakeLists.txt:11 (include)
+
+
+CMake Deprecation Warning at /dx-toolkit/src/cpp/cmake_include/set_compiler_flags.txt:2 (cmake_policy):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+Call Stack (most recent call first):
+  /dx-toolkit/src/cpp/SimpleHttpLib/CMakeLists.txt:11 (include)
+
+
+-- SimpleHttpLib CMakeLists.txt says: Boost 1.48+ header files found in location /usr/include
+CMake Error at /dx-toolkit/src/cpp/SimpleHttpLib/CMakeLists.txt:48 (message):
+  
+
+  SimpleHttpLib says: Unable to find libcurl.  CURL_INCLUDE_PATH =
+  "CURL_INCLUDE_DIR-NOTFOUND", CURL_LIBRARY_PATH =
+  "CURL_LIBRARY_PATH-NOTFOUND"
+
+
+-- Configuring incomplete, errors occurred!
+make[1]: *** [Makefile:27: all] Error 1
+make[1]: Leaving directory '/dx-toolkit/src/dx-verify-file'
+make: *** [Makefile:84: dx-verify-file] Error 2
