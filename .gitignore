@@ -19,9 +19,10 @@
 
 /src/openssl*.tar.gz
 /src/openssl
-/src/boost*.tar.bz2
 /src/boost
-/src/file*.tar.gz
+/src/boost.download-shasum-checked
+/src/boost*.tar.bz2
+/src/file*.tar.xz
 /src/file
 /src/curl*.tar.gz
 /src/curl
