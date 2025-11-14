@@ -4,32 +4,142 @@ WARNING: image platform (linux/amd64) does not match the expected platform (linu
 STEP 2/4: ENV DEBIAN_FRONTEND=noninteractive
 --> Using cache 5e0c8cfe15ce8d13e31b67736b340897ff5a797ad77b7b49ad7e217b4d027757
 --> 5e0c8cfe15ce
-STEP 3/4: RUN apt-get update && apt-get install -y     cmake     curl     g++     gcc     git     libboost-all-dev     libbz2-dev     libicu-dev     libidn11-dev     libssl-dev     make     python3     python3-pip     python3-venv     virtualenv     zlib1g-dev     && apt-get clean && rm -rf /var/lib/apt/lists/*
---> Using cache 615a0144894ce2ed383d1590c60b727e6a4d8293151517be0faed35a9bdcb5b6
---> 615a0144894c
+STEP 3/4: RUN apt-get update && apt-get install -y     cmake     curl     g++     gcc     git     libboost-all-dev     libbz2-dev     libcurl4-openssl-dev     libicu-dev     libidn11-dev     libssl-dev     make     python3     python3-pip     python3-venv     virtualenv     zlib1g-dev     && apt-get clean && rm -rf /var/lib/apt/lists/*
+--> Using cache f6897c8678f772ecf0a7c1b5d078213030d59824b14cf50d22de0f35098c7806
+--> f6897c8678f7
 STEP 4/4: CMD ["/bin/bash"]
---> Using cache 11c79e38aa7a3c27c48710af133086f59e6b5732a1675acc44e6f1ee24e18b0e
+--> Using cache e23685ec5da06f164f5b962984500d0c5aab47231478d379fd97077131da9ba5
 COMMIT dx-toolkit-builder
---> 11c79e38aa7a
+--> e23685ec5da0
 Successfully tagged localhost/dx-toolkit-builder:latest
-Successfully tagged 263799606133.dkr.ecr.us-east-1.amazonaws.com/upload-agent-tester:7063444e19aad95f8a0e4057c97bf5908b8ab526
-Successfully tagged 263799606133.dkr.ecr.us-east-1.amazonaws.com/upload-agent-tester:latest
-11c79e38aa7a3c27c48710af133086f59e6b5732a1675acc44e6f1ee24e18b0e
+e23685ec5da06f164f5b962984500d0c5aab47231478d379fd97077131da9ba5
 Emulate Docker CLI using podman. Create /etc/containers/nodocker to quiet msg.
 WARNING: image platform (linux/amd64) does not match the expected platform (linux/arm64)
 /usr/bin/make -j -l 2.0 -C dx-verify-file clean
 make[1]: Entering directory '/dx-toolkit/src/dx-verify-file'
 rm -rvf build/ build_static/
+removed 'build/dxcpp/libdxcpp.a'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/exec_utils.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/DependInfo.cmake'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/compiler_depend.ts'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/exec_utils.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/cmake_clean_target.cmake'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/api.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/compiler_depend.make'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/utils.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/depend.make'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/cmake_clean.cmake'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/utils.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/link.txt'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/progress.make'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/dxcpp.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/dxlog.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/build.make'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/api.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxproject.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxjob.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxapp.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxjob.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/execution_common_helper.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxfile.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxfile.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxapp.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/search.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxrecord.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxrecord.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxproject.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/execution_common_helper.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxapplet.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/search.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings/dxapplet.cc.o'
+removed directory 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/flags.make'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/dxlog.cc.o'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/dxcpp.cc.o.d'
+removed 'build/dxcpp/CMakeFiles/dxcpp.dir/bindings.cc.o'
+removed directory 'build/dxcpp/CMakeFiles/dxcpp.dir'
+removed 'build/dxcpp/CMakeFiles/progress.marks'
+removed 'build/dxcpp/CMakeFiles/CMakeDirectoryInformation.cmake'
 removed directory 'build/dxcpp/CMakeFiles'
+removed 'build/dxcpp/Makefile'
+removed 'build/dxcpp/cmake_install.cmake'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/DependInfo.cmake'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/compiler_depend.ts'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/cmake_clean_target.cmake'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/compiler_depend.make'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/dxjson.cpp.o'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/depend.make'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/cmake_clean.cmake'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/link.txt'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/progress.make'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/build.make'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/dxjson.cpp.o.d'
+removed 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir/flags.make'
+removed directory 'build/dxcpp/dxjson/CMakeFiles/dxjson.dir'
+removed 'build/dxcpp/dxjson/CMakeFiles/progress.marks'
+removed 'build/dxcpp/dxjson/CMakeFiles/CMakeDirectoryInformation.cmake'
 removed directory 'build/dxcpp/dxjson/CMakeFiles'
+removed 'build/dxcpp/dxjson/Makefile'
+removed 'build/dxcpp/dxjson/cmake_install.cmake'
+removed 'build/dxcpp/dxjson/libdxjson.a'
 removed directory 'build/dxcpp/dxjson'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/progress.marks'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/CMakeDirectoryInformation.cmake'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/DependInfo.cmake'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SimpleHttp.cpp.o'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/Utility.cpp.o'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/compiler_depend.ts'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/cmake_clean_target.cmake'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/compiler_depend.make'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SimpleHttp.cpp.o.d'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/depend.make'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SimpleHttpHeaders.cpp.o.d'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/cmake_clean.cmake'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SSLThreads.cpp.o'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/link.txt'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/progress.make'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SimpleHttpHeaders.cpp.o'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SSLThreads.cpp.o.d'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/build.make'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/flags.make'
+removed 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/Utility.cpp.o.d'
+removed directory 'build/dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir'
 removed directory 'build/dxcpp/SimpleHttpLib/CMakeFiles'
+removed 'build/dxcpp/SimpleHttpLib/Makefile'
+removed 'build/dxcpp/SimpleHttpLib/cmake_install.cmake'
+removed 'build/dxcpp/SimpleHttpLib/libdxhttp.a'
 removed directory 'build/dxcpp/SimpleHttpLib'
 removed directory 'build/dxcpp'
 removed 'build/CMakeFiles/cmake.check_cache'
 removed 'build/CMakeFiles/CMakeConfigureLog.yaml'
 removed directory 'build/CMakeFiles/CMakeScratch'
+removed 'build/CMakeFiles/Makefile.cmake'
 removed directory 'build/CMakeFiles/pkgRedirects'
+removed 'build/CMakeFiles/dx-verify-file.dir/main.cpp.o'
+removed 'build/CMakeFiles/dx-verify-file.dir/log.cpp.o.d'
+removed 'build/CMakeFiles/dx-verify-file.dir/DependInfo.cmake'
+removed 'build/CMakeFiles/dx-verify-file.dir/compiler_depend.ts'
+removed 'build/CMakeFiles/dx-verify-file.dir/File.cpp.o.d'
+removed 'build/CMakeFiles/dx-verify-file.dir/chunk.cpp.o'
+removed 'build/CMakeFiles/dx-verify-file.dir/File.cpp.o'
+removed 'build/CMakeFiles/dx-verify-file.dir/compiler_depend.make'
+removed 'build/CMakeFiles/dx-verify-file.dir/depend.make'
+removed 'build/CMakeFiles/dx-verify-file.dir/cmake_clean.cmake'
+removed 'build/CMakeFiles/dx-verify-file.dir/link.txt'
+removed 'build/CMakeFiles/dx-verify-file.dir/progress.make'
+removed 'build/CMakeFiles/dx-verify-file.dir/main.cpp.o.d'
+removed 'build/CMakeFiles/dx-verify-file.dir/build.make'
+removed 'build/CMakeFiles/dx-verify-file.dir/chunk.cpp.o.d'
+removed 'build/CMakeFiles/dx-verify-file.dir/options.cpp.o.d'
+removed 'build/CMakeFiles/dx-verify-file.dir/options.cpp.o'
+removed 'build/CMakeFiles/dx-verify-file.dir/flags.make'
+removed 'build/CMakeFiles/dx-verify-file.dir/log.cpp.o'
+removed directory 'build/CMakeFiles/dx-verify-file.dir'
+removed 'build/CMakeFiles/progress.marks'
+removed 'build/CMakeFiles/TargetDirectories.txt'
+removed 'build/CMakeFiles/CMakeDirectoryInformation.cmake'
+removed 'build/CMakeFiles/Makefile2'
 removed 'build/CMakeFiles/3.28.3/CMakeDetermineCompilerABI_CXX.bin'
 removed 'build/CMakeFiles/3.28.3/CMakeDetermineCompilerABI_C.bin'
 removed 'build/CMakeFiles/3.28.3/CompilerIdC/CMakeCCompilerId.c'
@@ -45,6 +155,9 @@ removed 'build/CMakeFiles/3.28.3/CMakeCCompiler.cmake'
 removed 'build/CMakeFiles/3.28.3/CMakeSystem.cmake'
 removed directory 'build/CMakeFiles/3.28.3'
 removed directory 'build/CMakeFiles'
+removed 'build/Makefile'
+removed 'build/dx-verify-file'
+removed 'build/cmake_install.cmake'
 removed 'build/CMakeCache.txt'
 removed directory 'build/'
 make[1]: Leaving directory '/dx-toolkit/src/dx-verify-file'
@@ -107,15 +220,308 @@ cd build && cmake .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1 -DCMAKE_
 -- Found Boost: /usr/lib/x86_64-linux-gnu/cmake/Boost-1.83.0/BoostConfig.cmake (found suitable version "1.83.0", minimum required is "1.48")  
 -- dxjson CMakeLists.txt says: Boost 1.48+ header files found in location /usr/include
 -- SimpleHttpLib CMakeLists.txt says: Boost 1.48+ header files found in location /usr/include
-CMake Error at /dx-toolkit/src/cpp/SimpleHttpLib/CMakeLists.txt:48 (message):
-  
-
-  SimpleHttpLib says: Unable to find libcurl.  CURL_INCLUDE_PATH =
-  "CURL_INCLUDE_DIR-NOTFOUND", CURL_LIBRARY_PATH =
-  "CURL_LIBRARY_PATH-NOTFOUND"
-
-
--- Configuring incomplete, errors occurred!
-make[1]: *** [Makefile:27: all] Error 1
+-- SimpleHttpLib CMakeLists.txt says: libcurl found!
+-- 	** CURL_INCLUDE_PATH = "/usr/include/x86_64-linux-gnu"
+-- 	** CURL_LIBRARY_PATH = "/usr/lib/x86_64-linux-gnu/libcurl.so"
+-- SimpleHttpLib CMakeLists.txt says: libcrypto, and openssl/crypto.h found!
+-- 	** OPENSSL_INCLUDE_PATH = "/usr/include"
+-- 	** CRYPTO_LIBRARY_PATH = "/usr/lib/x86_64-linux-gnu/libcrypto.so"
+-- Configuring done (2.7s)
+-- Generating done (0.0s)
+-- Build files have been written to: /dx-toolkit/src/dx-verify-file/build
+/usr/bin/make -C build
+make[2]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+make[3]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+[  3%] Building CXX object dxcpp/dxjson/CMakeFiles/dxjson.dir/dxjson.cpp.o
+[  7%] Building CXX object dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SimpleHttp.cpp.o
+[ 14%] Building CXX object dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SSLThreads.cpp.o
+[ 14%] Building CXX object dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/Utility.cpp.o
+[ 17%] Building CXX object dxcpp/SimpleHttpLib/CMakeFiles/dxhttp.dir/SimpleHttpHeaders.cpp.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxjson/dxjson.cpp:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /dx-toolkit/src/cpp/SimpleHttpLib/SimpleHttp.h:26,
+                 from /dx-toolkit/src/cpp/SimpleHttpLib/SimpleHttp.cpp:17:
+/dx-toolkit/src/cpp/SimpleHttpLib/SimpleHttp.cpp: In member function 'void dx::HttpRequest::send()':
+/dx-toolkit/src/cpp/SimpleHttpLib/SimpleHttp.cpp:296:57: warning: 'CURLOPT_PUT' is deprecated: since 7.12.1. Use CURLOPT_UPLOAD [-Wdeprecated-declarations]
+  296 |           assertLibCurlFunctions(curl_easy_setopt(curl, CURLOPT_PUT, 1L));
+      |                                                         ^~~~~~~~~~~
+/usr/include/x86_64-linux-gnu/curl/curl.h:1281:3: note: declared here
+ 1281 |   CURLOPTDEPRECATED(CURLOPT_PUT, CURLOPTTYPE_LONG, 54,
+      |   ^~~~~~~~~~~~~~~~~
+/dx-toolkit/src/cpp/dxjson/dxjson.cpp: In member function 'bool dx::JSON::has(const dx::JSON&) const':
+/dx-toolkit/src/cpp/dxjson/dxjson.cpp:668:33: warning: type qualifiers ignored on cast result type [-Wignored-qualifiers]
+  668 |     case JSON_ARRAY: return has((const size_t)j);
+      |                                 ^~~~~~~~~~~~~~~
+[ 21%] Linking CXX static library libdxhttp.a
+make[4]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+[ 21%] Built target dxhttp
+In file included from /usr/include/c++/13/vector:62,
+                 from /dx-toolkit/src/cpp/dxjson/dxjson.h:22:
+In static member function 'static _Up* std::__copy_move<_IsMove, true, std::random_access_iterator_tag>::__copy_m(_Tp*, _Tp*, _Up*) [with _Tp = const char; _Up = char; bool _IsMove = false]',
+    inlined from '_OI std::__copy_move_a2(_II, _II, _OI) [with bool _IsMove = false; _II = const char*; _OI = char*]' at /usr/include/c++/13/bits/stl_algobase.h:506:30,
+    inlined from '_OI std::__copy_move_a1(_II, _II, _OI) [with bool _IsMove = false; _II = const char*; _OI = char*]' at /usr/include/c++/13/bits/stl_algobase.h:533:42,
+    inlined from '_OI std::__copy_move_a(_II, _II, _OI) [with bool _IsMove = false; _II = __gnu_cxx::__normal_iterator<const char*, __cxx11::basic_string<char> >; _OI = char*]' at /usr/include/c++/13/bits/stl_algobase.h:540:31,
+    inlined from '_OI std::copy(_II, _II, _OI) [with _II = __gnu_cxx::__normal_iterator<const char*, __cxx11::basic_string<char> >; _OI = char*]' at /usr/include/c++/13/bits/stl_algobase.h:633:7,
+    inlined from 'std::string JSON_Utility::parseUtf8JsonString(const std::string&)' at /dx-toolkit/src/cpp/dxjson/dxjson.cpp:352:17:
+/usr/include/c++/13/bits/stl_algobase.h:437:30: warning: 'void* __builtin_memcpy(void*, const void*, long unsigned int)' forming offset 4 is out of the bounds [0, 4] of object 'hex' with type 'char [4]' [-Warray-bounds=]
+  437 |             __builtin_memmove(__result, __first, sizeof(_Tp) * _Num);
+      |             ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/dx-toolkit/src/cpp/dxjson/dxjson.cpp: In function 'std::string JSON_Utility::parseUtf8JsonString(const std::string&)':
+/dx-toolkit/src/cpp/dxjson/dxjson.cpp:336:14: note: 'hex' declared here
+  336 |         char hex[4];
+      |              ^~~
+In static member function 'static _Up* std::__copy_move<_IsMove, true, std::random_access_iterator_tag>::__copy_m(_Tp*, _Tp*, _Up*) [with _Tp = const char; _Up = char; bool _IsMove = false]',
+    inlined from '_OI std::__copy_move_a2(_II, _II, _OI) [with bool _IsMove = false; _II = const char*; _OI = char*]' at /usr/include/c++/13/bits/stl_algobase.h:506:30,
+    inlined from '_OI std::__copy_move_a1(_II, _II, _OI) [with bool _IsMove = false; _II = const char*; _OI = char*]' at /usr/include/c++/13/bits/stl_algobase.h:533:42,
+    inlined from '_OI std::__copy_move_a(_II, _II, _OI) [with bool _IsMove = false; _II = __gnu_cxx::__normal_iterator<const char*, __cxx11::basic_string<char> >; _OI = char*]' at /usr/include/c++/13/bits/stl_algobase.h:540:31,
+    inlined from '_OI std::copy(_II, _II, _OI) [with _II = __gnu_cxx::__normal_iterator<const char*, __cxx11::basic_string<char> >; _OI = char*]' at /usr/include/c++/13/bits/stl_algobase.h:633:7,
+    inlined from 'std::string JSON_Utility::parseUtf8JsonString(const std::string&)' at /dx-toolkit/src/cpp/dxjson/dxjson.cpp:363:19:
+/usr/include/c++/13/bits/stl_algobase.h:437:30: warning: 'void* __builtin_memcpy(void*, const void*, long unsigned int)' forming offset 4 is out of the bounds [0, 4] of object 'hex' with type 'char [4]' [-Warray-bounds=]
+  437 |             __builtin_memmove(__result, __first, sizeof(_Tp) * _Num);
+      |             ~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/dx-toolkit/src/cpp/dxjson/dxjson.cpp: In function 'std::string JSON_Utility::parseUtf8JsonString(const std::string&)':
+/dx-toolkit/src/cpp/dxjson/dxjson.cpp:336:14: note: 'hex' declared here
+  336 |         char hex[4];
+      |              ^~~
+[ 25%] Linking CXX static library libdxjson.a
+make[4]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+[ 25%] Built target dxjson
+make[4]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+[ 28%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/dxcpp.cc.o
+[ 32%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/api.cc.o
+[ 35%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings.cc.o
+[ 39%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings/dxjob.cc.o
+[ 46%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings/dxapplet.cc.o
+[ 50%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings/dxrecord.cc.o
+[ 50%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings/dxfile.cc.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../dxcpp.h:24,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../bindings.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxapplet.h:42,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxapplet.cc:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/dxcpp.h:24,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings.cc:18:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxjob.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxjob.cc:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/api.h:25,
+                 from /dx-toolkit/src/cpp/dxcpp/api.cc:6:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../dxcpp.h:24,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../bindings.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxrecord.h:25,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxrecord.cc:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../dxcpp.h:24,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../bindings.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxfile.h:29,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxfile.cc:21:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/dxcpp.h:24,
+                 from /dx-toolkit/src/cpp/dxcpp/dxcpp.cc:25:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/lexical_cast.hpp:26,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxfile.cc:18:
+/usr/include/boost/bind.hpp:36:1: note: '#pragma message: The practice of declaring the Bind placeholders (_1, _2, ...) in the global namespace is deprecated. Please use <boost/bind/bind.hpp> + using namespace boost::placeholders, or define BOOST_BIND_GLOBAL_PLACEHOLDERS to retain the current behavior.'
+   36 | BOOST_PRAGMA_MESSAGE(
+      | ^~~~~~~~~~~~~~~~~~~~
+/dx-toolkit/src/cpp/dxcpp/bindings/dxfile.cc: In function 'void dx::makeHTTPRequestForFileReadAndWrite(HttpRequest&, const std::string&, const HttpHeaders&, const HttpMethod&, const char*, size_t, int)':
+/dx-toolkit/src/cpp/dxcpp/bindings/dxfile.cc:44:36: warning: catching polymorphic type 'class dx::HttpRequestException' by value [-Wcatch-value=]
+   44 |       } catch(HttpRequestException e) {
+      |                                    ^
+[ 53%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/dxlog.cc.o
+[ 57%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/utils.cc.o
+[ 60%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/exec_utils.cc.o
+[ 64%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings/execution_common_helper.cc.o
+[ 67%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings/dxproject.cc.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/exec_utils.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/exec_utils.cc:19:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+[ 71%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings/search.cc.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../dxcpp.h:24,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../bindings.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/search.h:25,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/search.cc:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/execution_common_helper.h:19,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/execution_common_helper.cc:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../dxcpp.h:24,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../bindings.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxproject.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxproject.cc:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+[ 75%] Building CXX object dxcpp/CMakeFiles/dxcpp.dir/bindings/dxapp.cc.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/cpp/dxcpp/../dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../dxcpp.h:24,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/../bindings.h:27,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxapp.h:42,
+                 from /dx-toolkit/src/cpp/dxcpp/bindings/dxapp.cc:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+/dx-toolkit/src/cpp/dxcpp/utils.cc: In function 'std::string dx::getHexifiedMD5(const unsigned char*, long unsigned int)':
+/dx-toolkit/src/cpp/dxcpp/utils.cc:74:8: warning: 'unsigned char* MD5(const unsigned char*, size_t, unsigned char*)' is deprecated: Since OpenSSL 3.0 [-Wdeprecated-declarations]
+   74 |     MD5(ptr, size, md5);
+      |     ~~~^~~~~~~~~~~~~~~~
+In file included from /dx-toolkit/src/cpp/dxcpp/utils.cc:23:
+/usr/include/openssl/md5.h:52:38: note: declared here
+   52 | OSSL_DEPRECATEDIN_3_0 unsigned char *MD5(const unsigned char *d, size_t n,
+      |                                      ^~~
+[ 78%] Linking CXX static library libdxcpp.a
+make[4]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+[ 78%] Built target dxcpp
+make[4]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+make[4]: Entering directory '/dx-toolkit/src/dx-verify-file/build'
+[ 82%] Building CXX object CMakeFiles/dx-verify-file.dir/main.cpp.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/../src/cpp/dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/dx-verify-file/File.h:24,
+                 from /dx-toolkit/src/dx-verify-file/main.cpp:27:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /dx-toolkit/src/../src/cpp/dxcpp/dxcpp.h:92,
+                 from /dx-toolkit/src/dx-verify-file/main.cpp:29:
+/dx-toolkit/src/../src/cpp/dxcpp/bindings.h:284:18: warning: 'virtual void dx::DXDataObject::close() const' was hidden [-Woverloaded-virtual=]
+  284 |     virtual void close() const;
+      |                  ^~~~~
+In file included from /dx-toolkit/src/../src/cpp/dxcpp/bindings.h:318:
+/dx-toolkit/src/../src/cpp/dxcpp/bindings/dxfile.h:484:10: note:   by 'void dx::DXFile::close(bool)'
+  484 |     void close(const bool block=false);
+      |          ^~~~~
+[ 85%] Building CXX object CMakeFiles/dx-verify-file.dir/File.cpp.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/../src/cpp/dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/dx-verify-file/File.h:24,
+                 from /dx-toolkit/src/dx-verify-file/File.cpp:17:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /dx-toolkit/src/../src/cpp/dxcpp/dxcpp.h:92,
+                 from /dx-toolkit/src/dx-verify-file/File.cpp:18:
+/dx-toolkit/src/../src/cpp/dxcpp/bindings.h:284:18: warning: 'virtual void dx::DXDataObject::close() const' was hidden [-Woverloaded-virtual=]
+  284 |     virtual void close() const;
+      |                  ^~~~~
+In file included from /dx-toolkit/src/../src/cpp/dxcpp/bindings.h:318:
+/dx-toolkit/src/../src/cpp/dxcpp/bindings/dxfile.h:484:10: note:   by 'void dx::DXFile::close(bool)'
+  484 |     void close(const bool block=false);
+      |          ^~~~~
+[ 89%] Building CXX object CMakeFiles/dx-verify-file.dir/chunk.cpp.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/../src/cpp/dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/dx-verify-file/chunk.cpp:26:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /dx-toolkit/src/../src/cpp/dxcpp/dxcpp.h:92,
+                 from /dx-toolkit/src/dx-verify-file/chunk.cpp:27:
+/dx-toolkit/src/../src/cpp/dxcpp/bindings.h:284:18: warning: 'virtual void dx::DXDataObject::close() const' was hidden [-Woverloaded-virtual=]
+  284 |     virtual void close() const;
+      |                  ^~~~~
+In file included from /dx-toolkit/src/../src/cpp/dxcpp/bindings.h:318:
+/dx-toolkit/src/../src/cpp/dxcpp/bindings/dxfile.h:484:10: note:   by 'void dx::DXFile::close(bool)'
+  484 |     void close(const bool block=false);
+      |          ^~~~~
+[ 96%] Building CXX object CMakeFiles/dx-verify-file.dir/options.cpp.o
+[ 96%] Building CXX object CMakeFiles/dx-verify-file.dir/log.cpp.o
+In file included from /usr/include/boost/math/tools/real_cast.hpp:9,
+                 from /usr/include/boost/math/special_functions/fpclassify.hpp:17,
+                 from /dx-toolkit/src/../src/cpp/dxjson/dxjson.h:38,
+                 from /dx-toolkit/src/dx-verify-file/options.cpp:25:
+/usr/include/boost/math/tools/config.hpp:23:6: warning: #warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)" [-Wcpp]
+   23 | #    warning "The minimum language standard to use Boost.Math will be C++14 starting in July 2023 (Boost 1.82 release)"
+      |      ^~~~~~~
+In file included from /dx-toolkit/src/../src/cpp/dxcpp/dxcpp.h:92,
+                 from /dx-toolkit/src/dx-verify-file/options.cpp:26:
+/dx-toolkit/src/../src/cpp/dxcpp/bindings.h:284:18: warning: 'virtual void dx::DXDataObject::close() const' was hidden [-Woverloaded-virtual=]
+  284 |     virtual void close() const;
+      |                  ^~~~~
+In file included from /dx-toolkit/src/../src/cpp/dxcpp/bindings.h:318:
+/dx-toolkit/src/../src/cpp/dxcpp/bindings/dxfile.h:484:10: note:   by 'void dx::DXFile::close(bool)'
+  484 |     void close(const bool block=false);
+      |          ^~~~~
+[100%] Linking CXX executable dx-verify-file
+make[4]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+[100%] Built target dx-verify-file
+make[3]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+make[2]: Leaving directory '/dx-toolkit/src/dx-verify-file/build'
+install -v build/dx-verify-file /dx-toolkit/src/..///bin
+'build/dx-verify-file' -> '/dx-toolkit/src/..///bin/dx-verify-file'
 make[1]: Leaving directory '/dx-toolkit/src/dx-verify-file'
-make: *** [Makefile:84: dx-verify-file] Error 2

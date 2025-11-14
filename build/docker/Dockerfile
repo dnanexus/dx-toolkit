@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     git \
     libboost-all-dev \
     libbz2-dev \
+    libcurl4-openssl-dev \
     libicu-dev \
     libidn11-dev \
     libssl-dev \
