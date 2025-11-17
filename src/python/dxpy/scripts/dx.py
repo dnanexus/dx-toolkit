@@ -6451,8 +6451,8 @@ EXAMPLES:
     parents=[all_arg],
     prog='dx unarchive')
 
-parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+
-fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
+parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Standard, Expedited}', width_adjustment=-24,initial_indent='  ') + '\n'+
+fill('- AWS regions: {Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
 
 parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_unarchive.add_argument(
