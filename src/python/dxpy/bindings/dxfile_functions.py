@@ -232,7 +232,7 @@ def _verify_checksum(parts, part_id, chunk_data, checksum_type, dxfile_id):
     if checksum_type is None:
         return
 
-    part = parts[part_id]
+    part = parts.get(part_id)
     if part is None:
         raise DXFileError("Part {} not found in {}".format(part_id, dxfile_id))
 

@@ -41,7 +41,7 @@ class TestVerifyPerPartChecksum(unittest.TestCase):
           _verify_checksum(self.valid_crc32_parts, '5', self.chunk_data, 'CRC32', self.dx_file_id)
 
     def test_invalid_checksum(self):
-        with self.assertRaisesRegex(DXFileError, 'Unsupported per-part checksum type: ABC'):
+        with self.assertRaisesRegex(DXFileError, 'Unsupported checksum type: ABC'):
           _verify_checksum(self.valid_crc32_parts, '1', self.chunk_data, 'ABC', self.dx_file_id)
 
     def test_checksum_not_found(self):
