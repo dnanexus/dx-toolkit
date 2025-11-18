@@ -37,6 +37,7 @@ from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
 from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic, create_cohort, extract_assay_expression
 from ..cli.download import (download_one_file, download_one_database_file, download)
+from ..cli.sync import SyncCommand
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
@@ -3986,8 +3987,8 @@ def verify_ssh_config():
             err_exit(expected_exceptions=(IOError, DXError))
 
 def sync(args):
-    print("Sync command")
-    print(args)
+    sync_command = SyncCommand(args)
+    sync_command.sync()
 
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
@@ -5740,11 +5741,11 @@ parser_sync = subparsers.add_parser('sync', help='Sync symlinked drive with a DN
                                    parents=[env_args])
 parser_sync.add_argument('drive', help='Drive ID and path to be digested in. Format: drive-xxx:/some/folder')
 parser_sync.add_argument('project', help='Target project and path where the files should be ingested. Format: project-xxx:/some/another/folder')
-parser_sync.add_argument('dryrun', action="store_const", const=True, default=False)
-# parser_sync.add_argument('--delete', action="store_const", const=True, default=False)                 ## P2
+parser_sync.add_argument('--dryrun', action="store_true", default=False)
+# parser_sync.add_argument('--delete', action="store_true", default=False)                 ## P2
 # parser_sync.add_argument('--include')                                                                 ## P2
 # parser_sync.add_argument('--exclude')                                                                 ## P2
-parser_sync.add_argument('--quiet', action="store_const", const=True, default=False)
+parser_sync.add_argument('--quiet', action="store_true", default=False)
 
 parser_sync.set_defaults(func=sync)
 

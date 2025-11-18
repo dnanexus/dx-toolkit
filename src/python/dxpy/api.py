@@ -1336,6 +1336,14 @@ def record_new(input_params={}, always_retry=True, **kwargs):
     input_params_cp = Nonce.update_nonce(input_params)
     return DXHTTPRequest('/record/new', input_params_cp, always_retry=always_retry, **kwargs)
 
+def bulk_new_symlinks(input_params={}, always_retry=False, **kwargs):
+    """
+    Invokes the /system/bulkNewSymlinks API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-bulknewsymlinks
+    """
+    return DXHTTPRequest('/system/bulkNewSymlinks', input_params, always_retry=always_retry, **kwargs)
+
 def system_describe_data_objects(input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /system/describeDataObjects API method.
