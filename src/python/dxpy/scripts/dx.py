@@ -5416,6 +5416,7 @@ parser_update_project.add_argument('--https-app-isolated-browsing',
                                    help="Whether all https access to jobs in this project should be wrapped in Isolated Browsing."
                                         " If true, httpsApp-enabled executables must have httpsApp.shared_access set to 'NONE' to run in this project.",
                                    choices=["true", "false"])
+parser_update_project.add_argument('--https-app-isolated-browsing-options', help="A JSON string with options for Isolated Browsing. See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-update for a list of supported keys.", type=str)
 allowed_executables_group = parser_update_project.add_mutually_exclusive_group()
 allowed_executables_group.add_argument('--allowed-executables', help='Executable ID(s) this project is allowed to run.  This operation overrides any existing list of executables.', type=str, nargs="+")
 allowed_executables_group.add_argument('--unset-allowed-executables', help='Removes any restriction to run executables as set by --allowed-executables', action='store_true')
@@ -6450,8 +6451,8 @@ EXAMPLES:
     parents=[all_arg],
     prog='dx unarchive')
 
-parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Expedited, Standard}', width_adjustment=-24,initial_indent='  ') + '\n'+
-fill('- AWS regions: {Expedited, Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
+parser_unarchive.add_argument('--rate', help=fill('The speed at which all files in this request are unarchived.', width_adjustment=-24) + '\n'+ fill('- Azure regions: {Standard, Expedited}', width_adjustment=-24,initial_indent='  ') + '\n'+
+fill('- AWS regions: {Standard, Bulk}', width_adjustment=-24,initial_indent='  '), choices=["Expedited", "Standard", "Bulk"], default="Standard")
 
 parser_unarchive.add_argument('-q', '--quiet', help='Do not print extra info messages', action='store_true')
 parser_unarchive.add_argument(

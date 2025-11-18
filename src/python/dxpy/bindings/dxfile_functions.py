@@ -341,8 +341,11 @@ def _download_dxfile(dxid, filename, part_retry_counter,
     if show_progress:
         _print_progress(0, None, filename)
 
-    def get_chunk(part_id_to_get, start, end):
+    def get_chunk(part_id_to_get, start, end, e_tag = None):
         url, headers = dxfile.get_download_url(project=project, **kwargs)
+        if e_tag is not None:
+            headers["If-Match"] = e_tag
+
         # If we're fetching the whole object in one shot, avoid setting the Range header to take advantage of gzip
         # transfer compression
         sub_range = False
@@ -351,12 +354,12 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         data = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
         return part_id_to_get, data
 
-    def chunk_requests():
+    def chunk_requests(e_tag = None):
         for part_id_to_chunk in parts_to_get:
             part_info = parts[part_id_to_chunk]
             for chunk_start in range(part_info["start"], part_info["start"] + part_info["size"], chunksize):
                 chunk_end = min(chunk_start + chunksize, part_info["start"] + part_info["size"]) - 1
-                yield get_chunk, [part_id_to_chunk, chunk_start, chunk_end], {}
+                yield get_chunk, [part_id_to_chunk, chunk_start, chunk_end, e_tag], {}
 
     def verify_part(_part_id, got_bytes, hasher):
         if got_bytes is not None and got_bytes != parts[_part_id]["size"]:
@@ -415,7 +418,11 @@ def _download_dxfile(dxid, filename, part_retry_counter,
             # Main loop. In parallel: download chunks, verify them, and write them to disk.
             get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
             cur_part, got_bytes, hasher = None, None, None
-            for chunk_part, chunk_data in response_iterator(chunk_requests(),
+            e_tag = None
+            if describe_output and describe_output.get("symlinkTargetIdentifier"):
+                e_tag = describe_output["symlinkTargetIdentifier"].get("ETag")
+
+            for chunk_part, chunk_data in response_iterator(chunk_requests(e_tag),
                                                             dxfile._http_threadpool,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
                 if chunk_part != cur_part:

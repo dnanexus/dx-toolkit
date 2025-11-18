@@ -1,0 +1,10 @@
+{
+  "aws:ap-southeast-2": "mem2_ssd1_v2_x4",
+  "aws:eu-central-1": "mem2_ssd1_v2_x4",
+  "aws:us-east-1": "mem2_ssd1_v2_x4",
+  "aws:me-south-1": "mem2_ssd1_v2_x4",
+  "azure:westeurope": "azure:mem2_ssd1_x4",
+  "azure:westus": "azure:mem2_ssd1_x4",
+  "aws:eu-west-2-g": "mem2_ssd1_v2_x4",
+  "oci:us-ashburn-1": "oci:mem2_ssd1_v3i_x4"
+}

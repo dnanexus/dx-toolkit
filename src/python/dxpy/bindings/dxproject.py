@@ -285,7 +285,7 @@ class DXProject(DXContainer):
             restricted=None, download_restricted=None, contains_phi=None,
             tags=None, properties=None, bill_to=None, database_ui_view_only=None,
             external_upload_restricted=None, default_symlink=None,
-            database_results_restricted=None,
+            database_results_restricted=None, drive=None,
             **kwargs):
         """
         :param name: The name of the project
@@ -318,6 +318,8 @@ class DXProject(DXContainer):
         :type database_results_restricted: int
         :param default_symlink: If provided, the details needed to have writable symlinks in the project. Dict must include drive, container, and optional prefix.
         :type default_symlink: dict
+        :param drive: If provided, this drive will associated with the project.
+        :type drive: string
 
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
@@ -357,6 +359,8 @@ class DXProject(DXContainer):
             input_hash["properties"] = properties
         if default_symlink is not None:
             input_hash["defaultSymlink"] = default_symlink
+        if drive is not None:
+            input_hash["drive"] = drive
 
         self.set_id(dxpy.api.project_new(input_hash, **kwargs)["id"])
         self._desc = {}
@@ -367,7 +371,7 @@ class DXProject(DXContainer):
                allowed_executables=None, unset_allowed_executables=None,
                database_ui_view_only=None, external_upload_restricted=None,
                database_results_restricted=None, unset_database_results_restricted=None,
-               https_app_isolated_browsing=None, **kwargs):
+               https_app_isolated_browsing=None, https_app_isolated_browsing_options=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -398,6 +402,8 @@ class DXProject(DXContainer):
         :param https_app_isolated_browsing: Whether all https access to jobs in this project should be wrapped in Isolated Browsing.
                                             If true, httpsApp-enabled executables must have httpsApp.shared_access set to 'NONE' to run in this project.
         :type https_app_isolated_browsing: boolean
+        :param https_app_isolated_browsing_options: Options for Isolated Browsing. See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-update for a list of supported keys.
+        :type https_app_isolated_browsing_options: dict
 
         Updates the project with the new fields. All fields are
         optional. Fields that are not provided are not changed.
@@ -435,6 +441,8 @@ class DXProject(DXContainer):
             update_hash["databaseResultsRestricted"] = None
         if https_app_isolated_browsing is not None:
             update_hash["httpsAppIsolatedBrowsing"] = https_app_isolated_browsing
+        if https_app_isolated_browsing_options is not None:
+            update_hash["httpsAppIsolatedBrowsingOptions"] = https_app_isolated_browsing_options
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):

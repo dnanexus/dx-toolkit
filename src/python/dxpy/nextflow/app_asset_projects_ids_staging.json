@@ -5,5 +5,6 @@
     "aws:me-south-1": "project-Gv8PVXk32gZ83kfp0pZ1v3V2",
     "aws:us-east-1": "project-G0zG4B808VFFYVz84FQkvF1K",
     "azure:westeurope": "project-G0zG4BQBq1XQby2F4FqQpPXv",
-    "azure:westus": "project-G0zG4B09ZJ5gx1Vz4Fb8Q9XX"
+    "azure:westus": "project-G0zG4B09ZJ5gx1Vz4Fb8Q9XX",
+    "oci:us-ashburn-1": "project-J1q0ZJV6z2pJXY2Qqv8xvX5G"
 }

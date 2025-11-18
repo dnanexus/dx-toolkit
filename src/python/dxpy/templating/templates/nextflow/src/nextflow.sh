@@ -104,7 +104,7 @@ main() {
     $nextflow_pipeline_params)"
 
   NEXTFLOW_CMD_ENV+=("${applet_runtime_inputs[@]}")
-  
+
   AWS_ENV="$HOME/.dx-aws.env"
 
   get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
@@ -112,10 +112,10 @@ main() {
 
   # Login to AWS, if configured
   aws_login
-  aws_relogin_loop & AWS_RELOGIN_PID=$!
+  refresh_web_identity_token_loop & TOKEN_REFRESH_PID=$!
 
   set_vars_session_and_cache
-  
+
   if [[ $preserve_cache == true ]]; then
     set_job_properties_cache
     check_cache_db_storage_limit
@@ -168,7 +168,7 @@ main() {
   wait $NXF_EXEC_PID
   ret=$?
 
-  kill "$AWS_RELOGIN_PID"
+  kill "$TOKEN_REFRESH_PID" 2>/dev/null || true
   exit $ret
 }
 
@@ -243,7 +243,7 @@ nf_task_entry() {
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
   aws_login
-  aws_relogin_loop & AWS_RELOGIN_PID=$!
+  refresh_web_identity_token_loop & TOKEN_REFRESH_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
 
@@ -256,12 +256,13 @@ nf_task_entry() {
   set +e
   bash .command.run > >(tee .command.log) 2>&1
   export exit_code=$?
-  kill "$AWS_RELOGIN_PID"
   dx set_properties ${DX_JOB_ID} nextflow_exit_code=$exit_code
   set -e
 }
 
 nf_task_exit() {
+  kill "$TOKEN_REFRESH_PID" 2>/dev/null || true
+
   if [ -f .command.log ]; then
     if [[ $USING_S3_WORKDIR == true ]]; then
       aws s3 cp .command.log "${cmd_log_file}"
@@ -336,34 +337,56 @@ aws_login() {
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
     detect_if_using_s3_workdir
-  
-    # aws env file example values:
-    # "iamRoleArnToAssume", "jobTokenAudience", "jobTokenSubjectClaims", "awsRegion"
-    roleSessionName="dnanexus_${DX_JOB_ID}"
-    job_id_token=$(dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims})
-    output=$(aws sts assume-role-with-web-identity --role-arn $iamRoleArnToAssume --role-session-name $roleSessionName --web-identity-token $job_id_token --duration-seconds 3600)
-    mkdir -p /home/dnanexus/.aws/
 
-    cat <<EOF > /home/dnanexus/.aws/credentials
-[default]
-aws_access_key_id = $(echo "$output" | jq -r '.Credentials.AccessKeyId')
-aws_secret_access_key = $(echo "$output" | jq -r '.Credentials.SecretAccessKey')
-aws_session_token = $(echo "$output" | jq -r '.Credentials.SessionToken')
-EOF
-    cat <<EOF > /home/dnanexus/.aws/config
-[default]
-region = $awsRegion
-EOF
-    echo "Successfully authenticated to AWS - $(aws sts get-caller-identity)"
+    local web_identity_token_file="/tmp/aws_web_identity_token"
+
+    dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims} > ${web_identity_token_file}
+
+    export AWS_REGION="$awsRegion"
+    export AWS_ROLE_ARN="$iamRoleArnToAssume"
+    export AWS_ROLE_SESSION_NAME="dnanexus_${DX_JOB_ID}"
+    export AWS_WEB_IDENTITY_TOKEN_FILE="$web_identity_token_file"
+
+    # Clean up any old AWS config files to avoid conflicts. The SDK will now ignore ~/.aws/config and ~/.aws/credentials because the environment variables take precedence.
+    rm -rf /home/dnanexus/.aws/
+
+    # This explicit check is added to ensure that existing pytest tests for invalid credentials still fail correctly.
+    # In the new model, the AWS SDK would normally handle this lazily, but the tests expect an immediate failure.
+    aws sts assume-role-with-web-identity --role-arn "$iamRoleArnToAssume" \
+      --role-session-name "dnanexus_${DX_JOB_ID}" \
+      --web-identity-token "$(cat "${web_identity_token_file}")" > /dev/null
+
+    echo "Successfully configured AWS with Web Identity Token File."
+    # Optional sanity check; SDK/CLI will now do STS AssumeRoleWithWebIdentity on demand
+    aws sts get-caller-identity >/dev/null 2>&1 || echo "Note: initial STS call deferred to Nextflow/AWS SDK."
   fi
 }
 
-aws_relogin_loop() {
+refresh_web_identity_token_loop() {
+  # The DNAnexus job identity token expires in ~5 minutes.
+  # Refresh the OIDC token file proactively so the AWS SDK v2 can re-assume the role on demand.
+
   while true; do
-    sleep 3300 # relogin every 55 minutes, first login is done separately, so we wait before the login
-      if [ -f "$AWS_ENV" ]; then
-        aws_login
-      fi
+    sleep 240 # 4 minutes
+
+    if [ -f "$AWS_ENV" ]; then
+      source "$AWS_ENV"
+
+      local tmp_token_file="${AWS_WEB_IDENTITY_TOKEN_FILE}.tmp"
+      local attempt=0
+
+      while [ "$attempt" -le 3 ]; do
+        if dx-jobutil-get-identity-token --aud "${jobTokenAudience}" --subject_claims "${jobTokenSubjectClaims}" > "$tmp_token_file"; then
+          mv -f "$tmp_token_file" "$AWS_WEB_IDENTITY_TOKEN_FILE"
+
+          break
+        else
+          echo "WARNING: AWS token refresh failed (attempt $((attempt+1))/3)" >&2
+          sleep 5 # wait 5s before retry
+        fi
+        attempt=$((attempt+1))
+      done
+    fi
   done
 }
 
@@ -553,8 +576,8 @@ get_resume_session_id() {
 
   valid_id_pattern='^\{?[A-Z0-9a-z]{8}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{4}-[A-Z0-9a-z]{12}\}?$'
   [[ "$PREV_JOB_SESSION_ID" =~ $valid_id_pattern ]] ||
-    dx-jobutil-report-error "Invalid resume value. Please provide either \"true\", \"last\", or \"sessionID\". 
-    If a sessionID was provided, Nextflow cached content could not be found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/. 
+    dx-jobutil-report-error "Invalid resume value. Please provide either \"true\", \"last\", or \"sessionID\".
+    If a sessionID was provided, Nextflow cached content could not be found under $DX_CACHEDIR/$PREV_JOB_SESSION_ID/.
     Please provide the exact sessionID for \"resume\" or run without resume."
 
   NXF_UUID=$PREV_JOB_SESSION_ID
@@ -596,8 +619,8 @@ check_no_concurrent_job_same_cache() {
   )
 
   [[ -n $FIRST_RESUMED_JOB && $DX_JOB_ID == $FIRST_RESUMED_JOB ]] ||
-    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID. 
-    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun, 
+    dx-jobutil-report-error "There is at least one other non-terminal state job with the same sessionID $NXF_UUID.
+    Please wait until all other jobs sharing the same sessionID to enter their terminal state and rerun,
     or run without preserve_cache set to true."
 }
 
@@ -605,12 +628,12 @@ restore_cache_and_set_resume_cmd() {
   # download latest cache.tar from $DX_CACHEDIR/$PREV_JOB_SESSION_ID/
   PREV_JOB_CACHE_FILE=$(
     dx api system findDataObjects \
-      '{"visibility": "either", 
+      '{"visibility": "either",
         "name":"cache.tar",
         "scope": {
-          "project": "'$DX_PROJECT_CONTEXT_ID'", 
-          "folder": "/.nextflow_cache_db/'$NXF_UUID'", 
-          "recurse": false}, 
+          "project": "'$DX_PROJECT_CONTEXT_ID'",
+          "folder": "/.nextflow_cache_db/'$NXF_UUID'",
+          "recurse": false},
         "describe": true}' 2>/dev/null |
       jq -r '.results | sort_by(.describe.created)[-1] | .id // empty'
   )

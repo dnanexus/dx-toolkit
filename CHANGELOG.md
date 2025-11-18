@@ -6,7 +6,26 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [399.0] - beta
+## [401.0] - beta
+
+* No significant changes
+
+## [400.1] - 2025.11.03
+
+### Changed
+
+* Extract nextflow default instances to separate file
+
+### Fixed
+
+* Nextflow app template to use Web Identity Token File (WITF) flow instead of credentials files for AWS authentication within AWS SDK v2
+
+### Added
+
+* Support for OCI region in Nextflow applets
+* Support for `--https-app-isolated-browsing-options` in `dx update project`
+ 
+## [399.1] - 2025.10.03
 
 ### Added
 
