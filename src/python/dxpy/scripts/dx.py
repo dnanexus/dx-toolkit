@@ -3985,6 +3985,10 @@ def verify_ssh_config():
         if not prompt_for_yn(fill(msg), default=False):
             err_exit(expected_exceptions=(IOError, DXError))
 
+def sync(args):
+    print("Sync command")
+    print(args)
+
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
         err_exit(args.job_id + " does not look like a DNAnexus job ID")
@@ -5725,6 +5729,25 @@ parser_ssh_firewall.add_argument('--allow-ssh', action='append', nargs='?', meta
 parser_ssh.add_argument('--suppress-running-check', action='store_false', help=argparse.SUPPRESS, dest='check_running')
 parser_ssh.set_defaults(func=ssh)
 register_parser(parser_ssh, categories='exec')
+
+
+#####################################
+# sync
+#####################################
+parser_sync = subparsers.add_parser('sync', help='Sync symlinked drive with a DNAnexus project',
+                                   description='TBA',
+                                   prog='dx sync',
+                                   parents=[env_args])
+parser_ssh.add_argument('drive', help='Drive ID and path to be digested in. Format: drive-xxx:/some/folder')
+parser_ssh.add_argument('project', help='Target project and path where the files should be ingested. Format: project-xxx:/some/another/folder')
+parser_ssh.add_argument('--dry-run')
+parser_ssh.add_argument('--delete')
+parser_ssh.add_argument('--include')
+parser_ssh.add_argument('--exclude')
+parser_ssh.add_argument('--quit')
+
+parser_sync.set_defaults(func=sync)
+register_parser(parser_sync)
 
 #####################################
 # terminate
