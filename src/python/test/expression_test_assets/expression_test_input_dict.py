@@ -193,7 +193,7 @@ VIZPAYLOADERBUILDER_TEST_INPUT = {
         ],
     },
     "test_vizpayloadbuilder_annotation_feature_name": {
-        "annotation": {"feature_name": ["ABL1"]}
+        "annotation": {"feature_name": ["RUNX1"]}
     },
     "test_vizpayloadbuilder_annotation_feature_id": {
         "annotation": {"feature_id": ["ENST00000327669", "ENST00000456328"]}
