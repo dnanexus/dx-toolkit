@@ -201,17 +201,11 @@ endif
 
 BOOST_LIBS=filesystem,program_options,regex,system,thread,atomic,chrono,date_time,exception,iostreams,signals
 
-ifeq ($(UNAME)$(CC), Darwinclang)
-	BOOST_MAJOR=1
-	BOOST_MINOR=56
-	BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
-	BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
-	BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
-else
-	BOOST_PV=1.55
-	BOOST_URL=${UBUNTU_MIRROR}/pool/universe/b/boost${BOOST_PV}/boost${BOOST_PV}_${BOOST_PV}.0.orig.tar.bz2
-	BOOST_SHA=cef9a0cc7084b1d639e06cd3bc34e4251524c840
-endif
+BOOST_MAJOR=1
+BOOST_MINOR=56
+BOOST_PV=$(BOOST_MAJOR).$(BOOST_MINOR)
+BOOST_URL=http://downloads.sourceforge.net/project/boost/boost/${BOOST_PV}.0/boost_${BOOST_MAJOR}_${BOOST_MINOR}_0.tar.bz2
+BOOST_SHA=f94bb008900ed5ba1994a1072140590784b9b5df
 
 boost: boost/stage
 
@@ -247,13 +241,13 @@ boost_build:
 curl: c-ares/stage/lib/libcares.la curl/stage/lib/libcurl.la
 
 CURL_MAJOR=7
-CURL_MINOR=45
-CURL_MICRO=0
+CURL_MINOR=88
+CURL_MICRO=1
 CURL_PV=$(CURL_MAJOR).$(CURL_MINOR).$(CURL_MICRO)
 CURL_PV_UNDERSCORES=$(CURL_MAJOR)_$(CURL_MINOR)_$(CURL_MICRO)
 CURL_MIRROR=https://github.com/bagder/curl/releases/download
 CURL_URL=$(CURL_MIRROR)/curl-$(CURL_PV_UNDERSCORES)/curl-$(CURL_PV).tar.gz
-CURL_SHA=e44fc290844c1e3c9b7f6ef9926d4366d0600514
+CURL_SHA=6ae5229c36badb822641bb14958e7d227c57611d
 ifeq ($(OS), Windows_NT)
 	CURL_WITH_SSL=--with-winssl
 	CURL_SHARED_LIBS=--enable-shared=yes
@@ -271,17 +265,19 @@ else
 	CURL_SHARED_LIBS=--enable-shared=no
 endif
 
-curl/stage/lib/libcurl.la: shasum openssl
+curl/stage/lib/libcurl.la: shasum openssl c-ares
 	mkdir -p curl
 	curl -L $(CURL_URL) > curl-$(CURL_PV).tar.gz
 	[[ $$(shasum curl-$(CURL_PV).tar.gz|cut -f 1 -d ' ') == $(CURL_SHA) ]]
 	tar -xzf curl-$(CURL_PV).tar.gz -C curl --strip-components=1
-	cd curl; ./configure --disable-ldap --disable-ldaps \
+	cd curl; CPPFLAGS="-I$(DNANEXUS_HOME)/src/c-ares/stage/include" \
+	    LDFLAGS="-L$(DNANEXUS_HOME)/src/c-ares/stage/lib" \
+	    ./configure --disable-ldap --disable-ldaps \
 	    --disable-rtsp --disable-dict --disable-telnet --disable-tftp --disable-pop3 \
 	    --disable-imap --disable-smtp --disable-gopher --disable-sspi --disable-ntlm-wb \
-	    --disable-tls-srp --without-gnutls --without-polarssl --without-cyassl \
-	    --without-nss --without-libmetalink --without-libssh2 --without-librtmp \
-	    --without-winidn --without-libidn --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
+	    --disable-tls-srp --without-gnutls --without-libssh2 --without-librtmp \
+	    --without-winidn --without-libidn --without-libpsl \
+	    --enable-ares="$(DNANEXUS_HOME)/src/c-ares/stage" \
 	    --enable-static=yes $(CURL_SHARED_LIBS) $(CURL_WITH_SSL) --prefix=/
 	$(MAKE) -C curl install DESTDIR="$(DNANEXUS_HOME)/src/curl/stage"
 
