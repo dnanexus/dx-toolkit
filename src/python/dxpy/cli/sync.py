@@ -35,4 +35,5 @@ class SyncCommand:
                 print(f"API call failed: {e}")
                 break
 
-        print(result)
+        if self.args.quiet is False:
+            print(result)
