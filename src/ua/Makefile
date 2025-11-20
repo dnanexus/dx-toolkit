@@ -43,6 +43,7 @@ VPATH = $(dxjson_dir):$(dxhttp_dir):$(dxcpp_dir):$(ua_dir)
 CFLAGS = -O3 -Wall -Wextra -Werror=return-type -Wno-switch -pedantic
 CXXFLAGS = $(CFLAGS)
 CXXFLAGS += -D_FILE_OFFSET_BITS=64 -DUAVERSION=\"$(VERSION)\" -DDXTOOLKIT_GITVERSION=\"$(DXTOOLKIT_GITVERSION)\"
+CXXFLAGS += -DBOOST_FILESYSTEM_VERSION=3 -DBOOST_FILESYSTEM_NO_DEPRECATED
 CXXFLAGS += -isystem $(libmagic_dir)/include -isystem $(openssl_dir)/include -isystem $(curl_dir)/include -isystem $(cares_dir)/include -I$(boost_dir) -I$(cpp_dir) -I$(dxhttp_dir) -I$(dxjson_dir) -I$(dxcpp_dir) -I$(ua_dir)
 ifeq ($(CENTOS_MAJOR_VERSION), 5)
 	CXXFLAGS += -DOLD_KERNEL_SUPPORT=1
