@@ -1459,6 +1459,15 @@
         }
     ],
     [
+        "/system/bulkNewSymlinks",
+        "bulkNewSymlinks(req)",
+        {
+            "objectMethod": false,
+            "retryable": false,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/system-methods#api-method-system-bulknewsymlinks"
+        }
+    ],
+    [
         "/system/describeDataObjects",
         "systemDescribeDataObjects(req)",
         {
