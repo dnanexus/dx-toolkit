@@ -5741,10 +5741,6 @@ parser_sync = subparsers.add_parser('sync', help='Sync symlinked drive with a DN
                                    parents=[env_args])
 parser_sync.add_argument('drive', help='Drive ID and path to be digested in. Format: drive-xxx:/some/folder')
 parser_sync.add_argument('project', help='Target project and path where the files should be ingested. Format: project-xxx:/some/another/folder')
-parser_sync.add_argument('--dryrun', action="store_true", default=False)
-# parser_sync.add_argument('--delete', action="store_true", default=False)                 ## P2
-# parser_sync.add_argument('--include')                                                                 ## P2
-# parser_sync.add_argument('--exclude')                                                                 ## P2
 parser_sync.add_argument('--quiet', action="store_true", default=False)
 
 parser_sync.set_defaults(func=sync)
