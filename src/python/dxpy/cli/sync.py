@@ -24,6 +24,11 @@ class SyncCommand:
     def validate_args(self):
         project_id, project_path = self.args.project.split(":", 1)
         drive_id, drive_path = self.args.drive.split(":", 1)
+        if not project_id or not isinstance(project_id, str):
+            raise ValueError("project_id must be a non-empty string")
+        if not drive_id or not isinstance(drive_id, str):
+            raise ValueError("drive_id must be a non-empty string")
+
         return project_id, project_path, drive_id, drive_path
 
     def sync(self):
