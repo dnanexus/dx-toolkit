@@ -5736,7 +5736,6 @@ register_parser(parser_ssh, categories='exec')
 # sync
 #####################################
 parser_sync = subparsers.add_parser('sync', help='Sync symlinked drive with a DNAnexus project',
-                                   description='TBA',
                                    prog='dx sync',
                                    parents=[env_args])
 parser_sync.add_argument('drive', help='Drive ID and path to be digested in. Format: drive-xxx:/some/folder')
