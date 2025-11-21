@@ -361,7 +361,11 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                 chunk_end = min(chunk_start + chunksize, part_info["start"] + part_info["size"]) - 1
                 yield get_chunk, [part_id_to_chunk, chunk_start, chunk_end, e_tag], {}
 
-    def verify_part(_part_id, got_bytes, hasher):
+    def verify_part(_part_id, got_bytes, hasher, e_tag = None):
+        # If there's no md5 but we have an eTag, skip the client-side md5 check
+        if got_bytes is not None and "md5" not in parts[_part_id] and e_tag is not None:
+            return
+
         if got_bytes is not None and got_bytes != parts[_part_id]["size"]:
             msg = "Unexpected part data size in {} part {} (expected {}, got {})"
             msg = msg.format(dxfile.get_id(), _part_id, parts[_part_id]["size"], got_bytes)
@@ -426,7 +430,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                                                             dxfile._http_threadpool,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
                 if chunk_part != cur_part:
-                    verify_part(cur_part, got_bytes, hasher)
+                    verify_part(cur_part, got_bytes, hasher, e_tag)
                     cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
                     if dxfile_desc.get('drive') is not None:
                         _verify_checksum(parts, cur_part, chunk_data, checksum_type, dxfile.get_id())
@@ -436,7 +440,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                 if show_progress:
                     _bytes += len(chunk_data)
                     _print_progress(_bytes, file_size, filename)
-            verify_part(cur_part, got_bytes, hasher)
+            verify_part(cur_part, got_bytes, hasher, e_tag)
             if show_progress:
                 _print_progress(_bytes, file_size, filename, action="Completed")
         except DXFileError:
