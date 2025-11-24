@@ -174,6 +174,8 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
             return str_types[nf_format]
         elif nf_type in types:
             return types[nf_type]
+        elif isinstance(nf_type, list):
+            return "string"  # default to string if we have a list of types
         raise Exception("type {} is not supported by DNAnexus".format(nf_type))
 
     inputs = []
