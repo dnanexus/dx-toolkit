@@ -49,17 +49,12 @@ class SyncCommand:
         continuation_token = None
 
         while True:
-            try:
-                if continuation_token:
-                    input_params["continuationToken"] = continuation_token
-                response = bulk_new_symlinks(input_params)
-                for obj in response.get("objects", []):
-                    result.append(obj)
-                continuation_token = response.get("continuationToken")
-                if not continuation_token:
-                    break
-            except Exception as e:
-                print(f"API call failed: {e}")
+            if continuation_token:
+                input_params["continuationToken"] = continuation_token
+            response = bulk_new_symlinks(input_params)
+            result.extend(response.get("objects", []))
+            continuation_token = response.get("continuationToken")
+            if not continuation_token:
                 break
 
         return result
