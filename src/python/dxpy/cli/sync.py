@@ -32,7 +32,9 @@ class SyncCommand:
         return project_id, project_path, drive_id, drive_path
 
     def sync(self):
-        run_with_loader(self.__sync_objects, text="Syncing objects...")
+        result = run_with_loader(self.__sync_objects, text="Syncing objects...")
+        if not self.args.quiet:
+            print(result)
 
     def __sync_objects(self):
         project_id, project_path, drive_id, drive_path = self.validate_args()
@@ -60,7 +62,4 @@ class SyncCommand:
                 print(f"API call failed: {e}")
                 break
 
-        if self.args.quiet is False:
-            return result
-
-        return None
+        return result

@@ -42,6 +42,6 @@ def run_with_loader(task, text="Loading...", *args, **kwargs):
         done.set()
         t.join()
 
-    print(result)
+    return result
 
 
