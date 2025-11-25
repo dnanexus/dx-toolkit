@@ -36,8 +36,6 @@ def run_with_loader(task, text="Loading...", *args, **kwargs):
     t.start()
     try:
         result = task(*args, **kwargs)
-    except Exception as e:
-        result = e
     finally:
         done.set()
         t.join()
