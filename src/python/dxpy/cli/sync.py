@@ -28,6 +28,10 @@ class SyncCommand:
             raise ValueError("project_id must be a non-empty string")
         if not drive_id:
             raise ValueError("drive_id must be a non-empty string")
+        if not project_path:
+            raise ValueError("project path must be a non-empty string")
+        if not project_path[0] == "/":
+            raise ValueError("project path must start with '/'")
 
         return project_id, project_path, drive_id, drive_path
 
