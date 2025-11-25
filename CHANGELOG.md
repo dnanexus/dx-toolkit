@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* New instance types in `dx run --instance-type-help` corresponding to the [official docs](https://documentation.dnanexus.com/developer/api/running-analyses/instance-types)
+
 ## [401.0] - beta
 
 * No significant changes

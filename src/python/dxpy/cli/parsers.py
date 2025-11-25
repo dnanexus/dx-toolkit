@@ -244,7 +244,7 @@ class PrintInstanceTypeHelp(argparse.Action):
                     'instance type to be used by each entry point.'))
         print(fill('A single instance type can be requested to be used by all entry points by providing the instance type name.  Different instance types can also be requested for different entry points of an app or applet by providing a JSON string mapping from function names to instance types, e.g.'))
         print()
-        print('    {"main": "mem2_hdd2_v2_x2", "other_function": "mem1_ssd1_v2_x2"}')
+        print('    {"main": "mem2_ssd2_v3_x4", "other_function": "mem1_ssd2_v3_x2"}')
         if parser.prog == 'dx run':
             print()
             print(fill('When running a workflow, --instance-type lets you specify instance types for ' +
@@ -261,15 +261,15 @@ class PrintInstanceTypeHelp(argparse.Action):
                   '                                         "*":    "mem1_ssd1_v2_x4"}\'')
             print()
             print(fill('2. Runs all entry points of the first stage with ' +
-                       'mem2_hdd2_v2_x2, the main entry point of the second stage with mem1_ssd1_v2_x4, ' +
+                       'mem2_ssd2_v3_x2, the main entry point of the second stage with mem1_ssd1_v2_x4, ' +
                        'the stage named "BWA" with mem1_ssd1_v2_x2, and all other ' +
-                       'stages with mem2_hdd2_v2_x4'))
+                       'stages with mem2_ssd2_v3_x4'))
             print()
             print('    dx run workflow-xxxx \\\n' +
-                  '     --instance-type 0=mem2_hdd2_v2_x2 \\\n' +
+                  '     --instance-type 0=mem2_ssd2_v3_x2 \\\n' +
                   '     --instance-type 1=\'{"main": "mem1_ssd1_v2_x4"}\' \\\n' +
                   '     --instance-type BWA=mem1_ssd1_v2_x2 \\\n' +
-                  '     --instance-type mem2_hdd2_v2_x4')
+                  '     --instance-type mem2_ssd2_v3_x4')
             print()
             print(fill('--instance-type-by-executable argument is a JSON string with a double mapping that ' +
                        'specifies instance types by app or applet id, then by entry point within the executable.' +
@@ -283,30 +283,30 @@ class PrintInstanceTypeHelp(argparse.Action):
                 '    dx run workflow-xxxx --instance-type-by-executable \'{"*": {"*": "mem2_ssd1_v2_x2"}}\'')
             print()
             print(fill(
-                '4. Force every job in the execution tree executing applet-xyz1 to use mem2_ssd1_v2_x2'))
+                '4. Force every job in the execution tree executing applet-xyz1 to use mem3_ssd2_v3_x2'))
             print()
             print(
-                '    dx run workflow-xxxx --instance-type-by-executable \'{"applet-xyz1":{"*": "mem2_ssd1_v2_x2"}}\'')
+                '    dx run workflow-xxxx --instance-type-by-executable \'{"applet-xyz1":{"*": "mem3_ssd2_v3_x2"}}\'')
             print()
-            print(fill('5. Force every job executing applet-xyz1 to use mem2_ssd1_v2_x4 ' +
-                       'for the main entry point and mem2_ssd1_v2_x2 for all other entry points.' +
-                       'Also force the collect entry point of all executables other than applet-xyz1 to use mem2_ssd1_v2_x8.' +
+            print(fill('5. Force every job executing applet-xyz1 to use mem1_ssd2_v3_x4 ' +
+                       'for the main entry point and mem1_ssd2_v3_x2 for all other entry points.' +
+                       'Also force the collect entry point of all executables other than applet-xyz1 to use mem2_ssd2_v3_x8.' +
                        'Other entry points of executable other than applet-xyz1 may be overridden by ' +
                        'lower-priority mechanisms'))
             print()
             print('    dx run workflow-xxxx --instance-type-by-executable \\\n' +
-                  '           \'{"applet-xyz1":  {"main":    "mem2_ssd1_v2_x4", "*": "mem2_ssd1_v2_x2"},\n' +
-                  '             "*":            {"collect": "mem2_ssd1_v2_x8"}}\'')
+                  '           \'{"applet-xyz1":  {"main":    "mem1_ssd2_v3_x4", "*": "mem1_ssd2_v3_x2"},\n' +
+                  '             "*":            {"collect": "mem2_ssd2_v3_x8"}}\'')
             print()
-            print(fill('6. Force every job executing applet-xxxx to use mem2_ssd1_v2_x2 for all entry points ' +
+            print(fill('6. Force every job executing applet-xxxx to use mem1_ssd2_v3_x2 for all entry points ' +
                        'in the entire execution tree. ' +
-                       'Also force stage 0 executable to run on mem2_ssd1_v2_x4, unless stage 0 invokes ' +
-                       'applet-xxxx, in which case applet-xxxx\'s jobs will use mem2_ssd1_v2_x2 as specified by ' +
+                       'Also force stage 0 executable to run on mem1_ssd2_v3_x4, unless stage 0 invokes ' +
+                       'applet-xxxx, in which case applet-xxxx\'s jobs will use mem1_ssd2_v3_x2 as specified by ' +
                        '--instance-type-by-executable.'))
             print()
             print('    dx run workflow-xxxx \\\n' +
-                  '     --instance-type-by-executable  \'{"applet-xxxx": {"*": "mem2_ssd1_v2_x2"}}\' \\\n' +
-                  '     --instance-type 0=mem2_ssd1_v2_x4')
+                  '     --instance-type-by-executable  \'{"applet-xxxx": {"*": "mem1_ssd2_v3_x2"}}\' \\\n' +
+                  '     --instance-type 0=mem1_ssd2_v3_x4')
             print()
             print(fill(
                 'See "Requesting Instance Types" in DNAnexus documentation for more details.'))
@@ -332,7 +332,7 @@ instance_type_arg.add_argument('--instance-type',
                                metavar='INSTANCE_TYPE_OR_MAPPING',
                                help=fill('''When running an app or applet, the mapping lists executable's entry points or "*" as keys, and instance types to use for these entry points as values.  
 When running a workflow, the specified instance types can be prefixed by a stage name or stage index followed by "=" to apply to a specific stage, or apply to all workflow stages without such prefix. 
-The instance type corresponding to the "*" key is applied to all entry points not explicitly mentioned in the --instance-type mapping. Specifying a single instance type is equivalent to using it for all entry points, so "--instance-type mem1_ssd1_v2_x2" is same as "--instance-type '{"*":"mem1_ssd1_v2_x2"}'. 
+The instance type corresponding to the "*" key is applied to all entry points not explicitly mentioned in the --instance-type mapping. Specifying a single instance type is equivalent to using it for all entry points, so "--instance-type mem1_ssd2_v3_x2" is same as "--instance-type '{"*":"mem1_ssd2_v3_x2"}'. 
 Note that "dx run" calls within the execution subtree may override the values specified at the root of the execution tree.
 See dx run --instance-type-help for details.
 ''', width_adjustment=-24, replace_whitespace=False),
