@@ -3988,7 +3988,10 @@ def verify_ssh_config():
 
 def sync(args):
     sync_command = SyncCommand(args)
-    sync_command.sync()
+    try:
+        sync_command.sync()
+    except:
+        err_exit()
 
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
