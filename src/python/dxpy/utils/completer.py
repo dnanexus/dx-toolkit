@@ -423,6 +423,16 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem1_ssd1_v2_x36', 36, 72.0, 900),
               InstanceTypeSpec('mem1_ssd1_v2_x72', 72, 144.0, 1800),
 
+              InstanceTypeSpec('mem1_ssd2_v3_x2', 2, 4.0, 118),
+              InstanceTypeSpec('mem1_ssd2_v3_x4', 4, 8.0, 237),
+              InstanceTypeSpec('mem1_ssd2_v3_x8', 8, 16.0, 474),
+              InstanceTypeSpec('mem1_ssd2_v3_x16', 16, 32.0, 950),
+              InstanceTypeSpec('mem1_ssd2_v3_x32', 32, 64.0, 1900),
+              InstanceTypeSpec('mem1_ssd2_v3_x48', 48, 96.0, 2850),
+              InstanceTypeSpec('mem1_ssd2_v3_x64', 64, 128.0, 3800),
+              InstanceTypeSpec('mem1_ssd2_v3_x96', 96, 192.0, 5700),
+              InstanceTypeSpec('mem1_ssd2_v3_x128', 128, 256.0, 7600),
+
               InstanceTypeSpec('mem1_ssd2_v2_x2', 2, 4.0, 160),
               InstanceTypeSpec('mem1_ssd2_v2_x4', 4, 8.0, 320),
               InstanceTypeSpec('mem1_ssd2_v2_x8', 8, 16.0, 640),
@@ -438,6 +448,16 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem2_ssd1_v2_x48', 48, 144.0, 1800),
               InstanceTypeSpec('mem2_ssd1_v2_x64', 64, 256.0, 2400),
               InstanceTypeSpec('mem2_ssd1_v2_x96', 96, 384.0, 3600),
+
+              InstanceTypeSpec('mem2_ssd2_v3_x2', 2, 8.0, 118),
+              InstanceTypeSpec('mem2_ssd2_v3_x4', 4, 16.0, 237),
+              InstanceTypeSpec('mem2_ssd2_v3_x8', 8, 32.0, 474),
+              InstanceTypeSpec('mem2_ssd2_v3_x16', 16, 64.0, 950),
+              InstanceTypeSpec('mem2_ssd2_v3_x32', 32, 128.0, 1900),
+              InstanceTypeSpec('mem2_ssd2_v3_x48', 48, 192.0, 2850),
+              InstanceTypeSpec('mem2_ssd2_v3_x64', 64, 256.0, 3800),
+              InstanceTypeSpec('mem2_ssd2_v3_x96', 96, 384.0, 5700),
+              InstanceTypeSpec('mem2_ssd2_v3_x128', 128, 512.0, 7600),
 
               InstanceTypeSpec('mem2_ssd2_v2_x2', 2, 8.0, 160),
               InstanceTypeSpec('mem2_ssd2_v2_x4', 4, 16.0, 320),
@@ -456,6 +476,16 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem3_ssd1_v2_x48', 48, 384.0, 1800),
               InstanceTypeSpec('mem3_ssd1_v2_x64', 64, 512.0, 3200),
               InstanceTypeSpec('mem3_ssd1_v2_x96', 96, 768.0, 3600),
+
+              InstanceTypeSpec('mem3_ssd2_v3_x2', 2, 16.0, 118),
+              InstanceTypeSpec('mem3_ssd2_v3_x4', 4, 32.0, 237),
+              InstanceTypeSpec('mem3_ssd2_v3_x8', 8, 64.0, 474),
+              InstanceTypeSpec('mem3_ssd2_v3_x16', 16, 128.0, 950),
+              InstanceTypeSpec('mem3_ssd2_v3_x32', 32, 256.0, 1900),
+              InstanceTypeSpec('mem3_ssd2_v3_x48', 48, 384.0, 2850),
+              InstanceTypeSpec('mem3_ssd2_v3_x64', 64, 512.0, 3800),
+              InstanceTypeSpec('mem3_ssd2_v3_x96', 96, 768.0, 5700),
+              InstanceTypeSpec('mem3_ssd2_v3_x128', 128, 1024.0, 7600),
 
               InstanceTypeSpec('mem3_ssd2_v2_x2', 2, 15.25, 475),
               InstanceTypeSpec('mem3_ssd2_v2_x4', 4, 30.5, 950),
@@ -541,8 +571,8 @@ class InstanceTypesCompleter():
 
     fpga_instance_types = OrderedDict()
     for i in (FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x24', 24, 256.0, 940, 1),
-              FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x48', 48, 512.0, 1880, 2),
-              FpgaInstanceTypeSpec('mem3_ssd2_fpga1_x192', 192, 2048.0, 7520, 8)):
+              FpgaInstanceTypeSpec('mem3_ssd2_fpga2_x48', 48, 512.0, 1880, 2),
+              FpgaInstanceTypeSpec('mem3_ssd2_fpga8_x192', 192, 2048.0, 7520, 8)):
         fpga_instance_types[i.Name] = i
 
     aws_other_instance_types = OrderedDict()
@@ -551,6 +581,7 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('mem1_ssd1_x8', 8, 15.0, 160),
               InstanceTypeSpec('mem1_ssd1_x16', 16, 30.0, 320),
               InstanceTypeSpec('mem1_ssd1_x32', 32, 60.0, 640),
+              InstanceTypeSpec('mem1_ssd1_x36', 36, 72.0, 900),
 
               InstanceTypeSpec('mem1_ssd2_x2', 2, 3.8, 160),
               InstanceTypeSpec('mem1_ssd2_x4', 4, 7.5, 320),
@@ -604,6 +635,10 @@ class InstanceTypesCompleter():
 
               InstanceTypeSpec('mem2_hdd2_v2_x2', 2, 8.0, 1000),
               InstanceTypeSpec('mem2_hdd2_v2_x4', 4, 16.0, 2000),
+
+              InstanceTypeSpec('mem3_hdd2_x2', 2, 17.1, 420),
+              InstanceTypeSpec('mem3_hdd2_x4', 4, 34.2, 850),
+              InstanceTypeSpec('mem3_hdd2_x8', 8, 68.4, 1680),
 
               InstanceTypeSpec('mem3_hdd2_v2_x2', 2, 16.0, 500),
               InstanceTypeSpec('mem3_hdd2_v2_x4', 4, 32.0, 1000),
