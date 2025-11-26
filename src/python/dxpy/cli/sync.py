@@ -13,6 +13,7 @@
 #   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #   License for the specific language governing permissions and limitations
 #   under the License.
+import json
 
 from ..api import bulk_new_symlinks
 from ..utils.loader import run_with_loader
@@ -36,9 +37,11 @@ class SyncCommand:
         return project_id, project_path, drive_id, drive_path
 
     def sync(self):
-        result = run_with_loader(self.__sync_objects, text="Syncing objects...")
         if not self.args.quiet:
-            print(result)
+            result = run_with_loader(self.__sync_objects, text="Syncing objects...")
+            print(json.dumps(result, indent=2))
+        else:
+            self.__sync_objects()
 
     def __sync_objects(self):
         project_id, project_path, drive_id, drive_path = self.validate_args()
