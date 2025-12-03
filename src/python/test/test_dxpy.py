@@ -3191,6 +3191,118 @@ class TestAppBuilderUtils(unittest.TestCase):
         with self.assertRaises(app_builder.AppBuilderException):
             assert_consistent_regions({"aws:us-east-1": None}, ["azure:westus"], app_builder.AppBuilderException)
 
+    def test_validate_system_requirements_instance_type_selector(self):
+        """Test that instanceTypeSelector validation works correctly"""
+        validate = app_builder._validate_system_requirements
+
+        # Valid cases - should not raise exceptions
+
+        # instanceTypeSelector alone is valid
+        validate({
+            "main": {
+                "instanceTypeSelector": {
+                    "allowedInstanceTypes": ["mem1_ssd1_x4", "mem1_ssd1_x8"]
+                }
+            }
+        })
+
+        # instanceType alone is valid
+        validate({
+            "main": {
+                "instanceType": "mem1_ssd1_x4"
+            }
+        })
+
+        # clusterSpec alone is valid
+        validate({
+            "main": {
+                "clusterSpec": {
+                    "type": "generic",
+                    "numInstances": 3
+                }
+            }
+        })
+
+        # instanceType and clusterSpec together is valid
+        validate({
+            "main": {
+                "instanceType": "mem1_ssd1_x4",
+                "clusterSpec": {
+                    "type": "generic",
+                    "numInstances": 3
+                }
+            }
+        })
+
+        # Empty requirements is valid
+        validate({})
+
+        # None requirements is valid
+        validate(None)
+
+        # Invalid cases - should raise AppBuilderException
+
+        # instanceType and instanceTypeSelector are mutually exclusive
+        with self.assertRaises(app_builder.AppBuilderException) as cm:
+            validate({
+                "main": {
+                    "instanceType": "mem1_ssd1_x4",
+                    "instanceTypeSelector": {
+                        "allowedInstanceTypes": ["mem1_ssd1_x4", "mem1_ssd1_x8"]
+                    }
+                }
+            })
+        self.assertIn("mutually exclusive", str(cm.exception))
+        self.assertIn("instanceType", str(cm.exception))
+        self.assertIn("instanceTypeSelector", str(cm.exception))
+
+        # instanceTypeSelector and clusterSpec are mutually exclusive
+        with self.assertRaises(app_builder.AppBuilderException) as cm:
+            validate({
+                "main": {
+                    "instanceTypeSelector": {
+                        "allowedInstanceTypes": ["mem1_ssd1_x4", "mem1_ssd1_x8"]
+                    },
+                    "clusterSpec": {
+                        "type": "generic",
+                        "numInstances": 3
+                    }
+                }
+            })
+        self.assertIn("mutually exclusive", str(cm.exception))
+        self.assertIn("instanceTypeSelector", str(cm.exception))
+        self.assertIn("clusterSpec", str(cm.exception))
+
+        # Test with wildcard entry point
+        with self.assertRaises(app_builder.AppBuilderException) as cm:
+            validate({
+                "*": {
+                    "instanceType": "mem1_ssd1_x4",
+                    "instanceTypeSelector": {
+                        "allowedInstanceTypes": ["mem1_ssd1_x4"]
+                    }
+                }
+            })
+        self.assertIn("mutually exclusive", str(cm.exception))
+
+        # Test with multiple entry points - one invalid
+        with self.assertRaises(app_builder.AppBuilderException) as cm:
+            validate({
+                "main": {
+                    "instanceTypeSelector": {
+                        "allowedInstanceTypes": ["mem1_ssd1_x4"]
+                    }
+                },
+                "process": {
+                    "instanceType": "mem1_ssd1_x4",
+                    "instanceTypeSelector": {
+                        "allowedInstanceTypes": ["mem1_ssd1_x8"]
+                    }
+                }
+            })
+        self.assertIn("mutually exclusive", str(cm.exception))
+        self.assertIn("process", str(cm.exception))
+
 class TestWorkflowBuilderUtils(testutil.DXTestCaseBuildWorkflows):
     def setUp(self):
         super(TestWorkflowBuilderUtils, self).setUp()

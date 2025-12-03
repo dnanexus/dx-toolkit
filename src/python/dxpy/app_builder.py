@@ -64,9 +64,46 @@ class AppBuilderException(Exception):
     """
     pass
 
+def _validate_system_requirements(system_requirements):
+    """
+    Validates systemRequirements section of dxapp.json for instanceTypeSelector constraints.
+
+    :param system_requirements: The systemRequirements section from runSpec
+    :type system_requirements: dict
+    :raises AppBuilderException: If validation fails
+    """
+    if not isinstance(system_requirements, dict):
+        return
+
+    for entry_point, requirements in system_requirements.items():
+        if not isinstance(requirements, dict):
+            continue
+
+        has_instance_type = 'instanceType' in requirements
+        has_instance_type_selector = 'instanceTypeSelector' in requirements
+        has_cluster_spec = 'clusterSpec' in requirements
+
+        # Check mutual exclusivity: instanceType and instanceTypeSelector
+        if has_instance_type and has_instance_type_selector:
+            raise AppBuilderException(
+                "instanceType and instanceTypeSelector keywords are mutually exclusive "
+                "in systemRequirements for entry point '{}'".format(entry_point)
+            )
+
+        # Check mutual exclusivity: instanceTypeSelector and clusterSpec
+        if has_instance_type_selector and has_cluster_spec:
+            raise AppBuilderException(
+                "instanceTypeSelector and clusterSpec keywords are mutually exclusive "
+                "in systemRequirements for entry point '{}'".format(entry_point)
+            )
+
 def _validate_applet_spec(applet_spec):
     if 'runSpec' not in applet_spec:
         raise AppBuilderException("Required field 'runSpec' not found in dxapp.json")
+
+    # Validate systemRequirements for instanceTypeSelector constraints
+    if 'systemRequirements' in applet_spec.get('runSpec', {}):
+        _validate_system_requirements(applet_spec['runSpec']['systemRequirements'])
 
 def _validate_app_spec(app_spec):
     pass
