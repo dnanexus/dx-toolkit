@@ -101,12 +101,28 @@ def _validate_applet_spec(applet_spec):
     if 'runSpec' not in applet_spec:
         raise AppBuilderException("Required field 'runSpec' not found in dxapp.json")
 
-    # Validate systemRequirements for instanceTypeSelector constraints
+    # Validate systemRequirements for instanceTypeSelector constraints in runSpec
     if 'systemRequirements' in applet_spec.get('runSpec', {}):
         _validate_system_requirements(applet_spec['runSpec']['systemRequirements'])
 
+    # Validate systemRequirements in regionalOptions for each region
+    regional_options = applet_spec.get('regionalOptions', {})
+    if isinstance(regional_options, dict):
+        for region, options in regional_options.items():
+            if isinstance(options, dict) and 'systemRequirements' in options:
+                _validate_system_requirements(options['systemRequirements'])
+
 def _validate_app_spec(app_spec):
-    pass
+    # Validate systemRequirements for instanceTypeSelector constraints in runSpec
+    if 'runSpec' in app_spec and 'systemRequirements' in app_spec['runSpec']:
+        _validate_system_requirements(app_spec['runSpec']['systemRequirements'])
+
+    # Validate systemRequirements in regionalOptions for each region
+    regional_options = app_spec.get('regionalOptions', {})
+    if isinstance(regional_options, dict):
+        for region, options in regional_options.items():
+            if isinstance(options, dict) and 'systemRequirements' in options:
+                _validate_system_requirements(options['systemRequirements'])
 
 def _get_applet_spec(src_dir):
     applet_spec_file = os.path.join(src_dir, "dxapp.json")
