@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [402.0] - beta
+
 ### Added
 
 * New instance types in `dx run --instance-type-help` corresponding to the [official docs](https://documentation.dnanexus.com/developer/api/running-analyses/instance-types)
@@ -14,7 +16,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Nextflow bugs: Support size attribute for remote files and selection of default OCI region instance type
 
-## [401.0] - beta
+## [401.0] - 2025.12.08
 
 * No significant changes
 
