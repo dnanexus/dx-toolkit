@@ -3280,6 +3280,31 @@ dx-jobutil-add-output record_array $second_record --array
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
+    def test_dx_run_extra_args_instanceTypeSelector_rejected(self):
+        # Validate that instanceTypeSelector cannot be specified in runtime extra-args
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+
+        # Test with wildcard entry point
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"systemRequirements": {"*": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}\'')
+
+        # Test with specific entry point
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"systemRequirements": {"main": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}\'')
+
+        # Test with regionalOptions
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"regionalOptions": {"aws:us-east-1": {"systemRequirements": {"*": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}}}\'')
+
     def test_dx_run_sys_reqs(self):
         app_spec = {"project": self.project,
                     "dxapi": "1.0.0",
