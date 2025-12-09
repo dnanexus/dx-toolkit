@@ -37,6 +37,7 @@ from ..cli import workflow as workflow_cli
 from ..cli.cp import cp
 from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic, create_cohort, extract_assay_expression
 from ..cli.download import (download_one_file, download_one_database_file, download)
+from ..cli.sync import SyncCommand
 from ..cli.parsers import (no_color_arg, delim_arg, env_args, stdout_args, all_arg, json_arg, try_arg, parser_dataobject_args,
                            parser_single_dataobject_output_args, process_properties_args,
                            find_by_properties_and_tags_args, process_find_by_property_args, process_dataobject_args,
@@ -3985,6 +3986,13 @@ def verify_ssh_config():
         if not prompt_for_yn(fill(msg), default=False):
             err_exit(expected_exceptions=(IOError, DXError))
 
+def sync(args):
+    sync_command = SyncCommand(args)
+    try:
+        sync_command.sync()
+    except:
+        err_exit()
+
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
         err_exit(args.job_id + " does not look like a DNAnexus job ID")
@@ -5725,6 +5733,19 @@ parser_ssh_firewall.add_argument('--allow-ssh', action='append', nargs='?', meta
 parser_ssh.add_argument('--suppress-running-check', action='store_false', help=argparse.SUPPRESS, dest='check_running')
 parser_ssh.set_defaults(func=ssh)
 register_parser(parser_ssh, categories='exec')
+
+
+#####################################
+# sync
+#####################################
+parser_sync = subparsers.add_parser('sync', help='Sync symlinked drive with a DNAnexus project',
+                                   prog='dx sync',
+                                   parents=[env_args])
+parser_sync.add_argument('drive', help='Drive ID and path to be digested in. Format: drive-xxxx:/some/folder')
+parser_sync.add_argument('project', help='Target project and path where the files should be ingested. Format: project-xxxx:/some/another/folder')
+parser_sync.add_argument('--quiet', action="store_true", default=False)
+
+parser_sync.set_defaults(func=sync)
 
 #####################################
 # terminate
