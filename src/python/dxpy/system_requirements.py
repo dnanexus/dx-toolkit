@@ -83,9 +83,9 @@ class SystemRequirementsDict(object):
         """
         Returns SystemRequirementsDict encapsulating system requirements.
         It can extract only entrypoints with specific fields ('clusterSpec',
-        'instanceType', etc), depending on the value of _type.
+        'instanceType', 'instanceTypeSelector', etc), depending on the value of _type.
         """
-        allowed_types = ['all', 'clusterSpec', 'instanceType', 'fpgaDriver', 'nvidiaDriver']
+        allowed_types = ['all', 'clusterSpec', 'instanceType', 'instanceTypeSelector', 'fpgaDriver', 'nvidiaDriver']
         if _type not in (allowed_types):
             raise DXError("Expected '_type' to be one of the following: {}".format(allowed_types))
 
