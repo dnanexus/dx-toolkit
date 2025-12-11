@@ -22,57 +22,53 @@
 
 from __future__ import absolute_import
 
-import unittest
+import copy
+import csv
+import json
+import os
+import shutil
 import subprocess
 import sys
-import os
-import dxpy
-import copy
-import json
 import tempfile
-import csv
+import unittest
 from collections import OrderedDict
+
+import dxpy
 import pandas as pd
-
-import shutil
-from dxpy_testutil import cd, chdir
-from dxpy.bindings.apollo.json_validation_by_schema import JSONValidator
-from dxpy.utils.resolver import resolve_existing_path
-
-from dxpy.bindings.apollo.schemas.assay_filtering_json_schemas import (
-    EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
-)
 from dxpy.bindings.apollo.cmd_line_options_validator import ArgsValidator
-from dxpy.bindings.apollo.schemas.input_arguments_validation_schemas import (
-    EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
-)
-from dxpy.bindings.apollo.vizclient import VizClient
-
 from dxpy.bindings.apollo.data_transformations import transform_to_expression_matrix
-from dxpy.cli.output_handling import write_expression_output
-from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
-from dxpy.bindings.dxrecord import DXRecord
 from dxpy.bindings.apollo.dataset import Dataset
-
-from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
+from dxpy.bindings.apollo.json_validation_by_schema import JSONValidator
 from dxpy.bindings.apollo.schemas.assay_filtering_conditions import (
     EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_0,
     EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1,
     EXTRACT_ASSAY_EXPRESSION_FILTERING_CONDITIONS_1_1_non_optimized,
 )
+from dxpy.bindings.apollo.schemas.assay_filtering_json_schemas import (
+    EXTRACT_ASSAY_EXPRESSION_JSON_SCHEMA,
+)
+from dxpy.bindings.apollo.schemas.input_arguments_validation_schemas import (
+    EXTRACT_ASSAY_EXPRESSION_INPUT_ARGS_SCHEMA,
+)
+from dxpy.bindings.apollo.vizclient import VizClient
+from dxpy.bindings.apollo.vizserver_filters_from_json_parser import JSONFiltersValidator
 from dxpy.bindings.apollo.vizserver_payload_builder import VizPayloadBuilder
+from dxpy.bindings.dxrecord import DXRecord
+from dxpy.cli.help_messages import EXTRACT_ASSAY_EXPRESSION_JSON_TEMPLATE
+from dxpy.cli.output_handling import write_expression_output
 from dxpy.exceptions import err_exit
-
+from dxpy.utils.resolver import resolve_existing_path
+from dxpy_testutil import cd, chdir
 
 dirname = os.path.dirname(__file__)
 
-from expression_test_assets.expression_test_input_dict import (
-    CLIEXPRESS_TEST_INPUT,
-    VIZPAYLOADERBUILDER_TEST_INPUT,
-    EXPRESSION_CLI_JSON_FILTERS,
-)
 from expression_test_assets.expression_test_expected_output_dict import (
     VIZPAYLOADERBUILDER_EXPECTED_OUTPUT,
+)
+from expression_test_assets.expression_test_input_dict import (
+    CLIEXPRESS_TEST_INPUT,
+    EXPRESSION_CLI_JSON_FILTERS,
+    VIZPAYLOADERBUILDER_TEST_INPUT,
 )
 
 
@@ -1187,9 +1183,9 @@ class TestDXExtractExpression(unittest.TestCase):
 
     def test_dx_extract_cmd_location_expression_sample_sql(self):
         expected_sql_query = [
-            "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE (`expr_annotation_1`.`chr` = '11' AND (`expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` <= 8693350 AND `expr_annotation_1`.`end` >= 67440200) OR `expr_annotation_1`.`chr` = 'X' AND (`expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` <= 148500700 AND `expr_annotation_1`.`end` >= 148994424) OR `expr_annotation_1`.`chr` = '17' AND (`expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` <= 75228160 AND `expr_annotation_1`.`end` >= 75235759)) AND `expression_1`.`value` >= 25.63 AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2') ORDER BY `feature_id` ASC, `sample_id` ASC",
-            "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE (`expr_annotation_1`.`chr` = '11' AND (`expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`end` >= 67440200 AND `expr_annotation_1`.`start` <= 8693350) OR `expr_annotation_1`.`chr` = 'X' AND (`expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`end` >= 148994424 AND `expr_annotation_1`.`start` <= 148500700) OR `expr_annotation_1`.`chr` = '17' AND (`expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`end` >= 75235759 AND `expr_annotation_1`.`start` <= 75228160)) AND `expression_1`.`value` >= 25.63 AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2') ORDER BY `feature_id` ASC, `sample_id` ASC",
-            "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE (`expr_annotation_1`.`chr` = '11' AND (`expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`end` >= 67440200 AND `expr_annotation_1`.`start` <= 8693350) OR `expr_annotation_1`.`chr` = 'X' AND (`expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`end` >= 148994424 AND `expr_annotation_1`.`start` <= 148500700) OR `expr_annotation_1`.`chr` = '17' AND (`expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`end` >= 75235759 AND `expr_annotation_1`.`start` <= 75228160)) AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2') AND `expression_1`.`value` >= 25.63 ORDER BY `feature_id` ASC, `sample_id` ASC",
+            "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE ((`expr_annotation_1`.`chr` = '11' AND ((`expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200) OR (`expr_annotation_1`.`start` <= 8693350 AND `expr_annotation_1`.`end` >= 67440200))) OR (`expr_annotation_1`.`chr` = 'X' AND ((`expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424) OR (`expr_annotation_1`.`start` <= 148500700 AND `expr_annotation_1`.`end` >= 148994424))) OR (`expr_annotation_1`.`chr` = '17' AND ((`expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759) OR (`expr_annotation_1`.`start` <= 75228160 AND `expr_annotation_1`.`end` >= 75235759)))) AND `expression_1`.`value` >= 25.63 AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2') ORDER BY `feature_id` ASC, `sample_id` ASC",
+            "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE ((`expr_annotation_1`.`chr` = '11' AND ((`expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200) OR (`expr_annotation_1`.`end` >= 67440200 AND `expr_annotation_1`.`start` <= 8693350))) OR (`expr_annotation_1`.`chr` = 'X' AND ((`expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424) OR (`expr_annotation_1`.`end` >= 148994424 AND `expr_annotation_1`.`start` <= 148500700))) OR (`expr_annotation_1`.`chr` = '17' AND ((`expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759) OR (`expr_annotation_1`.`end` >= 75235759 AND `expr_annotation_1`.`start` <= 75228160)))) AND `expression_1`.`value` >= 25.63 AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2') ORDER BY `feature_id` ASC, `sample_id` ASC",
+            "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression`, `expr_annotation_1`.`gene_name` AS `feature_name`, `expr_annotation_1`.`chr` AS `chrom`, `expr_annotation_1`.`start` AS `start` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE ((`expr_annotation_1`.`chr` = '11' AND ((`expr_annotation_1`.`end` BETWEEN 8693350 AND 67440200 OR `expr_annotation_1`.`start` BETWEEN 8693350 AND 67440200) OR (`expr_annotation_1`.`end` >= 67440200 AND `expr_annotation_1`.`start` <= 8693350))) OR (`expr_annotation_1`.`chr` = 'X' AND ((`expr_annotation_1`.`end` BETWEEN 148500700 AND 148994424 OR `expr_annotation_1`.`start` BETWEEN 148500700 AND 148994424) OR (`expr_annotation_1`.`end` >= 148994424 AND `expr_annotation_1`.`start` <= 148500700))) OR (`expr_annotation_1`.`chr` = '17' AND ((`expr_annotation_1`.`end` BETWEEN 75228160 AND 75235759 OR `expr_annotation_1`.`start` BETWEEN 75228160 AND 75235759) OR (`expr_annotation_1`.`end` >= 75235759 AND `expr_annotation_1`.`start` <= 75228160)))) AND `expression_1`.`sample_id` IN ('sample_1', 'sample_2') AND `expression_1`.`value` >= 25.63 ORDER BY `feature_id` ASC, `sample_id` ASC",
         ]
         response = self.run_dx_extract_assay_expression_cmd(
             self.expression_dataset,
