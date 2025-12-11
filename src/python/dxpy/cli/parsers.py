@@ -229,7 +229,7 @@ def process_extra_args(args):
                     if isinstance(reqs, dict) and 'instanceTypeSelector' in reqs:
                         raise DXParserError(
                             'instanceTypeSelector cannot be specified in runtime --extra-args. '
-                            'It must be defined in the dxapp.json at build time.'
+                            'It can only be defined in the dxapp.json at build time.'
                         )
 
         if 'systemRequirements' in args.extra_args:
