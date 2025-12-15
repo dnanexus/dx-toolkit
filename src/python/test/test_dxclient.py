@@ -3472,9 +3472,18 @@ dx-jobutil-add-output record_array $second_record --array
         # TODO uncomment later - for now this is not included in the backend behaviour
         # assert "instanceTypeSelector" not in cloned_job_desc_2["systemRequirements"]["*"]
 
-        # Clone with --instance-count - should fail (clusterSpec and instanceTypeSelector are mutually exclusive)
-        with self.assertSubprocessFailure(stderr_regexp='Cannot specify --instance-count.*instanceTypeSelector', exit_code=3):
+        # Clone with --instance-count alone - should fail (clusterSpec and instanceTypeSelector are mutually exclusive)
+        with self.assertSubprocessFailure(stderr_regexp='Cannot specify --instance-count.*instanceTypeSelector.*without providing --instance-type', exit_code=3):
             run(f"dx run --clone {origin_job_id} --instance-count 3 --brief -y")
+
+        # Clone with both --instance-count and --instance-type - should work (instanceType overrides instanceTypeSelector)
+        cloned_job_id_3 = run(f"dx run --clone {origin_job_id} --instance-count 3 --instance-type mem2_hdd2_x4 --brief -y").strip()
+        assert cloned_job_id_3.startswith("job-")
+        cloned_job_desc_3 = dxpy.api.job_describe(cloned_job_id_3)
+        # Verify both instanceType and clusterSpec are present
+        assert "instanceType" in cloned_job_desc_3["systemRequirements"]["*"]
+        assert cloned_job_desc_3["systemRequirements"]["*"]["instanceType"] == "mem2_hdd2_x4"
+        assert "clusterSpec" in cloned_job_desc_3["systemRequirements"]["*"]
 
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,

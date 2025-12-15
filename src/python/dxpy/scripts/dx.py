@@ -3219,10 +3219,11 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     if args.instance_count:
         # Validate that we're not mixing clusterSpec with instanceTypeSelector
         # clusterSpec and instanceTypeSelector are mutually exclusive at build time
-        # If runtime provides instance-count, we should not have instanceTypeSelector from cloned job
-        if cloned_instance_type_selector.as_dict():
-            raise DXCLIError("Cannot specify --instance-count when cloning a job that uses instanceTypeSelector. "
-                            "instanceTypeSelector and clusterSpec are mutually exclusive.")
+        # However, if instanceType is provided (either from runtime or cloned job), it overrides instanceTypeSelector
+        # So we only raise an error if instanceTypeSelector exists AND no instanceType override is present
+        if cloned_instance_type_selector.as_dict() and not requested_instance_type.as_dict():
+            raise DXCLIError("Cannot specify --instance-count when cloning a job that uses instanceTypeSelector "
+                            "without providing --instance-type. instanceTypeSelector and clusterSpec are mutually exclusive.")
         # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
         # and overwrite the field initialInstanceCount with the runtime mapping
         requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)        
@@ -3244,10 +3245,10 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     requested_nvidia_driver = cloned_nvidia_driver
 
     # Validate mutual exclusivity: instanceTypeSelector and clusterSpec cannot coexist
-    # Note: instanceType can override instanceTypeSelector, so we only check clusterSpec here
+    # Note: instanceType can override instanceTypeSelector, so we only raise error if no instanceType is present
     # instanceTypeSelector is build-time only and should never be in runtime systemRequirements
-    if cloned_instance_type_selector.as_dict() and requested_cluster_spec.as_dict():
-        raise DXCLIError("Cannot combine clusterSpec with instanceTypeSelector. "
+    if cloned_instance_type_selector.as_dict() and requested_cluster_spec.as_dict() and not requested_instance_type.as_dict():
+        raise DXCLIError("Cannot combine clusterSpec with instanceTypeSelector without providing instanceType. "
                         "instanceTypeSelector and clusterSpec are mutually exclusive.")
 
     # combine the requested instance type, full cluster spec, fpga spec, nvidia spec
