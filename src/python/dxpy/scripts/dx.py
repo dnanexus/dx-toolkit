@@ -30,7 +30,7 @@ from ..compat import sys_encoding, basestring
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy import workflow_builder
-from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
+from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound, DXCLIError
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
@@ -3221,8 +3221,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         # clusterSpec and instanceTypeSelector are mutually exclusive at build time
         # If runtime provides instance-count, we should not have instanceTypeSelector from cloned job
         if cloned_instance_type_selector.as_dict():
-            raise err_exit("Cannot specify --instance-count when cloning a job that uses instanceTypeSelector. "
-                          "instanceTypeSelector and clusterSpec are mutually exclusive.")
+            raise DXCLIError("Cannot specify --instance-count when cloning a job that uses instanceTypeSelector. "
+                            "instanceTypeSelector and clusterSpec are mutually exclusive.")
         # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
         # and overwrite the field initialInstanceCount with the runtime mapping
         requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)        
@@ -3247,8 +3247,8 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     # Note: instanceType can override instanceTypeSelector, so we only check clusterSpec here
     # instanceTypeSelector is build-time only and should never be in runtime systemRequirements
     if cloned_instance_type_selector.as_dict() and requested_cluster_spec.as_dict():
-        raise err_exit("Cannot combine clusterSpec with instanceTypeSelector. "
-                      "instanceTypeSelector and clusterSpec are mutually exclusive.")
+        raise DXCLIError("Cannot combine clusterSpec with instanceTypeSelector. "
+                        "instanceTypeSelector and clusterSpec are mutually exclusive.")
 
     # combine the requested instance type, full cluster spec, fpga spec, nvidia spec
     # into the runtime systemRequirements
