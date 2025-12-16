@@ -30,7 +30,7 @@ from ..compat import sys_encoding, basestring
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy import workflow_builder
-from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound
+from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound, DXCLIError
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
@@ -3191,27 +3191,39 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
         # however when cloning from an analysis, the temporary workflow already has the cloned spec as its default, so no need to merge 1) and 2) here
         cloned_system_requirements = copy.deepcopy(args.cloned_job_desc).get("systemRequirements", {})
         cloned_instance_type = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceType')
+        cloned_instance_type_selector = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='instanceTypeSelector')
         cloned_cluster_spec = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='clusterSpec')
         cloned_fpga_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='fpgaDriver')
         cloned_nvidia_driver = SystemRequirementsDict.from_sys_requirements(cloned_system_requirements, _type='nvidiaDriver')
         cloned_system_requirements_by_executable = args.cloned_job_desc.get("mergedSystemRequirementsByExecutable", {}) or {}
     else:
         cloned_system_requirements = {}
-        cloned_instance_type, cloned_cluster_spec, cloned_fpga_driver, cloned_nvidia_driver = (
-            SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}))
+        cloned_instance_type, cloned_instance_type_selector, cloned_cluster_spec, cloned_fpga_driver, cloned_nvidia_driver = (
+            SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}), SystemRequirementsDict({}))
         cloned_system_requirements_by_executable = {}
 
     # convert runtime --instance-type into mapping {entrypoint:{'instanceType':xxx}}
     # here the args.instance_type no longer contains specifications for stage sys reqs
     if args.instance_type:
+        # Runtime --instance-type overrides instanceTypeSelector from the executable's runSpec
+        # When instanceType is specified at runtime, instanceTypeSelector should not be passed to the API
         requested_instance_type = SystemRequirementsDict.from_instance_type(args.instance_type)
         if not isinstance(args.instance_type, basestring):
             requested_instance_type = SystemRequirementsDict(merge(cloned_instance_type.as_dict(), requested_instance_type.as_dict()))
     else:
+        # If no runtime instanceType, use cloned instanceType (not instanceTypeSelector)
+        # instanceTypeSelector from the executable's runSpec will be resolved by the API
         requested_instance_type = cloned_instance_type
 
     # convert runtime --instance-count into mapping {entrypoint:{'clusterSpec':{'initialInstanceCount': N}}})
     if args.instance_count:
+        # Validate that we're not mixing clusterSpec with instanceTypeSelector
+        # clusterSpec and instanceTypeSelector are mutually exclusive at build time
+        # However, if instanceType is provided (either from runtime or cloned job), it overrides instanceTypeSelector
+        # So we only raise an error if instanceTypeSelector exists AND no instanceType override is present
+        if cloned_instance_type_selector.as_dict() and not requested_instance_type.as_dict():
+            raise DXCLIError("Cannot specify --instance-count when cloning a job that uses instanceTypeSelector "
+                            "without providing --instance-type. instanceTypeSelector and clusterSpec are mutually exclusive.")
         # retrieve the full cluster spec defined in executable's runSpec.systemRequirements
         # and overwrite the field initialInstanceCount with the runtime mapping
         requested_instance_count = SystemRequirementsDict.from_instance_count(args.instance_count)        
@@ -3232,8 +3244,11 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     requested_fpga_driver = cloned_fpga_driver
     requested_nvidia_driver = cloned_nvidia_driver
 
+
     # combine the requested instance type, full cluster spec, fpga spec, nvidia spec
     # into the runtime systemRequirements
+    # Note: instanceTypeSelector is NOT included here as it's build-time only
+    # If runtime instanceType was provided, it overrides instanceTypeSelector
     requested_system_requirements = (requested_instance_type + requested_cluster_spec + requested_fpga_driver +
                                      requested_nvidia_driver).as_dict()
 

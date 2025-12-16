@@ -222,6 +222,45 @@ def process_extra_args(args):
         except:
             raise DXParserError('Value given for --extra-args could not be parsed as JSON')
 
+        # Validate that instanceTypeSelector is not specified in systemRequirements
+        def check_system_requirements(sys_reqs, context="systemRequirements"):
+            if isinstance(sys_reqs, dict):
+                for entry_point, reqs in sys_reqs.items():
+                    if isinstance(reqs, dict) and 'instanceTypeSelector' in reqs:
+                        raise DXParserError(
+                            'instanceTypeSelector cannot be specified in runtime --extra-args. '
+                            'It can only be defined in the dxapp.json at build time.'
+                        )
+
+        if 'systemRequirements' in args.extra_args:
+            check_system_requirements(args.extra_args['systemRequirements'])
+
+        # Check systemRequirementsByExecutable (double-nested structure: executable -> entrypoint -> requirements)
+        if 'systemRequirementsByExecutable' in args.extra_args:
+            sys_reqs_by_exec = args.extra_args['systemRequirementsByExecutable']
+            if isinstance(sys_reqs_by_exec, dict):
+                for executable_id, entrypoints in sys_reqs_by_exec.items():
+                    if isinstance(entrypoints, dict):
+                        check_system_requirements(entrypoints, f"systemRequirementsByExecutable.{executable_id}")
+
+        # Also check regionalOptions
+        if 'regionalOptions' in args.extra_args:
+            regional_opts = args.extra_args['regionalOptions']
+            if isinstance(regional_opts, dict):
+                for region, region_spec in regional_opts.items():
+                    if isinstance(region_spec, dict):
+                        if 'systemRequirements' in region_spec:
+                            check_system_requirements(region_spec['systemRequirements'],
+                                                     f"regionalOptions.{region}.systemRequirements")
+                        # Also check systemRequirementsByExecutable within regionalOptions
+                        if 'systemRequirementsByExecutable' in region_spec:
+                            sys_reqs_by_exec = region_spec['systemRequirementsByExecutable']
+                            if isinstance(sys_reqs_by_exec, dict):
+                                for executable_id, entrypoints in sys_reqs_by_exec.items():
+                                    if isinstance(entrypoints, dict):
+                                        check_system_requirements(entrypoints,
+                                                                f"regionalOptions.{region}.systemRequirementsByExecutable.{executable_id}")
+
 exec_input_args = argparse.ArgumentParser(add_help=False)
 exec_input_args.add_argument('-i', '--input', help=fill('An input to be added using "<input name>[:<class>]=<input value>" (provide "class" if there is no input spec; it can be any job IO class, e.g. "string", "array:string", or "array"; if "class" is "array" or not specified, the value will be attempted to be parsed as JSON and is otherwise treated as a string)', width_adjustment=-24), action='append')
 exec_input_args.add_argument('-j', '--input-json', help=fill('The full input JSON (keys=input field names, values=input field values)', width_adjustment=-24))
