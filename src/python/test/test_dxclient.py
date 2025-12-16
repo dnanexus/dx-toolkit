@@ -3480,10 +3480,15 @@ dx-jobutil-add-output record_array $second_record --array
         cloned_job_id_3 = run(f"dx run --clone {origin_job_id} --instance-count 3 --instance-type mem2_hdd2_x4 --brief -y").strip()
         assert cloned_job_id_3.startswith("job-")
         cloned_job_desc_3 = dxpy.api.job_describe(cloned_job_id_3)
-        # Verify both instanceType and clusterSpec are present
+        # Verify instanceType override is applied
         assert "instanceType" in cloned_job_desc_3["systemRequirements"]["*"]
         assert cloned_job_desc_3["systemRequirements"]["*"]["instanceType"] == "mem2_hdd2_x4"
+        # Verify initialInstanceCount from --instance-count is present
+        # Note: Since the applet uses instanceTypeSelector and doesn't define a full clusterSpec,
+        # only initialInstanceCount will be present in clusterSpec
         assert "clusterSpec" in cloned_job_desc_3["systemRequirements"]["*"]
+        assert "initialInstanceCount" in cloned_job_desc_3["systemRequirements"]["*"]["clusterSpec"]
+        assert cloned_job_desc_3["systemRequirements"]["*"]["clusterSpec"]["initialInstanceCount"] == 3
 
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,

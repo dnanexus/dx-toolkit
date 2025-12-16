@@ -3244,12 +3244,6 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
     requested_fpga_driver = cloned_fpga_driver
     requested_nvidia_driver = cloned_nvidia_driver
 
-    # Validate mutual exclusivity: instanceTypeSelector and clusterSpec cannot coexist
-    # Note: instanceType can override instanceTypeSelector, so we only raise error if no instanceType is present
-    # instanceTypeSelector is build-time only and should never be in runtime systemRequirements
-    if cloned_instance_type_selector.as_dict() and requested_cluster_spec.as_dict() and not requested_instance_type.as_dict():
-        raise DXCLIError("Cannot combine clusterSpec with instanceTypeSelector without providing instanceType. "
-                        "instanceTypeSelector and clusterSpec are mutually exclusive.")
 
     # combine the requested instance type, full cluster spec, fpga spec, nvidia spec
     # into the runtime systemRequirements
