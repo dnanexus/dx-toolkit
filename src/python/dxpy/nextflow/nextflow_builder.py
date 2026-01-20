@@ -172,6 +172,11 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
         }
         if nf_type == "string" and nf_format in str_types:
             return str_types[nf_format]
+        elif isinstance(nf_type, list):
+            print(f'TEST: nf_type is: {nf_type}')
+            type_array = [get_dx_type(t) for t in nf_type if t != "null"]
+            print(f'TEST: type_array is: {type_array}')
+            return type_array[0] if len(type_array) == 1 else type_array
         elif nf_type in types:
             return types[nf_type]
         raise Exception("type {} is not supported by DNAnexus".format(nf_type))
