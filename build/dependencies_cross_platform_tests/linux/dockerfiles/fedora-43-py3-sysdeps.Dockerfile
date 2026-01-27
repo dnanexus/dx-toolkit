@@ -1,4 +1,4 @@
-FROM --platform=amd64 fedora:38
+FROM --platform=amd64 fedora:43
 
 SHELL ["/bin/bash", "-c"]
 ENV DXPY_TEST_PYTHON_VERSION=3
