@@ -1199,6 +1199,7 @@ def describe(args):
                 extra_fields.append('runSystemRequirementsByExecutable')
                 extra_fields.append('mergedSystemRequirementsByExecutable')
                 extra_fields.append('jobLogsForwardingStatus')
+                extra_fields.append('instanceTypeTransitions')
 
         if is_analysis_id(args.path):
             extra_fields.append('spotCostSavings')
@@ -1207,6 +1208,7 @@ def describe(args):
                 extra_fields.append('runSystemRequirementsByExecutable')
                 extra_fields.append('mergedSystemRequirementsByExecutable')
                 extra_fields.append('runStageSystemRequirements')
+                extra_fields.append('instanceTypeTransitions')
 
         if len(extra_fields) > 0:
             json_input['defaultFields'] = True
