@@ -6,7 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [403.0] - beta
+## [404.0] - beta
+
+### Added 
+
+* Nextflow assets now available in azure:uksouth-ofh
+
+### Fixed
+
+* Update to nextaur 1.11.2: Handle file with duplicate names
+
+## [403.0] - 2026.01.26
 
 * No significant changes
 

@@ -3298,6 +3298,46 @@ dx-jobutil-add-output record_array $second_record --array
         with self.assertSubprocessFailure(stderr_regexp='JSON', exit_code=3):
             run("dx run " + applet_id + " --extra-args not-a-JSON-string")
 
+    def test_dx_run_extra_args_instanceTypeSelector_rejected(self):
+        # Validate that instanceTypeSelector cannot be specified in runtime extra-args
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "14.04",
+                                                     "code": "echo 'hello'"}
+                                         })['id']
+
+        # Test with wildcard entry point
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"systemRequirements": {"*": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}\'')
+
+        # Test with specific entry point
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"systemRequirements": {"main": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}\'')
+
+        # Test with regionalOptions
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"regionalOptions": {"aws:us-east-1": {"systemRequirements": {"*": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}}}\'')
+
+        # Test with systemRequirementsByExecutable
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"systemRequirementsByExecutable": {"' + applet_id + '": {"main": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}}\'')
+
+        # Test with systemRequirementsByExecutable with wildcard entry point
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"systemRequirementsByExecutable": {"' + applet_id + '": {"*": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}}\'')
+
+        # Test with regionalOptions.systemRequirementsByExecutable
+        with self.assertSubprocessFailure(stderr_regexp='instanceTypeSelector cannot be specified in runtime', exit_code=3):
+            run('dx run ' + applet_id + ' --extra-args ' +
+                '\'{"regionalOptions": {"aws:us-east-1": {"systemRequirementsByExecutable": {"' + applet_id + '": {"main": {"instanceTypeSelector": {"allowedInstanceTypes": ["mem2_ssd1_v2_x2"]}}}}}}}\'')
+
     def test_dx_run_sys_reqs(self):
         app_spec = {"project": self.project,
                     "dxapi": "1.0.0",
@@ -3395,6 +3435,73 @@ dx-jobutil-add-output record_array $second_record --array
         cloned_job_id_nvidia_override = run(f"dx run --clone {origin_job_id_nvidia_override} --extra-args '{extra_args}' --brief -y").strip()
         cloned_job_desc = dxpy.api.job_describe(cloned_job_id_nvidia_override)
         assert cloned_job_desc["systemRequirements"]["*"]["nvidiaDriver"] == build_nvidia_version
+
+    def test_dx_run_clone_with_instance_type_selector(self):
+        """
+        Test that when cloning a job from an applet that uses instanceTypeSelector:
+        1. Cloning without runtime args works - instanceTypeSelector is preserved
+        2. Cloning with --instance-type works - runtime instanceType overrides instanceTypeSelector
+        3. Cloning with --instance-count fails - clusterSpec and instanceTypeSelector are mutually exclusive
+        4. Job description contains instanceTypeSelector in systemRequirements
+        """
+        # Create an applet with instanceTypeSelector
+        applet_id = dxpy.api.applet_new({"project": self.project,
+                                         "dxapi": "1.0.0",
+                                         "runSpec": {"interpreter": "bash",
+                                                     "distribution": "Ubuntu",
+                                                     "release": "20.04",
+                                                     "version": "0",
+                                                     "code": "echo 'hello'",
+                                                     "systemRequirements": {
+                                                         "*": {
+                                                             "instanceTypeSelector": {
+                                                                 "allowedInstanceTypes": ["mem1_ssd1_x2", "mem2_ssd1_x2"]
+                                                             }
+                                                         }
+                                                     }}
+                                         })['id']
+
+        # Run the applet to create the origin job
+        # The API will resolve instanceTypeSelector to an actual instanceType
+        origin_job_id = run(f"dx run {applet_id} --brief -y").strip().split('\n')[-1]
+
+        # Verify the origin job description contains instanceTypeSelector
+        origin_job_desc = dxpy.api.job_describe(origin_job_id)
+        assert "systemRequirements" in origin_job_desc
+        assert "*" in origin_job_desc["systemRequirements"]
+        assert "instanceTypeSelector" in origin_job_desc["systemRequirements"]["*"]
+        assert "allowedInstanceTypes" in origin_job_desc["systemRequirements"]["*"]["instanceTypeSelector"]
+
+        # Clone without runtime args - should work, instanceTypeSelector is preserved
+        cloned_job_id_1 = run(f"dx run --clone {origin_job_id} --brief -y").strip()
+        assert cloned_job_id_1.startswith("job-")
+        cloned_job_desc_1 = dxpy.api.job_describe(cloned_job_id_1)
+        # Verify instanceTypeSelector is in the cloned job's systemRequirements
+        assert "instanceTypeSelector" in cloned_job_desc_1["systemRequirements"]["*"]
+
+        # Clone with --instance-type - should work, runtime instanceType overrides instanceTypeSelector
+        cloned_job_id_2 = run(f"dx run --clone {origin_job_id} --instance-type mem2_hdd2_x4 --brief -y").strip()
+        assert cloned_job_id_2.startswith("job-")
+        cloned_job_desc_2 = dxpy.api.job_describe(cloned_job_id_2)
+        # Verify instanceType is used instead of instanceTypeSelector
+        assert "instanceType" in cloned_job_desc_2["systemRequirements"]["*"]
+        assert cloned_job_desc_2["systemRequirements"]["*"]["instanceType"] == "mem2_hdd2_x4"
+        # instanceTypeSelector should not be in the runtime systemRequirements when overridden
+        # TODO uncomment later - for now this is not included in the backend behaviour
+        # assert "instanceTypeSelector" not in cloned_job_desc_2["systemRequirements"]["*"]
+
+        # Clone with --instance-count alone - should fail (clusterSpec and instanceTypeSelector are mutually exclusive)
+        with self.assertSubprocessFailure(stderr_regexp='Cannot specify --instance-count.*instanceTypeSelector.*without providing --instance-type', exit_code=3):
+            run(f"dx run --clone {origin_job_id} --instance-count 3 --brief -y")
+
+        # Clone with both --instance-count and --instance-type - should work (instanceType overrides instanceTypeSelector)
+        cloned_job_id_3 = run(f"dx run --clone {origin_job_id} --instance-count 3 --instance-type mem2_hdd2_x4 --brief -y").strip()
+        assert cloned_job_id_3.startswith("job-")
+        cloned_job_desc_3 = dxpy.api.job_describe(cloned_job_id_3)
+        # Verify instanceType override is applied
+        assert "instanceType" in cloned_job_desc_3["systemRequirements"]["*"]
+        assert cloned_job_desc_3["systemRequirements"]["*"]["instanceType"] == "mem2_hdd2_x4"
+        # Note: When the applet's runSpec doesn't have a clusterSpec defined (only instanceTypeSelector)
 
     def test_dx_run_clone(self):
         applet_id = dxpy.api.applet_new({"project": self.project,
