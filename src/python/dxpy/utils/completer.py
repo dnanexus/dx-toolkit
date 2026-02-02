@@ -627,7 +627,6 @@ class InstanceTypesCompleter():
 
               InstanceTypeSpec('mem1_hdd2_x1', 1, 1.7, 160),
               InstanceTypeSpec('mem1_hdd2_x8', 8, 7.0, 1680),
-              InstanceTypeSpec('mem1_hdd2_x32', 32, 60.5, 3360),
 
               InstanceTypeSpec('mem2_hdd2_x1', 1, 3.8, 410),
               InstanceTypeSpec('mem2_hdd2_x2', 2, 7.5, 840),
