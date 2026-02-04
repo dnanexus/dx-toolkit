@@ -128,6 +128,45 @@ parser_categories = {"all": {"desc": "\t\tAll commands",
                      "other": {"desc": "\t\tMiscellaneous advanced utilities",
                                "cmds": []}}
 
+# Verbose-only fields for jobs and analyses
+# These fields are only included in describe output when --verbose flag is used
+VERBOSE_ONLY_JOB_FIELDS = [
+    'internetUsageIPs',
+    'runSystemRequirements',
+    'runSystemRequirementsByExecutable',
+    'mergedSystemRequirementsByExecutable',
+    'jobLogsForwardingStatus',
+    'instanceTypeTransitions'
+]
+
+VERBOSE_ONLY_ANALYSIS_FIELDS = [
+    'runSystemRequirements',
+    'runSystemRequirementsByExecutable',
+    'mergedSystemRequirementsByExecutable',
+    'runStageSystemRequirements',
+    'instanceTypeTransitions'
+]
+
+def filter_verbose_fields(description, entity_id):
+    """
+    Filter out verbose-only fields from a job or analysis description.
+
+    Args:
+        description (dict): The entity description to filter
+        entity_id (str): The entity ID to determine if it's a job or analysis
+
+    Returns:
+        dict: Filtered description without verbose-only fields
+    """
+    if is_job_id(entity_id):
+        verbose_fields = VERBOSE_ONLY_JOB_FIELDS
+    elif is_analysis_id(entity_id):
+        verbose_fields = VERBOSE_ONLY_ANALYSIS_FIELDS
+    else:
+        return description
+
+    return {k: v for k, v in description.items() if k not in verbose_fields}
+
 class ResultCounter():
     def __init__(self):
         self.counter = 0
@@ -1194,19 +1233,14 @@ def describe(args):
         if is_job_id(args.path):
             extra_fields.append('spotCostSavings')
             if args.verbose:
-                extra_fields.append('internetUsageIPs')
-                extra_fields.append('runSystemRequirements')
-                extra_fields.append('runSystemRequirementsByExecutable')
-                extra_fields.append('mergedSystemRequirementsByExecutable')
-                extra_fields.append('jobLogsForwardingStatus')
+                for field in VERBOSE_ONLY_JOB_FIELDS:
+                    extra_fields.append(field)
 
         if is_analysis_id(args.path):
             extra_fields.append('spotCostSavings')
             if args.verbose:
-                extra_fields.append('runSystemRequirements')
-                extra_fields.append('runSystemRequirementsByExecutable')
-                extra_fields.append('mergedSystemRequirementsByExecutable')
-                extra_fields.append('runStageSystemRequirements')
+                for field in VERBOSE_ONLY_ANALYSIS_FIELDS:
+                    extra_fields.append(field)
 
         if len(extra_fields) > 0:
             json_input['defaultFields'] = True
@@ -1288,7 +1322,11 @@ def describe(args):
                     default_analysis_desc = dxpy.DXAnalysis(result['id']).describe()
                     result['describe'].update(default_analysis_desc)
                 if args.json:
-                    json_output.append(result['describe'])
+                    # Filter out verbose-only fields for jobs and analyses when not in verbose mode
+                    desc_output = result['describe']
+                    if not args.verbose:
+                        desc_output = filter_verbose_fields(desc_output, result['id'])
+                    json_output.append(desc_output)
                 elif args.name:
                     print(result['describe']['name'])
                 else:
