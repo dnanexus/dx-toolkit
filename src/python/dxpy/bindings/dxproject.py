@@ -424,12 +424,6 @@ class DXProject(DXContainer):
         if restricted is not None:
             update_hash["restricted"] = restricted
         if download_restricted is not None:
-            # Change previewViewerRestricted to False when download_restricted is set to False.
-            # 2 different API calls are needed because both keys cannot be set in the same call.
-            if download_restricted == False:
-                new_hash = {}
-                new_hash["previewViewerRestricted"] = False
-                dxpy.api.project_update(self._dxid, new_hash, **kwargs)
             update_hash["downloadRestricted"] = download_restricted
         if version is not None:
             update_hash["version"] = version
