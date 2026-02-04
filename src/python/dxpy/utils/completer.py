@@ -21,6 +21,7 @@ dx for tab-completion, resolving naming conflicts, etc.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 import sys
+from typing import Union
 
 from argcomplete import warn
 from collections import namedtuple, OrderedDict
@@ -659,11 +660,71 @@ class InstanceTypesCompleter():
 
     instance_type_names = instance_types.keys()
 
+    @classmethod
+    def get_project_instance_types(cls, project_id: str) -> OrderedDict[str, Union["InstanceTypeSpec", "GpuInstanceTypeSpec", "FpgaInstanceTypeSpec"]]:
+        project = dxpy.api.project_describe(project_id, input_params={"fields": {"availableInstanceTypes": True}})
+        avail_itypes = project.get("availableInstanceTypes", {})
+
+        ret = OrderedDict()
+        for name, details in avail_itypes.items():
+            if 'fpga' in name:
+                itype = cls.FpgaInstanceTypeSpec(
+                    Name=name,
+                    CPU_Cores=details['numCores'],
+                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
+                    Storage_GB=details['ephemeralStorageGB'],
+                    # TODO: populate FPGA type/name from api result when available
+                    FPGA=None
+                )
+            elif 'azure:' in name:
+                itype = cls.InstanceTypeSpec(
+                    Name=name,
+                    CPU_Cores=details['numCores'],
+                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
+                    Storage_GB=details['ephemeralStorageGB']    
+                )
+            elif 'gpu' in name:
+                itype = cls.GpuInstanceTypeSpec(
+                    Name=name,
+                    CPU_Cores=details['numCores'],
+                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
+                    Storage_GB=details['ephemeralStorageGB'],
+                    # TODO: populate GPU type/name from api result when available
+                    GPU=None,
+                    # TODO: populate GPU memory from api result when available
+                    GPU_Memory_GiB=None
+                )
+            else:
+                itype = cls.InstanceTypeSpec(
+                    Name=name,
+                    CPU_Cores=details['numCores'],
+                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
+                    Storage_GB=details['ephemeralStorageGB']
+                )
+            ret[name] = itype
+        
+        return ret
+
     def complete(self, text, state):
         try:
             return self.instance_type_names[state]
         except IndexError:
             return None
 
-    def __call__(self, prefix, parsed_args, **kwargs):
-        return [name for name in self.instance_type_names if name.startswith(prefix)]
+    def __call__(self, prefix, parsed_args, **kwargs) -> list[str]:
+        project = None
+        if hasattr(parsed_args, 'project'):
+            project = parsed_args.project
+        elif dxpy.PROJECT_CONTEXT_ID is not None:
+            project = dxpy.PROJECT_CONTEXT_ID
+        
+        instance_types = self.instance_types
+        if project is not None:
+            try:
+                instance_types = self.get_project_instance_types(project)
+            except dxpy.exceptions.DXAPIError:
+                # Fall back to hard-coded instance types
+                pass
+        instance_names = list(instance_types.keys())
+        
+        return [name for name in instance_names if name.startswith(prefix)]
