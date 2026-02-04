@@ -6,7 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [404.0] - beta
+## [405.0] - beta
+
+* No significant changes
+
+## [404.0] - 2026.02.04
 
 ### Added 
 
