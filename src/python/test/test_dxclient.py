@@ -2353,10 +2353,19 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         analysis_desc_verbose_json = run("dx describe {} --verbose --json".format(dxanalysis.get_id()))
         self.assertTrue(all(key in analysis_desc_verbose for key in ["Run Sys Reqs", "Run Sys Reqs by Exec", "Merged Sys Reqs By Exec", "Run Stage Sys Reqs"]))
         self.assertTrue(all(key in analysis_desc_verbose for key in ["ID", "Job name", "Executable name", "Class", "Workspace", "Project context"]))
-        self.assertFalse(any(key in json.loads(analysis_desc_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        # Verify verbose-only fields are not present in non-verbose JSON output
+        verbose_only_fields = ['runSystemRequirements', 'runSystemRequirementsByExecutable',
+                              'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements',
+                              'instanceTypeTransitions']
+        self.assertFalse(any(key in json.loads(analysis_desc_json) for key in verbose_only_fields))
         self.assertTrue(all(key in json.loads(analysis_desc_json) for key in ['id','name','executable','class','workspace','project']))
-        self.assertTrue(all(key in json.loads(analysis_desc_verbose_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
-        self.assertTrue(all(key in json.loads(analysis_desc_verbose_json) for key in ['id','name','executable','class','workspace','project']))
+        # Verify verbose-only fields ARE present in verbose JSON output
+        verbose_json_desc = json.loads(analysis_desc_verbose_json)
+        self.assertTrue(all(key in verbose_json_desc for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
+        self.assertTrue(all(key in verbose_json_desc for key in ['id','name','executable','class','workspace','project']))
+        # instanceTypeTransitions may not be present if the analysis hasn't transitioned, but if it is, it should only be in verbose output
+        if 'instanceTypeTransitions' in verbose_json_desc:
+            self.assertNotIn('instanceTypeTransitions', json.loads(analysis_desc_json))
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping test that would run jobs')
@@ -2369,8 +2378,17 @@ class TestDXClientDescribe(DXTestCaseBuildWorkflows):
         job_desc_json = run("dx describe {} --json".format(dxjob.get_id()))
         job_desc_verbose_json = run("dx describe {} --verbose --json".format(dxjob.get_id()))
         self.assertTrue(all(key in job_desc_verbose for key in ["Run Sys Reqs", "Run Sys Reqs by Exec", "Merged Sys Reqs By Exec"]))
-        self.assertFalse(any(key in json.loads(job_desc_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements']))
-        self.assertTrue(all(key in json.loads(job_desc_verbose_json) for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable']))
+        # Verify verbose-only fields are not present in non-verbose JSON output
+        verbose_only_fields = ['runSystemRequirements', 'runSystemRequirementsByExecutable',
+                              'mergedSystemRequirementsByExecutable', 'runStageSystemRequirements',
+                              'instanceTypeTransitions', 'internetUsageIPs', 'jobLogsForwardingStatus']
+        self.assertFalse(any(key in json.loads(job_desc_json) for key in verbose_only_fields))
+        # Verify verbose-only fields ARE present in verbose JSON output (if they exist in the response)
+        verbose_json_desc = json.loads(job_desc_verbose_json)
+        self.assertTrue(all(key in verbose_json_desc for key in ['runSystemRequirements', 'runSystemRequirementsByExecutable', 'mergedSystemRequirementsByExecutable']))
+        # instanceTypeTransitions may not be present if the job hasn't transitioned, but if it is, it should only be in verbose output
+        if 'instanceTypeTransitions' in verbose_json_desc:
+            self.assertNotIn('instanceTypeTransitions', json.loads(job_desc_json))
 
 class TestDXClientRun(DXTestCase):
     def setUp(self):
