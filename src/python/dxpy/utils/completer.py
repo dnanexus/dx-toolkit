@@ -21,6 +21,7 @@ dx for tab-completion, resolving naming conflicts, etc.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 import sys
+from typing import Union
 
 from argcomplete import warn
 from collections import namedtuple, OrderedDict
@@ -563,9 +564,6 @@ class InstanceTypesCompleter():
               GpuInstanceTypeSpec('mem3_ssd1_gpu1_x16', 16, 128.0, 600, '1 NVIDIA L4', 24.0),
               GpuInstanceTypeSpec('mem3_ssd1_gpu1_x32', 32, 256.0, 900, '1 NVIDIA L4', 24.0),
 
-              GpuInstanceTypeSpec('mem3_ssd1_gpu_x8', 8, 61.0, 160, '1 NVIDIA V100', 16.0),
-              GpuInstanceTypeSpec('mem3_ssd1_gpu_x32', 32, 244.0, 640, '4 NVIDIA V100', 64.0),
-              GpuInstanceTypeSpec('mem3_ssd1_gpu_x64', 64, 488.0, 1280, '8 NVIDIA V100', 128.0),
               GpuInstanceTypeSpec('azure:mem3_ssd2_gpu4_x64', 64, 488.0, 2048, '4 NVIDIA V100', 64.0)):
         gpu_instance_types[i.Name] = i
 
@@ -627,7 +625,6 @@ class InstanceTypesCompleter():
 
               InstanceTypeSpec('mem1_hdd2_x1', 1, 1.7, 160),
               InstanceTypeSpec('mem1_hdd2_x8', 8, 7.0, 1680),
-              InstanceTypeSpec('mem1_hdd2_x32', 32, 60.5, 3360),
 
               InstanceTypeSpec('mem2_hdd2_x1', 1, 3.8, 410),
               InstanceTypeSpec('mem2_hdd2_x2', 2, 7.5, 840),
@@ -659,11 +656,71 @@ class InstanceTypesCompleter():
 
     instance_type_names = instance_types.keys()
 
+    @classmethod
+    def get_project_instance_types(cls, project_id: str) -> OrderedDict[str, Union["InstanceTypeSpec", "GpuInstanceTypeSpec", "FpgaInstanceTypeSpec"]]:
+        project = dxpy.api.project_describe(project_id, input_params={"fields": {"availableInstanceTypes": True}})
+        avail_itypes = project.get("availableInstanceTypes", {})
+
+        ret = OrderedDict()
+        for name, details in avail_itypes.items():
+            if 'fpga' in name:
+                itype = cls.FpgaInstanceTypeSpec(
+                    Name=name,
+                    CPU_Cores=details['numCores'],
+                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
+                    Storage_GB=details['ephemeralStorageGB'],
+                    # TODO: populate FPGA type/name from api result when available
+                    FPGA=None
+                )
+            elif 'azure:' in name:
+                itype = cls.InstanceTypeSpec(
+                    Name=name,
+                    CPU_Cores=details['numCores'],
+                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
+                    Storage_GB=details['ephemeralStorageGB']    
+                )
+            elif 'gpu' in name:
+                itype = cls.GpuInstanceTypeSpec(
+                    Name=name,
+                    CPU_Cores=details['numCores'],
+                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
+                    Storage_GB=details['ephemeralStorageGB'],
+                    # TODO: populate GPU type/name from api result when available
+                    GPU=None,
+                    # TODO: populate GPU memory from api result when available
+                    GPU_Memory_GiB=None
+                )
+            else:
+                itype = cls.InstanceTypeSpec(
+                    Name=name,
+                    CPU_Cores=details['numCores'],
+                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
+                    Storage_GB=details['ephemeralStorageGB']
+                )
+            ret[name] = itype
+        
+        return ret
+
     def complete(self, text, state):
         try:
             return self.instance_type_names[state]
         except IndexError:
             return None
 
-    def __call__(self, prefix, parsed_args, **kwargs):
-        return [name for name in self.instance_type_names if name.startswith(prefix)]
+    def __call__(self, prefix, parsed_args, **kwargs) -> list[str]:
+        project = None
+        if hasattr(parsed_args, 'project'):
+            project = parsed_args.project
+        elif dxpy.PROJECT_CONTEXT_ID is not None:
+            project = dxpy.PROJECT_CONTEXT_ID
+        
+        instance_types = self.instance_types
+        if project is not None:
+            try:
+                instance_types = self.get_project_instance_types(project)
+            except dxpy.exceptions.DXAPIError:
+                # Fall back to hard-coded instance types
+                pass
+        instance_names = list(instance_types.keys())
+        
+        return [name for name in instance_names if name.startswith(prefix)]
