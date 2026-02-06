@@ -528,7 +528,7 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('azure:mem4_ssd1_x4', 4, 56.0, 128),
               InstanceTypeSpec('azure:mem4_ssd1_x8', 8, 112.0, 256),
               InstanceTypeSpec('azure:mem4_ssd1_x16', 16, 224.0, 512),
-              InstanceTypeSpec('azure:mem4_ssd1_x32', 32, 448.0, 1024),
+              InstanceTypeSpec('azure:mem4_ssd1_x32', 32, 448.0, 2048),
 
               InstanceTypeSpec('azure:mem5_ssd2_x64', 64, 1792.0, 8192),
               InstanceTypeSpec('azure:mem5_ssd2_x128', 128, 3892.0, 16384)):
@@ -566,7 +566,7 @@ class InstanceTypesCompleter():
               GpuInstanceTypeSpec('mem3_ssd1_gpu_x8', 8, 61.0, 160, '1 NVIDIA V100', 16.0),
               GpuInstanceTypeSpec('mem3_ssd1_gpu_x32', 32, 244.0, 640, '4 NVIDIA V100', 64.0),
               GpuInstanceTypeSpec('mem3_ssd1_gpu_x64', 64, 488.0, 1280, '8 NVIDIA V100', 128.0),
-              GpuInstanceTypeSpec('azure:mem3_ssd2_gpu4_x64', 64, 488.0, 2048, '4 NVIDIA V100', 64.0)):
+              GpuInstanceTypeSpec('azure:mem3_ssd2_gpu4_x64', 64, 448.0, 2048, '4 NVIDIA T4', 64.0)):
         gpu_instance_types[i.Name] = i
 
     fpga_instance_types = OrderedDict()
