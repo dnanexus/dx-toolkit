@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Azure instance type annotations corrected: `azure:mem4_ssd1_x32` storage (1024 GB → 2048 GB) and `azure:mem3_ssd2_gpu4_x64` memory (488.0 GiB → 448.0 GiB) and GPU model (NVIDIA V100 → NVIDIA T4)
+
 ## [405.0] - beta
 
 * No significant changes
