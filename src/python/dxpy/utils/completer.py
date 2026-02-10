@@ -21,6 +21,7 @@ dx for tab-completion, resolving naming conflicts, etc.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 import sys
+import re
 from typing import Union
 
 from argcomplete import warn
@@ -665,25 +666,22 @@ class InstanceTypesCompleter():
         project = dxpy.api.project_describe(project_id, input_params={"fields": {"availableInstanceTypes": True}})
         avail_itypes = project.get("availableInstanceTypes", {})
 
+        std_aws_itype_pat = re.compile(r'^mem\d+_ssd\d+_v\d+_x\d+$', re.IGNORECASE)
+        std_azure_itype_pat = re.compile(r'^azure:mem\d+_ssd\d+_x\d+$', re.IGNORECASE)
+        std_oci_itype_pat = re.compile(r'^oci:mem\d+_ssd\d+_v\d+i_x\d+$', re.IGNORECASE)
+        gpu_itype_pat = re.compile(r'^(azure:|oci:|)mem\d+_ssd\d+_gpu\d+(_v\d+)?_x\d+$', re.IGNORECASE)
+        fpga_itype_pat = re.compile(r'^mem\d+_ssd\d+_fpga(?P<fpga_version>\d+)_x\d+$', re.IGNORECASE)
+
         ret = OrderedDict()
         for name, details in avail_itypes.items():
-            if 'fpga' in name:
-                itype = cls.FpgaInstanceTypeSpec(
-                    Name=name,
-                    CPU_Cores=details['numCores'],
-                    Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
-                    Storage_GB=details['ephemeralStorageGB'],
-                    # TODO: populate FPGA type/name from api result when available
-                    FPGA=None
-                )
-            elif 'azure:' in name:
+            if (re.match(std_aws_itype_pat, name) or re.match(std_azure_itype_pat, name) or re.match(std_oci_itype_pat, name)):
                 itype = cls.InstanceTypeSpec(
                     Name=name,
                     CPU_Cores=details['numCores'],
                     Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
                     Storage_GB=details['ephemeralStorageGB']    
                 )
-            elif 'gpu' in name:
+            elif re.match(gpu_itype_pat, name):
                 itype = cls.GpuInstanceTypeSpec(
                     Name=name,
                     CPU_Cores=details['numCores'],
@@ -694,13 +692,17 @@ class InstanceTypesCompleter():
                     # TODO: populate GPU memory from api result when available
                     GPU_Memory_GiB=None
                 )
-            else:
-                itype = cls.InstanceTypeSpec(
+            elif m := re.match(fpga_itype_pat, name):
+                itype = cls.FpgaInstanceTypeSpec(
                     Name=name,
                     CPU_Cores=details['numCores'],
                     Memory_GiB=round(details['totalMemoryMB'] / 1024, 1),
-                    Storage_GB=details['ephemeralStorageGB']
+                    Storage_GB=details['ephemeralStorageGB'],
+                    FPGA=m.group('fpga_version')
                 )
+            else:
+                # Unknown instance type format; skip
+                continue
             ret[name] = itype
         
         return ret
@@ -713,10 +715,13 @@ class InstanceTypesCompleter():
 
     def __call__(self, prefix, parsed_args, **kwargs) -> list[str]:
         project = None
-        if hasattr(parsed_args, 'project'):
+        
+        if hasattr(parsed_args, 'project') and parsed_args.project is not None and parsed_args.project.startswith('project-'):
             project = parsed_args.project
-        elif dxpy.PROJECT_CONTEXT_ID is not None:
+        elif dxpy.PROJECT_CONTEXT_ID and dxpy.PROJECT_CONTEXT_ID.startswith('project-'):
             project = dxpy.PROJECT_CONTEXT_ID
+        elif dxpy.WORKSPACE_ID and dxpy.WORKSPACE_ID.startswith('project-'):
+            project = dxpy.WORKSPACE_ID
         
         instance_types = self.instance_types
         if project is not None:
