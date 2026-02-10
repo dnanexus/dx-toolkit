@@ -370,6 +370,9 @@ array:boolean  array:int      boolean        hash           string''')
     print(BOLD('Common Azure instance types:'))
     print(format_table(InstanceTypesCompleter.azure_preferred_instance_types.values(),
                        column_names=list(InstanceTypesCompleter.azure_preferred_instance_types.values())[0]._fields))
+    print(BOLD('Common OCI instance types:'))
+    print(format_table(InstanceTypesCompleter.oci_preferred_instance_types.values(),
+                       column_names=list(InstanceTypesCompleter.oci_preferred_instance_types.values())[0]._fields))
     print(fill(BOLD('Default instance type:') + ' The instance type you select here will apply to all entry points in ' +
                'your app unless you override it. See ' +
                BOLD('https://documentation.dnanexus.com/developer/api/running-analyses/instance-types') + ' for more information.'))

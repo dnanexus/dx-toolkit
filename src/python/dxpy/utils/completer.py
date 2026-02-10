@@ -536,6 +536,46 @@ class InstanceTypesCompleter():
               InstanceTypeSpec('azure:mem5_ssd2_x128', 128, 3892.0, 16384)):
         azure_preferred_instance_types[i.Name] = i
 
+    # OCI
+    oci_preferred_instance_types = OrderedDict()
+    for i in (InstanceTypeSpec('oci:mem1_ssd1_v3i_x2', 2, 3.9, 50),
+              InstanceTypeSpec('oci:mem1_ssd1_v3i_x4', 4, 7.8, 100),
+              InstanceTypeSpec('oci:mem1_ssd1_v3i_x8', 8, 15.6, 200),
+              InstanceTypeSpec('oci:mem1_ssd1_v3i_x16', 16, 31.3, 400),
+              InstanceTypeSpec('oci:mem1_ssd1_v3i_x36', 36, 70.3, 900),
+
+              InstanceTypeSpec('oci:mem1_ssd2_v3i_x2', 2, 3.9, 160),
+              InstanceTypeSpec('oci:mem1_ssd2_v3i_x4', 4, 7.8, 320),
+              InstanceTypeSpec('oci:mem1_ssd2_v3i_x8', 8, 15.6, 640),
+              InstanceTypeSpec('oci:mem1_ssd2_v3i_x16', 16, 31.3, 1280),
+              InstanceTypeSpec('oci:mem1_ssd2_v3i_x36', 36, 70.3, 2880),
+
+              InstanceTypeSpec('oci:mem2_ssd1_v3i_x2', 2, 7.8, 75),
+              InstanceTypeSpec('oci:mem2_ssd1_v3i_x4', 4, 15.6, 150),
+              InstanceTypeSpec('oci:mem2_ssd1_v3i_x8', 8, 31.3, 300),
+              InstanceTypeSpec('oci:mem2_ssd1_v3i_x16', 16, 62.5, 600),
+              InstanceTypeSpec('oci:mem2_ssd1_v3i_x32', 32, 125.0, 1200),
+
+              InstanceTypeSpec('oci:mem3_ssd1_v3i_x2', 2, 15.6, 75),
+              InstanceTypeSpec('oci:mem3_ssd1_v3i_x4', 4, 31.3, 150),
+              InstanceTypeSpec('oci:mem3_ssd1_v3i_x8', 8, 62.5, 300),
+              InstanceTypeSpec('oci:mem3_ssd1_v3i_x16', 16, 125.0, 600),
+              InstanceTypeSpec('oci:mem3_ssd1_v3i_x32', 32, 250.0, 1200),
+
+              InstanceTypeSpec('oci:mem3_ssd2_v3i_x2', 2, 15.6, 475),
+              InstanceTypeSpec('oci:mem3_ssd2_v3i_x4', 4, 31.3, 950),
+              InstanceTypeSpec('oci:mem3_ssd2_v3i_x8', 8, 62.5, 1900),
+              InstanceTypeSpec('oci:mem3_ssd2_v3i_x16', 16, 125.0, 3800),
+              InstanceTypeSpec('oci:mem3_ssd2_v3i_x32', 32, 250.0, 7600),
+
+              InstanceTypeSpec('oci:mem3_ssd3_v3i_x2', 2, 15.6, 1250),
+              InstanceTypeSpec('oci:mem3_ssd3_v3i_x4', 4, 31.3, 2500),
+              InstanceTypeSpec('oci:mem3_ssd3_v3i_x8', 8, 62.5, 5000),
+              InstanceTypeSpec('oci:mem3_ssd3_v3i_x12', 12, 93.8, 7500),
+              InstanceTypeSpec('oci:mem3_ssd3_v3i_x24', 24, 187.5, 15000),
+              InstanceTypeSpec('oci:mem3_ssd3_v3i_x32', 32, 250.0, 20000)):
+        oci_preferred_instance_types[i.Name] = i
+
     gpu_instance_types = OrderedDict()
     for i in (GpuInstanceTypeSpec('mem2_ssd1_gpu_x16', 16, 64.0, 225, '1 NVIDIA T4', 16.0),
               GpuInstanceTypeSpec('mem2_ssd1_gpu_x32', 32, 128.0, 900, '1 NVIDIA T4', 16.0),
@@ -565,7 +605,14 @@ class InstanceTypesCompleter():
               GpuInstanceTypeSpec('mem3_ssd1_gpu1_x16', 16, 128.0, 600, '1 NVIDIA L4', 24.0),
               GpuInstanceTypeSpec('mem3_ssd1_gpu1_x32', 32, 256.0, 900, '1 NVIDIA L4', 24.0),
 
-              GpuInstanceTypeSpec('azure:mem3_ssd2_gpu4_x64', 64, 488.0, 2048, '4 NVIDIA V100', 64.0)):
+              GpuInstanceTypeSpec('azure:mem3_ssd2_gpu4_x64', 64, 488.0, 2048, '4 NVIDIA V100', 64.0),
+
+              GpuInstanceTypeSpec('oci:mem2_ssd1_GPU_v2_x24', 24, 70.3, 480, '1 NVIDIA P100', 16.0),
+              GpuInstanceTypeSpec('oci:mem3_ssd1_GPU_v3_x12', 12, 87.9, 240, '1 NVIDIA V100', 16.0),
+              GpuInstanceTypeSpec('oci:mem3_ssd1_GPU_v3_x24', 24, 175.8, 480, '2 NVIDIA V100', 32.0),
+              GpuInstanceTypeSpec('oci:mem3_ssd1_GPU_v3_x48', 48, 351.6, 960, '4 NVIDIA V100', 64.0),
+              GpuInstanceTypeSpec('oci:mem3_ssd2_GPU_vA10_x30', 30, 234.4, 960, '1 NVIDIA A10', 24.0),
+              GpuInstanceTypeSpec('oci:mem3_ssd2_GPU_vA10_x60', 60, 468.8, 1920, '2 NVIDIA A10', 48.0)):
         gpu_instance_types[i.Name] = i
 
     fpga_instance_types = OrderedDict()
@@ -648,6 +695,7 @@ class InstanceTypesCompleter():
     standard_instance_types = OrderedDict()
     standard_instance_types.update(aws_preferred_instance_types)
     standard_instance_types.update(azure_preferred_instance_types)
+    standard_instance_types.update(oci_preferred_instance_types)
     standard_instance_types.update(aws_other_instance_types)
 
     instance_types = OrderedDict()
