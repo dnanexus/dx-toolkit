@@ -41,6 +41,7 @@ except:
 IO_NAME_PATTERN = re.compile('^[a-zA-Z_][0-9a-zA-Z_]*$')
 DEFAULT_REGION_AWS = 'aws:us-east-1'
 DEFAULT_REGION_AZURE = 'azure:westus'
+DEFAULT_REGION_OCI = 'oci:us-ashburn-1'
 API_VERSION = '1.0.0'
 
 parser = argparse.ArgumentParser(description="Create a source code directory for a DNAnexus app.  You will be prompted for various metadata for the app as well as for its input and output specifications.")
@@ -384,6 +385,8 @@ array:boolean  array:int      boolean        hash           string''')
     target_region = DEFAULT_REGION_AWS
     if instance_type in InstanceTypesCompleter.azure_preferred_instance_types.keys():
         target_region = DEFAULT_REGION_AZURE
+    elif instance_type in InstanceTypesCompleter.oci_preferred_instance_types.keys():
+        target_region = DEFAULT_REGION_OCI
 
     app_json['regionalOptions'] = OrderedDict({})
     app_json['regionalOptions'][target_region] = OrderedDict({})
