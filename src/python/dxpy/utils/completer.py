@@ -709,7 +709,12 @@ class InstanceTypesCompleter():
 
     def complete(self, text, state):
         try:
-            return self.instance_type_names[state]
+            filtered = list(filter(lambda name: name.startswith(text), self.instance_type_names))
+            if state < len(filtered):
+                return filtered[state]
+            else:
+                # fallback to unfiltered list
+                return self.instance_type_names[state]
         except IndexError:
             return None
 
