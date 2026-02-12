@@ -152,6 +152,21 @@ class AppInternalError(DXError):
     through the DNAnexus API.
     '''
 
+class AppInsufficientResourceError(AppInternalError):
+    '''
+    Exception to be raised while using :mod:`dxpy` inside DNAnexus execution
+    containers when a job fails due to insufficient resources (e.g., out of
+    memory, storage).
+
+    This exception is a subclass of :class:`AppInternalError` and is intended
+    to provide a specific error type for resource-related failures, allowing
+    job viewers to immediately understand the failure cause. Like its parent
+    class, this exception will cause the Python execution template to write
+    exception information into the file ``job_error.json`` in the current
+    working directory, allowing reporting of the error state through the
+    DNAnexus API.
+    '''
+
 class DXCLIError(DXError):
     '''
     Exception class for generic errors in the command-line client
