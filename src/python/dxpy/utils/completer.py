@@ -710,11 +710,11 @@ class InstanceTypesCompleter():
         project = dxpy.api.project_describe(project_id, input_params={"fields": {"availableInstanceTypes": True}})
         avail_itypes = project.get("availableInstanceTypes", {})
 
-        std_aws_itype_pat = re.compile(r'^mem\d+_ssd\d+_v\d+_x\d+$', re.IGNORECASE)
-        std_azure_itype_pat = re.compile(r'^azure:mem\d+_ssd\d+_x\d+$', re.IGNORECASE)
-        std_oci_itype_pat = re.compile(r'^oci:mem\d+_ssd\d+_v\d+i_x\d+$', re.IGNORECASE)
-        gpu_itype_pat = re.compile(r'^(azure:|oci:|)mem\d+_ssd\d+_gpu\d+(_v\d+)?_x\d+$', re.IGNORECASE)
-        fpga_itype_pat = re.compile(r'^mem\d+_ssd\d+_fpga(?P<fpga_version>\d+)_x\d+$', re.IGNORECASE)
+        std_aws_itype_pat = re.compile(r'^mem(?!.*gpu)(?!.*fpga).*', re.IGNORECASE)
+        std_azure_itype_pat = re.compile(r'^azure:mem(?!.*gpu)(?!.*fpga).*', re.IGNORECASE)
+        std_oci_itype_pat = re.compile(r'^oci:mem(?!.*gpu)(?!.*fpga).*', re.IGNORECASE)
+        gpu_itype_pat = re.compile(r'.*_gpu.*', re.IGNORECASE)
+        fpga_itype_pat = re.compile(r'.*_fpga(?P<fpga_version>\d+).*', re.IGNORECASE)
 
         ret = OrderedDict()
         for name, details in avail_itypes.items():
