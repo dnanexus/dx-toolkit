@@ -701,7 +701,7 @@ class InstanceTypesCompleter():
     instance_types.update(gpu_instance_types)
     instance_types.update(fpga_instance_types)
 
-    instance_type_names = instance_types.keys()
+    instance_type_names = list(instance_types.keys())
 
     def complete(self, text, state):
         try:
