@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Java SDK: add `failureCounts` and `try` fields to DXJob
+
 ### Fixed
 
 * Azure instance type annotations corrected: `azure:mem4_ssd1_x32` storage (1024 GB → 2048 GB) and `azure:mem3_ssd2_gpu4_x64` memory (488.0 GiB → 448.0 GiB) and GPU model (NVIDIA V100 → NVIDIA T4)
@@ -20,7 +24,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## [404.0] - 2026.02.04
 
-### Added 
+### Added
 
 * Nextflow assets now available in azure:uksouth-ofh
 
