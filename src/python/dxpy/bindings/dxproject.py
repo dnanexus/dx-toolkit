@@ -371,7 +371,8 @@ class DXProject(DXContainer):
                allowed_executables=None, unset_allowed_executables=None,
                database_ui_view_only=None, external_upload_restricted=None,
                database_results_restricted=None, unset_database_results_restricted=None,
-               https_app_isolated_browsing=None, https_app_isolated_browsing_options=None, **kwargs):
+               https_app_isolated_browsing=None, https_app_isolated_browsing_options=None,
+               preview_viewer_restricted=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -404,6 +405,8 @@ class DXProject(DXContainer):
         :type https_app_isolated_browsing: boolean
         :param https_app_isolated_browsing_options: Options for Isolated Browsing. See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-update for a list of supported keys.
         :type https_app_isolated_browsing_options: dict
+        :type preview_viewer_restricted: boolean
+        :param preview_viewer_restricted: Whether to disable preview and viewer capabilities for all project members
 
         Updates the project with the new fields. All fields are
         optional. Fields that are not provided are not changed.
@@ -424,12 +427,6 @@ class DXProject(DXContainer):
         if restricted is not None:
             update_hash["restricted"] = restricted
         if download_restricted is not None:
-            # Change previewViewerRestricted to False when download_restricted is set to False.
-            # 2 different API calls are needed because both keys cannot be set in the same call.
-            if download_restricted == False:
-                new_hash = {}
-                new_hash["previewViewerRestricted"] = False
-                dxpy.api.project_update(self._dxid, new_hash, **kwargs)
             update_hash["downloadRestricted"] = download_restricted
         if version is not None:
             update_hash["version"] = version
@@ -449,6 +446,8 @@ class DXProject(DXContainer):
             update_hash["httpsAppIsolatedBrowsing"] = https_app_isolated_browsing
         if https_app_isolated_browsing_options is not None:
             update_hash["httpsAppIsolatedBrowsingOptions"] = https_app_isolated_browsing_options
+        if preview_viewer_restricted is not None:
+            update_hash["previewViewerRestricted"] = preview_viewer_restricted
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):
