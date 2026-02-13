@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Azure instance type annotations corrected: `azure:mem4_ssd1_x32` storage (1024 GB → 2048 GB) and `azure:mem3_ssd2_gpu4_x64` memory (488.0 GiB → 448.0 GiB) and GPU model (NVIDIA V100 → NVIDIA T4)
 
+* Removed retired instance types: `mem1_hdd2_x32`, `mem3_ssd1_gpu_x8`, `mem3_ssd1_gpu_x32` and `mem3_ssd1_gpu_x64`
+
+* Added OCI instance types corresponding to the [official docs](https://documentation.dnanexus.com/developer/api/running-analyses/instance-types#standard-oci-instance-types)
+
 ## [405.0] - beta
 
 * No significant changes
