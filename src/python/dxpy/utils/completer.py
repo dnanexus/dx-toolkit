@@ -603,7 +603,7 @@ class InstanceTypesCompleter():
               GpuInstanceTypeSpec('mem3_ssd1_gpu1_x16', 16, 128.0, 600, '1 NVIDIA L4', 24.0),
               GpuInstanceTypeSpec('mem3_ssd1_gpu1_x32', 32, 256.0, 900, '1 NVIDIA L4', 24.0),
 
-              GpuInstanceTypeSpec('azure:mem3_ssd2_gpu4_x64', 64, 488.0, 2048, '4 NVIDIA V100', 64.0),
+              GpuInstanceTypeSpec('azure:mem3_ssd2_gpu4_x64', 64, 488.0, 2048, '4 NVIDIA T4', 64.0),
 
               GpuInstanceTypeSpec('oci:mem2_ssd1_GPU_v2_x24', 24, 70.3, 480, '1 NVIDIA P100', 16.0),
               GpuInstanceTypeSpec('oci:mem3_ssd1_GPU_v3_x12', 12, 87.9, 240, '1 NVIDIA V100', 16.0),
