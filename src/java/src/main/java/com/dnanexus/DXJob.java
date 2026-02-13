@@ -18,6 +18,7 @@ package com.dnanexus;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -27,6 +28,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 /**
@@ -200,6 +202,29 @@ public final class DXJob extends DXExecution {
         }
 
         /**
+         * Returns a mapping of failure reason to the number of times the job has failed with that
+         * reason, or null if not available.
+         *
+         * @return map of failure reason to count, or null
+         */
+        public Map<String, Integer> getFailureCounts() {
+            if (describeOutput.failureCounts == null) {
+                return null;
+            }
+            return ImmutableMap.copyOf(describeOutput.failureCounts);
+        }
+
+        /**
+         * Returns the try number for the job (the current attempt, starting from 0), or null if not
+         * available (e.g. for older jobs that predate this field).
+         *
+         * @return try number, or null
+         */
+        public Integer getTry() {
+            return describeOutput.tryNumber;
+        }
+
+        /**
          * Returns whether the job will be charged to the billed entity (billTo).
          *
          * <p>
@@ -257,6 +282,10 @@ public final class DXJob extends DXExecution {
         private String resources;
         @JsonProperty
         private String projectCache;
+        @JsonProperty
+        private Map<String, Integer> failureCounts;
+        @JsonProperty("try")
+        private Integer tryNumber;
     }
 
     /**
