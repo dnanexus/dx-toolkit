@@ -285,7 +285,7 @@ class DXProject(DXContainer):
             restricted=None, download_restricted=None, contains_phi=None,
             tags=None, properties=None, bill_to=None, database_ui_view_only=None,
             external_upload_restricted=None, default_symlink=None,
-            database_results_restricted=None, drive=None,
+            database_results_restricted=None, drive=None, preview_viewer_restricted=None,
             **kwargs):
         """
         :param name: The name of the project
@@ -320,6 +320,8 @@ class DXProject(DXContainer):
         :type default_symlink: dict
         :param drive: If provided, this drive will associated with the project.
         :type drive: string
+        :type preview_viewer_restricted: boolean
+        :param preview_viewer_restricted: Whether to disable preview and viewer capabilities for all project members
 
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
@@ -361,6 +363,8 @@ class DXProject(DXContainer):
             input_hash["defaultSymlink"] = default_symlink
         if drive is not None:
             input_hash["drive"] = drive
+        if preview_viewer_restricted is not None:
+            input_hash["previewViewerRestricted"] = preview_viewer_restricted
 
         self.set_id(dxpy.api.project_new(input_hash, **kwargs)["id"])
         self._desc = {}
