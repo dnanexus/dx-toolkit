@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.dnanexus.DXJob.StateTransition;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -202,8 +203,9 @@ public final class DXJob extends DXExecution {
         }
 
         /**
-         * Returns a mapping of failure reason to the number of times the job has failed with that
-         * reason, or null if not available.
+         * A mapping from failure types to the number of times that type occurred and caused the job
+         * to be restarted before the job try being described. Failure types include categories such
+         * as AppError.
          *
          * @return map of failure reason to count, or null
          */
@@ -215,8 +217,10 @@ public final class DXJob extends DXExecution {
         }
 
         /**
-         * Returns the try number for the job (the current attempt, starting from 0), or null if not
-         * available (e.g. for older jobs that predate this field).
+         * Returns the try for this job, with 0 corresponding to the first try, 1 corresponding to
+         * the second try for restarted jobs and so on. null is returned for jobs belonging to root
+         * executions launched before July 12, 2023 00:13 UTC and information for the latest job try
+         * is returned.
          *
          * @return try number, or null
          */
