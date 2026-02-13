@@ -18,8 +18,10 @@ package com.dnanexus;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import com.dnanexus.DXJob.StateTransition;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -27,6 +29,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 /**
@@ -200,6 +203,32 @@ public final class DXJob extends DXExecution {
         }
 
         /**
+         * A mapping from failure types to the number of times that type occurred and caused the job
+         * to be restarted before the job try being described. Failure types include categories such
+         * as AppError.
+         *
+         * @return map of failure reason to count, or null
+         */
+        public Map<String, Integer> getFailureCounts() {
+            if (describeOutput.failureCounts == null) {
+                return null;
+            }
+            return ImmutableMap.copyOf(describeOutput.failureCounts);
+        }
+
+        /**
+         * Returns the try for this job, with 0 corresponding to the first try, 1 corresponding to
+         * the second try for restarted jobs and so on. null is returned for jobs belonging to root
+         * executions launched before July 12, 2023 00:13 UTC and information for the latest job try
+         * is returned.
+         *
+         * @return try number, or null
+         */
+        public Integer getTry() {
+            return describeOutput.tryNumber;
+        }
+
+        /**
          * Returns whether the job will be charged to the billed entity (billTo).
          *
          * <p>
@@ -257,6 +286,10 @@ public final class DXJob extends DXExecution {
         private String resources;
         @JsonProperty
         private String projectCache;
+        @JsonProperty
+        private Map<String, Integer> failureCounts;
+        @JsonProperty("try")
+        private Integer tryNumber;
     }
 
     /**
