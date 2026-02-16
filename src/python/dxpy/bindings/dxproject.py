@@ -321,7 +321,7 @@ class DXProject(DXContainer):
         :param drive: If provided, this drive will associated with the project.
         :type drive: string
         :type preview_viewer_restricted: boolean
-        :param preview_viewer_restricted: Whether to disable preview and viewer capabilities for all project members
+        :param preview_viewer_restricted: If provided, whether file preview and viewer for the project should be restricted
 
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
@@ -410,7 +410,7 @@ class DXProject(DXContainer):
         :param https_app_isolated_browsing_options: Options for Isolated Browsing. See https://documentation.dnanexus.com/developer/api/data-containers/projects#api-method-project-xxxx-update for a list of supported keys.
         :type https_app_isolated_browsing_options: dict
         :type preview_viewer_restricted: boolean
-        :param preview_viewer_restricted: Whether to disable preview and viewer capabilities for all project members
+        :param preview_viewer_restricted: If provided, whether file preview and viewer for the project should be restricted
 
         Updates the project with the new fields. All fields are
         optional. Fields that are not provided are not changed.
