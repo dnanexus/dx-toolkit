@@ -6,13 +6,27 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Java SDK: add `failureCounts` and `try` fields to DXJob
+
+* OCI instance types corresponding to the [official docs](https://documentation.dnanexus.com/developer/api/running-analyses/instance-types#standard-oci-instance-types)
+
+### Fixed
+
+* Azure instance type annotations corrected: `azure:mem4_ssd1_x32` storage (1024 GB → 2048 GB) and `azure:mem3_ssd2_gpu4_x64` memory (488.0 GiB → 448.0 GiB) and GPU model (NVIDIA V100 → NVIDIA T4)
+
+### Removed
+
+* Retired instance types: `mem1_hdd2_x32`, `mem3_ssd1_gpu_x8`, `mem3_ssd1_gpu_x32` and `mem3_ssd1_gpu_x64`
+
 ## [405.0] - beta
 
 * No significant changes
 
 ## [404.0] - 2026.02.04
 
-### Added 
+### Added
 
 * Nextflow assets now available in azure:uksouth-ofh
 
