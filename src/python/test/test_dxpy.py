@@ -202,16 +202,26 @@ class TestDXProject(unittest.TestCase):
         self.assertEqual(desc["protected"], True)
         self.assertEqual(desc["restricted"], True)
         self.assertEqual(desc["downloadRestricted"], True)
+        self.assertEqual(desc["previewViewerRestricted"], True)
         self.assertEqual(desc["externalUploadRestricted"], False)
         self.assertEqual(desc["description"], "new description")
         self.assertEqual(desc["allowedExecutables"][0], "applet-abcdefghijklmnopqrstuzwx")
         self.assertEqual(desc["databaseResultsRestricted"], 10)
         self.assertTrue("created" in desc)
 
+        # PTFM-40852 Must explicitly disable previewViewerRestricted before turning on downloadRestricted
+        with self.assertRaises(dxpy.exceptions.InvalidInput):
+            dxproject.update(download_restricted=False)
+        dxproject.update(preview_viewer_restricted=False)
+        desc = dxproject.describe()
+        self.assertEqual(desc["downloadRestricted"], True)
+        self.assertEqual(desc["previewViewerRestricted"], False)
+
         dxproject.update(restricted=False, download_restricted=False, unset_allowed_executables=True, unset_database_results_restricted=True)
         desc = dxproject.describe()
         self.assertEqual(desc["restricted"], False)
         self.assertEqual(desc["downloadRestricted"], False)
+        self.assertEqual(desc["previewViewerRestricted"], False)
         self.assertEqual(desc["allowedExecutables"], None)
         self.assertEqual(desc["databaseResultsRestricted"], None)
 
