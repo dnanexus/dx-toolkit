@@ -9,8 +9,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Java SDK: add `failureCounts` and `try` fields to DXJob
-
 * OCI instance types corresponding to the [official docs](https://documentation.dnanexus.com/developer/api/running-analyses/instance-types#standard-oci-instance-types)
+* Support for `--preview-viewer-restricted` in `dx update project` and bindings
 
 ### Fixed
 
