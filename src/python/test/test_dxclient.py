@@ -3803,7 +3803,7 @@ dx-jobutil-add-output record_array $second_record --array
                           "--extra-args '" +
                           json.dumps({"systemRequirements": {"some_ep":
                                                 {"clusterSpec": {"initialInstanceCount": 12, "bootstrapScript": "z.sh"},
-                                                 "fpgaDriver": "edico-1.4.5",
+                                                 "fpgaDriver": "edico-1.4.9.2",
                                                  "nvidiaDriver": "R535"}}}) + "'").strip()
         orig_job_desc = dxpy.api.job_describe(orig_job_id)
         check_instance_count(orig_job_desc, ["main", "some_ep","*"], [2, 12, 2])
@@ -3822,7 +3822,7 @@ dx-jobutil-add-output record_array $second_record --array
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['instanceType'], 'mem2_hdd2_x2')
         self.assertEqual(new_job_desc['systemRequirements']['*']['instanceType'], 'mem2_hdd2_v2_x2')
         
-        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.5')
+        self.assertEqual(new_job_desc['systemRequirements']['some_ep']['fpgaDriver'], 'edico-1.4.9.2')
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['nvidiaDriver'], 'R535')
         self.assertEqual(new_job_desc['systemRequirements']['some_ep']['clusterSpec']['bootstrapScript'], 'z.sh')
 
