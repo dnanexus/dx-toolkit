@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [406.0] - beta
+
 ### Added
 
 * Java SDK: add `failureCounts` and `try` fields to DXJob
@@ -20,7 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Retired instance types: `mem1_hdd2_x32`, `mem3_ssd1_gpu_x8`, `mem3_ssd1_gpu_x32` and `mem3_ssd1_gpu_x64`
 
-## [405.0] - beta
+## [405.0] - 2026.02.24
 
 * No significant changes
 
