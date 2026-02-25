@@ -170,6 +170,10 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
             "directory-path": "string",  # So far we will stick with strings dx://...
             "path": "string"
         }
+        # Handle JSON Schema union types e.g. ["string", "null"], ["boolean", "string"]
+        if isinstance(nf_type, list):
+            non_null = [t for t in nf_type if t != "null"]
+            nf_type = non_null[0] if non_null else "string"
         if nf_type == "string" and nf_format in str_types:
             return str_types[nf_format]
         elif nf_type in types:
