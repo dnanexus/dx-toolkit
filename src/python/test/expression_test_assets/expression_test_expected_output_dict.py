@@ -326,7 +326,10 @@ VIZPAYLOADERBUILDER_EXPECTED_OUTPUT = {
             },
         ],
         "expected_sql_output": "SELECT `expression_1`.`feature_id` AS `feature_id`, `expression_1`.`sample_id` AS `sample_id`, `expression_1`.`value` AS `expression` FROM `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expression` AS `expression_1` LEFT OUTER JOIN `database_gzky7400vgpyzy621q43gkkf__molecular_expression1_db`.`expr_annotation` AS `expr_annotation_1` ON `expression_1`.`feature_id` = `expr_annotation_1`.`feature_id` WHERE `expr_annotation_1`.`gene_name` IN ('RUNX1') ORDER BY `feature_id` ASC, `sample_id` ASC",
-        "expected_sql_output_1_1": "SELECT `expression_read_optimized_1`.`feature_id` AS `feature_id`, `expression_read_optimized_1`.`sample_id` AS `sample_id`, `expression_read_optimized_1`.`value` AS `expression` FROM `database_j29xxf80vgpgzv8x60bvfzzv__molecular_expression_1_1`.`expression_read_optimized` AS `expression_read_optimized_1` WHERE `expression_read_optimized_1`.`gene_name` IN ('RUNX1') AND `expression_read_optimized_1`.`chr` = '21' AND `expression_read_optimized_1`.`bin` IN (14, 13) ORDER BY `feature_id` ASC, `sample_id` ASC",
+        "expected_sql_output_1_1": [
+            "SELECT `expression_read_optimized_1`.`feature_id` AS `feature_id`, `expression_read_optimized_1`.`sample_id` AS `sample_id`, `expression_read_optimized_1`.`value` AS `expression` FROM `database_j29xxf80vgpgzv8x60bvfzzv__molecular_expression_1_1`.`expression_read_optimized` AS `expression_read_optimized_1` WHERE `expression_read_optimized_1`.`gene_name` IN ('RUNX1') AND `expression_read_optimized_1`.`chr` = '21' AND `expression_read_optimized_1`.`bin` IN (13, 14) ORDER BY `feature_id` ASC, `sample_id` ASC",
+            "SELECT `expression_read_optimized_1`.`feature_id` AS `feature_id`, `expression_read_optimized_1`.`sample_id` AS `sample_id`, `expression_read_optimized_1`.`value` AS `expression` FROM `database_j29xxf80vgpgzv8x60bvfzzv__molecular_expression_1_1`.`expression_read_optimized` AS `expression_read_optimized_1` WHERE `expression_read_optimized_1`.`gene_name` IN ('RUNX1') AND `expression_read_optimized_1`.`chr` = '21' AND `expression_read_optimized_1`.`bin` IN (14, 13) ORDER BY `feature_id` ASC, `sample_id` ASC",
+        ],
     },
     "test_vizpayloadbuilder_annotation_feature_id": {
         "expected_data_output": [
