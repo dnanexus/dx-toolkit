@@ -1218,7 +1218,7 @@ class TestDXClient(DXTestCase):
             dx = pexpect.spawn("dx ssh " + job_id,
                             env=override_environment(HOME=wd),
                             **spawn_extra_args)
-            time.sleep(3)
+            time.sleep(5)
             dx.close()
             job_allow_ssh = dxpy.describe(job_id)['allowSSH']
             self.assertEqual(allow_ssh, set(job_allow_ssh))
@@ -1228,7 +1228,7 @@ class TestDXClient(DXTestCase):
             dx1 = pexpect.spawn("dx ssh --allow-ssh 1.2.3.4 " + job_id,
                             env=override_environment(HOME=wd),
                             **spawn_extra_args)
-            time.sleep(3)
+            time.sleep(5)
             dx1.close()
             job_allow_ssh = dxpy.describe(job_id)['allowSSH']
             self.assertEqual(allow_ssh, set(job_allow_ssh))
@@ -1241,7 +1241,7 @@ class TestDXClient(DXTestCase):
             dx2 = pexpect.spawn("dx ssh --no-firewall-update " + job_id,
                             env=override_environment(HOME=wd),
                             **spawn_extra_args)
-            time.sleep(3)
+            time.sleep(5)
             dx2.close()
             job_allow_ssh = dxpy.describe(job_id)['allowSSH']
             self.assertEqual(allow_ssh, set(job_allow_ssh))
@@ -1254,7 +1254,7 @@ class TestDXClient(DXTestCase):
             dx3 = pexpect.spawn("dx ssh --ssh-proxy 5.6.7.8:22 " + job_id,
                             env=override_environment(HOME=wd),
                             **spawn_extra_args)
-            time.sleep(3)
+            time.sleep(5)
             dx3.close()
             job_allow_ssh = dxpy.describe(job_id)['allowSSH']
             self.assertEqual(allow_ssh, set(job_allow_ssh))
@@ -4091,7 +4091,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                                                    json.dumps({applet_id: {"*": "mem2_ssd1_v2_x2"}}) +
                                                    "\' --brief -y").strip()
 
-        time.sleep(25) # May need to wait for any new jobs to be created in the system
+        time.sleep(30) # May need to wait for any new jobs to be created in the system
 
         # make assertions for test cases
         orig_analysis_desc = dxpy.describe(analysis_id)
@@ -4136,7 +4136,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
             self.assertEqual(new_analysis_desc['folder'], '/foo')
             self.assertEqual(new_analysis_desc['tags'], ['sometag'])
             self.assertEqual(new_analysis_desc['properties'], {'propkey': 'propval'})
-            time.sleep(10)
+            time.sleep(20)
             new_job_desc = dxpy.describe(new_analysis_desc['stages'][0]['execution']['id'])
             self.assertEqual(new_job_desc['project'], other_proj_id)
             self.assertEqual(new_job_desc['input']['number'], 32)
@@ -4214,7 +4214,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
                           json.dumps({applet_id: {"*": "mem2_ssd1_v2_x2"}}) +
                          "\' --brief -y").strip()
         
-        time.sleep(10) # give time for all jobs to be populated
+        time.sleep(20) # give time for all jobs to be populated
 
         no_req_desc = dxpy.describe(no_req_id)
         self.assertEqual(no_req_desc['stages'][0]['execution']['instanceType'],
@@ -4280,7 +4280,7 @@ class TestDXClientWorkflow(DXTestCaseBuildWorkflows):
         # only modify one
         per_stg_folders_id_3 = run(cmd + '--stage-output-folder ' + stage_ids[0] + ' /hello').strip()
 
-        time.sleep(10) # give time for all jobs to be generated
+        time.sleep(20) # give time for all jobs to be generated
 
         def expect_stage_folders(analysis_id, first_stage_folder, second_stage_folder):
             analysis_desc = dxpy.describe(analysis_id)
@@ -4979,7 +4979,7 @@ class TestDXClientGlobalWorkflow(DXTestCaseBuildWorkflows):
         self.assertIn(gwf_name, analysis_desc)
 
         analysis_desc = json.loads(run("dx describe " + analysis_id + " --json"))
-        time.sleep(2) # May need to wait for job to be created in the system
+        time.sleep(5) # May need to wait for job to be created in the system
         job_desc = run("dx describe " + analysis_desc["stages"][0]["execution"]["id"])
         self.assertIn(' number = 32', job_desc)
 
@@ -5850,9 +5850,9 @@ class TestDXClientFind(DXTestCase):
                 executions.pop()
             except DXAPIError:
                 t += 1
-                if t > 20:
+                if t > 10:
                     raise Exception("Timeout while waiting for job to be created for an analysis stage")
-                time.sleep(1)
+                time.sleep(5)
 
         options = "--user=self"
         self.assertEqual(len(run("dx find executions "+options).splitlines()), 8)
@@ -6016,10 +6016,10 @@ class TestDXClientFind(DXTestCase):
                     analysis_id = dxpy.api.job_describe(job_id, {})['dependsOn'][0]
                     break
                 except IndexError:
-                    t += 1
-                    if t > 300:
+                    t += 5
+                    if t > 500:
                         raise Exception("Timeout while waiting for workflow to be run by root execution")
-                    time.sleep(1)
+                    time.sleep(5)
 
             # Wait for subjob to be run by analysis
             subjob_id = dxpy.api.analysis_describe(analysis_id, {})['stages'][0]['execution']['id']
@@ -6030,9 +6030,9 @@ class TestDXClientFind(DXTestCase):
                     break
                 except DXAPIError:
                     t += 1
-                    if t > 20:
+                    if t > 10:
                         raise Exception("Timeout while waiting for job to be created for an analysis stage")
-                    time.sleep(1)
+                    time.sleep(5)
 
             options = "--brief --user=self --project="+temp_proj_id
             self.assert_cmd_gives_ids("dx find executions "+options, [job_id, analysis_id, subjob_id])
@@ -11689,7 +11689,7 @@ class TestDXArchive(DXTestCase):
             dxpy.DXFile(dxid=fid, project=self.proj_archive_id).clone(test_projectid, folder=self.rootdir)
             
             run("dx archive -y {}:{}".format(self.proj_archive_id,fid))
-            time.sleep(5)
+            time.sleep(10)
             self.assertEqual(dxpy.describe(fid)["archivalState"],"archival")
             with select_project(test_projectid):
                 self.assertEqual(dxpy.describe(fid)["archivalState"],"live")
@@ -11698,7 +11698,7 @@ class TestDXArchive(DXTestCase):
             
             if self.is_admin:
                 run("dx archive -y --all-copies {}:{}".format(self.proj_archive_id,fid_allcopy))
-                time.sleep(20)
+                time.sleep(30)
                 self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
                 with select_project(test_projectid):
                     self.assertEqual(dxpy.describe(fid_allcopy)["archivalState"],"archived")
