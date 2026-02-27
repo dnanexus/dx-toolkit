@@ -263,7 +263,7 @@ def extract_dataset(args):
     if args.dump_dataset_dictionary:
         global pd
 
-        recommended_pandas_version = "2.0.3" if sys.version_info.minor == 8 else "2.2.3"
+        recommended_pandas_version = "2.0.3" if sys.version_info.major == 3 and sys.version_info.minor == 8 else "2.2.3"
         try:
             import pandas as pd
 
@@ -274,13 +274,14 @@ def extract_dataset(args):
                 print(
                     "Warning: For '-ddd' usage, the recommended pandas version is {}. "
                     "The installed version of pandas is {}. It is recommended to update pandas. "
-                    "For example, 'pip install -I pandas=={}'.".format(
+                    "For example, 'python3 -m pip install -I pandas=={}'.".format(
                         recommended_pandas_version, pd.__version__, recommended_pandas_version
                     )
                 )
         except ImportError as e:
             err_exit(
-                "'-ddd' requires the use of pandas, which is not currently installed. Please install pandas to a version {}. For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is {}.".format(
+                "'-ddd' requires the use of pandas, which is not currently installed. "
+                "Please install pandas to a version {}. For example, 'python3 -m pip install -I pandas==X.X.X' where X.X.X is {}.".format(
                     recommended_pandas_version,
                     recommended_pandas_version,
                 )
