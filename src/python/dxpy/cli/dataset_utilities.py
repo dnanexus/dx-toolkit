@@ -260,69 +260,30 @@ def extract_dataset(args):
     files_to_check = []
     file_already_exist = []
 
-    def _check_system_python_version():
-        python_version = sys.version_info[:3]
-        # Set python version range
-        # python_range = 0 for python_version>="3.7"
-        # python_range = 1 for python_version>="3.5.3" and python_version<"3.7"
-        # python_range = 2 for python_version<"3.5.3"
-        if python_version >= (3, 7):
-            python_range = "0"
-        elif python_version >= (3, 5, 3):
-            python_range = "1"
-        else:
-            python_range = "2"
-        return python_range
-
-    def _check_pandas_version(
-        python_range, current_pandas_version, pandas_version_range
-    ):
-        # Valid pandas versions based on python versions
-        # python_range = 0; python_version>="3.7"; Valid pandas version: pandas==1.3.5
-        # python_range = 1; python_version>="3.5.3" and python_version<"3.7"; Valid pandas version: pandas>=0.23.3,<=0.25.3
-        # python_range = 2; python_version<"3.5.3"; Valid pandas version: pandas>=0.23.3,< 0.25.0
-        system_pandas_version = tuple(map(int, current_pandas_version.split(".")))
-        if (
-            (python_range == "0" and system_pandas_version == (1, 3, 5))
-            or (
-                python_range == "1"
-                and ((0, 25, 3) >= system_pandas_version >= (0, 23, 3))
-            )
-            or (
-                python_range == "2"
-                and ((0, 25, 0) > system_pandas_version >= (0, 23, 3))
-            )
-        ):
-            pass
-        else:
-            print(
-                "Warning: For '-ddd' usage, the recommended pandas version is {}. The installed version of pandas is {}. It is recommended to update pandas. For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is {}.".format(
-                    pandas_version_range, current_pandas_version, pandas_version_range
-                )
-            )
-
     if args.dump_dataset_dictionary:
         global pd
-        pandas_version_dictionary = {
-            "0": "'1.3.5'",
-            "1": ">= '0.23.3' and <= '0.25.3'",
-            "2": ">= '0.23.3' and < '0.25.0'",
-        }
-        python_range = _check_system_python_version()
+
+        recommended_pandas_version = "2.0.3" if sys.version_info.major == 3 and sys.version_info.minor == 8 else "2.2.3"
         try:
             import pandas as pd
 
-            current_pandas_version = pd.__version__
-            _check_pandas_version(
-                python_range,
-                current_pandas_version,
-                pandas_version_dictionary[python_range],
-            )
+            system_pandas_version = tuple(map(int, pd.__version__.split(".")[:2]))
+
+            # Warn if pandas is older than the 2.0 baseline
+            if system_pandas_version < (2, 0):
+                print(
+                    "Warning: For '-ddd' usage, the recommended pandas version is {}. "
+                    "The installed version of pandas is {}. It is recommended to update pandas. "
+                    "For example, 'python3 -m pip install -I pandas=={}'.".format(
+                        recommended_pandas_version, pd.__version__, recommended_pandas_version
+                    )
+                )
         except ImportError as e:
             err_exit(
-                "'-ddd' requires the use of pandas, which is not currently installed. Please install pandas to a version {}. For example, 'pip/pip3 install -I pandas==X.X.X' where X.X.X is {}.".format(
-                    pandas_version_dictionary[python_range],
-                    pandas_version_dictionary[python_range],
+                "'-ddd' requires the use of pandas, which is not currently installed. "
+                "Please install pandas to a version {}. For example, 'python3 -m pip install -I pandas==X.X.X' where X.X.X is {}.".format(
+                    recommended_pandas_version,
+                    recommended_pandas_version,
                 )
             )
 

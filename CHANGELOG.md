@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Dependencies loading for test environment setup
+
 ## [406.0] - beta
 
 ### Added

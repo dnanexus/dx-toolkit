@@ -924,17 +924,17 @@ class TestDXJobutilNewJob(DXTestCase):
                                         "other_function": { "instanceType": "mem2_hdd2_x1" }}}),
             ("--instance-type-by-executable " +
                 shlex.quote(json.dumps({"my_applet": {"main": "mem2_hdd2_x2",
-                                        "other_function": "mem3_ssd2_fpga1_x8"}})),
+                                        "other_function": "mem3_ssd2_fpga1_x24"}})),
                 {"systemRequirementsByExecutable": {"my_applet": {"main": {"instanceType": "mem2_hdd2_x2"},
-                                                    "other_function": {"instanceType": "mem3_ssd2_fpga1_x8"}}}}),
+                                                    "other_function": {"instanceType": "mem3_ssd2_fpga1_x24"}}}}),
             ("--instance-type-by-executable " +
              shlex.quote(json.dumps({"my_applet": {"main": "mem1_ssd1_v2_x2",
-                                                   "other_function": "mem3_ssd2_fpga1_x8"}})) +
+                                                   "other_function": "mem3_ssd2_fpga1_x24"}})) +
              " --extra-args " +
                 shlex.quote(json.dumps({"systemRequirementsByExecutable": {"my_applet": {"main": {"instanceType": "mem2_hdd2_x2", "clusterSpec": {"initialInstanceCount": 3}},
-                                        "other_function": {"fpgaDriver": "edico-1.4.5"}}}})),
+                                        "other_function": {"fpgaDriver": "edico-1.4.9.2"}}}})),
                 {"systemRequirementsByExecutable": {"my_applet":{"main": { "instanceType": "mem2_hdd2_x2", "clusterSpec":{"initialInstanceCount": 3}},
-                                        "other_function": { "instanceType": "mem3_ssd2_fpga1_x8", "fpgaDriver": "edico-1.4.5"} }}}),
+                                        "other_function": { "instanceType": "mem3_ssd2_fpga1_x24", "fpgaDriver": "edico-1.4.9.2"} }}}),
             # nvidia driver
             ("--instance-type-by-executable " +
              shlex.quote(json.dumps({
