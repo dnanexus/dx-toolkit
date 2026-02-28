@@ -1143,7 +1143,23 @@ class TestDXClient(DXTestCase):
             job_id = run("dx run {} --yes --brief --debug-on All".format(crash_applet),
                          env=override_environment(HOME=wd)).strip()
             job_desc = dxpy.describe(job_id)
-            self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'ExecutionError'])
+            self.assertEqual(job_desc["debug"]['debugOn'], ['AppError', 'AppInternalError', 'AppInsufficientResourceError', 'ExecutionError'])
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
+    def test_dx_run_debug_on_insufficient_resource(self):
+        with self.configure_ssh() as wd:
+            crash_applet = dxpy.api.applet_new(dict(name="crash",
+                                                    runSpec={"code": "exit 5", "interpreter": "bash",
+                                                         "distribution": "Ubuntu", "release": "20.04", "version":"0"
+                                                         },
+                                                    inputSpec=[], outputSpec=[],
+                                                    dxapi="1.0.0", version="1.0.0",
+                                                    project=self.project))["id"]
+
+            job_id = run("dx run {} --yes --brief --debug-on AppInsufficientResourceError".format(crash_applet),
+                         env=override_environment(HOME=wd)).strip()
+            job_desc = dxpy.describe(job_id)
+            self.assertEqual(job_desc["debug"]['debugOn'], ['AppInsufficientResourceError'])
 
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_run_allow_ssh(self):

@@ -3312,7 +3312,7 @@ def run_body(args, executable, dest_proj, dest_path, preset_inputs=None, input_n
 
     if args.debug_on:
         if 'All' in args.debug_on:
-            args.debug_on = ['AppError', 'AppInternalError', 'ExecutionError']
+            args.debug_on = ['AppError', 'AppInternalError', 'AppInsufficientResourceError', 'ExecutionError']
 
     preserve_job_outputs = None
     if args.preserve_job_outputs:
@@ -5583,7 +5583,7 @@ parser_run.add_argument('--ssh',
 parser_run.add_argument('--ssh-proxy', metavar=('<address>:<port>'),
                         help=fill('SSH connect via proxy, argument supplied is used as the proxy address and port',
                                   width_adjustment=-24))
-parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'ExecutionError', 'All'],
+parser_run.add_argument('--debug-on', action='append', choices=['AppError', 'AppInternalError', 'AppInsufficientResourceError', 'ExecutionError', 'All'],
                         help=fill("Configure the job to hold for debugging when any of the listed errors occur",
                                   width_adjustment=-24))
 

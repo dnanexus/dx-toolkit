@@ -26,7 +26,7 @@ import time, copy, re
 
 import dxpy.api
 from ..exceptions import (DXError, DXAPIError, DXFileError, DXSearchError, DXAppletError,
-                          DXJobFailureError, AppError, AppInternalError, DXCLIError)
+                          DXJobFailureError, AppError, AppInternalError, AppInsufficientResourceError, DXCLIError)
 from ..compat import basestring
 
 def verify_string_dxid(dxid, expected_classes):
