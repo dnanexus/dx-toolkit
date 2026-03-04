@@ -485,6 +485,8 @@ def get_update_project_args(args):
         input_params["restricted"] = args.restricted == 'true'
     if args.download_restricted is not None:
         input_params["downloadRestricted"] = args.download_restricted == 'true'
+    if args.preview_viewer_restricted is not None:
+        input_params["previewViewerRestricted"] = args.preview_viewer_restricted == 'true'
     if args.containsPHI is not None:
         input_params["containsPHI"] = args.containsPHI == 'true'
     if args.database_ui_view_only is not None:

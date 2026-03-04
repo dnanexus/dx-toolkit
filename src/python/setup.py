@@ -100,7 +100,7 @@ setup(
     python_requires = '>=3.8',
     install_requires = dependencies,
     extras_require={
-        'pandas': ["pandas==1.3.5", "numpy<2.0.0"],
+        'pandas': ["pandas==2.0.3; python_version == '3.8'", "pandas==2.2.3; python_version >= '3.9'", "numpy<2.0.0"],
         'xattr': ["xattr==0.10.1; sys_platform == 'linux2' or sys_platform == 'linux'"]
     },
     tests_require = test_dependencies,

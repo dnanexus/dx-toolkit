@@ -92,6 +92,8 @@ public class DXJobTest {
                         .put("stoppedRunning", 1234567892000L)
                         .put("tags", DXJSON.getArrayBuilder().add("t1").build())
                         .put("totalPrice", 1.0)
+                        .put("try", 2)
+                        .put("failureCounts", DXJSON.parseJson("{\"UnresponsiveWorker\": 1, \"AppError\": 1}"))
                         .put("workspace", "container-343434343434343434343434")
                         .build();
 
@@ -146,6 +148,10 @@ public class DXJobTest {
         Assert.assertEquals(1.0, describe.getTotalPrice(), 0.0);
         Assert.assertEquals(DXContainer.getInstance("container-343434343434343434343434"),
                 describe.getWorkspace());
+
+        Assert.assertEquals(Integer.valueOf(2), describe.getTry());
+        Assert.assertEquals(ImmutableMap.of("UnresponsiveWorker", 1, "AppError", 1),
+                describe.getFailureCounts());
 
         // TODO: test failureMessage, failureReason
 
