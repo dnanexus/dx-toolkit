@@ -2,6 +2,9 @@
 
 set -e
 
+# On some systems, the system Python packages are protected, and pip will refuse to install packages.
+export PIP_BREAK_SYSTEM_PACKAGES=1
+
 if [[ "$DXPY_TEST_USING_PYENV" == "true" ]]; then
     eval "$(pyenv init -)"
 fi
