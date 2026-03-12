@@ -12,7 +12,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* urllib3 dxpy dependency to >=1.25.0,<2.7
+* urllib3 dxpy dependency to >=1.25,<2.7
 
 ## [406.0] - beta
 
