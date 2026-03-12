@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Dependencies loading for test environment setup
 
+### Changed
+
+* urllib3 dxpy dependency to >=1.25.0,<2.7
+
 ## [406.0] - beta
 
 ### Added
