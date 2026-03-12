@@ -12,7 +12,7 @@ RUN \
 
 ENV PYENV_ROOT=/root/.pyenv
 ENV PATH="${PYENV_ROOT}/bin:${PATH}"
-ENV PYENV_PYTHON_VERSION=3.13
+ENV PYENV_PYTHON_VERSION=3.14
 
 RUN \
     eval "$(pyenv init -)" && \
