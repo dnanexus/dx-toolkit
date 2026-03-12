@@ -1,10 +1,12 @@
-FROM --platform=amd64 fedora:37
+FROM --platform=amd64 debian:13
 
 SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
 ENV DXPY_TEST_PYTHON_VERSION=3
 
 RUN \
-    dnf install -y which diffutils python3 python3-pip && \
+    apt-get update && \
+    apt-get install -y python3 python3-pip python3-venv && \
     python3 -m venv /pytest-env
 
 RUN \
@@ -12,12 +14,12 @@ RUN \
     python3 -m pip install --quiet pytest pexpect
 
 RUN \
-    dnf install -y \
+    apt-get install -y \
         python3-argcomplete \
         python3-dateutil \
         python3-psutil \
         python3-urllib3 \
-        python3-websocket-client
+        python3-websocket
 
 COPY run_tests.sh /
 
