@@ -159,8 +159,8 @@ main() {
   if [[ $debug == true ]] ; then
     # Forward Nextflow log to job log
     touch "${LOGS_DIR}${LOG_NAME}"
-    tail --follow -n 0 "${LOGS_DIR}${LOG_NAME}" -s 60 >&2 & LOG_MONITOR_PID=$!
-    disown $LOG_MONITOR_PID
+    tail --follow -n 0 "${LOGS_DIR}${LOG_NAME}" -s 60 >&2 &
+    LOG_MONITOR_PID=$!
     set -x
   fi
 
@@ -175,6 +175,8 @@ main() {
 on_exit() {
   ret=$?
 
+  echo "--- TRAP START: $(date), ret=$ret ---"
+
   properties=$(dx describe ${DX_JOB_ID} --json 2>/dev/null | jq -r ".properties")
   if [[ $properties != "null" ]]; then
     if [[ $(jq .nextflow_errorStrategy <<<${properties} -r) == "ignore" ]]; then
@@ -184,23 +186,35 @@ on_exit() {
       fi
     fi
   fi
+  echo "--- on_exit: properties checked ---"
+
   set +x
-  if [[ $debug == true ]]; then
-    # DEVEX-1943 Wait up to 30 seconds for log forwarders to terminate
+  if [[ $debug == true && -n "${LOG_MONITOR_PID:-}" ]]; then
+    # Wait briefly for log forwarder to terminate, then force kill if still alive
     set +e
+    echo "--- on_exit: stopping log monitor pid=${LOG_MONITOR_PID}"
+
+    kill "$LOG_MONITOR_PID" 2>/dev/null || true
+
     i=0
-    while [[ $i -lt 30 ]];
+    while [[ $i -lt 10 ]];
     do
-        if kill -0 "$LOG_MONITOR_PID" 2>/dev/null; then
-            sleep 1
-        else
-            break
-        fi
-        ((i++))
+      if kill -0 "$LOG_MONITOR_PID" 2>/dev/null; then
+        sleep 1
+      else
+        break
+      fi
+      ((i++))
     done
-    kill $LOG_MONITOR_PID 2>/dev/null || true
+
+    if kill -0 "$LOG_MONITOR_PID" 2>/dev/null; then
+      echo "--- on_exit: log monitor still alive, sending SIGKILL"
+      kill -9 "$LOG_MONITOR_PID" 2>/dev/null || true
+    fi
+
     set -xe
   fi
+  echo "--- on_exit: log monitor handled ---"
 
   if [[ $preserve_cache == true ]]; then
     echo "=== Execution completed — caching current session to $DX_CACHEDIR/$NXF_UUID"
@@ -208,9 +222,11 @@ on_exit() {
   else
     echo "=== Execution completed — cache and working files will not be resumable"
   fi
+  echo "--- on_exit: cache handled ---"
 
   # remove .nextflow from the current folder /home/dnanexus/nextflow_execution
-  rm -rf .nextflow
+  rm -rf .nextflow || true
+  echo "--- on_exit: .nextflow cleanup handled ---"
 
   if [[ -s "${LOGS_DIR}${LOG_NAME}" ]]; then
     echo "=== Execution completed — upload nextflow log to job output destination ${DX_JOB_OUTDIR%/}/"
@@ -220,17 +236,18 @@ on_exit() {
   else
     echo "=== Execution completed — no nextflow log file available."
   fi
+  echo "--- on_exit: log upload handled ---"
 
   if [[ $ret -ne 0 ]]; then
     echo "=== Execution failed — skip uploading published files to job output destination ${DX_JOB_OUTDIR%/}/"
-
   else
     echo "=== Execution succeeded — upload published files to job output destination ${DX_JOB_OUTDIR%/}/"
     mkdir -p /home/dnanexus/out/published_files
     find . -type f -newermt "$BEGIN_TIME" -exec cp --parents {} /home/dnanexus/out/published_files/ \; -delete
-    dx-upload-all-outputs --parallel --wait-on-close || echo "No published files has been generated."
+    dx-upload-all-outputs --parallel || echo "No published files have been generated."
   fi
-  exit $ret
+
+  echo "--- TRAP END: $(date), ret=$ret ---"
 }
 
 # =========================================================
@@ -378,7 +395,6 @@ refresh_web_identity_token_loop() {
       while [ "$attempt" -le 3 ]; do
         if dx-jobutil-get-identity-token --aud "${jobTokenAudience}" --subject_claims "${jobTokenSubjectClaims}" > "$tmp_token_file"; then
           mv -f "$tmp_token_file" "$AWS_WEB_IDENTITY_TOKEN_FILE"
-
           break
         else
           echo "WARNING: AWS token refresh failed (attempt $((attempt+1))/3)" >&2
