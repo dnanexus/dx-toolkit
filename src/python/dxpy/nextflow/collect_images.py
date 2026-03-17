@@ -109,7 +109,7 @@ def _resolve_digest(full_ref):
             stderr=subprocess.DEVNULL, text=True,
         )
         data = json.loads(output)
-        manifests = data.get("manifests", [])
+        manifests = data.get("manifests") or []
         for manifest in manifests:
             platform = manifest.get("platform", {})
             if (platform.get("architecture") == "amd64"
@@ -176,6 +176,13 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
             continue
 
         repository, image_name, tag, digest = _parse_docker_ref(container)
+
+        # Reject refs that specify both tag and digest. A ref should
+        # identify an image by tag OR by digest, not both.
+        if tag and digest:
+            raise ImageRefFactoryError(
+                "Image reference has both tag and digest: {}".format(
+                    container))
 
         # Resolve registry digest only for images with no tag AND no digest
         # (implicit latest). Tagged images get their digest resolved

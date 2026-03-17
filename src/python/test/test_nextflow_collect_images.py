@@ -151,6 +151,13 @@ class TestResolveDigest(unittest.TestCase):
         self.assertEqual(result, "")
 
     @patch("dxpy.nextflow.collect_images.subprocess.check_output")
+    def test_null_manifests_value(self, mock_check_output):
+        """If manifests key exists but is null, should return empty string."""
+        mock_check_output.return_value = json.dumps({"manifests": None})
+        result = _resolve_digest("some/image:latest")
+        self.assertEqual(result, "")
+
+    @patch("dxpy.nextflow.collect_images.subprocess.check_output")
     def test_single_arch_flat_manifest(self, mock_check_output):
         """Single-arch images return a flat manifest (no manifests array)."""
         mock_check_output.return_value = json.dumps({
@@ -427,6 +434,22 @@ class TestCollectDockerImagesExtended(unittest.TestCase):
         refs = collect_docker_images("/tmp/pipeline", "", "")
         self.assertEqual(refs, [])
         mock_populate.assert_not_called()
+
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_tag_and_digest_rejected(self, mock_run):
+        """Image refs with both tag and digest should raise."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "processes": [
+                    {"name": "PROC", "container": "busybox:1.36@sha256:abcdef1234567890"},
+                ]
+            }),
+        )
+        from dxpy.nextflow.ImageRefFactory import ImageRefFactoryError
+        with self.assertRaises(ImageRefFactoryError) as ctx:
+            collect_docker_images("/tmp/pipeline", "", "")
+        self.assertIn("both tag and digest", str(ctx.exception))
 
     @patch("dxpy.nextflow.collect_images._populate_cached_file_ids")
     @patch("dxpy.nextflow.collect_images._resolve_digest")
