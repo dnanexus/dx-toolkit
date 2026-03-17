@@ -18,16 +18,19 @@
 #   under the License.
 
 import json
-import os.path
+import logging
+import shlex
 import subprocess
+
+from dxpy import config, find_data_objects
 from dxpy.nextflow.ImageRefFactory import ImageRefFactory, ImageRefFactoryError
 
-CONTAINERS_JSON = "containers.json"
+log = logging.getLogger(__name__)
 
 
 def bundle_docker_images(image_refs):
     """
-    :param image_refs: Image references extracted from run_nextaur_collect().
+    :param image_refs: Image references extracted from collect_docker_images().
     :type image_refs: Dict
     :returns: Array of dicts for bundledDepends attribute of the applet resources. Also saves images on the platform
     if not done that before.
@@ -45,33 +48,227 @@ def bundle_docker_images(image_refs):
     return bundled_depends
 
 
-def run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params):
+def _parse_docker_ref(ref):
+    """Parse a Docker image reference into (repository, image_name, tag, digest).
+
+    ``repository + image_name`` reconstructs the full image path.
+    ``image_name`` is always the **last** path component (no slashes) so it
+    can be used safely as a local filename by ``ImageRef._construct_cache_file_name()``.
+
+    Examples:
+        quay.io/biocontainers/fastqc:0.12.1
+          -> ("quay.io/biocontainers/", "fastqc", "0.12.1", "")
+        community.wave.seqera.io/library/star:5acb4e8c
+          -> ("community.wave.seqera.io/library/", "star", "5acb4e8c", "")
+        ubuntu:20.04
+          -> ("", "ubuntu", "20.04", "")
+        myregistry:5000/myimage:latest
+          -> ("myregistry:5000/", "myimage", "latest", "")
     """
-        :param resources_dir: URL to the local(ized) NF pipeline in the app(let) resources.
-        :type resources_dir: String
-        :param profile: Custom Nextflow profile. More profiles can be provided by using comma separated string (without whitespaces).
-        :type profile: str
-        :param nextflow_pipeline_params: Custom Nextflow pipeline parameters
-        :type nextflow_pipeline_params: string
-        :returns: Dict. Image references in the form of
-            "process": String. Name of the process/task
-            "repository": String. Repository (host) prefix
-            "image_name": String. Image base name
-            "tag": String. Version tag
-            "digest": String. Image digest
-            "file_id": String. File ID if found on the platform
-            "engine": String. Container engine.
-        Runs nextaur:collect
-        """
-    base_cmd = "nextflow plugin nextaur:collect docker {}".format(resources_dir)
-    pipeline_params_arg = "pipelineParams={}".format(nextflow_pipeline_params) if nextflow_pipeline_params else ""
-    profile_arg = "profile={}".format(profile) if profile else ""
-    nextaur_cmd = " ".join([base_cmd, pipeline_params_arg, profile_arg])
-    process = subprocess.run(nextaur_cmd, shell=True, capture_output=True, text=True)
-    if not os.path.exists(CONTAINERS_JSON):
-        raise ImageRefFactoryError(process.stdout)
-    with open(CONTAINERS_JSON, "r") as json_file:
-        image_refs = json.load(json_file).get("processes", None)
-        if not image_refs:
-            raise ImageRefFactoryError("Could not extract processes from nextaur:collect")
+    digest = ""
+    tag = ""
+
+    # Strip docker:// URI scheme if present
+    if ref.startswith("docker://"):
+        ref = ref[len("docker://"):]
+
+    # Split off @sha256:... digest
+    if "@sha256:" in ref:
+        ref, digest = ref.rsplit("@", 1)
+
+    # Split off :tag — but not :port in the registry host.
+    # The tag is after the last colon; if there is a / after that colon
+    # then it is a host:port separator, not an image:tag separator.
+    colon_idx = ref.rfind(":")
+    if colon_idx != -1:
+        after_colon = ref[colon_idx + 1:]
+        if "/" not in after_colon:
+            tag = after_colon
+            ref = ref[:colon_idx]
+
+    # Split at the last "/" so image_name is always a simple name (no slashes).
+    # Everything before (including the trailing "/") goes into repository.
+    last_slash = ref.rfind("/")
+    if last_slash == -1:
+        return "", ref, tag, digest
+
+    return ref[:last_slash + 1], ref[last_slash + 1:], tag, digest
+
+
+def _resolve_digest(full_ref):
+    """Resolve registry manifest digest via ``docker manifest inspect``.
+
+    Runs ``docker manifest inspect <image>`` and extracts the digest
+    from the manifest entry matching platform amd64/linux.
+
+    Returns the ``sha256:...`` digest string, or ``""`` on failure.
+    """
+    try:
+        output = subprocess.check_output(
+            ["docker", "manifest", "inspect", full_ref],
+            stderr=subprocess.DEVNULL, text=True,
+        )
+        data = json.loads(output)
+        manifests = data.get("manifests", [])
+        for manifest in manifests:
+            platform = manifest.get("platform", {})
+            if (platform.get("architecture") == "amd64"
+                    and platform.get("os") == "linux"):
+                return manifest.get("digest", "")
+        log.warning("No amd64/linux manifest found for %s", full_ref)
+        return ""
+    except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
+        log.warning("Failed to resolve digest for %s", full_ref)
+        return ""
+
+
+def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
+    """Collect container image references using ``nextflow inspect``.
+
+    Uses the native ``nextflow inspect`` command (NF >= 25.04).  It scans
+    pipeline ``include`` statements statically — no plugins, parameters,
+    or profile are required for container discovery.
+
+    :param resources_dir: Path to the local(ized) NF pipeline.
+    :type resources_dir: str
+    :param profile: Custom Nextflow profile (comma-separated, no spaces).
+    :type profile: str
+    :param nextflow_pipeline_params: Pipeline parameters forwarded to inspect
+        (e.g. ``"--input samplesheet.csv --outdir results"``).  Some older
+        nf-core pipelines have hard parameter validation that runs before
+        process definitions are reached; passing the required params here
+        lets ``nextflow inspect`` get past those checks.
+    :type nextflow_pipeline_params: str
+    :returns: List of dicts with keys: process, repository, image_name,
+              tag, digest, file_id, engine.
+    """
+    cmd_parts = ["nextflow", "inspect", resources_dir, "-format", "json"]
+    if profile:
+        cmd_parts.extend(["-profile", profile])
+    if nextflow_pipeline_params:
+        try:
+            cmd_parts.extend(shlex.split(nextflow_pipeline_params))
+        except ValueError as e:
+            raise ImageRefFactoryError(
+                "Malformed pipeline parameters: {}".format(e))
+
+    process = subprocess.run(cmd_parts, capture_output=True, text=True)
+    if process.returncode != 0:
+        raise ImageRefFactoryError(
+            "nextflow inspect failed (rc={}): stdout: {}\nstderr: {}".format(
+                process.returncode, process.stdout, process.stderr))
+
+    try:
+        inspect_data = json.loads(process.stdout)
+    except (json.JSONDecodeError, ValueError) as e:
+        raise ImageRefFactoryError(
+            "Failed to parse nextflow inspect output: {}".format(e))
+
+    processes = inspect_data.get("processes", [])
+    if not processes:
+        log.warning("No processes found in nextflow inspect output")
+        return []
+
+    image_refs = []
+    for entry in processes:
+        container = entry.get("container", "")
+        if not container:
+            continue
+
+        repository, image_name, tag, digest = _parse_docker_ref(container)
+
+        # Resolve registry digest only for images with no tag AND no digest
+        # (implicit latest). Tagged images get their digest resolved
+        # downstream by ImageRef._cache() after pull.
+        if not digest and not tag:
+            full_ref = repository + image_name
+            digest = _resolve_digest(full_ref)
+
+        image_refs.append({
+            "process": entry.get("name", ""),
+            "repository": repository,
+            "image_name": image_name,
+            "tag": tag,
+            "digest": digest,
+            "file_id": None,
+            "engine": "docker",
+        })
+
+    _populate_cached_file_ids(image_refs)
     return image_refs
+
+
+def _populate_cached_file_ids(image_refs):
+    """Look up previously cached Docker images in the current project.
+
+    Searches ``/.cached_docker_images/<image_name>/`` for files matching
+    ``<image_name>_<tag>``.  When found, verifies the image digest stored
+    in the file's ``properties`` and populates ``file_id`` so that
+    ``DockerImageRef._package_bundle()`` skips the pull/save/upload cycle
+    and reuses the existing platform file.
+
+    This benefits:
+    - Repeat builds of the same pipeline (faster rebuilds)
+    - Colleagues in the same project building other pipelines that share
+      images (e.g. samtools, fastqc are used across many nf-core pipelines)
+    """
+    project_id = config.get("DX_PROJECT_CONTEXT_ID")
+    if not project_id:
+        return
+
+    # Deduplicate by (repository, image_name, tag) to avoid redundant API calls
+    unique_keys = {}
+    for ref in image_refs:
+        key = (ref["repository"], ref["image_name"], ref["tag"])
+        if key not in unique_keys:
+            unique_keys[key] = ref
+
+    cache_hits = 0
+    for (repository, image_name, tag), ref in unique_keys.items():
+        cache_file_name = "_".join(x for x in [image_name, tag] if x)
+        cache_folder = "/.cached_docker_images/{}/".format(image_name)
+
+        try:
+            results = list(find_data_objects(
+                classname="file",
+                state="closed",
+                project=project_id,
+                folder=cache_folder,
+                name=cache_file_name,
+                describe={"fields": {"properties": True}},
+                limit=1,
+            ))
+        except Exception as e:
+            log.warning("Docker image cache: failed to search for %s/%s: %s",
+                        image_name, tag, e)
+            continue
+
+        if results:
+            file_id = results[0]["id"]
+            desc = results[0].get("describe", {})
+            props = desc.get("properties", {})
+            stored_digest = props.get("image_digest", "")
+            if not stored_digest:
+                log.warning(
+                    "Docker image cache: skipping %s/%s "
+                    "(no digest in properties)",
+                    image_name, tag)
+                continue
+
+            # If the ref has a known digest, verify it matches
+            if ref["digest"] and ref["digest"] != stored_digest:
+                log.warning(
+                    "Docker image cache: digest mismatch for %s/%s "
+                    "(expected %s, got %s)", image_name, tag,
+                    ref["digest"], stored_digest)
+                continue
+
+            cache_hits += 1
+            # Apply to all refs with the same (repository, image_name, tag)
+            for r in image_refs:
+                if r["repository"] == repository and r["image_name"] == image_name and r["tag"] == tag:
+                    r["file_id"] = file_id
+
+    if cache_hits:
+        log.info("Docker image cache: %d/%d images found in project %s",
+                 cache_hits, len(unique_keys), project_id)
