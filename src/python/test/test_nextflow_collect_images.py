@@ -24,6 +24,7 @@ from unittest.mock import patch, MagicMock
 
 from parameterized import parameterized
 from dxpy.nextflow.collect_images import (
+    _ImageRef,
     _parse_docker_ref,
     _resolve_digest,
     collect_docker_images,
@@ -313,9 +314,10 @@ class TestPopulateCachedFileIds(unittest.TestCase):
     @patch("dxpy.nextflow.collect_images.config")
     def test_no_project_context(self, mock_config):
         mock_config.get.return_value = None
-        refs = [{"repository": "", "image_name": "busybox", "tag": "1.36", "digest": "", "file_id": None}]
+        refs = [_ImageRef(process="", repository="", image_name="busybox", tag="1.36",
+                          digest="", file_id=None, engine="docker")]
         _populate_cached_file_ids(refs)
-        self.assertIsNone(refs[0]["file_id"])
+        self.assertIsNone(refs[0].file_id)
 
     @patch("dxpy.nextflow.collect_images.find_data_objects")
     @patch("dxpy.nextflow.collect_images.config")
@@ -325,10 +327,10 @@ class TestPopulateCachedFileIds(unittest.TestCase):
             "id": "file-AAAA",
             "describe": {"properties": {"image_digest": "sha256:abc123"}},
         }])
-        refs = [{"repository": "quay.io/bio/", "image_name": "fastqc", "tag": "0.12.1",
-                 "digest": "", "file_id": None}]
+        refs = [_ImageRef(process="", repository="quay.io/bio/", image_name="fastqc",
+                          tag="0.12.1", digest="", file_id=None, engine="docker")]
         _populate_cached_file_ids(refs)
-        self.assertEqual(refs[0]["file_id"], "file-AAAA")
+        self.assertEqual(refs[0].file_id, "file-AAAA")
 
     @patch("dxpy.nextflow.collect_images.find_data_objects")
     @patch("dxpy.nextflow.collect_images.config")
@@ -338,10 +340,10 @@ class TestPopulateCachedFileIds(unittest.TestCase):
             "id": "file-AAAA",
             "describe": {"properties": {"image_digest": "sha256:wrong"}},
         }])
-        refs = [{"repository": "", "image_name": "busybox", "tag": "1.36",
-                 "digest": "sha256:correct", "file_id": None}]
+        refs = [_ImageRef(process="", repository="", image_name="busybox", tag="1.36",
+                          digest="sha256:correct", file_id=None, engine="docker")]
         _populate_cached_file_ids(refs)
-        self.assertIsNone(refs[0]["file_id"])
+        self.assertIsNone(refs[0].file_id)
 
     @patch("dxpy.nextflow.collect_images.find_data_objects")
     @patch("dxpy.nextflow.collect_images.config")
@@ -351,10 +353,10 @@ class TestPopulateCachedFileIds(unittest.TestCase):
         mock_config.get.return_value = "project-123"
         mock_find.side_effect = [iter([]), iter([])]
         refs = [
-            {"repository": "quay.io/bio/", "image_name": "samtools", "tag": "1.16",
-             "digest": "", "file_id": None},
-            {"repository": "docker.io/lib/", "image_name": "samtools", "tag": "1.16",
-             "digest": "", "file_id": None},
+            _ImageRef(process="", repository="quay.io/bio/", image_name="samtools",
+                      tag="1.16", digest="", file_id=None, engine="docker"),
+            _ImageRef(process="", repository="docker.io/lib/", image_name="samtools",
+                      tag="1.16", digest="", file_id=None, engine="docker"),
         ]
         _populate_cached_file_ids(refs)
         # find_data_objects called twice (once per unique key)
@@ -371,14 +373,14 @@ class TestPopulateCachedFileIds(unittest.TestCase):
             "describe": {"properties": {"image_digest": "sha256:xyz"}},
         }])
         refs = [
-            {"repository": "quay.io/bio/", "image_name": "fastqc", "tag": "0.12",
-             "digest": "", "file_id": None, "process": "PROC_A"},
-            {"repository": "quay.io/bio/", "image_name": "fastqc", "tag": "0.12",
-             "digest": "", "file_id": None, "process": "PROC_B"},
+            _ImageRef(process="PROC_A", repository="quay.io/bio/", image_name="fastqc",
+                      tag="0.12", digest="", file_id=None, engine="docker"),
+            _ImageRef(process="PROC_B", repository="quay.io/bio/", image_name="fastqc",
+                      tag="0.12", digest="", file_id=None, engine="docker"),
         ]
         _populate_cached_file_ids(refs)
-        self.assertEqual(refs[0]["file_id"], "file-BBBB")
-        self.assertEqual(refs[1]["file_id"], "file-BBBB")
+        self.assertEqual(refs[0].file_id, "file-BBBB")
+        self.assertEqual(refs[1].file_id, "file-BBBB")
 
     @patch("dxpy.nextflow.collect_images.find_data_objects")
     @patch("dxpy.nextflow.collect_images.config")
@@ -389,10 +391,10 @@ class TestPopulateCachedFileIds(unittest.TestCase):
             "id": "file-UNTAGGED",
             "describe": {"properties": {"image_digest": "sha256:latestdigest"}},
         }])
-        refs = [{"repository": "library/", "image_name": "ubuntu", "tag": "",
-                 "digest": "", "file_id": None}]
+        refs = [_ImageRef(process="", repository="library/", image_name="ubuntu",
+                          tag="", digest="", file_id=None, engine="docker")]
         _populate_cached_file_ids(refs)
-        self.assertEqual(refs[0]["file_id"], "file-UNTAGGED")
+        self.assertEqual(refs[0].file_id, "file-UNTAGGED")
         # Verify the cache file name is just "ubuntu", not "ubuntu_"
         call_kwargs = mock_find.call_args[1]
         self.assertEqual(call_kwargs["name"], "ubuntu")
@@ -404,10 +406,10 @@ class TestPopulateCachedFileIds(unittest.TestCase):
         """If find_data_objects raises, the image is skipped (file_id stays None)."""
         mock_config.get.return_value = "project-123"
         mock_find.side_effect = Exception("network timeout")
-        refs = [{"repository": "", "image_name": "busybox", "tag": "1.36",
-                 "digest": "", "file_id": None}]
+        refs = [_ImageRef(process="", repository="", image_name="busybox", tag="1.36",
+                          digest="", file_id=None, engine="docker")]
         _populate_cached_file_ids(refs)
-        self.assertIsNone(refs[0]["file_id"])
+        self.assertIsNone(refs[0].file_id)
 
     @patch("dxpy.nextflow.collect_images.find_data_objects")
     @patch("dxpy.nextflow.collect_images.config")
@@ -415,10 +417,10 @@ class TestPopulateCachedFileIds(unittest.TestCase):
         """Cached file without image_digest property is not trustworthy, skip it."""
         mock_config.get.return_value = "project-123"
         mock_find.return_value = iter([{"id": "file-NODESC"}])
-        refs = [{"repository": "", "image_name": "alpine", "tag": "3.18",
-                 "digest": "", "file_id": None}]
+        refs = [_ImageRef(process="", repository="", image_name="alpine", tag="3.18",
+                          digest="", file_id=None, engine="docker")]
         _populate_cached_file_ids(refs)
-        self.assertIsNone(refs[0]["file_id"])
+        self.assertIsNone(refs[0].file_id)
 
 
 class TestCollectDockerImagesExtended(unittest.TestCase):

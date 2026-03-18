@@ -17,15 +17,29 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import dataclasses
 import json
 import logging
 import shlex
 import subprocess
+from typing import Optional
 
 from dxpy import config, find_data_objects
 from dxpy.nextflow.ImageRefFactory import ImageRefFactory, ImageRefFactoryError
 
 log = logging.getLogger(__name__)
+
+
+@dataclasses.dataclass
+class _ImageRef:
+    """Internal representation of a container image reference."""
+    process: str
+    repository: Optional[str]
+    image_name: str
+    tag: Optional[str]
+    digest: Optional[str]
+    file_id: Optional[str]
+    engine: str
 
 
 def bundle_docker_images(image_refs):
@@ -186,21 +200,21 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
         # (implicit latest). Tagged images get their digest resolved
         # downstream by ImageRef._cache() after pull.
         if not digest and not tag:
-            full_ref = repository + image_name
+            full_ref = (repository or "") + image_name
             digest = _resolve_digest(full_ref)
 
-        image_refs.append({
-            "process": entry.get("name", ""),
-            "repository": repository,
-            "image_name": image_name,
-            "tag": tag,
-            "digest": digest,
-            "file_id": None,
-            "engine": "docker",
-        })
+        image_refs.append(_ImageRef(
+            process=entry.get("name", ""),
+            repository=repository,
+            image_name=image_name,
+            tag=tag,
+            digest=digest,
+            file_id=None,
+            engine="docker",
+        ))
 
     _populate_cached_file_ids(image_refs)
-    return image_refs
+    return [dataclasses.asdict(ref) for ref in image_refs]
 
 
 def _populate_cached_file_ids(image_refs):
@@ -224,7 +238,7 @@ def _populate_cached_file_ids(image_refs):
     # Deduplicate by (repository, image_name, tag) to avoid redundant API calls
     unique_keys = {}
     for ref in image_refs:
-        key = (ref["repository"], ref["image_name"], ref["tag"])
+        key = (ref.repository, ref.image_name, ref.tag)
         if key not in unique_keys:
             unique_keys[key] = ref
 
@@ -257,15 +271,15 @@ def _populate_cached_file_ids(image_refs):
                 continue
 
             # If the ref has a known digest, verify it matches
-            if ref["digest"] and ref["digest"] != stored_digest:
-                log.warning(f"Docker image cache: digest mismatch for {image_name}/{tag} (expected {ref['digest']}, got {stored_digest})")
+            if ref.digest and ref.digest != stored_digest:
+                log.warning(f"Docker image cache: digest mismatch for {image_name}/{tag} (expected {ref.digest}, got {stored_digest})")
                 continue
 
             cache_hits += 1
             # Apply to all refs with the same (repository, image_name, tag)
             for r in image_refs:
-                if r["repository"] == repository and r["image_name"] == image_name and r["tag"] == tag:
-                    r["file_id"] = file_id
+                if r.repository == repository and r.image_name == image_name and r.tag == tag:
+                    r.file_id = file_id
 
     if cache_hits:
         log.info(f"Docker image cache: {cache_hits}/{len(unique_keys)} images found in project {project_id}")
