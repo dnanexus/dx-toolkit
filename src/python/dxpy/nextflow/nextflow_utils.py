@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from os import path, makedirs, listdir
 import re
+import sys
 import errno
 import dxpy
 import json
@@ -8,6 +9,52 @@ import shutil
 import logging
 from dxpy.exceptions import ResourceNotFound
 from dxpy.nextflow.collect_images import collect_docker_images, bundle_docker_images
+
+
+def _load_versions_manifest():
+    """Load versions.json manifest."""
+    manifest_path = path.join(path.dirname(dxpy.__file__), 'nextflow', 'versions.json')
+    try:
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        raise dxpy.exceptions.DXError(
+            "Failed to load Nextflow versions manifest at {}: {}".format(manifest_path, e))
+    if "default" not in manifest or "versions" not in manifest:
+        raise dxpy.exceptions.DXError(
+            "Malformed Nextflow versions manifest: missing 'default' or 'versions' key")
+    required_keys = {"status", "nextflow_assets", "nextaur_assets", "awscli_assets"}
+    for ver, cfg in manifest["versions"].items():
+        missing = required_keys - set(cfg.keys())
+        if missing:
+            raise dxpy.exceptions.DXError(
+                "Malformed version entry '{}': missing keys {}".format(ver, missing))
+    return manifest
+
+
+def resolve_version(requested_version=None):
+    """Resolve Nextflow version. Returns (version_key, version_config).
+    Prints deprecation warning to stderr if version is deprecated.
+    Raises DXError if version is not found.
+    """
+    manifest = _load_versions_manifest()
+    if requested_version is None:
+        requested_version = manifest["default"]
+        if requested_version not in manifest["versions"]:
+            raise dxpy.exceptions.DXError(
+                "Nextflow versions manifest is misconfigured: default version '{}' "
+                "is not listed in versions".format(requested_version))
+    version_config = manifest["versions"].get(requested_version)
+    if version_config is None:
+        available = ", ".join(sorted(manifest["versions"].keys()))
+        raise dxpy.exceptions.DXError(
+            "Nextflow version '{}' is not supported. "
+            "Available versions: {}".format(requested_version, available))
+    if version_config["status"] == "deprecated":
+        sys.stderr.write(
+            "WARNING: Nextflow version {} is deprecated. "
+            "Consider upgrading to {}.\n".format(requested_version, manifest["default"]))
+    return requested_version, version_config
 
 
 def get_source_file_name():
@@ -111,8 +158,8 @@ def write_dxapp(folder, content):
         json.dump(content, dxapp)
 
 
-def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_pipeline_params):
-    nextaur_asset, nextflow_asset, awscli_asset = get_nextflow_assets(region)
+def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_pipeline_params, version_config=None):
+    nextaur_asset, nextflow_asset, awscli_asset = get_nextflow_assets(region, version_config=version_config)
     regional_instance_type = get_instance_type(region)
     if cache_docker:
         image_refs = collect_docker_images(resources_dir, profile, nextflow_pipeline_params)
@@ -162,26 +209,44 @@ def get_instance_type(region):
     return instance_type
 
 
-def get_nextflow_assets(region):
+def get_nextflow_assets(region, nextflow_version=None, version_config=None):
+    if nextflow_version is not None and version_config is not None:
+        raise ValueError("Specify nextflow_version or version_config, not both")
+    if version_config is None:
+        _, version_config = resolve_version(nextflow_version)
     nextflow_basepath = path.join(path.dirname(dxpy.__file__), 'nextflow')
-    # The order of assets in the tuple is: nextaur, nextflow
-    nextaur_assets = path.join(nextflow_basepath, "nextaur_assets.json")
-    nextflow_assets = path.join(nextflow_basepath, "nextflow_assets.json")
-    awscli_assets = path.join(nextflow_basepath, "awscli_assets.json")
+
+    nextaur_filename = version_config["nextaur_assets"]
+    nextflow_filename = version_config["nextflow_assets"]
+    awscli_filename = version_config["awscli_assets"]
+
+    nextaur_assets = path.join(nextflow_basepath, nextaur_filename)
+    nextflow_assets = path.join(nextflow_basepath, nextflow_filename)
+    awscli_assets = path.join(nextflow_basepath, awscli_filename)
+
+    def _load_regional_assets(nextaur_path, nextflow_path, awscli_path):
+        try:
+            with open(nextaur_path, 'r') as nextaur_f, open(nextflow_path, 'r') as nextflow_f, open(awscli_path, 'r') as awscli_f:
+                return json.load(nextaur_f)[region], json.load(nextflow_f)[region], json.load(awscli_f)[region]
+        except KeyError:
+            raise dxpy.exceptions.DXError(
+                "Nextflow assets not available for region '{}'. "
+                "Check that your Nextflow version supports this region.".format(region))
+
     try:
-        with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f, open(awscli_assets, 'r') as awscli_f:
-            nextaur = json.load(nextaur_f)[region]
-            nextflow = json.load(nextflow_f)[region]
-            awscli = json.load(awscli_f)[region]
+        nextaur, nextflow, awscli = _load_regional_assets(nextaur_assets, nextflow_assets, awscli_assets)
         dxpy.describe(nextflow, fields={})  # existence check
         return nextaur, nextflow, awscli
-    except ResourceNotFound:
-        nextaur_assets = path.join(nextflow_basepath, "nextaur_assets.staging.json")
-        nextflow_assets = path.join(nextflow_basepath, "nextflow_assets.staging.json")
-        awscli_assets = path.join(nextflow_basepath, "awscli_assets.staging.json")
-
-        with open(nextaur_assets, 'r') as nextaur_f, open(nextflow_assets, 'r') as nextflow_f, open(awscli_assets, 'r') as awscli_f:
-            return json.load(nextaur_f)[region], json.load(nextflow_f)[region], json.load(awscli_f)[region]
+    except (ResourceNotFound, FileNotFoundError):
+        nextaur_staging = path.join(nextflow_basepath, nextaur_filename.replace(".json", ".staging.json"))
+        nextflow_staging = path.join(nextflow_basepath, nextflow_filename.replace(".json", ".staging.json"))
+        awscli_staging = path.join(nextflow_basepath, awscli_filename.replace(".json", ".staging.json"))
+        try:
+            return _load_regional_assets(nextaur_staging, nextflow_staging, awscli_staging)
+        except FileNotFoundError:
+            raise dxpy.exceptions.DXError(
+                "Staging asset files not found for the resolved Nextflow version. "
+                "Expected files like: {}".format(nextaur_staging))
 
 
 def get_nested(args, arg_path):
