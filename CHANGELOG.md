@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Nextflow asset update: Nextaur 1.12.0 with Nextflow 25.10.4 and nf-amazon 3.4.4
 
+### Fixed
+
+* Handle JSON Schema union types in `get_dx_type()` for Nextflow pipeline builder
+
 ## [407.0] - beta
 
 ### Fixed
