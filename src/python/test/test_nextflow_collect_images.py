@@ -38,23 +38,23 @@ class TestParseDockerRef(unittest.TestCase):
     @parameterized.expand([
         # (image_reference, expected_repository, expected_image, expected_tag, expected_digest)
         ("myregistryhost:5000/fedora/httpd:version1.0",
-         "myregistryhost:5000/fedora/", "httpd", "version1.0", ""),
+         "myregistryhost:5000/fedora/", "httpd", "version1.0", None),
         ("fedora/httpd:version1.0-alpha",
-         "fedora/", "httpd", "version1.0-alpha", ""),
+         "fedora/", "httpd", "version1.0-alpha", None),
         ("fedora/httpd:version1.0",
-         "fedora/", "httpd", "version1.0", ""),
+         "fedora/", "httpd", "version1.0", None),
         ("rabbit:3",
-         "", "rabbit", "3", ""),
+         None, "rabbit", "3", None),
         ("rabbit",
-         "", "rabbit", "", ""),
+         None, "rabbit", None, None),
         ("repository/rabbit:3",
-         "repository/", "rabbit", "3", ""),
+         "repository/", "rabbit", "3", None),
         ("repository/rabbit",
-         "repository/", "rabbit", "", ""),
+         "repository/", "rabbit", None, None),
         ("rabbit@sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d",
-         "", "rabbit", "", "sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d"),
+         None, "rabbit", None, "sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d"),
         ("repository/rabbit@sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d",
-         "repository/", "rabbit", "", "sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d"),
+         "repository/", "rabbit", None, "sha256:974219f34a18afde9517b27f3b81403c3a08f6908cbf8d7b717097b93b11583d"),
     ])
     def test_core_cases(self, ref, exp_repo, exp_image, exp_tag, exp_digest):
         repo, image, tag, digest = _parse_docker_ref(ref)
@@ -67,24 +67,24 @@ class TestParseDockerRef(unittest.TestCase):
     @parameterized.expand([
         # quay.io biocontainers (common nf-core pattern)
         ("quay.io/biocontainers/fastqc:0.12.1--hdfd78af_0",
-         "quay.io/biocontainers/", "fastqc", "0.12.1--hdfd78af_0", ""),
+         "quay.io/biocontainers/", "fastqc", "0.12.1--hdfd78af_0", None),
         # wave container with short hash tag
         ("community.wave.seqera.io/library/star:5acb4e8c",
-         "community.wave.seqera.io/library/", "star", "5acb4e8c", ""),
+         "community.wave.seqera.io/library/", "star", "5acb4e8c", None),
         # plain image with tag
         ("ubuntu:20.04",
-         "", "ubuntu", "20.04", ""),
+         None, "ubuntu", "20.04", None),
         # docker:// URI scheme (Singularity-style)
         ("docker://ubuntu:20.04",
-         "", "ubuntu", "20.04", ""),
+         None, "ubuntu", "20.04", None),
         ("docker://quay.io/biocontainers/samtools:1.16.1",
-         "quay.io/biocontainers/", "samtools", "1.16.1", ""),
+         "quay.io/biocontainers/", "samtools", "1.16.1", None),
         # tag + digest
         ("busybox:1.36@sha256:abcdef1234567890",
-         "", "busybox", "1.36", "sha256:abcdef1234567890"),
+         None, "busybox", "1.36", "sha256:abcdef1234567890"),
         # docker:// with digest
         ("docker://ubuntu@sha256:abc123",
-         "", "ubuntu", "", "sha256:abc123"),
+         None, "ubuntu", None, "sha256:abc123"),
     ])
     def test_extended_cases(self, ref, exp_repo, exp_image, exp_tag, exp_digest):
         repo, image, tag, digest = _parse_docker_ref(ref)
@@ -97,76 +97,91 @@ class TestParseDockerRef(unittest.TestCase):
 class TestResolveDigest(unittest.TestCase):
     """Tests for _resolve_digest() with mocked subprocess."""
 
-    @patch("dxpy.nextflow.collect_images.subprocess.check_output")
-    def test_selects_amd64_from_multiarch(self, mock_check_output):
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_selects_amd64_from_multiarch(self, mock_run):
         """Multi-arch manifests: must pick amd64/linux, not arm64."""
-        mock_check_output.return_value = json.dumps({
-            "manifests": [
-                {
-                    "digest": "sha256:arm64digest",
-                    "platform": {"architecture": "arm64", "os": "linux"},
-                },
-                {
-                    "digest": "sha256:amd64digest",
-                    "platform": {"architecture": "amd64", "os": "linux"},
-                },
-            ]
-        })
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "manifests": [
+                    {
+                        "digest": "sha256:arm64digest",
+                        "platform": {"architecture": "arm64", "os": "linux"},
+                    },
+                    {
+                        "digest": "sha256:amd64digest",
+                        "platform": {"architecture": "amd64", "os": "linux"},
+                    },
+                ]
+            }),
+        )
         result = _resolve_digest("quay.io/biocontainers/fastqc:0.12.1")
         self.assertEqual(result, "sha256:amd64digest")
-        mock_check_output.assert_called_once_with(
+        mock_run.assert_called_once_with(
             ["docker", "manifest", "inspect", "quay.io/biocontainers/fastqc:0.12.1"],
-            stderr=subprocess.DEVNULL, text=True,
+            capture_output=True, text=True,
         )
 
-    @patch("dxpy.nextflow.collect_images.subprocess.check_output")
-    def test_no_amd64_manifest(self, mock_check_output):
-        mock_check_output.return_value = json.dumps({
-            "manifests": [
-                {
-                    "digest": "sha256:arm64only",
-                    "platform": {"architecture": "arm64", "os": "linux"},
-                },
-            ]
-        })
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_no_amd64_manifest(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "manifests": [
+                    {
+                        "digest": "sha256:arm64only",
+                        "platform": {"architecture": "arm64", "os": "linux"},
+                    },
+                ]
+            }),
+        )
         result = _resolve_digest("some/image:latest")
-        self.assertEqual(result, "")
+        self.assertIsNone(result)
 
-    @patch("dxpy.nextflow.collect_images.subprocess.check_output")
-    def test_subprocess_failure(self, mock_check_output):
-        mock_check_output.side_effect = subprocess.CalledProcessError(1, "docker")
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_subprocess_failure(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=1)
         result = _resolve_digest("nonexistent/image:1.0")
-        self.assertEqual(result, "")
+        self.assertIsNone(result)
 
-    @patch("dxpy.nextflow.collect_images.subprocess.check_output")
-    def test_invalid_json(self, mock_check_output):
-        mock_check_output.return_value = "not json"
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_invalid_json(self, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="not json")
         result = _resolve_digest("some/image:latest")
-        self.assertEqual(result, "")
+        self.assertIsNone(result)
 
-    @patch("dxpy.nextflow.collect_images.subprocess.check_output")
-    def test_empty_manifests_list(self, mock_check_output):
-        mock_check_output.return_value = json.dumps({"manifests": []})
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_empty_manifests_list(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({"manifests": []}),
+        )
         result = _resolve_digest("some/image:latest")
-        self.assertEqual(result, "")
+        self.assertIsNone(result)
 
-    @patch("dxpy.nextflow.collect_images.subprocess.check_output")
-    def test_null_manifests_value(self, mock_check_output):
-        """If manifests key exists but is null, should return empty string."""
-        mock_check_output.return_value = json.dumps({"manifests": None})
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_null_manifests_value(self, mock_run):
+        """If manifests key exists but is null, should return None."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({"manifests": None}),
+        )
         result = _resolve_digest("some/image:latest")
-        self.assertEqual(result, "")
+        self.assertIsNone(result)
 
-    @patch("dxpy.nextflow.collect_images.subprocess.check_output")
-    def test_single_arch_flat_manifest(self, mock_check_output):
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_single_arch_flat_manifest(self, mock_run):
         """Single-arch images return a flat manifest (no manifests array)."""
-        mock_check_output.return_value = json.dumps({
-            "schemaVersion": 2,
-            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-            "config": {"digest": "sha256:configdigest"},
-        })
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "schemaVersion": 2,
+                "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+                "config": {"digest": "sha256:configdigest"},
+            }),
+        )
         result = _resolve_digest("singlearch/image:1.0")
-        self.assertEqual(result, "")
+        self.assertIsNone(result)
 
 
 class TestCollectDockerImages(unittest.TestCase):
@@ -192,7 +207,7 @@ class TestCollectDockerImages(unittest.TestCase):
         self.assertEqual(refs[0]["repository"], "quay.io/biocontainers/")
         self.assertEqual(refs[0]["image_name"], "fastqc")
         self.assertEqual(refs[0]["tag"], "0.12.1")
-        self.assertEqual(refs[0]["digest"], "")
+        self.assertIsNone(refs[0]["digest"])
         self.assertEqual(refs[1]["process"], "MULTIQC")
         self.assertEqual(refs[1]["image_name"], "multiqc")
         mock_resolve.assert_not_called()
@@ -482,10 +497,10 @@ class TestParseDockerRefEdgeCases(unittest.TestCase):
 
     def test_empty_string(self):
         repo, image, tag, digest = _parse_docker_ref("")
-        self.assertEqual(repo, "")
+        self.assertIsNone(repo)
         self.assertEqual(image, "")
-        self.assertEqual(tag, "")
-        self.assertEqual(digest, "")
+        self.assertIsNone(tag)
+        self.assertIsNone(digest)
 
     def test_three_level_registry(self):
         """gcr.io/google-containers/cadvisor:v0.36.0 — 3 path segments."""
@@ -494,7 +509,7 @@ class TestParseDockerRefEdgeCases(unittest.TestCase):
         self.assertEqual(repo, "gcr.io/google-containers/")
         self.assertEqual(image, "cadvisor")
         self.assertEqual(tag, "v0.36.0")
-        self.assertEqual(digest, "")
+        self.assertIsNone(digest)
 
 
 if __name__ == "__main__":

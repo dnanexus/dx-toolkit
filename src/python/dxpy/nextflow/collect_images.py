@@ -65,8 +65,8 @@ def _parse_docker_ref(ref):
         myregistry:5000/myimage:latest
           -> ("myregistry:5000/", "myimage", "latest", "")
     """
-    digest = ""
-    tag = ""
+    digest = None
+    tag = None
 
     # Strip docker:// URI scheme if present
     if ref.startswith("docker://"):
@@ -90,7 +90,7 @@ def _parse_docker_ref(ref):
     # Everything before (including the trailing "/") goes into repository.
     last_slash = ref.rfind("/")
     if last_slash == -1:
-        return "", ref, tag, digest
+        return None, ref, tag, digest
 
     return ref[:last_slash + 1], ref[last_slash + 1:], tag, digest
 
@@ -101,25 +101,28 @@ def _resolve_digest(full_ref):
     Runs ``docker manifest inspect <image>`` and extracts the digest
     from the manifest entry matching platform amd64/linux.
 
-    Returns the ``sha256:...`` digest string, or ``""`` on failure.
+    Returns the ``sha256:...`` digest string, or ``None`` on failure.
     """
     try:
-        output = subprocess.check_output(
+        result = subprocess.run(
             ["docker", "manifest", "inspect", full_ref],
-            stderr=subprocess.DEVNULL, text=True,
+            capture_output=True, text=True,
         )
-        data = json.loads(output)
+        if result.returncode != 0:
+            log.warning("Failed to resolve digest for %s", full_ref)
+            return None
+        data = json.loads(result.stdout)
         manifests = data.get("manifests") or []
         for manifest in manifests:
             platform = manifest.get("platform", {})
             if (platform.get("architecture") == "amd64"
                     and platform.get("os") == "linux"):
-                return manifest.get("digest", "")
+                return manifest.get("digest")
         log.warning("No amd64/linux manifest found for %s", full_ref)
-        return ""
-    except (subprocess.CalledProcessError, json.JSONDecodeError, KeyError):
+        return None
+    except (json.JSONDecodeError, KeyError):
         log.warning("Failed to resolve digest for %s", full_ref)
-        return ""
+        return None
 
 
 def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
@@ -149,20 +152,17 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
         try:
             cmd_parts.extend(shlex.split(nextflow_pipeline_params))
         except ValueError as e:
-            raise ImageRefFactoryError(
-                "Malformed pipeline parameters: {}".format(e))
+            raise ImageRefFactoryError(f"Malformed pipeline parameters: {e}")
 
     process = subprocess.run(cmd_parts, capture_output=True, text=True)
     if process.returncode != 0:
         raise ImageRefFactoryError(
-            "nextflow inspect failed (rc={}): stdout: {}\nstderr: {}".format(
-                process.returncode, process.stdout, process.stderr))
+            f"nextflow inspect failed (rc={process.returncode}): stdout: {process.stdout}\nstderr: {process.stderr}")
 
     try:
         inspect_data = json.loads(process.stdout)
     except (json.JSONDecodeError, ValueError) as e:
-        raise ImageRefFactoryError(
-            "Failed to parse nextflow inspect output: {}".format(e))
+        raise ImageRefFactoryError(f"Failed to parse nextflow inspect output: {e}")
 
     processes = inspect_data.get("processes", [])
     if not processes:
@@ -180,9 +180,7 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
         # Reject refs that specify both tag and digest. A ref should
         # identify an image by tag OR by digest, not both.
         if tag and digest:
-            raise ImageRefFactoryError(
-                "Image reference has both tag and digest: {}".format(
-                    container))
+            raise ImageRefFactoryError(f"Image reference has both tag and digest: {container}")
 
         # Resolve registry digest only for images with no tag AND no digest
         # (implicit latest). Tagged images get their digest resolved
@@ -232,8 +230,8 @@ def _populate_cached_file_ids(image_refs):
 
     cache_hits = 0
     for (repository, image_name, tag), ref in unique_keys.items():
-        cache_file_name = "_".join(x for x in [image_name, tag] if x)
-        cache_folder = "/.cached_docker_images/{}/".format(image_name)
+        cache_file_name = "_".join(filter(lambda x: x, [image_name, tag]))
+        cache_folder = f"/.cached_docker_images/{image_name}/"
 
         try:
             results = list(find_data_objects(
@@ -246,28 +244,21 @@ def _populate_cached_file_ids(image_refs):
                 limit=1,
             ))
         except Exception as e:
-            log.warning("Docker image cache: failed to search for %s/%s: %s",
-                        image_name, tag, e)
+            log.warning(f"Docker image cache: failed to search for {image_name}/{tag}: {e}")
             continue
 
         if results:
             file_id = results[0]["id"]
             desc = results[0].get("describe", {})
             props = desc.get("properties", {})
-            stored_digest = props.get("image_digest", "")
+            stored_digest = props.get("image_digest")
             if not stored_digest:
-                log.warning(
-                    "Docker image cache: skipping %s/%s "
-                    "(no digest in properties)",
-                    image_name, tag)
+                log.warning(f"Docker image cache: skipping {image_name}/{tag} (no digest in properties)")
                 continue
 
             # If the ref has a known digest, verify it matches
             if ref["digest"] and ref["digest"] != stored_digest:
-                log.warning(
-                    "Docker image cache: digest mismatch for %s/%s "
-                    "(expected %s, got %s)", image_name, tag,
-                    ref["digest"], stored_digest)
+                log.warning(f"Docker image cache: digest mismatch for {image_name}/{tag} (expected {ref['digest']}, got {stored_digest})")
                 continue
 
             cache_hits += 1
@@ -277,5 +268,4 @@ def _populate_cached_file_ids(image_refs):
                     r["file_id"] = file_id
 
     if cache_hits:
-        log.info("Docker image cache: %d/%d images found in project %s",
-                 cache_hits, len(unique_keys), project_id)
+        log.info(f"Docker image cache: {cache_hits}/{len(unique_keys)} images found in project {project_id}")
