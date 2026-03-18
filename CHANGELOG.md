@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Nextflow asset update: Nextaur 1.12.0 with Nextflow 25.10.4 and nf-amazon 3.4.4
+
 ## [407.0] - beta
 
 ### Fixed
