@@ -130,9 +130,6 @@ def _parse_dx_uri(uri):
     return project_id, file_id
 
 
-_RETRY_DELAYS = (60, 300)
-
-
 def _docker_manifest_inspect(ref):
     """Run ``docker manifest inspect`` with retries on failure.
 
@@ -140,11 +137,10 @@ def _docker_manifest_inspect(ref):
     or network errors.  Returns the parsed JSON dict, or ``None`` on
     permanent failure.
     """
-    attempts = [0] + list(_RETRY_DELAYS)
+    attempts = [0, 60, 300]
     for i, delay in enumerate(attempts):
         if delay:
-            log.info("Retrying docker manifest inspect for %s in %ds (attempt %d/%d)",
-                     ref, delay, i + 1, len(attempts))
+            log.info(f"Retrying docker manifest inspect for {ref} in {delay}s (attempt {i + 1}/{len(attempts)})")
             time.sleep(delay)
         try:
             result = subprocess.run(
@@ -153,11 +149,9 @@ def _docker_manifest_inspect(ref):
             )
             if result.returncode == 0:
                 return json.loads(result.stdout)
-            log.warning("docker manifest inspect failed for %s (rc=%d, attempt %d/%d)",
-                        ref, result.returncode, i + 1, len(attempts))
+            log.warning(f"docker manifest inspect failed for {ref} (rc={result.returncode}, attempt {i + 1}/{len(attempts)})")
         except (json.JSONDecodeError, OSError) as e:
-            log.warning("docker manifest inspect error for %s (attempt %d/%d): %s",
-                        ref, i + 1, len(attempts), e)
+            log.warning(f"docker manifest inspect error for {ref} (attempt {i + 1}/{len(attempts)}): {e}")
     return None
 
 
@@ -200,7 +194,7 @@ def _resolve_digest(full_ref):
         if config_digest:
             return config_digest
 
-    log.warning("No digest found for %s", full_ref)
+    log.warning(f"No digest found for {full_ref}")
     return None
 
 
@@ -226,7 +220,7 @@ def _get_config_digest(image_ref, platform_digest):
     config = data.get("config")
     if isinstance(config, dict):
         return config.get("digest")
-    log.warning("No config digest in platform manifest for %s", ref_by_digest)
+    log.warning(f"No config digest in platform manifest for {ref_by_digest}")
     return None
 
 
@@ -307,7 +301,7 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
 
         # Resolve registry digest for all images that don't already have one.
         # The digest is used for cache validation in _populate_cached_file_ids()
-        # to prevent cross-registry collisions (see docs/cache_collision_scenarios.md).
+        # to prevent cross-registry collisions (see dx-toolkit/devdocs/nextflow/cache_collision_scenarios.md).
         if not digest:
             full_ref = (repository or "") + image_name
             if tag:
