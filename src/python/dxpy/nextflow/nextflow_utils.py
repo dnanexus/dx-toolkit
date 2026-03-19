@@ -28,13 +28,13 @@ def _load_versions_manifest():
         missing = required_keys - set(cfg.keys())
         if missing:
             raise dxpy.exceptions.DXError(
-                "Malformed version entry '{}': missing keys {}".format(ver, missing))
+                "Malformed version entry '{}': missing keys {}".format(ver, sorted(missing)))
     return manifest
 
 
-def resolve_version(requested_version=None):
+def resolve_version(requested_version=None, warn=True):
     """Resolve Nextflow version. Returns (version_key, version_config).
-    Prints deprecation warning to stderr if version is deprecated.
+    Prints deprecation warning to stderr if version is deprecated and warn=True.
     Raises DXError if version is not found.
     """
     manifest = _load_versions_manifest()
@@ -50,7 +50,7 @@ def resolve_version(requested_version=None):
         raise dxpy.exceptions.DXError(
             "Nextflow version '{}' is not supported. "
             "Available versions: {}".format(requested_version, available))
-    if version_config["status"] == "deprecated":
+    if warn and version_config["status"] == "deprecated":
         sys.stderr.write(
             "WARNING: Nextflow version {} is deprecated. "
             "Consider upgrading to {}.\n".format(requested_version, manifest["default"]))
@@ -211,7 +211,7 @@ def get_instance_type(region):
 
 def get_nextflow_assets(region, nextflow_version=None, version_config=None):
     if nextflow_version is not None and version_config is not None:
-        raise ValueError("Specify nextflow_version or version_config, not both")
+        raise dxpy.exceptions.DXError("Specify nextflow_version or version_config, not both")
     if version_config is None:
         _, version_config = resolve_version(nextflow_version)
     nextflow_basepath = path.join(path.dirname(dxpy.__file__), 'nextflow')

@@ -99,8 +99,9 @@ def build_pipeline_with_npi(
 
     # Auto-detect NPI capability for version selection
     if nextflow_version is not None:
-        # Validate early so invalid versions fail before launching a job; result intentionally discarded
-        resolve_version(nextflow_version)
+        # Validate early so invalid versions fail before launching a job; result intentionally discarded.
+        # warn=False: deprecation warning will be emitted by the worker's dxpy during the actual build.
+        resolve_version(nextflow_version, warn=False)
         # TODO: Remove auto-detect once all deployed NPI versions support nextflow_version input
         if _npi_supports_version_selection():
             input_hash["nextflow_version"] = nextflow_version

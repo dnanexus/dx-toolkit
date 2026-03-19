@@ -2889,7 +2889,7 @@ def build(args):
             build_parser.error(
                 "Docker caching argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
 
-        if args.nextflow_version and not args.nextflow:
+        if args.nextflow_version is not None and not args.nextflow:
             build_parser.error(
                 "--nextflow-version is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
 
@@ -5175,7 +5175,7 @@ nextflow_options.add_argument('--nextflow-pipeline-params', help=fill("Custom pi
 
 # --nextflow-version
 nextflow_options.add_argument('--nextflow-version', help=fill("Nextflow engine version to use (e.g., 25.10, 24.10). "
-                                                              "Defaults to the configured default version. "
+                                                              "Defaults to the latest supported version. "
                                                               "Deprecated versions will print a warning. "
                                                               "An invalid version will list all available versions.",
                                                    width_adjustment=-24), dest="nextflow_version")
