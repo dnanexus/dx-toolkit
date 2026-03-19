@@ -136,10 +136,18 @@ class DockerImageRef(ImageRef):
         """
         Docker image reference has the form of <REPOSITORY_NAME>/<IMAGE_NAME>:<VERSION_TAG> or
         <REPOSITORY_NAME>/<IMAGE_NAME>@<DIGEST>
+
+        Tag takes precedence over digest so that ``docker pull`` and
+        ``docker save`` use the human-readable tag.  The digest (when
+        present alongside a tag) is still written to the cached file's
+        ``image_digest`` property for validation by
+        ``_populate_cached_file_ids()``.
         """
         repo_and_image_name = self._join_if_exists("", [self._repository, self._image_name])
-        if self._digest:
+        if self._tag:
+            full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
+        elif self._digest:
             full_ref = self._join_if_exists("@", [repo_and_image_name, self._digest])
         else:
-            full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
+            full_ref = repo_and_image_name
         return full_ref
