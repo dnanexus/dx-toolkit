@@ -18,16 +18,16 @@ def _load_versions_manifest():
         with open(manifest_path, 'r') as f:
             manifest = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
-        raise dxpy.exceptions.DXError(
+        raise dxpy.exceptions.DXCLIError(
             "Failed to load Nextflow versions manifest at {}: {}".format(manifest_path, e))
     if "default" not in manifest or "versions" not in manifest:
-        raise dxpy.exceptions.DXError(
+        raise dxpy.exceptions.DXCLIError(
             "Malformed Nextflow versions manifest: missing 'default' or 'versions' key")
     required_keys = {"status", "nextflow_assets", "nextaur_assets", "awscli_assets"}
     for ver, cfg in manifest["versions"].items():
         missing = required_keys - set(cfg.keys())
         if missing:
-            raise dxpy.exceptions.DXError(
+            raise dxpy.exceptions.DXCLIError(
                 "Malformed version entry '{}': missing keys {}".format(ver, sorted(missing)))
     return manifest
 
@@ -41,13 +41,13 @@ def resolve_version(requested_version=None, warn=True):
     if requested_version is None:
         requested_version = manifest["default"]
         if requested_version not in manifest["versions"]:
-            raise dxpy.exceptions.DXError(
+            raise dxpy.exceptions.DXCLIError(
                 "Nextflow versions manifest is misconfigured: default version '{}' "
                 "is not listed in versions".format(requested_version))
     version_config = manifest["versions"].get(requested_version)
     if version_config is None:
         available = ", ".join(sorted(manifest["versions"].keys()))
-        raise dxpy.exceptions.DXError(
+        raise dxpy.exceptions.DXCLIError(
             "Nextflow version '{}' is not supported. "
             "Available versions: {}".format(requested_version, available))
     if warn and version_config["status"] == "deprecated":
@@ -211,7 +211,7 @@ def get_instance_type(region):
 
 def get_nextflow_assets(region, nextflow_version=None, version_config=None):
     if nextflow_version is not None and version_config is not None:
-        raise dxpy.exceptions.DXError("Specify nextflow_version or version_config, not both")
+        raise dxpy.exceptions.DXCLIError("Specify nextflow_version or version_config, not both")
     if version_config is None:
         _, version_config = resolve_version(nextflow_version)
     nextflow_basepath = path.join(path.dirname(dxpy.__file__), 'nextflow')
@@ -229,7 +229,7 @@ def get_nextflow_assets(region, nextflow_version=None, version_config=None):
             with open(nextaur_path, 'r') as nextaur_f, open(nextflow_path, 'r') as nextflow_f, open(awscli_path, 'r') as awscli_f:
                 return json.load(nextaur_f)[region], json.load(nextflow_f)[region], json.load(awscli_f)[region]
         except KeyError:
-            raise dxpy.exceptions.DXError(
+            raise dxpy.exceptions.DXCLIError(
                 "Nextflow assets not available for region '{}'. "
                 "Check that your Nextflow version supports this region.".format(region))
 
@@ -244,7 +244,7 @@ def get_nextflow_assets(region, nextflow_version=None, version_config=None):
         try:
             return _load_regional_assets(nextaur_staging, nextflow_staging, awscli_staging)
         except FileNotFoundError:
-            raise dxpy.exceptions.DXError(
+            raise dxpy.exceptions.DXCLIError(
                 "Staging asset files not found for the resolved Nextflow version. "
                 "Expected files like: {}".format(nextaur_staging))
 
