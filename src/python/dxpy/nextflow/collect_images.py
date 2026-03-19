@@ -110,6 +110,26 @@ def _parse_docker_ref(ref):
     return ref[:last_slash + 1], ref[last_slash + 1:], tag, digest
 
 
+def _parse_dx_uri(uri):
+    """Extract (project_id, file_id) from a ``dx://`` URI.
+
+    Supported formats::
+
+        dx://file-xxxx              → (None, "file-xxxx")
+        dx://project-xxxx:file-xxxx → ("project-xxxx", "file-xxxx")
+    """
+    path = uri[len("dx://"):]
+    parts = path.split(":")
+    project_id = None
+    file_id = None
+    for part in parts:
+        if part.startswith("project-"):
+            project_id = part
+        elif part.startswith("file-"):
+            file_id = part
+    return project_id, file_id
+
+
 _RETRY_DELAYS = (60, 300)
 
 
@@ -259,6 +279,23 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
     for entry in processes:
         container = entry.get("container", "")
         if not container:
+            continue
+
+        # dx:// URIs reference platform files directly — no pull/save/upload
+        # needed. Extract the file ID so _package_bundle() reuses it.
+        if container.startswith("dx://"):
+            _, file_id = _parse_dx_uri(container)
+            if not file_id:
+                raise ImageRefFactoryError(f"Could not parse dx:// URI: {container}")
+            image_refs.append(_ImageRef(
+                process=entry.get("name", ""),
+                repository=None,
+                image_name=file_id,
+                tag=None,
+                digest=None,
+                file_id=file_id,
+                engine="docker",
+            ))
             continue
 
         repository, image_name, tag, digest = _parse_docker_ref(container)

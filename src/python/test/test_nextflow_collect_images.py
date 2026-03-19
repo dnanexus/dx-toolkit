@@ -26,6 +26,7 @@ from dxpy.nextflow.collect_images import (
     _ImageRef,
     _docker_manifest_inspect,
     _parse_docker_ref,
+    _parse_dx_uri,
     _resolve_digest,
     collect_docker_images,
     _populate_cached_file_ids,
@@ -220,6 +221,41 @@ class TestCollectDockerImages(unittest.TestCase):
         from dxpy.nextflow.ImageRefFactory import ImageRefFactoryError
         with self.assertRaises(ImageRefFactoryError):
             collect_docker_images("/tmp/pipeline", "", "")
+
+    @patch("dxpy.nextflow.collect_images._populate_cached_file_ids")
+    @patch("dxpy.nextflow.collect_images._resolve_digest")
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_dx_uri_passes_through_with_file_id(self, mock_run, mock_resolve, mock_populate):
+        """dx:// URIs set file_id directly, skipping pull/save/upload."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "processes": [
+                    {"name": "PROC", "container": "dx://project-xxxx:file-yyyy"},
+                ]
+            }),
+        )
+        refs = collect_docker_images("/tmp/pipeline", "", "")
+        self.assertEqual(len(refs), 1)
+        self.assertEqual(refs[0]["file_id"], "file-yyyy")
+        self.assertIsNone(refs[0]["repository"])
+        self.assertEqual(refs[0]["image_name"], "file-yyyy")
+        mock_resolve.assert_not_called()
+
+
+class TestParseDxUri(unittest.TestCase):
+    """Unit tests for _parse_dx_uri()."""
+
+    def test_file_only(self):
+        project_id, file_id = _parse_dx_uri("dx://file-xxxx")
+        self.assertIsNone(project_id)
+        self.assertEqual(file_id, "file-xxxx")
+
+    def test_project_and_file(self):
+        project_id, file_id = _parse_dx_uri("dx://project-AAAA:file-BBBB")
+        self.assertEqual(project_id, "project-AAAA")
+        self.assertEqual(file_id, "file-BBBB")
+
 
 class TestPopulateCachedFileIds(unittest.TestCase):
     """Tests for _populate_cached_file_ids() with mocked DX API."""

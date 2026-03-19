@@ -14,6 +14,11 @@ nextflow inspect pipeline/ -format json
 └─────────────────────────────────────────────────────────┘
          │
          ▼
+    ┌────────────┐
+    │ dx:// URI?  │───Yes──▶  _parse_dx_uri(container)
+    └────────────┘            Extract file-xxxx
+         │ No                 Set file_id = file-xxxx
+         ▼                    (skip pull/save/upload/cache)
 ┌─────────────────────────────────────────────────────────┐
 │  _parse_docker_ref(container)                           │
 │  ──────────────────────────────                         │
@@ -192,6 +197,7 @@ Three layers share the same schema, all ignoring `repository`:
 | Digest-only | `quay.io/bio/fastqc@sha256:abc` | `None` | `sha256:abc` (from ref) |
 | Untagged | `quay.io/bio/samtools` | `None` | resolved via `docker manifest inspect` |
 | Tag+digest | `quay.io/bio/samtools:1.17@sha256:abc` | — | — ([rejected][reject]) |
+| Platform file | `dx://project-xxxx:file-yyyy` | `None` | `None` (file_id set directly, no cache) |
 
 [reject]: https://github.com/dnanexus/dx-toolkit/blob/f9b65800de863217fa6685519fb669f7ccf35e27/src/python/dxpy/nextflow/collect_images.py#L196-L197
 
