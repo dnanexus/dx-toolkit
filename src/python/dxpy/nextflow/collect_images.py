@@ -227,7 +227,7 @@ def _get_config_digest(image_ref, platform_digest):
 def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
     """Collect container image references using ``nextflow inspect``.
 
-    Uses the native ``nextflow inspect`` command (NF >= 25.04).  It scans
+    Uses the native ``nextflow inspect`` command.  It scans
     pipeline ``include`` statements statically — no plugins, parameters,
     or profile are required for container discovery.
 
