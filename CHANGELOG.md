@@ -13,6 +13,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * Fix redundant `cpuUsageIdle` description in `dx watch --metrics-help` output
+* Nextflow importer app will enhance inputs help message with additional description from Nextflow pipeline schema
 
 ## [409.0] - beta
 

@@ -232,11 +232,9 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
             help_parts = [f"(Nextflow pipeline {'optional' if property.get('optional') else 'required'})"]
             if "default" in property:
                 help_parts.append(f"Default value: {property.get('default', '')}.")
-            if "description" in property:
-                help_parts.append(property.get('description', ''))
-            if "help_text" in property:
-                help_parts.append(property.get('help_text', ''))
-            dx_input["help"] = " ".join(help_parts).strip()
+            help_parts.append(property.get('description', None))
+            help_parts.append(property.get('help_text', None))
+            dx_input["help"] = " ".join(filter(lambda x: x, help_parts)).strip()
 
             dx_input["hidden"] = property.get('hidden', False)
             dx_input["optional"] = True
