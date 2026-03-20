@@ -110,17 +110,17 @@ class DockerImageRef(ImageRef):
 
     def _cache(self, file_name):
         full_image_ref = self._reconstruct_image_ref()
-        docker_pull_cmd = "sudo docker pull {}".format(full_image_ref)
-        docker_save_cmd = "sudo docker save {} | gzip > {}".format(full_image_ref, file_name)
+        docker_pull_cmd = f"sudo docker pull {full_image_ref}"
+        docker_save_cmd = f"sudo docker save {full_image_ref} | gzip > {file_name}"
         for cmd in [docker_pull_cmd, docker_save_cmd]:
             try:
                 _ = subprocess.check_output(cmd, shell=True)
             except subprocess.CalledProcessError:
-                err_exit("Failed to run a subprocess command: {}".format(cmd))
+                err_exit(f"Failed to run a subprocess command: {cmd}")
         # may need wait_on_close = True??
         extracted_digest = self._digest
         if not self._digest:
-            digest_cmd = "docker images --no-trunc --quiet {}".format(full_image_ref)
+            digest_cmd = f"docker images --no-trunc --quiet {full_image_ref}"
             extracted_digest = subprocess.check_output(digest_cmd, shell=True).decode().strip()
         uploaded_dx_file = upload_local_file(
             filename=file_name,
@@ -136,10 +136,18 @@ class DockerImageRef(ImageRef):
         """
         Docker image reference has the form of <REPOSITORY_NAME>/<IMAGE_NAME>:<VERSION_TAG> or
         <REPOSITORY_NAME>/<IMAGE_NAME>@<DIGEST>
+
+        Tag takes precedence over digest so that ``docker pull`` and
+        ``docker save`` use the human-readable tag.  The digest (when
+        present alongside a tag) is still written to the cached file's
+        ``image_digest`` property for validation by
+        ``_populate_cached_file_ids()``.
         """
         repo_and_image_name = self._join_if_exists("", [self._repository, self._image_name])
-        if self._digest:
+        if self._tag:
+            full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
+        elif self._digest:
             full_ref = self._join_if_exists("@", [repo_and_image_name, self._digest])
         else:
-            full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
+            full_ref = repo_and_image_name
         return full_ref

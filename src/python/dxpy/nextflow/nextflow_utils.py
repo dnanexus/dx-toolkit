@@ -7,7 +7,7 @@ import json
 import shutil
 import logging
 from dxpy.exceptions import ResourceNotFound
-from dxpy.nextflow.collect_images import run_nextaur_collect, bundle_docker_images
+from dxpy.nextflow.collect_images import collect_docker_images, bundle_docker_images
 
 
 def get_source_file_name():
@@ -115,7 +115,7 @@ def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_
     nextaur_asset, nextflow_asset, awscli_asset = get_nextflow_assets(region)
     regional_instance_type = get_instance_type(region)
     if cache_docker:
-        image_refs = run_nextaur_collect(resources_dir, profile, nextflow_pipeline_params)
+        image_refs = collect_docker_images(resources_dir, profile, nextflow_pipeline_params)
         image_bundled = bundle_docker_images(image_refs)
     else:
         image_bundled = {}
