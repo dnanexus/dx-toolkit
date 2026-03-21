@@ -22,6 +22,7 @@ import json
 import logging
 import shlex
 import subprocess
+import sys
 import time
 from typing import Optional
 
@@ -29,6 +30,11 @@ from dxpy import config, find_data_objects
 from dxpy.nextflow.ImageRefFactory import ImageRefFactory, ImageRefFactoryError
 
 log = logging.getLogger(__name__)
+
+
+def _progress(msg):
+    """Write user-facing progress to stderr (stdout is reserved for --json output)."""
+    print(msg, file=sys.stderr, flush=True)
 
 
 @dataclasses.dataclass
@@ -270,6 +276,7 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
 
     image_refs = []
     resolved_digests = {}
+    _progress(f"Resolving {len(processes)} container image(s) from pipeline...")
     for entry in processes:
         container = entry.get("container", "")
         if not container:
@@ -281,6 +288,7 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
             _, file_id = _parse_dx_uri(container)
             if not file_id:
                 raise ImageRefFactoryError(f"Could not parse dx:// URI: {container}")
+            _progress(f"  {container} -> platform file")
             image_refs.append(_ImageRef(
                 process=entry.get("name", ""),
                 repository=None,
@@ -309,6 +317,13 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
             if full_ref not in resolved_digests:
                 resolved_digests[full_ref] = _resolve_digest(full_ref)
             digest = resolved_digests[full_ref]
+
+        display_ref = (repository or "") + image_name + (":" + tag if tag else "")
+        if digest:
+            # Show algo prefix (sha256:) + first 12 hex chars
+            _progress(f"  {display_ref} (digest: {digest[:19]}...)")
+        else:
+            _progress(f"  {display_ref} (digest: unresolved)")
 
         image_refs.append(_ImageRef(
             process=entry.get("name", ""),
@@ -342,14 +357,14 @@ def _populate_cached_file_ids(image_refs):
     if not project_id:
         return
 
-    cache_hits = 0
-    for ref in image_refs:
-        # Skip cache lookup when digest is unknown (e.g. _resolve_digest
-        # failed).  Without a digest we cannot guarantee correctness of
-        # the cache hit.
-        if not ref.digest:
-            continue
+    cacheable = [ref for ref in image_refs if ref.digest and not ref.file_id]
+    if not cacheable:
+        return
 
+    _progress(f"Checking project cache for {len(cacheable)} docker image(s)...")
+    cache_hits = 0
+    for ref in cacheable:
+        display = ref.image_name + (":" + ref.tag if ref.tag else "")
         cache_file_name = "_".join(filter(lambda x: x, [ref.image_name, ref.tag]))
         cache_folder = f"/.cached_docker_images/{ref.image_name}/"
 
@@ -361,15 +376,21 @@ def _populate_cached_file_ids(image_refs):
                 folder=cache_folder,
                 name=cache_file_name,
                 properties={"image_digest": ref.digest},
+                describe={"fields": {"name": True, "folder": True, "project": True}},
                 limit=1,
             ))
         except Exception as e:
-            log.warning(f"Docker image cache: failed to search for {ref.image_name}/{ref.tag}: {e}")
+            log.warning(f"Docker image cache: failed to search for {display}: {e}")
+            _progress(f"  {display}: SKIP (lookup error)")
             continue
 
         if results:
             ref.file_id = results[0]["id"]
             cache_hits += 1
+            desc = results[0]["describe"]
+            _progress(f"  {display}: CACHED ({desc['project']}:{desc['folder']}/{desc['name']} ({results[0]['id']}))")
+        else:
+            _progress(f"  {display}: MISS (will pull and upload)")
 
-    if cache_hits:
-        log.info(f"Docker image cache: {cache_hits}/{len(image_refs)} images found in project {project_id}")
+    cache_misses = len(cacheable) - cache_hits
+    _progress(f"Docker image cache: {cache_hits} cached, {cache_misses} to upload")
