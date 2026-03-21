@@ -357,6 +357,9 @@ def _populate_cached_file_ids(image_refs):
     if not project_id:
         return
 
+    # Skip cache lookup when digest is unknown (e.g. _resolve_digest
+    # failed).  Without a digest we cannot guarantee correctness of
+    # the cache hit.  Also skip refs that already have a file_id (dx:// URIs).
     cacheable = [ref for ref in image_refs if ref.digest and not ref.file_id]
     if not cacheable:
         return
