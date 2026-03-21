@@ -5174,7 +5174,7 @@ nextflow_options.add_argument('--nextflow-pipeline-params', help=fill("Custom pi
                                                    width_adjustment=-24), dest="nextflow_pipeline_params")
 
 # --nextflow-version
-nextflow_options.add_argument('--nextflow-version', help=fill("Nextflow engine version to use (e.g., 25.10, 24.10). "
+nextflow_options.add_argument('--nextflow-version', choices=['24.10', '25.10'], help=fill("Nextflow engine version to use (e.g., 25.10, 24.10). "
                                                               "Defaults to the latest supported version. "
                                                               "Deprecated versions will print a warning. "
                                                               "An invalid version will list all available versions.",
