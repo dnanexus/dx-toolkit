@@ -264,7 +264,7 @@ class TestPopulateCachedFileIds(unittest.TestCase):
     @patch("dxpy.nextflow.collect_images.config")
     def test_cache_hit(self, mock_config, mock_find):
         mock_config.get.return_value = "project-123"
-        mock_find.return_value = iter([{"id": "file-AAAA"}])
+        mock_find.return_value = iter([{"id": "file-AAAA", "describe": {"name": "test-name", "project": "project-123", "folder": "/dir"}}])
         refs = [_ImageRef(process="", repository="quay.io/bio/", image_name="fastqc",
                           tag="0.12.1", digest="sha256:abc123", file_id=None, engine="docker")]
         _populate_cached_file_ids(refs)
@@ -277,8 +277,8 @@ class TestPopulateCachedFileIds(unittest.TestCase):
     def test_duplicate_refs_each_get_cache_hit(self, mock_config, mock_find):
         mock_config.get.return_value = "project-123"
         mock_find.side_effect = [
-            iter([{"id": "file-BBBB"}]),
-            iter([{"id": "file-BBBB"}]),
+            iter([{"id": "file-BBBB", "describe": {"name": "test-name", "project": "project-123", "folder": "/dir"}}]),
+            iter([{"id": "file-BBBB", "describe": {"name": "test-name", "project": "project-123", "folder": "/dir"}}]),
         ]
         refs = [
             _ImageRef(process="PROC_A", repository="quay.io/bio/", image_name="fastqc",
@@ -306,7 +306,7 @@ class TestPopulateCachedFileIds(unittest.TestCase):
     def test_cross_registry_collision_prevented(self, mock_config, mock_find):
         mock_config.get.return_value = "project-123"
         mock_find.side_effect = [
-            iter([{"id": "file-FROM-QUAY"}]),
+            iter([{"id": "file-FROM-QUAY", "describe": {"name": "test-name", "project": "project-123", "folder": "/dir"}}]),
             iter([]),
         ]
         refs = [
