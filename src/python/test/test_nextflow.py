@@ -664,7 +664,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         pipeline_name = "hello_invalid_ver"
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
-        with self.assertSubprocessFailure(stderr_regexp="not supported", exit_code=3):
+        with self.assertSubprocessFailure(stderr_regexp="invalid choice", exit_code=3):
             run("dx build --nextflow --nextflow-version 99.99 --json " + applet_dir)
 
     def test_dx_build_nextflow_version_without_nextflow_flag(self):
