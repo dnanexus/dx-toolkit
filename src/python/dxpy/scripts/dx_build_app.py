@@ -1052,7 +1052,8 @@ def _build_app(args, extra_args):
             profile=args.profile,
             region=get_destination_region(args.destination),
             cache_docker=args.cache_docker,
-            nextflow_pipeline_params=args.nextflow_pipeline_params
+            nextflow_pipeline_params=args.nextflow_pipeline_params,
+            nextflow_version=args.nextflow_version
         )
         resources_dir = args.src_dir
         worker_resources_subpath = get_resources_subpath(resources_dir)
@@ -1197,7 +1198,8 @@ def _build_app(args, extra_args):
                 git_creds=args.git_credentials,
                 brief=args.brief,
                 destination=args.destination,
-                extra_args=extra_args
+                extra_args=extra_args,
+                nextflow_version=args.nextflow_version
             )
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)

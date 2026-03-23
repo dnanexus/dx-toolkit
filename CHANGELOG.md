@@ -6,6 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Nextflow: multi-version support via `--nextflow-version` flag for `dx build --nextflow`
+* Nextflow: user-facing progress logging for docker image caching (resolve, cache lookup, upload status)
+
 ### Changed
 
 * Nextflow asset update: Nextaur 1.12.0 with Nextflow 25.10.4 and nf-amazon 3.4.4

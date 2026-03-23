@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 from .nextflow_utils import (get_template_dir, get_source_file_name, get_resources_subpath,
-                             is_importer_job, get_regional_options, get_resources_dir_name)
+                             is_importer_job, get_regional_options, get_resources_dir_name,
+                             resolve_version)
 import json
 import os
 from dxpy import TOOLKIT_VERSION
@@ -13,7 +14,8 @@ def get_nextflow_dxapp(
         region="aws:us-east-1",
         profile="",
         cache_docker=False,
-        nextflow_pipeline_params=""
+        nextflow_pipeline_params="",
+        nextflow_version=None
 ):
     """
     :param custom_inputs: Custom inputs that will be used in the created Nextflow pipeline.
@@ -45,12 +47,18 @@ def get_nextflow_dxapp(
     dxapp["name"] = name
     dxapp["title"] = name
     dxapp["summary"] = name
-    dxapp["regionalOptions"] = get_regional_options(region, resources_dir, profile, cache_docker, nextflow_pipeline_params)
+    # Resolve version once and thread through
+    resolved_version, version_config = resolve_version(nextflow_version)
+    dxapp["regionalOptions"] = get_regional_options(region, resources_dir, profile, cache_docker, nextflow_pipeline_params, version_config=version_config)
 
     # Record dxpy version used for this Nextflow build
     dxapp["details"]["dxpyBuildVersion"] = TOOLKIT_VERSION
     if os.environ.get("DX_JOB_ID") is None or not is_importer_job():
         dxapp["details"]["repository"] = "local"
+
+    # Record the resolved Nextflow version
+    dxapp["details"]["nextflowVersion"] = resolved_version
+
     return dxapp
 
 

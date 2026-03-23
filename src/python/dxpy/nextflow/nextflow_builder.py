@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import os
+import sys
 import dxpy
 import json
 import argparse
+import logging
 from glob import glob
 import shutil
 import tempfile
@@ -10,13 +12,26 @@ from functools import partial
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
-                                          create_readme, get_nested, get_allowed_extra_fields_mapping)
+                                          create_readme, get_nested, get_allowed_extra_fields_mapping,
+                                          resolve_version)
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
 
 
 parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
+
+
+def _npi_supports_version_selection():
+    """Check if deployed NPI app accepts nextflow_version input."""
+    try:
+        npi = dxpy.DXApp(name=get_importer_name())
+        desc = npi.describe(fields={"inputSpec": True})
+        input_names = {inp["name"] for inp in desc.get("inputSpec", [])}
+        return "nextflow_version" in input_names
+    except (dxpy.exceptions.ResourceNotFound, dxpy.exceptions.DXAPIError) as e:
+        logging.debug("Could not check NPI version support: %s", e)
+        return False
 
 
 def build_pipeline_with_npi(
@@ -29,7 +44,8 @@ def build_pipeline_with_npi(
         git_creds=None,
         brief=False,
         destination=None,
-        extra_args=None
+        extra_args=None,
+        nextflow_version=None
 ):
     """
     :param repository: URL to a Git repository
@@ -81,6 +97,20 @@ def build_pipeline_with_npi(
         if raw_value:
             input_hash[key] = transform(raw_value) if transform else raw_value
 
+    # Auto-detect NPI capability for version selection
+    if nextflow_version is not None:
+        # Validate early so invalid versions fail before launching a job; result intentionally discarded.
+        # warn=False: deprecation warning will be emitted by the worker's dxpy during the actual build.
+        resolve_version(nextflow_version, warn=False)
+        # TODO: Remove auto-detect once all deployed NPI versions support nextflow_version input
+        if _npi_supports_version_selection():
+            input_hash["nextflow_version"] = nextflow_version
+        else:
+            sys.stderr.write(
+                "WARNING: The deployed Nextflow Pipeline Importer does not support "
+                "version selection. Building with NPI's default version.\n"
+            )
+
     if destination:
         build_project_id, build_folder, _ = try_call(resolve_existing_path, destination, expected='folder')
     if build_project_id is None:
@@ -106,7 +136,8 @@ def prepare_nextflow(
         profile,
         region,
         cache_docker=False,
-        nextflow_pipeline_params=""
+        nextflow_pipeline_params="",
+        nextflow_version=None
 ):
     """
     :param resources_dir: Directory with all resources needed for the Nextflow pipeline. Usually directory with user's Nextflow files.
@@ -137,7 +168,8 @@ def prepare_nextflow(
         region=region,
         profile=profile,
         cache_docker=cache_docker,
-        nextflow_pipeline_params=nextflow_pipeline_params
+        nextflow_pipeline_params=nextflow_pipeline_params,
+        nextflow_version=nextflow_version
     )
     exec_content = get_nextflow_src(custom_inputs=custom_inputs, profile=profile, resources_dir=resources_dir)
     shutil.copytree(get_template_dir(), dxapp_dir, dirs_exist_ok=True)
@@ -186,8 +218,10 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
 
     with open(schema_file, "r") as fh:
         schema = json.load(fh)
-    defs_key = "definitions" if "definitions" in schema else "$defs" if "$defs" in schema else {}
-    for d_key, d_schema in schema.get(defs_key).items():
+    defs_key = "definitions" if "definitions" in schema else "$defs" if "$defs" in schema else None
+    if defs_key is None:
+        return inputs
+    for d_key, d_schema in schema.get(defs_key, {}).items():
         required_inputs = d_schema.get("required", [])
         for property_key, property in d_schema.get("properties", {}).items():
             dx_input = {}

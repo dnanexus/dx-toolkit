@@ -24,15 +24,17 @@ import shutil
 import os
 import sys
 import unittest
+import unittest.mock
 import json
+import dxpy.exceptions
 from dxpy.nextflow.nextflow_templates import get_nextflow_src, get_nextflow_dxapp
-from dxpy.nextflow.nextflow_utils import get_template_dir
+from dxpy.nextflow.nextflow_utils import get_template_dir, resolve_version
+from dxpy.nextflow.nextflow_builder import _npi_supports_version_selection
 from dxpy.nextflow.collect_images import bundle_docker_images
 
 import uuid
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildNextflowApps, run, chdir)
 import dxpy_testutil as testutil
-from dxpy.utils.resolver import ResolutionError
 import dxpy
 from dxpy.nextflow.nextflow_builder import prepare_custom_inputs
 from dxpy.nextflow.nextflow_utils import find_readme
@@ -89,6 +91,296 @@ class TestNextflowUtils(DXTestCase):
         finally:
             shutil.rmtree(temp_dir)
         assert actual == expected
+
+
+class TestNextflowVersionResolution(unittest.TestCase):
+
+    def test_resolve_version_default(self):
+        version, config = resolve_version(None)
+        self.assertEqual(version, "25.10")
+        self.assertEqual(config["status"], "supported")
+
+    def test_resolve_version_explicit(self):
+        version, config = resolve_version("25.10")
+        self.assertEqual(version, "25.10")
+        self.assertEqual(config["nextflow_assets"], "nextflow_assets_25_10.json")
+
+    def test_resolve_version_deprecated_warning(self):
+        import io
+        captured = io.StringIO()
+        old_stderr = sys.stderr
+        try:
+            sys.stderr = captured
+            version, config = resolve_version("24.10")
+        finally:
+            sys.stderr = old_stderr
+        self.assertEqual(version, "24.10")
+        self.assertIn("deprecated", captured.getvalue())
+
+    def test_resolve_version_invalid(self):
+        from dxpy.exceptions import DXError
+        with self.assertRaises(DXError) as ctx:
+            resolve_version("99.99")
+        self.assertIn("99.99", str(ctx.exception))
+        self.assertIn("Available versions", str(ctx.exception))
+
+    @unittest.mock.patch("dxpy.nextflow.nextflow_templates.get_regional_options")
+    def test_dxapp_records_nextflow_version(self, mock_regional):
+        mock_regional.return_value = {"aws:us-east-1": {}}
+        dxapp = get_nextflow_dxapp(nextflow_version="25.10")
+        self.assertEqual(dxapp["details"]["nextflowVersion"], "25.10")
+
+    @unittest.mock.patch("dxpy.nextflow.nextflow_templates.get_regional_options")
+    def test_dxapp_records_default_nextflow_version(self, mock_regional):
+        mock_regional.return_value = {"aws:us-east-1": {}}
+        dxapp = get_nextflow_dxapp()
+        self.assertEqual(dxapp["details"]["nextflowVersion"], "25.10")
+
+    @unittest.mock.patch("dxpy.nextflow.nextflow_templates.get_regional_options")
+    def test_dxapp_threads_default_version_config(self, mock_regional):
+        mock_regional.return_value = {"aws:us-east-1": {}}
+        get_nextflow_dxapp()
+        _, kwargs = mock_regional.call_args
+        self.assertEqual(kwargs["version_config"]["nextflow_assets"], "nextflow_assets_25_10.json")
+        self.assertEqual(kwargs["version_config"]["nextaur_assets"], "nextaur_assets_25_10.json")
+        self.assertEqual(kwargs["version_config"]["awscli_assets"], "awscli_assets_25_10.json")
+
+    @unittest.mock.patch("dxpy.nextflow.nextflow_templates.get_regional_options")
+    def test_dxapp_threads_deprecated_version_config(self, mock_regional):
+        mock_regional.return_value = {"aws:us-east-1": {}}
+        get_nextflow_dxapp(nextflow_version="24.10")
+        _, kwargs = mock_regional.call_args
+        self.assertEqual(kwargs["version_config"]["nextflow_assets"], "nextflow_assets_24_10.json")
+        self.assertEqual(kwargs["version_config"]["nextaur_assets"], "nextaur_assets_24_10.json")
+        self.assertEqual(kwargs["version_config"]["awscli_assets"], "awscli_assets_24_10.json")
+
+    @unittest.mock.patch("dxpy.DXApp")
+    def test_npi_auto_detect_unsupported(self, mock_app_cls):
+        mock_app = unittest.mock.MagicMock()
+        mock_app.describe.return_value = {"inputSpec": [{"name": "repository_url"}, {"name": "config_profile"}]}
+        mock_app_cls.return_value = mock_app
+        self.assertFalse(_npi_supports_version_selection())
+
+    @unittest.mock.patch("dxpy.DXApp")
+    def test_npi_auto_detect_supported(self, mock_app_cls):
+        mock_app = unittest.mock.MagicMock()
+        mock_app.describe.return_value = {"inputSpec": [{"name": "repository_url"}, {"name": "nextflow_version"}]}
+        mock_app_cls.return_value = mock_app
+        self.assertTrue(_npi_supports_version_selection())
+
+    @unittest.mock.patch("dxpy.DXApp")
+    def test_npi_auto_detect_exception(self, mock_app_cls):
+        mock_app_cls.side_effect = dxpy.exceptions.DXAPIError({"error": {"type": "NotFound", "message": "not found"}}, 404)
+        self.assertFalse(_npi_supports_version_selection())
+
+    @unittest.mock.patch("dxpy.describe")
+    def test_get_nextflow_assets_with_version_config(self, mock_describe):
+        from dxpy.nextflow.nextflow_utils import get_nextflow_assets
+        _, config = resolve_version("25.10")
+        nextaur, nextflow, awscli = get_nextflow_assets("aws:us-east-1", version_config=config)
+        self.assertTrue(nextaur.startswith("record-"))
+        self.assertTrue(nextflow.startswith("record-"))
+        self.assertTrue(awscli.startswith("record-"))
+        mock_describe.assert_called_once()
+
+    @unittest.mock.patch("dxpy.describe")
+    def test_get_nextflow_assets_staging_fallback(self, mock_describe):
+        from dxpy.nextflow.nextflow_utils import get_nextflow_assets
+        from dxpy.exceptions import ResourceNotFound
+        mock_describe.side_effect = ResourceNotFound({"error": {"type": "ResourceNotFound", "message": "not found"}}, 404)
+        _, config = resolve_version("25.10")
+        # Should fall through to staging files without error
+        nextaur, nextflow, awscli = get_nextflow_assets("aws:us-east-1", version_config=config)
+        self.assertTrue(nextaur.startswith("record-"))
+        self.assertTrue(nextflow.startswith("record-"))
+        self.assertTrue(awscli.startswith("record-"))
+
+    def test_get_nextflow_assets_invalid_region(self):
+        from dxpy.nextflow.nextflow_utils import get_nextflow_assets
+        from dxpy.exceptions import DXError
+        _, config = resolve_version("25.10")
+        with self.assertRaises(DXError) as ctx:
+            get_nextflow_assets("aws:nonexistent-region", version_config=config)
+        self.assertIn("nonexistent-region", str(ctx.exception))
+
+    def test_manifest_validation_missing_keys(self):
+        from dxpy.nextflow.nextflow_utils import _load_versions_manifest
+        from dxpy.exceptions import DXError
+        bad_manifest = json.dumps({"foo": "bar"})
+        with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data=bad_manifest)):
+            with self.assertRaises(DXError) as ctx:
+                _load_versions_manifest()
+            self.assertIn("missing", str(ctx.exception))
+
+    # --- Tier 1: Manifest loading error cases ---
+
+    def test_manifest_file_not_found(self):
+        from dxpy.nextflow.nextflow_utils import _load_versions_manifest
+        with unittest.mock.patch("builtins.open", side_effect=FileNotFoundError("no such file")):
+            with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+                _load_versions_manifest()
+            self.assertIn("Failed to load", str(ctx.exception))
+
+    def test_manifest_invalid_json(self):
+        from dxpy.nextflow.nextflow_utils import _load_versions_manifest
+        with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data="not json{{")):
+            with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+                _load_versions_manifest()
+            self.assertIn("Failed to load", str(ctx.exception))
+
+    def test_manifest_missing_default_key(self):
+        from dxpy.nextflow.nextflow_utils import _load_versions_manifest
+        manifest = json.dumps({"versions": {"25.10": {
+            "status": "supported", "nextflow_assets": "a.json",
+            "nextaur_assets": "b.json", "awscli_assets": "c.json"}}})
+        with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data=manifest)):
+            with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+                _load_versions_manifest()
+            self.assertIn("missing", str(ctx.exception).lower())
+
+    def test_manifest_missing_versions_key(self):
+        from dxpy.nextflow.nextflow_utils import _load_versions_manifest
+        manifest = json.dumps({"default": "25.10"})
+        with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data=manifest)):
+            with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+                _load_versions_manifest()
+            self.assertIn("missing", str(ctx.exception).lower())
+
+    # --- Tier 1: Version resolution edge cases ---
+
+    def test_resolve_version_deprecated_warn_false(self):
+        import io
+        captured = io.StringIO()
+        old_stderr = sys.stderr
+        try:
+            sys.stderr = captured
+            version, config = resolve_version("24.10", warn=False)
+        finally:
+            sys.stderr = old_stderr
+        self.assertEqual(version, "24.10")
+        self.assertEqual(captured.getvalue(), "")
+
+    def test_resolve_version_default_misconfigured(self):
+        bad_manifest = {
+            "default": "99.99",
+            "versions": {"25.10": {
+                "status": "supported", "nextflow_assets": "a.json",
+                "nextaur_assets": "b.json", "awscli_assets": "c.json"}}
+        }
+        with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data=json.dumps(bad_manifest))):
+            with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+                resolve_version(None)
+            self.assertIn("misconfigured", str(ctx.exception))
+
+    # --- Tier 1: Asset loading mutual exclusion ---
+
+    def test_get_nextflow_assets_both_params_error(self):
+        from dxpy.nextflow.nextflow_utils import get_nextflow_assets
+        _, config = resolve_version("25.10")
+        with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+            get_nextflow_assets("aws:us-east-1", nextflow_version="25.10", version_config=config)
+        self.assertIn("not both", str(ctx.exception))
+
+    # --- Tier 2: Staging fallback edge cases ---
+
+    @unittest.mock.patch("dxpy.describe")
+    def test_get_nextflow_assets_staging_file_not_found(self, mock_describe):
+        from dxpy.nextflow.nextflow_utils import get_nextflow_assets
+        from dxpy.exceptions import ResourceNotFound
+        mock_describe.side_effect = ResourceNotFound(
+            {"error": {"type": "ResourceNotFound", "message": "not found"}}, 404)
+        _, config = resolve_version("25.10")
+        # Patch open so that staging files raise FileNotFoundError
+        original_open = open
+        def _mock_open(filepath, *args, **kwargs):
+            if "staging" in str(filepath):
+                raise FileNotFoundError("staging file missing")
+            return original_open(filepath, *args, **kwargs)
+        with unittest.mock.patch("builtins.open", side_effect=_mock_open):
+            with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+                get_nextflow_assets("aws:us-east-1", version_config=config)
+            self.assertIn("Staging asset files not found", str(ctx.exception))
+
+    @unittest.mock.patch("dxpy.describe")
+    def test_get_nextflow_assets_staging_region_missing(self, mock_describe):
+        from dxpy.nextflow.nextflow_utils import get_nextflow_assets
+        from dxpy.exceptions import ResourceNotFound
+        mock_describe.side_effect = ResourceNotFound(
+            {"error": {"type": "ResourceNotFound", "message": "not found"}}, 404)
+        _, config = resolve_version("25.10")
+        # Staging files exist but won't have "aws:fake-region-99"
+        with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+            get_nextflow_assets("aws:fake-region-99", version_config=config)
+        self.assertIn("fake-region-99", str(ctx.exception))
+
+    # --- Tier 2: NPI auto-detect edge cases ---
+
+    @unittest.mock.patch("dxpy.DXApp")
+    def test_npi_auto_detect_empty_inputspec(self, mock_app_cls):
+        mock_app = unittest.mock.MagicMock()
+        mock_app.describe.return_value = {"inputSpec": []}
+        mock_app_cls.return_value = mock_app
+        self.assertFalse(_npi_supports_version_selection())
+
+    @unittest.mock.patch("dxpy.DXApp")
+    def test_npi_auto_detect_auth_error(self, mock_app_cls):
+        mock_app_cls.side_effect = dxpy.exceptions.DXAPIError(
+            {"error": {"type": "Unauthorized", "message": "unauthorized"}}, 401)
+        self.assertFalse(_npi_supports_version_selection())
+
+    # --- Tier 2: Version-specific asset content verification ---
+
+    @unittest.mock.patch("dxpy.nextflow.nextflow_utils.get_project_with_assets", return_value="project-FAKE")
+    @unittest.mock.patch("dxpy.nextflow.nextflow_utils.get_instance_type", return_value="mem1_ssd1_v2_x4")
+    @unittest.mock.patch("dxpy.describe")
+    def test_regional_options_assets_match_local_files(self, mock_describe, _mock_inst, _mock_proj):
+        """For each version in versions.json, verify that get_regional_options
+        produces assetDepends record IDs that exactly match the local asset files."""
+        from dxpy.nextflow.nextflow_utils import get_regional_options, _load_versions_manifest
+        region = "aws:us-east-1"
+        manifest = _load_versions_manifest()
+        nextflow_basepath = os.path.join(os.path.dirname(dxpy.__file__), "nextflow")
+
+        for ver_key, ver_config in manifest["versions"].items():
+            with self.subTest(version=ver_key):
+                # Read expected record IDs directly from local asset files
+                with open(os.path.join(nextflow_basepath, ver_config["nextaur_assets"])) as f:
+                    expected_nextaur = json.load(f)[region]
+                with open(os.path.join(nextflow_basepath, ver_config["nextflow_assets"])) as f:
+                    expected_nextflow = json.load(f)[region]
+                with open(os.path.join(nextflow_basepath, ver_config["awscli_assets"])) as f:
+                    expected_awscli = json.load(f)[region]
+
+                result = get_regional_options(
+                    region, resources_dir=None, profile=None,
+                    cache_docker=False, nextflow_pipeline_params=None,
+                    version_config=ver_config,
+                )
+                asset_depends = result[region]["assetDepends"]
+                actual_ids = [entry["id"]["$dnanexus_link"]["id"] for entry in asset_depends]
+
+                self.assertEqual(actual_ids, [expected_nextaur, expected_nextflow, expected_awscli],
+                                 f"Version {ver_key}: assetDepends record IDs do not match local asset files")
+
+    # --- Tier 3: Error message quality ---
+
+    def test_invalid_version_error_lists_available(self):
+        with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
+            resolve_version("99.99")
+        err_msg = str(ctx.exception)
+        self.assertIn("24.10", err_msg)
+        self.assertIn("25.10", err_msg)
+
+    def test_deprecated_warning_suggests_default(self):
+        import io
+        captured = io.StringIO()
+        old_stderr = sys.stderr
+        try:
+            sys.stderr = captured
+            resolve_version("24.10")
+        finally:
+            sys.stderr = old_stderr
+        self.assertIn("25.10", captured.getvalue())
 
 
 class TestNextflowTemplates(DXTestCase):
@@ -211,7 +503,7 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
             pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
         with chdir(applet_dir):
             applet_id = json.loads(
-            run("dx build --nextflow . --json".format(applet_dir)))["id"]
+            run("dx build --nextflow . --json"))["id"]
         app = dxpy.describe(applet_id)
         self.assertEqual(app["name"], pipeline_name)
 
@@ -348,6 +640,78 @@ class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(desc["title"], pipeline_name)
         self.assertEqual(desc["summary"], pipeline_name)
 
+    def test_dx_build_nextflow_with_default_version(self):
+        pipeline_name = "hello_default_ver"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(
+            run("dx build --nextflow --json " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+        details = applet.get_details()
+        self.assertEqual(details["nextflowVersion"], "25.10")
+
+    def test_dx_build_nextflow_with_explicit_version(self):
+        pipeline_name = "hello_explicit_ver"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        applet_id = json.loads(
+            run("dx build --nextflow --nextflow-version 25.10 --json " + applet_dir))["id"]
+        applet = dxpy.DXApplet(applet_id)
+        details = applet.get_details()
+        self.assertEqual(details["nextflowVersion"], "25.10")
+
+    def test_dx_build_nextflow_with_invalid_version(self):
+        pipeline_name = "hello_invalid_ver"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        with self.assertSubprocessFailure(stderr_regexp="not supported", exit_code=3):
+            run("dx build --nextflow --nextflow-version 99.99 --json " + applet_dir)
+
+    def test_dx_build_nextflow_version_without_nextflow_flag(self):
+        with self.assertSubprocessFailure(stderr_regexp="--nextflow-version", exit_code=2):
+            run("dx build --nextflow-version 25.10 .")
+
+    def test_dx_build_nextflow_with_deprecated_version(self):
+        pipeline_name = "hello_deprecated_ver"
+        applet_dir = self.write_nextflow_applet_directory(
+            pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
+        import subprocess
+        proc = subprocess.run(
+            ["dx", "build", "--nextflow", "--nextflow-version", "24.10",
+             "--json", applet_dir],
+            capture_output=True, text=True
+        )
+        self.assertEqual(proc.returncode, 0, f"Build failed: {proc.stderr}")
+        self.assertIn("deprecated", proc.stderr)
+        applet_json = json.loads(proc.stdout.strip())
+        applet = dxpy.DXApplet(applet_json["id"])
+        details = applet.get_details()
+        self.assertEqual(details["nextflowVersion"], "24.10")
+
+    @unittest.skipUnless(testutil.TEST_RUN_JOBS,
+                         'skipping tests that would run jobs')
+    def test_dx_build_nextflow_npi_with_version_warning(self):
+        hello_repo_url = "https://github.com/nextflow-io/hello"
+        import subprocess
+        proc = subprocess.run(
+            ["dx", "build", "--nextflow", "--nextflow-version", "25.10",
+             "--repository", hello_repo_url, "--brief"],
+            capture_output=True, text=True
+        )
+        # NPI may or may not support version selection yet;
+        # either the build succeeds, or we get a warning about NPI not supporting it
+        if proc.returncode == 0:
+            applet_json = json.loads(proc.stdout.strip())
+            applet = dxpy.DXApplet(applet_json["id"])
+            details = applet.get_details()
+            # nextflowVersion is only recorded if the worker's dxpy has multi-version support;
+            # if present, verify it's the requested version
+            if "nextflowVersion" in details:
+                self.assertEqual(details["nextflowVersion"], "25.10")
+        else:
+            # Build may fail for other reasons (auth, etc.), but should not crash
+            self.assertNotIn("Traceback", proc.stderr)
+
 
 class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
 
@@ -439,7 +803,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
                          "nextflow_run_opts": "-w user_workdir",
                          })
         self.assertRaises(dxpy.exceptions.DXJobFailureError, job.wait_on_done)
-        desc = job.describe()
+        job.describe()
         job_desc = dxpy.DXJob(job.get_id()).describe()
         self.assertEqual(job_desc["failureReason"], "AppError")
         self.assertIn("Please remove workDir specification",
@@ -454,10 +818,10 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
             pipeline_name, nf_file_name="main.nf", existing_nf_file_path=THIS_DIR / "nextflow/publishDir/main.nf")
         applet_id = json.loads(run(
             "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
-        desc = dxpy.describe(applet_id)
+        dxpy.describe(applet_id)
 
         # Run with "dx run".
-        dxfile = dxpy.upload_string("foo", name="foo.txt", folder="/a/b/c",
+        dxpy.upload_string("foo", name="foo.txt", folder="/a/b/c",
                                     project=self.project, parents=True, wait_on_close=True)
         inFile_path = "dx://{}:/a/b/c/foo.txt".format(self.project)
         inFolder_path = "dx://{}:/a/".format(self.project)
