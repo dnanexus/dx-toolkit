@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [408.0] - beta
+
 ### Added
 
 * Nextflow: multi-version support via `--nextflow-version` flag for `dx build --nextflow`
@@ -20,7 +22,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Handle JSON Schema union types in `get_dx_type()` for Nextflow pipeline builder
 
-## [407.0] - beta
+## [407.0] - 2026.03.23
 
 ### Fixed
 
