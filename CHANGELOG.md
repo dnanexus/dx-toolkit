@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Nextflow: multi-version support via `--nextflow-version` flag for `dx build --nextflow`
+* Nextflow: use `nextflow inspect` for Docker image collection, with digest-based cache validation and retry logic
 * Nextflow: user-facing progress logging for docker image caching (resolve, cache lookup, upload status)
 
 ### Changed
@@ -33,7 +34,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Nextflow: use `nextflow inspect` for Docker image collection, with digest-based cache validation and retry logic
 * Java SDK: add `failureCounts` and `try` fields to DXJob
 * OCI instance types corresponding to the [official docs](https://documentation.dnanexus.com/developer/api/running-analyses/instance-types#standard-oci-instance-types)
 * Support for `--preview-viewer-restricted` in `dx update project` and bindings
