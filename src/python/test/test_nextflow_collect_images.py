@@ -324,11 +324,12 @@ class TestPopulateCachedFileIds(unittest.TestCase):
 class TestReconstructImageRef(unittest.TestCase):
     """Tests for DockerImageRef._reconstruct_image_ref()."""
 
-    def _make_ref(self, tag=None, digest=None, repository=None, image_name="samtools"):
+    def _make_ref(self, tag=None, digest=None, repository=None, image_name="samtools",
+                  digest_is_original=False):
         from dxpy.nextflow.ImageRef import DockerImageRef
         return DockerImageRef(
             process="PROC", digest=digest, repository=repository,
-            image_name=image_name, tag=tag,
+            image_name=image_name, tag=tag, digest_is_original=digest_is_original,
         )
 
     def test_tag_only(self):
@@ -336,12 +337,21 @@ class TestReconstructImageRef(unittest.TestCase):
         self.assertEqual(ref._reconstruct_image_ref(), "quay.io/bio/samtools:1.17")
 
     def test_tag_and_digest_prefers_tag(self):
-        ref = self._make_ref(tag="1.17", digest="sha256:abc", repository="quay.io/bio/")
+        ref = self._make_ref(tag="1.17", digest="sha256:abc", repository="quay.io/bio/",
+                             digest_is_original=True)
         self.assertEqual(ref._reconstruct_image_ref(), "quay.io/bio/samtools:1.17")
 
-    def test_digest_only(self):
-        ref = self._make_ref(digest="sha256:abc", repository="quay.io/bio/")
+    def test_digest_only_original(self):
+        """Original @sha256: digest is used in pull command."""
+        ref = self._make_ref(digest="sha256:abc", repository="quay.io/bio/",
+                             digest_is_original=True)
         self.assertEqual(ref._reconstruct_image_ref(), "quay.io/bio/samtools@sha256:abc")
+
+    def test_digest_only_resolved(self):
+        """Resolved config digest is NOT used in pull command — bare name instead."""
+        ref = self._make_ref(digest="sha256:abc", repository="quay.io/bio/",
+                             digest_is_original=False)
+        self.assertEqual(ref._reconstruct_image_ref(), "quay.io/bio/samtools")
 
 
 if __name__ == "__main__":
