@@ -47,6 +47,7 @@ class _ImageRef:
     digest: Optional[str]
     file_id: Optional[str]
     engine: str
+    digest_is_original: bool = False  # True only if the ref had @sha256:...
 
 
 def bundle_docker_images(image_refs):
@@ -307,6 +308,11 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
         if tag and digest:
             raise ImageRefFactoryError(f"Image reference has both tag and digest: {container}")
 
+        # Track whether the digest came from the original reference (@sha256:...)
+        # vs resolved by us. Original digests are manifest digests (pullable),
+        # resolved digests are config digests (not pullable, used for cache only).
+        digest_is_original = bool(digest)
+
         # Resolve registry digest for all images that don't already have one.
         # The digest is used for cache validation in _populate_cached_file_ids()
         # to prevent cross-registry collisions (see dx-toolkit/devdocs/nextflow/cache_collision_scenarios.md).
@@ -333,6 +339,7 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
             digest=digest,
             file_id=None,
             engine="docker",
+            digest_is_original=digest_is_original,
         ))
 
     _populate_cached_file_ids(image_refs)
