@@ -31,13 +31,14 @@ class ImageRefFactory(object):
     def get_image(self):
         image = self._imageRef_switch.get(self._engine, None)
         if not image:
-            raise ImageRefFactoryError("Unsupported container engine: {}".format(self._engine))
+            raise ImageRefFactoryError(f"Unsupported container engine: {self._engine}")
         return image(
             process=self._image_ref["process"],
             digest=self._image_ref["digest"],
             dx_file_id=self._image_ref.get("file_id", None),
             repository=self._image_ref.get("repository", None),
             image_name=self._image_ref.get("image_name", None),
-            tag=self._image_ref.get("tag", None)
+            tag=self._image_ref.get("tag", None),
+            digest_is_original=self._image_ref.get("digest_is_original", False)
         )
 
