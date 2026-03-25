@@ -15,7 +15,8 @@ class ImageRef(object):
             dx_file_id=None,
             repository=None,
             image_name=None,
-            tag=None
+            tag=None,
+            digest_is_original=False
     ):
         """
         A class to handle an image reference from nextflow pipeline.
@@ -31,6 +32,11 @@ class ImageRef(object):
         :type image_name: Optional[String]
         :param tag: A version tag
         :type tag: Optional[String]
+        :param digest_is_original: True if the digest came from the original image reference
+            (@sha256:...), False if it was resolved by _resolve_digest(). Original digests
+            are manifest digests (pullable); resolved digests are config digests (for cache
+            validation only, not pullable).
+        :type digest_is_original: bool
         """
         self._caching_dir = os.path.join("/.cached_docker_images/", image_name or "")
         self._dx_file_id = dx_file_id
@@ -39,6 +45,7 @@ class ImageRef(object):
         self._image_name = image_name
         self._tag = tag
         self._digest = digest
+        self._digest_is_original = digest_is_original
         self._process = process
 
     @property
@@ -98,7 +105,8 @@ class DockerImageRef(ImageRef):
             dx_file_id=None,
             repository=None,
             image_name=None,
-            tag=None
+            tag=None,
+            digest_is_original=False
     ):
         super().__init__(
             process,
@@ -106,7 +114,8 @@ class DockerImageRef(ImageRef):
             dx_file_id,
             repository,
             image_name,
-            tag)
+            tag,
+            digest_is_original)
 
     def _cache(self, file_name):
         full_image_ref = self._reconstruct_image_ref()
@@ -138,15 +147,17 @@ class DockerImageRef(ImageRef):
         <REPOSITORY_NAME>/<IMAGE_NAME>@<DIGEST>
 
         Tag takes precedence over digest so that ``docker pull`` and
-        ``docker save`` use the human-readable tag.  The digest (when
-        present alongside a tag) is still written to the cached file's
-        ``image_digest`` property for validation by
-        ``_populate_cached_file_ids()``.
+        ``docker save`` use the human-readable tag.
+
+        Only original digests (from ``@sha256:...`` in the pipeline source) are
+        used for pull — these are manifest digests that registries can resolve.
+        Resolved digests (from ``_resolve_digest()``) are config digests used
+        only for cache validation; they are not pullable references.
         """
         repo_and_image_name = self._join_if_exists("", [self._repository, self._image_name])
         if self._tag:
             full_ref = self._join_if_exists(":", [repo_and_image_name, self._tag])
-        elif self._digest:
+        elif self._digest and self._digest_is_original:
             full_ref = self._join_if_exists("@", [repo_and_image_name, self._digest])
         else:
             full_ref = repo_and_image_name
