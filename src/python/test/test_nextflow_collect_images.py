@@ -113,6 +113,25 @@ class TestResolveDigest(unittest.TestCase):
         result = _resolve_digest("singlearch/image:1.0")
         self.assertEqual(result, "sha256:configdigest")
 
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_multiarch_returns_manifest_digest_when_requested(self, mock_run):
+        """Multi-arch with use_manifest_digest=True: single call, returns platform manifest digest."""
+        mock_run.return_value = MagicMock(returncode=0, stdout=json.dumps({
+            "manifests": [
+                {
+                    "digest": "sha256:arm64digest",
+                    "platform": {"architecture": "arm64", "os": "linux"},
+                },
+                {
+                    "digest": "sha256:amd64digest",
+                    "platform": {"architecture": "amd64", "os": "linux"},
+                },
+            ]
+        }))
+        result = _resolve_digest("quay.io/nextflow/bash", use_manifest_digest=True)
+        self.assertEqual(result, "sha256:amd64digest")
+        self.assertEqual(mock_run.call_count, 1)
+
     @patch("dxpy.nextflow.collect_images.time.sleep")
     @patch("dxpy.nextflow.collect_images.subprocess.run")
     def test_retries_on_transient_failure(self, mock_run, mock_sleep):
@@ -186,7 +205,32 @@ class TestCollectDockerImages(unittest.TestCase):
         )
         refs = collect_docker_images("/tmp/pipeline", "", "")
         self.assertEqual(refs[0]["digest"], "sha256:resolved")
-        mock_resolve.assert_called_once_with("repository/rabbit")
+        mock_resolve.assert_called_once_with("repository/rabbit", use_manifest_digest=False)
+
+    @patch("dxpy.nextflow.collect_images._populate_cached_file_ids")
+    @patch("dxpy.nextflow.collect_images._resolve_digest", return_value="sha256:resolved")
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_manifest_digest_only_for_latest_and_untagged(self, mock_run, mock_resolve, mock_populate):
+        """use_manifest_digest=True only applies to latest/untagged; tagged images always get config digest."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "processes": [
+                    {"name": "TAGGED", "container": "quay.io/bio/fastqc:0.12.1"},
+                    {"name": "LATEST", "container": "quay.io/bio/bash:latest"},
+                    {"name": "UNTAGGED", "container": "quay.io/bio/samtools"},
+                ]
+            }),
+        )
+        collect_docker_images("/tmp/pipeline", "", "", use_manifest_digest=True)
+        calls = mock_resolve.call_args_list
+        self.assertEqual(len(calls), 3)
+        # Tagged image -> use_manifest_digest=False (scope guard)
+        self.assertEqual(calls[0], unittest.mock.call("quay.io/bio/fastqc:0.12.1", use_manifest_digest=False))
+        # Explicit :latest -> use_manifest_digest=True
+        self.assertEqual(calls[1], unittest.mock.call("quay.io/bio/bash:latest", use_manifest_digest=True))
+        # Untagged -> use_manifest_digest=True
+        self.assertEqual(calls[2], unittest.mock.call("quay.io/bio/samtools", use_manifest_digest=True))
 
     @patch("dxpy.nextflow.collect_images.subprocess.run")
     def test_inspect_failure_raises(self, mock_run):

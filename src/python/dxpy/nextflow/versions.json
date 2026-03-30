@@ -5,13 +5,15 @@
       "status": "supported",
       "nextflow_assets": "nextflow_assets_25_10.json",
       "nextaur_assets": "nextaur_assets_25_10.json",
-      "awscli_assets": "awscli_assets_25_10.json"
+      "awscli_assets": "awscli_assets_25_10.json",
+      "cache_digest_type": "config"
     },
     "24.10": {
       "status": "deprecated",
       "nextflow_assets": "nextflow_assets_24_10.json",
       "nextaur_assets": "nextaur_assets_24_10.json",
-      "awscli_assets": "awscli_assets_24_10.json"
+      "awscli_assets": "awscli_assets_24_10.json",
+      "cache_digest_type": "manifest"
     }
   }
 }
