@@ -6,6 +6,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Nextflow asset update: Nextaur 1.12.1
+
+### Fixed
+
+* Nextflow: store version-appropriate digest type when caching Docker images — config digest for NF 25.10 (nextaur >= 1.12.1), manifest digest for NF 24.10 (old nextaur)
+
 ## [408.1] - beta
 
 ### Added

@@ -23,12 +23,17 @@ def _load_versions_manifest():
     if "default" not in manifest or "versions" not in manifest:
         raise dxpy.exceptions.DXCLIError(
             "Malformed Nextflow versions manifest: missing 'default' or 'versions' key")
-    required_keys = {"status", "nextflow_assets", "nextaur_assets", "awscli_assets"}
+    required_keys = {"status", "nextflow_assets", "nextaur_assets", "awscli_assets", "cache_digest_type"}
+    valid_digest_types = {"config", "manifest"}
     for ver, cfg in manifest["versions"].items():
         missing = required_keys - set(cfg.keys())
         if missing:
             raise dxpy.exceptions.DXCLIError(
                 f"Malformed version entry '{ver}': missing keys {sorted(missing)}")
+        digest_type = cfg.get("cache_digest_type")
+        if digest_type not in valid_digest_types:
+            raise dxpy.exceptions.DXCLIError(
+                f"Invalid cache_digest_type '{digest_type}' in version '{ver}'; expected one of {sorted(valid_digest_types)}")
     return manifest
 
 
@@ -162,7 +167,8 @@ def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_
     nextaur_asset, nextflow_asset, awscli_asset = get_nextflow_assets(region, version_config=version_config)
     regional_instance_type = get_instance_type(region)
     if cache_docker:
-        image_refs = collect_docker_images(resources_dir, profile, nextflow_pipeline_params)
+        use_manifest_digest = version_config.get("cache_digest_type") == "manifest" if version_config else False
+        image_refs = collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_manifest_digest=use_manifest_digest)
         image_bundled = bundle_docker_images(image_refs)
     else:
         image_bundled = {}
