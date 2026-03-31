@@ -162,19 +162,27 @@ def _docker_manifest_inspect(ref):
     return None
 
 
-def _resolve_digest(full_ref):
-    """Resolve the image config digest via ``docker manifest inspect``.
+def _resolve_digest(full_ref, use_manifest_digest=False):
+    """Resolve the image digest via ``docker manifest inspect``.
 
-    Always returns the **config digest** (``config.digest``), which is
-    the same value as ``docker images --no-trunc``.  This keeps the
-    digest format consistent with pre-existing cached files so that
-    upgrading does not cause a one-time cache invalidation.
+    By default returns the **config digest** (``config.digest``), which is
+    the same value as ``docker images --no-trunc``.  This matches the
+    lookup behavior of nextaur >= 1.12.1.
 
-    For multi-arch images this requires two calls: one to get the
-    manifest list and find the amd64/linux platform digest, then a
-    second to fetch that platform's manifest and extract its config
-    digest.  Single-arch images return a flat manifest with the config
-    digest directly.
+    When ``use_manifest_digest=True``, returns the **platform manifest
+    digest** instead (a single API call).  This matches the lookup
+    behavior of older nextaur versions (< 1.12.1) which use the manifest
+    digest from ``docker manifest inspect`` to search the cache.
+
+    For multi-arch images with ``use_manifest_digest=False``, this
+    requires two calls: one to get the manifest list, then a second to
+    fetch the platform manifest and extract its config digest.
+
+    Single-arch images always return the config digest directly,
+    regardless of ``use_manifest_digest``.  This is safe because old
+    nextaur's ``implicitLatestGetDigest()`` cannot parse single-arch
+    manifests (no ``manifests`` array) and returns null, so it never
+    does a digest-based lookup for single-arch images.
 
     Returns the ``sha256:...`` digest string, or ``None`` on failure.
     """
@@ -182,8 +190,7 @@ def _resolve_digest(full_ref):
     if data is None:
         return None
 
-    # Multi-arch: find the amd64/linux manifest, then fetch its
-    # config digest with a second inspect call.
+    # Multi-arch: find the amd64/linux manifest.
     manifests = data.get("manifests") or []
     for manifest in manifests:
         platform = manifest.get("platform", {})
@@ -192,6 +199,8 @@ def _resolve_digest(full_ref):
             platform_digest = manifest.get("digest")
             if not platform_digest:
                 break
+            if use_manifest_digest:
+                return platform_digest
             return _get_config_digest(full_ref, platform_digest)
 
     # Single-arch: config digest is directly in the flat manifest
@@ -231,7 +240,7 @@ def _get_config_digest(image_ref, platform_digest):
     return None
 
 
-def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
+def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_manifest_digest=False):
     """Collect container image references using ``nextflow inspect``.
 
     Uses the native ``nextflow inspect`` command.  It scans
@@ -248,6 +257,12 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
         process definitions are reached; passing the required params here
         lets ``nextflow inspect`` get past those checks.
     :type nextflow_pipeline_params: str
+    :param use_manifest_digest: If True, store the platform manifest digest
+        (instead of config digest) for latest/untagged images.  This is needed
+        for nextaur versions prior to 1.12.1 which look up cached images by
+        manifest digest.  Only affects images without a specific tag — tagged
+        images always use config digest for cache deduplication consistency.
+    :type use_manifest_digest: bool
     :returns: List of dicts with keys: process, repository, image_name,
               tag, digest, file_id, engine.
     """
@@ -320,9 +335,19 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params):
             full_ref = (repository or "") + image_name
             if tag:
                 full_ref += ":" + tag
-            if full_ref not in resolved_digests:
-                resolved_digests[full_ref] = _resolve_digest(full_ref)
-            digest = resolved_digests[full_ref]
+            # Only use manifest digest for latest/untagged images where old
+            # nextaur (<1.12.1) does a digest-based lookup.  Tagged images use
+            # name-based lookup at runtime, so keep config digest for cache
+            # deduplication consistency with existing cached files.
+            # Note: "image" and "image:latest" get separate cache keys via
+            # full_ref, but both use manifest digest when use_manifest_digest
+            # is True — old nextaur treats both as implicit-latest.
+            is_implicit_latest = not tag or tag.lower() == "latest"
+            effective_use_manifest = use_manifest_digest and is_implicit_latest
+            cache_key = (full_ref, effective_use_manifest)
+            if cache_key not in resolved_digests:
+                resolved_digests[cache_key] = _resolve_digest(full_ref, use_manifest_digest=effective_use_manifest)
+            digest = resolved_digests[cache_key]
 
         display_ref = (repository or "") + image_name + (":" + tag if tag else "")
         if digest:

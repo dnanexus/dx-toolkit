@@ -14,11 +14,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Changed
 
-* Nextflow asset update: Nextaur 1.12.0 with Nextflow 25.10.4 and nf-amazon 3.4.4
+* Nextflow asset update: Nextaur 1.12.1 with Nextflow 25.10.4 and nf-amazon 3.4.4
 
 ### Fixed
 
 * Handle JSON Schema union types in `get_dx_type()` for Nextflow pipeline builder
+* Nextflow: store version-appropriate digest type when caching Docker images — config digest for NF 25.10 (nextaur >= 1.12.1), manifest digest for NF 24.10 (old nextaur)
 
 ## [407.0] - beta
 

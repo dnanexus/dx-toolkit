@@ -265,7 +265,8 @@ class TestNextflowVersionResolution(unittest.TestCase):
             "default": "99.99",
             "versions": {"25.10": {
                 "status": "supported", "nextflow_assets": "a.json",
-                "nextaur_assets": "b.json", "awscli_assets": "c.json"}}
+                "nextaur_assets": "b.json", "awscli_assets": "c.json",
+                "cache_digest_type": "config"}}
         }
         with unittest.mock.patch("builtins.open", unittest.mock.mock_open(read_data=json.dumps(bad_manifest))):
             with self.assertRaises(dxpy.exceptions.DXCLIError) as ctx:
