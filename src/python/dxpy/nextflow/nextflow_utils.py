@@ -167,7 +167,7 @@ def get_regional_options(region, resources_dir, profile, cache_docker, nextflow_
     nextaur_asset, nextflow_asset, awscli_asset = get_nextflow_assets(region, version_config=version_config)
     regional_instance_type = get_instance_type(region)
     if cache_docker:
-        use_manifest_digest = version_config.get("cache_digest_type", "config") == "manifest" if version_config else False
+        use_manifest_digest = version_config.get("cache_digest_type") == "manifest" if version_config else False
         image_refs = collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_manifest_digest=use_manifest_digest)
         image_bundled = bundle_docker_images(image_refs)
     else:
