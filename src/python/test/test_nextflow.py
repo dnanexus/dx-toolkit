@@ -847,12 +847,13 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertEqual(subjob_desc.get("properties").get("nextflow_errorStrategy"), "retry-exceedsMaxValue")
         self.assertEqual(subjob_desc.get("properties").get("nextflow_errored_subjob"), "self")
 
+    @parameterized.expand(ALL_VERSIONS)
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
-    def test_dx_run_nextflow_with_additional_parameters(self):
-        pipeline_name = "hello"
+    def test_dx_run_nextflow_with_additional_parameters(self, ver):
+        pipeline_name = "hello_{}".format(ver.replace(".", "_"))
         applet_dir = self.write_nextflow_applet_directory(pipeline_name, existing_nf_file_path=self.base_nextflow_nf)
-        applet_id = json.loads(run("dx build --nextflow --json " + applet_dir))["id"]
+        applet_id = json.loads(run("dx build --nextflow --nextflow-version {} --json {}".format(ver, applet_dir)))["id"]
         applet = dxpy.DXApplet(applet_id)
 
         job = applet.run({
@@ -918,15 +919,15 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertIn("Please remove workDir specification",
                       job_desc["failureMessage"])
 
+    @parameterized.expand(ALL_VERSIONS)
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
-    def test_dx_run_nextflow_with_publishDir(self):
-        pipeline_name = "cat_ls"
-        # extra_args = '{"name": "testing_cat_ls"}'
+    def test_dx_run_nextflow_with_publishDir(self, ver):
+        pipeline_name = "cat_ls_{}".format(ver.replace(".", "_"))
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name, nf_file_name="main.nf", existing_nf_file_path=THIS_DIR / "nextflow/publishDir/main.nf")
         applet_id = json.loads(run(
-            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
+            "dx build --nextflow --nextflow-version {} '{}' --json".format(ver, applet_dir)))["id"]
         dxpy.describe(applet_id)
 
         # Run with "dx run".
@@ -949,14 +950,15 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         # the output files will be: ls_folder.txt, cat_file.txt
         self.assertEqual(len(job_desc["output"]["published_files"]), 2)
 
+    @parameterized.expand(ALL_VERSIONS)
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
-    def test_dx_run_override_profile(self):
-        pipeline_name = "profile_test"
+    def test_dx_run_override_profile(self, ver):
+        pipeline_name = "profile_test_{}".format(ver.replace(".", "_"))
 
         applet_dir = self.write_nextflow_applet_directory_from_folder(pipeline_name, THIS_DIR / "nextflow/profile/")
         applet_id = json.loads(run(
-            "dx build --nextflow --profile test '{}' --json".format(applet_dir)))["id"]
+            "dx build --nextflow --nextflow-version {} --profile test '{}' --json".format(ver, applet_dir)))["id"]
         job_id = run(
             "dx run {applet_id} -y -inextflow_run_opts=\"-profile second\" --brief".format(applet_id=applet_id)
         ).strip()
@@ -968,14 +970,15 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertTrue("second_config world!" in watched_run_output, "second_config world! test was NOT found in the job log of {job_id}".format(job_id=job_id))
         self.assertTrue("test_config world!" not in watched_run_output, "test_config world! test was found in the job log of {job_id}, but it should have been overriden".format(job_id=job_id))
 
+    @parameterized.expand(ALL_VERSIONS)
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
-    def test_dx_run_nextflow_with_soft_conf_files(self):
-        pipeline_name = "print_env"
+    def test_dx_run_nextflow_with_soft_conf_files(self, ver):
+        pipeline_name = "print_env_{}".format(ver.replace(".", "_"))
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name,  existing_nf_file_path=THIS_DIR / "nextflow/print_env_nextflow_soft_confs/main.nf")
         applet_id = json.loads(run(
-            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
+            "dx build --nextflow --nextflow-version {} '{}' --json".format(ver, applet_dir)))["id"]
 
         # Run with "dx run".
         first_config = dxpy.upload_local_file(THIS_DIR / "nextflow/print_env_nextflow_soft_confs/first.config", project=self.project, wait_on_close=True).get_id()
@@ -995,14 +998,15 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         # env var BETA specified in first.config only
         self.assertTrue("The env var BETA is: runtime beta 1" in watched_run_output)
 
+    @parameterized.expand(ALL_VERSIONS)
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
-    def test_dx_run_nextflow_with_runtime_param_file(self):
-        pipeline_name = "print_params"
+    def test_dx_run_nextflow_with_runtime_param_file(self, ver):
+        pipeline_name = "print_params_{}".format(ver.replace(".", "_"))
         applet_dir = self.write_nextflow_applet_directory(
             pipeline_name,  existing_nf_file_path=THIS_DIR / "nextflow/print_param_nextflow_params_file/main.nf")
         applet_id = json.loads(run(
-            "dx build --nextflow '{}' --json".format(applet_dir)))["id"]
+            "dx build --nextflow --nextflow-version {} '{}' --json".format(ver, applet_dir)))["id"]
 
         # Run with "dx run".
         params_file = dxpy.upload_local_file(THIS_DIR / "nextflow/print_param_nextflow_params_file/params_file.yml", project=self.project, wait_on_close=True).get_id()
