@@ -2171,6 +2171,9 @@ def upload_one(args):
                 upload_one(sub_args)
     else:
         try:
+            if getattr(args, 'preserve_mtime', False) and args.filename != '-':
+                mtime = int(os.path.getmtime(args.filename))
+                args.properties = dict(args.properties or {}, restorable_mtime=str(mtime))
             dxfile = dxpy.upload_local_file(filename=(None if args.filename == '-' else args.filename),
                                             file=(sys.stdin.buffer if args.filename == '-' else None),
                                             write_buffer_size=(None if args.write_buffer_size is None
@@ -4945,6 +4948,12 @@ parser_upload.add_argument('--no-progress', help='Do not show a progress bar', d
                            action='store_false', default=sys.stderr.isatty())
 parser_upload.add_argument('--buffer-size', help='Set the write buffer size (in bytes)', dest='write_buffer_size')
 parser_upload.add_argument('--singlethread', help='Enable singlethreaded uploading', dest='singlethread', action='store_true')
+parser_upload.add_argument('--preserve-mtime',
+                           help=fill('Store the local file modification time as a file property (restorable_mtime). '
+                                     'On recursive upload (-r) the property is applied to every file in the tree. '
+                                     'Has no effect when reading from stdin.',
+                                     width_adjustment=-24),
+                           action='store_true', dest='preserve_mtime', default=False)
 parser_upload.set_defaults(func=upload, mute=False)
 register_parser(parser_upload, categories='data')
 
@@ -4972,6 +4981,13 @@ parser_download.add_argument('--symlink-max-tries', help='Set maximum number of 
                              default=15)
 parser_download.add_argument('--unicode', help='Display the characters as text/unicode when writing to stdout',
                              dest="unicode_text", action='store_true')
+parser_download.add_argument('--restore-mtime',
+                             help=fill('Restore the local file modification time after download. '
+                                       'Uses the restorable_mtime property set by --preserve-mtime (priority), '
+                                       'or falls back to the platform file modified timestamp. '
+                                       'Works with -r/--recursive. Has no effect when writing to stdout (-o -).',
+                                       width_adjustment=-24),
+                             action='store_true', dest='restore_mtime', default=False)
 parser_download.set_defaults(func=download_or_cat)
 register_parser(parser_download, categories='data')
 
