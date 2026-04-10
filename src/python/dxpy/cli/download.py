@@ -67,7 +67,7 @@ def _verify(filename, md5digest):
     print("Checksum correct")
 
 
-def download_one_file(project, file_desc, dest_filename, args):
+def download_one_file(project, file_desc, dest_filename, args, restore_mtime=False):
     if not args.overwrite:
         if os.path.exists(dest_filename):
             err_exit(fill('Error: path "' + dest_filename + '" already exists but -f/--overwrite was not set'))
@@ -95,9 +95,20 @@ def download_one_file(project, file_desc, dest_filename, args):
                             project=project,
                             describe_output=file_desc,
                             symlink_max_tries=symlink_max_tries)
-        return
     except:
         err_exit()
+
+    if restore_mtime and dest_filename != '-':
+        props = file_desc.get('properties') or {}
+        raw = props.get('restorable_mtime')
+        if raw:
+            mtime = int(raw)
+        elif 'modified' in file_desc:
+            mtime = file_desc['modified'] // 1000
+        else:
+            mtime = None
+        if mtime is not None:
+            os.utime(dest_filename, (mtime, mtime))
 
 def do_debug(msg):
     logging.debug(msg)
@@ -158,11 +169,12 @@ def _rel2abs(path, project):
 
 
 def _download_files(files, destdir, args, dest_filename=None):
+    restore_mtime = getattr(args, 'restore_mtime', False)
     for project in files:
         for f in files[project]:
             file_desc = f['describe']
             dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
-            download_one_file(project, file_desc, dest, args)
+            download_one_file(project, file_desc, dest, args, restore_mtime=restore_mtime)
 
 
 def _download_folders(folders, destdir, args):
@@ -170,6 +182,7 @@ def _download_folders(folders, destdir, args):
         show_progress = args.show_progress
     except AttributeError:
         show_progress = False
+    restore_mtime = getattr(args, 'restore_mtime', False)
     for project in folders:
         for folder, strip_prefix in folders[project]:
             if not args.recursive:
@@ -178,7 +191,7 @@ def _download_folders(folders, destdir, args):
             folder_destdir = os.path.join(destdir, folder[len(strip_prefix):].lstrip('/'))
             try:
                 dxpy.download_folder(project, folder_destdir, folder=folder, overwrite=args.overwrite,
-                                     show_progress=show_progress)
+                                     show_progress=show_progress, restore_mtime=restore_mtime)
             except:
                 err_exit()
 
@@ -202,6 +215,8 @@ def download(args):
                                              "md5": True,
                                              "checksumType": True
                                              }})
+        if getattr(args, 'restore_mtime', False):
+            resolver_kwargs['describe'].update({'properties': True, 'modified': True})
 
         project, folderpath, matching_files = try_call(resolve_existing_path, path, **resolver_kwargs)
 

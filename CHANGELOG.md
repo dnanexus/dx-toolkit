@@ -6,6 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx upload --preserve-mtime`: stores the local file modification time as a file property (`restorable_mtime`). Propagates to every file when combined with `-r/--recursive`. Has no effect when reading from stdin.
+* `dx download --restore-mtime`: restores the local file modification time after download. Uses the `restorable_mtime` property set by `--preserve-mtime` (priority), or falls back to the platform `modified` timestamp. Works with `-r/--recursive`.
+
 ## [408.2] - beta
 
 ### Added

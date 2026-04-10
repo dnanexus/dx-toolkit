@@ -1747,6 +1747,23 @@ class TestDXClientUploadDownload(DXTestCase):
                 self.assertIn(os.path.basename(fd.name), listing)
                 self.assertIn("0 bytes", listing)
 
+    def test_dx_upload_preserve_mtime(self):
+        """
+        Upload with --preserve-mtime stores restorable_mtime property equal to original local mtime.
+        """
+        with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
+            f.write(b"test content")
+            local_path = f.name
+
+            original_mtime = int(os.path.getmtime(local_path))
+            run("dx upload --preserve-mtime --brief --wait {}".format(local_path))
+            file_name = os.path.basename(local_path)
+            desc = json.loads(run("dx describe --json {}".format(file_name)))
+            props = desc.get('properties', {})
+            self.assertIn('restorable_mtime', props, "restorable_mtime property should be set after --preserve-mtime upload")
+            self.assertEqual(int(props['restorable_mtime']), original_mtime,
+                             "restorable_mtime should equal the original local file mtime")
+
     @unittest.skipUnless(testutil.TEST_RUN_JOBS, "Skipping test that would run jobs")
     def test_dx_download_by_job_id_and_output_field(self):
         test_project_name = 'PTFM-13437'
@@ -1978,7 +1995,71 @@ dxpy.run()
 
             # Assert that no more than 4 API calls were made
             self.assertLessEqual(api_call_count, 4, f"dx download made {api_call_count} API calls, exceeding the limit of 4.\n_DX_DEBUG:\n{stderr}")
+def test_dx_download_restore_mtime(self):
+    """Round-trip: upload with --preserve-mtime, download with --restore-mtime restores original mtime."""
+    with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
+        f.write(b"test content for mtime")
+        local_path = f.name
 
+        # Set a known mtime in the past
+        known_mtime = int(os.path.getmtime(local_path)) - 3600
+        os.utime(local_path, (known_mtime, known_mtime))
+        run("dx upload --preserve-mtime --brief --wait {}".format(local_path))
+
+        file_name = os.path.basename(local_path)
+        with chdir(tempfile.mkdtemp()):
+            run("dx download --restore-mtime -f {}".format(file_name))
+            restored_mtime = int(os.path.getmtime(file_name))
+            self.assertEqual(restored_mtime, known_mtime,
+                             "Downloaded file mtime should match the original mtime after --restore-mtime")
+
+
+def test_dx_download_restore_mtime_modified_fallback(self):
+    """Without --preserve-mtime on upload, --restore-mtime falls back to platform modified timestamp."""
+    with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as f:
+        f.write(b"fallback mtime test")
+        local_path = f.name
+
+        run("dx upload --brief --wait {}".format(local_path))
+        time.sleep(3)
+
+        file_name = os.path.basename(local_path)
+        desc = json.loads(run("dx describe --json {}".format(file_name)))
+        platform_modified_ms = desc.get('modified')
+        self.assertIsNotNone(platform_modified_ms, "platform modified timestamp should be present")
+        expected_mtime = platform_modified_ms // 1000
+        with chdir(tempfile.mkdtemp()):
+            run("dx download --restore-mtime -f {}".format(file_name))
+            restored_mtime = int(os.path.getmtime(file_name))
+            self.assertEqual(restored_mtime, expected_mtime,
+                             "Downloaded file mtime should fall back to platform modified // 1000")
+
+
+def test_dx_upload_download_preserve_restore_recursive(self):
+    """Recursive round-trip: all files in the tree get correct mtimes via --preserve-mtime/--restore-mtime."""
+    src_dir = tempfile.mkdtemp()
+    sub_dir = os.path.join(src_dir, 'subdir')
+    os.makedirs(sub_dir)
+    files_and_mtimes = {}
+    for fname, content, subdir in [('a.txt', b'aaa', src_dir), ('b.txt', b'bbb', sub_dir)]:
+        path = os.path.join(subdir, fname)
+        with open(path, 'wb') as fh:
+            fh.write(content)
+        # Set a deterministic past mtime
+        mtime = int(os.path.getmtime(path)) - 7200
+        os.utime(path, (mtime, mtime))
+        files_and_mtimes[fname] = mtime
+
+    dir_name = os.path.basename(src_dir)
+    run("dx upload -r --preserve-mtime --wait {}".format(src_dir))
+    with chdir(tempfile.mkdtemp()):
+        run("dx download -r --restore-mtime -f {}".format(dir_name))
+        restored_a = int(os.path.getmtime(os.path.join(dir_name, 'a.txt')))
+        restored_b = int(os.path.getmtime(os.path.join(dir_name, 'subdir', 'b.txt')))
+        self.assertEqual(restored_a, files_and_mtimes['a.txt'],
+                         "a.txt mtime should be restored correctly")
+        self.assertEqual(restored_b, files_and_mtimes['b.txt'],
+                         "b.txt mtime in subdirectory should be restored correctly")
 
 
 class TestDXClientDownloadDataEgressBilling(DXTestCase):

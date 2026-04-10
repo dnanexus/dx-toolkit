@@ -694,7 +694,7 @@ def list_subfolders(project, path, recurse=True):
         return (f for f in project_folders if f.startswith(path) and '/' not in f[len(path)+1:])
 
 def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxfile.DEFAULT_BUFFER_SIZE,
-                    show_progress=False, **kwargs):
+                    show_progress=False, restore_mtime=False, **kwargs):
     '''
     :param project: Project ID to use as context for this download.
     :type project: string
@@ -750,6 +750,8 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
                                       size=True,
                                       drive=True,
                                       md5=True))
+    if restore_mtime:
+        describe_input['fields'].update({'properties': True, 'modified': True})
 
     # A generator that returns the files one by one. We don't want to materialize it, because
     # there could be many files here.
@@ -781,3 +783,14 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
                         show_progress=show_progress,
                         describe_output=remote_file['describe'],
                         **kwargs)
+        if restore_mtime:
+            props = remote_file['describe'].get('properties') or {}
+            raw = props.get('restorable_mtime')
+            if raw:
+                mtime = int(raw)
+            elif 'modified' in remote_file['describe']:
+                mtime = remote_file['describe']['modified'] // 1000
+            else:
+                mtime = None
+            if mtime is not None:
+                os.utime(local_filename, (mtime, mtime))
