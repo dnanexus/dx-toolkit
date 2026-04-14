@@ -9,7 +9,10 @@ process sayHello {
 
     script:
         """
-        echo 'docker is working!'
+        # /.dockerenv is created by the Docker runtime inside every container.
+        # Its presence proves the process is actually running inside Docker,
+        # not falling back to native execution on the bare worker host.
+        [ -f /.dockerenv ] && echo 'docker is working!' || { echo 'NOT running in Docker — injection may have failed'; exit 1; }
         """
 }
 

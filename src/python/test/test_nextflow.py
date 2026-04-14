@@ -400,25 +400,16 @@ class TestNextflowDockerInjection(unittest.TestCase):
     # Core injection: docker must always be enabled in generated script    #
     # ------------------------------------------------------------------ #
 
-    def test_docker_enabled_no_profile(self):
-        """docker.enabled = true must always be injected when no profile is given.
-        This is the primary regression case: nf-core pipelines built without -profile docker."""
+    def test_docker_injection_in_generated_script(self):
+        """Three tightly coupled aspects of the injection mechanism, verified together:
+          1. docker.enabled = true is present in the script (the actual setting).
+          2. DX_DOCKER_CONFIG is declared (the temp config file variable).
+          3. RUNTIME_CONFIG_CMD is built (the flag passed to nextflow run).
+        Primary regression guard: nf-core pipelines built without -profile docker."""
         src = get_nextflow_src()
         self.assertIn("docker.enabled = true", src)
-
-    def test_docker_config_file_written_at_runtime(self):
-        """The generated script must write docker.enabled = true to a config file at runtime."""
-        src = get_nextflow_src()
-        # Script writes the override config to a known temp path
         self.assertIn("DX_DOCKER_CONFIG", src)
-        self.assertIn("docker.enabled = true", src)
-
-    def test_docker_config_passed_to_nextflow_run(self):
-        """The dx_docker.config must be passed via -c flag to the nextflow run command."""
-        src = get_nextflow_src()
-        # RUNTIME_CONFIG_CMD must include the docker override config
         self.assertIn("RUNTIME_CONFIG_CMD", src)
-        self.assertIn("DX_DOCKER_CONFIG", src)
 
     # ------------------------------------------------------------------ #
     # Compatibility: -profile arg is independent, must not be broken       #
@@ -445,10 +436,10 @@ class TestNextflowDockerInjection(unittest.TestCase):
         self.assertIn("-profile singularity", src)
 
     def test_profile_arg_still_independent(self):
-        """Profile arg and docker injection are independent — no profile means profile_arg is empty,
+        """Profile arg and docker injection are independent — no profile means no -profile flag,
         but Docker is still always enabled."""
         src = get_nextflow_src()
-        self.assertIn('profile_arg=""', src)
+        self.assertNotIn("-profile", src)
         self.assertIn("docker.enabled = true", src)
 
     def test_docker_enabled_with_test_profile_only(self):
@@ -1000,6 +991,7 @@ class TestRunNextflowApplet(DXTestCaseBuildNextflowApps):
         self.assertTrue("The parameter ALPHA is: param file alpha" in watched_run_output)
         self.assertTrue("The parameter BETA is: CLI beta" in watched_run_output)
 
+
 class TestRunNextflowDockerInjection(DXTestCaseBuildNextflowApps):
     """Job-run integration tests verifying docker.enabled = true injection works end-to-end.
 
@@ -1035,8 +1027,11 @@ class TestRunNextflowDockerInjection(DXTestCaseBuildNextflowApps):
     @unittest.skipUnless(testutil.TEST_RUN_JOBS,
                          'skipping tests that would run jobs')
     def test_no_default_docker_no_conflict_with_explicit_profile(self):
-        """Build with explicit -profile docker — injected docker.enabled = true must not conflict.
+        """Build with explicit --profile docker (a dx-build flag, not a Nextflow runtime arg)
+        alongside the always-injected docker.enabled = true — the two must not conflict.
 
+        --profile docker bakes `-profile docker` into the applet via @@PROFILE_ARG@@.
+        docker.enabled = true is injected separately via dx_docker.config.
         The two settings are redundant but compatible: Nextflow merges configs without error.
         """
         pipeline_name = "profile_no_default_docker_explicit_profile"

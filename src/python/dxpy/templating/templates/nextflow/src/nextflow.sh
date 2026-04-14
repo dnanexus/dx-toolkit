@@ -85,7 +85,7 @@ main() {
   # Injected at lowest precedence so user soft configs can still override docker settings.
   DX_DOCKER_CONFIG="/tmp/dx_docker.config"
   echo "docker.enabled = true" > "$DX_DOCKER_CONFIG"
-  RUNTIME_CONFIG_CMD="-c $DX_DOCKER_CONFIG "
+  RUNTIME_CONFIG_CMD="-c ${DX_DOCKER_CONFIG} "
   [[ -d "$HOME/in/nextflow_soft_confs/" ]] && RUNTIME_CONFIG_CMD+=$(find "$HOME"/in/nextflow_soft_confs -name "*.config" -type f -printf "-c %p ")
   [[ -d "$HOME/in/nextflow_params_file/" ]] && RUNTIME_PARAMS_FILE=$(find "$HOME"/in/nextflow_params_file -type f -printf "-params-file %p ")
   if [[ -d "$HOME/in/docker_creds" ]]; then
