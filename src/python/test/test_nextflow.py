@@ -436,10 +436,10 @@ class TestNextflowDockerInjection(unittest.TestCase):
         self.assertIn("-profile singularity", src)
 
     def test_profile_arg_still_independent(self):
-        """Profile arg and docker injection are independent — no profile means no -profile flag,
-        but Docker is still always enabled."""
+        """Profile arg and docker injection are independent — no profile means profile_arg is
+        empty (@@PROFILE_ARG@@ substituted to ""), but Docker is still always enabled."""
         src = get_nextflow_src()
-        self.assertNotIn("-profile", src)
+        self.assertIn('profile_arg=""', src)
         self.assertIn("docker.enabled = true", src)
 
     def test_docker_enabled_with_test_profile_only(self):
