@@ -787,7 +787,7 @@ class DXFile(DXDataObject):
                 self._download_url_headers = _validate_headers(resp.get("headers", {}))
                 
                 if resp.get("security_status") == "FLAGGED_MALICIOUS":
-                    warn("WARNING: Potentially malicious file detected. Download continuing. Verify the source before viewing or executing.")
+                    warn("WARNING: Potentially malicious file detected. Verify the source before viewing or executing.")
                 
                 if preauthenticated:
                     self._download_url_expires = resp["expires"]/1000 - 60  # Try to account for drift
