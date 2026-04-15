@@ -24,7 +24,7 @@ from dxpy.bindings.dxfile import DXFile
 class TestGetDownloadUrlSecurityWarning(unittest.TestCase):
     FILE_ID = 'file-xxxx'
     DOWNLOAD_URL = 'https://dl.dnanexus.com/F/D/file-xxxx'
-    WARNING_MESSAGE = 'WARNING: Potentially malicious file detected. Download continuing. Verify the source before viewing or executing.'
+    WARNING_MESSAGE = 'WARNING: Potentially malicious file detected. Verify the source before viewing or executing.'
 
     def _make_dxfile(self):
         # Pass dxid=None to skip ID format validation in __init__,
