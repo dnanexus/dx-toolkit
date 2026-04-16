@@ -81,7 +81,12 @@ main() {
   dx-download-all-inputs --parallel @@EXCLUDE_INPUT_DOWNLOAD@@ 2>/dev/null 1>&2
   RUNTIME_CONFIG_CMD=''
   RUNTIME_PARAMS_FILE=''
-  [[ -d "$HOME/in/nextflow_soft_confs/" ]] && RUNTIME_CONFIG_CMD=$(find "$HOME"/in/nextflow_soft_confs -name "*.config" -type f -printf "-c %p ")
+  # Always enable Docker — DNAnexus workers only support Docker as a container runtime.
+  # Injected at lowest precedence so user soft configs can still override docker settings.
+  DX_DOCKER_CONFIG="/tmp/dx_docker.config"
+  echo "docker.enabled = true" > "$DX_DOCKER_CONFIG"
+  RUNTIME_CONFIG_CMD="-c ${DX_DOCKER_CONFIG} "
+  [[ -d "$HOME/in/nextflow_soft_confs/" ]] && RUNTIME_CONFIG_CMD+=$(find "$HOME"/in/nextflow_soft_confs -name "*.config" -type f -printf "-c %p ")
   [[ -d "$HOME/in/nextflow_params_file/" ]] && RUNTIME_PARAMS_FILE=$(find "$HOME"/in/nextflow_params_file -type f -printf "-params-file %p ")
   if [[ -d "$HOME/in/docker_creds" ]]; then
     CREDENTIALS=$(find "$HOME/in/docker_creds" -type f | head -1)
