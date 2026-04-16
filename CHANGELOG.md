@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Display a security warning when downloading or generating download URLs for files flagged as infected
+* Display a security warning when downloading or generating download URLs for files flagged as malicious
 
 ## [408.2] - beta
 
