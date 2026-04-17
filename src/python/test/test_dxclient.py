@@ -7382,7 +7382,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
-                          "archivalManagement": True,
+                          "archivalManagement": False,
                           "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
                           "appAccess": True,
