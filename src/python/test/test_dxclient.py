@@ -7026,6 +7026,7 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
+            "archivalManagement": False,
             "cloudIntegrationManagement": False,
             "appAccess": False,
             "projectAccess": "VIEW",
@@ -7045,6 +7046,7 @@ class TestDXClientNewUser(DXTestCase):
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
+            "archivalManagement": True,
             "cloudIntegrationManagement": False,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
@@ -7175,6 +7177,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
+                          "archivalManagement": False,
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "CONTRIBUTE",
@@ -7379,6 +7382,7 @@ class TestDXClientMembership(DXTestCase):
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
+                          "archivalManagement": True,
                           "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
                           "appAccess": True,
