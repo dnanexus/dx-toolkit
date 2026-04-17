@@ -7377,8 +7377,18 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        run("dx update member {o} {u} --level MEMBER --allow-billable-activities false --project-access VIEW --app-access true".format(
-            o=self.org_id, u=self.username))
+        run(
+            "dx update member {o} {u} "
+            "--level MEMBER "
+            "--allow-billable-activities false "
+            "--archival-management false "
+            "--cloud-integration-management false "
+            "--project-access VIEW "
+            "--app-access true "
+            "--tre-management false".format(
+                o=self.org_id, u=self.username
+            )
+        )
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": False,
@@ -7390,11 +7400,21 @@ class TestDXClientMembership(DXTestCase):
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        run("dx update member {o} {u} --allow-billable-activities true --app-access false".format(
-            o=self.org_id, u=self.username))
+        run(
+            "dx update member {o} {u} "
+            "--allow-billable-activities true "
+            "--archival-management false "
+            "--cloud-integration-management false "
+            "--project-access VIEW "
+            "--app-access false "
+            "--tre-management false".format(
+                o=self.org_id, u=self.username
+            )
+        )
         exp_membership = {"id": self.user_id,
                           "level": "MEMBER",
                           "allowBillableActivities": True,
+                          "archivalManagement": False,
                           "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
                           "appAccess": False,
