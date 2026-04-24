@@ -6979,18 +6979,24 @@ class TestDXClientNewUser(DXTestCase):
 
         # Grant default org membership level and permission flags.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id)).strip()
+        user_id = run(
+            "{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --brief".format(
+                cmd=cmd, u=username, e=email, f=first, o=self.org_id
+            )
+        ).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
+            "archivalManagement": False,
             "cloudIntegrationManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
+            "projectMemberDemotion": False,
             "id": user_id,
-            "treManagement": False
+            "treManagement": False,
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -6999,36 +7005,54 @@ class TestDXClientNewUser(DXTestCase):
         # has uppercase chars.
         username, email = generate_unique_username_email()
         username = username.upper()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id)).strip()
+        user_id = run(
+            "{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --brief".format(
+                cmd=cmd, u=username, e=email, f=first, o=self.org_id
+            )
+        ).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": False,
+            "archivalManagement": False,
             "cloudIntegrationManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
+            "projectMemberDemotion": False,
             "id": user_id,
-            "treManagement": False
+            "treManagement": False,
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
 
         # Grant custom org membership level and permission flags.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id, l="MEMBER", pa="VIEW")).strip()
+        user_id = run(
+            "{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --level {l} --allow-billable-activities --no-app-access --project-access {pa} --brief".format(
+                cmd=cmd,
+                u=username,
+                e=email,
+                f=first,
+                o=self.org_id,
+                l="MEMBER",
+                pa="VIEW",
+            )
+        ).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "MEMBER",
             "allowBillableActivities": True,
+            "archivalManagement": False,
             "cloudIntegrationManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
             "appAccess": False,
             "projectAccess": "VIEW",
+            "projectMemberDemotion": False,
             "id": user_id,
-            "treManagement": False
+            "treManagement": False,
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -7036,18 +7060,30 @@ class TestDXClientNewUser(DXTestCase):
         # Grant ADMIN org membership level; ignore all other org permission
         # options.
         username, email = generate_unique_username_email()
-        user_id = run("{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --level {l} --no-app-access --project-access {pa} --brief".format(
-                      cmd=cmd, u=username, e=email, f=first,
-                      o=self.org_id, l="ADMIN", pa="VIEW")).strip()
+        user_id = run(
+            "{cmd} --username {u} --email {e} --first {f} --on-behalf-of {o} --org {o} --level {l} --no-app-access --project-access {pa} --brief".format(
+                cmd=cmd,
+                u=username,
+                e=email,
+                f=first,
+                o=self.org_id,
+                l="ADMIN",
+                pa="VIEW",
+            )
+        ).strip()
         self._assert_user_desc(user_id, {"first": first})
         exp = {
             "level": "ADMIN",
             "allowBillableActivities": True,
+            "archivalManagement": True,
             "cloudIntegrationManagement": False,
+            "dataDeletion": True,
+            "dataSearch": True,
             "appAccess": True,
             "projectAccess": "ADMINISTER",
+            "projectMemberDemotion": True,
             "id": user_id,
-            "treManagement": False
+            "treManagement": False,
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -7156,26 +7192,38 @@ class TestDXClientMembership(DXTestCase):
         cmd = "dx add member {o} {u} --level {l}"
 
         run(cmd.format(o=self.org_id, u=self.username, l="ADMIN"))
-        exp_membership = {"id": self.user_id,
-                          "level": "ADMIN",
-                          "allowBillableActivities": True,
-                          "cloudIntegrationManagement": False,
-                          "appAccess": True,
-                          "projectAccess": "ADMINISTER",
-                          "treManagement": False}
+        exp_membership = {
+            "id": self.user_id,
+            "level": "ADMIN",
+            "allowBillableActivities": True,
+            "archivalManagement": True,
+            "cloudIntegrationManagement": False,
+            "dataDeletion": True,
+            "dataSearch": True,
+            "appAccess": True,
+            "projectAccess": "ADMINISTER",
+            "projectMemberDemotion": True,
+            "treManagement": False,
+        }
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
         self._remove_user(self.user_id)
 
         run(cmd.format(o=self.org_id, u=self.username, l="MEMBER"))
-        exp_membership = {"id": self.user_id,
-                          "level": "MEMBER",
-                          "allowBillableActivities": False,
-                          "cloudIntegrationManagement": False,
-                          "appAccess": True,
-                          "projectAccess": "CONTRIBUTE",
-                          "treManagement": False}
+        exp_membership = {
+            "id": self.user_id,
+            "level": "MEMBER",
+            "allowBillableActivities": False,
+            "archivalManagement": False,
+            "cloudIntegrationManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
+            "appAccess": True,
+            "projectAccess": "CONTRIBUTE",
+            "projectMemberDemotion": False,
+            "treManagement": False,
+        }
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7231,13 +7279,19 @@ class TestDXClientMembership(DXTestCase):
     def test_remove_membership_default(self):
         self._add_user(self.user_id)
 
-        exp_membership = {"id": self.user_id,
-                          "level": "ADMIN",
-                          "allowBillableActivities": True,
-                          "cloudIntegrationManagement": False,
-                          "appAccess": True,
-                          "projectAccess": "ADMINISTER",
-                          "treManagement": False}
+        exp_membership = {
+            "id": self.user_id,
+            "level": "ADMIN",
+            "allowBillableActivities": True,
+            "archivalManagement": True,
+            "cloudIntegrationManagement": False,
+            "dataDeletion": True,
+            "dataSearch": True,
+            "appAccess": True,
+            "projectAccess": "ADMINISTER",
+            "projectMemberDemotion": True,
+            "treManagement": False,
+        }
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7359,37 +7413,61 @@ class TestDXClientMembership(DXTestCase):
         # default test
         self._add_user(self.user_id)
 
-        exp_membership = {"id": self.user_id,
-                          "level": "ADMIN",
-                          "allowBillableActivities": True,
-                          "cloudIntegrationManagement": False,
-                          "appAccess": True,
-                          "projectAccess": "ADMINISTER",
-                          "treManagement": False}
+        exp_membership = {
+            "id": self.user_id,
+            "level": "ADMIN",
+            "allowBillableActivities": True,
+            "archivalManagement": True,
+            "cloudIntegrationManagement": False,
+            "dataDeletion": True,
+            "dataSearch": True,
+            "appAccess": True,
+            "projectAccess": "ADMINISTER",
+            "projectMemberDemotion": True,
+            "treManagement": False,
+        }
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        run("dx update member {o} {u} --level MEMBER --allow-billable-activities false --project-access VIEW --app-access true".format(
-            o=self.org_id, u=self.username))
-        exp_membership = {"id": self.user_id,
-                          "level": "MEMBER",
-                          "allowBillableActivities": False,
-                          "cloudIntegrationManagement": False,
-                          "projectAccess": "VIEW",
-                          "appAccess": True,
-                          "treManagement": False}
+        run(
+            "dx update member {o} {u} --level MEMBER --allow-billable-activities false --project-access VIEW --app-access true".format(
+                o=self.org_id, u=self.username
+            )
+        )
+        exp_membership = {
+            "id": self.user_id,
+            "level": "MEMBER",
+            "allowBillableActivities": False,
+            "archivalManagement": False,
+            "cloudIntegrationManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
+            "projectAccess": "VIEW",
+            "projectMemberDemotion": False,
+            "appAccess": True,
+            "treManagement": False,
+        }
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
-        run("dx update member {o} {u} --allow-billable-activities true --app-access false".format(
-            o=self.org_id, u=self.username))
-        exp_membership = {"id": self.user_id,
-                          "level": "MEMBER",
-                          "allowBillableActivities": True,
-                          "cloudIntegrationManagement": False,
-                          "projectAccess": "VIEW",
-                          "appAccess": False,
-                          "treManagement": False}
+        run(
+            "dx update member {o} {u} --allow-billable-activities true --app-access false".format(
+                o=self.org_id, u=self.username
+            )
+        )
+        exp_membership = {
+            "id": self.user_id,
+            "level": "MEMBER",
+            "allowBillableActivities": True,
+            "archivalManagement": False,
+            "cloudIntegrationManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
+            "projectAccess": "VIEW",
+            "projectMemberDemotion": False,
+            "appAccess": False,
+            "treManagement": False,
+        }
 
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
