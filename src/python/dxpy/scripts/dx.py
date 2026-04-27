@@ -5714,7 +5714,7 @@ The "csv" mode outputs the following columns with headers in csv format to stdou
 - cpuUsageUser: The percentage of cpu time spent in user mode on the instance during the metric collection period.
 - cpuUsageSystem: The percentage of cpu time spent in system mode on the instance during the metric collection period.
 - cpuUsageIowait: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
-- cpuUsageIdle: The percentage of cpu time spent in waiting for I/O operations to complete on the instance during the metric collection period.
+- cpuUsageIdle: The percentage of cpu time spent idle on the instance during the metric collection period.
 - memoryUsedBytes: Bytes of memory used (calculated as total - free - buffers - cache - slab_reclaimable + shared_memory).
 - memoryTotalBytes: Total memory available on the instance that ran the job.
 - diskUsedBytes: Bytes of storage allocated to the AEE that are used by the filesystem.
