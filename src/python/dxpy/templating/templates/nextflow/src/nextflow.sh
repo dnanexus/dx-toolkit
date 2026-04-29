@@ -382,6 +382,7 @@ _fetch_jit_to_file() {
   local subject_claims="$3"
 
   if ! ( umask 077 && dx-jobutil-get-identity-token --aud "${audience}" --subject_claims "${subject_claims}" > "${target}" ); then
+    rm -f "${target}"
     return 1
   fi
   if ! grep -qE '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$' "${target}"; then
