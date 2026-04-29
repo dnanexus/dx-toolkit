@@ -227,18 +227,20 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
             dx_input = {}
             dx_input["name"] = property_key
             dx_input["title"] = dx_input['name']
-            if "default" in property:
-                dx_input["help"] = "Default value:{}\n".format(property.get("default", ""))
-            if "help_text" in property:
-                dx_input["help"] = dx_input.get("help", "") + property.get('help_text', "")
-            dx_input["hidden"] = property.get('hidden', False)
             dx_input["class"] = get_dx_type(property.get("type"), property.get("format"))
+
+            help_parts = [f"(Nextflow pipeline {'required' if property_key in required_inputs else 'optional'})"]
+            if "default" in property:
+                help_parts.append(f"Default value: {property.get('default', '')}.")
+            help_parts.append(property.get('description', None))
+            help_parts.append(property.get('help_text', None))
+            dx_input["help"] = " ".join(filter(lambda x: x, help_parts)).strip()
+
+            dx_input["hidden"] = property.get('hidden', False)
             dx_input["optional"] = True
-            if property_key not in required_inputs:
-                dx_input["help"] = "(Nextflow pipeline optional) {}".format(dx_input.get("help", ""))
-                inputs.append(dx_input)
-            else:
-                dx_input["help"] = "(Nextflow pipeline required) {}".format(dx_input.get("help", ""))
+            if property_key in required_inputs:
                 inputs.insert(0, dx_input)
+            else:
+                inputs.append(dx_input)
 
     return inputs
