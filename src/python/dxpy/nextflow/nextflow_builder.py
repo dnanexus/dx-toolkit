@@ -229,7 +229,7 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
             dx_input["title"] = dx_input['name']
             dx_input["class"] = get_dx_type(property.get("type"), property.get("format"))
 
-            help_parts = [f"(Nextflow pipeline {'optional' if property.get('optional') else 'required'})"]
+            help_parts = [f"(Nextflow pipeline {'required' if property_key in required_inputs else 'optional'})"]
             if "default" in property:
                 help_parts.append(f"Default value: {property.get('default', '')}.")
             help_parts.append(property.get('description', None))
@@ -238,9 +238,9 @@ def prepare_custom_inputs(schema_file="./nextflow_schema.json"):
 
             dx_input["hidden"] = property.get('hidden', False)
             dx_input["optional"] = True
-            if property_key not in required_inputs:
-                inputs.append(dx_input)
-            else:
+            if property_key in required_inputs:
                 inputs.insert(0, dx_input)
+            else:
+                inputs.append(dx_input)
 
     return inputs
