@@ -119,6 +119,11 @@ class DockerImageRef(ImageRef):
 
     def _cache(self, file_name):
         full_image_ref = self._reconstruct_image_ref()
+        # If this is an ECR image, authenticate `docker` to the registry before
+        # pulling. Imported here (not at module scope) to avoid a circular
+        # import: collect_images imports ImageRefFactory, which imports ImageRef.
+        from dxpy.nextflow.collect_images import ensure_ecr_login_for_image
+        ensure_ecr_login_for_image(full_image_ref)
         docker_pull_cmd = f"sudo docker pull {full_image_ref}"
         docker_save_cmd = f"sudo docker save {full_image_ref} | gzip > {file_name}"
         for cmd in [docker_pull_cmd, docker_save_cmd]:
