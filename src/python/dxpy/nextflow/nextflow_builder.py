@@ -13,7 +13,7 @@ from functools import partial
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
                                           create_readme, get_nested, get_allowed_extra_fields_mapping,
-                                          resolve_version)
+                                          resolve_version, parse_nextflow_config_dx_fields)
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
@@ -45,7 +45,9 @@ def build_pipeline_with_npi(
         brief=False,
         destination=None,
         extra_args=None,
-        nextflow_version=None
+        nextflow_version=None,
+        src_dir=None,
+        ecr_region=None
 ):
     """
     :param repository: URL to a Git repository
@@ -96,6 +98,28 @@ def build_pipeline_with_npi(
     for key, (raw_value, transform) in input_updates.items():
         if raw_value:
             input_hash[key] = transform(raw_value) if transform else raw_value
+
+    # Forward DNAnexus / AWS / ECR config from the user's local nextflow.config to NPI.
+    # The importer job uses these fields to mint a JIT and `docker login` to ECR before
+    # `--cache-docker` pulls private images. Only relevant for local `--src-dir` builds:
+    # for `--repository <url>` builds the local working directory has no nextflow.config
+    # and NPI must read it from the cloned repo itself. `parse_nextflow_config_dx_fields`
+    # silently returns `{}` when the file is absent, so this is a no-op in that case.
+    # Only fields actually present in the config are forwarded; the NPI input spec
+    # treats them all as optional, so older NPI versions silently ignore unknown keys
+    # — see Risk note "NPI app and dx-toolkit ship out of sync" in the implementation plan.
+    config_fields = parse_nextflow_config_dx_fields(src_dir)
+    for npi_key, value in config_fields.items():
+        if value:
+            input_hash[npi_key] = value
+
+    # `--ecr-region` build-time override. Only meaningful with `--cache-docker`; the
+    # CLI parser already enforces that pairing. Forwarded as a separate input so NPI
+    # can authenticate to a non-default-region ECR (e.g. pre-bundle a us-west-2 image
+    # while `aws.region` is us-east-1). Has no runtime effect — runtime always uses
+    # `aws.region`.
+    if ecr_region:
+        input_hash["ecr_region_override"] = ecr_region
 
     # Auto-detect NPI capability for version selection
     if nextflow_version is not None:

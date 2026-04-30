@@ -2893,6 +2893,18 @@ def build(args):
             build_parser.error(
                 "--nextflow-version is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
 
+        # --ecr-region is a build-only override that authenticates the importer job to
+        # ECR in a region different from `aws.region` (e.g. for pre-bundling a
+        # us-west-2 image into a pipeline whose runtime region is us-east-1). It only
+        # makes sense in conjunction with --cache-docker, since the override exists
+        # solely to influence which images NPI pulls during caching.
+        if args.ecr_region and not args.nextflow:
+            build_parser.error(
+                "--ecr-region is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
+        if args.ecr_region and not args.cache_docker:
+            build_parser.error(
+                "--ecr-region only applies to --cache-docker builds; runtime always uses aws.region.")
+
         if args.cache_docker:
             logging.warning(
                 "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
@@ -5163,6 +5175,14 @@ nextflow_options.add_argument('--git-credentials', help=fill("Git credentials us
 nextflow_options.add_argument('--cache-docker', help=fill("Stores a container image tarball in the currently selected project "
                                                           "in /.cached_dockerImages. Currently only docker engine is supported. Incompatible with --remote, --force, --archive, --dry-run, --json.",
                                                    width_adjustment=-24), action="store_true", dest="cache_docker")
+
+# --ecr-region
+nextflow_options.add_argument('--ecr-region', help=fill("Build-time AWS region override for authenticating to a private "
+                                                        "Amazon ECR registry while pre-caching images. Only meaningful with "
+                                                        "--cache-docker. Use this to bundle ECR images from a region different "
+                                                        "from the pipeline's runtime aws.region (e.g. multi-region image sets). "
+                                                        "Has no effect at runtime — runtime ECR pulls always use aws.region.",
+                                                   width_adjustment=-24), dest="ecr_region")
 
 # --docker-secrets
 nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "
