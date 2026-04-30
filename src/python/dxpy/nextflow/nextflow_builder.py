@@ -52,6 +52,89 @@ def _npi_input_names():
         return None
 
 
+# Names of the ECR-specific input fields. Used by `_apply_npi_input_gate` to
+# distinguish "the user configured ECR" from "the user only configured workdir"
+# when deciding which warning to emit on a dropped field.
+_ECR_SPECIFIC_INPUTS = frozenset({
+    "ecr_role_arn_to_assume",
+    "ecr_job_token_audience",
+    "ecr_job_token_subject_claims",
+    "ecr_region_override",
+})
+
+
+def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
+    """Apply the deployed-NPI input-spec gate to the parsed config fields.
+
+    Mutates `input_hash` in place with the fields the deployed NPI accepts.
+    Writes one or more warning lines to `stderr` for every dropped field.
+
+    Extracted from `build_pipeline_with_npi` so the gating logic is unit-
+    testable in isolation. Behaviour:
+      - `accepted_inputs is None`: deployed app could not be described.
+        Forward nothing new, warn that ECR auth will not be configured.
+      - `accepted_inputs is set`: forward only fields in the set; drop
+        others into one of two warning buckets — ECR-specific (clear
+        message about ECR being unavailable) vs other (generic). When the
+        user clearly intends ECR (any `ecr_*` field present and
+        non-empty) but `aws_region` is dropped, emit a more specific
+        ECR-blocked warning since the importer would otherwise fail with
+        an opaque "no AWS region available" several minutes into the job.
+    """
+    if not config_fields:
+        return
+    if accepted_inputs is None:
+        stderr.write(
+            "WARNING: Could not describe the deployed Nextflow Pipeline Importer; "
+            "skipping forwarding of nextflow.config dnanexus.* / aws.region / "
+            "ecr_region_override fields. Private ECR auth will not be configured.\n"
+        )
+        return
+
+    dropped_ecr = []
+    dropped_other = []
+    for npi_key, value in config_fields.items():
+        if not value:
+            continue
+        if npi_key in accepted_inputs:
+            input_hash[npi_key] = value
+        else:
+            if npi_key in _ECR_SPECIFIC_INPUTS:
+                dropped_ecr.append(npi_key)
+            else:
+                dropped_other.append(npi_key)
+
+    ecr_intent = any(k in config_fields and config_fields[k]
+                     for k in _ECR_SPECIFIC_INPUTS)
+    aws_region_dropped = ("aws_region" in dropped_other
+                          and bool(config_fields.get("aws_region")))
+
+    if dropped_ecr:
+        stderr.write(
+            "WARNING: The deployed Nextflow Pipeline Importer does not declare "
+            "input(s) {dropped}; private ECR authentication will not be set up "
+            "for this build. Upgrade the importer app to enable --cache-docker "
+            "against private ECR registries.\n".format(dropped=sorted(dropped_ecr))
+        )
+    if dropped_other:
+        if ecr_intent and aws_region_dropped:
+            stderr.write(
+                "WARNING: The deployed Nextflow Pipeline Importer does not declare "
+                "the `aws_region` input — but private ECR authentication needs it. "
+                "The build will fail inside the importer with "
+                "'ECR is configured but no AWS region is available'. Upgrade the "
+                "importer app to enable --cache-docker against private ECR registries.\n"
+            )
+        non_aws_region_dropped = [k for k in dropped_other if k != "aws_region"]
+        if non_aws_region_dropped or not (ecr_intent and aws_region_dropped):
+            stderr.write(
+                "WARNING: The deployed Nextflow Pipeline Importer does not declare "
+                "input(s) {dropped} from your nextflow.config; the importer job "
+                "will not see these values and may fall back to defaults or fail.\n"
+                .format(dropped=sorted(dropped_other))
+            )
+
+
 def build_pipeline_with_npi(
         repository=None,
         tag=None,
@@ -132,54 +215,7 @@ def build_pipeline_with_npi(
     config_fields = parse_nextflow_config_dx_fields(src_dir)
     if ecr_region:
         config_fields["ecr_region_override"] = ecr_region
-
-    if config_fields:
-        accepted_inputs = _npi_input_names()
-        if accepted_inputs is None:
-            # Could not describe the deployed app — fall back to forwarding nothing
-            # new rather than risk a launch failure. The build will still succeed
-            # for non-ECR pipelines.
-            sys.stderr.write(
-                "WARNING: Could not describe the deployed Nextflow Pipeline Importer; "
-                "skipping forwarding of nextflow.config dnanexus.* / aws.region / "
-                "ecr_region_override fields. Private ECR auth will not be configured.\n"
-            )
-        else:
-            # Warn on EVERY non-empty config field the deployed NPI does not
-            # accept. Singling out only ECR-specific fields would silently
-            # drop e.g. `aws_region` and surface later as a confusing
-            # "ECR is configured but no AWS region is available" error from
-            # inside the importer job. Distinguish the ECR cluster from the
-            # workdir cluster in the warning so the user knows which
-            # capability they're losing.
-            ecr_specific = {"ecr_role_arn_to_assume", "ecr_job_token_audience",
-                            "ecr_job_token_subject_claims", "ecr_region_override"}
-            dropped_ecr = []
-            dropped_other = []
-            for npi_key, value in config_fields.items():
-                if not value:
-                    continue
-                if npi_key in accepted_inputs:
-                    input_hash[npi_key] = value
-                else:
-                    if npi_key in ecr_specific:
-                        dropped_ecr.append(npi_key)
-                    else:
-                        dropped_other.append(npi_key)
-            if dropped_ecr:
-                sys.stderr.write(
-                    "WARNING: The deployed Nextflow Pipeline Importer does not declare "
-                    "input(s) {dropped}; private ECR authentication will not be set up "
-                    "for this build. Upgrade the importer app to enable --cache-docker "
-                    "against private ECR registries.\n".format(dropped=sorted(dropped_ecr))
-                )
-            if dropped_other:
-                sys.stderr.write(
-                    "WARNING: The deployed Nextflow Pipeline Importer does not declare "
-                    "input(s) {dropped} from your nextflow.config; the importer job "
-                    "will not see these values and may fall back to defaults or fail.\n"
-                    .format(dropped=sorted(dropped_other))
-                )
+    _apply_npi_input_gate(config_fields, _npi_input_names(), input_hash, sys.stderr)
 
     # Auto-detect NPI capability for version selection
     if nextflow_version is not None:

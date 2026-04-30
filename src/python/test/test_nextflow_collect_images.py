@@ -398,6 +398,61 @@ class TestReconstructImageRef(unittest.TestCase):
         self.assertEqual(ref._reconstruct_image_ref(), "quay.io/bio/samtools")
 
 
+class TestDockerImageRefEcrFailLoud(unittest.TestCase):
+    """Regression test for the BUG-1 fail-loud branch in DockerImageRef._cache.
+    When `ensure_ecr_login_for_image` returns False on a confirmed ECR image,
+    `_cache` must call err_exit with a message naming the host — not silently
+    proceed to `sudo docker pull` and let it surface a generic registry error.
+    """
+
+    def setUp(self):
+        from dxpy.nextflow import collect_images
+        collect_images._ECR_LOGGED_IN_HOSTS.clear()
+
+    def _make_ecr_ref(self):
+        from dxpy.nextflow.ImageRef import DockerImageRef
+        return DockerImageRef(
+            process="P", digest=None,
+            repository="123.dkr.ecr.us-east-1.amazonaws.com/",
+            image_name="repo", tag="latest",
+            digest_is_original=False,
+        )
+
+    @patch("dxpy.nextflow.collect_images.ensure_ecr_login_for_image")
+    def test_cache_raises_when_ecr_login_fails(self, mock_login):
+        import io
+        import sys
+        from dxpy.exceptions import DXCLIError
+        mock_login.return_value = False  # simulate ECR auth setup failure
+        ref = self._make_ecr_ref()
+        # err_exit prints to stderr and raises SystemExit / DXCLIError.
+        captured = io.StringIO()
+        original = sys.stderr
+        sys.stderr = captured
+        try:
+            with self.assertRaises((DXCLIError, SystemExit)):
+                ref._cache("/tmp/dummy.tar.gz")
+        finally:
+            sys.stderr = original
+        # The error message must name the ECR host so the user can debug.
+        text = captured.getvalue()
+        self.assertIn("123.dkr.ecr.us-east-1.amazonaws.com", text)
+        self.assertIn("ECR authentication failed", text)
+
+    @patch("dxpy.nextflow.collect_images.ensure_ecr_login_for_image")
+    @patch("dxpy.nextflow.ImageRef.subprocess.check_output")
+    @patch("dxpy.nextflow.ImageRef.upload_local_file")
+    def test_cache_proceeds_when_ecr_login_ok(self, mock_upload, mock_subproc, mock_login):
+        """The fail-loud branch must NOT trigger when login succeeded."""
+        mock_login.return_value = True
+        mock_subproc.return_value = b""
+        mock_upload.return_value = MagicMock(get_id=lambda: "file-XYZ")
+        ref = self._make_ecr_ref()
+        ref._digest = "sha256:abc"  # avoid the digest_cmd path
+        result = ref._cache("/tmp/dummy.tar.gz")
+        self.assertEqual(result, "file-XYZ")
+
+
 class TestEcrHostExtraction(unittest.TestCase):
     """Tests for _extract_ecr_host_and_region — must match the bash-side
     is_ecr_host helper in nextaur's DxBashLib.groovy."""

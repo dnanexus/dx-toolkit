@@ -40,14 +40,26 @@ log = logging.getLogger(__name__)
 _ECR_HOST_RE = re.compile(r"^[0-9]+\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com$", re.IGNORECASE)
 
 # Tracks (host, region) pairs we've successfully `docker login`-ed during this
-# build. The Docker registry auth token returned by `aws ecr get-login-password`
+# process. The Docker registry auth token returned by `aws ecr get-login-password`
 # is valid for ~12h; the underlying STS web-identity session credentials are
-# only ~1h. For typical NPI-hosted builds (well under an hour) one login per
-# host per build is sufficient. If a build legitimately runs longer than the
-# STS session, subsequent `aws ecr get-login-password` calls will fail with
-# ExpiredToken — `_ecr_docker_login` returns False and the caller logs the
-# specific AWS error to the build log.
+# only ~1h.
+#
+# Lifetime contract: this cache is correct ONLY for the lifetime of a single
+# `dx build --nextflow --cache-docker` invocation, which on the importer is
+# always a fresh Python process well under one hour. Callers that import this
+# module in a long-running Python process (e.g. integration test harnesses)
+# must call `reset_ecr_login_cache()` between builds to avoid serving a stale
+# "logged in" verdict after the underlying STS session has expired.
 _ECR_LOGGED_IN_HOSTS = set()
+
+
+def reset_ecr_login_cache():
+    """Clear the per-process ECR login cache. Test harnesses and any future
+    long-lived caller MUST call this between independent builds — without it,
+    a second build may skip login and the resulting `docker pull` will fail
+    with an expired-token error.
+    """
+    _ECR_LOGGED_IN_HOSTS.clear()
 
 
 def _extract_ecr_host_and_region(image_ref):

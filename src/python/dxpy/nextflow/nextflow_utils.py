@@ -363,6 +363,25 @@ def parse_nextflow_config_dx_fields(src_dir):
     text = _strip_groovy_comments(text)
     found = {}
 
+    def _accept(value):
+        """Reject values that contain a CR or LF.
+
+        The capturing classes `[^']*` / `[^"]*` are negated character classes
+        that DO match newlines (the `(?m)` flag only affects `^` / `$`, not
+        character classes). A user with control over `nextflow.config` could
+        otherwise embed newlines in a value and inject INI sections into the
+        importer's `~/.aws/credentials` heredoc on the build path, or smuggle
+        extra arguments into commands consuming these values. None of the
+        keys we extract (ARNs, audiences, claim names, regions) legitimately
+        contain newlines, so reject them outright at the parser boundary —
+        this is the same discipline applied to the runtime path by
+        AwsUtils.shellSingleQuote which strips \r\n before writing
+        /.dx-aws.env.
+        """
+        if value is None or "\r" in value or "\n" in value:
+            return None
+        return value
+
     # --- 1. Dotted-form pass: `scope.key = 'value'` on a single line.
     for cfg_key, npi_name in _NEXTFLOW_DX_CONFIG_KEYS:
         # Match start-of-line whitespace, the literal key, optional whitespace, `=`, then a quoted value.
@@ -371,7 +390,10 @@ def parse_nextflow_config_dx_fields(src_dir):
         )
         m = pat.search(text)
         if m:
-            found[npi_name] = m.group(1) if m.group(1) is not None else m.group(2)
+            raw = m.group(1) if m.group(1) is not None else m.group(2)
+            cleaned = _accept(raw)
+            if cleaned is not None:
+                found[npi_name] = cleaned
 
     # --- 2. Scope-block pass: extract `scope { ... }` body, then look for inner keys.
     # Group config keys by their leading scope.
@@ -405,7 +427,10 @@ def parse_nextflow_config_dx_fields(src_dir):
                     body,
                 )
                 if inner:
-                    found[npi_name] = inner.group(1) if inner.group(1) is not None else inner.group(2)
+                    raw = inner.group(1) if inner.group(1) is not None else inner.group(2)
+                    cleaned = _accept(raw)
+                    if cleaned is not None:
+                        found[npi_name] = cleaned
     return found
 
 
