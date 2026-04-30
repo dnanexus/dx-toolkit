@@ -145,9 +145,17 @@ def build_pipeline_with_npi(
                 "ecr_region_override fields. Private ECR auth will not be configured.\n"
             )
         else:
+            # Warn on EVERY non-empty config field the deployed NPI does not
+            # accept. Singling out only ECR-specific fields would silently
+            # drop e.g. `aws_region` and surface later as a confusing
+            # "ECR is configured but no AWS region is available" error from
+            # inside the importer job. Distinguish the ECR cluster from the
+            # workdir cluster in the warning so the user knows which
+            # capability they're losing.
             ecr_specific = {"ecr_role_arn_to_assume", "ecr_job_token_audience",
                             "ecr_job_token_subject_claims", "ecr_region_override"}
             dropped_ecr = []
+            dropped_other = []
             for npi_key, value in config_fields.items():
                 if not value:
                     continue
@@ -156,12 +164,21 @@ def build_pipeline_with_npi(
                 else:
                     if npi_key in ecr_specific:
                         dropped_ecr.append(npi_key)
+                    else:
+                        dropped_other.append(npi_key)
             if dropped_ecr:
                 sys.stderr.write(
                     "WARNING: The deployed Nextflow Pipeline Importer does not declare "
                     "input(s) {dropped}; private ECR authentication will not be set up "
                     "for this build. Upgrade the importer app to enable --cache-docker "
                     "against private ECR registries.\n".format(dropped=sorted(dropped_ecr))
+                )
+            if dropped_other:
+                sys.stderr.write(
+                    "WARNING: The deployed Nextflow Pipeline Importer does not declare "
+                    "input(s) {dropped} from your nextflow.config; the importer job "
+                    "will not see these values and may fall back to defaults or fail.\n"
+                    .format(dropped=sorted(dropped_other))
                 )
 
     # Auto-detect NPI capability for version selection
