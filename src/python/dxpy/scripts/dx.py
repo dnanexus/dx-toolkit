@@ -2904,6 +2904,16 @@ def build(args):
         if args.ecr_region and not args.cache_docker:
             build_parser.error(
                 "--ecr-region only applies to --cache-docker builds; runtime always uses aws.region.")
+        if args.ecr_region:
+            # Reject obvious typos / shell-metacharacter values before launching the
+            # remote build. Match the AWS region naming pattern (commercial only):
+            #   us-east-1, eu-west-2, ap-northeast-3, etc.
+            # Note: this is a defensive sanity check, not exhaustive — the actual
+            # validation happens server-side in NPI when `aws sts ...` is called.
+            import re as _re
+            if not _re.match(r"^[a-z]{2}-[a-z]+-\d+$", args.ecr_region):
+                build_parser.error(
+                    "--ecr-region value '{}' does not look like an AWS region (expected e.g. 'us-east-1').".format(args.ecr_region))
 
         if args.cache_docker:
             logging.warning(

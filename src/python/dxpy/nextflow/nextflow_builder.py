@@ -34,6 +34,24 @@ def _npi_supports_version_selection():
         return False
 
 
+def _npi_input_names():
+    """Return the set of input names the deployed NPI app accepts.
+
+    Used to gate forwarding of new optional input fields (ECR auth fields,
+    `ecr_region_override`) so an older NPI that does not yet declare them
+    will not reject the launch with InvalidInput. Returns ``None`` if the
+    deployed app cannot be described, signalling the caller to skip
+    forwarding any input that isn't part of the historically-stable set.
+    """
+    try:
+        npi = dxpy.DXApp(name=get_importer_name())
+        desc = npi.describe(fields={"inputSpec": True})
+        return {inp["name"] for inp in desc.get("inputSpec", [])}
+    except (dxpy.exceptions.ResourceNotFound, dxpy.exceptions.DXAPIError) as e:
+        logging.debug("Could not describe NPI input spec: %s", e)
+        return None
+
+
 def build_pipeline_with_npi(
         repository=None,
         tag=None,
@@ -105,21 +123,46 @@ def build_pipeline_with_npi(
     # for `--repository <url>` builds the local working directory has no nextflow.config
     # and NPI must read it from the cloned repo itself. `parse_nextflow_config_dx_fields`
     # silently returns `{}` when the file is absent, so this is a no-op in that case.
-    # Only fields actually present in the config are forwarded; the NPI input spec
-    # treats them all as optional, so older NPI versions silently ignore unknown keys
-    # — see Risk note "NPI app and dx-toolkit ship out of sync" in the implementation plan.
+    #
+    # Backward compatibility: the platform's applet/run API rejects unknown input
+    # field names with InvalidInput, so forwarding new fields to an older NPI that
+    # does not declare them would break every build. Gate forwarding on a describe
+    # of the deployed NPI's input spec — drop unknown fields with a clear warning
+    # so users on older NPI versions still get a working (non-ECR) build.
     config_fields = parse_nextflow_config_dx_fields(src_dir)
-    for npi_key, value in config_fields.items():
-        if value:
-            input_hash[npi_key] = value
-
-    # `--ecr-region` build-time override. Only meaningful with `--cache-docker`; the
-    # CLI parser already enforces that pairing. Forwarded as a separate input so NPI
-    # can authenticate to a non-default-region ECR (e.g. pre-bundle a us-west-2 image
-    # while `aws.region` is us-east-1). Has no runtime effect — runtime always uses
-    # `aws.region`.
     if ecr_region:
-        input_hash["ecr_region_override"] = ecr_region
+        config_fields["ecr_region_override"] = ecr_region
+
+    if config_fields:
+        accepted_inputs = _npi_input_names()
+        if accepted_inputs is None:
+            # Could not describe the deployed app — fall back to forwarding nothing
+            # new rather than risk a launch failure. The build will still succeed
+            # for non-ECR pipelines.
+            sys.stderr.write(
+                "WARNING: Could not describe the deployed Nextflow Pipeline Importer; "
+                "skipping forwarding of nextflow.config dnanexus.* / aws.region / "
+                "ecr_region_override fields. Private ECR auth will not be configured.\n"
+            )
+        else:
+            ecr_specific = {"ecr_role_arn_to_assume", "ecr_job_token_audience",
+                            "ecr_job_token_subject_claims", "ecr_region_override"}
+            dropped_ecr = []
+            for npi_key, value in config_fields.items():
+                if not value:
+                    continue
+                if npi_key in accepted_inputs:
+                    input_hash[npi_key] = value
+                else:
+                    if npi_key in ecr_specific:
+                        dropped_ecr.append(npi_key)
+            if dropped_ecr:
+                sys.stderr.write(
+                    "WARNING: The deployed Nextflow Pipeline Importer does not declare "
+                    "input(s) {dropped}; private ECR authentication will not be set up "
+                    "for this build. Upgrade the importer app to enable --cache-docker "
+                    "against private ECR registries.\n".format(dropped=sorted(dropped_ecr))
+                )
 
     # Auto-detect NPI capability for version selection
     if nextflow_version is not None:

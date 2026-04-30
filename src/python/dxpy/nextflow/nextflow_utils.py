@@ -293,26 +293,45 @@ _NEXTFLOW_DX_CONFIG_KEYS = [
 
 
 def _strip_groovy_comments(text):
-    """Strip line (`//`) and block (`/* ... */`) comments. Preserves line numbers
-    structure-wise (replaces with spaces) so regex line anchors keep working.
-    Comment-stripping is intentionally simple: it does not honor `//` inside a
-    string literal. Acceptable because all values we extract are quoted strings,
-    and a `//` inside a quote would still leave the surrounding `key = "..."` line
-    matchable by our value-extraction regex.
+    """Strip line (`//`) and block (`/* ... */`) comments while preserving the
+    contents of string literals.
+
+    Earlier versions stripped `//` unconditionally, which corrupted legal config
+    values that happen to contain `//` inside a quoted string (e.g. URI-shaped
+    subject claims like `'job://...'` or S3 URLs). We now mask out single- and
+    double-quoted string spans before stripping comments, then restore them.
+
+    Newlines inside block comments are preserved (replaced with spaces of the
+    same length) so multi-line regexes anchored on `^...$` don't shift line
+    boundaries.
     """
-    # /* ... */ block comments — non-greedy, multiline.
-    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
-    # // line comments.
+    # 1. Mask string literals so their contents are protected from comment
+    #    stripping. Each literal becomes \x00<idx>\x00 — a unique slot so two
+    #    adjacent literals don't merge during unmasking.
+    masked_strings = []
+
+    def _mask(m):
+        idx = len(masked_strings)
+        masked_strings.append(m.group(0))
+        return f"\x00{idx}\x00"
+
+    # Match `"..."` or `'...'` lazily — single-line. Does not handle backslash
+    # escapes (the keys we extract are simple ARNs/URIs without escapes).
+    text = re.sub(r"\"[^\"\n]*\"|\'[^\'\n]*\'", _mask, text)
+
+    # 2. Strip block comments while preserving line breaks (so line-anchored
+    #    regexes elsewhere don't shift).
+    def _blank_keep_newlines(m):
+        return re.sub(r"[^\n]", " ", m.group(0))
+
+    text = re.sub(r"/\*.*?\*/", _blank_keep_newlines, text, flags=re.DOTALL)
+
+    # 3. Strip line comments.
     text = re.sub(r"//[^\n]*", "", text)
+
+    # 4. Restore masked string literals from their slot indices.
+    text = re.sub(r"\x00(\d+)\x00", lambda m: masked_strings[int(m.group(1))], text)
     return text
-
-
-def _extract_quoted_value(line):
-    """Given a line like `key = 'value'` or `key = "value"`, return the value or None."""
-    m = re.search(r"""=\s*(?:'([^']*)'|"([^"]*)")\s*$""", line.rstrip())
-    if not m:
-        return None
-    return m.group(1) if m.group(1) is not None else m.group(2)
 
 
 def parse_nextflow_config_dx_fields(src_dir):

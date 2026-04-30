@@ -122,8 +122,21 @@ class DockerImageRef(ImageRef):
         # If this is an ECR image, authenticate `docker` to the registry before
         # pulling. Imported here (not at module scope) to avoid a circular
         # import: collect_images imports ImageRefFactory, which imports ImageRef.
-        from dxpy.nextflow.collect_images import ensure_ecr_login_for_image
-        ensure_ecr_login_for_image(full_image_ref)
+        from dxpy.nextflow.collect_images import ensure_ecr_login_for_image, _extract_ecr_host_and_region
+        if not ensure_ecr_login_for_image(full_image_ref):
+            # Fail loud rather than letting `sudo docker pull` surface a
+            # generic "no basic auth credentials" registry error several
+            # subprocess layers down. _extract_ecr_host_and_region returns
+            # (None, None) for non-ECR images so this branch only fires when
+            # we definitely identified an ECR registry.
+            host, _ = _extract_ecr_host_and_region(full_image_ref)
+            err_exit(
+                f"ECR authentication failed for image {full_image_ref} "
+                f"(host {host}). Verify the importer's [ecr] AWS profile is "
+                "configured (dnanexus.ecrRoleArnToAssume + ecrJobTokenAudience "
+                "in nextflow.config) and the role grants ecr:GetAuthorizationToken "
+                "+ ecr:BatchGetImage on this repository."
+            )
         docker_pull_cmd = f"sudo docker pull {full_image_ref}"
         docker_save_cmd = f"sudo docker save {full_image_ref} | gzip > {file_name}"
         for cmd in [docker_pull_cmd, docker_save_cmd]:
