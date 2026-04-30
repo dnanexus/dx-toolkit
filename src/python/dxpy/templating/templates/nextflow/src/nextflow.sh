@@ -110,16 +110,20 @@ main() {
   get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
-  # Login to AWS, if configured. Workdir failure is fatal because the rest of the
-  # pipeline cannot function without S3 access when an S3 workdir is configured.
-  # ECR failure is logged but non-fatal — the actual docker pull will surface the
-  # error in context, and a misconfigured ECR role should not block pipelines that
-  # don't actually use ECR images.
+  # Login to AWS, if configured. Both workdir and ECR auth are fatal-on-failure
+  # when configured — the user explicitly asked for that auth path to work, and
+  # silently continuing only surfaces later as opaque registry / S3 errors that
+  # are much harder to debug. ecr_aws_login itself returns 0 cleanly when
+  # ecrRoleArnToAssume is empty (ECR not configured), so non-ECR pipelines are
+  # unaffected.
   if ! aws_login; then
     dx-jobutil-report-error "AWS workdir login failed; check dnanexus.iamRoleArnToAssume, dnanexus.jobTokenAudience, and the role's trust policy."
     exit 1
   fi
-  ecr_aws_login || echo "WARNING: AWS ECR login failed; ECR image pulls will fail until configuration is corrected." >&2
+  if ! ecr_aws_login; then
+    dx-jobutil-report-error "AWS ECR login failed; check dnanexus.ecrRoleArnToAssume, dnanexus.ecrJobTokenAudience, dnanexus.ecrJobTokenSubjectClaims, aws.region, and the ECR role's trust policy. See preceding ERROR lines for the specific failure."
+    exit 1
+  fi
   refresh_web_identity_token_loop & TOKEN_REFRESH_PID=$!
 
   set_vars_session_and_cache
@@ -254,7 +258,14 @@ nf_task_entry() {
     dx-jobutil-report-error "AWS workdir login failed in task subjob; check dnanexus.iamRoleArnToAssume / jobTokenAudience."
     exit 1
   fi
-  ecr_aws_login || echo "WARNING: AWS ECR login failed in task subjob; ECR image pulls will fail." >&2
+  # Symmetric with the head job: ECR auth setup failure is fatal when ECR is
+  # configured. Without this the task would later fall into the docker-pull
+  # retry loop and fail with an opaque registry-auth error several minutes
+  # in, generating cost and confusing logs across N parallel tasks.
+  if ! ecr_aws_login; then
+    dx-jobutil-report-error "AWS ECR login failed in task subjob; check dnanexus.ecr* config and the ECR role's trust policy."
+    exit 1
+  fi
   refresh_web_identity_token_loop & TOKEN_REFRESH_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT

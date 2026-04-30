@@ -181,6 +181,78 @@ class TestParseEdgeCases(unittest.TestCase):
             shutil.rmtree(tmp)
 
 
+class TestNewlineRejection(unittest.TestCase):
+    """Regression tests for the BUG-2 newline-injection vector: values
+    captured from `nextflow.config` flow into shell heredocs / INI files
+    on the importer side. A user-controlled newline could inject a rogue
+    profile section into ~/.aws/credentials. The parser must drop any value
+    containing CR or LF rather than passing it through.
+    """
+
+    def setUp(self):
+        self._tmp = tempfile.mkdtemp(prefix="dx-nf-config-")
+
+    def tearDown(self):
+        shutil.rmtree(self._tmp, ignore_errors=True)
+
+    def _write(self, content):
+        with open(os.path.join(self._tmp, "nextflow.config"), "w") as f:
+            f.write(content)
+        return self._tmp
+
+    def test_aws_region_with_lf_dropped(self):
+        """`aws.region = 'us-east-1\\n[default]\\naws_access_key_id = X'` must
+        NOT be forwarded — that would let a malicious pipeline author inject
+        a rogue [default] profile into the importer's ~/.aws/credentials.
+        """
+        src_dir = self._write(
+            "aws.region = 'us-east-1\n[default]\naws_access_key_id = X'\n"
+        )
+        result = parse_nextflow_config_dx_fields(src_dir)
+        self.assertNotIn("aws_region", result)
+
+    def test_aws_region_with_cr_dropped(self):
+        src_dir = self._write(
+            "aws.region = 'us-east-1\r[default]\rfoo = bar'\n"
+        )
+        result = parse_nextflow_config_dx_fields(src_dir)
+        self.assertNotIn("aws_region", result)
+
+    def test_role_arn_with_lf_dropped(self):
+        src_dir = self._write(
+            "dnanexus.ecrRoleArnToAssume = 'arn:aws:iam::1:role/x\nattacker'\n"
+        )
+        result = parse_nextflow_config_dx_fields(src_dir)
+        self.assertNotIn("ecr_role_arn_to_assume", result)
+
+    def test_audience_with_lf_dropped(self):
+        src_dir = self._write(
+            "dnanexus.ecrJobTokenAudience = 'good\nevil'\n"
+        )
+        result = parse_nextflow_config_dx_fields(src_dir)
+        self.assertNotIn("ecr_job_token_audience", result)
+
+    def test_lf_in_scope_block_value_dropped(self):
+        """Same protection in the scope-block parsing branch."""
+        src_dir = self._write(
+            "aws {\n    region = 'us-east-1\n[evil]\nx = y'\n}\n"
+        )
+        result = parse_nextflow_config_dx_fields(src_dir)
+        self.assertNotIn("aws_region", result)
+
+    def test_clean_value_still_accepted(self):
+        """Make sure the newline rejection is not over-eager — clean values
+        adjacent to a rejected one must still flow through."""
+        src_dir = self._write(
+            "dnanexus.ecrRoleArnToAssume = 'arn:aws:iam::1:role/clean'\n"
+            "aws.region = 'us-east-1'\n"
+        )
+        result = parse_nextflow_config_dx_fields(src_dir)
+        self.assertEqual(result.get("ecr_role_arn_to_assume"),
+                         "arn:aws:iam::1:role/clean")
+        self.assertEqual(result.get("aws_region"), "us-east-1")
+
+
 class TestStripGroovyComments(unittest.TestCase):
     """Direct unit tests for _strip_groovy_comments — focuses on the
     string-masking behaviour added in pass-1 review fixes."""
