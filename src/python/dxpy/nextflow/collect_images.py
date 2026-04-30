@@ -82,8 +82,17 @@ def _ecr_docker_login(host, region):
     has via the awscli asset) rather than boto3 to avoid adding boto3 as a dxpy
     dependency. The `[ecr]` profile must have been configured by the importer
     job entrypoint before `--cache-docker` invokes this code; if it isn't, the
-    `aws` call fails and we return False so the caller can log a clear warning
-    (the subsequent `docker pull` will fail with a registry auth error).
+    `aws` call fails and we return False so the caller can fail loud (the
+    subsequent `docker pull` would otherwise produce a confusing
+    anonymous-access error).
+
+    Region handling: the `aws` call deliberately omits `--region` and relies on
+    the `[ecr]` profile's `region = ...` line to drive the API endpoint. This
+    is what makes the user's `--ecr-region` build override actually take effect
+    — without this, the per-image hostname region would always win and the
+    override would be informational only. Per design Q3 a build authenticates
+    to one ECR region; pipelines mixing regions must be split into multiple
+    `--cache-docker --ecr-region` builds.
 
     Cached per (host, region) for the lifetime of the process.
     """
@@ -93,7 +102,7 @@ def _ecr_docker_login(host, region):
     try:
         # `aws ecr get-login-password` prints a 12h auth token to stdout.
         token_proc = subprocess.run(
-            ["aws", "--profile", "ecr", "ecr", "get-login-password", "--region", region],
+            ["aws", "--profile", "ecr", "ecr", "get-login-password"],
             capture_output=True, text=True, check=False,
         )
         if token_proc.returncode != 0:
@@ -122,19 +131,27 @@ def _ecr_docker_login(host, region):
                 host, login_proc.returncode, login_proc.stderr.strip(),
             )
             return False
-        # Mirror auth into root's docker config for `sudo docker pull/save` callers.
-        # Failure here is logged but non-fatal — the job-user login already
-        # succeeded, which is enough for non-sudo callers.
+        # Mirror auth into root's docker config so `sudo docker pull/save` in
+        # DockerImageRef._cache finds the same credentials. Without this,
+        # /root/.docker/config.json has no ECR token and `sudo docker pull`
+        # falls back to anonymous access — which then fails with a generic
+        # registry auth error rather than the clear fail-loud message in
+        # _cache. So this MUST succeed for ECR pulls to work at all; treat a
+        # failure as fatal rather than logging-and-continuing. (The most
+        # likely cause is the importer image lacking NOPASSWD sudoers for
+        # docker — surface that loudly so it can be fixed in NPI itself.)
         sudo_login = subprocess.run(
             ["sudo", "-n", "docker", "login", "--username", "AWS", "--password-stdin", host],
             input=token_proc.stdout, capture_output=True, text=True, check=False,
         )
         if sudo_login.returncode != 0:
             log.warning(
-                "sudo docker login to ECR host %s failed rc=%d stderr=%s "
-                "(`sudo docker pull` may fail with anonymous-access auth errors)",
+                "sudo docker login to ECR host %s failed rc=%d stderr=%s. "
+                "If sudo requires a password for docker on the importer, configure "
+                "passwordless sudo or run docker pull as the same user that runs docker login.",
                 host, sudo_login.returncode, sudo_login.stderr.strip(),
             )
+            return False
         _ECR_LOGGED_IN_HOSTS.add(key)
         _progress(f"  Logged in to ECR registry {host}")
         return True
