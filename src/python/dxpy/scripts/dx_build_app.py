@@ -1199,7 +1199,11 @@ def _build_app(args, extra_args):
                 brief=args.brief,
                 destination=args.destination,
                 extra_args=extra_args,
-                nextflow_version=args.nextflow_version
+                nextflow_version=args.nextflow_version,
+                # Pass src_dir so NPI input forwarding can read local nextflow.config
+                # for ECR / S3-workdir auth fields. None for `--repository <url>` builds.
+                src_dir=args.src_dir,
+                ecr_region=args.ecr_region
             )
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)
