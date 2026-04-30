@@ -70,6 +70,16 @@ def _extract_ecr_host_and_region(image_ref):
     """
     if not image_ref:
         return None, None
+    # F9-9 symmetry with extract_ecr_host_from_image (Groovy bash side):
+    # strip URI scheme prefixes that some pipelines use in `container`
+    # directives (e.g. `docker://...`, `oras://...`). Today this path is
+    # only reached after `_parse_docker_ref` has already stripped
+    # `docker://`, but we re-strip here so a future caller that hands us a
+    # raw container ref does not silently miss ECR detection.
+    if image_ref.startswith("docker://"):
+        image_ref = image_ref[len("docker://"):]
+    elif image_ref.startswith("oras://"):
+        image_ref = image_ref[len("oras://"):]
     # Hostname is everything up to the first '/'. Strip an optional :port (rare
     # for ECR but safe to handle).
     first = image_ref.split("/", 1)[0].split(":", 1)[0].lower()
@@ -492,6 +502,15 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
             # `docker manifest inspect` against a private ECR registry requires
             # auth too (not just `docker pull`). Run an ECR login proactively so
             # digest resolution works for ECR images. No-op for non-ECR images.
+            #
+            # Failure semantics: this call is intentionally best-effort — return
+            # value is discarded. If login fails here and the image is in fact
+            # ECR, `docker manifest inspect` will fail with an auth error and the
+            # caller (`_resolve_digest`) will fall back to retries. The same
+            # `ensure_ecr_login_for_image` is invoked again from
+            # DockerImageRef._cache (see ImageRef.py) where the failure IS fatal
+            # — that's the fail-loud surface. The duplicate call is cheap because
+            # `_ECR_LOGGED_IN_HOSTS` deduplicates the actual subprocess work.
             ensure_ecr_login_for_image(full_ref)
             # Only use manifest digest for latest/untagged images where old
             # nextaur (<1.12.1) does a digest-based lookup.  Tagged images use
