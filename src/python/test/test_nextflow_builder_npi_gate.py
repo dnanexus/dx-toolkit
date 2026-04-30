@@ -24,18 +24,24 @@ forward to the importer and emits warnings for fields the deployed NPI
 does not declare.
 
 Behaviour the tests pin down:
-  - Describe failure -> single warning, nothing forwarded.
+  - Describe failure with ECR intent -> hard error (refuse to launch).
+  - Describe failure without ECR intent -> warning, nothing forwarded.
   - All fields accepted -> all forwarded, no warning.
-  - ECR-specific drop -> ECR-cluster warning (private ECR auth disabled).
-  - Workdir/aws_region drop with ECR intent -> escalated ECR-blocked warning
-    explicitly naming `aws_region` (BUG-3 regression test).
-  - Workdir/aws_region drop without ECR intent -> generic warning only.
+  - ECR-specific drop -> hard error (refuse to launch; otherwise the build
+    would fail several minutes in at the docker-pull step).
+  - aws_region drop with ECR intent -> hard error (ECR needs a region).
+  - aws_region drop without ECR intent -> generic warning only.
 """
 
 import io
 import unittest
+from unittest import mock
 
-from dxpy.nextflow.nextflow_builder import _apply_npi_input_gate
+import dxpy
+from dxpy.nextflow.nextflow_builder import (
+    _apply_npi_input_gate,
+    preflight_validate_for_cache_docker,
+)
 
 
 class TestApplyNpiInputGate(unittest.TestCase):
@@ -54,15 +60,25 @@ class TestApplyNpiInputGate(unittest.TestCase):
 
     # --- describe-failure path ---
 
-    def test_describe_failure_warns_and_forwards_nothing(self):
+    def test_describe_failure_with_ecr_intent_raises(self):
+        """ECR was clearly requested but we can't verify the NPI accepts the
+        fields — refuse to launch rather than fail several minutes in."""
+        with self.assertRaises(dxpy.exceptions.DXError) as cm:
+            self._run(
+                config_fields={"ecr_role_arn_to_assume": "arn:role/x"},
+                accepted_inputs=None,
+            )
+        self.assertIn("Could not describe", str(cm.exception))
+        self.assertEqual(self.input_hash, {})
+
+    def test_describe_failure_without_ecr_intent_warns(self):
+        """No ECR intent — degrade to a warning so non-ECR pipelines still build."""
         self._run(
-            config_fields={"ecr_role_arn_to_assume": "arn:role/x"},
+            config_fields={"iam_role_arn_to_assume": "arn:role/wd"},
             accepted_inputs=None,
         )
         self.assertEqual(self.input_hash, {})
         self.assertIn("Could not describe", self.stderr.getvalue())
-        self.assertIn("Private ECR auth will not be configured",
-                      self.stderr.getvalue())
 
     def test_describe_failure_with_empty_config_silent(self):
         """Empty config + describe failure -> no warning at all."""
@@ -92,22 +108,21 @@ class TestApplyNpiInputGate(unittest.TestCase):
 
     # --- dropped-field warnings ---
 
-    def test_ecr_specific_drop_emits_ecr_cluster_warning(self):
+    def test_ecr_specific_drop_raises(self):
+        """Older NPI lacks ecr_* inputs: refuse to launch (the docker pull
+        step would fail without credentials)."""
         cfg = {"ecr_role_arn_to_assume": "arn:role/ecr",
                "ecr_job_token_audience": "aud",
                "ecr_job_token_subject_claims": "sc"}
-        # Older NPI: declares none of the ecr_* fields.
-        self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
-        self.assertEqual(self.input_hash, {})
-        text = self.stderr.getvalue()
-        self.assertIn("ecr_role_arn_to_assume", text)
-        self.assertIn("private ECR authentication will not be set up", text)
+        with self.assertRaises(dxpy.exceptions.DXError) as cm:
+            self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
+        self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
+        self.assertIn("Upgrade the importer app", str(cm.exception))
 
-    def test_aws_region_drop_with_ecr_intent_escalates(self):
-        """BUG-3 regression: when ECR is being configured but the deployed NPI
-        does not declare `aws_region`, we must emit the specific
-        ECR-blocked-without-region warning, not just the generic dropped-field one.
-        """
+    def test_aws_region_drop_with_ecr_intent_raises(self):
+        """ECR needs a region; if the NPI doesn't accept aws_region, refuse
+        to launch rather than fail mid-job with the opaque 'no AWS region
+        available' error."""
         cfg = {
             "ecr_role_arn_to_assume": "arn:role/ecr",
             "ecr_job_token_audience": "aud",
@@ -117,10 +132,9 @@ class TestApplyNpiInputGate(unittest.TestCase):
         # NPI accepts all ECR-specific fields but NOT aws_region.
         accepted = {"ecr_role_arn_to_assume", "ecr_job_token_audience",
                     "ecr_job_token_subject_claims", "repository_url"}
-        self._run(cfg, accepted)
-        text = self.stderr.getvalue()
-        self.assertIn("ECR is configured but no AWS region is available", text)
-        self.assertIn("aws_region", text)
+        with self.assertRaises(dxpy.exceptions.DXError) as cm:
+            self._run(cfg, accepted)
+        self.assertIn("aws_region", str(cm.exception))
 
     def test_aws_region_drop_without_ecr_intent_uses_generic_warning(self):
         """User has aws.region in config but no ECR — drop should emit
@@ -129,20 +143,60 @@ class TestApplyNpiInputGate(unittest.TestCase):
         self._run(cfg, accepted_inputs={"repository_url"})
         text = self.stderr.getvalue()
         self.assertIn("aws_region", text)
-        self.assertNotIn("ECR is configured but no AWS region", text)
-        self.assertNotIn("private ECR authentication will not be set up", text)
+        self.assertNotIn("private ECR authentication", text)
 
-    def test_mixed_drop_emits_both_warnings(self):
-        """If both ECR-specific and other fields are dropped, both
-        warnings should appear so the user sees the full picture."""
+    def test_mixed_drop_with_ecr_intent_raises(self):
+        """If any ECR-specific field is dropped, refuse to launch (ECR
+        intent + missing input slot would silently fail at docker-pull)."""
         cfg = {
             "ecr_region_override": "us-west-2",
             "iam_role_arn_to_assume": "arn:role/wd",
         }
-        self._run(cfg, accepted_inputs={"repository_url"})
-        text = self.stderr.getvalue()
-        self.assertIn("ecr_region_override", text)
-        self.assertIn("iam_role_arn_to_assume", text)
+        with self.assertRaises(dxpy.exceptions.DXError) as cm:
+            self._run(cfg, accepted_inputs={"repository_url"})
+        self.assertIn("ecr_region_override", str(cm.exception))
+
+
+class TestPreflightValidateForCacheDocker(unittest.TestCase):
+    """F9-2/F9-3/F9-4: pre-upload validation that runs before
+    `.nf_source/` upload so a fail-fast does not leave orphaned data.
+    """
+
+    def test_describe_failure_always_raises(self):
+        """F9-4: tighter than the in-build gate — describe failure on a
+        --cache-docker build always raises, regardless of ECR intent."""
+        with mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value=None,
+        ):
+            with self.assertRaises(dxpy.exceptions.DXError) as cm:
+                preflight_validate_for_cache_docker(src_dir=None, ecr_region=None)
+            self.assertIn("Could not describe", str(cm.exception))
+
+    def test_repository_mode_with_complete_npi_passes(self):
+        """F9-3: --repository mode + NPI declares ECR slots -> OK
+        (we cannot detect ECR intent from the remote repo's config)."""
+        with mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value={
+                "ecr_role_arn_to_assume", "ecr_job_token_audience",
+                "ecr_job_token_subject_claims", "ecr_region_override",
+                "aws_region", "repository_url",
+            },
+        ):
+            preflight_validate_for_cache_docker(src_dir=None, ecr_region=None)
+
+    def test_repository_mode_with_older_npi_raises(self):
+        """F9-3: --repository mode against an older NPI lacking ECR slots
+        must raise — otherwise the importer would clone a repo with
+        ecrRoleArnToAssume and silently fail at docker pull."""
+        with mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value={"repository_url", "cache_docker"},
+        ):
+            with self.assertRaises(dxpy.exceptions.DXError) as cm:
+                preflight_validate_for_cache_docker(src_dir=None, ecr_region=None)
+            self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
 
 
 if __name__ == "__main__":

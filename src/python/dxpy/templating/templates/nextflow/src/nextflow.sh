@@ -443,9 +443,11 @@ aws_login() {
 # Configures the [ecr] AWS profile in $ECR_AWS_CONFIG_FILE so `aws_ecr ...` calls
 # automatically assume ecrRoleArnToAssume via the DNAnexus Job Identity Token. The SDK
 # refreshes role creds whenever the token file changes; the refresh loop keeps the file
-# fresh. Skips the post-write sanity STS call to save one API hit per task subjob startup
-# — real failures will surface on the first ECR pull. Returns non-zero only on hard
-# misconfiguration (missing required fields, JIT API failure).
+# fresh. Performs a single sts:GetCallerIdentity probe after writing the profile so
+# trust-policy / role-ARN errors surface here (in the entrypoint, fail-fast and once)
+# rather than per-task at first `docker pull` (noisy, parallel, far from the source).
+# Returns non-zero on hard misconfiguration (missing required fields, JIT API failure,
+# STS probe failure).
 ecr_aws_login() {
   if [ ! -f "$AWS_ENV" ]; then
     return 0
@@ -488,6 +490,26 @@ EOF
 
   # Defensive: clear any stale per-host login cache from a reused worker.
   rm -f "$ECR_LOGGED_IN_HOSTS_FILE"
+
+  # Fail-fast probe: AssumeRoleWithWebIdentity + sts:GetCallerIdentity. If the
+  # role ARN is wrong, the trust policy doesn't allow the JIT audience/subject,
+  # or the token is malformed, this surfaces a clear error here — before any
+  # task subjob runs `docker pull` and discovers it the slow way. Cheap (~50ms)
+  # compared to N-way per-task failures.
+  #
+  # STS-rate-limit trade-off (F9-8): this function runs in both the head job
+  # and every task subjob, so a wide-fanout pipeline with N parallel tasks
+  # produces N parallel STS calls within the first few seconds. AWS STS
+  # account-level limits are ~250 TPS pre-burst, well above realistic Nextflow
+  # parallelism, so throttling has not been observed. The cost is justified by
+  # the alternative — N+ retried `docker pull` failures with opaque registry
+  # auth errors. If a future pipeline shape ever pushes past STS limits, the
+  # task-subjob probe could be skipped on the assumption that the head-job
+  # probe already validated the role.
+  if ! aws_ecr sts get-caller-identity >/dev/null 2>&1; then
+    echo "ERROR: sts:GetCallerIdentity failed for the [ecr] profile (role=${ecrRoleArnToAssume}, region=${awsRegion}). Verify the role's trust policy allows the JIT audience '${ecrJobTokenAudience}' and that the role exists." >&2
+    return 1
+  fi
 
   echo "AWS [ecr] profile configured for role ${ecrRoleArnToAssume}."
   return 0

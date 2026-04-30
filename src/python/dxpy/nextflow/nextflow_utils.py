@@ -304,6 +304,19 @@ def _strip_groovy_comments(text):
     Newlines inside block comments are preserved (replaced with spaces of the
     same length) so multi-line regexes anchored on `^...$` don't shift line
     boundaries.
+
+    Limitations:
+      - Single-line single- or double-quoted strings only. Groovy/Java
+        triple-quoted strings (`'''...'''`, `\"\"\"...\"\"\"`) and
+        slashy-strings (`/.../`) are NOT recognised; if a config value
+        uses one of those forms, comment-stripping may corrupt it. The
+        keys consumed by `parse_nextflow_config_dx_fields` (role ARNs,
+        OIDC audiences, region names, subject claims) are short tokens
+        that fit comfortably on a single line, so this restriction has
+        not been observed in practice. The `_accept` helper rejects any
+        value containing `\\r` or `\\n` as a defense-in-depth backstop
+        (see APPS-3915 BUG-2).
+      - `includeConfig` / nested-profile chains are not followed.
     """
     # 1. Mask string literals so their contents are protected from comment
     #    stripping. Each literal becomes \x00<idx>\x00 — a unique slot so two

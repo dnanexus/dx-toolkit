@@ -37,7 +37,7 @@ import dxpy.workflow_builder
 import dxpy.executable_builder
 from .. import logger
 
-from dxpy.nextflow.nextflow_builder import build_pipeline_with_npi, prepare_nextflow
+from dxpy.nextflow.nextflow_builder import build_pipeline_with_npi, prepare_nextflow, preflight_validate_for_cache_docker
 from dxpy.nextflow.nextflow_utils import get_resources_subpath, is_importer_job
 
 from ..utils import json_load_raise_on_duplicates
@@ -1151,6 +1151,17 @@ def _build_app(args, extra_args):
 
 
         if args.nextflow and build_nf_with_npi:
+            # Pre-flight: validate against the deployed NPI's input spec BEFORE
+            # uploading the pipeline source. Without this, a fail-fast inside
+            # build_pipeline_with_npi (older NPI lacking ECR inputs, missing
+            # aws_region, undescribable NPI) would leave the user's
+            # .nf_source/<basename>/ upload orphaned in the destination
+            # project, forcing a manual `dx rm -r` before retrying.
+            if args.cache_docker:
+                preflight_validate_for_cache_docker(
+                    src_dir=args.src_dir,
+                    ecr_region=args.ecr_region,
+                )
             nf_scr = args.repository
             if (not args.repository) and args.src_dir:
                 logger.info(
