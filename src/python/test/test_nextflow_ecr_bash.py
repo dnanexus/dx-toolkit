@@ -198,6 +198,20 @@ class TestDxBashLibEcrHelpers(unittest.TestCase):
         ))
         self.assertEqual(out.strip(), "NO")
 
+    def test_is_ecr_host_iso_rejected(self):
+        """Parity with the Python-side _extract_ecr_host_and_region which
+        rejects us-iso-* and us-isob-* (Secret / Top Secret partitions)."""
+        rc, out, err = _run_bash(self._harness(
+            'is_ecr_host "123.dkr.ecr.us-iso-east-1.amazonaws.com" '
+            '&& echo YES || echo NO'
+        ))
+        self.assertEqual(out.strip(), "NO")
+        rc, out, err = _run_bash(self._harness(
+            'is_ecr_host "123.dkr.ecr.us-isob-east-1.amazonaws.com" '
+            '&& echo YES || echo NO'
+        ))
+        self.assertEqual(out.strip(), "NO")
+
     def test_is_ecr_host_china_rejected(self):
         rc, out, err = _run_bash(self._harness(
             'is_ecr_host "123.dkr.ecr.cn-north-1.amazonaws.com.cn" '
