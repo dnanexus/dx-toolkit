@@ -460,6 +460,16 @@ ecr_aws_login() {
     echo "ERROR: dnanexus.ecrRoleArnToAssume is set but aws.region is not. Refusing to configure [ecr] profile." >&2
     return 1
   fi
+  # Defense-in-depth (mirrors the parser-side strip in dx-toolkit and the
+  # importer-side check in npi.sh): refuse to configure the [ecr] profile
+  # with a region value that does not look like a real AWS commercial
+  # region. shellSingleQuote in AwsUtils.groovy already strips \r and \n,
+  # so direct INI injection is not reachable here, but a malformed region
+  # would otherwise produce a confusing AWS API error far from the source.
+  if ! [[ "$awsRegion" =~ ^[a-z]{2}-[a-z]+-[0-9]+$ ]]; then
+    echo "ERROR: aws.region '$awsRegion' does not match the AWS commercial region pattern. Refusing to configure [ecr] profile." >&2
+    return 1
+  fi
 
   if ! _fetch_jit_to_file "${ECR_WEB_IDENTITY_TOKEN_FILE}" "${ecrJobTokenAudience}" "${ecrJobTokenSubjectClaims}"; then
     echo "ERROR: failed to obtain ECR JIT (audience=${ecrJobTokenAudience}). Check dnanexus.ecrJobTokenAudience / subjectClaims." >&2
