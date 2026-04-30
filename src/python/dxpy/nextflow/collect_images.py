@@ -40,9 +40,13 @@ log = logging.getLogger(__name__)
 _ECR_HOST_RE = re.compile(r"^[0-9]+\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com$", re.IGNORECASE)
 
 # Tracks (host, region) pairs we've successfully `docker login`-ed during this
-# build. ECR auth tokens last 12h; build jobs are short-lived, so a per-process
-# cache is sufficient and avoids repeated STS calls / rate-limit cascades when
-# pulling many images from the same registry.
+# build. The Docker registry auth token returned by `aws ecr get-login-password`
+# is valid for ~12h; the underlying STS web-identity session credentials are
+# only ~1h. For typical NPI-hosted builds (well under an hour) one login per
+# host per build is sufficient. If a build legitimately runs longer than the
+# STS session, subsequent `aws ecr get-login-password` calls will fail with
+# ExpiredToken — `_ecr_docker_login` returns False and the caller logs the
+# specific AWS error to the build log.
 _ECR_LOGGED_IN_HOSTS = set()
 
 
@@ -61,7 +65,12 @@ def _extract_ecr_host_and_region(image_ref):
     if not m:
         return None, None
     region = m.group(1).lower()
-    if region.startswith("us-gov-"):
+    # Reject all non-commercial AWS partitions. STS / ECR endpoints differ in:
+    #   us-gov-*   GovCloud
+    #   us-iso-*   Secret Region (and us-isob-* Top Secret)
+    # Only commercial partitions have been validated end-to-end with the JIT-
+    # based auth flow used by Phase 1/2.
+    if region.startswith(("us-gov-", "us-iso-", "us-isob-")):
         return None, None
     return first, region
 
@@ -96,6 +105,13 @@ def _ecr_docker_login(host, region):
             return False
         # Pipe the password into `docker login --password-stdin`. Using stdin
         # avoids the password ever appearing on a command line / process list.
+        #
+        # We login twice: once as the job user (so `docker manifest inspect` —
+        # which runs without sudo — can read the registry), and once via sudo
+        # (so `sudo docker pull` / `sudo docker save` in DockerImageRef._cache
+        # also see the auth). Without the sudo login, `sudo docker pull` reads
+        # /root/.docker/config.json which does not contain the ECR token, and
+        # falls back to anonymous access — failing for private registries.
         login_proc = subprocess.run(
             ["docker", "login", "--username", "AWS", "--password-stdin", host],
             input=token_proc.stdout, capture_output=True, text=True, check=False,
@@ -106,6 +122,19 @@ def _ecr_docker_login(host, region):
                 host, login_proc.returncode, login_proc.stderr.strip(),
             )
             return False
+        # Mirror auth into root's docker config for `sudo docker pull/save` callers.
+        # Failure here is logged but non-fatal — the job-user login already
+        # succeeded, which is enough for non-sudo callers.
+        sudo_login = subprocess.run(
+            ["sudo", "-n", "docker", "login", "--username", "AWS", "--password-stdin", host],
+            input=token_proc.stdout, capture_output=True, text=True, check=False,
+        )
+        if sudo_login.returncode != 0:
+            log.warning(
+                "sudo docker login to ECR host %s failed rc=%d stderr=%s "
+                "(`sudo docker pull` may fail with anonymous-access auth errors)",
+                host, sudo_login.returncode, sudo_login.stderr.strip(),
+            )
         _ECR_LOGGED_IN_HOSTS.add(key)
         _progress(f"  Logged in to ECR registry {host}")
         return True
