@@ -13,7 +13,7 @@ from functools import partial
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
                                           create_readme, get_nested, get_allowed_extra_fields_mapping,
-                                          resolve_version)
+                                          resolve_version, parse_nextflow_config_dx_fields)
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
@@ -34,6 +34,184 @@ def _npi_supports_version_selection():
         return False
 
 
+def _npi_input_names():
+    """Return the set of input names the deployed NPI app accepts.
+
+    Used to gate forwarding of new optional input fields (ECR auth fields,
+    `ecr_region_override`) so an older NPI that does not yet declare them
+    will not reject the launch with InvalidInput. Returns ``None`` if the
+    deployed app cannot be described, signalling the caller to skip
+    forwarding any input that isn't part of the historically-stable set.
+    """
+    try:
+        npi = dxpy.DXApp(name=get_importer_name())
+        desc = npi.describe(fields={"inputSpec": True})
+        return {inp["name"] for inp in desc.get("inputSpec", [])}
+    except (dxpy.exceptions.ResourceNotFound, dxpy.exceptions.DXAPIError) as e:
+        logging.debug("Could not describe NPI input spec: %s", e)
+        return None
+
+
+# Names of the ECR-specific input fields. Used by `_apply_npi_input_gate` to
+# distinguish "the user configured ECR" from "the user only configured workdir"
+# when deciding which warning to emit on a dropped field.
+_ECR_SPECIFIC_INPUTS = frozenset({
+    "ecr_role_arn_to_assume",
+    "ecr_job_token_audience",
+    "ecr_job_token_subject_claims",
+    "ecr_region_override",
+})
+
+
+def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
+    """Apply the deployed-NPI input-spec gate to the parsed config fields.
+
+    Mutates `input_hash` in place with the fields the deployed NPI accepts.
+
+    Behaviour summary:
+      - `accepted_inputs is None` (NPI describe failed) and ECR intent
+        present in `config_fields` -> raise ``DXError``.
+      - `accepted_inputs is None` and no ECR intent -> warn, forward
+        nothing new (preserves backward compat for non-ECR pipelines).
+      - Any ``ecr_*`` field in `config_fields` is dropped (older NPI
+        without the slot) -> raise ``DXError``. Launching would burn an
+        NPI job and fail several minutes in at the docker-pull step.
+      - `aws_region` dropped while ECR intent is present -> raise
+        ``DXError`` (ECR auth needs a region).
+      - Other workdir fields dropped -> stderr warning, build continues.
+    """
+    if not config_fields:
+        return
+
+    # Detect ECR intent up front so we can fail fast (rather than warn-and-continue)
+    # when ECR was clearly requested but the deployed NPI cannot honour it. Without
+    # this, the build would launch, run for several minutes, and fail inside the
+    # importer with an opaque "no basic auth credentials" or "ECR is configured but
+    # no AWS region available" error.
+    ecr_intent = any(k in config_fields and config_fields[k]
+                     for k in _ECR_SPECIFIC_INPUTS)
+
+    if accepted_inputs is None:
+        msg = (
+            "Could not describe the deployed Nextflow Pipeline Importer; "
+            "cannot determine whether private ECR auth fields are accepted."
+        )
+        if ecr_intent:
+            raise dxpy.exceptions.DXError(
+                msg + " Refusing to launch a build that would silently "
+                "fail at the docker-pull step. Verify the importer app is "
+                "deployed and you have describe permission, or remove the "
+                "dnanexus.ecrRoleArnToAssume field from nextflow.config."
+            )
+        stderr.write(
+            "WARNING: " + msg + " Skipping forwarding of nextflow.config "
+            "dnanexus.* / aws.region / ecr_region_override fields.\n"
+        )
+        return
+
+    dropped_ecr = []
+    dropped_other = []
+    for npi_key, value in config_fields.items():
+        if not value:
+            continue
+        if npi_key in accepted_inputs:
+            input_hash[npi_key] = value
+        else:
+            if npi_key in _ECR_SPECIFIC_INPUTS:
+                dropped_ecr.append(npi_key)
+            else:
+                dropped_other.append(npi_key)
+
+    aws_region_dropped = ("aws_region" in dropped_other
+                          and bool(config_fields.get("aws_region")))
+
+    if dropped_ecr:
+        # ECR was clearly requested but the deployed NPI lacks the input slots
+        # to receive the auth fields — the docker-pull step will fail without
+        # credentials. Refuse to launch the (long, expensive) NPI job.
+        raise dxpy.exceptions.DXError(
+            "The deployed Nextflow Pipeline Importer does not declare "
+            "input(s) {dropped}; private ECR authentication cannot be set up "
+            "for this build. Upgrade the importer app to a version that "
+            "supports private ECR registries, or remove "
+            "dnanexus.ecrRoleArnToAssume from nextflow.config to opt out.".format(
+                dropped=sorted(dropped_ecr))
+        )
+    if dropped_other:
+        if ecr_intent and aws_region_dropped:
+            # ECR auth needs a region. Fail fast rather than letting the
+            # importer fail several minutes in with the opaque error.
+            raise dxpy.exceptions.DXError(
+                "The deployed Nextflow Pipeline Importer does not declare "
+                "the `aws_region` input, but private ECR authentication "
+                "needs it. Upgrade the importer app to a version that "
+                "supports private ECR registries, or remove "
+                "dnanexus.ecrRoleArnToAssume from nextflow.config to opt out."
+            )
+        stderr.write(
+            "WARNING: The deployed Nextflow Pipeline Importer does not declare "
+            "input(s) {dropped} from your nextflow.config; the importer job "
+            "will not see these values and may fall back to defaults or fail.\n"
+            .format(dropped=sorted(dropped_other))
+        )
+
+
+def preflight_validate_for_cache_docker(src_dir, ecr_region):
+    """Pre-upload validation for `dx build --nextflow --cache-docker`.
+
+    Called from dx_build_app.py BEFORE the local pipeline source is uploaded
+    to the user's project. Any DXError raised here aborts the build cleanly
+    without leaving an orphaned `.nf_source/` upload behind that the user
+    would otherwise have to `dx rm -r` manually before retrying.
+
+    Runs the same `_apply_npi_input_gate` logic as `build_pipeline_with_npi`
+    but against a throwaway dict so nothing is forwarded twice.
+
+    Additional tightening over the in-build gate:
+      - When the deployed NPI cannot be described, raise unconditionally
+        (an unrenderable input spec is suspicious enough to refuse a
+        --cache-docker build, regardless of whether ECR intent was
+        detected locally).
+      - When `src_dir is None` (i.e. ``--repository <url>`` mode), the
+        local config is not visible. Verify that the deployed NPI declares
+        the ECR input slots so a remote-config pipeline using ECR will not
+        fail opaquely. If the slots are missing, raise so the user knows
+        upfront rather than discovering it mid-job.
+    """
+    accepted = _npi_input_names()
+    if accepted is None:
+        raise dxpy.exceptions.DXError(
+            "Could not describe the deployed Nextflow Pipeline Importer. "
+            "Refusing to launch a --cache-docker build before verifying "
+            "the importer accepts the expected input fields. Verify the "
+            "importer app is deployed and you have describe permission."
+        )
+
+    if src_dir is None:
+        # --repository <url>: nextflow.config is in the cloned remote repo
+        # which only the importer can read. We cannot detect ECR intent
+        # here, but we can refuse to launch against an importer that
+        # lacks the ECR input slots — otherwise a repo with
+        # `dnanexus.ecrRoleArnToAssume` would silently bypass ECR auth.
+        missing = sorted(_ECR_SPECIFIC_INPUTS - set(accepted))
+        if missing:
+            raise dxpy.exceptions.DXError(
+                "The deployed Nextflow Pipeline Importer does not declare "
+                "input(s) {missing}; --cache-docker against a remote "
+                "repository that uses private ECR would fail at the "
+                "docker-pull step. Upgrade the importer app to a version "
+                "that supports private ECR registries.".format(missing=missing)
+            )
+        return
+
+    # Local-src-dir mode: parse config and run the gate against a throwaway
+    # dict. _apply_npi_input_gate raises on any unrecoverable mismatch.
+    config_fields = parse_nextflow_config_dx_fields(src_dir)
+    if ecr_region:
+        config_fields["ecr_region_override"] = ecr_region
+    _apply_npi_input_gate(config_fields, accepted, {}, sys.stderr)
+
+
 def build_pipeline_with_npi(
         repository=None,
         tag=None,
@@ -45,7 +223,9 @@ def build_pipeline_with_npi(
         brief=False,
         destination=None,
         extra_args=None,
-        nextflow_version=None
+        nextflow_version=None,
+        src_dir=None,
+        ecr_region=None
 ):
     """
     :param repository: URL to a Git repository
@@ -96,6 +276,23 @@ def build_pipeline_with_npi(
     for key, (raw_value, transform) in input_updates.items():
         if raw_value:
             input_hash[key] = transform(raw_value) if transform else raw_value
+
+    # Forward DNAnexus / AWS / ECR config from the user's local nextflow.config to NPI.
+    # The importer job uses these fields to mint a JIT and `docker login` to ECR before
+    # `--cache-docker` pulls private images. Only relevant for local `--src-dir` builds:
+    # for `--repository <url>` builds the local working directory has no nextflow.config
+    # and NPI must read it from the cloned repo itself. `parse_nextflow_config_dx_fields`
+    # silently returns `{}` when the file is absent, so this is a no-op in that case.
+    #
+    # Backward compatibility: the platform's applet/run API rejects unknown input
+    # field names with InvalidInput, so forwarding new fields to an older NPI that
+    # does not declare them would break every build. Gate forwarding on a describe
+    # of the deployed NPI's input spec — drop unknown fields with a clear warning
+    # so users on older NPI versions still get a working (non-ECR) build.
+    config_fields = parse_nextflow_config_dx_fields(src_dir)
+    if ecr_region:
+        config_fields["ecr_region_override"] = ecr_region
+    _apply_npi_input_gate(config_fields, _npi_input_names(), input_hash, sys.stderr)
 
     # Auto-detect NPI capability for version selection
     if nextflow_version is not None:

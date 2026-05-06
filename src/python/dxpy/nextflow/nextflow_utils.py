@@ -275,6 +275,178 @@ def get_nested(args, arg_path):
     return args
 
 
+# Keys forwarded from the local nextflow.config to the NPI app at build time so that
+# the importer job can mint a JIT, assume the ECR role, and `docker login` to the
+# private ECR registry before pulling images via `--cache-docker`.
+# Format: (config-key, NPI-input-name). Config keys are looked up in both dotted
+# (`dnanexus.iamRoleArnToAssume = ...`) and scope-block (`dnanexus { iamRoleArnToAssume = ... }`)
+# form. String values only — these are all string-typed in the runtime config.
+_NEXTFLOW_DX_CONFIG_KEYS = [
+    ("dnanexus.iamRoleArnToAssume", "iam_role_arn_to_assume"),
+    ("dnanexus.jobTokenAudience", "job_token_audience"),
+    ("dnanexus.jobTokenSubjectClaims", "job_token_subject_claims"),
+    ("dnanexus.ecrRoleArnToAssume", "ecr_role_arn_to_assume"),
+    ("dnanexus.ecrJobTokenAudience", "ecr_job_token_audience"),
+    ("dnanexus.ecrJobTokenSubjectClaims", "ecr_job_token_subject_claims"),
+    ("aws.region", "aws_region"),
+]
+
+
+def _strip_groovy_comments(text):
+    """Strip line (`//`) and block (`/* ... */`) comments while preserving the
+    contents of string literals.
+
+    Earlier versions stripped `//` unconditionally, which corrupted legal config
+    values that happen to contain `//` inside a quoted string (e.g. URI-shaped
+    subject claims like `'job://...'` or S3 URLs). We now mask out single- and
+    double-quoted string spans before stripping comments, then restore them.
+
+    Newlines inside block comments are preserved (replaced with spaces of the
+    same length) so multi-line regexes anchored on `^...$` don't shift line
+    boundaries.
+
+    Limitations:
+      - Single-line single- or double-quoted strings only. Groovy/Java
+        triple-quoted strings (`'''...'''`, `\"\"\"...\"\"\"`) and
+        slashy-strings (`/.../`) are NOT recognised; if a config value
+        uses one of those forms, comment-stripping may corrupt it. The
+        keys consumed by `parse_nextflow_config_dx_fields` (role ARNs,
+        OIDC audiences, region names, subject claims) are short tokens
+        that fit comfortably on a single line, so this restriction has
+        not been observed in practice. The `_accept` helper rejects any
+        value containing `\\r` or `\\n` as a defense-in-depth backstop
+        (see APPS-3915 BUG-2).
+      - `includeConfig` / nested-profile chains are not followed.
+    """
+    # 1. Mask string literals so their contents are protected from comment
+    #    stripping. Each literal becomes \x00<idx>\x00 — a unique slot so two
+    #    adjacent literals don't merge during unmasking.
+    masked_strings = []
+
+    def _mask(m):
+        idx = len(masked_strings)
+        masked_strings.append(m.group(0))
+        return f"\x00{idx}\x00"
+
+    # Match `"..."` or `'...'` lazily — single-line. Does not handle backslash
+    # escapes (the keys we extract are simple ARNs/URIs without escapes).
+    text = re.sub(r"\"[^\"\n]*\"|\'[^\'\n]*\'", _mask, text)
+
+    # 2. Strip block comments while preserving line breaks (so line-anchored
+    #    regexes elsewhere don't shift).
+    def _blank_keep_newlines(m):
+        return re.sub(r"[^\n]", " ", m.group(0))
+
+    text = re.sub(r"/\*.*?\*/", _blank_keep_newlines, text, flags=re.DOTALL)
+
+    # 3. Strip line comments.
+    text = re.sub(r"//[^\n]*", "", text)
+
+    # 4. Restore masked string literals from their slot indices.
+    text = re.sub(r"\x00(\d+)\x00", lambda m: masked_strings[int(m.group(1))], text)
+    return text
+
+
+def parse_nextflow_config_dx_fields(src_dir):
+    """Best-effort parser for the subset of `nextflow.config` keys we forward to NPI.
+
+    Supports two layout styles per key:
+      1. Dotted:   `dnanexus.iamRoleArnToAssume = 'arn:...'`
+      2. Scope:    `dnanexus { iamRoleArnToAssume = 'arn:...' }` (one level deep)
+
+    Limitations (intentional — full Groovy/HOCON parsing is out of scope):
+      - Only single-quoted or double-quoted string values are recognized.
+      - `includeConfig` / nested profiles are not followed.
+      - Variable interpolation, env reads, and groovy expressions are skipped.
+
+    Returns a dict mapping NPI input names (per `_NEXTFLOW_DX_CONFIG_KEYS`) to
+    values. Missing keys are simply absent. Returns `{}` if the file does not
+    exist or cannot be read.
+    """
+    if not src_dir:
+        return {}
+    config_path = path.join(src_dir, "nextflow.config")
+    if not path.isfile(config_path):
+        return {}
+    try:
+        with open(config_path, "r", encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+    except (OSError, IOError):
+        return {}
+    text = _strip_groovy_comments(text)
+    found = {}
+
+    def _accept(value):
+        """Reject values that contain a CR or LF.
+
+        The capturing classes `[^']*` / `[^"]*` are negated character classes
+        that DO match newlines (the `(?m)` flag only affects `^` / `$`, not
+        character classes). A user with control over `nextflow.config` could
+        otherwise embed newlines in a value and inject INI sections into the
+        importer's `~/.aws/credentials` heredoc on the build path, or smuggle
+        extra arguments into commands consuming these values. None of the
+        keys we extract (ARNs, audiences, claim names, regions) legitimately
+        contain newlines, so reject them outright at the parser boundary —
+        this is the same discipline applied to the runtime path by
+        AwsUtils.shellSingleQuote which strips \r\n before writing
+        /.dx-aws.env.
+        """
+        if value is None or "\r" in value or "\n" in value:
+            return None
+        return value
+
+    # --- 1. Dotted-form pass: `scope.key = 'value'` on a single line.
+    for cfg_key, npi_name in _NEXTFLOW_DX_CONFIG_KEYS:
+        # Match start-of-line whitespace, the literal key, optional whitespace, `=`, then a quoted value.
+        pat = re.compile(
+            r"(?m)^\s*" + re.escape(cfg_key) + r"\s*=\s*(?:'([^']*)'|\"([^\"]*)\")\s*$"
+        )
+        m = pat.search(text)
+        if m:
+            raw = m.group(1) if m.group(1) is not None else m.group(2)
+            cleaned = _accept(raw)
+            if cleaned is not None:
+                found[npi_name] = cleaned
+
+    # --- 2. Scope-block pass: extract `scope { ... }` body, then look for inner keys.
+    # Group config keys by their leading scope.
+    scope_to_keys = {}
+    for cfg_key, npi_name in _NEXTFLOW_DX_CONFIG_KEYS:
+        scope, _, leaf = cfg_key.partition(".")
+        scope_to_keys.setdefault(scope, []).append((leaf, npi_name))
+
+    for scope, key_pairs in scope_to_keys.items():
+        # Find `scope { ... }` blocks. Use a simple brace counter to locate the matching `}`.
+        for header in re.finditer(r"(?m)^\s*" + re.escape(scope) + r"\s*\{", text):
+            start = header.end()
+            depth = 1
+            i = start
+            while i < len(text) and depth > 0:
+                c = text[i]
+                if c == "{":
+                    depth += 1
+                elif c == "}":
+                    depth -= 1
+                i += 1
+            if depth != 0:
+                continue  # unbalanced — skip
+            body = text[start:i - 1]
+            for leaf, npi_name in key_pairs:
+                if npi_name in found:
+                    continue  # dotted form already won
+                # Match `<leaf> = '...'` anywhere in the body, on its own line.
+                inner = re.search(
+                    r"(?m)^\s*" + re.escape(leaf) + r"\s*=\s*(?:'([^']*)'|\"([^\"]*)\")\s*$",
+                    body,
+                )
+                if inner:
+                    raw = inner.group(1) if inner.group(1) is not None else inner.group(2)
+                    cleaned = _accept(raw)
+                    if cleaned is not None:
+                        found[npi_name] = cleaned
+    return found
+
+
 def get_allowed_extra_fields_mapping():
     """
     :returns: tuple (arg_path, target_key)

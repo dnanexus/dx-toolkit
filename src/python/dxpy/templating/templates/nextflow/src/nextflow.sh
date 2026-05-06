@@ -110,8 +110,20 @@ main() {
   get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
-  # Login to AWS, if configured
-  aws_login
+  # Login to AWS, if configured. Both workdir and ECR auth are fatal-on-failure
+  # when configured — the user explicitly asked for that auth path to work, and
+  # silently continuing only surfaces later as opaque registry / S3 errors that
+  # are much harder to debug. ecr_aws_login itself returns 0 cleanly when
+  # ecrRoleArnToAssume is empty (ECR not configured), so non-ECR pipelines are
+  # unaffected.
+  if ! aws_login; then
+    dx-jobutil-report-error "AWS workdir login failed; check dnanexus.iamRoleArnToAssume, dnanexus.jobTokenAudience, and the role's trust policy."
+    exit 1
+  fi
+  if ! ecr_aws_login; then
+    dx-jobutil-report-error "AWS ECR login failed; check dnanexus.ecrRoleArnToAssume, dnanexus.ecrJobTokenAudience, dnanexus.ecrJobTokenSubjectClaims, aws.region, and the ECR role's trust policy. See preceding ERROR lines for the specific failure."
+    exit 1
+  fi
   refresh_web_identity_token_loop & TOKEN_REFRESH_PID=$!
 
   set_vars_session_and_cache
@@ -242,7 +254,18 @@ nf_task_entry() {
   dx download "$DX_WORKSPACE_ID:/dx_docker_creds" -o $CREDENTIALS --recursive --no-progress -f 2>/dev/null || true
   [[ -f $CREDENTIALS ]] && docker_registry_login  || echo "no docker credential available"
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
-  aws_login
+  if ! aws_login; then
+    dx-jobutil-report-error "AWS workdir login failed in task subjob; check dnanexus.iamRoleArnToAssume / jobTokenAudience."
+    exit 1
+  fi
+  # Symmetric with the head job: ECR auth setup failure is fatal when ECR is
+  # configured. Without this the task would later fall into the docker-pull
+  # retry loop and fail with an opaque registry-auth error several minutes
+  # in, generating cost and confusing logs across N parallel tasks.
+  if ! ecr_aws_login; then
+    dx-jobutil-report-error "AWS ECR login failed in task subjob; check dnanexus.ecr* config and the ECR role's trust policy."
+    exit 1
+  fi
   refresh_web_identity_token_loop & TOKEN_REFRESH_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
@@ -333,61 +356,224 @@ docker_registry_login() {
 # Helpers: AWS login, job id tokens
 # =========================================================
 
+ECR_WEB_IDENTITY_TOKEN_FILE="/tmp/aws_ecr_web_identity_token"
+ECR_AWS_CONFIG_FILE="/home/dnanexus/.aws/dx-ecr-config"
+ECR_LOGGED_IN_HOSTS_FILE="/home/dnanexus/.dx_ecr_logged_in_hosts"
+
+# Wraps `aws --profile ecr` so that AWS_* env vars set by aws_login (for the workdir role)
+# do not override the [ecr] profile's role_arn / web_identity_token_file. This is critical:
+# without this, env vars take precedence over named-profile settings and ECR commands would
+# end up assuming the workdir role instead of the ECR role. Also pins AWS_CONFIG_FILE to
+# our dedicated path so ECR config never collides with a customer's ~/.aws/config.
+aws_ecr() {
+  env -u AWS_ACCESS_KEY_ID \
+      -u AWS_SECRET_ACCESS_KEY \
+      -u AWS_SESSION_TOKEN \
+      -u AWS_ROLE_ARN \
+      -u AWS_WEB_IDENTITY_TOKEN_FILE \
+      -u AWS_ROLE_SESSION_NAME \
+      -u AWS_DEFAULT_REGION \
+      -u AWS_REGION \
+      -u AWS_PROFILE \
+      -u AWS_DEFAULT_PROFILE \
+      -u AWS_SHARED_CREDENTIALS_FILE \
+      -u AWS_CONTAINER_CREDENTIALS_RELATIVE_URI \
+      -u AWS_CONTAINER_CREDENTIALS_FULL_URI \
+      -u AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE \
+      AWS_CONFIG_FILE="$ECR_AWS_CONFIG_FILE" \
+      aws --profile ecr "$@"
+}
+
+# Fetches a JIT and writes it directly to a file under mode 600. The JWT is never
+# placed in a shell variable, which would leak under set -x. Validates the result is a
+# JWT (3 base64url segments) so partial writes / proxy error pages are rejected.
+_fetch_jit_to_file() {
+  local target="$1"
+  local audience="$2"
+  local subject_claims="$3"
+
+  if ! ( umask 077 && dx-jobutil-get-identity-token --aud "${audience}" --subject_claims "${subject_claims}" > "${target}" ); then
+    rm -f "${target}"
+    return 1
+  fi
+  if ! grep -qE '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$' "${target}"; then
+    rm -f "${target}"
+    return 1
+  fi
+  return 0
+}
+
 aws_login() {
   if [ -f "$AWS_ENV" ]; then
     source $AWS_ENV
+
+    # ECR-only configurations write the env file but leave iamRoleArnToAssume empty;
+    # in that case skip the workdir/STS env var setup entirely.
+    if [ -z "$iamRoleArnToAssume" ] || [ "$iamRoleArnToAssume" = "null" ]; then
+      return 0
+    fi
+
     detect_if_using_s3_workdir
 
     local web_identity_token_file="/tmp/aws_web_identity_token"
 
-    dx-jobutil-get-identity-token --aud ${jobTokenAudience} --subject_claims ${jobTokenSubjectClaims} > ${web_identity_token_file}
+    if ! _fetch_jit_to_file "${web_identity_token_file}" "${jobTokenAudience}" "${jobTokenSubjectClaims}"; then
+      echo "ERROR: failed to obtain workdir JIT (audience=${jobTokenAudience}). Check dnanexus.jobTokenAudience / subjectClaims." >&2
+      return 1
+    fi
 
     export AWS_REGION="$awsRegion"
     export AWS_ROLE_ARN="$iamRoleArnToAssume"
     export AWS_ROLE_SESSION_NAME="dnanexus_${DX_JOB_ID}"
     export AWS_WEB_IDENTITY_TOKEN_FILE="$web_identity_token_file"
 
-    # Clean up any old AWS config files to avoid conflicts. The SDK will now ignore ~/.aws/config and ~/.aws/credentials because the environment variables take precedence.
-    rm -rf /home/dnanexus/.aws/
-
-    # This explicit check is added to ensure that existing pytest tests for invalid credentials still fail correctly.
-    # In the new model, the AWS SDK would normally handle this lazily, but the tests expect an immediate failure.
-    aws sts assume-role-with-web-identity --role-arn "$iamRoleArnToAssume" \
-      --role-session-name "dnanexus_${DX_JOB_ID}" \
-      --web-identity-token "$(cat "${web_identity_token_file}")" > /dev/null
+    # Existing pytest contract: invalid credentials must fail fast, not lazily on first
+    # SDK call. Use file:// (not $(cat ...)) so the JWT does not appear under set -x.
+    if ! aws sts assume-role-with-web-identity --role-arn "$iamRoleArnToAssume" \
+           --role-session-name "dnanexus_${DX_JOB_ID}" \
+           --web-identity-token "file://${web_identity_token_file}" > /dev/null 2>&1; then
+      echo "ERROR: sts:AssumeRoleWithWebIdentity failed for workdir role ${iamRoleArnToAssume}. Check role trust policy and audience." >&2
+      return 1
+    fi
 
     echo "Successfully configured AWS with Web Identity Token File."
-    # Optional sanity check; SDK/CLI will now do STS AssumeRoleWithWebIdentity on demand
-    aws sts get-caller-identity >/dev/null 2>&1 || echo "Note: initial STS call deferred to Nextflow/AWS SDK."
   fi
 }
 
+# Configures the [ecr] AWS profile in $ECR_AWS_CONFIG_FILE so `aws_ecr ...` calls
+# automatically assume ecrRoleArnToAssume via the DNAnexus Job Identity Token. The SDK
+# refreshes role creds whenever the token file changes; the refresh loop keeps the file
+# fresh. Performs a single sts:GetCallerIdentity probe after writing the profile so
+# trust-policy / role-ARN errors surface here (in the entrypoint, fail-fast and once)
+# rather than per-task at first `docker pull` (noisy, parallel, far from the source).
+# Returns non-zero on hard misconfiguration (missing required fields, JIT API failure,
+# STS probe failure).
+ecr_aws_login() {
+  if [ ! -f "$AWS_ENV" ]; then
+    return 0
+  fi
+  source "$AWS_ENV"
+
+  if [ -z "$ecrRoleArnToAssume" ] || [ "$ecrRoleArnToAssume" = "null" ]; then
+    return 0
+  fi
+
+  if [ -z "$awsRegion" ] || [ "$awsRegion" = "null" ]; then
+    echo "ERROR: dnanexus.ecrRoleArnToAssume is set but aws.region is not. Refusing to configure [ecr] profile." >&2
+    return 1
+  fi
+  # Defense-in-depth (mirrors the parser-side strip in dx-toolkit and the
+  # importer-side check in npi.sh): refuse to configure the [ecr] profile
+  # with a region value that does not look like a real AWS commercial
+  # region. shellSingleQuote in AwsUtils.groovy already strips \r and \n,
+  # so direct INI injection is not reachable here, but a malformed region
+  # would otherwise produce a confusing AWS API error far from the source.
+  if ! [[ "$awsRegion" =~ ^[a-z]{2}-[a-z]+-[0-9]+$ ]]; then
+    echo "ERROR: aws.region '$awsRegion' does not match the AWS commercial region pattern. Refusing to configure [ecr] profile." >&2
+    return 1
+  fi
+
+  if ! _fetch_jit_to_file "${ECR_WEB_IDENTITY_TOKEN_FILE}" "${ecrJobTokenAudience}" "${ecrJobTokenSubjectClaims}"; then
+    echo "ERROR: failed to obtain ECR JIT (audience=${ecrJobTokenAudience}). Check dnanexus.ecrJobTokenAudience / subjectClaims." >&2
+    return 1
+  fi
+
+  mkdir -p "$(dirname "$ECR_AWS_CONFIG_FILE")"
+  ( umask 077 && cat > "$ECR_AWS_CONFIG_FILE" <<EOF
+[profile ecr]
+region = ${awsRegion}
+role_arn = ${ecrRoleArnToAssume}
+web_identity_token_file = ${ECR_WEB_IDENTITY_TOKEN_FILE}
+role_session_name = dnanexus_${DX_JOB_ID}_ecr
+EOF
+  )
+
+  # Defensive: clear any stale per-host login cache from a reused worker.
+  rm -f "$ECR_LOGGED_IN_HOSTS_FILE"
+
+  # Fail-fast probe: AssumeRoleWithWebIdentity + sts:GetCallerIdentity. If the
+  # role ARN is wrong, the trust policy doesn't allow the JIT audience/subject,
+  # or the token is malformed, this surfaces a clear error here — before any
+  # task subjob runs `docker pull` and discovers it the slow way. Cheap (~50ms)
+  # compared to N-way per-task failures.
+  #
+  # STS-rate-limit trade-off (F9-8): this function runs in both the head job
+  # and every task subjob, so a wide-fanout pipeline with N parallel tasks
+  # produces N parallel STS calls within the first few seconds. AWS STS
+  # account-level limits are ~250 TPS pre-burst, well above realistic Nextflow
+  # parallelism, so throttling has not been observed. The cost is justified by
+  # the alternative — N+ retried `docker pull` failures with opaque registry
+  # auth errors. If a future pipeline shape ever pushes past STS limits, the
+  # task-subjob probe could be skipped on the assumption that the head-job
+  # probe already validated the role.
+  if ! aws_ecr sts get-caller-identity >/dev/null 2>&1; then
+    echo "ERROR: sts:GetCallerIdentity failed for the [ecr] profile (role=${ecrRoleArnToAssume}, region=${awsRegion}). Verify the role's trust policy allows the JIT audience '${ecrJobTokenAudience}' and that the role exists." >&2
+    return 1
+  fi
+
+  echo "AWS [ecr] profile configured for role ${ecrRoleArnToAssume}."
+  return 0
+}
+
 refresh_web_identity_token_loop() {
-  # The DNAnexus job identity token expires in ~5 minutes.
-  # Refresh the OIDC token file proactively so the AWS SDK v2 can re-assume the role on demand.
+  # The DNAnexus job identity token expires in ~5 minutes (300s). Refresh at 50% TTL.
+  # NOTE: counters are local to this background subshell and not visible to the parent.
+  # Persistent failure is reported via stderr; a future improvement could escalate via
+  # dx-jobutil-report-error from this subshell.
+  local consecutive_workdir=0
+  local consecutive_ecr=0
 
   while true; do
-    sleep 240 # 4 minutes
+    sleep 180
 
     if [ -f "$AWS_ENV" ]; then
       source "$AWS_ENV"
 
-      local tmp_token_file="${AWS_WEB_IDENTITY_TOKEN_FILE}.tmp"
-      local attempt=0
-
-      while [ "$attempt" -le 3 ]; do
-        if dx-jobutil-get-identity-token --aud "${jobTokenAudience}" --subject_claims "${jobTokenSubjectClaims}" > "$tmp_token_file"; then
-          mv -f "$tmp_token_file" "$AWS_WEB_IDENTITY_TOKEN_FILE"
-
-          break
+      if [ -n "$iamRoleArnToAssume" ] && [ "$iamRoleArnToAssume" != "null" ] \
+         && [ -n "$AWS_WEB_IDENTITY_TOKEN_FILE" ]; then
+        if _refresh_token_file "$AWS_WEB_IDENTITY_TOKEN_FILE" "$jobTokenAudience" "$jobTokenSubjectClaims" "workdir"; then
+          consecutive_workdir=0
         else
-          echo "WARNING: AWS token refresh failed (attempt $((attempt+1))/3)" >&2
-          sleep 5 # wait 5s before retry
+          consecutive_workdir=$((consecutive_workdir + 1))
+          if [ "$consecutive_workdir" -ge 3 ]; then
+            echo "ERROR: workdir JIT refresh has failed ${consecutive_workdir} consecutive cycles; AWS workdir access will start failing." >&2
+          fi
         fi
-        attempt=$((attempt+1))
-      done
+      fi
+
+      if [ -n "$ecrRoleArnToAssume" ] && [ "$ecrRoleArnToAssume" != "null" ]; then
+        if _refresh_token_file "$ECR_WEB_IDENTITY_TOKEN_FILE" "$ecrJobTokenAudience" "$ecrJobTokenSubjectClaims" "ecr"; then
+          consecutive_ecr=0
+        else
+          consecutive_ecr=$((consecutive_ecr + 1))
+          if [ "$consecutive_ecr" -ge 3 ]; then
+            echo "ERROR: ECR JIT refresh has failed ${consecutive_ecr} consecutive cycles; ECR pulls will start failing." >&2
+          fi
+        fi
+      fi
     fi
   done
+}
+
+_refresh_token_file() {
+  local token_file="$1"
+  local audience="$2"
+  local subject_claims="$3"
+  local label="$4"
+  local tmp_token_file="${token_file}.tmp"
+  local attempt=0
+
+  while [ "$attempt" -lt 3 ]; do
+    if _fetch_jit_to_file "$tmp_token_file" "$audience" "$subject_claims"; then
+      mv -f "$tmp_token_file" "$token_file"
+      return 0
+    fi
+    echo "WARNING: AWS ${label} token refresh failed (attempt $((attempt+1))/3)" >&2
+    rm -f "$tmp_token_file"
+    sleep 5
+    attempt=$((attempt+1))
+  done
+  return 1
 }
 
 # =========================================================
