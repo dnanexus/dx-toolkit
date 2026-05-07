@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Display a security warning when downloading or generating download URLs for files flagged as malicious
+* Fix security status check when downloading files to use correct response field `securityStatus` instead of `security_status`
 
 ### Fixed
 

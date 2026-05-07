@@ -786,7 +786,7 @@ class DXFile(DXDataObject):
                 self._download_url = resp["url"]
                 self._download_url_headers = _validate_headers(resp.get("headers", {}))
                 
-                if resp.get("security_status") == "FLAGGED_MALICIOUS":
+                if resp.get("securityStatus") == "FLAGGED_MALICIOUS":
                     warn("WARNING: Potentially malicious file detected. Verify the source before viewing or executing.")
                 
                 if preauthenticated:
