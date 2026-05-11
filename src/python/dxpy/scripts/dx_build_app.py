@@ -1158,10 +1158,7 @@ def _build_app(args, extra_args):
             # .nf_source/<basename>/ upload orphaned in the destination
             # project, forcing a manual `dx rm -r` before retrying.
             if args.cache_docker:
-                preflight_validate_for_cache_docker(
-                    src_dir=args.src_dir,
-                    ecr_region=args.ecr_region,
-                )
+                preflight_validate_for_cache_docker(src_dir=args.src_dir)
             nf_scr = args.repository
             if (not args.repository) and args.src_dir:
                 logger.info(
@@ -1214,7 +1211,6 @@ def _build_app(args, extra_args):
                 # Pass src_dir so NPI input forwarding can read local nextflow.config
                 # for ECR / S3-workdir auth fields. None for `--repository <url>` builds.
                 src_dir=args.src_dir,
-                ecr_region=args.ecr_region,
             )
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)

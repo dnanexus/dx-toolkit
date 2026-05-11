@@ -35,18 +35,18 @@ def _npi_supports_version_selection():
 
 
 # TODO(APPS-3915): Once the NPI version that declares ecr_role_arn_to_assume,
-# ecr_job_token_audience, ecr_job_token_subject_claims, and ecr_region_override
-# is the minimum deployed version, remove _npi_input_names(), _ECR_SPECIFIC_INPUTS,
-# _apply_npi_input_gate(), preflight_validate_for_cache_docker(), and the gate call
-# in build_pipeline_with_npi(). Replace with unconditional forwarding of config_fields
-# into the input_hash. The describe() API call on every `dx build --nextflow` is pure
-# latency once the gate never drops anything.
+# ecr_job_token_audience, and ecr_job_token_subject_claims is the minimum deployed
+# version, remove _npi_input_names(), _ECR_SPECIFIC_INPUTS, _apply_npi_input_gate(),
+# preflight_validate_for_cache_docker(), and the gate call in build_pipeline_with_npi().
+# Replace with unconditional forwarding of config_fields into the input_hash. The
+# describe() API call on every `dx build --nextflow` is pure latency once the gate
+# never drops anything.
 # Also delete src/python/test/test_nextflow_builder_npi_gate.py — it tests only this gate.
 def _npi_input_names():
     """Return the set of input names the deployed NPI app accepts.
 
     Used to gate forwarding of new optional input fields (ECR auth fields,
-    `ecr_region_override`) so an older NPI that does not yet declare them
+    `aws_region`) so an older NPI that does not yet declare them
     will not reject the launch with InvalidInput. Returns ``None`` if the
     deployed app cannot be described, signalling the caller to skip
     forwarding any input that isn't part of the historically-stable set.
@@ -67,7 +67,6 @@ _ECR_SPECIFIC_INPUTS = frozenset({
     "ecr_role_arn_to_assume",
     "ecr_job_token_audience",
     "ecr_job_token_subject_claims",
-    "ecr_region_override",
 })
 
 
@@ -113,7 +112,7 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
             )
         stderr.write(
             "WARNING: " + msg + " Skipping forwarding of nextflow.config "
-            "dnanexus.* / aws.region / ecr_region_override fields.\n"
+            "dnanexus.* / aws.region fields.\n"
         )
         return
 
@@ -164,7 +163,7 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
         )
 
 
-def preflight_validate_for_cache_docker(src_dir, ecr_region):
+def preflight_validate_for_cache_docker(src_dir):
     """Pre-upload validation for `dx build --nextflow --cache-docker`.
 
     Called from dx_build_app.py BEFORE the local pipeline source is uploaded
@@ -215,8 +214,6 @@ def preflight_validate_for_cache_docker(src_dir, ecr_region):
     # Local-src-dir mode: parse config and run the gate against a throwaway
     # dict. _apply_npi_input_gate raises on any unrecoverable mismatch.
     config_fields = parse_nextflow_config_dx_fields(src_dir)
-    if ecr_region:
-        config_fields["ecr_region_override"] = ecr_region
     _apply_npi_input_gate(config_fields, accepted, {}, sys.stderr)
 
 
@@ -233,7 +230,6 @@ def build_pipeline_with_npi(
         extra_args=None,
         nextflow_version=None,
         src_dir=None,
-        ecr_region=None,
 ):
     """
     :param repository: URL to a Git repository
@@ -298,8 +294,6 @@ def build_pipeline_with_npi(
     # of the deployed NPI's input spec — drop unknown fields with a clear warning
     # so users on older NPI versions still get a working (non-ECR) build.
     config_fields = parse_nextflow_config_dx_fields(src_dir)
-    if ecr_region:
-        config_fields["ecr_region_override"] = ecr_region
     _apply_npi_input_gate(config_fields, _npi_input_names(), input_hash, sys.stderr)
 
     # Auto-detect NPI capability for version selection

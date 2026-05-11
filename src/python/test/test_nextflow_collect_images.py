@@ -516,10 +516,12 @@ class TestEcrDockerLogin(unittest.TestCase):
         ok = _ecr_docker_login("123.dkr.ecr.us-east-1.amazonaws.com", "us-east-1")
         self.assertTrue(ok)
         aws_call, docker_call, sudo_call = mock_run.call_args_list
-        # aws: --profile ecr ecr get-login-password (no --region — profile drives region)
+        # aws: --profile ecr --region <region> ecr get-login-password
+        # Region is derived from the image hostname so the token is always for
+        # the correct ECR registry (tokens are region-scoped).
         self.assertEqual(
             aws_call[0][0],
-            ["aws", "--profile", "ecr", "ecr", "get-login-password"],
+            ["aws", "--profile", "ecr", "--region", "us-east-1", "ecr", "get-login-password"],
         )
         # docker: login --username AWS --password-stdin <host>
         self.assertEqual(

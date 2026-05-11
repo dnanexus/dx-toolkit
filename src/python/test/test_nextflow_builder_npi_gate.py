@@ -33,9 +33,9 @@ Behaviour the tests pin down:
   - aws_region drop without ECR intent -> generic warning only.
 
 TODO(APPS-3915): Delete this entire file once the NPI version that declares
-ecr_role_arn_to_assume / ecr_job_token_audience / ecr_job_token_subject_claims /
-ecr_region_override is the minimum deployed version. See companion TODO in
-nextflow_builder.py above _npi_input_names().
+ecr_role_arn_to_assume / ecr_job_token_audience / ecr_job_token_subject_claims
+is the minimum deployed version. See companion TODO in nextflow_builder.py
+above _npi_input_names().
 """
 
 import io
@@ -154,12 +154,12 @@ class TestApplyNpiInputGate(unittest.TestCase):
         """If any ECR-specific field is dropped, refuse to launch (ECR
         intent + missing input slot would silently fail at docker-pull)."""
         cfg = {
-            "ecr_region_override": "us-west-2",
+            "ecr_role_arn_to_assume": "arn:aws:iam::123456789:role/ecr-pull",
             "iam_role_arn_to_assume": "arn:role/wd",
         }
         with self.assertRaises(dxpy.exceptions.DXError) as cm:
             self._run(cfg, accepted_inputs={"repository_url"})
-        self.assertIn("ecr_region_override", str(cm.exception))
+        self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
 
 
 class TestPreflightValidateForCacheDocker(unittest.TestCase):
@@ -175,7 +175,7 @@ class TestPreflightValidateForCacheDocker(unittest.TestCase):
             return_value=None,
         ):
             with self.assertRaises(dxpy.exceptions.DXError) as cm:
-                preflight_validate_for_cache_docker(src_dir=None, ecr_region=None)
+                preflight_validate_for_cache_docker(src_dir=None)
             self.assertIn("Could not describe", str(cm.exception))
 
     def test_repository_mode_with_complete_npi_passes(self):
@@ -185,11 +185,10 @@ class TestPreflightValidateForCacheDocker(unittest.TestCase):
             "dxpy.nextflow.nextflow_builder._npi_input_names",
             return_value={
                 "ecr_role_arn_to_assume", "ecr_job_token_audience",
-                "ecr_job_token_subject_claims", "ecr_region_override",
-                "aws_region", "repository_url",
+                "ecr_job_token_subject_claims", "aws_region", "repository_url",
             },
         ):
-            preflight_validate_for_cache_docker(src_dir=None, ecr_region=None)
+            preflight_validate_for_cache_docker(src_dir=None)
 
     def test_repository_mode_with_older_npi_raises(self):
         """F9-3: --repository mode against an older NPI lacking ECR slots
@@ -200,7 +199,7 @@ class TestPreflightValidateForCacheDocker(unittest.TestCase):
             return_value={"repository_url", "cache_docker"},
         ):
             with self.assertRaises(dxpy.exceptions.DXError) as cm:
-                preflight_validate_for_cache_docker(src_dir=None, ecr_region=None)
+                preflight_validate_for_cache_docker(src_dir=None)
             self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
 
 

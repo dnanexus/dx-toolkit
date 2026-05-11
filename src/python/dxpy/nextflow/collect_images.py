@@ -133,13 +133,13 @@ def _ecr_docker_login(host, region):
     subsequent `docker pull` would otherwise produce a confusing
     anonymous-access error).
 
-    Region handling: the `aws` call deliberately omits `--region` and relies on
-    the `[ecr]` profile's `region = ...` line to drive the API endpoint. This
-    is what makes the user's `--ecr-region` build override actually take effect
-    — without this, the per-image hostname region would always win and the
-    override would be informational only. Per design Q3 a build authenticates
-    to one ECR region; pipelines mixing regions must be split into multiple
-    `--cache-docker --ecr-region` builds.
+    Region handling: `--region` is derived from the ECR hostname itself (e.g.
+    `123456789.dkr.ecr.us-east-1.amazonaws.com` → `us-east-1`). ECR tokens
+    are region-scoped, so the token must come from the same region as the
+    registry being logged into — using any other region would produce a token
+    that the registry rejects. Passing the per-image region also means
+    pipelines that reference images from multiple ECR regions work correctly
+    without any extra CLI flag.
 
     Cached per (host, region) for the lifetime of the process.
     """
@@ -149,13 +149,14 @@ def _ecr_docker_login(host, region):
     try:
         # `aws ecr get-login-password` prints a 12h auth token to stdout.
         token_proc = subprocess.run(
-            ["aws", "--profile", "ecr", "ecr", "get-login-password"],
+            ["aws", "--profile", "ecr", "--region", region, "ecr", "get-login-password"],
             capture_output=True, text=True, check=False,
         )
         if token_proc.returncode != 0:
             log.warning(
                 "ECR get-login-password failed for host=%s region=%s rc=%d stderr=%s. "
-                "Is dnanexus.ecrRoleArnToAssume configured and the [ecr] AWS profile set up?",
+                "Is dnanexus.ecrRoleArnToAssume configured and the [ecr] AWS profile "
+                "set up by the importer entrypoint?",
                 host, region, token_proc.returncode, token_proc.stderr.strip(),
             )
             return False
