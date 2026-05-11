@@ -70,12 +70,13 @@ def _extract_ecr_host_and_region(image_ref):
     """
     if not image_ref:
         return None, None
-    # F9-9 symmetry with extract_ecr_host_from_image (Groovy bash side):
-    # strip URI scheme prefixes that some pipelines use in `container`
-    # directives (e.g. `docker://...`, `oras://...`). Today this path is
-    # only reached after `_parse_docker_ref` has already stripped
-    # `docker://`, but we re-strip here so a future caller that hands us a
-    # raw container ref does not silently miss ECR detection.
+    # Defensively strip URI scheme prefixes before hostname extraction.
+    # `docker://` is valid Nextflow syntax but only for Singularity/Apptainer;
+    # the Docker engine (used on DNAnexus) does not produce it. `oras://` is
+    # used by modern nf-core modules for Seqera Community Containers on the
+    # Singularity side, also not an ECR pattern in practice. Neither prefix is
+    # expected on this code path, but stripping keeps detection correct if a
+    # raw container ref is ever passed in directly.
     if image_ref.startswith("docker://"):
         image_ref = image_ref[len("docker://"):]
     elif image_ref.startswith("oras://"):
