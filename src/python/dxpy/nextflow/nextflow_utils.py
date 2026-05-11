@@ -398,7 +398,7 @@ def parse_nextflow_config_dx_fields(src_dir):
     for cfg_key, npi_name in _NEXTFLOW_DX_CONFIG_KEYS:
         # Match start-of-line whitespace, the literal key, optional whitespace, `=`, then a quoted value.
         pat = re.compile(
-            r"(?m)^\s*" + re.escape(cfg_key) + r"\s*=\s*(?:'([^']*)'|\"([^\"]*)\")\s*$"
+            r"(?m)^\s*" + re.escape(cfg_key) + r"\s*=\s*(?:'([^']*)'|\"([^\"]*)\")\s*;?\s*$"
         )
         m = pat.search(text)
         if m:

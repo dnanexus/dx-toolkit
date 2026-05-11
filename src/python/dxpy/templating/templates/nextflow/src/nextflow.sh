@@ -396,7 +396,11 @@ _fetch_jit_to_file() {
     rm -f "${target}"
     return 1
   fi
-  if ! grep -qE '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$' "${target}"; then
+  # A JWT is always a single line.  A multi-line file indicates a proxy error
+  # page or truncated write — reject it before the pattern check so the regex
+  # cannot accidentally match one valid-looking line inside a longer response.
+  if [ "$(wc -l < "${target}")" -gt 1 ] || \
+     ! grep -qE '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$' "${target}"; then
     rm -f "${target}"
     return 1
   fi
