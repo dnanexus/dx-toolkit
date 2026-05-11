@@ -31,6 +31,11 @@ Behaviour the tests pin down:
     would fail several minutes in at the docker-pull step).
   - aws_region drop with ECR intent -> hard error (ECR needs a region).
   - aws_region drop without ECR intent -> generic warning only.
+
+TODO(APPS-3915): Delete this entire file once the NPI version that declares
+ecr_role_arn_to_assume / ecr_job_token_audience / ecr_job_token_subject_claims /
+ecr_region_override is the minimum deployed version. See companion TODO in
+nextflow_builder.py above _npi_input_names().
 """
 
 import io

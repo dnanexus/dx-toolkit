@@ -41,6 +41,7 @@ def _npi_supports_version_selection():
 # in build_pipeline_with_npi(). Replace with unconditional forwarding of config_fields
 # into the input_hash. The describe() API call on every `dx build --nextflow` is pure
 # latency once the gate never drops anything.
+# Also delete src/python/test/test_nextflow_builder_npi_gate.py — it tests only this gate.
 def _npi_input_names():
     """Return the set of input names the deployed NPI app accepts.
 
