@@ -34,6 +34,13 @@ def _npi_supports_version_selection():
         return False
 
 
+# TODO(APPS-3915): Once the NPI version that declares ecr_role_arn_to_assume,
+# ecr_job_token_audience, ecr_job_token_subject_claims, and ecr_region_override
+# is the minimum deployed version, remove _npi_input_names(), _ECR_SPECIFIC_INPUTS,
+# _apply_npi_input_gate(), preflight_validate_for_cache_docker(), and the gate call
+# in build_pipeline_with_npi(). Replace with unconditional forwarding of config_fields
+# into the input_hash. The describe() API call on every `dx build --nextflow` is pure
+# latency once the gate never drops anything.
 def _npi_input_names():
     """Return the set of input names the deployed NPI app accepts.
 
