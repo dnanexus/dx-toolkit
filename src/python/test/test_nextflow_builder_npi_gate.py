@@ -29,8 +29,7 @@ Behaviour the tests pin down:
   - All fields accepted -> all forwarded, no warning.
   - ECR-specific drop -> hard error (refuse to launch; otherwise the build
     would fail several minutes in at the docker-pull step).
-  - aws_region drop with ECR intent -> hard error (ECR needs a region).
-  - aws_region drop without ECR intent -> generic warning only.
+  - Non-ECR fields dropped -> generic warning only.
 
 TODO(APPS-3915): Delete this entire file once the NPI version that declares
 ecr_role_arn_to_assume / ecr_job_token_audience / ecr_job_token_subject_claims
@@ -98,7 +97,6 @@ class TestApplyNpiInputGate(unittest.TestCase):
             "ecr_role_arn_to_assume": "arn:role/ecr",
             "ecr_job_token_audience": "aud",
             "ecr_job_token_subject_claims": "sc",
-            "aws_region": "us-east-1",
         }
         accepted = set(cfg.keys()) | {"repository_url"}
         self._run(cfg, accepted)
@@ -107,9 +105,9 @@ class TestApplyNpiInputGate(unittest.TestCase):
 
     def test_empty_value_not_forwarded(self):
         """Falsy values are skipped (avoids forwarding empty-string defaults)."""
-        cfg = {"ecr_role_arn_to_assume": "", "aws_region": "us-east-1"}
-        self._run(cfg, accepted_inputs={"ecr_role_arn_to_assume", "aws_region"})
-        self.assertEqual(self.input_hash, {"aws_region": "us-east-1"})
+        cfg = {"ecr_role_arn_to_assume": "", "ecr_job_token_audience": "aud"}
+        self._run(cfg, accepted_inputs={"ecr_role_arn_to_assume", "ecr_job_token_audience"})
+        self.assertEqual(self.input_hash, {"ecr_job_token_audience": "aud"})
 
     # --- dropped-field warnings ---
 
@@ -123,32 +121,6 @@ class TestApplyNpiInputGate(unittest.TestCase):
             self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
         self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
         self.assertIn("Upgrade the importer app", str(cm.exception))
-
-    def test_aws_region_drop_with_ecr_intent_raises(self):
-        """ECR needs a region; if the NPI doesn't accept aws_region, refuse
-        to launch rather than fail mid-job with the opaque 'no AWS region
-        available' error."""
-        cfg = {
-            "ecr_role_arn_to_assume": "arn:role/ecr",
-            "ecr_job_token_audience": "aud",
-            "ecr_job_token_subject_claims": "sc",
-            "aws_region": "us-east-1",
-        }
-        # NPI accepts all ECR-specific fields but NOT aws_region.
-        accepted = {"ecr_role_arn_to_assume", "ecr_job_token_audience",
-                    "ecr_job_token_subject_claims", "repository_url"}
-        with self.assertRaises(dxpy.exceptions.DXError) as cm:
-            self._run(cfg, accepted)
-        self.assertIn("aws_region", str(cm.exception))
-
-    def test_aws_region_drop_without_ecr_intent_uses_generic_warning(self):
-        """User has aws.region in config but no ECR — drop should emit
-        only the generic warning."""
-        cfg = {"aws_region": "us-east-1"}
-        self._run(cfg, accepted_inputs={"repository_url"})
-        text = self.stderr.getvalue()
-        self.assertIn("aws_region", text)
-        self.assertNotIn("private ECR authentication", text)
 
     def test_mixed_drop_with_ecr_intent_raises(self):
         """If any ECR-specific field is dropped, refuse to launch (ECR
@@ -185,7 +157,7 @@ class TestPreflightValidateForCacheDocker(unittest.TestCase):
             "dxpy.nextflow.nextflow_builder._npi_input_names",
             return_value={
                 "ecr_role_arn_to_assume", "ecr_job_token_audience",
-                "ecr_job_token_subject_claims", "aws_region", "repository_url",
+                "ecr_job_token_subject_claims", "repository_url",
             },
         ):
             preflight_validate_for_cache_docker(src_dir=None)

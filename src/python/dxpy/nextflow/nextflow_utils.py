@@ -288,7 +288,6 @@ _NEXTFLOW_DX_CONFIG_KEYS = [
     ("dnanexus.ecrRoleArnToAssume", "ecr_role_arn_to_assume"),
     ("dnanexus.ecrJobTokenAudience", "ecr_job_token_audience"),
     ("dnanexus.ecrJobTokenSubjectClaims", "ecr_job_token_subject_claims"),
-    ("aws.region", "aws_region"),
 ]
 
 

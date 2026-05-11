@@ -18,9 +18,8 @@
 #   under the License.
 
 """Unit tests for parse_nextflow_config_dx_fields — the best-effort parser
-that extracts dnanexus.* and aws.region keys from the user's local
-nextflow.config so they can be forwarded to the Nextflow Pipeline Importer
-app at build time.
+that extracts dnanexus.* keys from the user's local nextflow.config so they
+can be forwarded to the Nextflow Pipeline Importer app at build time.
 """
 
 import os
@@ -60,7 +59,6 @@ class TestParseDottedForm(_ConfigFixture):
             dnanexus.ecrRoleArnToAssume = 'arn:aws:iam::1:role/ecr'
             dnanexus.ecrJobTokenAudience = 'sts.amazonaws.com'
             dnanexus.ecrJobTokenSubjectClaims = 'job_id'
-            aws.region = 'us-east-1'
         """)
         result = parse_nextflow_config_dx_fields(src_dir)
         self.assertEqual(result["iam_role_arn_to_assume"], "arn:aws:iam::1:role/wd")
@@ -69,7 +67,7 @@ class TestParseDottedForm(_ConfigFixture):
         self.assertEqual(result["ecr_role_arn_to_assume"], "arn:aws:iam::1:role/ecr")
         self.assertEqual(result["ecr_job_token_audience"], "sts.amazonaws.com")
         self.assertEqual(result["ecr_job_token_subject_claims"], "job_id")
-        self.assertEqual(result["aws_region"], "us-east-1")
+        self.assertNotIn("aws_region", result)
 
     def test_double_quoted_values_accepted(self):
         src_dir = self.write_config('dnanexus.iamRoleArnToAssume = "arn:aws:iam::1:role/x"\n')
@@ -93,14 +91,16 @@ class TestParseScopeBlockForm(_ConfigFixture):
         self.assertEqual(result["ecr_role_arn_to_assume"], "arn:aws:iam::1:role/ecr")
         self.assertEqual(result["ecr_job_token_audience"], "sts.amazonaws.com")
 
-    def test_aws_block(self):
+    def test_aws_block_not_parsed(self):
+        """aws.region is no longer forwarded to NPI — ECR region is derived
+        from the image hostname in collect_images.py."""
         src_dir = self.write_config("""
             aws {
                 region = 'eu-west-2'
             }
         """)
         result = parse_nextflow_config_dx_fields(src_dir)
-        self.assertEqual(result["aws_region"], "eu-west-2")
+        self.assertNotIn("aws_region", result)
 
     def test_dotted_form_wins_over_scope_block(self):
         """If a key appears in both forms, the dotted form (first pass) wins.
@@ -200,24 +200,6 @@ class TestNewlineRejection(unittest.TestCase):
             f.write(content)
         return self._tmp
 
-    def test_aws_region_with_lf_dropped(self):
-        """`aws.region = 'us-east-1\\n[default]\\naws_access_key_id = X'` must
-        NOT be forwarded — that would let a malicious pipeline author inject
-        a rogue [default] profile into the importer's ~/.aws/credentials.
-        """
-        src_dir = self._write(
-            "aws.region = 'us-east-1\n[default]\naws_access_key_id = X'\n"
-        )
-        result = parse_nextflow_config_dx_fields(src_dir)
-        self.assertNotIn("aws_region", result)
-
-    def test_aws_region_with_cr_dropped(self):
-        src_dir = self._write(
-            "aws.region = 'us-east-1\r[default]\rfoo = bar'\n"
-        )
-        result = parse_nextflow_config_dx_fields(src_dir)
-        self.assertNotIn("aws_region", result)
-
     def test_role_arn_with_lf_dropped(self):
         src_dir = self._write(
             "dnanexus.ecrRoleArnToAssume = 'arn:aws:iam::1:role/x\nattacker'\n"
@@ -232,17 +214,9 @@ class TestNewlineRejection(unittest.TestCase):
         result = parse_nextflow_config_dx_fields(src_dir)
         self.assertNotIn("ecr_job_token_audience", result)
 
-    def test_lf_in_scope_block_value_dropped(self):
-        """Same protection in the scope-block parsing branch."""
-        src_dir = self._write(
-            "aws {\n    region = 'us-east-1\n[evil]\nx = y'\n}\n"
-        )
-        result = parse_nextflow_config_dx_fields(src_dir)
-        self.assertNotIn("aws_region", result)
-
     def test_clean_value_still_accepted(self):
         """Make sure the newline rejection is not over-eager — clean values
-        adjacent to a rejected one must still flow through."""
+        adjacent to a ignored aws.region must still flow through."""
         src_dir = self._write(
             "dnanexus.ecrRoleArnToAssume = 'arn:aws:iam::1:role/clean'\n"
             "aws.region = 'us-east-1'\n"
@@ -250,7 +224,7 @@ class TestNewlineRejection(unittest.TestCase):
         result = parse_nextflow_config_dx_fields(src_dir)
         self.assertEqual(result.get("ecr_role_arn_to_assume"),
                          "arn:aws:iam::1:role/clean")
-        self.assertEqual(result.get("aws_region"), "us-east-1")
+        self.assertNotIn("aws_region", result)
 
 
 class TestStripGroovyComments(unittest.TestCase):

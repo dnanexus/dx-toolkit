@@ -38,15 +38,15 @@ def _npi_supports_version_selection():
 # ecr_job_token_audience, and ecr_job_token_subject_claims is the minimum deployed
 # version, remove _npi_input_names(), _ECR_SPECIFIC_INPUTS, _apply_npi_input_gate(),
 # preflight_validate_for_cache_docker(), and the gate call in build_pipeline_with_npi().
-# Replace with unconditional forwarding of config_fields into the input_hash. The
-# describe() API call on every `dx build --nextflow` is pure latency once the gate
-# never drops anything.
+# At that point build_pipeline_with_npi() forwards only the three ECR auth fields
+# unconditionally. The describe() API call on every `dx build --nextflow` is pure
+# latency once the gate never drops anything.
 # Also delete src/python/test/test_nextflow_builder_npi_gate.py — it tests only this gate.
 def _npi_input_names():
     """Return the set of input names the deployed NPI app accepts.
 
-    Used to gate forwarding of new optional input fields (ECR auth fields,
-    `aws_region`) so an older NPI that does not yet declare them
+    Used to gate forwarding of new optional input fields (ECR auth fields)
+    so an older NPI that does not yet declare them
     will not reject the launch with InvalidInput. Returns ``None`` if the
     deployed app cannot be described, signalling the caller to skip
     forwarding any input that isn't part of the historically-stable set.
@@ -83,9 +83,7 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
       - Any ``ecr_*`` field in `config_fields` is dropped (older NPI
         without the slot) -> raise ``DXError``. Launching would burn an
         NPI job and fail several minutes in at the docker-pull step.
-      - `aws_region` dropped while ECR intent is present -> raise
-        ``DXError`` (ECR auth needs a region).
-      - Other workdir fields dropped -> stderr warning, build continues.
+      - Other fields dropped -> stderr warning, build continues.
     """
     if not config_fields:
         return
@@ -112,7 +110,7 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
             )
         stderr.write(
             "WARNING: " + msg + " Skipping forwarding of nextflow.config "
-            "dnanexus.* / aws.region fields.\n"
+            "dnanexus.* fields.\n"
         )
         return
 
@@ -129,9 +127,6 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
             else:
                 dropped_other.append(npi_key)
 
-    aws_region_dropped = ("aws_region" in dropped_other
-                          and bool(config_fields.get("aws_region")))
-
     if dropped_ecr:
         # ECR was clearly requested but the deployed NPI lacks the input slots
         # to receive the auth fields — the docker-pull step will fail without
@@ -145,16 +140,6 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
                 dropped=sorted(dropped_ecr))
         )
     if dropped_other:
-        if ecr_intent and aws_region_dropped:
-            # ECR auth needs a region. Fail fast rather than letting the
-            # importer fail several minutes in with the opaque error.
-            raise dxpy.exceptions.DXError(
-                "The deployed Nextflow Pipeline Importer does not declare "
-                "the `aws_region` input, but private ECR authentication "
-                "needs it. Upgrade the importer app to a version that "
-                "supports private ECR registries, or remove "
-                "dnanexus.ecrRoleArnToAssume from nextflow.config to opt out."
-            )
         stderr.write(
             "WARNING: The deployed Nextflow Pipeline Importer does not declare "
             "input(s) {dropped} from your nextflow.config; the importer job "
