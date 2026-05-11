@@ -2915,9 +2915,6 @@ def build(args):
                 build_parser.error(
                     "--ecr-region value '{}' does not look like an AWS region (expected e.g. 'us-east-1').".format(args.ecr_region))
 
-        if args.ecr_allow_latest and not args.cache_docker:
-            build_parser.error("--ecr-allow-latest only applies to --cache-docker builds.")
-
         if args.cache_docker:
             logging.warning(
                 "WARNING: Caching the docker images (--cache-docker) makes you responsible for honoring the "
@@ -5196,17 +5193,6 @@ nextflow_options.add_argument('--ecr-region', help=fill("Build-time AWS region o
                                                         "from the pipeline's runtime aws.region (e.g. multi-region image sets). "
                                                         "Has no effect at runtime — runtime ECR pulls always use aws.region.",
                                                    width_adjustment=-24), dest="ecr_region")
-
-# --ecr-allow-latest
-nextflow_options.add_argument('--ecr-allow-latest', help=fill(
-    "Allow ECR images with floating tags (latest or no tag) when using "
-    "--cache-docker with OIDC-based ECR auth (dnanexus.ecrRoleArnToAssume). "
-    "By default, dx build rejects such images because Nextaur must contact ECR "
-    "at runtime to resolve the digest before each cache lookup, meaning runtime "
-    "workers need OIDC credentials even for fully pre-cached pipelines. "
-    "Pass this flag to acknowledge that requirement and proceed anyway. "
-    "Pinning images to explicit tags or digests is strongly recommended instead.",
-    width_adjustment=-24), action="store_true", dest="ecr_allow_latest", default=False)
 
 # --docker-secrets
 nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "

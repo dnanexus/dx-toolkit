@@ -512,35 +512,27 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
         if tag and digest:
             raise ImageRefFactoryError(f"Image reference has both tag and digest: {container}")
 
-        # When ECR OIDC auth is configured, a floating tag (latest/no tag) means
-        # Nextaur must call `docker manifest inspect` at runtime to resolve the
-        # digest before the cache lookup — so OIDC re-authentication is required
-        # at runtime even for fully pre-cached pipelines.  Warn the user and
-        # require an explicit opt-in flag to proceed.
+        # ECR images with a floating tag (latest/no tag) cannot be reliably
+        # cached.  Nextaur calls `docker manifest inspect` on the head job to
+        # resolve the digest before looking up the cached file — but the head
+        # job's Docker daemon is never logged into ECR (only the AWS CLI [ecr]
+        # profile is set up), so `docker manifest inspect` fails, the digest
+        # stays null, and the pre-cached image is silently bypassed every run.
+        # Caching such an image would be dead weight.  Fail fast instead.
         #
         # Only fires when ecr_role_arn_to_assume is set (OIDC path). Public ECR
-        # images without OIDC are unaffected.
+        # images without OIDC and non-ECR images are unaffected.
         ecr_oidc_configured = bool(os.environ.get("DX_ECR_ROLE_ARN_TO_ASSUME"))
         if ecr_oidc_configured and _is_floating_ecr_tag(container):
-            if not os.environ.get("DX_ECR_ALLOW_LATEST"):
-                raise ImageRefFactoryError(
-                    "ECR image '{}' uses a floating tag (latest or no tag). "
-                    "When OIDC-based ECR auth is configured "
-                    "(dnanexus.ecrRoleArnToAssume), Nextaur must contact ECR at "
-                    "runtime to resolve the image digest before each cache lookup — "
-                    "so runtime workers will need OIDC credentials even for fully "
-                    "pre-cached pipelines.\n"
-                    "Options:\n"
-                    "  1. Pin the image to an explicit tag or digest "
-                    "(recommended for reproducibility).\n"
-                    "  2. Pass --ecr-allow-latest to dx build to acknowledge "
-                    "that runtime OIDC will be required.".format(container)
-                )
-            log.warning(
-                "ECR image '%s' uses a floating tag. Runtime workers will require "
-                "OIDC re-authentication to ECR to resolve the digest on each run, "
-                "even when the image is pre-cached. Pin to an explicit tag or digest "
-                "to avoid this.", container
+            raise ImageRefFactoryError(
+                "ECR image '{}' uses a floating tag (latest or no tag) and "
+                "cannot be reliably cached. Nextaur resolves the digest of "
+                "floating-tag images via `docker manifest inspect` on the head "
+                "job, where the Docker daemon is not authenticated to ECR — so "
+                "the pre-cached image would be silently bypassed on every run.\n"
+                "Pin the image to an explicit tag or digest "
+                "(e.g. myrepo:1.2 or myrepo@sha256:...) "
+                "before building with --cache-docker.".format(container)
             )
 
         # Track whether the digest came from the original reference (@sha256:...)
