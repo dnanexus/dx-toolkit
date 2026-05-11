@@ -39,6 +39,30 @@ log = logging.getLogger(__name__)
 # rejected because their STS/ECR endpoints differ and have not been validated.
 _ECR_HOST_RE = re.compile(r"^[0-9]+\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com$", re.IGNORECASE)
 
+# Tags that are treated as "floating" — the image is not pinned and the registry
+# must be re-queried at runtime to resolve the current content. When ECR OIDC
+# auth is configured, this means runtime workers also need OIDC credentials even
+# for fully pre-cached pipelines (Nextaur calls `docker manifest inspect` to
+# resolve the digest before looking up the cached file).
+_FLOATING_TAGS = frozenset({"latest", ""})
+
+
+def _is_floating_ecr_tag(image_ref):
+    """Return True if *image_ref* is an ECR image with a floating (latest/no) tag.
+
+    Only images whose host matches ``_ECR_HOST_RE`` are considered.  Digest-
+    pinned refs (``image@sha256:...``) are always treated as pinned.
+    """
+    host, _ = _extract_ecr_host_and_region(image_ref)
+    if host is None:
+        return False
+    # Digest-pinned refs are always safe.
+    name_part = image_ref.split("/", 1)[-1] if "/" in image_ref else image_ref
+    if "@" in name_part:
+        return False
+    tag = name_part.split(":")[-1] if ":" in name_part else ""
+    return tag.lower() in _FLOATING_TAGS
+
 # Tracks (host, region) pairs we've successfully `docker login`-ed during this
 # process. The Docker registry auth token returned by `aws ecr get-login-password`
 # is valid for ~12h; the underlying STS web-identity session credentials are
@@ -487,6 +511,37 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
         # identify an image by tag OR by digest, not both.
         if tag and digest:
             raise ImageRefFactoryError(f"Image reference has both tag and digest: {container}")
+
+        # When ECR OIDC auth is configured, a floating tag (latest/no tag) means
+        # Nextaur must call `docker manifest inspect` at runtime to resolve the
+        # digest before the cache lookup — so OIDC re-authentication is required
+        # at runtime even for fully pre-cached pipelines.  Warn the user and
+        # require an explicit opt-in flag to proceed.
+        #
+        # Only fires when ecr_role_arn_to_assume is set (OIDC path). Public ECR
+        # images without OIDC are unaffected.
+        ecr_oidc_configured = bool(os.environ.get("DX_ECR_ROLE_ARN_TO_ASSUME"))
+        if ecr_oidc_configured and _is_floating_ecr_tag(container):
+            if not os.environ.get("DX_ECR_ALLOW_LATEST"):
+                raise ImageRefFactoryError(
+                    "ECR image '{}' uses a floating tag (latest or no tag). "
+                    "When OIDC-based ECR auth is configured "
+                    "(dnanexus.ecrRoleArnToAssume), Nextaur must contact ECR at "
+                    "runtime to resolve the image digest before each cache lookup — "
+                    "so runtime workers will need OIDC credentials even for fully "
+                    "pre-cached pipelines.\n"
+                    "Options:\n"
+                    "  1. Pin the image to an explicit tag or digest "
+                    "(recommended for reproducibility).\n"
+                    "  2. Pass --ecr-allow-latest to dx build to acknowledge "
+                    "that runtime OIDC will be required.".format(container)
+                )
+            log.warning(
+                "ECR image '%s' uses a floating tag. Runtime workers will require "
+                "OIDC re-authentication to ECR to resolve the digest on each run, "
+                "even when the image is pre-cached. Pin to an explicit tag or digest "
+                "to avoid this.", container
+            )
 
         # Track whether the digest came from the original reference (@sha256:...)
         # vs resolved by us. Original digests are manifest digests (pullable),

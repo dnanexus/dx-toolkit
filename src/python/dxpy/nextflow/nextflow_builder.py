@@ -60,6 +60,7 @@ _ECR_SPECIFIC_INPUTS = frozenset({
     "ecr_job_token_audience",
     "ecr_job_token_subject_claims",
     "ecr_region_override",
+    "ecr_allow_latest",
 })
 
 
@@ -225,7 +226,8 @@ def build_pipeline_with_npi(
         extra_args=None,
         nextflow_version=None,
         src_dir=None,
-        ecr_region=None
+        ecr_region=None,
+        ecr_allow_latest=False
 ):
     """
     :param repository: URL to a Git repository
@@ -292,6 +294,8 @@ def build_pipeline_with_npi(
     config_fields = parse_nextflow_config_dx_fields(src_dir)
     if ecr_region:
         config_fields["ecr_region_override"] = ecr_region
+    if ecr_allow_latest:
+        config_fields["ecr_allow_latest"] = True
     _apply_npi_input_gate(config_fields, _npi_input_names(), input_hash, sys.stderr)
 
     # Auto-detect NPI capability for version selection
