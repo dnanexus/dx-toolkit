@@ -11,7 +11,7 @@ import tempfile
 from functools import partial
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
-from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, get_importer_object,
                                           create_readme, get_nested, get_allowed_extra_fields_mapping,
                                           resolve_version, parse_nextflow_config_dx_fields)
 from dxpy.cli.exec_io import parse_obj
@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 def _npi_supports_version_selection():
     """Check if deployed NPI app accepts nextflow_version input."""
     try:
-        npi = dxpy.DXApp(name=get_importer_name())
+        npi = get_importer_object()
         desc = npi.describe(fields={"inputSpec": True})
         input_names = {inp["name"] for inp in desc.get("inputSpec", [])}
         return "nextflow_version" in input_names
@@ -52,7 +52,7 @@ def _npi_input_names():
     forwarding any input that isn't part of the historically-stable set.
     """
     try:
-        npi = dxpy.DXApp(name=get_importer_name())
+        npi = get_importer_object()
         desc = npi.describe(fields={"inputSpec": True})
         return {inp["name"] for inp in desc.get("inputSpec", [])}
     except (dxpy.exceptions.ResourceNotFound, dxpy.exceptions.DXAPIError) as e:
@@ -287,7 +287,7 @@ def build_pipeline_with_npi(
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
-    nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id,
+    nf_builder_job = get_importer_object().run(app_input=input_hash, project=build_project_id,
                                                               folder=build_folder,
                                                               name="Nextflow build of %s" % (repository), detach=True)
 
