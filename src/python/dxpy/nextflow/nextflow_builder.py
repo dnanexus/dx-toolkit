@@ -287,9 +287,13 @@ def build_pipeline_with_npi(
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
-    nf_builder_job = get_importer_object().run(app_input=input_hash, project=build_project_id,
-                                                              folder=build_folder,
-                                                              name="Nextflow build of %s" % (repository), detach=True)
+    importer = get_importer_object()
+    # DXApp.run() uses app_input=; DXApplet.run() uses applet_input= (positional).
+    # Branch so both the production DXApp path and the test-override DXApplet path work.
+    run_input_kwarg = "applet_input" if isinstance(importer, dxpy.DXApplet) else "app_input"
+    nf_builder_job = importer.run(**{run_input_kwarg: input_hash}, project=build_project_id,
+                                  folder=build_folder,
+                                  name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
         print("Started builder job %s" % (nf_builder_job.get_id(),))
