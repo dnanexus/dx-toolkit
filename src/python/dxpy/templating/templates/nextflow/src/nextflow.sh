@@ -385,8 +385,9 @@ aws_ecr() {
 }
 
 # Fetches a JIT and writes it directly to a file under mode 600. The JWT is never
-# placed in a shell variable, which would leak under set -x. Validates the result is a
-# JWT (3 base64url segments) so partial writes / proxy error pages are rejected.
+# placed in a shell variable, which would leak under set -x. Rejects multi-line
+# responses (proxy error pages, truncated writes) — token format validation is
+# left to STS, which rejects malformed tokens with a clear error.
 _fetch_jit_to_file() {
   local target="$1"
   local audience="$2"
@@ -396,11 +397,10 @@ _fetch_jit_to_file() {
     rm -f "${target}"
     return 1
   fi
-  # A JWT is always a single line.  A multi-line file indicates a proxy error
-  # page or truncated write — reject it before the pattern check so the regex
-  # cannot accidentally match one valid-looking line inside a longer response.
-  if [ "$(wc -l < "${target}")" -gt 1 ] || \
-     ! grep -qE '^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$' "${target}"; then
+  # A JWT is always a single line. A multi-line response indicates a proxy error
+  # page or truncated write — reject it so garbage never reaches AWS STS.
+  if [ "$(wc -l < "${target}")" -gt 1 ]; then
+    echo "ERROR: getIdentityToken returned a multi-line response; possible proxy interception." >&2
     rm -f "${target}"
     return 1
   fi
