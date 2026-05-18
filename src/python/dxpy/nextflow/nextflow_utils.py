@@ -83,7 +83,16 @@ def get_resources_subpath(resources_dir):
 
 
 def get_importer_name():
-    return "nextflow_pipeline_importer"
+    """Return the name of the Nextflow Pipeline Importer app to use.
+
+    Defaults to the published ``nextflow_pipeline_importer`` app.  Override
+    by setting the ``DX_NPI_NAME`` environment variable to a custom app name
+    — useful in testing when a private build of the importer (e.g. one that
+    declares ECR input slots for cache-docker testing) should be used instead
+    of the globally published version.
+    """
+    import os
+    return os.environ.get("DX_NPI_NAME", "nextflow_pipeline_importer")
 
 
 def get_template_dir():

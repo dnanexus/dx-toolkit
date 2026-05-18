@@ -24,11 +24,11 @@ forward to the importer and emits warnings for fields the deployed NPI
 does not declare.
 
 Behaviour the tests pin down:
-  - Describe failure with ECR intent -> hard error (refuse to launch).
-  - Describe failure without ECR intent -> warning, nothing forwarded.
+  - Describe failure (any intent) -> warning, nothing forwarded, build continues.
   - All fields accepted -> all forwarded, no warning.
-  - ECR-specific drop -> hard error (refuse to launch; otherwise the build
-    would fail several minutes in at the docker-pull step).
+  - ECR-specific drop (NPI lacks slots) -> warning, build continues.  ECR
+    auth still works at runtime via the bundled nextflow.config / nextaur.
+    Use DX_NPI_NAME to point at a custom importer for cache-docker testing.
   - Non-ECR fields dropped -> generic warning only.
 
 TODO(APPS-3915): Delete this entire file once the NPI version that declares
@@ -64,16 +64,15 @@ class TestApplyNpiInputGate(unittest.TestCase):
 
     # --- describe-failure path ---
 
-    def test_describe_failure_with_ecr_intent_raises(self):
-        """ECR was clearly requested but we can't verify the NPI accepts the
-        fields — refuse to launch rather than fail several minutes in."""
-        with self.assertRaises(dxpy.exceptions.DXError) as cm:
-            self._run(
-                config_fields={"ecr_role_arn_to_assume": "arn:role/x"},
-                accepted_inputs=None,
-            )
-        self.assertIn("Could not describe", str(cm.exception))
+    def test_describe_failure_with_ecr_intent_warns_and_continues(self):
+        """ECR was requested but NPI cannot be described — emit a warning and
+        continue. ECR auth will still work at runtime via bundled config."""
+        self._run(
+            config_fields={"ecr_role_arn_to_assume": "arn:role/x"},
+            accepted_inputs=None,
+        )
         self.assertEqual(self.input_hash, {})
+        self.assertIn("Could not describe", self.stderr.getvalue())
 
     def test_describe_failure_without_ecr_intent_warns(self):
         """No ECR intent — degrade to a warning so non-ECR pipelines still build."""
@@ -111,27 +110,28 @@ class TestApplyNpiInputGate(unittest.TestCase):
 
     # --- dropped-field warnings ---
 
-    def test_ecr_specific_drop_raises(self):
-        """Older NPI lacks ecr_* inputs: refuse to launch (the docker pull
-        step would fail without credentials)."""
+    def test_ecr_specific_drop_warns_and_continues(self):
+        """NPI lacks ecr_* input slots: emit a warning and continue.
+        ECR auth works at runtime via the bundled nextflow.config / nextaur.
+        Cache-docker with ECR requires a custom NPI (set DX_NPI_NAME)."""
         cfg = {"ecr_role_arn_to_assume": "arn:role/ecr",
                "ecr_job_token_audience": "aud",
                "ecr_job_token_subject_claims": "sc"}
-        with self.assertRaises(dxpy.exceptions.DXError) as cm:
-            self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
-        self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
-        self.assertIn("Upgrade the importer app", str(cm.exception))
+        self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
+        self.assertEqual(self.input_hash, {})
+        warning = self.stderr.getvalue()
+        self.assertIn("ecr_role_arn_to_assume", warning)
+        self.assertIn("DX_NPI_NAME", warning)
 
-    def test_mixed_drop_with_ecr_intent_raises(self):
-        """If any ECR-specific field is dropped, refuse to launch (ECR
-        intent + missing input slot would silently fail at docker-pull)."""
+    def test_mixed_drop_with_ecr_warns_and_continues(self):
+        """ECR field dropped, non-ECR field forwarded — both handled gracefully."""
         cfg = {
             "ecr_role_arn_to_assume": "arn:aws:iam::123456789:role/ecr-pull",
             "iam_role_arn_to_assume": "arn:role/wd",
         }
-        with self.assertRaises(dxpy.exceptions.DXError) as cm:
-            self._run(cfg, accepted_inputs={"repository_url"})
-        self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
+        self._run(cfg, accepted_inputs={"iam_role_arn_to_assume"})
+        self.assertEqual(self.input_hash, {"iam_role_arn_to_assume": "arn:role/wd"})
+        self.assertIn("ecr_role_arn_to_assume", self.stderr.getvalue())
 
 
 class TestPreflightValidateForCacheDocker(unittest.TestCase):

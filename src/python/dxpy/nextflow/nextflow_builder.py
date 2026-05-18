@@ -76,41 +76,30 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
     Mutates `input_hash` in place with the fields the deployed NPI accepts.
 
     Behaviour summary:
-      - `accepted_inputs is None` (NPI describe failed) and ECR intent
-        present in `config_fields` -> raise ``DXError``.
-      - `accepted_inputs is None` and no ECR intent -> warn, forward
-        nothing new (preserves backward compat for non-ECR pipelines).
-      - Any ``ecr_*`` field in `config_fields` is dropped (older NPI
-        without the slot) -> raise ``DXError``. Launching would burn an
-        NPI job and fail several minutes in at the docker-pull step.
+      - `accepted_inputs is None` (NPI describe failed) -> warn, skip
+        forwarding of all dnanexus.* fields; build continues.
+      - Any ``ecr_*`` field in `config_fields` is dropped (NPI without the
+        slot) -> stderr warning, build continues.  The ECR auth values are
+        still present in the bundled nextflow.config and will be read at
+        runtime by the nextaur plugin (DxOptions.groovy).  The dropped
+        fields are only advisory forwards to the NPI; they are not required
+        for the runtime ECR auth path to work.
+        NOTE(APPS-3915): the ``--cache-docker`` path is a separate concern:
+        the NPI must pull from ECR during the build job itself.
+        ``preflight_validate_for_cache_docker`` enforces that separately
+        and still raises when the NPI lacks the ECR slots.
       - Other fields dropped -> stderr warning, build continues.
     """
     if not config_fields:
         return
 
-    # Detect ECR intent up front so we can fail fast (rather than warn-and-continue)
-    # when ECR was clearly requested but the deployed NPI cannot honour it. Without
-    # this, the build would launch, run for several minutes, and fail inside the
-    # importer with an opaque "no basic auth credentials" or "ECR is configured but
-    # no AWS region available" error.
-    ecr_intent = any(k in config_fields and config_fields[k]
-                     for k in _ECR_SPECIFIC_INPUTS)
-
     if accepted_inputs is None:
-        msg = (
-            "Could not describe the deployed Nextflow Pipeline Importer; "
-            "cannot determine whether private ECR auth fields are accepted."
-        )
-        if ecr_intent:
-            raise dxpy.exceptions.DXError(
-                msg + " Refusing to launch a build that would silently "
-                "fail at the docker-pull step. Verify the importer app is "
-                "deployed and you have describe permission, or remove the "
-                "dnanexus.ecrRoleArnToAssume field from nextflow.config."
-            )
         stderr.write(
-            "WARNING: " + msg + " Skipping forwarding of nextflow.config "
-            "dnanexus.* fields.\n"
+            "WARNING: Could not describe the deployed Nextflow Pipeline "
+            "Importer; cannot determine whether private ECR auth fields are "
+            "accepted. Skipping forwarding of nextflow.config dnanexus.* "
+            "fields. ECR auth will still be attempted at runtime via the "
+            "bundled nextflow.config.\n"
         )
         return
 
@@ -128,16 +117,14 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
                 dropped_other.append(npi_key)
 
     if dropped_ecr:
-        # ECR was clearly requested but the deployed NPI lacks the input slots
-        # to receive the auth fields — the docker-pull step will fail without
-        # credentials. Refuse to launch the (long, expensive) NPI job.
-        raise dxpy.exceptions.DXError(
-            "The deployed Nextflow Pipeline Importer does not declare "
-            "input(s) {dropped}; private ECR authentication cannot be set up "
-            "for this build. Upgrade the importer app to a version that "
-            "supports private ECR registries, or remove "
-            "dnanexus.ecrRoleArnToAssume from nextflow.config to opt out.".format(
-                dropped=sorted(dropped_ecr))
+        stderr.write(
+            "WARNING: The deployed Nextflow Pipeline Importer does not declare "
+            "input(s) {dropped}; these fields will not be forwarded to the "
+            "importer job. ECR auth will still be attempted at runtime via "
+            "the bundled nextflow.config. To test cache-docker with a private "
+            "ECR registry, use an NPI build that declares these inputs "
+            "(set DX_NPI_NAME to a custom importer app name).\n"
+            .format(dropped=sorted(dropped_ecr))
         )
     if dropped_other:
         stderr.write(
