@@ -110,18 +110,15 @@ main() {
   get_nextflow_environment "${NEXTFLOW_CMD_ENV[@]}"
   dx download "$DX_WORKSPACE_ID:/.dx-aws.env" -o $AWS_ENV -f --no-progress 2>/dev/null || true
 
-  # Login to AWS, if configured. Both workdir and ECR auth are fatal-on-failure
-  # when configured — the user explicitly asked for that auth path to work, and
-  # silently continuing only surfaces later as opaque registry / S3 errors that
-  # are much harder to debug. ecr_aws_login itself returns 0 cleanly when
-  # ecrRoleArnToAssume is empty (ECR not configured), so non-ECR pipelines are
-  # unaffected.
+  # Workdir auth is validated eagerly here: the head job needs S3 access
+  # immediately to set up the Nextflow work directory.
+  # ECR credential validity is intentionally NOT validated here — the head job
+  # never pulls container images itself. Each task worker calls ecr_aws_login()
+  # in nf_task_entry() immediately before pulling, so failures surface at the
+  # task that actually needs ECR, with full context. Structural config errors
+  # (role set without audience) are caught earlier by AwsUtils.createEnvironment.
   if ! aws_login; then
     dx-jobutil-report-error "AWS workdir login failed; check dnanexus.iamRoleArnToAssume, dnanexus.jobTokenAudience, and the role's trust policy."
-    exit 1
-  fi
-  if ! ecr_aws_login; then
-    dx-jobutil-report-error "AWS ECR login failed; check dnanexus.ecrRoleArnToAssume, dnanexus.ecrJobTokenAudience, dnanexus.ecrJobTokenSubjectClaims, aws.region, and the ECR role's trust policy. See preceding ERROR lines for the specific failure."
     exit 1
   fi
   refresh_web_identity_token_loop & TOKEN_REFRESH_PID=$!
@@ -447,9 +444,7 @@ aws_login() {
 # Configures the [ecr] AWS profile in $ECR_AWS_CONFIG_FILE so `aws_ecr ...` calls
 # automatically assume ecrRoleArnToAssume via the DNAnexus Job Identity Token. The SDK
 # refreshes role creds whenever the token file changes; the refresh loop keeps the file
-# fresh. Performs a single sts:GetCallerIdentity probe after writing the profile so
-# trust-policy / role-ARN errors surface here (in the entrypoint, fail-fast and once)
-# rather than per-task at first `docker pull` (noisy, parallel, far from the source).
+# fresh. Called only from nf_task_entry() — the head job never calls this function.
 # Returns non-zero on hard misconfiguration (missing required fields, JIT API failure,
 # STS probe failure).
 ecr_aws_login() {
@@ -495,21 +490,14 @@ EOF
   # Defensive: clear any stale per-host login cache from a reused worker.
   rm -f "$ECR_LOGGED_IN_HOSTS_FILE"
 
-  # Fail-fast probe: AssumeRoleWithWebIdentity + sts:GetCallerIdentity. If the
-  # role ARN is wrong, the trust policy doesn't allow the JIT audience/subject,
-  # or the token is malformed, this surfaces a clear error here — before any
-  # task subjob runs `docker pull` and discovers it the slow way. Cheap (~50ms)
-  # compared to N-way per-task failures.
+  # Per-task STS probe: verify that AssumeRoleWithWebIdentity + GetCallerIdentity
+  # succeed before attempting any docker pull. If the role ARN is wrong or the
+  # trust policy rejects the JIT audience/subject, this surfaces a clear error in
+  # the task log rather than an opaque registry auth failure several seconds later.
   #
-  # STS-rate-limit trade-off (F9-8): this function runs in both the head job
-  # and every task subjob, so a wide-fanout pipeline with N parallel tasks
-  # produces N parallel STS calls within the first few seconds. AWS STS
+  # STS-rate-limit note: this runs on every task worker in parallel. AWS STS
   # account-level limits are ~250 TPS pre-burst, well above realistic Nextflow
-  # parallelism, so throttling has not been observed. The cost is justified by
-  # the alternative — N+ retried `docker pull` failures with opaque registry
-  # auth errors. If a future pipeline shape ever pushes past STS limits, the
-  # task-subjob probe could be skipped on the assumption that the head-job
-  # probe already validated the role.
+  # parallelism, so throttling has not been observed in practice.
   if ! aws_ecr sts get-caller-identity >/dev/null 2>&1; then
     echo "ERROR: sts:GetCallerIdentity failed for the [ecr] profile (role=${ecrRoleArnToAssume}, region=${awsRegion}). Verify the role's trust policy allows the JIT audience '${ecrJobTokenAudience}' and that the role exists." >&2
     return 1
