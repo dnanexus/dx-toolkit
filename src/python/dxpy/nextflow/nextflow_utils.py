@@ -91,7 +91,7 @@ def get_importer_name():
     of the importer should be used instead of the globally published version.
     """
     import os
-    return os.environ.get("DX_NPI_NAME", "nextflow_pipeline_importer")
+    return os.environ.get("DX_NPI_NAME") or "nextflow_pipeline_importer"
 
 
 def get_importer_object():

@@ -38,6 +38,7 @@ above _npi_input_names().
 """
 
 import io
+import os
 import unittest
 from unittest import mock
 
@@ -46,6 +47,7 @@ from dxpy.nextflow.nextflow_builder import (
     _apply_npi_input_gate,
     preflight_validate_for_cache_docker,
 )
+from dxpy.nextflow.nextflow_utils import get_importer_name
 
 
 class TestApplyNpiInputGate(unittest.TestCase):
@@ -173,6 +175,30 @@ class TestPreflightValidateForCacheDocker(unittest.TestCase):
             with self.assertRaises(dxpy.exceptions.DXError) as cm:
                 preflight_validate_for_cache_docker(src_dir=None)
             self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
+
+
+class TestGetImporterName(unittest.TestCase):
+    """get_importer_name() must fall back to the default when DX_NPI_NAME is
+    absent, None, or empty string (GHA sets it to "" when the workflow input
+    is left blank — os.environ.get("DX_NPI_NAME", default) returns "" in that
+    case, which must not be used as the app name)."""
+
+    def test_unset_returns_default(self):
+        env = {k: v for k, v in os.environ.items() if k != "DX_NPI_NAME"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            self.assertEqual(get_importer_name(), "nextflow_pipeline_importer")
+
+    def test_empty_string_returns_default(self):
+        with mock.patch.dict(os.environ, {"DX_NPI_NAME": ""}):
+            self.assertEqual(get_importer_name(), "nextflow_pipeline_importer")
+
+    def test_custom_name_returned(self):
+        with mock.patch.dict(os.environ, {"DX_NPI_NAME": "my_custom_importer"}):
+            self.assertEqual(get_importer_name(), "my_custom_importer")
+
+    def test_applet_id_returned(self):
+        with mock.patch.dict(os.environ, {"DX_NPI_NAME": "applet-xxxx0000xxxx0000xxxx0000"}):
+            self.assertEqual(get_importer_name(), "applet-xxxx0000xxxx0000xxxx0000")
 
 
 if __name__ == "__main__":
