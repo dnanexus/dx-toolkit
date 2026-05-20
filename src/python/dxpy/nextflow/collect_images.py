@@ -17,6 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import base64
 import dataclasses
 import json
 import logging
@@ -107,19 +108,53 @@ def _extract_ecr_host_and_region(image_ref):
     return first, region
 
 
+def _get_ecr_password(region):
+    """Return the ECR auth password for *region* using the [ecr] AWS profile.
+
+    Uses ``boto3`` with the ``[ecr]`` profile that ``ecr_login.py`` wrote to
+    ``~/.aws/credentials`` before ``--cache-docker`` runs.  boto3 is
+    pre-installed on the NPI worker alongside dxpy; no ``aws`` CLI binary is
+    required.
+
+    Returns ``(password: str | None, error: str | None)``.  Exactly one will
+    be non-``None``.
+    """
+    try:
+        import boto3
+        import botocore.exceptions
+    except ImportError:
+        return None, (
+            "boto3 is not installed. "
+            "Install boto3 to use --cache-docker with a private ECR registry."
+        )
+    try:
+        session = boto3.Session(profile_name="ecr")
+        ecr = session.client("ecr", region_name=region)
+        resp = ecr.get_authorization_token()
+        # authorizationToken is base64("AWS:<password>"); extract the password.
+        token_b64 = resp["authorizationData"][0]["authorizationToken"]
+        _, password = base64.b64decode(token_b64).decode().split(":", 1)
+        return password, None
+    except botocore.exceptions.ProfileNotFound:
+        return None, (
+            "AWS [ecr] profile not found in ~/.aws/credentials. "
+            "Did the importer entrypoint (ecr_login.py) run successfully before "
+            "`dx build --cache-docker`?"
+        )
+    except Exception as e:  # noqa: BLE001
+        return None, str(e)
+
+
 def _ecr_docker_login(host, region):
-    """Authenticate `docker` to the given ECR host using the local AWS [ecr] profile.
+    """Authenticate ``docker`` to the given ECR host using the local AWS [ecr] profile.
 
-    Uses `aws ecr get-login-password` (which the importer environment already
-    has via the awscli asset) rather than boto3 to avoid adding boto3 as a dxpy
-    dependency. The `[ecr]` profile must have been configured by the importer
-    job entrypoint before `--cache-docker` invokes this code; if it isn't, the
-    `aws` call fails and we return False so the caller can fail loud (the
-    subsequent `docker pull` would otherwise produce a confusing
-    anonymous-access error).
+    Obtains a 12-hour ECR auth token via ``_get_ecr_password`` (boto3) and
+    pipes it into two ``docker login`` calls: one as the current user (for
+    ``docker manifest inspect``) and one via ``sudo`` (for ``sudo docker pull``
+    / ``sudo docker save`` in DockerImageRef._cache).
 
-    Region handling: `--region` is derived from the ECR hostname itself (e.g.
-    `123456789.dkr.ecr.us-east-1.amazonaws.com` → `us-east-1`). ECR tokens
+    Region handling: ``--region`` is derived from the ECR hostname itself (e.g.
+    ``123456789.dkr.ecr.us-east-1.amazonaws.com`` → ``us-east-1``). ECR tokens
     are region-scoped, so the token must come from the same region as the
     registry being logged into — using any other region would produce a token
     that the registry rejects. Passing the per-image region also means
@@ -132,17 +167,11 @@ def _ecr_docker_login(host, region):
     if key in _ECR_LOGGED_IN_HOSTS:
         return True
     try:
-        # `aws ecr get-login-password` prints a 12h auth token to stdout.
-        token_proc = subprocess.run(
-            ["aws", "--profile", "ecr", "--region", region, "ecr", "get-login-password"],
-            capture_output=True, text=True, check=False,
-        )
-        if token_proc.returncode != 0:
+        password, err = _get_ecr_password(region)
+        if password is None:
             log.warning(
-                "ECR get-login-password failed for host=%s region=%s rc=%d stderr=%s. "
-                "Is dnanexus.ecrRoleArnToAssume configured and the [ecr] AWS profile "
-                "set up by the importer entrypoint?",
-                host, region, token_proc.returncode, token_proc.stderr.strip(),
+                "ECR get-login-password failed for host=%s region=%s: %s",
+                host, region, err,
             )
             return False
         # Pipe the password into `docker login --password-stdin`. Using stdin
@@ -156,7 +185,7 @@ def _ecr_docker_login(host, region):
         # falls back to anonymous access — failing for private registries.
         login_proc = subprocess.run(
             ["docker", "login", "--username", "AWS", "--password-stdin", host],
-            input=token_proc.stdout, capture_output=True, text=True, check=False,
+            input=password, capture_output=True, text=True, check=False,
         )
         if login_proc.returncode != 0:
             log.warning(
@@ -175,7 +204,7 @@ def _ecr_docker_login(host, region):
         # docker — surface that loudly so it can be fixed in NPI itself.)
         sudo_login = subprocess.run(
             ["sudo", "-n", "docker", "login", "--username", "AWS", "--password-stdin", host],
-            input=token_proc.stdout, capture_output=True, text=True, check=False,
+            input=password, capture_output=True, text=True, check=False,
         )
         if sudo_login.returncode != 0:
             log.warning(

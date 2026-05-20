@@ -492,10 +492,87 @@ class TestEcrHostExtraction(unittest.TestCase):
         self.assertEqual(region, exp_region)
 
 
+class TestGetEcrPassword(unittest.TestCase):
+    """Unit tests for _get_ecr_password — the boto3-based ECR token helper.
+
+    boto3 is imported lazily inside _get_ecr_password; Python resolves
+    ``import boto3`` by looking up ``sys.modules["boto3"]`` at call time.
+    So patching sys.modules is sufficient — no module reload required.
+    """
+
+    def _make_boto3_sys_modules(self, password="secret\n", error=None, profile_not_found=False):
+        """Return a dict suitable for use with ``patch.dict("sys.modules", ...)``.
+
+        Injects mock boto3 and botocore modules so that the lazy imports inside
+        _get_ecr_password resolve to controllable objects.
+        """
+        import base64 as _base64
+        ProfileNotFound = type("ProfileNotFound", (Exception,), {})
+
+        mock_ecr_client = MagicMock()
+        if profile_not_found:
+            mock_ecr_client.get_authorization_token.side_effect = ProfileNotFound("no profile")
+        elif error:
+            mock_ecr_client.get_authorization_token.side_effect = error
+        else:
+            token_b64 = _base64.b64encode(f"AWS:{password}".encode()).decode()
+            mock_ecr_client.get_authorization_token.return_value = {
+                "authorizationData": [{"authorizationToken": token_b64}]
+            }
+
+        mock_session = MagicMock()
+        mock_session.client.return_value = mock_ecr_client
+
+        mock_boto3 = MagicMock()
+        mock_boto3.Session.return_value = mock_session
+
+        # botocore.exceptions is accessed as ``botocore.exceptions.ProfileNotFound``
+        # after ``import botocore.exceptions``.  Python binds the local name
+        # ``botocore`` to sys.modules["botocore"], then accesses .exceptions on it.
+        mock_botocore_exceptions = MagicMock()
+        mock_botocore_exceptions.ProfileNotFound = ProfileNotFound
+
+        mock_botocore = MagicMock()
+        mock_botocore.exceptions = mock_botocore_exceptions
+
+        return {
+            "boto3": mock_boto3,
+            "botocore": mock_botocore,
+            "botocore.exceptions": mock_botocore_exceptions,
+        }, mock_boto3
+
+    def test_happy_path_returns_password(self):
+        mods, mock_boto3 = self._make_boto3_sys_modules(password="mypassword\n")
+        with patch.dict("sys.modules", mods):
+            from dxpy.nextflow.collect_images import _get_ecr_password
+            pwd, err = _get_ecr_password("us-east-1")
+        self.assertIsNone(err)
+        self.assertEqual(pwd, "mypassword\n")
+        mock_boto3.Session.assert_called_once_with(profile_name="ecr")
+        mock_boto3.Session.return_value.client.assert_called_once_with("ecr", region_name="us-east-1")
+
+    def test_profile_not_found_returns_error(self):
+        mods, _ = self._make_boto3_sys_modules(profile_not_found=True)
+        with patch.dict("sys.modules", mods):
+            from dxpy.nextflow.collect_images import _get_ecr_password
+            pwd, err = _get_ecr_password("us-east-1")
+        self.assertIsNone(pwd)
+        self.assertIn("profile", err.lower())
+
+    def test_boto3_not_installed_returns_error(self):
+        """Graceful error when boto3 is absent (ImportError path)."""
+        with patch.dict("sys.modules", {"boto3": None, "botocore": None,
+                                        "botocore.exceptions": None}):
+            from dxpy.nextflow.collect_images import _get_ecr_password
+            pwd, err = _get_ecr_password("us-east-1")
+        self.assertIsNone(pwd)
+        self.assertIn("boto3", err)
+
+
 class TestEcrDockerLogin(unittest.TestCase):
-    """Tests for _ecr_docker_login — verifies command construction around
-    `aws ecr get-login-password | docker login` and the per-(host,region)
-    cache. The actual aws/docker calls are mocked.
+    """Tests for _ecr_docker_login — verifies that _get_ecr_password is called
+    and the resulting password is piped into docker login + sudo docker login.
+    _get_ecr_password itself is mocked here; see TestGetEcrPassword for its unit tests.
     """
 
     def setUp(self):
@@ -504,54 +581,46 @@ class TestEcrDockerLogin(unittest.TestCase):
         from dxpy.nextflow import collect_images
         collect_images._ECR_LOGGED_IN_HOSTS.clear()
 
+    @patch("dxpy.nextflow.collect_images._get_ecr_password", return_value=("dummy-12h-token\n", None))
     @patch("dxpy.nextflow.collect_images.subprocess.run")
-    def test_login_success_invokes_aws_then_docker_then_sudo_docker(self, mock_run):
-        """Happy path: aws get-login-password, then docker login, then sudo docker login (mirror)."""
+    def test_login_success_invokes_docker_then_sudo_docker(self, mock_run, mock_get_pw):
+        """Happy path: _get_ecr_password, then docker login, then sudo docker login."""
         mock_run.side_effect = [
-            MagicMock(returncode=0, stdout="dummy-12h-token\n", stderr=""),  # aws
-            MagicMock(returncode=0, stdout="Login Succeeded", stderr=""),    # docker login
-            MagicMock(returncode=0, stdout="Login Succeeded", stderr=""),    # sudo docker login
+            MagicMock(returncode=0, stdout="Login Succeeded", stderr=""),   # docker login
+            MagicMock(returncode=0, stdout="Login Succeeded", stderr=""),   # sudo docker login
         ]
         from dxpy.nextflow.collect_images import _ecr_docker_login
         ok = _ecr_docker_login("123.dkr.ecr.us-east-1.amazonaws.com", "us-east-1")
         self.assertTrue(ok)
-        aws_call, docker_call, sudo_call = mock_run.call_args_list
-        # aws: --profile ecr --region <region> ecr get-login-password
-        # Region is derived from the image hostname so the token is always for
-        # the correct ECR registry (tokens are region-scoped).
-        self.assertEqual(
-            aws_call[0][0],
-            ["aws", "--profile", "ecr", "--region", "us-east-1", "ecr", "get-login-password"],
-        )
-        # docker: login --username AWS --password-stdin <host>
+        mock_get_pw.assert_called_once_with("us-east-1")
+        docker_call, sudo_call = mock_run.call_args_list
         self.assertEqual(
             docker_call[0][0],
             ["docker", "login", "--username", "AWS", "--password-stdin",
              "123.dkr.ecr.us-east-1.amazonaws.com"],
         )
         self.assertEqual(docker_call[1]["input"], "dummy-12h-token\n")
-        # sudo mirror — same args with `sudo -n` prefix.
         self.assertEqual(
             sudo_call[0][0],
             ["sudo", "-n", "docker", "login", "--username", "AWS", "--password-stdin",
              "123.dkr.ecr.us-east-1.amazonaws.com"],
         )
 
+    @patch("dxpy.nextflow.collect_images._get_ecr_password", return_value=(None, "credentials error"))
     @patch("dxpy.nextflow.collect_images.subprocess.run")
-    def test_aws_failure_returns_false_no_docker_call(self, mock_run):
-        """If `aws ecr get-login-password` fails, do not call docker login."""
-        mock_run.return_value = MagicMock(returncode=255, stdout="", stderr="profile not found")
+    def test_get_ecr_password_failure_returns_false_no_docker_call(self, mock_run, mock_get_pw):
+        """If _get_ecr_password fails, do not call docker login."""
         from dxpy.nextflow.collect_images import _ecr_docker_login
         ok = _ecr_docker_login("123.dkr.ecr.us-east-1.amazonaws.com", "us-east-1")
         self.assertFalse(ok)
-        self.assertEqual(mock_run.call_count, 1)
+        mock_run.assert_not_called()
 
+    @patch("dxpy.nextflow.collect_images._get_ecr_password", return_value=("token\n", None))
     @patch("dxpy.nextflow.collect_images.subprocess.run")
-    def test_sudo_docker_login_failure_returns_false(self, mock_run):
+    def test_sudo_docker_login_failure_returns_false(self, mock_run, mock_get_pw):
         """sudo mirror failing must fail the whole login — otherwise sudo
         docker pull later fails with a confusing anonymous-access error."""
         mock_run.side_effect = [
-            MagicMock(returncode=0, stdout="token\n", stderr=""),
             MagicMock(returncode=0, stdout="Login Succeeded", stderr=""),
             MagicMock(returncode=1, stdout="", stderr="sudo: a password is required"),
         ]
@@ -559,20 +628,22 @@ class TestEcrDockerLogin(unittest.TestCase):
         ok = _ecr_docker_login("123.dkr.ecr.us-east-1.amazonaws.com", "us-east-1")
         self.assertFalse(ok)
 
+    @patch("dxpy.nextflow.collect_images._get_ecr_password", return_value=("t\n", None))
     @patch("dxpy.nextflow.collect_images.subprocess.run")
-    def test_cache_hit_skips_aws_and_docker(self, mock_run):
-        """A second login for the same (host,region) must not re-call aws or docker."""
+    def test_cache_hit_skips_get_ecr_password_and_docker(self, mock_run, mock_get_pw):
+        """A second login for the same (host,region) must not re-call _get_ecr_password or docker."""
         mock_run.side_effect = [
-            MagicMock(returncode=0, stdout="t", stderr=""),
             MagicMock(returncode=0, stdout="ok", stderr=""),
             MagicMock(returncode=0, stdout="ok", stderr=""),
         ]
         from dxpy.nextflow.collect_images import _ecr_docker_login
         host, region = "123.dkr.ecr.us-east-1.amazonaws.com", "us-east-1"
         self.assertTrue(_ecr_docker_login(host, region))
-        self.assertEqual(mock_run.call_count, 3)
+        self.assertEqual(mock_run.call_count, 2)
         self.assertTrue(_ecr_docker_login(host, region))
-        self.assertEqual(mock_run.call_count, 3)
+        # No extra calls on cache hit
+        self.assertEqual(mock_run.call_count, 2)
+        mock_get_pw.assert_called_once()  # only called once despite two _ecr_docker_login calls
 
 
 class TestEnsureEcrLoginForImage(unittest.TestCase):
