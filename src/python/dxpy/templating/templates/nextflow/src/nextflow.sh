@@ -255,14 +255,14 @@ nf_task_entry() {
     dx-jobutil-report-error "AWS workdir login failed in task subjob; check dnanexus.iamRoleArnToAssume / jobTokenAudience."
     exit 1
   fi
-  # Symmetric with the head job: ECR auth setup failure is fatal when ECR is
-  # configured. Without this the task would later fall into the docker-pull
-  # retry loop and fail with an opaque registry-auth error several minutes
-  # in, generating cost and confusing logs across N parallel tasks.
-  if ! ecr_aws_login; then
-    dx-jobutil-report-error "AWS ECR login failed in task subjob; check dnanexus.ecr* config and the ECR role's trust policy."
-    exit 1
-  fi
+  # ECR auth is best-effort: it is only needed by tasks that pull an image from
+  # a private ECR registry. A task that uses a pre-cached image (loaded from
+  # DNAnexus storage) needs no ECR access, so a failure here must NOT kill it —
+  # that would break --cache-docker pipelines whose registry access was later
+  # revoked. When ECR auth is genuinely required, the failure still surfaces at
+  # the docker-pull step: nxf_docker_pull returns the non-retriable exit code 2,
+  # so the task fails fast (no multi-minute retry loop) with a clear error.
+  ecr_aws_login || echo "WARNING: ECR auth setup did not complete. Pre-cached images are unaffected; any runtime pull from a private ECR registry will fail." >&2
   refresh_web_identity_token_loop & TOKEN_REFRESH_PID=$!
   # capture the exit code
   trap nf_task_exit EXIT
