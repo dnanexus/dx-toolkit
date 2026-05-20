@@ -132,10 +132,11 @@ class DockerImageRef(ImageRef):
             host, _ = _extract_ecr_host_and_region(full_image_ref)
             err_exit(
                 f"ECR authentication failed for image {full_image_ref} "
-                f"(host {host}). Verify the importer's [ecr] AWS profile is "
-                "configured (dnanexus.ecrRoleArnToAssume + ecrJobTokenAudience "
-                "in nextflow.config) and the role grants ecr:GetAuthorizationToken "
-                "+ ecr:BatchGetImage on this repository."
+                f"(host {host}). Build-time ECR access is supplied via the "
+                "--ecr-role-arn / --ecr-job-token-audience flags to "
+                "`dx build --cache-docker`; verify they were passed and that the "
+                "role grants ecr:GetAuthorizationToken + ecr:BatchGetImage on "
+                "this repository."
             )
         docker_pull_cmd = f"sudo docker pull {full_image_ref}"
         docker_save_cmd = f"sudo docker save {full_image_ref} | gzip > {file_name}"
