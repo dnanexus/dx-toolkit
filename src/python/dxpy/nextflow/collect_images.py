@@ -63,6 +63,95 @@ def _is_floating_ecr_tag(image_ref):
     tag = name_part.split(":")[-1] if ":" in name_part else ""
     return tag.lower() in _FLOATING_TAGS
 
+
+# Pattern that matches `process.container = '<ref>'` or `= "<ref>"`.
+# Best-effort — does not evaluate Groovy expressions or multi-line strings.
+_CONTAINER_ASSIGN_RE = re.compile(
+    r'process\.container\s*=\s*[\'"]([^\'"]+)[\'"]'
+)
+
+
+def _extract_brace_block(text, open_brace_offset):
+    """Return the substring between the outermost ``{`` … ``}`` starting at
+    *open_brace_offset* (which must point at the ``{``), or ``None`` when
+    the braces are unbalanced.  The returned string excludes the outer braces.
+    """
+    depth = 0
+    for i in range(open_brace_offset, len(text)):
+        if text[i] == '{':
+            depth += 1
+        elif text[i] == '}':
+            depth -= 1
+            if depth == 0:
+                return text[open_brace_offset + 1:i]
+    return None
+
+
+def scan_ecr_floating_tags_in_config(src_dir, profile=None):
+    """Scan the local ``nextflow.config`` for ECR images with floating tags.
+
+    Used as a local preflight in ``preflight_validate_for_cache_docker`` so
+    the floating-tag guard can fire *before* the pipeline source is uploaded
+    (preventing orphaned ``.nf_source/`` directories in the destination
+    project).  Uses the same config-reading approach as ``collect_docker_images``
+    so behaviour is consistent between the local preflight and the in-NPI check.
+
+    Only checks containers that are active for the given *profile*:
+    * If *profile* is given, looks for a profile-specific ``process.container``
+      override first; falls back to the top-level value when not found.
+    * Without a *profile*, checks the top-level ``process.container`` only
+      (other profile containers are not active and must not trigger a false
+      positive).
+
+    Returns a (possibly empty) list of floating-tag ECR image refs.
+    """
+    config_path = os.path.join(src_dir, "nextflow.config")
+    if not os.path.exists(config_path):
+        return []
+    try:
+        with open(config_path) as fh:
+            content = fh.read()
+    except OSError:
+        return []
+
+    # Try to find a profile-specific process.container override first.
+    if profile:
+        profiles_m = re.search(r'\bprofiles\s*\{', content)
+        if profiles_m:
+            profiles_block = _extract_brace_block(content, profiles_m.end() - 1)
+            if profiles_block is not None:
+                named_m = re.search(
+                    r'\b' + re.escape(profile) + r'\s*\{', profiles_block
+                )
+                if named_m:
+                    named_block = _extract_brace_block(
+                        profiles_block, named_m.end() - 1
+                    )
+                    if named_block is not None:
+                        hits = _CONTAINER_ASSIGN_RE.findall(named_block)
+                        if hits:
+                            # Profile overrides the container — check only that.
+                            return [h for h in hits if _is_floating_ecr_tag(h)]
+
+    # No profile override found — check top-level process.container only.
+    # Strip the profiles block entirely to avoid false positives from other
+    # profiles' containers that are not active in the current build.
+    profiles_m = re.search(r'\bprofiles\s*\{', content)
+    top_content = content
+    if profiles_m:
+        profiles_block_raw = _extract_brace_block(content, profiles_m.end() - 1)
+        if profiles_block_raw is not None:
+            # +1 for the closing '}'
+            block_end = (
+                content.index(profiles_block_raw, profiles_m.end())
+                + len(profiles_block_raw) + 1
+            )
+            top_content = content[:profiles_m.start()] + content[block_end:]
+
+    hits = _CONTAINER_ASSIGN_RE.findall(top_content)
+    return [h for h in hits if _is_floating_ecr_tag(h)]
+
+
 # Tracks (host, region) pairs we've successfully `docker login`-ed during this
 # process. The Docker registry auth token returned by `aws ecr get-login-password`
 # is valid for ~12h; the underlying STS web-identity session credentials are
@@ -521,9 +610,15 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
         # stays null, and the pre-cached image is silently bypassed every run.
         # Caching such an image would be dead weight.  Fail fast instead.
         #
-        # Only fires when ecr_role_arn_to_assume is set (OIDC path). Public ECR
-        # images without OIDC and non-ECR images are unaffected.
-        ecr_oidc_configured = bool(os.environ.get("DX_ECR_ROLE_ARN_TO_ASSUME"))
+        # Only fires when ecrRoleArnToAssume is set in the pipeline's
+        # nextflow.config (OIDC path).  We read it directly from the config
+        # file so the guard works identically in both the local `dx build`
+        # preflight and inside the NPI job — no explicit NPI input is needed.
+        # Lazy import avoids a circular dependency (nextflow_utils imports us).
+        from dxpy.nextflow.nextflow_utils import parse_nextflow_config_dx_fields  # noqa: PLC0415
+        ecr_oidc_configured = bool(
+            parse_nextflow_config_dx_fields(resources_dir).get("ecr_role_arn_to_assume")
+        )
         if ecr_oidc_configured and _is_floating_ecr_tag(container):
             raise ImageRefFactoryError(
                 "ECR image '{}' uses a floating tag (latest or no tag) and "

@@ -14,6 +14,7 @@ from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_s
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, get_importer_object,
                                           create_readme, get_nested, get_allowed_extra_fields_mapping,
                                           resolve_version, parse_nextflow_config_dx_fields)
+from dxpy.nextflow.collect_images import scan_ecr_floating_tags_in_config
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
@@ -135,7 +136,7 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
         )
 
 
-def preflight_validate_for_cache_docker(src_dir):
+def preflight_validate_for_cache_docker(src_dir, profile=None):
     """Pre-upload validation for `dx build --nextflow --cache-docker`.
 
     Called from dx_build_app.py BEFORE the local pipeline source is uploaded
@@ -183,10 +184,32 @@ def preflight_validate_for_cache_docker(src_dir):
             )
         return
 
-    # Local-src-dir mode: parse config and run the gate against a throwaway
-    # dict. _apply_npi_input_gate raises on any unrecoverable mismatch.
+    # Local-src-dir mode: parse config and run the NPI input gate.
     config_fields = parse_nextflow_config_dx_fields(src_dir)
     _apply_npi_input_gate(config_fields, accepted, {}, sys.stderr)
+
+    # Floating-tag guard (local preflight).
+    # Read ECR config directly from nextflow.config — the same approach used
+    # inside collect_docker_images — so the guard fires consistently in both
+    # places without requiring any explicit NPI input to carry the ECR role ARN.
+    # Fires before .nf_source/ is uploaded so no orphaned directories are left
+    # in the destination project on rejection.
+    if config_fields.get("ecr_role_arn_to_assume"):
+        floating = scan_ecr_floating_tags_in_config(src_dir, profile=profile)
+        if floating:
+            raise dxpy.exceptions.DXError(
+                "ECR container(s) {floating} use a floating tag (latest or "
+                "no tag) and cannot be reliably cached. Nextaur resolves "
+                "the digest of floating-tag images via `docker manifest "
+                "inspect` on the head job, where the Docker daemon is not "
+                "authenticated to ECR — so the pre-cached image would be "
+                "silently bypassed on every run.\n"
+                "Pin the image to an explicit tag or digest "
+                "(e.g. myrepo:1.2 or myrepo@sha256:...) "
+                "before building with --cache-docker.".format(
+                    floating=sorted(floating)
+                )
+            )
 
 
 def build_pipeline_with_npi(

@@ -39,6 +39,8 @@ above _npi_input_names().
 
 import io
 import os
+import tempfile
+import textwrap
 import unittest
 from unittest import mock
 
@@ -47,6 +49,7 @@ from dxpy.nextflow.nextflow_builder import (
     _apply_npi_input_gate,
     preflight_validate_for_cache_docker,
 )
+from dxpy.nextflow.collect_images import scan_ecr_floating_tags_in_config
 from dxpy.nextflow.nextflow_utils import get_importer_name
 
 
@@ -199,6 +202,192 @@ class TestGetImporterName(unittest.TestCase):
     def test_applet_id_returned(self):
         with mock.patch.dict(os.environ, {"DX_NPI_NAME": "applet-xxxx0000xxxx0000xxxx0000"}):
             self.assertEqual(get_importer_name(), "applet-xxxx0000xxxx0000xxxx0000")
+
+
+def _write_config(directory, content):
+    """Write *content* to nextflow.config inside *directory*."""
+    path = os.path.join(directory, "nextflow.config")
+    with open(path, "w") as fh:
+        fh.write(textwrap.dedent(content))
+    return path
+
+
+_ECR_ROLE = "arn:aws:iam::123456789012:role/EcrRole"
+_ECR_IMAGE_LATEST = "123456789012.dkr.ecr.us-east-1.amazonaws.com/myrepo:latest"
+_ECR_IMAGE_PINNED = "123456789012.dkr.ecr.us-east-1.amazonaws.com/myrepo@sha256:abc123"
+_ECR_IMAGE_TAG = "123456789012.dkr.ecr.us-east-1.amazonaws.com/myrepo:v1.0.0"
+_PUBLIC_IMAGE_LATEST = "ubuntu:latest"
+
+
+class TestScanEcrFloatingTagsInConfig(unittest.TestCase):
+    """Unit tests for scan_ecr_floating_tags_in_config."""
+
+    def setUp(self):
+        self._tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self._tmpdir, ignore_errors=True)
+
+    def test_no_config_returns_empty(self):
+        result = scan_ecr_floating_tags_in_config(self._tmpdir)
+        self.assertEqual(result, [])
+
+    def test_pinned_ecr_tag_not_flagged(self):
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_PINNED}'
+        """)
+        self.assertEqual(scan_ecr_floating_tags_in_config(self._tmpdir), [])
+
+    def test_explicit_semver_ecr_tag_not_flagged(self):
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_TAG}'
+        """)
+        self.assertEqual(scan_ecr_floating_tags_in_config(self._tmpdir), [])
+
+    def test_public_image_latest_not_flagged(self):
+        """Only ECR hostnames are checked — public :latest is fine."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_PUBLIC_IMAGE_LATEST}'
+        """)
+        self.assertEqual(scan_ecr_floating_tags_in_config(self._tmpdir), [])
+
+    def test_top_level_ecr_latest_flagged(self):
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_LATEST}'
+        """)
+        self.assertEqual(
+            scan_ecr_floating_tags_in_config(self._tmpdir),
+            [_ECR_IMAGE_LATEST],
+        )
+
+    def test_profile_override_ecr_latest_flagged_when_profile_active(self):
+        """A floating tag inside the active profile block is caught."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_PINNED}'
+            profiles {{
+                bad_profile {{
+                    process.container = '{_ECR_IMAGE_LATEST}'
+                }}
+            }}
+        """)
+        result = scan_ecr_floating_tags_in_config(self._tmpdir, profile="bad_profile")
+        self.assertEqual(result, [_ECR_IMAGE_LATEST])
+
+    def test_inactive_profile_ecr_latest_not_flagged(self):
+        """A floating tag in an INACTIVE profile must not cause a false positive."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_PINNED}'
+            profiles {{
+                bad_profile {{
+                    process.container = '{_ECR_IMAGE_LATEST}'
+                }}
+            }}
+        """)
+        # No profile specified → only the top-level (pinned) container is checked.
+        self.assertEqual(scan_ecr_floating_tags_in_config(self._tmpdir), [])
+
+    def test_profile_without_container_override_falls_back_to_top_level(self):
+        """When the active profile doesn't set process.container, use the default."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_LATEST}'
+            profiles {{
+                no_container_override {{
+                    docker.enabled = true
+                }}
+            }}
+        """)
+        result = scan_ecr_floating_tags_in_config(self._tmpdir, profile="no_container_override")
+        self.assertEqual(result, [_ECR_IMAGE_LATEST])
+
+
+class TestPreflightFloatingTagGuard(unittest.TestCase):
+    """Floating-tag guard in preflight_validate_for_cache_docker."""
+
+    def setUp(self):
+        self._tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self._tmpdir, ignore_errors=True)
+
+    def _older_npi(self):
+        """Mock _npi_input_names to return a set without ECR slots."""
+        return mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value={"repository_url", "cache_docker"},
+        )
+
+    def test_ecr_floating_tag_raises_before_upload(self):
+        """Floating-tag ECR container + ecr_role_arn_to_assume in config → DXError."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_LATEST}'
+            dnanexus {{
+                ecrRoleArnToAssume = '{_ECR_ROLE}'
+            }}
+        """)
+        with self._older_npi():
+            with self.assertRaises(dxpy.exceptions.DXError) as cm:
+                preflight_validate_for_cache_docker(src_dir=self._tmpdir)
+        msg = str(cm.exception)
+        self.assertIn("floating", msg.lower())
+        self.assertIn(_ECR_IMAGE_LATEST, msg)
+
+    def test_ecr_floating_tag_profile_raises(self):
+        """Floating tag in active profile → DXError."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_PINNED}'
+            dnanexus {{
+                ecrRoleArnToAssume = '{_ECR_ROLE}'
+            }}
+            profiles {{
+                floating {{
+                    process.container = '{_ECR_IMAGE_LATEST}'
+                }}
+            }}
+        """)
+        with self._older_npi():
+            with self.assertRaises(dxpy.exceptions.DXError) as cm:
+                preflight_validate_for_cache_docker(
+                    src_dir=self._tmpdir, profile="floating"
+                )
+        self.assertIn(_ECR_IMAGE_LATEST, str(cm.exception))
+
+    def test_pinned_ecr_container_passes(self):
+        """Digest-pinned ECR container → no error."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_PINNED}'
+            dnanexus {{
+                ecrRoleArnToAssume = '{_ECR_ROLE}'
+            }}
+        """)
+        with self._older_npi():
+            preflight_validate_for_cache_docker(src_dir=self._tmpdir)  # must not raise
+
+    def test_no_ecr_role_floating_tag_passes(self):
+        """Floating ECR container but no ecr_role_arn_to_assume → guard does not fire."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_LATEST}'
+        """)
+        with self._older_npi():
+            preflight_validate_for_cache_docker(src_dir=self._tmpdir)  # must not raise
+
+    def test_inactive_profile_floating_tag_does_not_raise(self):
+        """Floating tag in a profile that is NOT active → no false positive."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_PINNED}'
+            dnanexus {{
+                ecrRoleArnToAssume = '{_ECR_ROLE}'
+            }}
+            profiles {{
+                floating {{
+                    process.container = '{_ECR_IMAGE_LATEST}'
+                }}
+            }}
+        """)
+        with self._older_npi():
+            # No profile passed → default container (pinned) is active.
+            preflight_validate_for_cache_docker(src_dir=self._tmpdir)  # must not raise
 
 
 if __name__ == "__main__":
