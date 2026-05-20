@@ -172,10 +172,40 @@ def preflight_validate_for_cache_docker(src_dir, profile=None, ecr_role_arn=None
         )
 
     if ecr_role_arn:
+        # Floating-tag guard: only applicable to local src_dir mode (no floating
+        # tags in --repository <url> mode since there is no local config to scan).
+        # Runs BEFORE the ECR slot check so user config errors are surfaced first,
+        # regardless of whether the deployed NPI has been upgraded to declare ECR
+        # input slots.  A floating-tag rejection is always a user error that must
+        # be fixed before retrying; failing early here also prevents an orphaned
+        # .nf_source/ upload on a guard rejection.
+        #
+        # NOT driven by nextflow.config — the runtime ECR config (ecrRoleArnToAssume
+        # in nextflow.config) is irrelevant here; it drives runtime auth, not
+        # this build-time caching step.
+        if src_dir:
+            floating = scan_ecr_floating_tags_in_config(src_dir, profile=profile)
+            if floating:
+                raise dxpy.exceptions.DXError(
+                    "ECR container(s) {floating} use a floating tag (latest or "
+                    "no tag) and cannot be reliably cached. Nextaur resolves "
+                    "the digest of floating-tag images via `docker manifest "
+                    "inspect` on the head job, where the Docker daemon is not "
+                    "authenticated to ECR — so the pre-cached image would be "
+                    "silently bypassed on every run.\n"
+                    "Pin the image to an explicit tag or digest "
+                    "(e.g. myrepo:1.2 or myrepo@sha256:...) "
+                    "before building with --cache-docker.".format(
+                        floating=sorted(floating)
+                    )
+                )
+
         # Fail fast if the deployed NPI does not declare ECR input slots.
         # Without these slots, the NPI job will not receive the role ARN and
         # will fall back to anonymous docker pulls, failing opaquely several
-        # minutes into the build job.
+        # minutes into the build job.  The floating-tag guard runs first so
+        # user config errors are surfaced before this infrastructure check.
+        # This check applies to both src_dir and --repository <url> modes.
         missing = sorted(_ECR_SPECIFIC_INPUTS - set(accepted))
         if missing:
             raise dxpy.exceptions.DXError(
@@ -187,34 +217,13 @@ def preflight_validate_for_cache_docker(src_dir, profile=None, ecr_role_arn=None
             )
 
     if src_dir is None:
-        # --repository <url> mode: no local config to scan.
+        # --repository <url> mode: no local config to scan beyond what is above.
         return
 
-    # Local-src-dir mode: run the NPI gate for non-ECR workdir config fields.
-    config_fields = parse_nextflow_config_dx_fields(src_dir)
-    _apply_npi_input_gate(config_fields, accepted, {}, sys.stderr)
-
-    # Floating-tag guard (local preflight, fires before .nf_source/ upload).
-    # Only relevant when build-time ECR auth is requested via --ecr-role-arn.
-    # NOT driven by nextflow.config — the runtime ECR config (ecrRoleArnToAssume
-    # in nextflow.config) is irrelevant here; it drives runtime auth, not
-    # this build-time caching step.
-    if ecr_role_arn and src_dir:
-        floating = scan_ecr_floating_tags_in_config(src_dir, profile=profile)
-        if floating:
-            raise dxpy.exceptions.DXError(
-                "ECR container(s) {floating} use a floating tag (latest or "
-                "no tag) and cannot be reliably cached. Nextaur resolves "
-                "the digest of floating-tag images via `docker manifest "
-                "inspect` on the head job, where the Docker daemon is not "
-                "authenticated to ECR — so the pre-cached image would be "
-                "silently bypassed on every run.\n"
-                "Pin the image to an explicit tag or digest "
-                "(e.g. myrepo:1.2 or myrepo@sha256:...) "
-                "before building with --cache-docker.".format(
-                    floating=sorted(floating)
-                )
-            )
+    # NOTE: workdir config forwarding (_apply_npi_input_gate for iam_role_arn_to_assume etc.)
+    # is intentionally NOT run here.  The preflight is concerned only with catching errors
+    # before the .nf_source/ upload; workdir field forwarding happens in build_pipeline_with_npi
+    # where it actually populates the NPI job's input_hash.
 
 
 def build_pipeline_with_npi(

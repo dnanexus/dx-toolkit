@@ -483,6 +483,34 @@ class TestPreflightFloatingTagGuard(unittest.TestCase):
                 ecr_role_arn=_ECR_ROLE,
             )  # must not raise
 
+    def test_floating_tag_raises_before_ecr_slot_check_when_npi_lacks_ecr_inputs(self):
+        """Floating-tag guard fires even when the deployed NPI does not yet
+        declare ECR input slots.
+
+        Ordering guarantee: the guard must reject user config errors (floating
+        tags) BEFORE the infrastructure check (NPI slot availability).  This
+        allows ``test_cache_docker_floating_tag_rejected`` to pass on environments
+        where the NPI has not yet been upgraded to support ECR inputs.
+        """
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_LATEST}'
+        """)
+        # NPI that does NOT declare ECR slots (simulates old NPI version).
+        with mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value={"repository_url", "cache_docker"},  # no ECR slots
+        ):
+            with self.assertRaises(dxpy.exceptions.DXError) as cm:
+                preflight_validate_for_cache_docker(
+                    src_dir=self._tmpdir,
+                    ecr_role_arn=_ECR_ROLE,
+                )
+        # The error must be the floating-tag rejection, NOT the ECR-slot-missing error.
+        msg = str(cm.exception)
+        self.assertIn("floating", msg.lower(), "Expected floating-tag error, got: " + msg)
+        self.assertNotIn("does not declare", msg,
+                         "Got ECR-slot-missing error instead of floating-tag error: " + msg)
+
 
 if __name__ == "__main__":
     unittest.main()
