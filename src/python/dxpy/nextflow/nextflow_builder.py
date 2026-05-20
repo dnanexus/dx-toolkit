@@ -11,10 +11,9 @@ import tempfile
 from functools import partial
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
-from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, get_importer_object,
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_object,
                                           create_readme, get_nested, get_allowed_extra_fields_mapping,
                                           resolve_version)
-from dxpy.nextflow.collect_images import scan_ecr_floating_tags_in_config
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
 from dxpy.utils.resolver import resolve_existing_path
@@ -35,134 +34,6 @@ def _npi_supports_version_selection():
         return False
 
 
-# TODO(APPS-3915): Once the NPI version that declares ecr_role_arn_to_assume,
-# ecr_job_token_audience, and ecr_job_token_subject_claims is the minimum deployed
-# version, remove _npi_input_names(), _ECR_SPECIFIC_INPUTS,
-# preflight_validate_for_cache_docker(), and the ECR slot check.
-# At that point build_pipeline_with_npi() forwards the three ECR auth fields
-# unconditionally without needing to check the NPI input spec first.
-# Also delete src/python/test/test_nextflow_builder_npi_gate.py.
-def _npi_input_names():
-    """Return the set of input names the deployed NPI app accepts.
-
-    Used to gate forwarding of new optional input fields (ECR auth fields)
-    so an older NPI that does not yet declare them
-    will not reject the launch with InvalidInput. Returns ``None`` if the
-    deployed app cannot be described, signalling the caller to skip
-    forwarding any input that isn't part of the historically-stable set.
-    """
-    try:
-        npi = get_importer_object()
-        desc = npi.describe(fields={"inputSpec": True})
-        return {inp["name"] for inp in desc.get("inputSpec", [])}
-    except (dxpy.exceptions.ResourceNotFound, dxpy.exceptions.DXAPIError) as e:
-        logging.debug("Could not describe NPI input spec: %s", e)
-        return None
-
-
-# Names of the ECR-specific input fields declared by the NPI.  Used by the
-# preflight ECR slot check to fail fast when the deployed NPI predates ECR support.
-_ECR_SPECIFIC_INPUTS = frozenset({
-    "ecr_role_arn_to_assume",
-    "ecr_job_token_audience",
-    "ecr_job_token_subject_claims",
-})
-
-
-def preflight_validate_for_cache_docker(src_dir, profile=None, ecr_role_arn=None):
-    """Pre-upload validation for `dx build --nextflow --cache-docker`.
-
-    Called from dx_build_app.py BEFORE the local pipeline source is uploaded
-    to the user's project. Any DXError raised here aborts the build cleanly
-    without leaving an orphaned `.nf_source/` upload behind that the user
-    would otherwise have to `dx rm -r` manually before retrying.
-
-    Parameters
-    ----------
-    src_dir : str or None
-        Path to the local Nextflow pipeline directory, or None when building
-        from a remote Git repository (``--repository <url>`` mode).
-    profile : str or None
-        Active Nextflow profile (``--profile``). Used by the floating-tag
-        scanner to check profile-specific container overrides.
-    ecr_role_arn : str or None
-        IAM role ARN passed via ``--ecr-role-arn``.  When set, signals that
-        the NPI job must authenticate to ECR to pull images, which triggers:
-          1. A check that the deployed NPI declares the ECR input slots.
-          2. A floating-tag guard — ECR images with ``:latest`` or no tag
-             cannot be reliably cached (see note in collect_images.py).
-
-        NOTE: This is the build-time-only ECR role.  It is distinct from
-        ``dnanexus.ecrRoleArnToAssume`` in nextflow.config, which drives
-        runtime ECR auth on every task subjob.  Keeping the two roles
-        separate means the cached applet has zero ECR dependency at runtime,
-        even if the private registry later revokes access.
-
-    Additional tightening over the in-build gate:
-      - When the deployed NPI cannot be described, raise unconditionally.
-      - When ``ecr_role_arn`` is provided, require the NPI to declare the
-        ECR input slots — otherwise the importer job will silently fall back
-        to anonymous pulls and fail at the docker-pull step.
-    """
-    accepted = _npi_input_names()
-    if accepted is None:
-        raise dxpy.exceptions.DXError(
-            "Could not describe the deployed Nextflow Pipeline Importer. "
-            "Refusing to launch a --cache-docker build before verifying "
-            "the importer accepts the expected input fields. Verify the "
-            "importer app is deployed and you have describe permission."
-        )
-
-    if ecr_role_arn:
-        # Floating-tag guard: only applicable to local src_dir mode (no floating
-        # tags in --repository <url> mode since there is no local config to scan).
-        # Runs BEFORE the ECR slot check so user config errors are surfaced first,
-        # regardless of whether the deployed NPI has been upgraded to declare ECR
-        # input slots.  A floating-tag rejection is always a user error that must
-        # be fixed before retrying; failing early here also prevents an orphaned
-        # .nf_source/ upload on a guard rejection.
-        #
-        # NOT driven by nextflow.config — the runtime ECR config (ecrRoleArnToAssume
-        # in nextflow.config) is irrelevant here; it drives runtime auth, not
-        # this build-time caching step.
-        if src_dir:
-            floating = scan_ecr_floating_tags_in_config(src_dir, profile=profile)
-            if floating:
-                raise dxpy.exceptions.DXError(
-                    "ECR container(s) {floating} use a floating tag (latest or "
-                    "no tag) and cannot be reliably cached. Nextaur resolves "
-                    "the digest of floating-tag images via `docker manifest "
-                    "inspect` on the head job, where the Docker daemon is not "
-                    "authenticated to ECR — so the pre-cached image would be "
-                    "silently bypassed on every run.\n"
-                    "Pin the image to an explicit tag or digest "
-                    "(e.g. myrepo:1.2 or myrepo@sha256:...) "
-                    "before building with --cache-docker.".format(
-                        floating=sorted(floating)
-                    )
-                )
-
-        # Fail fast if the deployed NPI does not declare ECR input slots.
-        # Without these slots, the NPI job will not receive the role ARN and
-        # will fall back to anonymous docker pulls, failing opaquely several
-        # minutes into the build job.  The floating-tag guard runs first so
-        # user config errors are surfaced before this infrastructure check.
-        # This check applies to both src_dir and --repository <url> modes.
-        missing = sorted(_ECR_SPECIFIC_INPUTS - set(accepted))
-        if missing:
-            raise dxpy.exceptions.DXError(
-                "The deployed Nextflow Pipeline Importer does not declare "
-                "input(s) {missing}. --cache-docker with --ecr-role-arn "
-                "requires an importer that supports private ECR registries. "
-                "Upgrade the importer app or set DX_NPI_NAME to a build "
-                "that declares these inputs.".format(missing=missing)
-            )
-
-    if src_dir is None:
-        # --repository <url> mode: no local config to scan beyond what is above.
-        return
-
-
 def build_pipeline_with_npi(
         repository=None,
         tag=None,
@@ -175,7 +46,6 @@ def build_pipeline_with_npi(
         destination=None,
         extra_args=None,
         nextflow_version=None,
-        src_dir=None,
         ecr_role_arn=None,
         ecr_job_token_audience=None,
         ecr_job_token_subject_claims=None,
