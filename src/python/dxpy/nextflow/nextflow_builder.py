@@ -72,24 +72,26 @@ _ECR_SPECIFIC_INPUTS = frozenset({
 
 
 def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
-    """Apply the deployed-NPI input-spec gate to the parsed config fields.
+    """Apply the deployed-NPI input-spec gate to the parsed *non-ECR* config fields.
 
     Mutates `input_hash` in place with the fields the deployed NPI accepts.
 
+    NOTE(APPS-3915 / Option 2): ECR-specific fields (ecr_role_arn_to_assume,
+    ecr_job_token_audience, ecr_job_token_subject_claims) are NO LONGER read
+    from nextflow.config for forwarding to the NPI.  They are passed as
+    explicit CLI flags (--ecr-role-arn / --ecr-job-token-*) and handled
+    separately in build_pipeline_with_npi().  This ensures the build-time ECR
+    role is never bundled into the resulting applet, so runtime executions
+    have zero ECR dependency after the images are cached.
+
+    This function now handles only the non-ECR workdir config fields
+    (iam_role_arn_to_assume, job_token_audience, job_token_subject_claims).
+
     Behaviour summary:
       - `accepted_inputs is None` (NPI describe failed) -> warn, skip
-        forwarding of all dnanexus.* fields; build continues.
-      - Any ``ecr_*`` field in `config_fields` is dropped (NPI without the
-        slot) -> stderr warning, build continues.  The ECR auth values are
-        still present in the bundled nextflow.config and will be read at
-        runtime by the nextaur plugin (DxOptions.groovy).  The dropped
-        fields are only advisory forwards to the NPI; they are not required
-        for the runtime ECR auth path to work.
-        NOTE(APPS-3915): the ``--cache-docker`` path is a separate concern:
-        the NPI must pull from ECR during the build job itself.
-        ``preflight_validate_for_cache_docker`` enforces that separately
-        and still raises when the NPI lacks the ECR slots.
-      - Other fields dropped -> stderr warning, build continues.
+        forwarding; build continues (non-fatal for workdir-only fields).
+      - Any non-ECR field dropped (NPI without the slot) -> stderr warning,
+        build continues.
     """
     if not config_fields:
         return
@@ -97,46 +99,35 @@ def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
     if accepted_inputs is None:
         stderr.write(
             "WARNING: Could not describe the deployed Nextflow Pipeline "
-            "Importer; cannot determine whether private ECR auth fields are "
+            "Importer; cannot determine which nextflow.config fields are "
             "accepted. Skipping forwarding of nextflow.config dnanexus.* "
-            "fields. ECR auth will still be attempted at runtime via the "
-            "bundled nextflow.config.\n"
+            "fields.\n"
         )
         return
 
-    dropped_ecr = []
-    dropped_other = []
+    dropped = []
     for npi_key, value in config_fields.items():
         if not value:
+            continue
+        # ECR fields are handled separately via explicit CLI flags — never
+        # forward them from config so they are not baked into the applet.
+        if npi_key in _ECR_SPECIFIC_INPUTS:
             continue
         if npi_key in accepted_inputs:
             input_hash[npi_key] = value
         else:
-            if npi_key in _ECR_SPECIFIC_INPUTS:
-                dropped_ecr.append(npi_key)
-            else:
-                dropped_other.append(npi_key)
+            dropped.append(npi_key)
 
-    if dropped_ecr:
-        stderr.write(
-            "WARNING: The deployed Nextflow Pipeline Importer does not declare "
-            "input(s) {dropped}; these fields will not be forwarded to the "
-            "importer job. ECR auth will still be attempted at runtime via "
-            "the bundled nextflow.config. To test cache-docker with a private "
-            "ECR registry, use an NPI build that declares these inputs "
-            "(set DX_NPI_NAME to a custom importer app name).\n"
-            .format(dropped=sorted(dropped_ecr))
-        )
-    if dropped_other:
+    if dropped:
         stderr.write(
             "WARNING: The deployed Nextflow Pipeline Importer does not declare "
             "input(s) {dropped} from your nextflow.config; the importer job "
             "will not see these values and may fall back to defaults or fail.\n"
-            .format(dropped=sorted(dropped_other))
+            .format(dropped=sorted(dropped))
         )
 
 
-def preflight_validate_for_cache_docker(src_dir, profile=None):
+def preflight_validate_for_cache_docker(src_dir, profile=None, ecr_role_arn=None):
     """Pre-upload validation for `dx build --nextflow --cache-docker`.
 
     Called from dx_build_app.py BEFORE the local pipeline source is uploaded
@@ -144,19 +135,32 @@ def preflight_validate_for_cache_docker(src_dir, profile=None):
     without leaving an orphaned `.nf_source/` upload behind that the user
     would otherwise have to `dx rm -r` manually before retrying.
 
-    Runs the same `_apply_npi_input_gate` logic as `build_pipeline_with_npi`
-    but against a throwaway dict so nothing is forwarded twice.
+    Parameters
+    ----------
+    src_dir : str or None
+        Path to the local Nextflow pipeline directory, or None when building
+        from a remote Git repository (``--repository <url>`` mode).
+    profile : str or None
+        Active Nextflow profile (``--profile``). Used by the floating-tag
+        scanner to check profile-specific container overrides.
+    ecr_role_arn : str or None
+        IAM role ARN passed via ``--ecr-role-arn``.  When set, signals that
+        the NPI job must authenticate to ECR to pull images, which triggers:
+          1. A check that the deployed NPI declares the ECR input slots.
+          2. A floating-tag guard — ECR images with ``:latest`` or no tag
+             cannot be reliably cached (see note in collect_images.py).
+
+        NOTE: This is the build-time-only ECR role.  It is distinct from
+        ``dnanexus.ecrRoleArnToAssume`` in nextflow.config, which drives
+        runtime ECR auth on every task subjob.  Keeping the two roles
+        separate means the cached applet has zero ECR dependency at runtime,
+        even if the private registry later revokes access.
 
     Additional tightening over the in-build gate:
-      - When the deployed NPI cannot be described, raise unconditionally
-        (an unrenderable input spec is suspicious enough to refuse a
-        --cache-docker build, regardless of whether ECR intent was
-        detected locally).
-      - When `src_dir is None` (i.e. ``--repository <url>`` mode), the
-        local config is not visible. Verify that the deployed NPI declares
-        the ECR input slots so a remote-config pipeline using ECR will not
-        fail opaquely. If the slots are missing, raise so the user knows
-        upfront rather than discovering it mid-job.
+      - When the deployed NPI cannot be described, raise unconditionally.
+      - When ``ecr_role_arn`` is provided, require the NPI to declare the
+        ECR input slots — otherwise the importer job will silently fall back
+        to anonymous pulls and fail at the docker-pull step.
     """
     accepted = _npi_input_names()
     if accepted is None:
@@ -167,34 +171,35 @@ def preflight_validate_for_cache_docker(src_dir, profile=None):
             "importer app is deployed and you have describe permission."
         )
 
-    if src_dir is None:
-        # --repository <url>: nextflow.config is in the cloned remote repo
-        # which only the importer can read. We cannot detect ECR intent
-        # here, but we can refuse to launch against an importer that
-        # lacks the ECR input slots — otherwise a repo with
-        # `dnanexus.ecrRoleArnToAssume` would silently bypass ECR auth.
+    if ecr_role_arn:
+        # Fail fast if the deployed NPI does not declare ECR input slots.
+        # Without these slots, the NPI job will not receive the role ARN and
+        # will fall back to anonymous docker pulls, failing opaquely several
+        # minutes into the build job.
         missing = sorted(_ECR_SPECIFIC_INPUTS - set(accepted))
         if missing:
             raise dxpy.exceptions.DXError(
                 "The deployed Nextflow Pipeline Importer does not declare "
-                "input(s) {missing}; --cache-docker against a remote "
-                "repository that uses private ECR would fail at the "
-                "docker-pull step. Upgrade the importer app to a version "
-                "that supports private ECR registries.".format(missing=missing)
+                "input(s) {missing}. --cache-docker with --ecr-role-arn "
+                "requires an importer that supports private ECR registries. "
+                "Upgrade the importer app or set DX_NPI_NAME to a build "
+                "that declares these inputs.".format(missing=missing)
             )
+
+    if src_dir is None:
+        # --repository <url> mode: no local config to scan.
         return
 
-    # Local-src-dir mode: parse config and run the NPI input gate.
+    # Local-src-dir mode: run the NPI gate for non-ECR workdir config fields.
     config_fields = parse_nextflow_config_dx_fields(src_dir)
     _apply_npi_input_gate(config_fields, accepted, {}, sys.stderr)
 
-    # Floating-tag guard (local preflight).
-    # Read ECR config directly from nextflow.config — the same approach used
-    # inside collect_docker_images — so the guard fires consistently in both
-    # places without requiring any explicit NPI input to carry the ECR role ARN.
-    # Fires before .nf_source/ is uploaded so no orphaned directories are left
-    # in the destination project on rejection.
-    if config_fields.get("ecr_role_arn_to_assume"):
+    # Floating-tag guard (local preflight, fires before .nf_source/ upload).
+    # Only relevant when build-time ECR auth is requested via --ecr-role-arn.
+    # NOT driven by nextflow.config — the runtime ECR config (ecrRoleArnToAssume
+    # in nextflow.config) is irrelevant here; it drives runtime auth, not
+    # this build-time caching step.
+    if ecr_role_arn and src_dir:
         floating = scan_ecr_floating_tags_in_config(src_dir, profile=profile)
         if floating:
             raise dxpy.exceptions.DXError(
@@ -225,6 +230,9 @@ def build_pipeline_with_npi(
         extra_args=None,
         nextflow_version=None,
         src_dir=None,
+        ecr_role_arn=None,
+        ecr_job_token_audience=None,
+        ecr_job_token_subject_claims=None,
 ):
     """
     :param repository: URL to a Git repository
@@ -241,6 +249,14 @@ def build_pipeline_with_npi(
     :type profile: string
     :param brief: Level of verbosity
     :type brief: boolean
+    :param ecr_role_arn: IAM role ARN for build-time ECR auth (--ecr-role-arn CLI flag).
+        Forwarded as an explicit NPI input.  NOT read from nextflow.config —
+        see design note in dx.py and ECR_Private_Registry.md.
+    :type ecr_role_arn: str or None
+    :param ecr_job_token_audience: OIDC audience for the build-time ECR role.
+    :type ecr_job_token_audience: str or None
+    :param ecr_job_token_subject_claims: OIDC subject claims for the build-time ECR role.
+    :type ecr_job_token_subject_claims: str or None
     :returns: ID of the created applet
 
     Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
@@ -276,20 +292,25 @@ def build_pipeline_with_npi(
         if raw_value:
             input_hash[key] = transform(raw_value) if transform else raw_value
 
-    # Forward DNAnexus / AWS / ECR config from the user's local nextflow.config to NPI.
-    # The importer job uses these fields to mint a JIT and `docker login` to ECR before
-    # `--cache-docker` pulls private images. Only relevant for local `--src-dir` builds:
-    # for `--repository <url>` builds the local working directory has no nextflow.config
-    # and NPI must read it from the cloned repo itself. `parse_nextflow_config_dx_fields`
-    # silently returns `{}` when the file is absent, so this is a no-op in that case.
-    #
-    # Backward compatibility: the platform's applet/run API rejects unknown input
-    # field names with InvalidInput, so forwarding new fields to an older NPI that
-    # does not declare them would break every build. Gate forwarding on a describe
-    # of the deployed NPI's input spec — drop unknown fields with a clear warning
-    # so users on older NPI versions still get a working (non-ECR) build.
+    # Forward non-ECR DNAnexus / AWS workdir config from local nextflow.config to NPI.
+    # (e.g. iam_role_arn_to_assume, job_token_audience, job_token_subject_claims)
+    # ECR-specific fields are intentionally excluded from config forwarding — they are
+    # passed as explicit CLI args (--ecr-role-arn etc.) and handled below.
+    # See design note in dx.py and ECR_Private_Registry.md for why.
     config_fields = parse_nextflow_config_dx_fields(src_dir)
     _apply_npi_input_gate(config_fields, _npi_input_names(), input_hash, sys.stderr)
+
+    # Forward build-time ECR credentials from explicit CLI flags.
+    # These are NEVER read from nextflow.config so they are never bundled
+    # into the resulting applet. After images are cached, runtime executions
+    # pull from DNAnexus storage with zero ECR dependency.
+    for ecr_key, ecr_val in [
+        ("ecr_role_arn_to_assume", ecr_role_arn),
+        ("ecr_job_token_audience", ecr_job_token_audience),
+        ("ecr_job_token_subject_claims", ecr_job_token_subject_claims),
+    ]:
+        if ecr_val:
+            input_hash[ecr_key] = ecr_val
 
     # Auto-detect NPI capability for version selection
     if nextflow_version is not None:

@@ -610,15 +610,16 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
         # stays null, and the pre-cached image is silently bypassed every run.
         # Caching such an image would be dead weight.  Fail fast instead.
         #
-        # Only fires when ecrRoleArnToAssume is set in the pipeline's
-        # nextflow.config (OIDC path).  We read it directly from the config
-        # file so the guard works identically in both the local `dx build`
-        # preflight and inside the NPI job — no explicit NPI input is needed.
-        # Lazy import avoids a circular dependency (nextflow_utils imports us).
-        from dxpy.nextflow.nextflow_utils import parse_nextflow_config_dx_fields  # noqa: PLC0415
-        ecr_oidc_configured = bool(
-            parse_nextflow_config_dx_fields(resources_dir).get("ecr_role_arn_to_assume")
-        )
+        # Inside the NPI job, the authoritative signal that build-time ECR auth
+        # is configured is the `ecr_role_arn_to_assume` NPI input, which npi.sh
+        # exports as an environment variable before invoking this code.
+        # We read it from the env var (not from nextflow.config) because the
+        # build-time ECR role is supplied via --ecr-role-arn CLI flag — it is
+        # intentionally NOT stored in nextflow.config so it is never bundled
+        # into the resulting applet.  Reading from config here would cause the
+        # guard to silently miss the case where the user passes --ecr-role-arn
+        # without putting any ECR config in nextflow.config.
+        ecr_oidc_configured = bool(os.environ.get("ecr_role_arn_to_assume"))
         if ecr_oidc_configured and _is_floating_ecr_tag(container):
             raise ImageRefFactoryError(
                 "ECR image '{}' uses a floating tag (latest or no tag) and "

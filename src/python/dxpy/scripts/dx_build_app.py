@@ -1158,7 +1158,11 @@ def _build_app(args, extra_args):
             # .nf_source/<basename>/ upload orphaned in the destination
             # project, forcing a manual `dx rm -r` before retrying.
             if args.cache_docker:
-                preflight_validate_for_cache_docker(src_dir=args.src_dir, profile=args.profile)
+                preflight_validate_for_cache_docker(
+                    src_dir=args.src_dir,
+                    profile=args.profile,
+                    ecr_role_arn=getattr(args, "ecr_role_arn", None),
+                )
             nf_scr = args.repository
             if (not args.repository) and args.src_dir:
                 logger.info(
@@ -1209,8 +1213,14 @@ def _build_app(args, extra_args):
                 extra_args=extra_args,
                 nextflow_version=args.nextflow_version,
                 # Pass src_dir so NPI input forwarding can read local nextflow.config
-                # for ECR / S3-workdir auth fields. None for `--repository <url>` builds.
+                # for workdir auth fields (iam_role_arn_to_assume etc.).
+                # None for `--repository <url>` builds.
                 src_dir=args.src_dir,
+                # Build-time-only ECR credentials (--ecr-role-arn / --ecr-job-token-*).
+                # NOT read from nextflow.config — see note in nextflow_builder.py.
+                ecr_role_arn=getattr(args, "ecr_role_arn", None),
+                ecr_job_token_audience=getattr(args, "ecr_job_token_audience", None),
+                ecr_job_token_subject_claims=getattr(args, "ecr_job_token_subject_claims", None),
             )
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)

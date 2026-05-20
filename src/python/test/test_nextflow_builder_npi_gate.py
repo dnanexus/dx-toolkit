@@ -23,12 +23,16 @@
 forward to the importer and emits warnings for fields the deployed NPI
 does not declare.
 
+NOTE(APPS-3915 / Option 2): ECR-specific fields are NO LONGER forwarded via
+the config gate.  They come from explicit CLI flags (--ecr-role-arn etc.) and
+are forwarded directly.  This file now tests only the non-ECR workdir config
+path through `_apply_npi_input_gate`, plus the preflight ECR checks driven by
+the explicit ecr_role_arn parameter.
+
 Behaviour the tests pin down:
   - Describe failure (any intent) -> warning, nothing forwarded, build continues.
-  - All fields accepted -> all forwarded, no warning.
-  - ECR-specific drop (NPI lacks slots) -> warning, build continues.  ECR
-    auth still works at runtime via the bundled nextflow.config / nextaur.
-    Use DX_NPI_NAME to point at a custom importer for cache-docker testing.
+  - All (non-ECR) fields accepted -> all forwarded, no warning.
+  - ECR fields in config -> silently skipped (not forwarded — by design).
   - Non-ECR fields dropped -> generic warning only.
 
 TODO(APPS-3915): Delete this entire file once the NPI version that declares
@@ -96,57 +100,82 @@ class TestApplyNpiInputGate(unittest.TestCase):
 
     # --- happy paths ---
 
-    def test_all_accepted_fields_forwarded_no_warning(self):
+    def test_non_ecr_fields_forwarded_no_warning(self):
+        """Non-ECR workdir fields accepted by NPI are forwarded without warning."""
         cfg = {
-            "ecr_role_arn_to_assume": "arn:role/ecr",
-            "ecr_job_token_audience": "aud",
-            "ecr_job_token_subject_claims": "sc",
+            "iam_role_arn_to_assume": "arn:role/wd",
+            "job_token_audience": "aud",
+            "job_token_subject_claims": "sc",
         }
         accepted = set(cfg.keys()) | {"repository_url"}
         self._run(cfg, accepted)
         self.assertEqual(self.input_hash, cfg)
         self.assertEqual(self.stderr.getvalue(), "")
 
-    def test_empty_value_not_forwarded(self):
-        """Falsy values are skipped (avoids forwarding empty-string defaults)."""
-        cfg = {"ecr_role_arn_to_assume": "", "ecr_job_token_audience": "aud"}
-        self._run(cfg, accepted_inputs={"ecr_role_arn_to_assume", "ecr_job_token_audience"})
-        self.assertEqual(self.input_hash, {"ecr_job_token_audience": "aud"})
+    def test_ecr_fields_in_config_silently_skipped(self):
+        """ECR-specific fields in config are silently ignored — by design.
+        Build-time ECR auth comes from --ecr-role-arn CLI flags, not config,
+        so they are never bundled into the resulting applet."""
+        cfg = {
+            "ecr_role_arn_to_assume": "arn:role/ecr",
+            "ecr_job_token_audience": "aud",
+            "ecr_job_token_subject_claims": "sc",
+        }
+        # Even if NPI declares them, they should not be forwarded from config.
+        accepted = set(cfg.keys()) | {"repository_url"}
+        self._run(cfg, accepted)
+        self.assertEqual(self.input_hash, {})
+        self.assertEqual(self.stderr.getvalue(), "")
 
-    # --- dropped-field warnings ---
-
-    def test_ecr_specific_drop_warns_and_continues(self):
-        """NPI lacks ecr_* input slots: emit a warning and continue.
-        ECR auth works at runtime via the bundled nextflow.config / nextaur.
-        Cache-docker with ECR requires a custom NPI (set DX_NPI_NAME)."""
+    def test_ecr_fields_in_config_silently_skipped_even_without_npi_slot(self):
+        """ECR config fields don't trigger a warning even when NPI lacks the slots.
+        They're intentionally excluded from the config-forwarding path."""
         cfg = {"ecr_role_arn_to_assume": "arn:role/ecr",
-               "ecr_job_token_audience": "aud",
-               "ecr_job_token_subject_claims": "sc"}
+               "ecr_job_token_audience": "aud"}
         self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
         self.assertEqual(self.input_hash, {})
-        warning = self.stderr.getvalue()
-        self.assertIn("ecr_role_arn_to_assume", warning)
-        self.assertIn("DX_NPI_NAME", warning)
+        self.assertEqual(self.stderr.getvalue(), "")  # no warning — by design
 
-    def test_mixed_drop_with_ecr_warns_and_continues(self):
-        """ECR field dropped, non-ECR field forwarded — both handled gracefully."""
+    def test_empty_value_not_forwarded(self):
+        """Falsy values are skipped (avoids forwarding empty-string defaults)."""
+        cfg = {"iam_role_arn_to_assume": "", "job_token_audience": "aud"}
+        self._run(cfg, accepted_inputs={"iam_role_arn_to_assume", "job_token_audience"})
+        self.assertEqual(self.input_hash, {"job_token_audience": "aud"})
+
+    # --- dropped-field warnings (non-ECR only) ---
+
+    def test_non_ecr_drop_warns_and_continues(self):
+        """Non-ECR field dropped by older NPI: emit a generic warning."""
+        cfg = {"iam_role_arn_to_assume": "arn:role/wd"}
+        self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
+        self.assertEqual(self.input_hash, {})
+        self.assertIn("iam_role_arn_to_assume", self.stderr.getvalue())
+
+    def test_mixed_ecr_and_non_ecr_in_config_only_non_ecr_forwarded(self):
+        """ECR fields silently skipped; non-ECR field forwarded normally."""
         cfg = {
             "ecr_role_arn_to_assume": "arn:aws:iam::123456789:role/ecr-pull",
             "iam_role_arn_to_assume": "arn:role/wd",
         }
-        self._run(cfg, accepted_inputs={"iam_role_arn_to_assume"})
+        self._run(cfg, accepted_inputs={"iam_role_arn_to_assume", "ecr_role_arn_to_assume"})
+        # Only the non-ECR field forwarded; no warning for the ECR field.
         self.assertEqual(self.input_hash, {"iam_role_arn_to_assume": "arn:role/wd"})
-        self.assertIn("ecr_role_arn_to_assume", self.stderr.getvalue())
+        self.assertEqual(self.stderr.getvalue(), "")
 
 
 class TestPreflightValidateForCacheDocker(unittest.TestCase):
-    """F9-2/F9-3/F9-4: pre-upload validation that runs before
-    `.nf_source/` upload so a fail-fast does not leave orphaned data.
+    """Pre-upload validation that runs before `.nf_source/` upload so a
+    fail-fast does not leave orphaned data.
+
+    ECR intent is now signalled via the explicit ``ecr_role_arn`` parameter
+    (from ``--ecr-role-arn`` CLI flag), NOT from nextflow.config.  Tests
+    reflect this: passing ecr_role_arn= triggers the NPI slot check and the
+    floating-tag guard; omitting it skips both regardless of what the config
+    contains.
     """
 
     def test_describe_failure_always_raises(self):
-        """F9-4: tighter than the in-build gate — describe failure on a
-        --cache-docker build always raises, regardless of ECR intent."""
+        """Describe failure on a --cache-docker build always raises."""
         with mock.patch(
             "dxpy.nextflow.nextflow_builder._npi_input_names",
             return_value=None,
@@ -155,9 +184,17 @@ class TestPreflightValidateForCacheDocker(unittest.TestCase):
                 preflight_validate_for_cache_docker(src_dir=None)
             self.assertIn("Could not describe", str(cm.exception))
 
-    def test_repository_mode_with_complete_npi_passes(self):
-        """F9-3: --repository mode + NPI declares ECR slots -> OK
-        (we cannot detect ECR intent from the remote repo's config)."""
+    def test_no_ecr_role_arg_passes_even_with_older_npi(self):
+        """When --ecr-role-arn is not passed, no ECR slot check fires.
+        Non-ECR builds succeed against older NPI."""
+        with mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value={"repository_url", "cache_docker"},
+        ):
+            preflight_validate_for_cache_docker(src_dir=None, ecr_role_arn=None)
+
+    def test_ecr_role_arg_with_complete_npi_passes(self):
+        """--ecr-role-arn + NPI declares ECR slots -> OK."""
         with mock.patch(
             "dxpy.nextflow.nextflow_builder._npi_input_names",
             return_value={
@@ -165,19 +202,39 @@ class TestPreflightValidateForCacheDocker(unittest.TestCase):
                 "ecr_job_token_subject_claims", "repository_url",
             },
         ):
-            preflight_validate_for_cache_docker(src_dir=None)
+            preflight_validate_for_cache_docker(
+                src_dir=None,
+                ecr_role_arn="arn:aws:iam::123456789:role/EcrRole",
+            )
 
-    def test_repository_mode_with_older_npi_raises(self):
-        """F9-3: --repository mode against an older NPI lacking ECR slots
-        must raise — otherwise the importer would clone a repo with
-        ecrRoleArnToAssume and silently fail at docker pull."""
+    def test_ecr_role_arg_with_older_npi_raises(self):
+        """--ecr-role-arn against an older NPI lacking ECR slots must raise
+        before upload — the importer would silently fall back to anonymous
+        pulls and fail at the docker-pull step."""
         with mock.patch(
             "dxpy.nextflow.nextflow_builder._npi_input_names",
             return_value={"repository_url", "cache_docker"},
         ):
             with self.assertRaises(dxpy.exceptions.DXError) as cm:
-                preflight_validate_for_cache_docker(src_dir=None)
+                preflight_validate_for_cache_docker(
+                    src_dir=None,
+                    ecr_role_arn="arn:aws:iam::123456789:role/EcrRole",
+                )
             self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
+
+    def test_ecr_in_config_without_cli_flag_does_not_raise(self):
+        """ecrRoleArnToAssume in nextflow.config without --ecr-role-arn flag
+        does NOT trigger the ECR slot check — runtime config is irrelevant
+        to build-time ECR auth (Option 2 design)."""
+        with mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value={"repository_url", "cache_docker"},
+        ), mock.patch(
+            "dxpy.nextflow.nextflow_builder.parse_nextflow_config_dx_fields",
+            return_value={"ecr_role_arn_to_assume": "arn:role/ecr"},
+        ):
+            # Must not raise — runtime ECR config does not drive preflight.
+            preflight_validate_for_cache_docker(src_dir="/some/dir", ecr_role_arn=None)
 
 
 class TestGetImporterName(unittest.TestCase):
@@ -302,7 +359,15 @@ class TestScanEcrFloatingTagsInConfig(unittest.TestCase):
 
 
 class TestPreflightFloatingTagGuard(unittest.TestCase):
-    """Floating-tag guard in preflight_validate_for_cache_docker."""
+    """Floating-tag guard in preflight_validate_for_cache_docker.
+
+    The guard fires when BOTH conditions hold:
+      1. --ecr-role-arn is passed (ecr_role_arn parameter is set).
+      2. The pipeline uses a floating ECR tag (latest or no tag).
+
+    It does NOT fire based on ecrRoleArnToAssume in nextflow.config —
+    that drives runtime auth, not build-time caching (Option 2 design).
+    """
 
     def setUp(self):
         self._tmpdir = tempfile.mkdtemp()
@@ -311,83 +376,112 @@ class TestPreflightFloatingTagGuard(unittest.TestCase):
         import shutil
         shutil.rmtree(self._tmpdir, ignore_errors=True)
 
-    def _older_npi(self):
-        """Mock _npi_input_names to return a set without ECR slots."""
+    def _complete_npi(self):
+        """Mock _npi_input_names to return a set WITH ECR slots."""
         return mock.patch(
             "dxpy.nextflow.nextflow_builder._npi_input_names",
-            return_value={"repository_url", "cache_docker"},
+            return_value={
+                "ecr_role_arn_to_assume", "ecr_job_token_audience",
+                "ecr_job_token_subject_claims", "repository_url", "cache_docker",
+            },
         )
 
-    def test_ecr_floating_tag_raises_before_upload(self):
-        """Floating-tag ECR container + ecr_role_arn_to_assume in config → DXError."""
+    def test_ecr_floating_tag_with_ecr_role_arg_raises(self):
+        """Floating-tag ECR container + --ecr-role-arn flag → DXError before upload."""
         _write_config(self._tmpdir, f"""
             process.container = '{_ECR_IMAGE_LATEST}'
-            dnanexus {{
-                ecrRoleArnToAssume = '{_ECR_ROLE}'
-            }}
         """)
-        with self._older_npi():
+        with self._complete_npi():
             with self.assertRaises(dxpy.exceptions.DXError) as cm:
-                preflight_validate_for_cache_docker(src_dir=self._tmpdir)
+                preflight_validate_for_cache_docker(
+                    src_dir=self._tmpdir,
+                    ecr_role_arn=_ECR_ROLE,
+                )
         msg = str(cm.exception)
         self.assertIn("floating", msg.lower())
         self.assertIn(_ECR_IMAGE_LATEST, msg)
 
-    def test_ecr_floating_tag_profile_raises(self):
-        """Floating tag in active profile → DXError."""
+    def test_ecr_floating_tag_profile_with_ecr_role_arg_raises(self):
+        """Floating tag in active profile + --ecr-role-arn → DXError."""
         _write_config(self._tmpdir, f"""
             process.container = '{_ECR_IMAGE_PINNED}'
-            dnanexus {{
-                ecrRoleArnToAssume = '{_ECR_ROLE}'
-            }}
             profiles {{
                 floating {{
                     process.container = '{_ECR_IMAGE_LATEST}'
                 }}
             }}
         """)
-        with self._older_npi():
+        with self._complete_npi():
             with self.assertRaises(dxpy.exceptions.DXError) as cm:
                 preflight_validate_for_cache_docker(
-                    src_dir=self._tmpdir, profile="floating"
+                    src_dir=self._tmpdir,
+                    profile="floating",
+                    ecr_role_arn=_ECR_ROLE,
                 )
         self.assertIn(_ECR_IMAGE_LATEST, str(cm.exception))
 
-    def test_pinned_ecr_container_passes(self):
-        """Digest-pinned ECR container → no error."""
+    def test_pinned_ecr_container_with_ecr_role_arg_passes(self):
+        """Digest-pinned ECR container + --ecr-role-arn → no error."""
         _write_config(self._tmpdir, f"""
             process.container = '{_ECR_IMAGE_PINNED}'
+        """)
+        with self._complete_npi():
+            preflight_validate_for_cache_docker(
+                src_dir=self._tmpdir,
+                ecr_role_arn=_ECR_ROLE,
+            )  # must not raise
+
+    def test_no_ecr_role_arg_floating_tag_does_not_raise(self):
+        """Floating ECR container but no --ecr-role-arn flag → guard does not fire.
+        Without the flag, no build-time ECR auth is requested, so the floating-
+        tag constraint is irrelevant."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_LATEST}'
+        """)
+        with mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value={"repository_url", "cache_docker"},
+        ):
+            preflight_validate_for_cache_docker(
+                src_dir=self._tmpdir,
+                ecr_role_arn=None,
+            )  # must not raise
+
+    def test_ecr_in_config_only_no_cli_flag_does_not_raise(self):
+        """ecrRoleArnToAssume in nextflow.config without --ecr-role-arn CLI flag
+        does NOT trigger the floating-tag guard — runtime config is not build-time
+        intent (Option 2 design principle)."""
+        _write_config(self._tmpdir, f"""
+            process.container = '{_ECR_IMAGE_LATEST}'
             dnanexus {{
                 ecrRoleArnToAssume = '{_ECR_ROLE}'
             }}
         """)
-        with self._older_npi():
-            preflight_validate_for_cache_docker(src_dir=self._tmpdir)  # must not raise
-
-    def test_no_ecr_role_floating_tag_passes(self):
-        """Floating ECR container but no ecr_role_arn_to_assume → guard does not fire."""
-        _write_config(self._tmpdir, f"""
-            process.container = '{_ECR_IMAGE_LATEST}'
-        """)
-        with self._older_npi():
-            preflight_validate_for_cache_docker(src_dir=self._tmpdir)  # must not raise
+        with mock.patch(
+            "dxpy.nextflow.nextflow_builder._npi_input_names",
+            return_value={"repository_url", "cache_docker"},
+        ):
+            preflight_validate_for_cache_docker(
+                src_dir=self._tmpdir,
+                ecr_role_arn=None,  # flag not passed
+            )  # must not raise
 
     def test_inactive_profile_floating_tag_does_not_raise(self):
         """Floating tag in a profile that is NOT active → no false positive."""
         _write_config(self._tmpdir, f"""
             process.container = '{_ECR_IMAGE_PINNED}'
-            dnanexus {{
-                ecrRoleArnToAssume = '{_ECR_ROLE}'
-            }}
             profiles {{
                 floating {{
                     process.container = '{_ECR_IMAGE_LATEST}'
                 }}
             }}
         """)
-        with self._older_npi():
+        with self._complete_npi():
             # No profile passed → default container (pinned) is active.
-            preflight_validate_for_cache_docker(src_dir=self._tmpdir)  # must not raise
+            preflight_validate_for_cache_docker(
+                src_dir=self._tmpdir,
+                ecr_role_arn=_ECR_ROLE,
+            )  # must not raise
 
 
 if __name__ == "__main__":
