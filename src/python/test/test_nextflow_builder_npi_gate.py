@@ -17,23 +17,18 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-"""Unit tests for the deployed-NPI input-spec gate
-(`_apply_npi_input_gate`). This is the helper extracted from
-`build_pipeline_with_npi` that decides which `nextflow.config` fields to
-forward to the importer and emits warnings for fields the deployed NPI
-does not declare.
+"""Unit tests for APPS-3915 NPI-related checks in nextflow_builder.py.
 
-NOTE(APPS-3915 / Option 2): ECR-specific fields are NO LONGER forwarded via
-the config gate.  They come from explicit CLI flags (--ecr-role-arn etc.) and
-are forwarded directly.  This file now tests only the non-ECR workdir config
-path through `_apply_npi_input_gate`, plus the preflight ECR checks driven by
-the explicit ecr_role_arn parameter.
+Covers:
+  - preflight_validate_for_cache_docker: NPI describe failure, ECR slot check,
+    floating-tag guard ordering, and ECR-in-config-without-CLI-flag non-regression.
+  - _npi_input_names / get_importer_name: custom NPI override via DX_NPI_NAME.
+  - scan_ecr_floating_tags_in_config: profile-aware floating-tag detection.
 
-Behaviour the tests pin down:
-  - Describe failure (any intent) -> warning, nothing forwarded, build continues.
-  - All (non-ECR) fields accepted -> all forwarded, no warning.
-  - ECR fields in config -> silently skipped (not forwarded — by design).
-  - Non-ECR fields dropped -> generic warning only.
+NOTE(APPS-3915): The workdir config forwarding path (_apply_npi_input_gate,
+parse_nextflow_config_dx_fields in build_pipeline_with_npi) was removed — the
+NPI reads nextflow.config from the uploaded source directory directly.  This
+file no longer contains tests for workdir forwarding.
 
 TODO(APPS-3915): Delete this entire file once the NPI version that declares
 ecr_role_arn_to_assume / ecr_job_token_audience / ecr_job_token_subject_claims
@@ -41,7 +36,6 @@ is the minimum deployed version. See companion TODO in nextflow_builder.py
 above _npi_input_names().
 """
 
-import io
 import os
 import tempfile
 import textwrap
@@ -50,117 +44,10 @@ from unittest import mock
 
 import dxpy
 from dxpy.nextflow.nextflow_builder import (
-    _apply_npi_input_gate,
     preflight_validate_for_cache_docker,
 )
 from dxpy.nextflow.collect_images import scan_ecr_floating_tags_in_config
 from dxpy.nextflow.nextflow_utils import get_importer_name
-
-
-class TestApplyNpiInputGate(unittest.TestCase):
-
-    def setUp(self):
-        self.input_hash = {}
-        self.stderr = io.StringIO()
-
-    def _run(self, config_fields, accepted_inputs):
-        _apply_npi_input_gate(
-            config_fields=config_fields,
-            accepted_inputs=accepted_inputs,
-            input_hash=self.input_hash,
-            stderr=self.stderr,
-        )
-
-    # --- describe-failure path ---
-
-    def test_describe_failure_with_ecr_intent_warns_and_continues(self):
-        """ECR was requested but NPI cannot be described — emit a warning and
-        continue. ECR auth will still work at runtime via bundled config."""
-        self._run(
-            config_fields={"ecr_role_arn_to_assume": "arn:role/x"},
-            accepted_inputs=None,
-        )
-        self.assertEqual(self.input_hash, {})
-        self.assertIn("Could not describe", self.stderr.getvalue())
-
-    def test_describe_failure_without_ecr_intent_warns(self):
-        """No ECR intent — degrade to a warning so non-ECR pipelines still build."""
-        self._run(
-            config_fields={"iam_role_arn_to_assume": "arn:role/wd"},
-            accepted_inputs=None,
-        )
-        self.assertEqual(self.input_hash, {})
-        self.assertIn("Could not describe", self.stderr.getvalue())
-
-    def test_describe_failure_with_empty_config_silent(self):
-        """Empty config + describe failure -> no warning at all."""
-        self._run(config_fields={}, accepted_inputs=None)
-        self.assertEqual(self.input_hash, {})
-        self.assertEqual(self.stderr.getvalue(), "")
-
-    # --- happy paths ---
-
-    def test_non_ecr_fields_forwarded_no_warning(self):
-        """Non-ECR workdir fields accepted by NPI are forwarded without warning."""
-        cfg = {
-            "iam_role_arn_to_assume": "arn:role/wd",
-            "job_token_audience": "aud",
-            "job_token_subject_claims": "sc",
-        }
-        accepted = set(cfg.keys()) | {"repository_url"}
-        self._run(cfg, accepted)
-        self.assertEqual(self.input_hash, cfg)
-        self.assertEqual(self.stderr.getvalue(), "")
-
-    def test_ecr_fields_in_config_silently_skipped(self):
-        """ECR-specific fields in config are silently ignored — by design.
-        Build-time ECR auth comes from --ecr-role-arn CLI flags, not config,
-        so they are never bundled into the resulting applet."""
-        cfg = {
-            "ecr_role_arn_to_assume": "arn:role/ecr",
-            "ecr_job_token_audience": "aud",
-            "ecr_job_token_subject_claims": "sc",
-        }
-        # Even if NPI declares them, they should not be forwarded from config.
-        accepted = set(cfg.keys()) | {"repository_url"}
-        self._run(cfg, accepted)
-        self.assertEqual(self.input_hash, {})
-        self.assertEqual(self.stderr.getvalue(), "")
-
-    def test_ecr_fields_in_config_silently_skipped_even_without_npi_slot(self):
-        """ECR config fields don't trigger a warning even when NPI lacks the slots.
-        They're intentionally excluded from the config-forwarding path."""
-        cfg = {"ecr_role_arn_to_assume": "arn:role/ecr",
-               "ecr_job_token_audience": "aud"}
-        self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
-        self.assertEqual(self.input_hash, {})
-        self.assertEqual(self.stderr.getvalue(), "")  # no warning — by design
-
-    def test_empty_value_not_forwarded(self):
-        """Falsy values are skipped (avoids forwarding empty-string defaults)."""
-        cfg = {"iam_role_arn_to_assume": "", "job_token_audience": "aud"}
-        self._run(cfg, accepted_inputs={"iam_role_arn_to_assume", "job_token_audience"})
-        self.assertEqual(self.input_hash, {"job_token_audience": "aud"})
-
-    # --- dropped-field warnings (non-ECR only) ---
-
-    def test_non_ecr_drop_warns_and_continues(self):
-        """Non-ECR field dropped by older NPI: emit a generic warning."""
-        cfg = {"iam_role_arn_to_assume": "arn:role/wd"}
-        self._run(cfg, accepted_inputs={"repository_url", "cache_docker"})
-        self.assertEqual(self.input_hash, {})
-        self.assertIn("iam_role_arn_to_assume", self.stderr.getvalue())
-
-    def test_mixed_ecr_and_non_ecr_in_config_only_non_ecr_forwarded(self):
-        """ECR fields silently skipped; non-ECR field forwarded normally."""
-        cfg = {
-            "ecr_role_arn_to_assume": "arn:aws:iam::123456789:role/ecr-pull",
-            "iam_role_arn_to_assume": "arn:role/wd",
-        }
-        self._run(cfg, accepted_inputs={"iam_role_arn_to_assume", "ecr_role_arn_to_assume"})
-        # Only the non-ECR field forwarded; no warning for the ECR field.
-        self.assertEqual(self.input_hash, {"iam_role_arn_to_assume": "arn:role/wd"})
-        self.assertEqual(self.stderr.getvalue(), "")
 
 
 class TestPreflightValidateForCacheDocker(unittest.TestCase):
@@ -223,18 +110,16 @@ class TestPreflightValidateForCacheDocker(unittest.TestCase):
             self.assertIn("ecr_role_arn_to_assume", str(cm.exception))
 
     def test_ecr_in_config_without_cli_flag_does_not_raise(self):
-        """ecrRoleArnToAssume in nextflow.config without --ecr-role-arn flag
-        does NOT trigger the ECR slot check — runtime config is irrelevant
-        to build-time ECR auth (Option 2 design)."""
+        """--ecr-role-arn not passed -> ECR slot check never fires, even when
+        nextflow.config contains ecrRoleArnToAssume.  Runtime config is irrelevant
+        to build-time ECR auth (Option 2 design).  preflight no longer reads
+        nextflow.config at all; this test pins the no-raise guarantee."""
         with mock.patch(
             "dxpy.nextflow.nextflow_builder._npi_input_names",
             return_value={"repository_url", "cache_docker"},
-        ), mock.patch(
-            "dxpy.nextflow.nextflow_builder.parse_nextflow_config_dx_fields",
-            return_value={"ecr_role_arn_to_assume": "arn:role/ecr"},
         ):
             # Must not raise — runtime ECR config does not drive preflight.
-            preflight_validate_for_cache_docker(src_dir="/some/dir", ecr_role_arn=None)
+            preflight_validate_for_cache_docker(src_dir=None, ecr_role_arn=None)
 
 
 class TestGetImporterName(unittest.TestCase):

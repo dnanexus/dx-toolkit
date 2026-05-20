@@ -13,7 +13,7 @@ from functools import partial
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
 from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name, get_importer_object,
                                           create_readme, get_nested, get_allowed_extra_fields_mapping,
-                                          resolve_version, parse_nextflow_config_dx_fields)
+                                          resolve_version)
 from dxpy.nextflow.collect_images import scan_ecr_floating_tags_in_config
 from dxpy.cli.exec_io import parse_obj
 from dxpy.cli import try_call
@@ -37,12 +37,11 @@ def _npi_supports_version_selection():
 
 # TODO(APPS-3915): Once the NPI version that declares ecr_role_arn_to_assume,
 # ecr_job_token_audience, and ecr_job_token_subject_claims is the minimum deployed
-# version, remove _npi_input_names(), _ECR_SPECIFIC_INPUTS, _apply_npi_input_gate(),
-# preflight_validate_for_cache_docker(), and the gate call in build_pipeline_with_npi().
-# At that point build_pipeline_with_npi() forwards only the three ECR auth fields
-# unconditionally. The describe() API call on every `dx build --nextflow` is pure
-# latency once the gate never drops anything.
-# Also delete src/python/test/test_nextflow_builder_npi_gate.py — it tests only this gate.
+# version, remove _npi_input_names(), _ECR_SPECIFIC_INPUTS,
+# preflight_validate_for_cache_docker(), and the ECR slot check.
+# At that point build_pipeline_with_npi() forwards the three ECR auth fields
+# unconditionally without needing to check the NPI input spec first.
+# Also delete src/python/test/test_nextflow_builder_npi_gate.py.
 def _npi_input_names():
     """Return the set of input names the deployed NPI app accepts.
 
@@ -61,70 +60,13 @@ def _npi_input_names():
         return None
 
 
-# Names of the ECR-specific input fields. Used by `_apply_npi_input_gate` to
-# distinguish "the user configured ECR" from "the user only configured workdir"
-# when deciding which warning to emit on a dropped field.
+# Names of the ECR-specific input fields declared by the NPI.  Used by the
+# preflight ECR slot check to fail fast when the deployed NPI predates ECR support.
 _ECR_SPECIFIC_INPUTS = frozenset({
     "ecr_role_arn_to_assume",
     "ecr_job_token_audience",
     "ecr_job_token_subject_claims",
 })
-
-
-def _apply_npi_input_gate(config_fields, accepted_inputs, input_hash, stderr):
-    """Apply the deployed-NPI input-spec gate to the parsed *non-ECR* config fields.
-
-    Mutates `input_hash` in place with the fields the deployed NPI accepts.
-
-    NOTE(APPS-3915 / Option 2): ECR-specific fields (ecr_role_arn_to_assume,
-    ecr_job_token_audience, ecr_job_token_subject_claims) are NO LONGER read
-    from nextflow.config for forwarding to the NPI.  They are passed as
-    explicit CLI flags (--ecr-role-arn / --ecr-job-token-*) and handled
-    separately in build_pipeline_with_npi().  This ensures the build-time ECR
-    role is never bundled into the resulting applet, so runtime executions
-    have zero ECR dependency after the images are cached.
-
-    This function now handles only the non-ECR workdir config fields
-    (iam_role_arn_to_assume, job_token_audience, job_token_subject_claims).
-
-    Behaviour summary:
-      - `accepted_inputs is None` (NPI describe failed) -> warn, skip
-        forwarding; build continues (non-fatal for workdir-only fields).
-      - Any non-ECR field dropped (NPI without the slot) -> stderr warning,
-        build continues.
-    """
-    if not config_fields:
-        return
-
-    if accepted_inputs is None:
-        stderr.write(
-            "WARNING: Could not describe the deployed Nextflow Pipeline "
-            "Importer; cannot determine which nextflow.config fields are "
-            "accepted. Skipping forwarding of nextflow.config dnanexus.* "
-            "fields.\n"
-        )
-        return
-
-    dropped = []
-    for npi_key, value in config_fields.items():
-        if not value:
-            continue
-        # ECR fields are handled separately via explicit CLI flags — never
-        # forward them from config so they are not baked into the applet.
-        if npi_key in _ECR_SPECIFIC_INPUTS:
-            continue
-        if npi_key in accepted_inputs:
-            input_hash[npi_key] = value
-        else:
-            dropped.append(npi_key)
-
-    if dropped:
-        stderr.write(
-            "WARNING: The deployed Nextflow Pipeline Importer does not declare "
-            "input(s) {dropped} from your nextflow.config; the importer job "
-            "will not see these values and may fall back to defaults or fail.\n"
-            .format(dropped=sorted(dropped))
-        )
 
 
 def preflight_validate_for_cache_docker(src_dir, profile=None, ecr_role_arn=None):
@@ -220,11 +162,6 @@ def preflight_validate_for_cache_docker(src_dir, profile=None, ecr_role_arn=None
         # --repository <url> mode: no local config to scan beyond what is above.
         return
 
-    # NOTE: workdir config forwarding (_apply_npi_input_gate for iam_role_arn_to_assume etc.)
-    # is intentionally NOT run here.  The preflight is concerned only with catching errors
-    # before the .nf_source/ upload; workdir field forwarding happens in build_pipeline_with_npi
-    # where it actually populates the NPI job's input_hash.
-
 
 def build_pipeline_with_npi(
         repository=None,
@@ -300,14 +237,6 @@ def build_pipeline_with_npi(
     for key, (raw_value, transform) in input_updates.items():
         if raw_value:
             input_hash[key] = transform(raw_value) if transform else raw_value
-
-    # Forward non-ECR DNAnexus / AWS workdir config from local nextflow.config to NPI.
-    # (e.g. iam_role_arn_to_assume, job_token_audience, job_token_subject_claims)
-    # ECR-specific fields are intentionally excluded from config forwarding — they are
-    # passed as explicit CLI args (--ecr-role-arn etc.) and handled below.
-    # See design note in dx.py and ECR_Private_Registry.md for why.
-    config_fields = parse_nextflow_config_dx_fields(src_dir)
-    _apply_npi_input_gate(config_fields, _npi_input_names(), input_hash, sys.stderr)
 
     # Forward build-time ECR credentials from explicit CLI flags.
     # These are NEVER read from nextflow.config so they are never bundled
