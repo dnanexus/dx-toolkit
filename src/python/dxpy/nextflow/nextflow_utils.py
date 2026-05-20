@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from os import path, makedirs, listdir
+from os import path, makedirs, listdir, environ
 import re
 import sys
 import errno
@@ -84,8 +84,7 @@ def get_resources_subpath(resources_dir):
 
 def get_importer_name():
     # DX_NPI_NAME lets tests point dx build at a custom NPI (app name or applet ID).
-    import os
-    return os.environ.get("DX_NPI_NAME") or "nextflow_pipeline_importer"
+    return environ.get("DX_NPI_NAME") or "nextflow_pipeline_importer"
 
 
 def get_importer_object():

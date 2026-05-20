@@ -508,64 +508,52 @@ EOF
 }
 
 refresh_web_identity_token_loop() {
-  # The DNAnexus job identity token expires in ~5 minutes (300s). Refresh at 50% TTL.
-  # NOTE: counters are local to this background subshell and not visible to the parent.
-  # Persistent failure is reported via stderr; a future improvement could escalate via
-  # dx-jobutil-report-error from this subshell.
-  local consecutive_workdir=0
-  local consecutive_ecr=0
+  # The DNAnexus job identity token expires in ~5 minutes. Refresh the OIDC
+  # token file(s) proactively so the AWS SDK can re-assume the role(s) on demand.
 
   while true; do
-    sleep 180
+    sleep 240 # 4 minutes
 
     if [ -f "$AWS_ENV" ]; then
       source "$AWS_ENV"
 
-      if [ -n "$iamRoleArnToAssume" ] && [ "$iamRoleArnToAssume" != "null" ] \
-         && [ -n "$AWS_WEB_IDENTITY_TOKEN_FILE" ]; then
-        if _refresh_token_file "$AWS_WEB_IDENTITY_TOKEN_FILE" "$jobTokenAudience" "$jobTokenSubjectClaims" "workdir"; then
-          consecutive_workdir=0
-        else
-          consecutive_workdir=$((consecutive_workdir + 1))
-          if [ "$consecutive_workdir" -ge 3 ]; then
-            echo "ERROR: workdir JIT refresh has failed ${consecutive_workdir} consecutive cycles; AWS workdir access will start failing." >&2
+      # Workdir token (skipped in ECR-only mode, where the workdir role is unset).
+      if [ -n "$AWS_WEB_IDENTITY_TOKEN_FILE" ]; then
+        local tmp_token_file="${AWS_WEB_IDENTITY_TOKEN_FILE}.tmp"
+        local attempt=0
+
+        while [ "$attempt" -le 3 ]; do
+          if dx-jobutil-get-identity-token --aud "${jobTokenAudience}" --subject_claims "${jobTokenSubjectClaims}" > "$tmp_token_file"; then
+            mv -f "$tmp_token_file" "$AWS_WEB_IDENTITY_TOKEN_FILE"
+
+            break
+          else
+            echo "WARNING: AWS token refresh failed (attempt $((attempt+1))/3)" >&2
+            sleep 5 # wait 5s before retry
           fi
-        fi
+          attempt=$((attempt+1))
+        done
       fi
 
+      # ECR token (only when ECR is configured).
       if [ -n "$ecrRoleArnToAssume" ] && [ "$ecrRoleArnToAssume" != "null" ]; then
-        if _refresh_token_file "$ECR_WEB_IDENTITY_TOKEN_FILE" "$ecrJobTokenAudience" "$ecrJobTokenSubjectClaims" "ecr"; then
-          consecutive_ecr=0
-        else
-          consecutive_ecr=$((consecutive_ecr + 1))
-          if [ "$consecutive_ecr" -ge 3 ]; then
-            echo "ERROR: ECR JIT refresh has failed ${consecutive_ecr} consecutive cycles; ECR pulls will start failing." >&2
+        local ecr_tmp_token_file="${ECR_WEB_IDENTITY_TOKEN_FILE}.tmp"
+        local ecr_attempt=0
+
+        while [ "$ecr_attempt" -le 3 ]; do
+          if dx-jobutil-get-identity-token --aud "${ecrJobTokenAudience}" --subject_claims "${ecrJobTokenSubjectClaims}" > "$ecr_tmp_token_file"; then
+            mv -f "$ecr_tmp_token_file" "$ECR_WEB_IDENTITY_TOKEN_FILE"
+
+            break
+          else
+            echo "WARNING: ECR token refresh failed (attempt $((ecr_attempt+1))/3)" >&2
+            sleep 5 # wait 5s before retry
           fi
-        fi
+          ecr_attempt=$((ecr_attempt+1))
+        done
       fi
     fi
   done
-}
-
-_refresh_token_file() {
-  local token_file="$1"
-  local audience="$2"
-  local subject_claims="$3"
-  local label="$4"
-  local tmp_token_file="${token_file}.tmp"
-  local attempt=0
-
-  while [ "$attempt" -lt 3 ]; do
-    if _fetch_jit_to_file "$tmp_token_file" "$audience" "$subject_claims"; then
-      mv -f "$tmp_token_file" "$token_file"
-      return 0
-    fi
-    echo "WARNING: AWS ${label} token refresh failed (attempt $((attempt+1))/3)" >&2
-    rm -f "$tmp_token_file"
-    sleep 5
-    attempt=$((attempt+1))
-  done
-  return 1
 }
 
 # =========================================================
