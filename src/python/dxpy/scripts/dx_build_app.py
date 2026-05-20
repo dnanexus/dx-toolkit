@@ -1191,11 +1191,21 @@ def _build_app(args, extra_args):
                         )
                     )
                 if dest_folder_exists:
-                    raise dxpy.app_builder.AppBuilderException(
-                        "Folder {} exists in the project {}. Remove the directory to avoid file duplication and retry".format(
-                            os.path.join(upload_destination_dir, os.path.basename(args.src_dir)), dest_project
+                    if args.ensure_upload:
+                        # --ensure-upload: reuse the already-uploaded source rather than
+                        # re-uploading and hitting the folder-exists conflict.  This is the
+                        # expected behaviour for CI pipelines that persist SOURCE_PROJECT
+                        # across runs so the upload step can be skipped on retry.
+                        nf_scr = os.path.join(qualified_upload_dest, os.path.basename(args.src_dir))
+                        logger.info(
+                            "Reusing existing pipeline source at %s (--ensure-upload).", nf_scr
                         )
-                    )
+                    else:
+                        raise dxpy.app_builder.AppBuilderException(
+                            "Folder {} exists in the project {}. Remove the directory to avoid file duplication and retry".format(
+                                os.path.join(upload_destination_dir, os.path.basename(args.src_dir)), dest_project
+                            )
+                        )
                 else:
                     upload_cmd = ["dx", "upload", args.src_dir, "-r", "-o", qualified_upload_dest, "-p"]
                     _ = subprocess.check_output(upload_cmd)
