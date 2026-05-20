@@ -83,24 +83,13 @@ def get_resources_subpath(resources_dir):
 
 
 def get_importer_name():
-    """Return the name of the Nextflow Pipeline Importer app to use.
-
-    Defaults to the published ``nextflow_pipeline_importer`` app.  Override
-    by setting the ``DX_NPI_NAME`` environment variable to a custom app name
-    or applet ID (``applet-xxxx``) — useful in testing when a private build
-    of the importer should be used instead of the globally published version.
-    """
+    # DX_NPI_NAME lets tests point dx build at a custom NPI (app name or applet ID).
     import os
     return os.environ.get("DX_NPI_NAME") or "nextflow_pipeline_importer"
 
 
 def get_importer_object():
-    """Return a DXApp or DXApplet object for the configured NPI.
-
-    If ``DX_NPI_NAME`` is an applet ID (starts with ``applet-``), returns a
-    ``DXApplet``; otherwise returns a ``DXApp`` looked up by name.  Both expose
-    the same ``.run()`` and ``.describe()`` interface used by the builder.
-    """
+    # Returns a DXApplet when DX_NPI_NAME is an applet ID, else a DXApp by name.
     name = get_importer_name()
     if name.startswith("applet-"):
         return dxpy.DXApplet(name)
