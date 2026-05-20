@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Display a security warning when downloading or generating download URLs for files flagged as malicious
+* Support private AWS ECR registries for Nextflow pipelines. `dx build --nextflow --cache-docker` accepts `--ecr-role-arn`, `--ecr-job-token-audience`, and `--ecr-job-token-subject-claims` to authenticate to a private ECR registry and pre-cache images at build time; runtime ECR authentication is configured via the `dnanexus.ecr*` properties in `nextflow.config`
 
 ### Fixed
 

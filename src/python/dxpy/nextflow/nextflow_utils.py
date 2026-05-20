@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from os import path, makedirs, listdir
+from os import path, makedirs, listdir, environ
 import re
 import sys
 import errno
@@ -83,7 +83,16 @@ def get_resources_subpath(resources_dir):
 
 
 def get_importer_name():
-    return "nextflow_pipeline_importer"
+    # DX_NPI_NAME lets tests point dx build at a custom NPI (app name or applet ID).
+    return environ.get("DX_NPI_NAME") or "nextflow_pipeline_importer"
+
+
+def get_importer_object():
+    # Returns a DXApplet when DX_NPI_NAME is an applet ID, else a DXApp by name.
+    name = get_importer_name()
+    if name.startswith("applet-"):
+        return dxpy.DXApplet(name)
+    return dxpy.DXApp(name=name)
 
 
 def get_template_dir():
@@ -273,6 +282,7 @@ def get_nested(args, arg_path):
         if args is None:
             return None
     return args
+
 
 
 def get_allowed_extra_fields_mapping():

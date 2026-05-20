@@ -11,7 +11,7 @@ import tempfile
 from functools import partial
 
 from dxpy.nextflow.nextflow_templates import (get_nextflow_dxapp, get_nextflow_src)
-from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_name,
+from dxpy.nextflow.nextflow_utils import (get_template_dir, write_exec, write_dxapp, get_importer_object,
                                           create_readme, get_nested, get_allowed_extra_fields_mapping,
                                           resolve_version)
 from dxpy.cli.exec_io import parse_obj
@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(description="Uploads a DNAnexus App.")
 def _npi_supports_version_selection():
     """Check if deployed NPI app accepts nextflow_version input."""
     try:
-        npi = dxpy.DXApp(name=get_importer_name())
+        npi = get_importer_object()
         desc = npi.describe(fields={"inputSpec": True})
         input_names = {inp["name"] for inp in desc.get("inputSpec", [])}
         return "nextflow_version" in input_names
@@ -45,7 +45,10 @@ def build_pipeline_with_npi(
         brief=False,
         destination=None,
         extra_args=None,
-        nextflow_version=None
+        nextflow_version=None,
+        ecr_role_arn=None,
+        ecr_job_token_audience=None,
+        ecr_job_token_subject_claims=None,
 ):
     """
     :param repository: URL to a Git repository
@@ -62,6 +65,14 @@ def build_pipeline_with_npi(
     :type profile: string
     :param brief: Level of verbosity
     :type brief: boolean
+    :param ecr_role_arn: IAM role ARN for build-time ECR auth (--ecr-role-arn CLI flag).
+        Forwarded as an explicit NPI input.  NOT read from nextflow.config —
+        see design note in dx.py and ECR_Private_Registry.md.
+    :type ecr_role_arn: str or None
+    :param ecr_job_token_audience: OIDC audience for the build-time ECR role.
+    :type ecr_job_token_audience: str or None
+    :param ecr_job_token_subject_claims: OIDC subject claims for the build-time ECR role.
+    :type ecr_job_token_subject_claims: str or None
     :returns: ID of the created applet
 
     Runs the Nextflow Pipeline Importer app, which creates a Nextflow applet from a given Git repository.
@@ -97,6 +108,18 @@ def build_pipeline_with_npi(
         if raw_value:
             input_hash[key] = transform(raw_value) if transform else raw_value
 
+    # Forward build-time ECR credentials from explicit CLI flags.
+    # These are NEVER read from nextflow.config so they are never bundled
+    # into the resulting applet. After images are cached, runtime executions
+    # pull from DNAnexus storage with zero ECR dependency.
+    for ecr_key, ecr_val in [
+        ("ecr_role_arn_to_assume", ecr_role_arn),
+        ("ecr_job_token_audience", ecr_job_token_audience),
+        ("ecr_job_token_subject_claims", ecr_job_token_subject_claims),
+    ]:
+        if ecr_val:
+            input_hash[ecr_key] = ecr_val
+
     # Auto-detect NPI capability for version selection
     if nextflow_version is not None:
         # Validate early so invalid versions fail before launching a job; result intentionally discarded.
@@ -116,9 +139,11 @@ def build_pipeline_with_npi(
     if build_project_id is None:
         parser.error(
             "Can't create an applet without specifying a destination project; please use the -d/--destination flag to explicitly specify a project")
-    nf_builder_job = dxpy.DXApp(name=get_importer_name()).run(app_input=input_hash, project=build_project_id,
-                                                              folder=build_folder,
-                                                              name="Nextflow build of %s" % (repository), detach=True)
+    # DXApp.run() and DXApplet.run() both take the input hash as the first
+    # positional arg, so this works whether DX_NPI_NAME selects an app or applet.
+    nf_builder_job = get_importer_object().run(
+        input_hash, project=build_project_id, folder=build_folder,
+        name="Nextflow build of %s" % (repository), detach=True)
 
     if not brief:
         print("Started builder job %s" % (nf_builder_job.get_id(),))
