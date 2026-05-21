@@ -18,6 +18,7 @@
 #   under the License.
 
 import json
+import os
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -406,8 +407,8 @@ class TestDockerImageRefEcrFailLoud(unittest.TestCase):
     """
 
     def setUp(self):
-        from dxpy.nextflow import collect_images
-        collect_images._ECR_LOGGED_IN_HOSTS.clear()
+        from dxpy.nextflow.collect_images import reset_ecr_login_cache
+        reset_ecr_login_cache()
 
     def _make_ecr_ref(self):
         from dxpy.nextflow.ImageRef import DockerImageRef
@@ -578,8 +579,8 @@ class TestEcrDockerLogin(unittest.TestCase):
     def setUp(self):
         # The login cache is module-global; reset for each test so test order
         # does not affect outcomes.
-        from dxpy.nextflow import collect_images
-        collect_images._ECR_LOGGED_IN_HOSTS.clear()
+        from dxpy.nextflow.collect_images import reset_ecr_login_cache
+        reset_ecr_login_cache()
 
     @patch("dxpy.nextflow.collect_images._get_ecr_password", return_value=("dummy-12h-token\n", None))
     @patch("dxpy.nextflow.collect_images.subprocess.run")
@@ -650,8 +651,8 @@ class TestEnsureEcrLoginForImage(unittest.TestCase):
     """Public entry point — must be a no-op for non-ECR images."""
 
     def setUp(self):
-        from dxpy.nextflow import collect_images
-        collect_images._ECR_LOGGED_IN_HOSTS.clear()
+        from dxpy.nextflow.collect_images import reset_ecr_login_cache
+        reset_ecr_login_cache()
 
     @patch("dxpy.nextflow.collect_images._ecr_docker_login")
     def test_noop_for_non_ecr(self, mock_login):
@@ -670,6 +671,113 @@ class TestEnsureEcrLoginForImage(unittest.TestCase):
         mock_login.assert_called_once_with(
             "123.dkr.ecr.us-east-1.amazonaws.com", "us-east-1"
         )
+
+
+class TestIsFloatingEcrTag(unittest.TestCase):
+    """Unit tests for _is_floating_ecr_tag — the floating-tag detector that
+    drives the --cache-docker ECR guard in collect_docker_images."""
+
+    @parameterized.expand([
+        # ECR host + floating tag / no tag -> floating.
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/repo:latest", True),
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/repo", True),
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/team/sub/repo:latest", True),
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/repo:LATEST", True),  # case-insensitive
+        # ECR host + pinned tag / digest -> not floating.
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/repo:1.2.3", False),
+        ("123456789012.dkr.ecr.us-east-1.amazonaws.com/repo@sha256:" + "a" * 64, False),
+        # Non-ECR hosts are never floating, regardless of tag.
+        ("quay.io/biocontainers/fastqc:latest", False),
+        ("docker.io/library/ubuntu", False),
+        ("ubuntu", False),
+        # GovCloud ECR hostnames are treated as non-ECR -> not floating.
+        ("123456789012.dkr.ecr.us-gov-west-1.amazonaws.com/repo:latest", False),
+    ])
+    def test_is_floating(self, ref, expected):
+        from dxpy.nextflow.collect_images import _is_floating_ecr_tag
+        self.assertEqual(_is_floating_ecr_tag(ref), expected)
+
+
+class TestFloatingTagGuard(unittest.TestCase):
+    """The --cache-docker floating-tag guard in collect_docker_images fires
+    only when build-time ECR auth was requested — signalled by the
+    ecr_role_arn_to_assume env var that npi.sh exports from the NPI input."""
+
+    @patch.dict("os.environ", {"ecr_role_arn_to_assume": "arn:aws:iam::123456789012:role/Ecr"})
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_floating_ecr_tag_rejected_when_ecr_configured(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "processes": [
+                    {"name": "P", "container": "123456789012.dkr.ecr.us-east-1.amazonaws.com/repo:latest"},
+                ]
+            }),
+        )
+        from dxpy.nextflow.ImageRefFactory import ImageRefFactoryError
+        with self.assertRaises(ImageRefFactoryError) as ctx:
+            collect_docker_images("/tmp/pipeline", "", "")
+        self.assertIn("floating tag", str(ctx.exception))
+
+    @patch.dict("os.environ", {"ecr_role_arn_to_assume": "arn:aws:iam::123456789012:role/Ecr"})
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_untagged_ecr_image_rejected_when_ecr_configured(self, mock_run):
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "processes": [
+                    {"name": "P", "container": "123456789012.dkr.ecr.us-east-1.amazonaws.com/repo"},
+                ]
+            }),
+        )
+        from dxpy.nextflow.ImageRefFactory import ImageRefFactoryError
+        with self.assertRaises(ImageRefFactoryError):
+            collect_docker_images("/tmp/pipeline", "", "")
+
+    @patch("dxpy.nextflow.collect_images._populate_cached_file_ids")
+    @patch("dxpy.nextflow.collect_images._resolve_digest", return_value="sha256:resolved")
+    @patch("dxpy.nextflow.collect_images.ensure_ecr_login_for_image")
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_floating_ecr_tag_allowed_when_ecr_not_configured(
+        self, mock_run, mock_login, mock_resolve, mock_populate
+    ):
+        """Without ecr_role_arn_to_assume the guard must not fire — otherwise
+        a pipeline that pulls a floating-tag ECR image at runtime would be
+        blocked from building even when no build-time ECR auth was requested."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "processes": [
+                    {"name": "P", "container": "123456789012.dkr.ecr.us-east-1.amazonaws.com/repo:latest"},
+                ]
+            }),
+        )
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("ecr_role_arn_to_assume", None)
+            refs = collect_docker_images("/tmp/pipeline", "", "")
+        self.assertEqual(len(refs), 1)
+        self.assertEqual(refs[0]["tag"], "latest")
+
+    @patch.dict("os.environ", {"ecr_role_arn_to_assume": "arn:aws:iam::123456789012:role/Ecr"})
+    @patch("dxpy.nextflow.collect_images._populate_cached_file_ids")
+    @patch("dxpy.nextflow.collect_images._resolve_digest", return_value="sha256:resolved")
+    @patch("dxpy.nextflow.collect_images.ensure_ecr_login_for_image")
+    @patch("dxpy.nextflow.collect_images.subprocess.run")
+    def test_public_floating_tag_allowed_even_when_ecr_configured(
+        self, mock_run, mock_login, mock_resolve, mock_populate
+    ):
+        """The guard is ECR-host-scoped: a public :latest image must still
+        build with --cache-docker even when build-time ECR auth is configured."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout=json.dumps({
+                "processes": [
+                    {"name": "P", "container": "quay.io/biocontainers/multiqc:latest"},
+                ]
+            }),
+        )
+        refs = collect_docker_images("/tmp/pipeline", "", "")
+        self.assertEqual(len(refs), 1)
 
 
 if __name__ == "__main__":

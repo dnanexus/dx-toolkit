@@ -2895,6 +2895,16 @@ def build(args):
                 "--ecr-role-arn / --ecr-job-token-audience / --ecr-job-token-subject-claims are only "
                 "valid with --cache-docker (build-time ECR auth for image caching)."
             )
+        if args.ecr_role_arn and not (args.ecr_job_token_audience and args.ecr_job_token_subject_claims):
+            build_parser.error(
+                "--ecr-role-arn requires both --ecr-job-token-audience and "
+                "--ecr-job-token-subject-claims (the role's OIDC trust policy needs them)."
+            )
+        if (args.ecr_job_token_audience or args.ecr_job_token_subject_claims) and not args.ecr_role_arn:
+            build_parser.error(
+                "--ecr-job-token-audience / --ecr-job-token-subject-claims have no effect "
+                "without --ecr-role-arn."
+            )
 
         if args.nextflow_version is not None and not args.nextflow:
             build_parser.error(

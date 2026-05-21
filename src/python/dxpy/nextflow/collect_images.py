@@ -72,6 +72,16 @@ def _is_floating_ecr_tag(image_ref):
 _ECR_LOGGED_IN_HOSTS = set()
 
 
+def reset_ecr_login_cache():
+    """Clear the per-process ECR ``docker login`` cache.
+
+    ``_ECR_LOGGED_IN_HOSTS`` is module-global and lives for the whole process.
+    Tests that exercise login success and failure must reset it between cases
+    so a prior successful login cannot mask a later failure.
+    """
+    _ECR_LOGGED_IN_HOSTS.clear()
+
+
 def _extract_ecr_host_and_region(image_ref):
     """If `image_ref`'s registry hostname is an AWS ECR endpoint, return
     `(host_lowercased, region)`. Otherwise return `(None, None)`.
