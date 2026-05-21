@@ -112,11 +112,17 @@ main() {
 
   # Workdir auth is validated eagerly here: the head job needs S3 access
   # immediately to set up the Nextflow work directory.
-  # ECR credential validity is intentionally NOT validated here — the head job
-  # never pulls container images itself. Each task worker calls ecr_aws_login()
-  # in nf_task_entry() immediately before pulling, so failures surface at the
-  # task that actually needs ECR, with full context. Structural config errors
-  # (role set without audience) are caught earlier by AwsUtils.createEnvironment.
+  #
+  # ECR auth is intentionally NOT set up on the head job. The head never
+  # `docker pull`s images — task workers do, each calling ecr_aws_login() in
+  # nf_task_entry() right before pulling. The head DOES run `docker manifest
+  # inspect` to resolve the digest of floating-tag (latest/untagged) images for
+  # the cache lookup; against a private ECR registry that needs ECR auth, which
+  # the head does not have. So private ECR images must be referenced by digest
+  # or an explicit tag, never :latest/untagged — the build-time guard
+  # (collect_images._is_floating_ecr_tag) enforces this for --cache-docker.
+  # Structural config errors (role set without audience) are caught earlier by
+  # AwsUtils.createEnvironment.
   if ! aws_login; then
     dx-jobutil-report-error "AWS workdir login failed; check dnanexus.iamRoleArnToAssume, dnanexus.jobTokenAudience, and the role's trust policy."
     exit 1

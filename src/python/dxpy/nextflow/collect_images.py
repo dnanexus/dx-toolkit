@@ -558,10 +558,11 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
         if ecr_oidc_configured and _is_floating_ecr_tag(container):
             raise ImageRefFactoryError(
                 "ECR image '{}' uses a floating tag (latest or no tag) and "
-                "cannot be reliably cached. Nextaur resolves the digest of "
-                "floating-tag images via `docker manifest inspect` on the head "
-                "job, where the Docker daemon is not authenticated to ECR — so "
-                "the pre-cached image would be silently bypassed on every run.\n"
+                "cannot be cached. At run time Nextaur's head job resolves the "
+                "digest of floating-tag images via `docker manifest inspect`, "
+                "but the head job is not authenticated to ECR — the inspect "
+                "fails and the run errors out on the head before any task "
+                "starts.\n"
                 "Pin the image to an explicit tag or digest "
                 "(e.g. myrepo:1.2 or myrepo@sha256:...) "
                 "before building with --cache-docker.".format(container)
