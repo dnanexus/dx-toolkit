@@ -400,6 +400,10 @@ _fetch_jit_to_file() {
     rm -f "${target}"
     return 1
   fi
+  # umask only sets the mode for newly-created files. If ${target} already
+  # existed (e.g. from a previously-failed write), the redirect truncated it
+  # but left its existing mode. Force 0600 explicitly.
+  chmod 600 "${target}" 2>/dev/null || true
   # A JWT is always a single line. A multi-line response indicates a proxy error
   # page or truncated write — reject it so garbage never reaches AWS STS.
   if [ "$(wc -l < "${target}")" -gt 1 ]; then
@@ -529,9 +533,11 @@ refresh_web_identity_token_loop() {
         local attempt=0
 
         while [ "$attempt" -le 3 ]; do
-          if dx-jobutil-get-identity-token --aud "${jobTokenAudience}" --subject_claims "${jobTokenSubjectClaims}" > "$tmp_token_file"; then
+          # _fetch_jit_to_file applies (umask 077), chmod 600, and the
+          # multi-line JWT-shape check — so the refreshed token file is never
+          # silently re-widened to 0644 and never contains a proxy error page.
+          if _fetch_jit_to_file "$tmp_token_file" "${jobTokenAudience}" "${jobTokenSubjectClaims}"; then
             mv -f "$tmp_token_file" "$AWS_WEB_IDENTITY_TOKEN_FILE"
-
             break
           else
             echo "WARNING: AWS token refresh failed (attempt $((attempt+1))/3)" >&2
@@ -547,9 +553,9 @@ refresh_web_identity_token_loop() {
         local ecr_attempt=0
 
         while [ "$ecr_attempt" -le 3 ]; do
-          if dx-jobutil-get-identity-token --aud "${ecrJobTokenAudience}" --subject_claims "${ecrJobTokenSubjectClaims}" > "$ecr_tmp_token_file"; then
+          # See workdir branch above — _fetch_jit_to_file is the safe writer.
+          if _fetch_jit_to_file "$ecr_tmp_token_file" "${ecrJobTokenAudience}" "${ecrJobTokenSubjectClaims}"; then
             mv -f "$ecr_tmp_token_file" "$ECR_WEB_IDENTITY_TOKEN_FILE"
-
             break
           else
             echo "WARNING: ECR token refresh failed (attempt $((ecr_attempt+1))/3)" >&2

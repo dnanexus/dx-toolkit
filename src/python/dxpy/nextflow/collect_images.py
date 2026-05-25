@@ -554,15 +554,19 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
         # into the resulting applet.  Reading from config here would cause the
         # guard to silently miss the case where the user passes --ecr-role-arn
         # without putting any ECR config in nextflow.config.
-        ecr_oidc_configured = bool(os.environ.get("ecr_role_arn_to_assume"))
+        # Match ecr_login.py's sentinel handling: treat None / "" / literal "null"
+        # identically as "ECR not configured" (DNAnexus inputs are sometimes
+        # serialized as the literal string "null" when unset).
+        ecr_oidc_configured = os.environ.get("ecr_role_arn_to_assume") not in (None, "", "null")
         if ecr_oidc_configured and _is_floating_ecr_tag(container):
             raise ImageRefFactoryError(
                 "ECR image '{}' uses a floating tag (latest or no tag) and "
-                "cannot be cached. At run time Nextaur's head job resolves the "
-                "digest of floating-tag images via `docker manifest inspect`, "
-                "but the head job is not authenticated to ECR — the inspect "
-                "fails and the run errors out on the head before any task "
-                "starts.\n"
+                "cannot be reliably cached. At run time Nextaur's head job "
+                "resolves the digest of floating-tag images via `docker manifest "
+                "inspect`, but the head job is not authenticated to ECR — the "
+                "inspect fails non-fatally, the cache lookup silently misses, "
+                "and the task pulls fresh every run, making the cache dead "
+                "weight.\n"
                 "Pin the image to an explicit tag or digest "
                 "(e.g. myrepo:1.2 or myrepo@sha256:...) "
                 "before building with --cache-docker.".format(container)
