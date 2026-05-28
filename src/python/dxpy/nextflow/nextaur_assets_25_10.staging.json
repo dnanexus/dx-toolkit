@@ -1,11 +1,11 @@
 {
-  "aws:ap-southeast-2": "record-J8FBQj85XFVz0GY4541zZFKb",
-  "aws:eu-central-1": "record-J8FBQ104BZ6ybppK3qkxbVXb",
-  "aws:eu-west-2-g": "record-J8FBQ0pK4jqP61J54xxKzPQp",
-  "aws:me-south-1": "record-J753XZ932gZKkjZFbGVpjXJ9",
-  "aws:us-east-1": "record-J8FBJPj0f7xz61J54xxKzPQP",
-  "azure:uksouth-ofh": "record-J8FBjg12yzk927X3yg4FvPFp",
-  "azure:westeurope": "record-J8FBXBQBgG1927X3yg4FvKqB",
-  "azure:westus": "record-J8FBYX09GFZ927X3yg4FvKqx",
-  "oci:us-ashburn-1": "record-J8FBVXV6588vKb50gy8Fp5yb"
+    "aws:ap-southeast-2": "record-J8G35pj517QFYQZVPGX70ZQb",
+    "aws:eu-central-1": "record-J8G35g04K5g77p4ykgP1GffB",
+    "aws:eu-west-2-g": "record-J8G35f2KvfG77p4ykgP1Gff6",
+    "aws:me-south-1": "record-J753XZ932gZKkjZFbGVpjXJ9",
+    "aws:us-east-1": "record-J8G2YYQ01jkGKb50gy8Fzfx1",
+    "azure:uksouth-ofh": "record-J8G37xV290b0XPGggZ5ky6XB",
+    "azure:westeurope": "record-J8G38G0Bf1vBPPXyk7pQVXyV",
+    "azure:westus": "record-J8G37YQ9811k27X3yg4G5by5",
+    "oci:us-ashburn-1": "record-J8G36Pk6J8BvBFZqX7BB24K9"
 }
