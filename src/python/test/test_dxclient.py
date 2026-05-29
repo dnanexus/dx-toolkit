@@ -6990,7 +6990,11 @@ class TestDXClientNewUser(DXTestCase):
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id,
-            "treManagement": False
+            "treManagement": False,
+            "archivalManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
+            "projectMemberDemotion": False
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -7010,7 +7014,11 @@ class TestDXClientNewUser(DXTestCase):
             "appAccess": True,
             "projectAccess": "CONTRIBUTE",
             "id": user_id,
-            "treManagement": False
+            "treManagement": False,
+            "archivalManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
+            "projectMemberDemotion": False
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -7028,7 +7036,11 @@ class TestDXClientNewUser(DXTestCase):
             "appAccess": False,
             "projectAccess": "VIEW",
             "id": user_id,
-            "treManagement": False
+            "treManagement": False,
+            "archivalManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
+            "projectMemberDemotion": False
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -7047,7 +7059,11 @@ class TestDXClientNewUser(DXTestCase):
             "appAccess": True,
             "projectAccess": "ADMINISTER",
             "id": user_id,
-            "treManagement": False
+            "treManagement": False,
+            "archivalManagement": False,
+            "dataDeletion": False,
+            "dataSearch": False,
+            "projectMemberDemotion": False
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -7162,7 +7178,11 @@ class TestDXClientMembership(DXTestCase):
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER",
-                          "treManagement": False}
+                          "treManagement": False,
+                          "archivalManagement": False,
+                          "dataDeletion": False,
+                          "dataSearch": False,
+                          "projectMemberDemotion": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7175,7 +7195,11 @@ class TestDXClientMembership(DXTestCase):
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "CONTRIBUTE",
-                          "treManagement": False}
+                          "treManagement": False,
+                          "archivalManagement": False,
+                          "dataDeletion": False,
+                          "dataSearch": False,
+                          "projectMemberDemotion": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7237,7 +7261,11 @@ class TestDXClientMembership(DXTestCase):
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER",
-                          "treManagement": False}
+                          "treManagement": False,
+                          "archivalManagement": False,
+                          "dataDeletion": False,
+                          "dataSearch": False,
+                          "projectMemberDemotion": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7365,7 +7393,11 @@ class TestDXClientMembership(DXTestCase):
                           "cloudIntegrationManagement": False,
                           "appAccess": True,
                           "projectAccess": "ADMINISTER",
-                          "treManagement": False}
+                          "treManagement": False,
+                          "archivalManagement": False,
+                          "dataDeletion": False,
+                          "dataSearch": False,
+                          "projectMemberDemotion": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7377,7 +7409,11 @@ class TestDXClientMembership(DXTestCase):
                           "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
                           "appAccess": True,
-                          "treManagement": False}
+                          "treManagement": False,
+                          "archivalManagement": False,
+                          "dataDeletion": False,
+                          "dataSearch": False,
+                          "projectMemberDemotion": False}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7389,7 +7425,11 @@ class TestDXClientMembership(DXTestCase):
                           "cloudIntegrationManagement": False,
                           "projectAccess": "VIEW",
                           "appAccess": False,
-                          "treManagement": False}
+                          "treManagement": False,
+                          "archivalManagement": False,
+                          "dataDeletion": False,
+                          "dataSearch": False,
+                          "projectMemberDemotion": False}
 
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
