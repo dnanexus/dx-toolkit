@@ -7060,10 +7060,10 @@ class TestDXClientNewUser(DXTestCase):
             "projectAccess": "ADMINISTER",
             "id": user_id,
             "treManagement": False,
-            "archivalManagement": False,
-            "dataDeletion": False,
-            "dataSearch": False,
-            "projectMemberDemotion": False
+            "archivalManagement": True,
+            "dataDeletion": True,
+            "dataSearch": True,
+            "projectMemberDemotion": True
         }
         res = dxpy.api.org_find_members(self.org_id, {"id": [user_id]})["results"][0]
         self.assertEqual(res, exp)
@@ -7179,10 +7179,10 @@ class TestDXClientMembership(DXTestCase):
                           "appAccess": True,
                           "projectAccess": "ADMINISTER",
                           "treManagement": False,
-                          "archivalManagement": False,
-                          "dataDeletion": False,
-                          "dataSearch": False,
-                          "projectMemberDemotion": False}
+                          "archivalManagement": True,
+                          "dataDeletion": True,
+                          "dataSearch": True,
+                          "projectMemberDemotion": True}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7262,10 +7262,10 @@ class TestDXClientMembership(DXTestCase):
                           "appAccess": True,
                           "projectAccess": "ADMINISTER",
                           "treManagement": False,
-                          "archivalManagement": False,
-                          "dataDeletion": False,
-                          "dataSearch": False,
-                          "projectMemberDemotion": False}
+                          "archivalManagement": True,
+                          "dataDeletion": True,
+                          "dataSearch": True,
+                          "projectMemberDemotion": True}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
@@ -7394,10 +7394,10 @@ class TestDXClientMembership(DXTestCase):
                           "appAccess": True,
                           "projectAccess": "ADMINISTER",
                           "treManagement": False,
-                          "archivalManagement": False,
-                          "dataDeletion": False,
-                          "dataSearch": False,
-                          "projectMemberDemotion": False}
+                          "archivalManagement": True,
+                          "dataDeletion": True,
+                          "dataSearch": True,
+                          "projectMemberDemotion": True}
         membership = self._org_find_members(self.user_id)
         self.assertEqual(membership, exp_membership)
 
