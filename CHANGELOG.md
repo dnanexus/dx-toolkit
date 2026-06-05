@@ -17,6 +17,14 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Display a security warning when downloading or generating download URLs for files flagged as malicious
 * Released Nextaur 1.13.0: New upload flow with `DxUploadByteArrayOutputStream and DXHTTPRequest`
 
+### Changed
+
+* Updated dependencies in dxpy
+  * Bumped `xattr` from `0.10.1` to `1.1.4`
+  * Bumped `mock` from `2.0.0` to `5.2.0`
+  * Bumped `pip` from `23.3.1` to `26.0`
+  * Bumped `setuptools` from `69.0.2` to `78.1.1`
+
 ### Fixed
 
 * `dx ssh` now always connects using the job's `host` field instead of the HTTPS App domain
