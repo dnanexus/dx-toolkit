@@ -482,6 +482,12 @@ ecr_aws_login() {
     return 1
   fi
 
+  if [ -z "$ecrJobTokenAudience" ] || [ "$ecrJobTokenAudience" = "null" ] || \
+     [ -z "$ecrJobTokenSubjectClaims" ] || [ "$ecrJobTokenSubjectClaims" = "null" ]; then
+    echo "ERROR: dnanexus.ecrIamRoleArnToAssume is set but dnanexus.ecrJobTokenAudience or dnanexus.ecrJobTokenSubjectClaims is missing in the AWS env file." >&2
+    return 1
+  fi
+
   if ! _fetch_jit_to_file "${ECR_WEB_IDENTITY_TOKEN_FILE}" "${ecrJobTokenAudience}" "${ecrJobTokenSubjectClaims}"; then
     echo "ERROR: failed to obtain ECR JIT (audience=${ecrJobTokenAudience}). Check dnanexus.ecrJobTokenAudience / subjectClaims." >&2
     return 1
