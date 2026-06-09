@@ -468,7 +468,7 @@ ecr_aws_login() {
   fi
 
   if [ -z "$awsRegion" ] || [ "$awsRegion" = "null" ]; then
-    echo "ERROR: dnanexus.ecrRoleArnToAssume is set but aws.region is not. Refusing to configure [ecr] profile." >&2
+    echo "ERROR: dnanexus.ecrIamRoleArnToAssume is set but aws.region is not. Refusing to configure [ecr] profile." >&2
     return 1
   fi
   # Defense-in-depth (mirrors the parser-side strip in dx-toolkit and the
