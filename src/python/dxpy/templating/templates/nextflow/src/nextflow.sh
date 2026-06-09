@@ -452,7 +452,7 @@ aws_login() {
 }
 
 # Configures the [ecr] AWS profile in $ECR_AWS_CONFIG_FILE so `aws_ecr ...` calls
-# automatically assume ecrRoleArnToAssume via the DNAnexus Job Identity Token. The SDK
+# automatically assume ecrIamRoleArnToAssume via the DNAnexus Job Identity Token. The SDK
 # refreshes role creds whenever the token file changes; the refresh loop keeps the file
 # fresh. Called only from nf_task_entry() — the head job never calls this function.
 # Returns non-zero on hard misconfiguration (missing required fields, JIT API failure,
@@ -463,7 +463,7 @@ ecr_aws_login() {
   fi
   source "$AWS_ENV"
 
-  if [ -z "$ecrRoleArnToAssume" ] || [ "$ecrRoleArnToAssume" = "null" ]; then
+  if [ -z "$ecrIamRoleArnToAssume" ] || [ "$ecrIamRoleArnToAssume" = "null" ]; then
     return 0
   fi
 
@@ -491,7 +491,7 @@ ecr_aws_login() {
   ( umask 077 && cat > "$ECR_AWS_CONFIG_FILE" <<EOF
 [profile ecr]
 region = ${awsRegion}
-role_arn = ${ecrRoleArnToAssume}
+role_arn = ${ecrIamRoleArnToAssume}
 web_identity_token_file = ${ECR_WEB_IDENTITY_TOKEN_FILE}
 role_session_name = dnanexus_${DX_JOB_ID}_ecr
 EOF
@@ -509,11 +509,11 @@ EOF
   # account-level limits are ~250 TPS pre-burst, well above realistic Nextflow
   # parallelism, so throttling has not been observed in practice.
   if ! aws_ecr sts get-caller-identity >/dev/null 2>&1; then
-    echo "ERROR: sts:GetCallerIdentity failed for the [ecr] profile (role=${ecrRoleArnToAssume}, region=${awsRegion}). Verify the role's trust policy allows the JIT audience '${ecrJobTokenAudience}' and that the role exists." >&2
+    echo "ERROR: sts:GetCallerIdentity failed for the [ecr] profile (role=${ecrIamRoleArnToAssume}, region=${awsRegion}). Verify the role's trust policy allows the JIT audience '${ecrJobTokenAudience}' and that the role exists." >&2
     return 1
   fi
 
-  echo "AWS [ecr] profile configured for role ${ecrRoleArnToAssume}."
+  echo "AWS [ecr] profile configured for role ${ecrIamRoleArnToAssume}."
   return 0
 }
 
@@ -548,7 +548,7 @@ refresh_web_identity_token_loop() {
       fi
 
       # ECR token (only when ECR is configured).
-      if [ -n "$ecrRoleArnToAssume" ] && [ "$ecrRoleArnToAssume" != "null" ]; then
+      if [ -n "$ecrIamRoleArnToAssume" ] && [ "$ecrIamRoleArnToAssume" != "null" ]; then
         local ecr_tmp_token_file="${ECR_WEB_IDENTITY_TOKEN_FILE}.tmp"
         local ecr_attempt=0
 
