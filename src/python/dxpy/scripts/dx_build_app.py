@@ -1199,7 +1199,10 @@ def _build_app(args, extra_args):
                 brief=args.brief,
                 destination=args.destination,
                 extra_args=extra_args,
-                nextflow_version=args.nextflow_version
+                nextflow_version=args.nextflow_version,
+                ecr_role_arn=getattr(args, "ecr_role_arn", None),
+                ecr_job_token_audience=getattr(args, "ecr_job_token_audience", None),
+                ecr_job_token_subject_claims=getattr(args, "ecr_job_token_subject_claims", None),
             )
         app_json = _parse_app_spec(source_dir)
         _check_suggestions(app_json, publish=args.publish)

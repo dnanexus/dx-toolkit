@@ -17,9 +17,12 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import base64
 import dataclasses
 import json
 import logging
+import os
+import re
 import shlex
 import subprocess
 import sys
@@ -30,6 +33,217 @@ from dxpy import config, find_data_objects
 from dxpy.nextflow.ImageRefFactory import ImageRefFactory, ImageRefFactoryError
 
 log = logging.getLogger(__name__)
+
+# Hostname pattern for AWS ECR registries. Must match the bash-side `is_ecr_host`
+# function in nextaur's DxBashLib.groovy / nextflow.sh — keep in sync. Commercial
+# AWS partition only; GovCloud (us-gov-*) and China (.amazonaws.com.cn) are
+# rejected because their STS/ECR endpoints differ and have not been validated.
+_ECR_HOST_RE = re.compile(r"^[0-9]+\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com$", re.IGNORECASE)
+
+# Tags that are treated as "floating" — the image is not pinned and the registry
+# must be re-queried at runtime to resolve the current content. When ECR OIDC
+# auth is configured, this means runtime workers also need OIDC credentials even
+# for fully pre-cached pipelines (Nextaur calls `docker manifest inspect` to
+# resolve the digest before looking up the cached file).
+_FLOATING_TAGS = frozenset({"latest", ""})
+
+
+def _is_floating_ecr_tag(image_ref):
+    """Return True if *image_ref* is an ECR image with a floating (latest/no) tag.
+
+    Only images whose host matches ``_ECR_HOST_RE`` are considered.  Digest-
+    pinned refs (``image@sha256:...``) are always treated as pinned.
+    """
+    host, _ = _extract_ecr_host_and_region(image_ref)
+    if host is None:
+        return False
+    # Digest-pinned refs are always safe.
+    name_part = image_ref.split("/", 1)[-1] if "/" in image_ref else image_ref
+    if "@" in name_part:
+        return False
+    tag = name_part.split(":")[-1] if ":" in name_part else ""
+    return tag.lower() in _FLOATING_TAGS
+
+
+# (host, region) pairs already `docker login`-ed in this process, so N images
+# from the same ECR registry trigger the login subprocesses only once. The ECR
+# auth token is valid ~12h and the importer is a fresh, short-lived process, so
+# no expiry handling is needed within a single `dx build --cache-docker` run.
+_ECR_LOGGED_IN_HOSTS = set()
+
+
+def reset_ecr_login_cache():
+    """Clear the per-process ECR ``docker login`` cache.
+
+    ``_ECR_LOGGED_IN_HOSTS`` is module-global and lives for the whole process.
+    Tests that exercise login success and failure must reset it between cases
+    so a prior successful login cannot mask a later failure.
+    """
+    _ECR_LOGGED_IN_HOSTS.clear()
+
+
+def _extract_ecr_host_and_region(image_ref):
+    """If `image_ref`'s registry hostname is an AWS ECR endpoint, return
+    `(host_lowercased, region)`. Otherwise return `(None, None)`.
+
+    GovCloud and China partitions are rejected — see `_ECR_HOST_RE`.
+    """
+    if not image_ref:
+        return None, None
+    # Defensively strip URI scheme prefixes before hostname extraction.
+    # `docker://` is valid Nextflow syntax but only for Singularity/Apptainer;
+    # the Docker engine (used on DNAnexus) does not produce it. `oras://` is
+    # used by modern nf-core modules for Seqera Community Containers on the
+    # Singularity side, also not an ECR pattern in practice. Neither prefix is
+    # expected on this code path, but stripping keeps detection correct if a
+    # raw container ref is ever passed in directly.
+    if image_ref.startswith("docker://"):
+        image_ref = image_ref[len("docker://"):]
+    elif image_ref.startswith("oras://"):
+        image_ref = image_ref[len("oras://"):]
+    # Hostname is everything up to the first '/'. Strip an optional :port (rare
+    # for ECR but safe to handle).
+    first = image_ref.split("/", 1)[0].split(":", 1)[0].lower()
+    m = _ECR_HOST_RE.match(first)
+    if not m:
+        return None, None
+    region = m.group(1).lower()
+    # Reject all non-commercial AWS partitions. STS / ECR endpoints differ in:
+    #   us-gov-*   GovCloud
+    #   us-iso-*   Secret Region (and us-isob-* Top Secret)
+    # Only commercial partitions have been validated end-to-end with the JIT-
+    # based auth flow used by Phase 1/2.
+    if region.startswith(("us-gov-", "us-iso-", "us-isob-")):
+        return None, None
+    return first, region
+
+
+def _get_ecr_password(region):
+    """Return the ECR auth password for *region* using the [ecr] AWS profile.
+
+    Uses ``boto3`` with the ``[ecr]`` profile that ``ecr_login.py`` wrote to
+    ``~/.aws/credentials`` before ``--cache-docker`` runs.  boto3 is
+    pre-installed on the NPI worker alongside dxpy; no ``aws`` CLI binary is
+    required.
+
+    Returns ``(password: str | None, error: str | None)``.  Exactly one will
+    be non-``None``.
+    """
+    try:
+        import boto3
+        import botocore.exceptions
+    except ImportError:
+        return None, (
+            "boto3 is not installed. "
+            "Install boto3 to use --cache-docker with a private ECR registry."
+        )
+    try:
+        session = boto3.Session(profile_name="ecr")
+        ecr = session.client("ecr", region_name=region)
+        resp = ecr.get_authorization_token()
+        # authorizationToken is base64("AWS:<password>"); extract the password.
+        token_b64 = resp["authorizationData"][0]["authorizationToken"]
+        _, password = base64.b64decode(token_b64).decode().split(":", 1)
+        return password, None
+    except botocore.exceptions.ProfileNotFound:
+        return None, (
+            "AWS [ecr] profile not found in ~/.aws/credentials. "
+            "Did the importer entrypoint (ecr_login.py) run successfully before "
+            "`dx build --cache-docker`?"
+        )
+    except Exception as e:  # noqa: BLE001
+        return None, str(e)
+
+
+def _ecr_docker_login(host, region):
+    """Authenticate ``docker`` to the given ECR host using the local AWS [ecr] profile.
+
+    Obtains a 12-hour ECR auth token via ``_get_ecr_password`` (boto3) and
+    pipes it into two ``docker login`` calls: one as the current user (for
+    ``docker manifest inspect``) and one via ``sudo`` (for ``sudo docker pull``
+    / ``sudo docker save`` in DockerImageRef._cache).
+
+    Region handling: ``--region`` is derived from the ECR hostname itself (e.g.
+    ``123456789.dkr.ecr.us-east-1.amazonaws.com`` → ``us-east-1``). ECR tokens
+    are region-scoped, so the token must come from the same region as the
+    registry being logged into — using any other region would produce a token
+    that the registry rejects. Passing the per-image region also means
+    pipelines that reference images from multiple ECR regions work correctly
+    without any extra CLI flag.
+
+    Cached per (host, region) for the lifetime of the process.
+    """
+    key = (host, region)
+    if key in _ECR_LOGGED_IN_HOSTS:
+        return True
+    try:
+        password, err = _get_ecr_password(region)
+        if password is None:
+            log.warning(
+                "ECR get-login-password failed for host=%s region=%s: %s",
+                host, region, err,
+            )
+            return False
+        # Pipe the password into `docker login --password-stdin`. Using stdin
+        # avoids the password ever appearing on a command line / process list.
+        #
+        # We login twice: once as the job user (so `docker manifest inspect` —
+        # which runs without sudo — can read the registry), and once via sudo
+        # (so `sudo docker pull` / `sudo docker save` in DockerImageRef._cache
+        # also see the auth). Without the sudo login, `sudo docker pull` reads
+        # /root/.docker/config.json which does not contain the ECR token, and
+        # falls back to anonymous access — failing for private registries.
+        login_proc = subprocess.run(
+            ["docker", "login", "--username", "AWS", "--password-stdin", host],
+            input=password, capture_output=True, text=True, check=False,
+        )
+        if login_proc.returncode != 0:
+            log.warning(
+                "docker login to ECR host %s failed rc=%d stderr=%s",
+                host, login_proc.returncode, login_proc.stderr.strip(),
+            )
+            return False
+        # Mirror auth into root's docker config so `sudo docker pull/save` in
+        # DockerImageRef._cache finds the same credentials. Without this,
+        # /root/.docker/config.json has no ECR token and `sudo docker pull`
+        # falls back to anonymous access — which then fails with a generic
+        # registry auth error rather than the clear fail-loud message in
+        # _cache. So this MUST succeed for ECR pulls to work at all; treat a
+        # failure as fatal rather than logging-and-continuing. (The most
+        # likely cause is the importer image lacking NOPASSWD sudoers for
+        # docker — surface that loudly so it can be fixed in NPI itself.)
+        sudo_login = subprocess.run(
+            ["sudo", "-n", "docker", "login", "--username", "AWS", "--password-stdin", host],
+            input=password, capture_output=True, text=True, check=False,
+        )
+        if sudo_login.returncode != 0:
+            log.warning(
+                "sudo docker login to ECR host %s failed rc=%d stderr=%s. "
+                "If sudo requires a password for docker on the importer, configure "
+                "passwordless sudo or run docker pull as the same user that runs docker login.",
+                host, sudo_login.returncode, sudo_login.stderr.strip(),
+            )
+            return False
+        _ECR_LOGGED_IN_HOSTS.add(key)
+        _progress(f"  Logged in to ECR registry {host}")
+        return True
+    except (OSError, subprocess.SubprocessError) as e:
+        log.warning("ECR login error for host=%s region=%s: %s", host, region, e)
+        return False
+
+
+def ensure_ecr_login_for_image(image_ref):
+    """Best-effort ECR login for an image ref. No-op for non-ECR images.
+
+    Returns True if the image is non-ECR or the ECR login succeeded; False if
+    the image is ECR but auth could not be set up. The caller is expected to
+    proceed with `docker pull` either way — a False result simply means the
+    pull is likely to fail with an auth error, which the user can then debug.
+    """
+    host, region = _extract_ecr_host_and_region(image_ref)
+    if host is None:
+        return True
+    return _ecr_docker_login(host, region)
 
 
 def _progress(msg):
@@ -323,6 +537,41 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
         if tag and digest:
             raise ImageRefFactoryError(f"Image reference has both tag and digest: {container}")
 
+        # ECR images with a floating tag (latest/no tag) cannot be reliably
+        # cached.  Nextaur calls `docker manifest inspect` on the head job to
+        # resolve the digest before looking up the cached file — but the head
+        # job's Docker daemon is never logged into ECR (only the AWS CLI [ecr]
+        # profile is set up), so `docker manifest inspect` fails, the digest
+        # stays null, and the pre-cached image is silently bypassed every run.
+        # Caching such an image would be dead weight.  Fail fast instead.
+        #
+        # Inside the NPI job, the authoritative signal that build-time ECR auth
+        # is configured is the `ecr_role_arn_to_assume` NPI input, which npi.sh
+        # exports as an environment variable before invoking this code.
+        # We read it from the env var (not from nextflow.config) because the
+        # build-time ECR role is supplied via --ecr-role-arn CLI flag — it is
+        # intentionally NOT stored in nextflow.config so it is never bundled
+        # into the resulting applet.  Reading from config here would cause the
+        # guard to silently miss the case where the user passes --ecr-role-arn
+        # without putting any ECR config in nextflow.config.
+        # Match ecr_login.py's sentinel handling: treat None / "" / literal "null"
+        # identically as "ECR not configured" (DNAnexus inputs are sometimes
+        # serialized as the literal string "null" when unset).
+        ecr_oidc_configured = os.environ.get("ecr_role_arn_to_assume") not in (None, "", "null")
+        if ecr_oidc_configured and _is_floating_ecr_tag(container):
+            raise ImageRefFactoryError(
+                "ECR image '{}' uses a floating tag (latest or no tag) and "
+                "cannot be reliably cached. At run time Nextaur's head job "
+                "resolves the digest of floating-tag images via `docker manifest "
+                "inspect`, but the head job is not authenticated to ECR — the "
+                "inspect fails non-fatally, the cache lookup silently misses, "
+                "and the task pulls fresh every run, making the cache dead "
+                "weight.\n"
+                "Pin the image to an explicit tag or digest "
+                "(e.g. myrepo:1.2 or myrepo@sha256:...) "
+                "before building with --cache-docker.".format(container)
+            )
+
         # Track whether the digest came from the original reference (@sha256:...)
         # vs resolved by us. Original digests are manifest digests (pullable),
         # resolved digests are config digests (not pullable, used for cache only).
@@ -335,6 +584,19 @@ def collect_docker_images(resources_dir, profile, nextflow_pipeline_params, use_
             full_ref = (repository or "") + image_name
             if tag:
                 full_ref += ":" + tag
+            # `docker manifest inspect` against a private ECR registry requires
+            # auth too (not just `docker pull`). Run an ECR login proactively so
+            # digest resolution works for ECR images. No-op for non-ECR images.
+            #
+            # Failure semantics: this call is intentionally best-effort — return
+            # value is discarded. If login fails here and the image is in fact
+            # ECR, `docker manifest inspect` will fail with an auth error and the
+            # caller (`_resolve_digest`) will fall back to retries. The same
+            # `ensure_ecr_login_for_image` is invoked again from
+            # DockerImageRef._cache (see ImageRef.py) where the failure IS fatal
+            # — that's the fail-loud surface. The duplicate call is cheap because
+            # `_ECR_LOGGED_IN_HOSTS` deduplicates the actual subprocess work.
+            ensure_ecr_login_for_image(full_ref)
             # Only use manifest digest for latest/untagged images where old
             # nextaur (<1.12.1) does a digest-based lookup.  Tagged images use
             # name-based lookup at runtime, so keep config digest for cache

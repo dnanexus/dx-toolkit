@@ -2889,6 +2889,23 @@ def build(args):
             build_parser.error(
                 "Docker caching argument is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
 
+        ecr_flags = [args.ecr_role_arn, args.ecr_job_token_audience, args.ecr_job_token_subject_claims]
+        if any(ecr_flags) and not args.cache_docker:
+            build_parser.error(
+                "--ecr-role-arn / --ecr-job-token-audience / --ecr-job-token-subject-claims are only "
+                "valid with --cache-docker (build-time ECR auth for image caching)."
+            )
+        if args.ecr_role_arn and not (args.ecr_job_token_audience and args.ecr_job_token_subject_claims):
+            build_parser.error(
+                "--ecr-role-arn requires both --ecr-job-token-audience and "
+                "--ecr-job-token-subject-claims (the role's OIDC trust policy needs them)."
+            )
+        if (args.ecr_job_token_audience or args.ecr_job_token_subject_claims) and not args.ecr_role_arn:
+            build_parser.error(
+                "--ecr-job-token-audience / --ecr-job-token-subject-claims have no effect "
+                "without --ecr-role-arn."
+            )
+
         if args.nextflow_version is not None and not args.nextflow:
             build_parser.error(
                 "--nextflow-version is available only when building a Nextflow pipeline. Did you mean 'dx build --nextflow'?")
@@ -5168,6 +5185,52 @@ nextflow_options.add_argument('--cache-docker', help=fill("Stores a container im
 nextflow_options.add_argument('--docker-secrets', help=fill("A dx file id with credentials for a private "
                                                             "docker repository.",
                                                    width_adjustment=-24), dest="docker_secrets")
+
+# --ecr-role-arn / --ecr-job-token-audience / --ecr-job-token-subject-claims
+# Build-time-only ECR credentials for --cache-docker.  These are forwarded as
+# explicit inputs to the Nextflow Pipeline Importer so the importer job can
+# authenticate to a private ECR registry when pulling images to cache.
+#
+# IMPORTANT: these flags are intentionally SEPARATE from the runtime ECR config
+# in nextflow.config (dnanexus.ecrRoleArnToAssume / ecrJobTokenAudience /
+# ecrJobTokenSubjectClaims).  The two paths serve different purposes:
+#
+#   --ecr-role-arn (CLI flag, this flag)
+#       Used ONLY during `dx build --cache-docker`.  The importer job assumes
+#       this role to pull images and cache them in DNAnexus storage.  The role
+#       ARN is NEVER bundled into the resulting applet, so runtime executions
+#       have zero ECR dependency — they pull from the DNAnexus cache.
+#       This is the correct choice when you want build-time-only ECR access
+#       and complete runtime isolation (e.g. after the private registry closes
+#       public access or the role is retired).
+#
+#   nextflow.config: dnanexus.ecrRoleArnToAssume (runtime config)
+#       Read by the nextaur plugin on EVERY run.  Use this when you want task
+#       workers to authenticate to ECR at runtime — e.g. the pipeline pulls
+#       images that are not pre-cached and you need ECR access on each job.
+#       This config is bundled into the applet permanently.
+#
+# You can configure BOTH independently (different roles, least-privilege).
+# You can also configure neither (public images only).
+nextflow_options.add_argument('--ecr-role-arn',
+                              help=fill("IAM role ARN to assume (via OIDC) for authenticating to a private "
+                                        "AWS ECR registry during --cache-docker image pulls. "
+                                        "Build-time only — not bundled into the resulting applet. "
+                                        "Can only be used with --cache-docker.",
+                                        width_adjustment=-24),
+                              dest="ecr_role_arn", default=None)
+nextflow_options.add_argument('--ecr-job-token-audience',
+                              help=fill("OIDC audience for the ECR IAM role's trust policy. "
+                                        "Required when --ecr-role-arn is set. "
+                                        "Can only be used with --cache-docker.",
+                                        width_adjustment=-24),
+                              dest="ecr_job_token_audience", default=None)
+nextflow_options.add_argument('--ecr-job-token-subject-claims',
+                              help=fill("Comma-separated OIDC subject claims for the ECR role trust policy "
+                                        "(e.g. 'project_id,launched_by'). "
+                                        "Can only be used with --cache-docker.",
+                                        width_adjustment=-24),
+                              dest="ecr_job_token_subject_claims", default=None)
 
 # --nextflow-pipeline-params
 nextflow_options.add_argument('--nextflow-pipeline-params', help=fill("Custom pipeline parameters to be referenced when collecting the docker images.",
