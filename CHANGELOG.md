@@ -15,6 +15,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Fix redundant `cpuUsageIdle` description in `dx watch --metrics-help` output
 * Nextflow importer app will enhance inputs help message with additional description from Nextflow pipeline schema
 
+
+## [410.0] - 2026.06.16
+
+### Added
+
+* Released Nextaur 1.13.0: New upload flow with `DxUploadByteArrayOutputStream and DXHTTPRequest`
+
 ## [409.0] - beta
 
 * No significant changes
