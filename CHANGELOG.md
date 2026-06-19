@@ -9,6 +9,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Added
 
 * Display a security warning when downloading or generating download URLs for files flagged as malicious
+* Released Nextaur 1.13.0: New upload flow with `DxUploadByteArrayOutputStream and DXHTTPRequest`
 
 ### Fixed
 
