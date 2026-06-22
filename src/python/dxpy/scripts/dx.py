@@ -4045,7 +4045,7 @@ def verify_ssh_config():
 def ssh(args, ssh_config_verified=False):
     if not re.match("^job-[0-9a-zA-Z]{24}$", args.job_id):
         err_exit(args.job_id + " does not look like a DNAnexus job ID")
-    ssh_desc_fields = {"state":True, "sshHostKey": True, "httpsApp": True, "sshPort": True, "host": True, "allowSSH": True}
+    ssh_desc_fields = {"state":True, "sshHostKey": True, "sshPort": True, "host": True, "allowSSH": True}
     job_desc = try_call(dxpy.describe, args.job_id, fields=ssh_desc_fields)
 
     if job_desc['state'] in ['done', 'failed', 'terminated']:
@@ -4092,13 +4092,6 @@ def ssh(args, ssh_config_verified=False):
     host, host_key, ssh_port = None, None, None
     for i in range(90):
         host = job_desc.get('host')
-        url = job_desc.get('httpsApp', {}).get('dns', {}).get('url')
-        if url is not None:
-            https_host = urlparse(url).hostname
-            # If the hostname is not parsed properly revert back to default behavior
-            if https_host is not None:
-                host = https_host
-                known_host = https_host
         host_key = job_desc.get('sshHostKey')
         ssh_port = job_desc.get('sshPort') or 22
         if host and host_key:
