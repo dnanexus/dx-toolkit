@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [410.0] - beta
+
 ### Added
 
 * Display a security warning when downloading or generating download URLs for files flagged as malicious
@@ -16,7 +18,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Fix redundant `cpuUsageIdle` description in `dx watch --metrics-help` output
 * Nextflow importer app will enhance inputs help message with additional description from Nextflow pipeline schema
 
-## [409.0] - beta
+## [409.0] - 2026.06.23
 
 * No significant changes
 
