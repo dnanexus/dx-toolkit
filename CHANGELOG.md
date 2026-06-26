@@ -6,13 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Fixed
+
+* Fix security status check when downloading files to use correct response field `securityStatus` instead of `security_status`
+
 ## [410.0] - beta
 
 ### Added
 
 * Display a security warning when downloading or generating download URLs for files flagged as malicious
 * Released Nextaur 1.13.0: New upload flow with `DxUploadByteArrayOutputStream and DXHTTPRequest`
-* Fix security status check when downloading files to use correct response field `securityStatus` instead of `security_status`
 
 ### Fixed
 
