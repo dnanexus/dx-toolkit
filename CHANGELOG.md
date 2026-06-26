@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* Released Nextaur 1.14.0: Support for module binaries feature
+
 ### Fixed
 
 * Fix security status check when downloading files to use correct response field `securityStatus` instead of `security_status`
@@ -19,6 +23,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Fixed
 
+* `dx ssh` now always connects using the job's `host` field instead of the HTTPS App domain
 * Fix redundant `cpuUsageIdle` description in `dx watch --metrics-help` output
 * Nextflow importer app will enhance inputs help message with additional description from Nextflow pipeline schema
 
