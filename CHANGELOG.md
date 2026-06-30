@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Released Nextaur 1.14.0: Support for module binaries feature
 
+### Fixed
+
+* Fix security status check when downloading files to use correct response field `securityStatus` instead of `security_status`
+
 ## [410.0] - beta
 
 ### Added

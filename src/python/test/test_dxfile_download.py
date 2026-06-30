@@ -39,7 +39,7 @@ class TestGetDownloadUrlSecurityWarning(unittest.TestCase):
         return resp
 
     def test_no_security_status_no_warning(self):
-        """No warning emitted when security_status is absent from the response."""
+        """No warning emitted when securityStatus is absent from the response."""
         dxfile = self._make_dxfile()
         with patch('dxpy.api.file_download', return_value=self._base_resp()) as mock_dl, \
                 patch('dxpy.bindings.dxfile.warn') as mock_warn, \
@@ -48,9 +48,9 @@ class TestGetDownloadUrlSecurityWarning(unittest.TestCase):
             mock_warn.assert_not_called()
 
     def test_flagged_malicious_emits_warning(self):
-        """Warning is emitted when security_status is FLAGGED_MALICIOUS."""
+        """Warning is emitted when securityStatus is FLAGGED_MALICIOUS."""
         dxfile = self._make_dxfile()
-        with patch('dxpy.api.file_download', return_value=self._base_resp(security_status='FLAGGED_MALICIOUS')) as mock_dl, \
+        with patch('dxpy.api.file_download', return_value=self._base_resp(securityStatus='FLAGGED_MALICIOUS')) as mock_dl, \
                 patch('dxpy.bindings.dxfile.warn') as mock_warn, \
                 patch('dxpy.bindings.dxfile.object_exists_in_project', return_value=False):
             dxfile.get_download_url()
@@ -59,9 +59,9 @@ class TestGetDownloadUrlSecurityWarning(unittest.TestCase):
             self.assertEqual(self.WARNING_MESSAGE, warned_message)
 
     def test_flagged_malicious_download_still_proceeds(self):
-        """Download URL is still returned even when security_status is FLAGGED_MALICIOUS."""
+        """Download URL is still returned even when securityStatus is FLAGGED_MALICIOUS."""
         dxfile = self._make_dxfile()
-        with patch('dxpy.api.file_download', return_value=self._base_resp(security_status='FLAGGED_MALICIOUS')), \
+        with patch('dxpy.api.file_download', return_value=self._base_resp(securityStatus='FLAGGED_MALICIOUS')), \
                 patch('dxpy.bindings.dxfile.warn'), \
                 patch('dxpy.bindings.dxfile.object_exists_in_project', return_value=False):
             url, headers = dxfile.get_download_url()
@@ -71,7 +71,7 @@ class TestGetDownloadUrlSecurityWarning(unittest.TestCase):
     def test_warning_emitted_only_once_when_url_cached(self):
         """Warning is only emitted on the first call; subsequent calls use the cached URL and do not re-warn."""
         dxfile = self._make_dxfile()
-        with patch('dxpy.api.file_download', return_value=self._base_resp(security_status='FLAGGED_MALICIOUS')) as mock_dl, \
+        with patch('dxpy.api.file_download', return_value=self._base_resp(securityStatus='FLAGGED_MALICIOUS')) as mock_dl, \
                 patch('dxpy.bindings.dxfile.warn') as mock_warn, \
                 patch('dxpy.bindings.dxfile.object_exists_in_project', return_value=False):
             dxfile.get_download_url()
