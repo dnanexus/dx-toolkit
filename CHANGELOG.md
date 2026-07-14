@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [411.0] - beta
+
 ### Added
 
 * Released Nextaur 1.14.0: Support for module binaries feature
 
-## [410.0] - beta
+## [410.0] - 2026.07.14
 
 ### Added
 
