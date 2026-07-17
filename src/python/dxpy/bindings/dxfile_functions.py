@@ -432,7 +432,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                 if chunk_part != cur_part:
                     verify_part(cur_part, got_bytes, hasher, e_tag)
                     cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
-                    if dxfile_desc.get('drive') is not None:
+                    if dxfile_desc.get('drive') is not None and "md5" not in parts[cur_part]:
                         _verify_checksum(parts, cur_part, chunk_data, checksum_type, dxfile.get_id())
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
