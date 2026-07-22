@@ -17,9 +17,14 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import hashlib
+import os
+import tempfile
 import unittest
+from collections import defaultdict
 from mock import patch
 from dxpy.bindings.dxfile import DXFile
+from dxpy.bindings import dxfile_functions
 
 class TestGetDownloadUrlSecurityWarning(unittest.TestCase):
     FILE_ID = 'file-xxxx'
@@ -79,6 +84,61 @@ class TestGetDownloadUrlSecurityWarning(unittest.TestCase):
             # file_download API called once; warn called once
             mock_dl.assert_called_once()
             mock_warn.assert_called_once()
+
+
+class TestDownloadPerPartChecksumGating(unittest.TestCase):
+    """TITAN-244: on a symlink/drive file, per-part checksum verification is
+    skipped when the part carries an md5 (md5 is the single integrity check),
+    and still runs as a fallback when the part has no md5."""
+
+    FILE_ID = 'file-xxxx'
+    DRIVE = 'drive-xxxx'
+    CHUNK = b'hello world'
+
+    def _make_dxfile(self):
+        dxfile = DXFile()
+        dxfile._dxid = self.FILE_ID
+        return dxfile
+
+    def _run_download(self, part):
+        dxfile = self._make_dxfile()
+        describe_output = {
+            'parts': {'1': part},
+            'size': len(self.CHUNK),
+            'drive': self.DRIVE,
+            'checksumType': 'CRC64NVME',
+        }
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+        os.remove(filename)  # ensure "rb+" open fails -> "wb" -> main download loop
+        try:
+            with patch.object(dxfile_functions, 'response_iterator',
+                              return_value=[('1', self.CHUNK)]), \
+                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                dxfile_functions._download_dxfile(
+                    dxfile, filename, defaultdict(lambda: 3),
+                    describe_output=describe_output)
+            return mock_verify
+        finally:
+            if os.path.exists(filename):
+                os.remove(filename)
+
+    def test_checksum_skipped_when_md5_present(self):
+        part = {
+            'size': len(self.CHUNK),
+            'md5': hashlib.md5(self.CHUNK).hexdigest(),
+            'checksum': '688cIX1wosY=',
+        }
+        mock_verify = self._run_download(part)
+        mock_verify.assert_not_called()
+
+    def test_checksum_verified_when_md5_absent(self):
+        part = {
+            'size': len(self.CHUNK),
+            'checksum': '688cIX1wosY=',
+        }
+        mock_verify = self._run_download(part)
+        mock_verify.assert_called_once()
 
 
 if __name__ == '__main__':
