@@ -8,7 +8,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Released Nextaur 1.16.0 (APPS-4103): fix the cache eviction and lookup throttle that abort `publishDir` with `NoSuchFileException`. Reverts the 1.15.0 seed-on-close attempt, which did not fix the defect.
 * Released Nextaur 1.15.0: Fix upload/path-resolution race by seeding path cache after file close
 
 ## [411.0] - beta
