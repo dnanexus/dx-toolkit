@@ -25,6 +25,7 @@ from collections import defaultdict
 from mock import patch
 from dxpy.bindings.dxfile import DXFile
 from dxpy.bindings import dxfile_functions
+from dxpy.exceptions import DXChecksumMismatchError
 
 class TestGetDownloadUrlSecurityWarning(unittest.TestCase):
     FILE_ID = 'file-xxxx'
@@ -155,6 +156,35 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
         }
         mock_verify = self._run_download(part)
         mock_verify.assert_not_called()
+
+    def test_md5_verified_when_checksum_skipped(self):
+        dxfile = self._make_dxfile()
+        part = {
+            'size': len(self.CHUNK),
+            'md5': hashlib.md5(b'different data').hexdigest(),
+            'checksum': '688cIX1wosY=',
+        }
+        describe_output = {
+            'parts': {'1': part},
+            'size': len(self.CHUNK),
+            'drive': self.DRIVE,
+            'checksumType': 'CRC64NVME',
+        }
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+        os.remove(filename)  # ensure "rb+" open fails -> "wb" -> main download loop
+        try:
+            with patch.object(dxfile_functions, 'response_iterator',
+                              return_value=[('1', self.CHUNK)]), \
+                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                with self.assertRaises(DXChecksumMismatchError):
+                    dxfile_functions._download_dxfile(
+                        dxfile, filename, defaultdict(lambda: 1),
+                        describe_output=describe_output)
+            mock_verify.assert_not_called()
+        finally:
+            if os.path.exists(filename):
+                os.remove(filename)
 
     def test_resume_preflight_checksum_skipped_when_md5_present(self):
         part = {
