@@ -400,7 +400,7 @@ def _download_dxfile(dxid, filename, part_retry_counter,
                         bytes_to_read -= max_verify_chunk_size
                     if hasher.hexdigest() != part_info["md5"]:
                         raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
-                    if dxfile_desc.get('drive') is not None:
+                    if dxfile_desc.get('drive') is not None and "md5" not in part_info:
                         _verify_checksum(parts, part_id, chunk, checksum_type, dxfile.get_id())
                     else:
                         last_verified_part = part_id

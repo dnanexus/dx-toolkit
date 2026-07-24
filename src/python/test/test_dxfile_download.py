@@ -123,6 +123,30 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
             if os.path.exists(filename):
                 os.remove(filename)
 
+    def _run_resume_preflight(self, part):
+        dxfile = self._make_dxfile()
+        describe_output = {
+            'parts': {'1': part},
+            'size': len(self.CHUNK),
+            'drive': self.DRIVE,
+            'checksumType': 'CRC64NVME',
+        }
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+        try:
+            with open(filename, 'wb') as fh:
+                fh.write(self.CHUNK)
+            with patch.object(dxfile_functions, 'response_iterator',
+                              return_value=[]), \
+                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                dxfile_functions._download_dxfile(
+                    dxfile, filename, defaultdict(lambda: 3),
+                    describe_output=describe_output)
+            return mock_verify
+        finally:
+            if os.path.exists(filename):
+                os.remove(filename)
+
     def test_checksum_skipped_when_md5_present(self):
         part = {
             'size': len(self.CHUNK),
@@ -130,6 +154,15 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
             'checksum': '688cIX1wosY=',
         }
         mock_verify = self._run_download(part)
+        mock_verify.assert_not_called()
+
+    def test_resume_preflight_checksum_skipped_when_md5_present(self):
+        part = {
+            'size': len(self.CHUNK),
+            'md5': hashlib.md5(self.CHUNK).hexdigest(),
+            'checksum': '688cIX1wosY=',
+        }
+        mock_verify = self._run_resume_preflight(part)
         mock_verify.assert_not_called()
 
     def test_checksum_verified_when_md5_absent(self):
