@@ -6,11 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [412.0] - beta
+
 ### Added
 
 * Released Nextaur 1.16.0: fix the cache eviction and lookup throttle that abort `publishDir` with `NoSuchFileException`.
 
-## [411.0] - beta
+## [411.0] - 2026.07.27
 
 ### Added
 
