@@ -785,6 +785,10 @@ class DXFile(DXDataObject):
                 resp = dxpy.api.file_download(self._dxid, args, **kwargs)
                 self._download_url = resp["url"]
                 self._download_url_headers = _validate_headers(resp.get("headers", {}))
+                
+                if resp.get("security_status") == "FLAGGED_MALICIOUS":
+                    warn("WARNING: Potentially malicious file detected. Verify the source before viewing or executing.")
+                
                 if preauthenticated:
                     self._download_url_expires = resp["expires"]/1000 - 60  # Try to account for drift
                 else:

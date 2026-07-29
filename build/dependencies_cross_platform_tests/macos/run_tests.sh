@@ -37,7 +37,10 @@ echo "Using venv with $PYTHON_VERSION ($DXPY_TEST_PYTHON_BIN)"
 if [[ ! -z "$DXPY_TEST_EXTRA_REQUIREMENTS" ]]; then
     $DXPY_TEST_PYTHON_BIN -m pip install -r $DXPY_TEST_EXTRA_REQUIREMENTS
 fi
-$DXPY_TEST_PYTHON_BIN -m pip install $DX_TOOLKIT_DIR
+
+# Force PEP517 in order to rewrite script's shebang to pip's python executable path.
+# This behavior is only applicable for scripts, not entrypoints.console_scripts
+$DXPY_TEST_PYTHON_BIN -m pip install --use-pep517 $DX_TOOLKIT_DIR
 
 hash -r
 

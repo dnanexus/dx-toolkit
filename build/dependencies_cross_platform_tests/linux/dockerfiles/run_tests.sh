@@ -26,7 +26,9 @@ if [[ -f "/extra_requirements.txt" ]]; then
     $DXPY_TEST_PYTHON_BIN -m pip install -r /extra_requirements.txt
 fi
 
-$DXPY_TEST_PYTHON_BIN -m pip install $TMPDIR/dx-toolkit/src/python
+# Force PEP517 in order to rewrite script's shebang to pip's python executable path.
+# This behavior is only applicable for scripts, not entrypoints.console_scripts
+$DXPY_TEST_PYTHON_BIN -m pip install --use-pep517 $TMPDIR/dx-toolkit/src/python
 
 if [[ "$DXPY_TEST_USING_PYENV" == "true" ]]; then
     pyenv rehash

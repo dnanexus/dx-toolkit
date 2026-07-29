@@ -413,6 +413,14 @@ def test_argcomplete(two_files):
 
     proc = pexpect.spawn("/bin/bash")
     proc.sendline('eval "$(register-python-argcomplete dx|sed \'s/-o default//\')"')
+    proc.sendline('echo $?')
+    proc.expect(r'(\d+)\r?\n')
+    output = proc.before
+    exit_code = int(proc.match.group(1))
+    assert exit_code == 0, "Error running register-python-argcomplete%s" % (
+        f": [exitcode: {exit_code}] {output}" if output is not None else ""
+    )
+    
     proc.send("dx \t\t")
     proc.expect("generate_batch_inputs")
     proc.send("new \t\t")
