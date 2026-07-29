@@ -19,6 +19,9 @@ package com.dnanexus;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
@@ -496,6 +499,7 @@ public class DXEnvironment implements AutoCloseable {
     private int maxDefaultConnectionsPerRoute;
     private final ProxyDesc proxy;
     private final CloseableHttpClient httpclient;
+    private final ScheduledExecutorService connectionEvictor;
 
     private static final JsonFactory jsonFactory = new MappingJsonFactory();
     /**
@@ -558,14 +562,21 @@ public class DXEnvironment implements AutoCloseable {
         RequestConfig.Builder reqBuilder = RequestConfig.custom()
                 .setConnectTimeout(connectionTimeout)
                 .setSocketTimeout(socketTimeout);
-
+        
         PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
         connManager.setMaxTotal(maxTotalConnections);
         connManager.setDefaultMaxPerRoute(maxDefaultConnectionsPerRoute);
-        // Before reusing a pooled connection idle >10s, perform a non-blocking socket check to
-        // detect connections closed by the server (FIN). Without this, reusing a server-closed
-        // connection causes a Connection reset error. Overhead is negligible (~µs per check).
-        connManager.setValidateAfterInactivity(10_000);
+
+        // Proactively close connections idle >55s (every 30s) to prevent reusing connections
+        // the server has already closed — e.g. nginx keepalive_timeout, NLB drain RST, NAT RST.
+        // Using a daemon thread so the JVM can exit even if close() is not called.
+        final ScheduledExecutorService evictor = Executors.newSingleThreadScheduledExecutor(
+                r -> { Thread t = new Thread(r, "dx-conn-evictor"); t.setDaemon(true); return t; });
+        evictor.scheduleAtFixedRate(() -> {
+            connManager.closeIdleConnections(55, TimeUnit.SECONDS);
+            connManager.closeExpiredConnections();
+        }, 30, 30, TimeUnit.SECONDS);
+        this.connectionEvictor = evictor;
 
         if (proxy == null) {
             RequestConfig requestConfig = reqBuilder.build();
@@ -765,6 +776,7 @@ public class DXEnvironment implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
+        connectionEvictor.shutdownNow();
         httpclient.close();
     }
 
