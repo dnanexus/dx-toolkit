@@ -19,7 +19,6 @@ package com.dnanexus;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
@@ -560,8 +559,7 @@ public class DXEnvironment implements AutoCloseable {
                 .setConnectTimeout(connectionTimeout)
                 .setSocketTimeout(socketTimeout);
 
-        // TTL of 300s caps connection lifetime as a safety net (e.g. server-side config changes).
-        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(300, TimeUnit.SECONDS);
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
         connManager.setMaxTotal(maxTotalConnections);
         connManager.setDefaultMaxPerRoute(maxDefaultConnectionsPerRoute);
         // Before reusing a pooled connection idle >10s, perform a non-blocking socket check to
