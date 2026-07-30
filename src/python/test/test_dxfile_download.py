@@ -17,12 +17,15 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import base64
 import hashlib
 import os
 import tempfile
 import unittest
 from collections import defaultdict
 from mock import patch
+from awscrt import checksums
+import dxpy
 from dxpy.bindings.dxfile import DXFile
 from dxpy.bindings import dxfile_functions
 from dxpy.exceptions import DXChecksumMismatchError
@@ -115,7 +118,7 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
         try:
             with patch.object(dxfile_functions, 'response_iterator',
                               return_value=[('1', self.CHUNK)]), \
-                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                    patch.object(dxfile_functions, '_compare_part_checksum') as mock_verify:
                 dxfile_functions._download_dxfile(
                     dxfile, filename, defaultdict(lambda: 3),
                     describe_output=describe_output)
@@ -139,7 +142,7 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
                 fh.write(self.CHUNK)
             with patch.object(dxfile_functions, 'response_iterator',
                               return_value=[]), \
-                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                    patch.object(dxfile_functions, '_compare_part_checksum') as mock_verify:
                 dxfile_functions._download_dxfile(
                     dxfile, filename, defaultdict(lambda: 3),
                     describe_output=describe_output)
@@ -176,7 +179,7 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
         try:
             with patch.object(dxfile_functions, 'response_iterator',
                               return_value=[('1', self.CHUNK)]), \
-                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                    patch.object(dxfile_functions, '_compare_part_checksum') as mock_verify:
                 with self.assertRaises(DXChecksumMismatchError):
                     dxfile_functions._download_dxfile(
                         dxfile, filename, defaultdict(lambda: 1),
@@ -202,6 +205,88 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
         }
         mock_verify = self._run_download(part)
         mock_verify.assert_called_once()
+
+
+class TestDownloadMultiChunkChecksum(unittest.TestCase):
+    """Reproduces the CRC64NVME mismatch seen on v0.404.0 for a symlink/drive
+    file whose (whole-file) checksum lives on part 1.
+
+    When a part is larger than the download chunk size, the download loop in
+    ``_download_dxfile`` splits it into multiple ``chunksize`` chunks, but
+    ``_verify_checksum`` is only ever handed the *first* chunk. The CRC is
+    therefore computed over the first chunk instead of the whole part, so a
+    perfectly intact download fails with DXChecksumMismatchError.
+    """
+
+    FILE_ID = 'file-xxxx'
+    DRIVE = 'drive-xxxx'
+
+    # 64 bytes of non-uniform data so the CRC of the first chunk differs from
+    # the CRC of the whole part.
+    DATA = bytes((i * 7 + 3) & 0xFF for i in range(64))
+    CHUNK_SIZE = 16  # -> part 1 splits into 4 chunks
+
+    def _make_dxfile(self):
+        dxfile = DXFile()
+        dxfile._dxid = self.FILE_ID
+        return dxfile
+
+    def _whole_checksum_b64(self):
+        return base64.b64encode(checksums.crc64nvme(self.DATA).to_bytes(8, 'big')).decode()
+
+    def _run(self, chunksize):
+        """Drive the *real* chunking/response_iterator/_verify_checksum path,
+        serving byte ranges out of an in-memory buffer instead of HTTP."""
+        dxfile = self._make_dxfile()
+        part = {'size': len(self.DATA), 'checksum': self._whole_checksum_b64()}
+        describe_output = {
+            'parts': {'1': part},
+            'size': len(self.DATA),
+            'drive': self.DRIVE,
+            'checksumType': 'CRC64NVME',
+        }
+
+        def fake_read_range(url, headers, start, end, timeout, sub_range=True):
+            return self.DATA[start:end + 1]
+
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+        os.remove(filename)  # force "wb" open -> main download loop (not rb+ resume)
+        try:
+            with patch.object(DXFile, 'get_download_url', return_value=('http://dummy', {})), \
+                    patch.object(dxpy, '_dxhttp_read_range', side_effect=fake_read_range):
+                dxfile_functions._download_dxfile(
+                    dxfile, filename, defaultdict(lambda: 1),
+                    chunksize=chunksize, describe_output=describe_output)
+            with open(filename, 'rb') as fh:
+                return fh.read()
+        finally:
+            if os.path.exists(filename):
+                os.remove(filename)
+
+    def test_sanity_data_and_checksum_are_valid(self):
+        """The whole-part checksum genuinely matches the whole data; only the
+        first chunk disagrees. Proves the failure below is about chunking, not
+        corrupt data."""
+        expected = base64.b64decode(self._whole_checksum_b64())
+        whole = checksums.crc64nvme(self.DATA).to_bytes(8, 'big')
+        first_chunk = checksums.crc64nvme(self.DATA[:self.CHUNK_SIZE]).to_bytes(8, 'big')
+        self.assertEqual(whole, expected)
+        self.assertNotEqual(first_chunk, expected)
+
+    def test_single_chunk_part_downloads_ok(self):
+        """Control: when the part fits in one chunk, verification passes and
+        the file is written correctly."""
+        result = self._run(chunksize=len(self.DATA))
+        self.assertEqual(result, self.DATA)
+
+    def test_multi_chunk_part_downloads_ok(self):
+        """The bug: identical, intact data must download successfully even when
+        it is split into several chunks. Currently FAILS (raises
+        DXChecksumMismatchError because only the first chunk is checksummed);
+        should PASS once the checksum is accumulated across all chunks."""
+        result = self._run(chunksize=self.CHUNK_SIZE)
+        self.assertEqual(result, self.DATA)
 
 
 if __name__ == '__main__':
