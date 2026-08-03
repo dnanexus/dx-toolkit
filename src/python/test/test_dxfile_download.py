@@ -17,12 +17,17 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import base64
 import hashlib
 import os
 import tempfile
 import unittest
+import zlib
+import crc32c
 from collections import defaultdict
 from mock import patch
+from awscrt import checksums
+import dxpy
 from dxpy.bindings.dxfile import DXFile
 from dxpy.bindings import dxfile_functions
 from dxpy.exceptions import DXChecksumMismatchError
@@ -115,7 +120,7 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
         try:
             with patch.object(dxfile_functions, 'response_iterator',
                               return_value=[('1', self.CHUNK)]), \
-                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                    patch.object(dxfile_functions, '_compare_part_checksum') as mock_verify:
                 dxfile_functions._download_dxfile(
                     dxfile, filename, defaultdict(lambda: 3),
                     describe_output=describe_output)
@@ -139,7 +144,7 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
                 fh.write(self.CHUNK)
             with patch.object(dxfile_functions, 'response_iterator',
                               return_value=[]), \
-                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                    patch.object(dxfile_functions, '_compare_part_checksum') as mock_verify:
                 dxfile_functions._download_dxfile(
                     dxfile, filename, defaultdict(lambda: 3),
                     describe_output=describe_output)
@@ -176,7 +181,7 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
         try:
             with patch.object(dxfile_functions, 'response_iterator',
                               return_value=[('1', self.CHUNK)]), \
-                    patch.object(dxfile_functions, '_verify_checksum') as mock_verify:
+                    patch.object(dxfile_functions, '_compare_part_checksum') as mock_verify:
                 with self.assertRaises(DXChecksumMismatchError):
                     dxfile_functions._download_dxfile(
                         dxfile, filename, defaultdict(lambda: 1),
@@ -202,6 +207,114 @@ class TestDownloadPerPartChecksumGating(unittest.TestCase):
         }
         mock_verify = self._run_download(part)
         mock_verify.assert_called_once()
+
+
+class TestDownloadMultiChunkChecksum(unittest.TestCase):
+    """Reproduces the checksum mismatch seen on v0.404.0 for a symlink/drive
+    file whose (whole-file) checksum lives on part 1.
+
+    When a part is larger than the download chunk size, the download loop in
+    ``_download_dxfile`` splits it into multiple ``chunksize`` chunks. The bug
+    was that the per-part checksum was computed over only the *first* chunk
+    instead of the whole part, so a perfectly intact download failed with
+    DXChecksumMismatchError. This affected every supported checksum type, not
+    just CRC64NVME, because the bug was in the download loop and not in any
+    type-specific logic -- so all types are exercised here.
+    """
+
+    FILE_ID = 'file-xxxx'
+    DRIVE = 'drive-xxxx'
+
+    # All checksum types supported by _verify_checksum / _IncrementalChecksum.
+    CHECKSUM_TYPES = ('CRC32', 'CRC32C', 'SHA1', 'SHA256', 'CRC64NVME')
+
+    # 64 bytes of non-uniform data so the checksum of the first chunk differs
+    # from the checksum of the whole part.
+    DATA = bytes((i * 7 + 3) & 0xFF for i in range(64))
+    CHUNK_SIZE = 16  # -> part 1 splits into 4 chunks
+
+    def _make_dxfile(self):
+        dxfile = DXFile()
+        dxfile._dxid = self.FILE_ID
+        return dxfile
+
+    @staticmethod
+    def _digest(checksum_type, data):
+        if checksum_type == 'CRC32':
+            return zlib.crc32(data).to_bytes(4, 'big')
+        if checksum_type == 'CRC32C':
+            return crc32c.crc32c(data).to_bytes(4, 'big')
+        if checksum_type == 'SHA1':
+            return hashlib.sha1(data).digest()
+        if checksum_type == 'SHA256':
+            return hashlib.sha256(data).digest()
+        if checksum_type == 'CRC64NVME':
+            return checksums.crc64nvme(data).to_bytes(8, 'big')
+        raise ValueError(checksum_type)
+
+    def _whole_checksum_b64(self, checksum_type):
+        return base64.b64encode(self._digest(checksum_type, self.DATA)).decode()
+
+    def _run(self, checksum_type, chunksize):
+        """Drive the *real* chunking/response_iterator/_verify_checksum path,
+        serving byte ranges out of an in-memory buffer instead of HTTP."""
+        dxfile = self._make_dxfile()
+        part = {'size': len(self.DATA), 'checksum': self._whole_checksum_b64(checksum_type)}
+        describe_output = {
+            'parts': {'1': part},
+            'size': len(self.DATA),
+            'drive': self.DRIVE,
+            'checksumType': checksum_type,
+        }
+
+        def fake_read_range(url, headers, start, end, timeout, sub_range=True):
+            return self.DATA[start:end + 1]
+
+        fd, filename = tempfile.mkstemp()
+        os.close(fd)
+        os.remove(filename)  # force "wb" open -> main download loop (not rb+ resume)
+        try:
+            with patch.object(DXFile, 'get_download_url', return_value=('http://dummy', {})), \
+                    patch.object(dxpy, '_dxhttp_read_range', side_effect=fake_read_range):
+                dxfile_functions._download_dxfile(
+                    dxfile, filename, defaultdict(lambda: 1),
+                    chunksize=chunksize, describe_output=describe_output)
+            with open(filename, 'rb') as fh:
+                return fh.read()
+        finally:
+            if os.path.exists(filename):
+                os.remove(filename)
+
+    def test_sanity_data_and_checksum_are_valid(self):
+        """For every type, the whole-part checksum genuinely matches the whole
+        data while only the first chunk disagrees. Proves the failures below are
+        about chunking, not corrupt data."""
+        for checksum_type in self.CHECKSUM_TYPES:
+            with self.subTest(checksum_type=checksum_type):
+                expected = base64.b64decode(self._whole_checksum_b64(checksum_type))
+                whole = self._digest(checksum_type, self.DATA)
+                first_chunk = self._digest(checksum_type, self.DATA[:self.CHUNK_SIZE])
+                self.assertEqual(whole, expected)
+                self.assertNotEqual(first_chunk, expected)
+
+    def test_single_chunk_part_downloads_ok(self):
+        """Control: when the part fits in one chunk, verification passes and
+        the file is written correctly, for every checksum type."""
+        for checksum_type in self.CHECKSUM_TYPES:
+            with self.subTest(checksum_type=checksum_type):
+                result = self._run(checksum_type, chunksize=len(self.DATA))
+                self.assertEqual(result, self.DATA)
+
+    def test_multi_chunk_part_downloads_ok(self):
+        """The bug: identical, intact data must download successfully even when
+        it is split into several chunks. Before the fix this raised
+        DXChecksumMismatchError (only the first chunk was checksummed); it now
+        passes because the checksum is accumulated across all chunks. Verified
+        for every supported checksum type."""
+        for checksum_type in self.CHECKSUM_TYPES:
+            with self.subTest(checksum_type=checksum_type):
+                result = self._run(checksum_type, chunksize=self.CHUNK_SIZE)
+                self.assertEqual(result, self.DATA)
 
 
 if __name__ == '__main__':

@@ -232,26 +232,62 @@ def _verify_checksum(parts, part_id, chunk_data, checksum_type, dxfile_id):
     if checksum_type is None:
         return
 
+    accumulator = _IncrementalChecksum(checksum_type)
+    accumulator.update(chunk_data)
+    return _compare_part_checksum(parts, part_id, accumulator.digest(), checksum_type, dxfile_id)
+
+
+class _IncrementalChecksum(object):
+    '''Incrementally computes a whole-part checksum as download chunks arrive.
+
+    A single part may be downloaded as several ``chunksize`` chunks, so the
+    checksum must be accumulated across every chunk and verified only once the
+    whole part has been read. CRC algorithms accept a running/previous value;
+    SHA algorithms use a stateful hashlib object.
+    '''
+
+    _CRC_TYPES = ('CRC32', 'CRC32C', 'CRC64NVME')
+
+    def __init__(self, checksum_type):
+        self.checksum_type = checksum_type
+        self._crc = 0
+        self._hasher = None
+        if checksum_type == 'SHA1':
+            self._hasher = hashlib.sha1()
+        elif checksum_type == 'SHA256':
+            self._hasher = hashlib.sha256()
+        elif checksum_type not in self._CRC_TYPES:
+            raise DXFileError("Unsupported checksum type: {}".format(checksum_type))
+
+    def update(self, data):
+        if self._hasher is not None:
+            self._hasher.update(data)
+        elif self.checksum_type == 'CRC32':
+            self._crc = zlib.crc32(data, self._crc)
+        elif self.checksum_type == 'CRC32C':
+            self._crc = crc32c.crc32c(data, self._crc)
+        else:  # CRC64NVME
+            self._crc = checksums.crc64nvme(data, self._crc)
+        return self
+
+    def digest(self):
+        if self._hasher is not None:
+            return self._hasher.digest()
+        if self.checksum_type == 'CRC64NVME':
+            return self._crc.to_bytes(8, 'big')
+        return self._crc.to_bytes(4, 'big')
+
+
+def _compare_part_checksum(parts, part_id, got_checksum, checksum_type, dxfile_id):
     part = parts.get(part_id)
     if part is None:
         raise DXFileError("Part {} not found in {}".format(part_id, dxfile_id))
 
     expected_checksum = part.get('checksum')
-    verifiers = {
-        'CRC32': lambda data: zlib.crc32(data).to_bytes(4, 'big'),
-        'CRC32C': lambda data: crc32c.crc32c(data).to_bytes(4, 'big'),
-        'SHA1': lambda data: hashlib.sha1(data).digest(),
-        'SHA256': lambda data: hashlib.sha256(data).digest(),
-        'CRC64NVME': lambda data: checksums.crc64nvme(data).to_bytes(8, 'big'),
-    }
-
-    if checksum_type not in verifiers:
-        raise DXFileError("Unsupported checksum type: {}".format(checksum_type))
     if expected_checksum is None:
         raise DXFileError("{} checksum not found in part {}".format(checksum_type, part_id))
 
     expected_checksum = base64.b64decode(expected_checksum)
-    got_checksum = verifiers[checksum_type](chunk_data)
 
     if got_checksum != expected_checksum:
         raise DXChecksumMismatchError("{} checksum mismatch in {} in part {} (expected {}, got {})".format(checksum_type, dxfile_id, part_id, expected_checksum, got_checksum))
@@ -421,26 +457,46 @@ def _download_dxfile(dxid, filename, part_retry_counter,
         try:
             # Main loop. In parallel: download chunks, verify them, and write them to disk.
             get_first_chunk_sequentially = (file_size > 128 * 1024 and last_verified_pos == 0 and dxpy.JOB_ID)
-            cur_part, got_bytes, hasher = None, None, None
+            cur_part, got_bytes, hasher, part_checksum = None, None, None, None
             e_tag = None
             if describe_output and describe_output.get("symlinkTargetIdentifier"):
                 e_tag = describe_output["symlinkTargetIdentifier"].get("ETag")
+
+            def new_part_checksum(part_id):
+                # Only verify the platform-provided checksum for symlink/drive
+                # files that lack a per-part md5 (md5 is the primary integrity
+                # check when present).
+                if checksum_type is None:
+                    return None
+                if dxfile_desc.get('drive') is None or "md5" in parts[part_id]:
+                    return None
+                return _IncrementalChecksum(checksum_type)
+
+            def verify_part_checksum(part_id, accumulator):
+                # A part may span several chunks; verify the accumulated
+                # checksum over the whole part once all chunks are read.
+                if accumulator is None:
+                    return
+                _compare_part_checksum(parts, part_id, accumulator.digest(), checksum_type, dxfile.get_id())
 
             for chunk_part, chunk_data in response_iterator(chunk_requests(e_tag),
                                                             dxfile._http_threadpool,
                                                             do_first_task_sequentially=get_first_chunk_sequentially):
                 if chunk_part != cur_part:
                     verify_part(cur_part, got_bytes, hasher, e_tag)
+                    verify_part_checksum(cur_part, part_checksum)
                     cur_part, got_bytes, hasher = chunk_part, 0, md5_hasher()
-                    if dxfile_desc.get('drive') is not None and "md5" not in parts[cur_part]:
-                        _verify_checksum(parts, cur_part, chunk_data, checksum_type, dxfile.get_id())
+                    part_checksum = new_part_checksum(cur_part)
                 got_bytes += len(chunk_data)
                 hasher.update(chunk_data)
+                if part_checksum is not None:
+                    part_checksum.update(chunk_data)
                 fh.write(chunk_data)
                 if show_progress:
                     _bytes += len(chunk_data)
                     _print_progress(_bytes, file_size, filename)
             verify_part(cur_part, got_bytes, hasher, e_tag)
+            verify_part_checksum(cur_part, part_checksum)
             if show_progress:
                 _print_progress(_bytes, file_size, filename, action="Completed")
         except DXFileError:
