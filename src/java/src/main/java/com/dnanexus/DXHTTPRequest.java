@@ -431,11 +431,17 @@ public class DXHTTPRequest {
                 // Note, this catches both exceptions directly thrown from httpclient.execute (e.g.
                 // no connectivity to server) and exceptions thrown by our code above after parsing
                 // the response.
-                logError(errorMessage("POST", resource, e.toString(), timeoutSeconds,
+                String msg = e.getMessage();
+                boolean isConnectionReset = msg != null && msg.toLowerCase().contains("connection reset");
+                boolean willRetry = attempts < NUM_RETRIES && retryRequest;
+                String causeDescription = isConnectionReset
+                        ? (willRetry ? "Server closed the connection (retrying)" : "Error: Server closed the connection")
+                        : e.toString();
+                logError(errorMessage("POST", resource, causeDescription, timeoutSeconds,
                         attempts + 1, NUM_RETRIES));
                 if (attempts == NUM_RETRIES || !retryRequest) {
                     if (statusCode == null) {
-                        throw new DXHTTPException();
+                        throw new DXHTTPException(e);
                     }
                     throw new InternalErrorException("Maximum number of retries reached, or unsafe to retry",
                             statusCode);
