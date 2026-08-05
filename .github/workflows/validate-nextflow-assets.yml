@@ -1,0 +1,27 @@
+name: Validate Nextflow asset JSON files
+
+on:
+  pull_request:
+    paths:
+      - "src/python/dxpy/nextflow/**"
+  push:
+    branches:
+      - master
+    paths:
+      - "src/python/dxpy/nextflow/**"
+
+jobs:
+  validate-assets:
+    name: Validate asset record/project IDs
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Run Nextflow asset validator
+        run: python src/python/dxpy/nextflow/validate_nextflow_assets.py
+
