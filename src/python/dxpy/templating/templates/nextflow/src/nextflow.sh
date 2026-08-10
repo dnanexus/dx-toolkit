@@ -50,6 +50,9 @@ main() {
   export NXF_PLUGINS_DEFAULT=nextaur@$NXF_PLUGINS_VERSION
   export NXF_EXECUTOR='dnanexus'
 
+  # decide whether Nextflow should run without internet access
+  setup_offline_mode
+
   # use /home/dnanexus/nextflow_execution as the temporary nextflow execution folder
   mkdir -p /home/dnanexus/nextflow_execution
   cd /home/dnanexus/nextflow_execution
@@ -426,6 +429,126 @@ setup_workdir() {
 }
 
 # =========================================================
+# Helpers: offline mode
+# =========================================================
+
+# Echoes "false" if the platform reports that outbound internet access is disabled for
+# this job, "true" if it is enabled, and nothing if the information is unavailable.
+# `jobOutboundInternet` is excluded from the default describe output, so it has to be
+# requested explicitly; when the field is not set at all, the platform reports `true`.
+# Both the job and its project are checked, and a single `false` is decisive.
+get_job_outbound_internet() {
+  local dx_id flag result=""
+  for dx_id in "$DX_JOB_ID" "$DX_PROJECT_CONTEXT_ID"; do
+    [[ -n $dx_id ]] || continue
+    # `|| true` keeps a failing describe (or output that jq cannot parse) from aborting
+    # the job through `set -e`: an unusable answer must leave the run online, not kill it
+    flag=$(dx api "$dx_id" describe '{"fields":{"jobOutboundInternet":true}}' 2>/dev/null |
+      jq -r 'if has("jobOutboundInternet") then (.jobOutboundInternet|tostring) else "" end' 2>/dev/null || true)
+    if [[ $flag == false ]]; then
+      echo "false"
+      return 0
+    fi
+    [[ $flag == true ]] && result="true"
+  done
+  echo "$result"
+}
+
+# Reads the offline request out of $nextflow_run_opts into $NXF_OFFLINE_REQUEST ("on", "off"
+# or empty) and rewrites $nextflow_run_opts.
+# `-offline` is a real Nextflow option and is passed through untouched. `-offline=<value>` is
+# not: Nextflow rejects that form with "Unknown option", so it is treated as a DNAnexus-only
+# control and consumed here instead of reaching the command line.
+parse_offline_run_opts() {
+  local opt
+  local -a offline_opts=() kept=()
+  NXF_OFFLINE_REQUEST=""
+  IFS=" " read -r -a offline_opts <<<"$nextflow_run_opts"
+  for opt in "${offline_opts[@]}"; do
+    case $opt in
+    -offline)
+      NXF_OFFLINE_REQUEST="on"
+      kept+=("$opt")
+      ;;
+    -offline=false)
+      NXF_OFFLINE_REQUEST="off"
+      ;;
+    -offline=*)
+      NXF_OFFLINE_REQUEST="on"
+      ;;
+    *)
+      kept+=("$opt")
+      ;;
+    esac
+  done
+  nextflow_run_opts="${kept[*]}"
+}
+
+# `-latest` pulls updates for a pipeline hosted in a remote repository. On DNAnexus the
+# pipeline ships inside the applet, so the option has no effect at all -- but Nextflow refuses
+# to combine it with offline mode and aborts the run. Drop it instead, and say so.
+drop_latest_run_opt() {
+  local opt
+  local -a latest_opts=() kept=()
+  IFS=" " read -r -a latest_opts <<<"$nextflow_run_opts"
+  for opt in "${latest_opts[@]}"; do
+    if [[ $opt == -latest ]]; then
+      echo "Ignoring the -latest run option: it has no effect on a pipeline bundled in an applet"
+      echo "and Nextflow does not allow it together with offline mode."
+      continue
+    fi
+    kept+=("$opt")
+  done
+  nextflow_run_opts="${kept[*]}"
+}
+
+# Turns on Nextflow offline mode: no version check, no plugin registry access, no
+# remote pipeline update check. See https://nf-co.re/docs/running/run-pipelines-offline
+enable_offline_mode() {
+  NXF_OFFLINE_REASON="$1"
+  export NXF_OFFLINE=true
+  export NXF_DISABLE_CHECK_LATEST=true
+  drop_latest_run_opt
+  echo "Nextflow offline mode enabled ($NXF_OFFLINE_REASON). Nextflow will not contact the internet"
+  echo "for version checks, plugin downloads or pipeline updates. Pipeline plugins that are not"
+  echo "bundled in the DNAnexus assets cannot be used, and docker images must be cached in the project."
+}
+
+# Offline mode is used when the user asks for it with the Nextflow `-offline` run option,
+# or when this job runs in a restricted environment without outbound internet access.
+setup_offline_mode() {
+  parse_offline_run_opts
+
+  # explicit opt-out wins over everything: a restricted environment, and a variable that
+  # was already in the job environment -- it is the only way to force a run back online
+  if [[ $NXF_OFFLINE_REQUEST == off ]]; then
+    unset NXF_OFFLINE
+    echo "Offline mode turned off with -offline=false in nextflow_run_opts; running online."
+    return
+  fi
+
+  if [[ $NXF_OFFLINE == true ]]; then
+    enable_offline_mode "NXF_OFFLINE was already set in the job environment"
+    return
+  fi
+
+  if [[ $NXF_OFFLINE_REQUEST == on ]]; then
+    enable_offline_mode "requested with -offline in nextflow_run_opts"
+    return
+  fi
+
+  case $(get_job_outbound_internet) in
+  false)
+    enable_offline_mode "this job has no outbound internet access (jobOutboundInternet=false)"
+    ;;
+  true) ;;
+  *)
+    echo "Could not determine whether this job has outbound internet access; assuming it has."
+    ;;
+  esac
+}
+
+# =========================================================
 # Helpers: basic run
 # =========================================================
 
@@ -479,6 +602,11 @@ log_context_info() {
   echo "=== NF workdir      : ${NXF_WORK}"
   if [[ $preserve_cache == true ]]; then
     echo "=== NF cache folder : dx://${DX_CACHEDIR}/${NXF_UUID}/"
+  fi
+  if [[ $NXF_OFFLINE == true ]]; then
+    echo "=== NF offline mode : true (${NXF_OFFLINE_REASON})"
+  else
+    echo "=== NF offline mode : false"
   fi
   echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
   echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
