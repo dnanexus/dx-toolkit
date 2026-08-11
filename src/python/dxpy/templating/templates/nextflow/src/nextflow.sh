@@ -516,6 +516,8 @@ enable_offline_mode() {
 
 # Offline mode is used when the user asks for it with the Nextflow `-offline` run option,
 # or when this job runs in a restricted environment without outbound internet access.
+# Every branch records $NXF_OFFLINE_REASON, so log_context_info can state why the run is
+# offline *or* why it is not -- support has to be able to answer that from the job log alone.
 setup_offline_mode() {
   parse_offline_run_opts
 
@@ -523,6 +525,7 @@ setup_offline_mode() {
   # was already in the job environment -- it is the only way to force a run back online
   if [[ $NXF_OFFLINE_REQUEST == off ]]; then
     unset NXF_OFFLINE
+    NXF_OFFLINE_REASON="turned off with -offline=false in nextflow_run_opts"
     echo "Offline mode turned off with -offline=false in nextflow_run_opts; running online."
     return
   fi
@@ -541,8 +544,11 @@ setup_offline_mode() {
   false)
     enable_offline_mode "this job has no outbound internet access (jobOutboundInternet=false)"
     ;;
-  true) ;;
+  true)
+    NXF_OFFLINE_REASON="this job has outbound internet access (jobOutboundInternet=true)"
+    ;;
   *)
+    NXF_OFFLINE_REASON="could not determine whether this job has outbound internet access"
     echo "Could not determine whether this job has outbound internet access; assuming it has."
     ;;
   esac
@@ -606,7 +612,7 @@ log_context_info() {
   if [[ $NXF_OFFLINE == true ]]; then
     echo "=== NF offline mode : true (${NXF_OFFLINE_REASON})"
   else
-    echo "=== NF offline mode : false"
+    echo "=== NF offline mode : false (${NXF_OFFLINE_REASON:-not requested})"
   fi
   echo "=== NF command      :" "${NEXTFLOW_CMD[@]}"
   echo "=== Built with dxpy : @@DXPY_BUILD_VERSION@@"
