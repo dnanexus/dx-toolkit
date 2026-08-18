@@ -7,6 +7,7 @@ Checks that every asset file referenced in versions.json:
   - is valid JSON
   - contains only well-formed DNAnexus record IDs (^record-[A-Za-z0-9]{24}$)
   - has identical region key sets in the prod and staging variants
+  - has identical region key sets across all asset types (nextaur, nextflow, awscli)
 
 Also validates app_asset_projects_ids_{prod,staging}.json for project IDs.
 
@@ -83,6 +84,10 @@ def validate_assets():
         # 2. Validate every version's prod and staging asset files
         # ------------------------------------------------------------------
         for ver, config in manifest["versions"].items():
+            # Phase 1: load all prod and staging region sets for this version
+            prod_regions_by_key = {}
+            staging_regions_by_key = {}
+
             for key in ASSET_KEYS:
                 prod_filename = config.get(key)
                 if not prod_filename:
@@ -90,40 +95,78 @@ def validate_assets():
                     continue
 
                 prod_path = os.path.join(NEXTFLOW_DIR, prod_filename)
-                staging_filename = prod_filename.replace(".json", ".staging.json")
-                staging_path = os.path.join(NEXTFLOW_DIR, staging_filename)
-
-                prod_regions = validate_asset_file(
-                    prod_path, RECORD_ID_RE, "record", errors
+                staging_path = os.path.join(
+                    NEXTFLOW_DIR, prod_filename.replace(".json", ".staging.json")
                 )
-                staging_regions = validate_asset_file(
+
+                regions = validate_asset_file(prod_path, RECORD_ID_RE, "record", errors)
+                if regions is not None:
+                    prod_regions_by_key[key] = regions
+
+                regions = validate_asset_file(
                     staging_path, RECORD_ID_RE, "record", errors
                 )
+                if regions is not None:
+                    staging_regions_by_key[key] = regions
 
-                # Region-set consistency between prod and staging
-                if prod_regions is not None and staging_regions is not None:
-                    only_in_prod = prod_regions - staging_regions
-                    only_in_staging = staging_regions - prod_regions
-                    if only_in_prod:
+            # Phase 2: union of all regions mentioned in any successfully loaded file
+            all_regions = set()
+            for regions in prod_regions_by_key.values():
+                all_regions |= regions
+            for regions in staging_regions_by_key.values():
+                all_regions |= regions
+
+            # Phase 3: for each region, verify prod and staging coverage per asset
+            for region in sorted(all_regions):
+                for key in ASSET_KEYS:
+                    if (
+                        key not in prod_regions_by_key
+                        and key not in staging_regions_by_key
+                    ):
+                        continue  # file-load failure already reported
+                    if (
+                        key in prod_regions_by_key
+                        and region not in prod_regions_by_key[key]
+                    ):
                         errors.append(
                             f"Region mismatch for {ver} / {key}: "
-                            f"regions in prod but not staging: {sorted(only_in_prod)}"
+                            f"region '{region}' missing from prod"
                         )
-                    if only_in_staging:
+                    if (
+                        key in staging_regions_by_key
+                        and region not in staging_regions_by_key[key]
+                    ):
                         errors.append(
                             f"Region mismatch for {ver} / {key}: "
-                            f"regions in staging but not prod: {sorted(only_in_staging)}"
+                            f"region '{region}' missing from staging"
                         )
 
     # ------------------------------------------------------------------
-    # 3. Validate app_asset_projects_ids_{prod,staging}.json
+    # 3. Validate app_asset_projects_ids_{prod,staging}.json and compare
     # ------------------------------------------------------------------
-    for filename in (
-        "app_asset_projects_ids_prod.json",
-        "app_asset_projects_ids_staging.json",
-    ):
-        filepath = os.path.join(NEXTFLOW_DIR, filename)
-        validate_asset_file(filepath, PROJECT_ID_RE, "project", errors)
+    prod_project_regions = validate_asset_file(
+        os.path.join(NEXTFLOW_DIR, "app_asset_projects_ids_prod.json"),
+        PROJECT_ID_RE,
+        "project",
+        errors,
+    )
+    staging_project_regions = validate_asset_file(
+        os.path.join(NEXTFLOW_DIR, "app_asset_projects_ids_staging.json"),
+        PROJECT_ID_RE,
+        "project",
+        errors,
+    )
+    if prod_project_regions is not None and staging_project_regions is not None:
+        only_in_prod = prod_project_regions - staging_project_regions
+        only_in_staging = staging_project_regions - prod_project_regions
+        if only_in_prod:
+            errors.append(
+                f"app_asset_projects_ids: regions in prod but not staging: {sorted(only_in_prod)}"
+            )
+        if only_in_staging:
+            errors.append(
+                f"app_asset_projects_ids: regions in staging but not prod: {sorted(only_in_staging)}"
+            )
 
     # ------------------------------------------------------------------
     # 4. Report
