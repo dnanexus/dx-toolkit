@@ -133,7 +133,7 @@ def validate_assets():
             print(f"FAIL  {err}", file=sys.stderr)
         return False
 
-    print(f"OK    All Nextflow asset JSON files passed validation.", file=sys.stderr)
+    print(f"OK    All Nextflow asset JSON files passed validation.", file=sys.stdout)
     return True
 
 
