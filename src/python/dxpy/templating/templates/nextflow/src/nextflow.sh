@@ -454,52 +454,136 @@ get_job_outbound_internet() {
   echo "$result"
 }
 
+# Echoes "false" when this applet was built without outbound network access, "true" when it
+# has some, and nothing when it cannot be told. Effective egress on a worker is
+# `access.network` AND `jobOutboundInternet`; this is the half `jobOutboundInternet` does not
+# cover. An applet built with `access.network: []` has no internet even in a project whose
+# jobOutboundInternet is true, which is the ordinary way a Nextflow applet gets restricted.
+# Reads the describe cached by detect_nextaur_plugin_version, so it costs no extra API call.
+get_executable_network_access() {
+  local entries
+  entries=$(echo "$DX_EXECUTABLE_DESCRIBE" |
+    jq -r 'if has("access") then (.access.network // [] | length | tostring) else "" end' 2>/dev/null || true)
+  case $entries in
+  "") ;;
+  0) echo "false" ;;
+  *) echo "true" ;;
+  esac
+}
+
+# Splits $nextflow_run_opts into $RUN_OPTS_TOKENS. Deliberate word splitting rather than
+# `read -r -a`: `read` stops at the first line break, so options written on a second line
+# would be silently dropped from the command. Globbing cannot interfere -- `set -f` is in
+# force for the whole script.
+split_run_opts() {
+  # shellcheck disable=SC2206
+  RUN_OPTS_TOKENS=($nextflow_run_opts)
+}
+
+# Echoes $1 without one layer of surrounding quotes. `declare -a NEXTFLOW_CMD="(...)"` strips
+# those before Nextflow sees the token, so the matching here has to strip them too -- otherwise
+# a quoted "-offline=true" is not recognised and reaches the CLI, which rejects it.
+dequote_run_opt() {
+  local bare=$1
+  bare=${bare#[\"\']}
+  bare=${bare%[\"\']}
+  echo "$bare"
+}
+
+# Writes $2.. back into $nextflow_run_opts, but only when a token was actually removed ($1 is
+# the original token count). Rejoining is not loss-free -- runs of spaces inside a quoted value
+# collapse -- so the string is left byte-for-byte alone on every run that changes nothing,
+# which is every run that does not use -offline= or -latest.
+set_run_opts_if_changed() {
+  local original_count=$1
+  shift
+  [[ $# -eq $original_count ]] || nextflow_run_opts="$*"
+}
+
 # Reads the offline request out of $nextflow_run_opts into $NXF_OFFLINE_REQUEST ("on", "off"
 # or empty) and rewrites $nextflow_run_opts.
-# `-offline` is a real Nextflow option and is passed through untouched. `-offline=<value>` is
-# not: Nextflow rejects that form with "Unknown option", so it is treated as a DNAnexus-only
-# control and consumed here instead of reaching the command line.
+# `-offline` is a real Nextflow run option and is normally passed through untouched. It is
+# dropped when the final decision is "off": leaving it on the command line would turn
+# Nextflow's own offline flag on while the job log says the run is online, and would make
+# Nextflow abort if `-latest` is also present.
+# `-offline=<value>` is not a Nextflow option -- Nextflow rejects that form with "Unknown
+# option" -- so it is a DNAnexus-only control and is consumed here. Only `true` and `false`
+# are accepted: guessing at `-offline=0` would silently do the opposite of what was asked.
 parse_offline_run_opts() {
-  local opt
-  local -a offline_opts=() kept=()
+  local opt bare
+  local -a kept=()
   NXF_OFFLINE_REQUEST=""
-  IFS=" " read -r -a offline_opts <<<"$nextflow_run_opts"
-  for opt in "${offline_opts[@]}"; do
-    case $opt in
-    -offline)
+  split_run_opts
+
+  # first pass: decide, so the second pass knows whether a bare `-offline` may stay
+  for opt in "${RUN_OPTS_TOKENS[@]}"; do
+    bare=$(dequote_run_opt "$opt")
+    case $bare in
+    -offline | -offline=true)
       NXF_OFFLINE_REQUEST="on"
-      kept+=("$opt")
       ;;
     -offline=false)
       NXF_OFFLINE_REQUEST="off"
       ;;
     -offline=*)
-      NXF_OFFLINE_REQUEST="on"
+      dx-jobutil-report-error "Unsupported value in nextflow_run_opts: ${bare}. Use -offline or -offline=true to run Nextflow without internet access, or -offline=false to force the run back online."
       ;;
+    esac
+  done
+
+  # second pass: drop the tokens that must not reach the Nextflow command line
+  for opt in "${RUN_OPTS_TOKENS[@]}"; do
+    bare=$(dequote_run_opt "$opt")
+    case $bare in
+    -offline)
+      [[ $NXF_OFFLINE_REQUEST == off ]] || kept+=("$opt")
+      ;;
+    -offline=*) ;;
     *)
       kept+=("$opt")
       ;;
     esac
   done
-  nextflow_run_opts="${kept[*]}"
+
+  set_run_opts_if_changed "${#RUN_OPTS_TOKENS[@]}" "${kept[@]}"
 }
 
 # `-latest` pulls updates for a pipeline hosted in a remote repository. On DNAnexus the
 # pipeline ships inside the applet, so the option has no effect at all -- but Nextflow refuses
 # to combine it with offline mode and aborts the run. Drop it instead, and say so.
 drop_latest_run_opt() {
-  local opt
-  local -a latest_opts=() kept=()
-  IFS=" " read -r -a latest_opts <<<"$nextflow_run_opts"
-  for opt in "${latest_opts[@]}"; do
-    if [[ $opt == -latest ]]; then
+  local opt bare
+  local -a kept=()
+  split_run_opts
+  for opt in "${RUN_OPTS_TOKENS[@]}"; do
+    bare=$(dequote_run_opt "$opt")
+    if [[ $bare == -latest ]]; then
       echo "Ignoring the -latest run option: it has no effect on a pipeline bundled in an applet"
       echo "and Nextflow does not allow it together with offline mode."
       continue
     fi
     kept+=("$opt")
   done
-  nextflow_run_opts="${kept[*]}"
+  set_run_opts_if_changed "${#RUN_OPTS_TOKENS[@]}" "${kept[@]}"
+}
+
+# `-offline` is a `nextflow run` option, not a top-level one: `nextflow -offline run ...`
+# fails with "Unknown option". nf-core's documentation talks about it without that
+# distinction, so catch the mistake here with an actionable message instead of letting
+# Nextflow abort on an opaque one.
+reject_offline_in_top_level_opts() {
+  local opt bare
+  local -a tokens=()
+  # shellcheck disable=SC2206
+  tokens=($nextflow_top_level_opts)
+  for opt in "${tokens[@]}"; do
+    bare=$(dequote_run_opt "$opt")
+    case $bare in
+    -offline | -offline=*)
+      dx-jobutil-report-error "Please pass ${bare} in nextflow_run_opts, not in nextflow_top_level_opts. Nextflow only accepts -offline as a run option; given as a top-level option it fails with \"Unknown option\"."
+      ;;
+    esac
+  done
 }
 
 # Turns on Nextflow offline mode: no version check, no plugin registry access, no
@@ -519,6 +603,7 @@ enable_offline_mode() {
 # Every branch records $NXF_OFFLINE_REASON, so log_context_info can state why the run is
 # offline *or* why it is not -- support has to be able to answer that from the job log alone.
 setup_offline_mode() {
+  reject_offline_in_top_level_opts
   parse_offline_run_opts
 
   # explicit opt-out wins over everything: a restricted environment, and a variable that
@@ -540,18 +625,26 @@ setup_offline_mode() {
     return
   fi
 
-  case $(get_job_outbound_internet) in
-  false)
+  # a worker reaches the internet only when the project policy allows it *and* the applet was
+  # built with network access, so either one saying no is enough to decide
+  local outbound network
+  outbound=$(get_job_outbound_internet)
+  network=$(get_executable_network_access)
+
+  if [[ $outbound == false ]]; then
     enable_offline_mode "this job has no outbound internet access (jobOutboundInternet=false)"
-    ;;
-  true)
+    return
+  fi
+  if [[ $network == false ]]; then
+    enable_offline_mode "this applet was built without network access (access.network is empty)"
+    return
+  fi
+  if [[ $outbound == true ]]; then
     NXF_OFFLINE_REASON="this job has outbound internet access (jobOutboundInternet=true)"
-    ;;
-  *)
-    NXF_OFFLINE_REASON="could not determine whether this job has outbound internet access"
-    echo "Could not determine whether this job has outbound internet access; assuming it has."
-    ;;
-  esac
+    return
+  fi
+  NXF_OFFLINE_REASON="could not determine whether this job has outbound internet access"
+  echo "Could not determine whether this job has outbound internet access; assuming it has."
 }
 
 # =========================================================
@@ -580,7 +673,10 @@ validate_run_opts() {
 
 detect_nextaur_plugin_version() {
   executable=$(cat dnanexus-executable.json | jq -r .id )
-  bundled_dependency=$(dx describe ${executable} --json | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
+  # kept in a variable so get_executable_network_access can reuse it: the offline decision
+  # needs .access.network from the same document, and this describe already happens
+  DX_EXECUTABLE_DESCRIBE=$(dx describe ${executable} --json)
+  bundled_dependency=$(echo "$DX_EXECUTABLE_DESCRIBE" | jq -r '.runSpec.bundledDepends[] | select(.name=="nextaur.tar.gz") | .id."$dnanexus_link"')
   asset_dependency=$(dx describe ${bundled_dependency} --json | jq -r .properties.AssetBundle)
   export NXF_PLUGINS_VERSION=$(dx describe ${asset_dependency} --json | jq -r .properties.version)
 }

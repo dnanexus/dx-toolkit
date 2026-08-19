@@ -21,6 +21,7 @@ from parameterized import parameterized
 
 import tempfile
 import textwrap
+import subprocess
 import shutil
 import os
 import sys
@@ -600,16 +601,21 @@ class TestNextflowOfflineMode(unittest.TestCase):
                 esac
                 """))
         os.chmod(dx_stub, 0o755)
+        # `dx-jobutil-report-error` aborts the job on the platform; here it prints the message
+        # and exits non-zero, so a test can assert both the failure and what the user is told
+        err_stub = os.path.join(cls.stub_dir, "dx-jobutil-report-error")
+        with open(err_stub, "w") as f:
+            f.write('#!/usr/bin/env bash\necho "$1"\nexit 1\n')
+        os.chmod(err_stub, 0o755)
 
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.tempdir, ignore_errors=True)
 
     def _run_bash(self, snippet, describe_json="", api_fails=False, run_opts="", nxf_offline=None,
-                  job_json=None, project_json=None):
+                  job_json=None, project_json=None, top_level_opts="", executable_json="",
+                  expect_failure=False):
         """Runs `snippet` against the sourced applet script; returns (stdout, described ids)."""
-        import subprocess
-
         calls_file = os.path.join(self.tempdir, "dx_calls.log")
         if os.path.exists(calls_file):
             os.remove(calls_file)
@@ -625,6 +631,9 @@ class TestNextflowOfflineMode(unittest.TestCase):
         if project_json is not None:
             env["DX_STUB_PROJECT_JSON"] = project_json
         env["nextflow_run_opts"] = run_opts
+        env["nextflow_top_level_opts"] = top_level_opts
+        # normally set by detect_nextaur_plugin_version from the executable describe
+        env["DX_EXECUTABLE_DESCRIBE"] = executable_json
         if nxf_offline is not None:
             env["NXF_OFFLINE"] = nxf_offline
         else:
@@ -634,7 +643,10 @@ class TestNextflowOfflineMode(unittest.TestCase):
         result = subprocess.run(
             ["bash", "-c", "set -e; source '{}'; {}".format(self.src_file, snippet)],
             env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
+        if expect_failure:
+            self.assertNotEqual(result.returncode, 0, "expected the helper to abort the job")
+        else:
+            self.assertEqual(result.returncode, 0, result.stderr)
         described = []
         if os.path.exists(calls_file):
             with open(calls_file) as f:
@@ -817,6 +829,118 @@ class TestNextflowOfflineMode(unittest.TestCase):
             'setup_offline_mode >/dev/null; echo "${NXF_DISABLE_CHECK_LATEST:-unset}"',
             describe_json='{"jobOutboundInternet":false}')
         self.assertEqual(flag, "true")
+
+    @parameterized.expand([
+        # `read -r -a` stops at the first line break, so rebuilding the string from it drops
+        # every option written on a later line -- silently, on a run that then succeeds with
+        # the wrong options. This bites every run, not only the offline ones.
+        # nothing is removed here, so the string is left byte-for-byte alone -- newline included
+        ("newline_offline_requested", "-offline\n-profile docker --outdir results",
+         '{"jobOutboundInternet":true}', "-offline\n-profile docker --outdir results"),
+        ("newline_nothing_to_rewrite", "-resume\n-profile docker",
+         '{"jobOutboundInternet":true}', "-resume\n-profile docker"),
+        ("newline_with_latest_dropped", "-offline\n-latest -resume",
+         '{"jobOutboundInternet":true}', "-offline -resume"),
+    ])
+    def test_run_opts_survive_line_breaks(self, _name, run_opts, describe_json, expected):
+        opts, _calls = self._run_bash('setup_offline_mode >/dev/null; echo "$nextflow_run_opts"',
+                                      describe_json=describe_json, run_opts=run_opts)
+        self.assertEqual(opts, expected)
+
+    def test_run_opts_left_untouched_when_nothing_is_removed(self):
+        # rejoining tokens collapses runs of spaces inside a quoted value, so the string must
+        # not be rewritten on a run that removes nothing
+        opts, _calls = self._run_bash('setup_offline_mode >/dev/null; echo "$nextflow_run_opts"',
+                                      describe_json='{"jobOutboundInternet":true}',
+                                      run_opts='-offline --with-report "a  b.html"')
+        self.assertEqual(opts, '-offline --with-report "a  b.html"')
+
+    @parameterized.expand([
+        # A bare `-offline` must not survive an opt-out: it would set CmdRun.offline while the
+        # log says the run is online, and it makes Nextflow abort when `-latest` is present too
+        ("bare_offline_dropped", "-offline -offline=false", "unset", ""),
+        ("bare_offline_dropped_keeps_rest", "-resume -offline -offline=false", "unset", "-resume"),
+        ("latest_may_stay_when_online", "-offline -offline=false -latest", "unset", "-latest"),
+    ])
+    def test_opt_out_also_strips_bare_offline(self, _name, run_opts, expected_flag, expected_opts):
+        flag, _calls = self._offline_flag(describe_json='{"jobOutboundInternet":true}',
+                                          run_opts=run_opts)
+        self.assertEqual(flag, expected_flag)
+        opts, _calls = self._run_bash('setup_offline_mode >/dev/null; echo "$nextflow_run_opts"',
+                                      describe_json='{"jobOutboundInternet":true}', run_opts=run_opts)
+        self.assertEqual(opts, expected_opts)
+
+    @parameterized.expand([
+        # `declare -a NEXTFLOW_CMD="(...)"` strips one layer of quotes before Nextflow sees the
+        # token, so the matching has to strip it too -- otherwise the token reaches the CLI,
+        # which rejects `-offline=<value>` with "Unknown option"
+        ('double_quoted', '"-offline=true"'),
+        ('single_quoted', "'-offline=true'"),
+    ])
+    def test_quoted_offline_tokens_are_recognised(self, _name, run_opts):
+        flag, _calls = self._offline_flag(describe_json='{"jobOutboundInternet":true}',
+                                          run_opts=run_opts)
+        self.assertEqual(flag, "true")
+        opts, _calls = self._run_bash('setup_offline_mode >/dev/null; echo "$nextflow_run_opts"',
+                                      describe_json='{"jobOutboundInternet":true}', run_opts=run_opts)
+        self.assertEqual(opts, "")
+
+    @parameterized.expand([
+        # Guessing at an unrecognised value risks doing the opposite of what was asked
+        ("zero", "-offline=0"),
+        ("no", "-offline=no"),
+        ("yes", "-offline=yes"),
+    ])
+    def test_unrecognised_offline_value_aborts(self, _name, run_opts):
+        out, _calls = self._run_bash('setup_offline_mode', run_opts=run_opts,
+                                     describe_json='{"jobOutboundInternet":true}',
+                                     expect_failure=True)
+        self.assertIn("Unsupported value in nextflow_run_opts", out)
+
+    @parameterized.expand([
+        # `-offline` is a `nextflow run` option; as a top-level option Nextflow rejects it
+        ("bare", "-offline"),
+        ("with_value", "-offline=true"),
+        ("among_others", "-quiet -offline"),
+    ])
+    def test_offline_in_top_level_opts_aborts_with_a_hint(self, _name, top_level_opts):
+        out, _calls = self._run_bash('setup_offline_mode', top_level_opts=top_level_opts,
+                                     describe_json='{"jobOutboundInternet":true}',
+                                     expect_failure=True)
+        self.assertIn("nextflow_run_opts, not in nextflow_top_level_opts", out)
+
+    @parameterized.expand([
+        # Effective egress is `access.network` AND `jobOutboundInternet`. An applet built with
+        # an empty network list has no internet even where jobOutboundInternet is true, which
+        # is how a Nextflow applet is normally restricted.
+        ("empty_network_goes_offline", '{"access":{"network":[]}}', '{"jobOutboundInternet":true}', "true"),
+        ("open_network_stays_online", '{"access":{"network":["*"]}}', '{"jobOutboundInternet":true}', "unset"),
+        ("restricted_host_list_stays_online", '{"access":{"network":["dnanexus.com"]}}',
+         '{"jobOutboundInternet":true}', "unset"),
+        # `access` absent means the describe could not be used; fail open, as everywhere else
+        ("no_access_field_stays_online", "{}", '{"jobOutboundInternet":true}', "unset"),
+        ("unavailable_describe_stays_online", "", '{"jobOutboundInternet":true}', "unset"),
+        # the project policy still decides on its own
+        ("policy_false_still_wins", '{"access":{"network":["*"]}}', '{"jobOutboundInternet":false}', "true"),
+    ])
+    def test_executable_network_access_feeds_auto_detection(self, _name, executable_json,
+                                                            describe_json, expected):
+        flag, _calls = self._offline_flag(describe_json=describe_json,
+                                          executable_json=executable_json)
+        self.assertEqual(flag, expected)
+
+    def test_network_access_reason_names_the_source(self):
+        reason, _calls = self._run_bash('setup_offline_mode >/dev/null; echo "$NXF_OFFLINE_REASON"',
+                                        describe_json='{"jobOutboundInternet":true}',
+                                        executable_json='{"access":{"network":[]}}')
+        self.assertIn("access.network is empty", reason)
+
+    def test_explicit_request_still_beats_network_detection(self):
+        # the opt-out must work in a restricted applet too, or there is no way back online
+        flag, _calls = self._offline_flag(describe_json='{"jobOutboundInternet":true}',
+                                          executable_json='{"access":{"network":[]}}',
+                                          run_opts="-offline=false")
+        self.assertEqual(flag, "unset")
 
     def test_src_reports_offline_mode_in_context_info(self):
         # Asserts the observability contract, not how it is written: the exact echo text and the

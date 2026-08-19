@@ -8,7 +8,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* Nextflow applets support offline mode: `nextflow_run_opts="-offline"` exports `NXF_OFFLINE`, and it is enabled automatically when the job has no outbound internet access (`jobOutboundInternet=false`). `-offline=false` forces a run back online.
+* Nextflow applets support offline mode: `nextflow_run_opts="-offline"` exports `NXF_OFFLINE`, and it is enabled
+  automatically when the job has no outbound internet access -- either because the project policy disallows it
+  (`jobOutboundInternet=false`) or because the applet was built with `access.network: []`. `-offline=false` forces a
+  run back online. Note: automatic activation from `jobOutboundInternet=false` has not been exercised on the
+  platform -- no project carrying that policy was available -- and is covered by unit tests only. Offline mode is
+  also absent from applets built with `--cache-docker`, which are rendered by the Nextflow Pipeline Importer app
+  using its own dxpy.
 
 ## [413.0] - beta
 
