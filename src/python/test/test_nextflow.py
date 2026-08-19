@@ -646,8 +646,8 @@ class TestNextflowOfflineMode(unittest.TestCase):
         return self._run_bash('setup_offline_mode >/dev/null; echo "${NXF_OFFLINE:-unset}"', **kwargs)
 
     @parameterized.expand([
-        ("restricted", '{"jobOutboundInternet":false}', False, "false"),
-        ("unrestricted", '{"jobOutboundInternet":true}', False, "true"),
+        # The `false` / `true` answers are asserted by test_get_job_outbound_internet_project_fallback,
+        # which also pins the call sequence; only the degenerate answers are left here
         # the field is excluded from the default describe output; absent means "unknown"
         ("field_absent", "{}", False, ""),
         ("api_failure", "", True, ""),
@@ -684,7 +684,8 @@ class TestNextflowOfflineMode(unittest.TestCase):
         ("explicit_offline", "-offline", '{"jobOutboundInternet":true}', "true"),
         ("offline_among_opts", "-resume -offline -profile docker", '{"jobOutboundInternet":true}', "true"),
         ("offline_true_value", "-offline=true", '{"jobOutboundInternet":true}', "true"),
-        ("offline_false_value", "-offline=false", '{"jobOutboundInternet":false}', "unset"),
+        # `-offline=false` is asserted by test_offline_false_forces_online, which also pins that
+        # the opt-out decides without querying the platform
         ("unrelated_opt", "--mode offline_report", '{"jobOutboundInternet":true}', "unset"),
         ("restricted_environment", "", '{"jobOutboundInternet":false}', "true"),
     ])
@@ -751,11 +752,6 @@ class TestNextflowOfflineMode(unittest.TestCase):
                                      run_opts=run_opts)
         self.assertIn(expected, out)
 
-    def test_fail_open_says_why(self):
-        # Failing open silently would leave "why is this run not offline" unanswerable
-        out, _calls = self._run_bash('setup_offline_mode', api_fails=True)
-        self.assertIn("Could not determine", out)
-
     def test_field_absent_stays_online(self):
         # The whole chain, not just get_job_outbound_internet: an unknown answer keeps the run online
         flag, _calls = self._offline_flag(describe_json="{}")
@@ -785,9 +781,12 @@ class TestNextflowOfflineMode(unittest.TestCase):
         self.assertEqual(opts, expected)
 
     def test_setup_offline_mode_fails_open(self):
-        # If the outbound internet state cannot be determined, keep running online
+        # If the outbound internet state cannot be determined, keep running online -- and say so:
+        # failing open silently would leave "why is this run not offline" unanswerable
         flag, _calls = self._offline_flag(api_fails=True)
         self.assertEqual(flag, "unset")
+        out, _calls = self._run_bash('setup_offline_mode', api_fails=True)
+        self.assertIn("Could not determine", out)
 
     def test_setup_offline_mode_survives_unparsable_describe(self):
         # A describe that prints something jq cannot parse must not abort the head job
@@ -795,16 +794,12 @@ class TestNextflowOfflineMode(unittest.TestCase):
         flag, _calls = self._offline_flag(describe_json="Permission denied")
         self.assertEqual(flag, "unset")
 
-    def test_setup_offline_mode_honours_preset_env(self):
-        flag, _calls = self._offline_flag(describe_json='{"jobOutboundInternet":true}',
-                                         nxf_offline="true")
-        self.assertEqual(flag, "true")
-
     @parameterized.expand([
         # Only "true" counts as a preset request. An inherited NXF_OFFLINE=false is deliberately
         # *not* an opt-out: there is no way for a user to inject an environment variable into the
         # head job, so a stray "false" from a worker image or a parent job must not override the
         # platform's restricted policy. `-offline=false` in nextflow_run_opts is the only opt-out.
+        ("preset_true_requests_offline", "true", '{"jobOutboundInternet":true}', "true"),
         ("preset_false_does_not_block_auto_detection", "false", '{"jobOutboundInternet":false}', "true"),
         # Nothing decides, so the value is left exactly as inherited -- harmless, because every
         # reader (the launcher's check_latest, PluginsFacade, CmdRun) compares against "true"
@@ -824,13 +819,24 @@ class TestNextflowOfflineMode(unittest.TestCase):
         self.assertEqual(flag, "true")
 
     def test_src_reports_offline_mode_in_context_info(self):
+        # Asserts the observability contract, not how it is written: the exact echo text and the
+        # variable-expansion syntax are free to change as long as both branches still report the
+        # mode with a reason. Note this only inspects the rendered script -- it cannot show that
+        # the line is reached, and it is not: a Nextflow failure inside get_nextflow_environment
+        # aborts before log_context_info runs.
         src = get_nextflow_src()
-        self.assertIn("setup_offline_mode", src)
-        # the reason has to be printed whether the run is offline or online
-        self.assertIn('echo "=== NF offline mode : true (${NXF_OFFLINE_REASON})"', src)
-        self.assertIn('echo "=== NF offline mode : false (${NXF_OFFLINE_REASON:-not requested})"', src)
-        # jobOutboundInternet is not part of the default describe output
-        self.assertIn('{"fields":{"jobOutboundInternet":true}}', src)
+        # setup_offline_mode is not only defined, it is called
+        self.assertGreater(len([l for l in src.splitlines()
+                               if l.strip() == "setup_offline_mode"]), 0)
+        # both branches report the mode, and each states a reason
+        reported = [l for l in src.splitlines() if "NF offline mode" in l]
+        self.assertEqual(len(reported), 2, reported)
+        self.assertTrue(any("true" in l for l in reported), reported)
+        self.assertTrue(any("false" in l for l in reported), reported)
+        for line in reported:
+            self.assertIn("NXF_OFFLINE_REASON", line)
+        # jobOutboundInternet is not part of the default describe output, so it is requested by name
+        self.assertIn("jobOutboundInternet", src)
 
 
 class TestDXBuildNextflowApplet(DXTestCaseBuildNextflowApps):
