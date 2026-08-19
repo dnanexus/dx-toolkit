@@ -8,7 +8,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ### Added
 
-* APPS-4127: Nextflow applets support offline mode. `nextflow_run_opts="-offline"` now also exports `NXF_OFFLINE`, so the flag covers plugin resolution and the launcher version check, not only the pipeline update check. Offline mode is enabled automatically when the platform reports that the job has no outbound internet access (`jobOutboundInternet=false`, e.g. a restricted project), and `nextflow_run_opts="-offline=false"` forces a run back online. When offline mode is on, `-latest` is dropped from the run options: Nextflow does not allow the two together and `-latest` has no effect on a pipeline bundled in an applet. The resulting mode and the reason for it are reported in the head job log.
+* Nextflow applets support offline mode: `nextflow_run_opts="-offline"` exports `NXF_OFFLINE`, and it is enabled automatically when the job has no outbound internet access (`jobOutboundInternet=false`). `-offline=false` forces a run back online.
 
 ## [413.0] - beta
 
