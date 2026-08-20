@@ -454,52 +454,103 @@ get_job_outbound_internet() {
   echo "$result"
 }
 
+# Echoes "false" if the platform granted this job no outbound network access, "true" if it
+# granted some, and nothing if the information is unavailable. `networkAccess` is the
+# executable's `access.network` as applied to this job. The platform grants egress only when
+# the executable asks for network access *and* the project allows it, so an empty list means
+# the job cannot reach the internet even when `jobOutboundInternet` is `true` -- which is the
+# case for the usual way of restricting a single applet, `access.network: []`.
+# Costs one more describe of the job than `jobOutboundInternet` alone, paid only when neither
+# the run options nor the environment have already decided.
+get_job_network_access() {
+  local flag
+  [[ -n $DX_JOB_ID ]] || return 0
+  # `|| true` as above: an unusable answer must leave the run online, not kill the job
+  flag=$(dx api "$DX_JOB_ID" describe '{"fields":{"networkAccess":true}}' 2>/dev/null |
+    jq -r 'if has("networkAccess") then (if (.networkAccess | length) > 0 then "true" else "false" end) else "" end' 2>/dev/null || true)
+  echo "$flag"
+}
+
 # Reads the offline request out of $nextflow_run_opts into $NXF_OFFLINE_REQUEST ("on", "off"
-# or empty) and rewrites $nextflow_run_opts.
-# `-offline` is a real Nextflow option and is passed through untouched. `-offline=<value>` is
-# not: Nextflow rejects that form with "Unknown option", so it is treated as a DNAnexus-only
-# control and consumed here instead of reaching the command line.
+# or empty), and rewrites $nextflow_run_opts only if a token had to change.
+# `-offline` is a real Nextflow option and is passed through -- unless a later `-offline=false`
+# wins, in which case it goes too, so the command line agrees with the logged decision.
+# `-offline=<value>` is not a Nextflow option: Nextflow rejects that form with "Unknown option",
+# so it is treated as a DNAnexus-only control and consumed here instead of reaching the command
+# line. Only `true` and `false` are accepted as values; anything else aborts the job.
 parse_offline_run_opts() {
-  local opt
-  local -a offline_opts=() kept=()
+  local opt token value rewrite=0
+  local -a kept=() filtered=()
   NXF_OFFLINE_REQUEST=""
-  IFS=" " read -r -a offline_opts <<<"$nextflow_run_opts"
-  for opt in "${offline_opts[@]}"; do
-    case $opt in
+  # Unquoted expansion rather than `read -a`: `read` consumes a single line, so anything the
+  # user put after a line break would be silently dropped from the run options. `set -f` at
+  # the top of this script disables globbing, so word splitting here is safe.
+  for opt in $nextflow_run_opts; do
+    # a value the user quoted arrives with the quote characters still attached
+    token=${opt//[\"\']/}
+    case $token in
     -offline)
       NXF_OFFLINE_REQUEST="on"
-      kept+=("$opt")
-      ;;
-    -offline=false)
-      NXF_OFFLINE_REQUEST="off"
+      kept+=("$token")
+      [[ $opt == "$token" ]] || rewrite=1
       ;;
     -offline=*)
-      NXF_OFFLINE_REQUEST="on"
+      value=${token#*=}
+      case $value in
+      true) NXF_OFFLINE_REQUEST="on" ;;
+      false) NXF_OFFLINE_REQUEST="off" ;;
+      *)
+        # guessing would mean silently doing the opposite of what was asked
+        dx-jobutil-report-error "Unrecognised value in nextflow_run_opts: '${opt}'. Offline mode accepts -offline, -offline=true or -offline=false."
+        ;;
+      esac
+      rewrite=1
       ;;
     *)
       kept+=("$opt")
       ;;
     esac
   done
-  nextflow_run_opts="${kept[*]}"
+  # A later -offline=false overrides an earlier bare -offline. The tokens have to agree with
+  # that decision: leaving -offline on the command line while the log says the run is online
+  # makes the log lie, and Nextflow then aborts if -latest is present too.
+  if [[ $NXF_OFFLINE_REQUEST == off ]]; then
+    for opt in "${kept[@]}"; do
+      if [[ $opt == -offline ]]; then
+        rewrite=1
+      else
+        filtered+=("$opt")
+      fi
+    done
+    if (( ${#filtered[@]} )); then kept=("${filtered[@]}"); else kept=(); fi
+  fi
+  # Only write the variable back when a token actually changed, so a run that has nothing to
+  # do with offline mode keeps its option string byte for byte -- line breaks and repeated
+  # spaces inside quoted values included.
+  if (( rewrite )); then
+    nextflow_run_opts="${kept[*]}"
+  fi
 }
 
 # `-latest` pulls updates for a pipeline hosted in a remote repository. On DNAnexus the
 # pipeline ships inside the applet, so the option has no effect at all -- but Nextflow refuses
 # to combine it with offline mode and aborts the run. Drop it instead, and say so.
 drop_latest_run_opt() {
-  local opt
-  local -a latest_opts=() kept=()
-  IFS=" " read -r -a latest_opts <<<"$nextflow_run_opts"
-  for opt in "${latest_opts[@]}"; do
-    if [[ $opt == -latest ]]; then
+  local opt rewrite=0
+  local -a kept=()
+  # unquoted expansion and a conditional write-back, for the reasons given in parse_offline_run_opts
+  for opt in $nextflow_run_opts; do
+    if [[ ${opt//[\"\']/} == -latest ]]; then
       echo "Ignoring the -latest run option: it has no effect on a pipeline bundled in an applet"
       echo "and Nextflow does not allow it together with offline mode."
+      rewrite=1
       continue
     fi
     kept+=("$opt")
   done
-  nextflow_run_opts="${kept[*]}"
+  if (( rewrite )); then
+    nextflow_run_opts="${kept[*]}"
+  fi
 }
 
 # Turns on Nextflow offline mode: no version check, no plugin registry access, no
@@ -540,6 +591,12 @@ setup_offline_mode() {
     return
   fi
 
+  # An executable that asks for no network access has no egress regardless of the project
+  if [[ $(get_job_network_access) == false ]]; then
+    enable_offline_mode "this job was granted no outbound network access (networkAccess is empty)"
+    return
+  fi
+
   case $(get_job_outbound_internet) in
   false)
     enable_offline_mode "this job has no outbound internet access (jobOutboundInternet=false)"
@@ -561,6 +618,21 @@ setup_offline_mode() {
 validate_run_opts() {
   profile_arg="@@PROFILE_ARG@@"
 
+  # -offline is a Nextflow *run* option: before the pipeline name it is rejected as an unknown
+  # option, which reads like the feature is missing rather than like a misplaced argument
+  for opt in $nextflow_top_level_opts; do
+    case ${opt//[\"\']/} in
+    -offline | -offline=*)
+      dx-jobutil-report-error "'${opt}' is a Nextflow run option: pass it in nextflow_run_opts, not nextflow_top_level_opts."
+      ;;
+    *) ;;
+    esac
+  done
+
+  # Left as `read` on purpose, unlike parse_offline_run_opts: `read` stops at the first line
+  # break, so options after one are not validated. That is a pre-existing gap and fixing it
+  # here would newly abort runs that pass a misplaced -w or -profile after a line break, which
+  # has nothing to do with offline mode. Worth its own ticket.
   IFS=" " read -r -a opts <<<"$nextflow_run_opts"
   for opt in "${opts[@]}"; do
     case $opt in
