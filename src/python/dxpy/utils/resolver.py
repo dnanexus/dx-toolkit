@@ -199,7 +199,7 @@ def is_project_explicit(path):
     return not is_hashid(path)
 
 
-def object_exists_in_project(obj_id, proj_id):
+def object_exists_in_project(obj_id, proj_id, **kwargs):
     '''
     :param obj_id: object ID
     :type obj_id: str
@@ -215,7 +215,7 @@ def object_exists_in_project(obj_id, proj_id):
         raise ValueError("Expected proj_id to be a string")
     if not is_container_id(proj_id):
         raise ValueError('Expected %r to be a container ID' % (proj_id,))
-    return try_call(dxpy.DXHTTPRequest, '/' + obj_id + '/describe', {'project': proj_id}, always_retry=True)['project'] == proj_id
+    return try_call(dxpy.DXHTTPRequest, '/' + obj_id + '/describe', {'project': proj_id}, always_retry=True, **kwargs)['project'] == proj_id
 
 
 # Special characters in bash to be escaped: #?*: ;&`"'/!$({[<>|~

@@ -760,7 +760,8 @@ class DXFile(DXDataObject):
                 if project is None and 'DX_JOB_ID' not in os.environ:
                     project_from_handler = self.get_proj_id()
                     # object_exists_in_project will call /file-xxxx/describe, which is skipped if the URL is cached
-                    if project_from_handler and object_exists_in_project(self.get_id(), project_from_handler):
+                    if project_from_handler and object_exists_in_project(
+                        self.get_id(), project_from_handler, **kwargs):
                         project = project_from_handler
 
                 if project is not None and project is not DXFile.NO_PROJECT_HINT:
@@ -935,7 +936,7 @@ class DXFile(DXDataObject):
     def read(self, length=None, use_compression=None, project=None, **kwargs):
         # Check if the file is present in dxfile project attribute if the project arg not specified 
         if project is None and self._exists_in_proj is None and self.get_proj_id() is not None:
-            self._exists_in_proj = object_exists_in_project(self.get_id(), self.get_proj_id())
+            self._exists_in_proj = object_exists_in_project(self.get_id(), self.get_proj_id(), **kwargs)
         # Use the DXFile attribute if the project arg is not provided
         if project is None and self._exists_in_proj:
             project = self.get_proj_id()

@@ -615,7 +615,9 @@ def upload_local_file(filename=None, file=None, media_type=None, keep_open=False
             sys.stderr.write("\n")
             sys.stderr.flush()
         try:
-            handler.wait_until_parts_uploaded()
+            wait_kwargs = remaining_kwargs.copy()
+            wait_kwargs.pop("timeout", None)
+            handler.wait_until_parts_uploaded(**wait_kwargs)
         except DXError:
             if show_progress:
                 logger.warning("File {} was not uploaded correctly!".format(filename))

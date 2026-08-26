@@ -20,8 +20,67 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import unittest
+import tempfile
+import dxpy
+from mock import MagicMock, patch
 from dxpy.bindings.dxfile_functions import _verify_checksum
+from dxpy.bindings.dxfile_functions import upload_local_file
+from dxpy.bindings.dxfile import DXFile
 from dxpy.exceptions import DXFileError, DXChecksumMismatchError
+
+
+class TestUploadLocalFile(unittest.TestCase):
+    @patch('dxpy.bindings.dxfile_functions.new_dxfile')
+    def test_auth_reaches_parts_polling_without_timeout(self, new_dxfile):
+        handler = MagicMock()
+        handler._write_bufsize = 1024
+        new_dxfile.return_value = handler
+        auth = {'auth_token': 'request-token', 'auth_token_type': 'Bearer'}
+        security_context = dxpy.SECURITY_CONTEXT
+
+        with tempfile.NamedTemporaryFile() as local_file:
+            local_file.write(b'test data')
+            local_file.flush()
+            upload_local_file(filename=local_file.name, auth=auth, timeout=17,
+                              keep_open=True)
+
+        self.assertIs(dxpy.SECURITY_CONTEXT, security_context)
+        handler.wait_until_parts_uploaded.assert_called_once_with(auth=auth)
+
+
+class TestDXFileRead(unittest.TestCase):
+    @patch('dxpy.bindings.dxfile.DXFile._read2', return_value=b'file contents')
+    @patch('dxpy.DXHTTPRequest')
+    def test_auth_reaches_project_existence_check(self, dxhttp_request, read):
+        file_id = 'file-123456789012345678901234'
+        project_id = 'project-123456789012345678901234'
+        dxhttp_request.return_value = {'project': project_id}
+        dxfile = DXFile(file_id, project=project_id, mode='rb')
+        auth = {'auth_token': 'request-token', 'auth_token_type': 'Bearer'}
+        security_context = dxpy.SECURITY_CONTEXT
+
+        self.assertEqual(dxfile.read(auth=auth), b'file contents')
+
+        dxhttp_request.assert_called_once_with(
+            '/' + file_id + '/describe', {'project': project_id},
+            always_retry=True, auth=auth)
+        self.assertIs(dxpy.SECURITY_CONTEXT, security_context)
+
+    @patch('dxpy.api.file_download', return_value={'url': 'https://download', 'headers': {}})
+    @patch('dxpy.DXHTTPRequest', return_value={'project': 'project-123456789012345678901234'})
+    def test_download_url_forwards_auth_to_project_existence_check(self, dxhttp_request, file_download):
+        file_id = 'file-123456789012345678901234'
+        project_id = 'project-123456789012345678901234'
+        dxfile = DXFile(file_id, project=project_id, mode='rb')
+        auth = {'auth_token': 'request-token', 'auth_token_type': 'Bearer'}
+        security_context = dxpy.SECURITY_CONTEXT
+
+        dxfile.get_download_url(auth=auth)
+
+        dxhttp_request.assert_called_once_with(
+            '/' + file_id + '/describe', {'project': project_id},
+            always_retry=True, auth=auth)
+        self.assertIs(dxpy.SECURITY_CONTEXT, security_context)
 
 class TestVerifyPerPartChecksum(unittest.TestCase):
     def setUp(self):
