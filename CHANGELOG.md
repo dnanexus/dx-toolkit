@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Decreased default `dx login` session expiration from 30 days to 18 hours to be aligned with [current platform behaviour](https://documentation.dnanexus.com/user/login-and-logout#session-expiration)
+
 ## [413.0] - beta
 
 * No significant changes
