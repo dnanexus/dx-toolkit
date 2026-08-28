@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Nextflow applets support offline mode: `nextflow_run_opts="-offline"` exports `NXF_OFFLINE`, or it is enabled automatically when the job has no outbound internet access. `-offline=false` forces a run back online. The automatic path is covered by unit tests only — it has not yet been exercised on a restricted project.
 
+### Changed
+
+* Decreased default `dx login` session expiration from 30 days to 18 hours to align with [current platform behaviour](https://documentation.dnanexus.com/user/login-and-logout#session-expiration)
+
 ## [413.0] - beta
 
 * No significant changes
