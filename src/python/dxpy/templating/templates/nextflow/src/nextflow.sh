@@ -605,6 +605,8 @@ enable_offline_mode() {
   echo "Nextflow offline mode enabled ($NXF_OFFLINE_REASON). Nextflow will not contact the Internet"
   echo "for version checks, Docker image downloads, plugin downloads or pipeline updates. Pipeline plugins that are not"
   echo "bundled in the DNAnexus assets cannot be used, and Docker images must be cached in the project."
+  echo "For how to cache images with '--cache-docker', see DNAnexus documentation:"
+  echo "https://documentation.dnanexus.com/user/running-apps-and-workflows/running-nextflow-pipelines#built-in-docker-image-caching"
 }
 
 # Offline mode is used when the user asks for it with the Nextflow `-offline` run option,
