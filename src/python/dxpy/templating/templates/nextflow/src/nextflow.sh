@@ -644,7 +644,7 @@ setup_offline_mode() {
     enable_offline_mode "this job has no outbound Internet access"
     ;;
   true)
-    NXF_OFFLINE_REASON="this job has outbound internet access (jobOutboundInternet=true)"
+    NXF_OFFLINE_REASON="this job has outbound Internet access"
     ;;
   *)
     NXF_OFFLINE_REASON="could not determine whether this job has outbound internet access"
