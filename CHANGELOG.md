@@ -13,6 +13,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * Decreased default `dx login` session expiration from 30 days to 18 hours to align with [current platform behaviour](https://documentation.dnanexus.com/user/login-and-logout#session-expiration)
+* Pinned versions of `dxpy` dependencies (`psutil`, `crc32c` and `awscrt`) to solve installation issues in 20.04 AEE
 
 ## [413.0] - beta
 
