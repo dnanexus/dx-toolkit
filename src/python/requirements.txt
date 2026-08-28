@@ -9,5 +9,5 @@ urllib3>=1.25,<2.8.0
 pyreadline3==3.5.6; sys_platform == "win32"
 colorama>=0.4.4,<=0.4.6; sys_platform == "win32"
 crc32c>=2.7.1,<2.9.0; python_version <= "3.8"
-crc32c>=2.7.1,<2.10.0
+crc32c>=2.7.1,<2.10.0; python_version > "3.8"
 awscrt>=0.23.4,<0.37.0
