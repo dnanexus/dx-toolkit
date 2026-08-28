@@ -602,9 +602,9 @@ enable_offline_mode() {
   export NXF_OFFLINE=true
   export NXF_DISABLE_CHECK_LATEST=true
   drop_latest_run_opt
-  echo "Nextflow offline mode enabled ($NXF_OFFLINE_REASON). Nextflow will not contact the internet"
-  echo "for version checks, plugin downloads or pipeline updates. Pipeline plugins that are not"
-  echo "bundled in the DNAnexus assets cannot be used, and docker images must be cached in the project."
+  echo "Nextflow offline mode enabled ($NXF_OFFLINE_REASON). Nextflow will not contact the Internet"
+  echo "for version checks, Docker image downloads, plugin downloads or pipeline updates. Pipeline plugins that are not"
+  echo "bundled in the DNAnexus assets cannot be used, and Docker images must be cached in the project."
 }
 
 # Offline mode is used when the user asks for it with the Nextflow `-offline` run option,
@@ -624,7 +624,7 @@ setup_offline_mode() {
   fi
 
   if [[ $NXF_OFFLINE == true ]]; then
-    enable_offline_mode "NXF_OFFLINE was already set in the job environment"
+    enable_offline_mode "NXF_OFFLINE is set in the job environment"
     return
   fi
 
@@ -635,7 +635,7 @@ setup_offline_mode() {
 
   # An executable that asks for no network access has no egress regardless of the project
   if [[ $(get_job_network_access) == false ]]; then
-    enable_offline_mode "this job was granted no outbound network access (networkAccess is empty)"
+    enable_offline_mode "this job wasn't granted outbound Internet access (networkAccess is empty)"
     return
   fi
 
@@ -647,8 +647,8 @@ setup_offline_mode() {
     NXF_OFFLINE_REASON="this job has outbound Internet access"
     ;;
   *)
-    NXF_OFFLINE_REASON="could not determine whether this job has outbound internet access"
-    echo "Could not determine whether this job has outbound internet access; assuming it has."
+    NXF_OFFLINE_REASON="could not determine whether this job has outbound Internet access"
+    echo "Could not determine whether this job has outbound Internet access; assuming it has."
     ;;
   esac
 }
