@@ -432,26 +432,72 @@ setup_workdir() {
 # Helpers: offline mode
 # =========================================================
 
+# Cached network policy state for this job. Values are: "true", "false" or empty.
+NETWORK_POLICY_LOADED=0
+JOB_NETWORK_ACCESS_RESULT=""
+JOB_OUTBOUND_INTERNET_RESULT=""
+NETWORK_POLICY_PROJECT_ID=""
+
+# Loads network policy signals once and caches them for the rest of the run.
+# Data sources are consulted in this order:
+# 1) /home/dnanexus/dnanexus-job.json (zero API calls)
+# 2) one job describe call for networkAccess + jobOutboundInternet (+ project)
+# 3) optional project describe fallback for jobOutboundInternet
+load_job_network_policy() {
+  local job_json describe_json project_json
+
+  (( NETWORK_POLICY_LOADED == 0 )) || return 0
+  NETWORK_POLICY_LOADED=1
+
+  job_json=/home/dnanexus/dnanexus-job.json
+  if [[ -s $job_json ]]; then
+    JOB_NETWORK_ACCESS_RESULT=$(jq -r 'if has("networkAccess") then (if (.networkAccess | length) > 0 then "true" else "false" end) else "" end' "$job_json" 2>/dev/null || true)
+    JOB_OUTBOUND_INTERNET_RESULT=$(jq -r 'if has("jobOutboundInternet") then (.jobOutboundInternet|tostring) else "" end' "$job_json" 2>/dev/null || true)
+    NETWORK_POLICY_PROJECT_ID=$(jq -r '.project // ""' "$job_json" 2>/dev/null || true)
+  fi
+
+  # If either signal is still unknown, fetch both in one describe call.
+  if [[ -n $DX_JOB_ID && ( -z $JOB_NETWORK_ACCESS_RESULT || -z $JOB_OUTBOUND_INTERNET_RESULT || -z $NETWORK_POLICY_PROJECT_ID ) ]]; then
+    # `|| true` keeps a failing describe (or unparsable output) from aborting
+    # the job through `set -e`: unusable answers must fail open to online.
+    describe_json=$(dx api "$DX_JOB_ID" describe '{"fields":{"networkAccess":true,"jobOutboundInternet":true,"project":true}}' 2>/dev/null || true)
+
+    if [[ -n $describe_json ]]; then
+      [[ -n $JOB_NETWORK_ACCESS_RESULT ]] || JOB_NETWORK_ACCESS_RESULT=$(jq -r 'if has("networkAccess") then (if (.networkAccess | length) > 0 then "true" else "false" end) else "" end' <<<"$describe_json" 2>/dev/null || true)
+      [[ -n $JOB_OUTBOUND_INTERNET_RESULT ]] || JOB_OUTBOUND_INTERNET_RESULT=$(jq -r 'if has("jobOutboundInternet") then (.jobOutboundInternet|tostring) else "" end' <<<"$describe_json" 2>/dev/null || true)
+      [[ -n $NETWORK_POLICY_PROJECT_ID ]] || NETWORK_POLICY_PROJECT_ID=$(jq -r '.project // ""' <<<"$describe_json" 2>/dev/null || true)
+    fi
+  fi
+
+  # jobOutboundInternet is excluded from default describe output. Keep a
+  # project-level check unless the job-level answer is already false.
+  # This preserves "a single false is decisive" across job and project.
+  if [[ $JOB_OUTBOUND_INTERNET_RESULT != false ]]; then
+    local dx_id
+    dx_id=${NETWORK_POLICY_PROJECT_ID:-$DX_PROJECT_CONTEXT_ID}
+    if [[ -n $dx_id ]]; then
+      project_json=$(dx api "$dx_id" describe '{"fields":{"jobOutboundInternet":true}}' 2>/dev/null || true)
+      if [[ -n $project_json ]]; then
+        local project_outbound
+        project_outbound=$(jq -r 'if has("jobOutboundInternet") then (.jobOutboundInternet|tostring) else "" end' <<<"$project_json" 2>/dev/null || true)
+        if [[ $project_outbound == false ]]; then
+          JOB_OUTBOUND_INTERNET_RESULT=false
+        elif [[ -z $JOB_OUTBOUND_INTERNET_RESULT ]]; then
+          JOB_OUTBOUND_INTERNET_RESULT=$project_outbound
+        fi
+      fi
+    fi
+  fi
+}
+
 # Echoes "false" if the platform reports that outbound internet access is disabled for
 # this job, "true" if it is enabled, and nothing if the information is unavailable.
 # `jobOutboundInternet` is excluded from the default describe output, so it has to be
 # requested explicitly; when the field is not set at all, the platform reports `true`.
 # Both the job and its project are checked, and a single `false` is decisive.
 get_job_outbound_internet() {
-  local dx_id flag result=""
-  for dx_id in "$DX_JOB_ID" "$DX_PROJECT_CONTEXT_ID"; do
-    [[ -n $dx_id ]] || continue
-    # `|| true` keeps a failing describe (or output that jq cannot parse) from aborting
-    # the job through `set -e`: an unusable answer must leave the run online, not kill it
-    flag=$(dx api "$dx_id" describe '{"fields":{"jobOutboundInternet":true}}' 2>/dev/null |
-      jq -r 'if has("jobOutboundInternet") then (.jobOutboundInternet|tostring) else "" end' 2>/dev/null || true)
-    if [[ $flag == false ]]; then
-      echo "false"
-      return 0
-    fi
-    [[ $flag == true ]] && result="true"
-  done
-  echo "$result"
+  load_job_network_policy
+  echo "$JOB_OUTBOUND_INTERNET_RESULT"
 }
 
 # Echoes "false" if the platform granted this job no outbound network access, "true" if it
@@ -463,12 +509,8 @@ get_job_outbound_internet() {
 # Costs one more describe of the job than `jobOutboundInternet` alone, paid only when neither
 # the run options nor the environment have already decided.
 get_job_network_access() {
-  local flag
-  [[ -n $DX_JOB_ID ]] || return 0
-  # `|| true` as above: an unusable answer must leave the run online, not kill the job
-  flag=$(dx api "$DX_JOB_ID" describe '{"fields":{"networkAccess":true}}' 2>/dev/null |
-    jq -r 'if has("networkAccess") then (if (.networkAccess | length) > 0 then "true" else "false" end) else "" end' 2>/dev/null || true)
-  echo "$flag"
+  load_job_network_policy
+  echo "$JOB_NETWORK_ACCESS_RESULT"
 }
 
 # Reads the offline request out of $nextflow_run_opts into $NXF_OFFLINE_REQUEST ("on", "off"
