@@ -513,7 +513,7 @@ get_job_network_access() {
   echo "$JOB_NETWORK_ACCESS_RESULT"
 }
 
-# Reads the offline request out of $nextflow_run_opts into $NXF_OFFLINE_REQUEST ("on", "off"
+# Reads the offline request out of $nextflow_run_opts into $NXF_OFFLINE_REQUEST ("true", "false"
 # or empty), and rewrites $nextflow_run_opts only if a token had to change.
 # `-offline` is a real Nextflow option and is passed through -- unless a later `-offline=false`
 # wins, in which case it goes too, so the command line agrees with the logged decision.
@@ -532,15 +532,15 @@ parse_offline_run_opts() {
     token=${opt//[\"\']/}
     case $token in
     -offline)
-      NXF_OFFLINE_REQUEST="on"
+      NXF_OFFLINE_REQUEST="true"
       kept+=("$token")
       [[ $opt == "$token" ]] || rewrite=1
       ;;
     -offline=*)
       value=${token#*=}
       case $value in
-      true) NXF_OFFLINE_REQUEST="on" ;;
-      false) NXF_OFFLINE_REQUEST="off" ;;
+      true) NXF_OFFLINE_REQUEST="true" ;;
+      false) NXF_OFFLINE_REQUEST="false" ;;
       *)
         # guessing would mean silently doing the opposite of what was asked
         dx-jobutil-report-error "Unrecognised value in nextflow_run_opts: '${opt}'. Offline mode accepts -offline, -offline=true or -offline=false."
@@ -556,7 +556,7 @@ parse_offline_run_opts() {
   # A later -offline=false overrides an earlier bare -offline. The tokens have to agree with
   # that decision: leaving -offline on the command line while the log says the run is online
   # makes the log lie, and Nextflow then aborts if -latest is present too.
-  if [[ $NXF_OFFLINE_REQUEST == off ]]; then
+  if [[ $NXF_OFFLINE_REQUEST == false ]]; then
     for opt in "${kept[@]}"; do
       if [[ $opt == -offline ]]; then
         rewrite=1
@@ -616,7 +616,7 @@ setup_offline_mode() {
 
   # explicit opt-out wins over everything: a restricted environment, and a variable that
   # was already in the job environment -- it is the only way to force a run back online
-  if [[ $NXF_OFFLINE_REQUEST == off ]]; then
+  if [[ $NXF_OFFLINE_REQUEST == false ]]; then
     unset NXF_OFFLINE
     NXF_OFFLINE_REASON="turned off with -offline=false in nextflow_run_opts"
     echo "Offline mode turned off with -offline=false in nextflow_run_opts; running online."
@@ -628,7 +628,7 @@ setup_offline_mode() {
     return
   fi
 
-  if [[ $NXF_OFFLINE_REQUEST == on ]]; then
+  if [[ $NXF_OFFLINE_REQUEST == true ]]; then
     enable_offline_mode "requested with -offline in nextflow_run_opts"
     return
   fi
