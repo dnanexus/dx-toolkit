@@ -641,7 +641,7 @@ setup_offline_mode() {
 
   case $(get_job_outbound_internet) in
   false)
-    enable_offline_mode "this job has no outbound internet access (jobOutboundInternet=false)"
+    enable_offline_mode "this job has no outbound Internet access"
     ;;
   true)
     NXF_OFFLINE_REASON="this job has outbound internet access (jobOutboundInternet=true)"
