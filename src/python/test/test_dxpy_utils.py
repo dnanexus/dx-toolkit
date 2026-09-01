@@ -177,7 +177,7 @@ class TestDXExecDependsUtils(testutil.DXTestCaseCompat):
 
         edi = self.get_edi({"execDepends": [{"name": "git"}], "dependencies": [{"name": "tmux"}]})
         edi.install()
-        assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git tmux")
+        assert_cmd_ran(edi, r"apt-get install --yes --no-install-recommends -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" git tmux")
 
         edi = self.get_edi({"execDepends": [], "bundledDepends": [], "dependencies": []})
         edi.install()
@@ -206,7 +206,7 @@ class TestDXExecDependsUtils(testutil.DXTestCaseCompat):
                                               "stages": ["main"]}]})
         edi.install()
         assert_cmd_ran(edi, re.escape("pip install --upgrade pytz==2014.7 certifi"))
-        assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends tmux")
+        assert_cmd_ran(edi, r"apt-get install --yes --no-install-recommends -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" tmux")
         assert_cmd_ran(edi, re.escape("gem install rake --version 10.3.2 && gem install nokogiri"))
         assert_cmd_ran(edi, "R -e .+ install.packages.+\"RJSONIO\".+install_version.+\"ggplot2\".+version=\"1.0.1\"")
         assert_log_contains(edi, 'Skipping bundled dependency "r1" because it does not refer to a file')
@@ -225,7 +225,7 @@ class TestDXExecDependsUtils(testutil.DXTestCaseCompat):
         edi = self.get_edi({"execDepends": [{"name": "git", "stages": ["foo", "bar"]}]},
                            job_desc={"function": "foo"})
         edi.install()
-        assert_cmd_ran(edi, "apt-get install --yes --no-install-recommends git")
+        assert_cmd_ran(edi, r"apt-get install --yes --no-install-recommends -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" git")
 
         # Job describe dict must contain "region" if the run specification
         # contains "bundledDependsByRegion".

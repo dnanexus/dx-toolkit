@@ -6,11 +6,34 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [414.0] - beta
+
+### Changed
+
+* Decreased default `dx login` session expiration from 30 days to 18 hours to align with [current platform behaviour](https://documentation.dnanexus.com/user/login-and-logout#session-expiration)
+* Pinned versions of `dxpy` dependencies (`psutil`, `crc32c` and `awscrt`) to solve installation issues in 20.04 AEE
+
+### Fixed
+
+* Fix intermittent apt dependency install failures in non-interactive jobs by adding dpkg conffile options (force-confdef, force-confold)
+
+## [413.0] - 2026.09.01
+
+* No significant changes
+
+## [412.0] - 2026.08.03
+
+### Added
+
+* Released Nextaur 1.16.0: fix the cache eviction and lookup throttle that abort `publishDir` with `NoSuchFileException`.
+
+## [411.0] - 2026.07.27
+
 ### Added
 
 * Released Nextaur 1.14.0: Support for module binaries feature
 
-## [410.0] - beta
+## [410.0] - 2026.07.14
 
 ### Added
 
