@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [414.0] - beta
+
 ### Changed
 
 * Decreased default `dx login` session expiration from 30 days to 18 hours to align with [current platform behaviour](https://documentation.dnanexus.com/user/login-and-logout#session-expiration)
@@ -15,7 +17,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * Fix intermittent apt dependency install failures in non-interactive jobs by adding dpkg conffile options (force-confdef, force-confold)
 
-## [413.0] - beta
+## [413.0] - 2026.09.01
 
 * No significant changes
 
