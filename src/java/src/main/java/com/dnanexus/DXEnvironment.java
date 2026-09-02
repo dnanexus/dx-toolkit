@@ -19,21 +19,23 @@ package com.dnanexus;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.NTCredentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.conn.ConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -499,7 +501,48 @@ public class DXEnvironment implements AutoCloseable {
     private int maxDefaultConnectionsPerRoute;
     private final ProxyDesc proxy;
     private final CloseableHttpClient httpclient;
-    private final ScheduledExecutorService connectionEvictor;
+
+    /**
+     * Upper bound on how long a pooled connection may sit idle before we refuse to reuse it.
+     *
+     * <p>
+     * Middleboxes between the client and the API server discard idle connections without the
+     * client noticing. An AWS ALB idle timeout (60s by default) closes with a FIN; an AWS NAT
+     * gateway (350s) returns an RST and never sends a FIN at all. Reusing such a connection
+     * surfaces to the caller as {@code SocketException: Connection reset} or
+     * {@code NoHttpResponseException}. Staying below the shortest of those timeouts means the pool
+     * hands out a fresh connection instead of a dead one.
+     * </p>
+     */
+    private static final int CONNECTION_MAX_IDLE_SECONDS = 45;
+
+    /**
+     * Upper bound on the total lifetime of a pooled connection, counted from when it was opened.
+     * A backstop for infrastructure that drops long-lived connections irrespective of activity.
+     */
+    private static final int CONNECTION_TTL_SECONDS = 300;
+
+    /**
+     * Honors the server's {@code Keep-Alive: timeout=N} header when it sends one, but never keeps
+     * a connection reusable for longer than {@link #CONNECTION_MAX_IDLE_SECONDS}.
+     *
+     * <p>
+     * The pool evaluates this expiry when a connection is leased, so a connection that has been
+     * idle past the cap is discarded and replaced rather than handed out. That makes a background
+     * eviction thread unnecessary, and unlike a periodic sweep it leaves no window in which an
+     * over-idle connection can still be reused.
+     * </p>
+     */
+    private static final ConnectionKeepAliveStrategy KEEP_ALIVE_STRATEGY =
+            new ConnectionKeepAliveStrategy() {
+                @Override
+                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+                    long cap = TimeUnit.SECONDS.toMillis(CONNECTION_MAX_IDLE_SECONDS);
+                    long fromServer = DefaultConnectionKeepAliveStrategy.INSTANCE
+                            .getKeepAliveDuration(response, context);
+                    return fromServer > 0 ? Math.min(fromServer, cap) : cap;
+                }
+            };
 
     private static final JsonFactory jsonFactory = new MappingJsonFactory();
     /**
@@ -562,25 +605,18 @@ public class DXEnvironment implements AutoCloseable {
         RequestConfig.Builder reqBuilder = RequestConfig.custom()
                 .setConnectTimeout(connectionTimeout)
                 .setSocketTimeout(socketTimeout);
-        
-        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+
+        PoolingHttpClientConnectionManager connManager =
+                new PoolingHttpClientConnectionManager(CONNECTION_TTL_SECONDS, TimeUnit.SECONDS);
         connManager.setMaxTotal(maxTotalConnections);
         connManager.setDefaultMaxPerRoute(maxDefaultConnectionsPerRoute);
-
-        // Proactively close connections idle >55s (every 30s) to prevent reusing connections
-        // the server has already closed — e.g. nginx keepalive_timeout, NLB drain RST, NAT RST.
-        // Using a daemon thread so the JVM can exit even if close() is not called.
-        final ScheduledExecutorService evictor = Executors.newSingleThreadScheduledExecutor(
-                r -> { Thread t = new Thread(r, "dx-conn-evictor"); t.setDaemon(true); return t; });
-        evictor.scheduleAtFixedRate(() -> {
-            connManager.closeIdleConnections(55, TimeUnit.SECONDS);
-            connManager.closeExpiredConnections();
-        }, 30, 30, TimeUnit.SECONDS);
-        this.connectionEvictor = evictor;
+        // validateAfterInactivity is deliberately left at the httpclient default (2s). It checks a
+        // pooled socket before reuse and so catches connections the server closed with a FIN,
+        // which is the half of the problem KEEP_ALIVE_STRATEGY cannot see. Do not raise it.
 
         if (proxy == null) {
             RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setKeepAliveStrategy(KEEP_ALIVE_STRATEGY).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
             return;
         }
 
@@ -588,7 +624,7 @@ public class DXEnvironment implements AutoCloseable {
         if (!proxy.authRequired) {
             reqBuilder.setProxy(proxy.host);
             RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setKeepAliveStrategy(KEEP_ALIVE_STRATEGY).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
             return;
         }
 
@@ -623,6 +659,7 @@ public class DXEnvironment implements AutoCloseable {
 
         RequestConfig requestConfig = reqBuilder.build();
         this.httpclient = HttpClients.custom().setConnectionManager(connManager)
+                .setKeepAliveStrategy(KEEP_ALIVE_STRATEGY)
                 .setDefaultCredentialsProvider(credsProvider)
                 .setUserAgent(userAgent)
                 .setDefaultRequestConfig(requestConfig)
@@ -776,7 +813,6 @@ public class DXEnvironment implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        connectionEvictor.shutdownNow();
         httpclient.close();
     }
 
