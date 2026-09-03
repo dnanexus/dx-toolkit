@@ -251,6 +251,9 @@ def get_codings(resp, project_context, limit=None):
 
         if not page.get("next"):
             return codings
+        # Echoed back verbatim as `starting`: when a coding has more codes than `limit`,
+        # `next` carries that coding's real `after_code` so the next page resumes mid-coding
+        # at the right code, rather than always just advancing to the next coding name.
         payload["starting"] = page["next"]
 
     raise DXError(

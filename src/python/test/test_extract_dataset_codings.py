@@ -162,7 +162,7 @@ class TestGetCodings(unittest.TestCase):
         self.assertEqual(kwargs["data"]["starting"], cursor)
 
     def test_split_flat_coding_is_merged(self):
-        codings, _ = self.call(
+        codings, request = self.call(
             [
                 {
                     "results": {
@@ -178,6 +178,13 @@ class TestGetCodings(unittest.TestCase):
                 },
             ]
         )
+        # The real after_code cursor is what lets the second page resume mid-coding at the
+        # right code, rather than skipping ahead to the next coding name.
+        _, second_call_kwargs = request.call_args_list[1]
+        self.assertEqual(
+            second_call_kwargs["data"]["starting"], {"name": "sex", "after_code": "0"}
+        )
+
         self.assertEqual(
             codings["sex"]["codes_to_meanings"], {"0": "Female", "1": "Male"}
         )
@@ -185,7 +192,7 @@ class TestGetCodings(unittest.TestCase):
         self.assertTrue(codings["sex"][CODING_PAGINATED_KEY])
 
     def test_split_hierarchical_coding_is_merged(self):
-        codings, _ = self.call(
+        codings, request = self.call(
             [
                 {
                     "results": {
@@ -211,6 +218,11 @@ class TestGetCodings(unittest.TestCase):
                 },
             ]
         )
+        _, second_call_kwargs = request.call_args_list[1]
+        self.assertEqual(
+            second_call_kwargs["data"]["starting"], {"name": "icd10", "after_code": "A"}
+        )
+
         self.assertEqual(codings["icd10"]["codes_to_parent"], {"A01": "A"})
         self.assertEqual(
             codings["icd10"]["codes_to_meanings"], {"A": "Chapter A", "A01": "Typhoid"}
