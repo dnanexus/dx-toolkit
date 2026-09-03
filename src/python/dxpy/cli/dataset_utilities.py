@@ -546,11 +546,8 @@ def extract_dataset(args):
         codings = None
         try:
             codings = get_codings(resp, project_context=project)
-        except Exception as details:
-            print(
-                "Warning: Could not retrieve codings from the server ({}). "
-                "Falling back to the codings in the dataset descriptor.".format(details)
-            )
+        except Exception:
+            pass
         rec_dict = rec_descriptor.get_dictionary(codings=codings)
         write_ot = rec_dict.write(
             output_file_data=output_file_data,
