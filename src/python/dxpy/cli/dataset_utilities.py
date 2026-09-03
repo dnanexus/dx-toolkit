@@ -190,8 +190,11 @@ def raw_api_call(resp, payload, sql_message=True):
     return resp_raw
 
 
-# Set on a coding assembled from more than one page. The server slices an oversized coding in
-# `code` order, so the authored display order of such a coding cannot be recovered.
+# Set on a coding assembled from more than one page. For a flat coding this is permanent:
+# its merged `display` is in `code` order, not the authored order, so display_order cannot
+# be recovered. For a hierarchical coding it is transient -- get_codings() clears it once it
+# rebuilds a real display tree from the coding's fully-merged code -> parent_code edges,
+# since display_order computed from that tree is exactly as legitimate as a whole coding's.
 CODING_PAGINATED_KEY = "_dx_paginated"
 
 # A backstop against a server bug that returns a `next` cursor that never resolves to null,
@@ -211,13 +214,55 @@ def viz_meta_codings_page(resp, payload):
     return page
 
 
+def _hierarchy_from_parents(codes_to_parent, all_codes):
+    """
+    Rebuilds a nested `display` tree for a hierarchical coding from its complete
+    code -> parent_code edges, once every fragment of a coding split across pages has been
+    merged. Siblings are ordered by code, since the wire format carries no other order for
+    a coding the server had to slice; see `_slice_page` in
+    hare/src/lib/api_handlers/utils/processor/codings_processor.py.
+    """
+    children_of = collections.OrderedDict()
+    for code in all_codes:
+        children_of.setdefault(codes_to_parent.get(code, ""), []).append(code)
+
+    def subtree(parent_code):
+        return [
+            {code: subtree(code)} if code in children_of else code
+            for code in children_of.get(parent_code, [])
+        ]
+
+    return subtree("")
+
+
+def _finalize_split_codings(codings):
+    """
+    Turns any coding still carrying `codes_to_parent` back into the canonical shape, now
+    that every fragment of it has been merged: its edges are a complete parent map, so the
+    tree hare couldn't safely build from a single page can be built here (see
+    _hierarchy_from_parents), and the coding is no longer distinguishable from a whole one.
+    """
+    for coding in codings.values():
+        if "codes_to_parent" not in coding:
+            continue
+        all_codes = list(coding["codes_to_meanings"])
+        coding["display"] = _hierarchy_from_parents(
+            coding.pop("codes_to_parent"), all_codes
+        )
+        coding.pop(CODING_PAGINATED_KEY, None)
+    return codings
+
+
 def get_codings(resp, project_context, limit=None):
     """
     Returns all of the dataset's codings as a dict of coding name to coding, following the
     server's pagination cursor and reassembling any coding split across pages.
 
-    Each coding has the same shape as a descriptor's `model["codings"]` entry, except that a
-    hierarchical coding the server had to split sends `codes_to_parent` in place of `display`.
+    Each coding has the same shape as a descriptor's `model["codings"]` entry. On the wire, a
+    hierarchical coding the server had to split sends `codes_to_parent` in place of `display`,
+    since a tree built from a single page could be wrong; once every fragment is in hand the
+    edges are complete, so this rebuilds `display` from them before returning -- callers never
+    see `codes_to_parent`.
     """
     codings = collections.OrderedDict()
     payload = {"project_context": project_context}
@@ -250,7 +295,7 @@ def get_codings(resp, project_context, limit=None):
                 existing["display"].extend(coding["display"] or [])
 
         if not page.get("next"):
-            return codings
+            return _finalize_split_codings(codings)
         # Echoed back verbatim as `starting`: when a coding has more codes than `limit`,
         # `next` carries that coding's real `after_code` so the next page resumes mid-coding
         # at the right code, rather than always just advancing to the next coding name.
@@ -2191,29 +2236,16 @@ class DXDatasetDictionary:
         """
         Returns CodingDictionary pandas DataFrame for a coding_name.
 
-        `coding` is a single coding, in either the descriptor's or the codings API's shape.
-        A coding the server split across pages carries no usable display order, so
-        `display_order` is omitted for one; see CODING_PAGINATED_KEY.
+        `coding` is a single coding, in either the descriptor's or the codings API's shape
+        (get_codings() rebuilds a `display` tree for any coding the server split, so this
+        never sees `codes_to_parent`). A flat coding split across pages carries no usable
+        display order, so `display_order` is omitted for one; see CODING_PAGINATED_KEY.
         """
         dcols = {}
         codes_to_concepts = coding.get("codes_to_concepts") or {}
         paginated = coding.get(CODING_PAGINATED_KEY)
 
-        if "codes_to_parent" in coding:
-            # A hierarchical coding split across pages: parent edges instead of a tree.
-            all_codes = list(coding["codes_to_meanings"])
-            dcols.update(
-                {
-                    "code": all_codes,
-                    "parent_code": [
-                        coding["codes_to_parent"].get(c, "") for c in all_codes
-                    ],
-                    "meaning": [coding["codes_to_meanings"][c] for c in all_codes],
-                    "concept": [codes_to_concepts.get(c) for c in all_codes],
-                }
-            )
-
-        elif is_hierarchical:
+        if is_hierarchical:
             displ_ord = 0
 
             def unpack_hierarchy(nodes, parent_code, displ_ord):

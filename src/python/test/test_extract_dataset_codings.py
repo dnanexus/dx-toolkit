@@ -23,6 +23,7 @@ Offline tests for retrieving dataset codings from the vizserver codings API, as 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import argparse
+import copy
 import os
 import shutil
 import tempfile
@@ -102,13 +103,30 @@ class TestGetCodings(unittest.TestCase):
     """Pagination and reassembly in get_codings()."""
 
     def call(self, pages, **kwargs):
-        with patch.object(dataset_utilities.dxpy, "DXHTTPRequest") as request:
-            request.side_effect = pages
+        """Runs get_codings() against canned pages, returning the codings and a snapshot
+        of each outgoing request's kwargs. get_codings() mutates and reuses the same
+        payload dict across pages, so a mock's call_args_list would show every call
+        pointing at the payload's *final* state rather than what was actually sent at
+        the time -- hence the deepcopy here instead of inspecting the mock afterward.
+        """
+        calls = []
+        responses = iter(pages)
+
+        def send(**call_kwargs):
+            calls.append(copy.deepcopy(call_kwargs))
+            result = next(responses)
+            if isinstance(result, Exception):
+                raise result
+            return result
+
+        with patch.object(
+            dataset_utilities.dxpy, "DXHTTPRequest", side_effect=send
+        ):
             codings = get_codings(VISUALIZE_RESP, "project-xxxx", **kwargs)
-        return codings, request
+        return codings, calls
 
     def test_single_page(self):
-        codings, request = self.call(
+        codings, calls = self.call(
             [
                 {
                     "results": {
@@ -123,8 +141,8 @@ class TestGetCodings(unittest.TestCase):
         self.assertNotIn(CODING_PAGINATED_KEY, codings["sex"])
 
         # One request, to the codings route, with the project context and no cursor.
-        self.assertEqual(request.call_count, 1)
-        _, kwargs = request.call_args
+        self.assertEqual(len(calls), 1)
+        kwargs = calls[0]
         self.assertEqual(
             kwargs["resource"],
             "https://vizserver.example/viz-meta/3.0/record-xxxx/codings",
@@ -133,13 +151,13 @@ class TestGetCodings(unittest.TestCase):
         self.assertEqual(kwargs["data"], {"project_context": "project-xxxx"})
 
     def test_empty_result_is_trusted(self):
-        codings, request = self.call([{"results": {}, "next": None}])
+        codings, calls = self.call([{"results": {}, "next": None}])
         self.assertEqual(codings, {})
-        self.assertEqual(request.call_count, 1)
+        self.assertEqual(len(calls), 1)
 
     def test_whole_codings_across_pages(self):
         cursor = {"name": "sex", "after_code": None}
-        codings, request = self.call(
+        codings, calls = self.call(
             [
                 {
                     "results": {"ethnicity": flat_coding("ethnicity", {"1": "White"})},
@@ -157,12 +175,11 @@ class TestGetCodings(unittest.TestCase):
         )
 
         # The cursor is echoed back verbatim as `starting`.
-        self.assertEqual(request.call_count, 2)
-        _, kwargs = request.call_args
-        self.assertEqual(kwargs["data"]["starting"], cursor)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[1]["data"]["starting"], cursor)
 
     def test_split_flat_coding_is_merged(self):
-        codings, request = self.call(
+        codings, calls = self.call(
             [
                 {
                     "results": {
@@ -180,9 +197,8 @@ class TestGetCodings(unittest.TestCase):
         )
         # The real after_code cursor is what lets the second page resume mid-coding at the
         # right code, rather than skipping ahead to the next coding name.
-        _, second_call_kwargs = request.call_args_list[1]
         self.assertEqual(
-            second_call_kwargs["data"]["starting"], {"name": "sex", "after_code": "0"}
+            calls[1]["data"]["starting"], {"name": "sex", "after_code": "0"}
         )
 
         self.assertEqual(
@@ -191,8 +207,12 @@ class TestGetCodings(unittest.TestCase):
         self.assertEqual(codings["sex"]["display"], ["0", "1"])
         self.assertTrue(codings["sex"][CODING_PAGINATED_KEY])
 
-    def test_split_hierarchical_coding_is_merged(self):
-        codings, request = self.call(
+    def test_split_hierarchical_coding_becomes_a_display_tree(self):
+        # A (root) -> A01, A02 (siblings) -> A01.1 (grandchild), split across three pages:
+        # once every fragment's edges are merged, get_codings() must rebuild the tree hare
+        # couldn't safely send from a single page (see _slice_page in
+        # hare/src/lib/api_handlers/utils/processor/codings_processor.py).
+        codings, calls = self.call(
             [
                 {
                     "results": {
@@ -209,25 +229,49 @@ class TestGetCodings(unittest.TestCase):
                     "results": {
                         "icd10": {
                             "name": "icd10",
-                            "codes_to_meanings": {"A01": "Typhoid"},
+                            "codes_to_meanings": {"A01": "Typhoid", "A02": "Paratyphoid"},
                             "codes_to_concepts": {},
-                            "codes_to_parent": {"A01": "A"},
+                            "codes_to_parent": {"A01": "A", "A02": "A"},
+                        }
+                    },
+                    "next": {"name": "icd10", "after_code": "A02"},
+                },
+                {
+                    "results": {
+                        "icd10": {
+                            "name": "icd10",
+                            "codes_to_meanings": {"A01.1": "Typhoid, unspecified"},
+                            "codes_to_concepts": {},
+                            "codes_to_parent": {"A01.1": "A01"},
                         }
                     },
                     "next": None,
                 },
             ]
         )
-        _, second_call_kwargs = request.call_args_list[1]
         self.assertEqual(
-            second_call_kwargs["data"]["starting"], {"name": "icd10", "after_code": "A"}
+            calls[1]["data"]["starting"], {"name": "icd10", "after_code": "A"}
+        )
+        self.assertEqual(
+            calls[2]["data"]["starting"], {"name": "icd10", "after_code": "A02"}
         )
 
-        self.assertEqual(codings["icd10"]["codes_to_parent"], {"A01": "A"})
+        # codes_to_parent never survives to the caller: it is transit-only, replaced by a
+        # rebuilt `display` tree once every fragment is in hand.
+        self.assertNotIn("codes_to_parent", codings["icd10"])
+        self.assertNotIn(CODING_PAGINATED_KEY, codings["icd10"])
         self.assertEqual(
-            codings["icd10"]["codes_to_meanings"], {"A": "Chapter A", "A01": "Typhoid"}
+            codings["icd10"]["display"], [{"A": [{"A01": ["A01.1"]}, "A02"]}]
         )
-        self.assertTrue(codings["icd10"][CODING_PAGINATED_KEY])
+        self.assertEqual(
+            codings["icd10"]["codes_to_meanings"],
+            {
+                "A": "Chapter A",
+                "A01": "Typhoid",
+                "A02": "Paratyphoid",
+                "A01.1": "Typhoid, unspecified",
+            },
+        )
 
     def test_stored_coding_does_not_alias_response(self):
         page_coding = flat_coding("sex", {"0": "Female"}, display=["0"])
@@ -271,9 +315,8 @@ class TestGetCodings(unittest.TestCase):
                 )
 
     def test_limit_is_sent_only_when_given(self):
-        _, request = self.call([{"results": {}, "next": None}], limit=5)
-        _, kwargs = request.call_args
-        self.assertEqual(kwargs["data"]["limit"], 5)
+        _, calls = self.call([{"results": {}, "next": None}], limit=5)
+        self.assertEqual(calls[0]["data"]["limit"], 5)
 
     def test_error_in_body_raises(self):
         with self.assertRaises(DXError):
@@ -387,22 +430,46 @@ class TestCodingDictionary(unittest.TestCase):
         self.assertNotIn("display_order", sex.columns)
         self.assertEqual(list(sex["code"]), ["0", "1"])
 
-    def test_split_hierarchical_coding_uses_parent_edges(self):
+    def test_split_hierarchical_coding_gets_a_real_display_order(self):
+        # End-to-end through get_codings(): once the split coding's edges are fully
+        # merged, its display tree is rebuilt and display_order is computed from it just
+        # like a whole coding's -- unlike a split flat coding, it is not left blank.
         descriptor = descriptor_stub({"diagnosis": ("icd10", True)})
-        coding = {
-            "name": "icd10",
-            "codes_to_meanings": {"A": "Chapter A", "A01": "Typhoid"},
-            "codes_to_concepts": {"A01": "snomed:2"},
-            "codes_to_parent": {"A01": "A"},
-            CODING_PAGINATED_KEY: True,
-        }
-        dictionary = self.build(descriptor, {"icd10": coding})
+        pages = [
+            {
+                "results": {
+                    "icd10": {
+                        "name": "icd10",
+                        "codes_to_meanings": {"A": "Chapter A"},
+                        "codes_to_concepts": {},
+                        "codes_to_parent": {},
+                    }
+                },
+                "next": {"name": "icd10", "after_code": "A"},
+            },
+            {
+                "results": {
+                    "icd10": {
+                        "name": "icd10",
+                        "codes_to_meanings": {"A01": "Typhoid"},
+                        "codes_to_concepts": {"A01": "snomed:2"},
+                        "codes_to_parent": {"A01": "A"},
+                    }
+                },
+                "next": None,
+            },
+        ]
+        with patch.object(dataset_utilities.dxpy, "DXHTTPRequest") as request:
+            request.side_effect = pages
+            codings = get_codings(VISUALIZE_RESP, "project-xxxx")
+
+        dictionary = self.build(descriptor, codings)
 
         icd10 = self.coding_frame(dictionary, "icd10")
         self.assertEqual(list(icd10["code"]), ["A", "A01"])
         self.assertEqual(list(icd10["parent_code"]), ["", "A"])
         self.assertEqual(column(icd10, "concept"), [None, "snomed:2"])
-        self.assertNotIn("display_order", icd10.columns)
+        self.assertEqual(list(icd10["display_order"]), [1, 2])
 
     def test_concepts_out_of_order_stay_row_aligned(self):
         descriptor = descriptor_stub({"sex": ("sex", False)})
