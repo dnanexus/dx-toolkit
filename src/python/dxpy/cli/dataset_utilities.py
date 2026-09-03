@@ -38,6 +38,7 @@ from ..utils.file_handle import as_handle
 from ..utils.describe import print_desc
 from ..exceptions import (
     err_exit,
+    DXError,
     PermissionDenied,
     InvalidInput,
     InvalidState,
@@ -186,6 +187,72 @@ def raw_api_call(resp, payload, sql_message=True):
     except Exception as details:
         err_exit(str(details))
     return resp_raw
+
+
+# Set on a coding assembled from more than one page. The server slices an oversized coding in
+# `code` order, so the authored display order of such a coding cannot be recovered.
+CODING_PAGINATED_KEY = "_dx_paginated"
+
+
+def viz_meta_codings_page(resp, payload):
+    """
+    Returns a single page of the dataset's codings. Raises rather than exiting, so the
+    caller can fall back to the descriptor.
+    """
+    resource_val = resp["url"] + "/viz-meta/3.0/" + resp["dataset"] + "/codings"
+    page = dxpy.DXHTTPRequest(resource=resource_val, data=payload, prepend_srv=False)
+    if "error" in page:
+        raise DXError(str(page["error"]))
+    return page
+
+
+def get_codings(resp, project_context, limit=None):
+    """
+    Returns all of the dataset's codings as a dict of coding name to coding, following the
+    server's pagination cursor and reassembling any coding split across pages.
+
+    Each coding has the same shape as a descriptor's `model["codings"]` entry, except that a
+    hierarchical coding the server had to split sends `codes_to_parent` in place of `display`.
+    """
+    codings = collections.OrderedDict()
+    payload = {"project_context": project_context}
+    if limit is not None:
+        payload["limit"] = limit
+
+    while True:
+        page = viz_meta_codings_page(resp, payload)
+        for name, coding in page["results"].items():
+            if name not in codings:
+                # Copy the members a later page may merge into, so a stored coding never
+                # aliases the response.
+                fresh = dict(coding)
+                for key in ("codes_to_meanings", "codes_to_concepts", "codes_to_parent"):
+                    if key in fresh:
+                        fresh[key] = dict(fresh[key] or {})
+                if "display" in fresh:
+                    fresh["display"] = list(fresh["display"] or [])
+                codings[name] = fresh
+                continue
+
+            # Seen already, so the server split this coding across pages. `existing` aliases
+            # the accumulated coding and is merged into in place.
+            existing = codings[name]
+            existing[CODING_PAGINATED_KEY] = True
+            existing["codes_to_meanings"].update(coding.get("codes_to_meanings") or {})
+            existing["codes_to_concepts"].update(coding.get("codes_to_concepts") or {})
+            if "codes_to_parent" in coding:
+                # A tree built from a single page is wrong, since a code's children can fall
+                # on the next page; parent edges hold however the pages divide.
+                existing.setdefault("codes_to_parent", {}).update(
+                    coding["codes_to_parent"] or {}
+                )
+                existing.pop("display", None)
+            elif "display" in coding and "display" in existing:
+                existing["display"].extend(coding["display"] or [])
+
+        if not page.get("next"):
+            return codings
+        payload["starting"] = page["next"]
 
 
 def extract_dataset(args):
@@ -423,7 +490,17 @@ def extract_dataset(args):
         err_exit("`--sql` passed without `--fields` or `--fields-file")
 
     if args.dump_dataset_dictionary:
-        rec_dict = rec_descriptor.get_dictionary()
+        # Codings live in the database's dx_codings table; a descriptor written before that
+        # change still carries them, and the server merges both sources.
+        codings = None
+        try:
+            codings = get_codings(resp, project_context=project)
+        except Exception as details:
+            print(
+                "Warning: Could not retrieve codings from the server ({}). "
+                "Falling back to the codings in the dataset descriptor.".format(details)
+            )
+        rec_dict = rec_descriptor.get_dictionary(codings=codings)
         write_ot = rec_dict.write(
             output_file_data=output_file_data,
             output_file_entity=output_file_entity,
@@ -1840,10 +1917,10 @@ class DXDataset(DXRecord):
             )
         return self.descriptor
 
-    def get_dictionary(self):
+    def get_dictionary(self, codings=None):
         if self.descriptor is None:
             self.get_descriptor()
-        return self.descriptor.get_dictionary()
+        return self.descriptor.get_dictionary(codings=codings)
 
 
 class DXDatasetDescriptor:
@@ -1874,8 +1951,8 @@ class DXDatasetDescriptor:
             setattr(self, key, obj[key])
         self.schema = kwargs.get("schema")
 
-    def get_dictionary(self):
-        return DXDatasetDictionary(self)
+    def get_dictionary(self, codings=None):
+        return DXDatasetDictionary(self, codings=codings)
 
 
 class DXDatasetDictionary:
@@ -1888,9 +1965,9 @@ class DXDatasetDictionary:
         coding - dictionary of coding name to pandas dataframe representing codes, their hierarchy (if applicable) and their meanings
     """
 
-    def __init__(self, descriptor):
+    def __init__(self, descriptor, codings=None):
         self.data_dictionary = self.load_data_dictionary(descriptor)
-        self.coding_dictionary = self.load_coding_dictionary(descriptor)
+        self.coding_dictionary = self.load_coding_dictionary(descriptor, codings)
         self.entity_dictionary = self.load_entity_dictionary(descriptor)
 
     def load_data_dictionary(self, descriptor):
@@ -2080,28 +2157,57 @@ class DXDatasetDictionary:
         edge["relationship"] = join_info_joins["relationship"]
         return edge
 
-    def load_coding_dictionary(self, descriptor):
+    def load_coding_dictionary(self, descriptor, codings=None):
         """
-        Processes coding dictionary from descriptor
+        Processes coding dictionary for the codings referenced by the dataset's fields.
+
+        Codings are taken from `codings`, as returned by the codings API, when it is given,
+        and from the descriptor otherwise. Both sources use the same per-coding shape.
         """
+        source = codings if codings is not None else descriptor.model.get("codings") or {}
         cblocks = collections.OrderedDict()
         for entity in descriptor.model["entities"]:
-            for field in descriptor.model["entities"][entity]["fields"]:
-                coding_name_value = descriptor.model["entities"][entity]["fields"][
-                    field
-                ]["coding_name"]
-                if coding_name_value and coding_name_value not in cblocks:
+            for field_dict in descriptor.model["entities"][entity]["fields"].values():
+                coding_name_value = field_dict["coding_name"]
+                if (
+                    coding_name_value
+                    and coding_name_value not in cblocks
+                    and coding_name_value in source
+                ):
                     cblocks[coding_name_value] = self.create_coding_name_dframe(
-                        descriptor.model, entity, field, coding_name_value
+                        source[coding_name_value],
+                        coding_name_value,
+                        field_dict["is_hierarchical"],
                     )
         return cblocks
 
-    def create_coding_name_dframe(self, model, entity, field, coding_name_value):
+    def create_coding_name_dframe(self, coding, coding_name_value, is_hierarchical):
         """
         Returns CodingDictionary pandas DataFrame for a coding_name.
+
+        `coding` is a single coding, in either the descriptor's or the codings API's shape.
+        A coding the server split across pages carries no usable display order, so
+        `display_order` is omitted for one; see CODING_PAGINATED_KEY.
         """
         dcols = {}
-        if model["entities"][entity]["fields"][field]["is_hierarchical"]:
+        codes_to_concepts = coding.get("codes_to_concepts") or {}
+        paginated = coding.get(CODING_PAGINATED_KEY)
+
+        if "codes_to_parent" in coding:
+            # A hierarchical coding split across pages: parent edges instead of a tree.
+            all_codes = list(coding["codes_to_meanings"])
+            dcols.update(
+                {
+                    "code": all_codes,
+                    "parent_code": [
+                        coding["codes_to_parent"].get(c, "") for c in all_codes
+                    ],
+                    "meaning": [coding["codes_to_meanings"][c] for c in all_codes],
+                    "concept": [codes_to_concepts.get(c) for c in all_codes],
+                }
+            )
+
+        elif is_hierarchical:
             displ_ord = 0
 
             def unpack_hierarchy(nodes, parent_code, displ_ord):
@@ -2125,57 +2231,39 @@ class DXDatasetDictionary:
                         yield (node, parent_code, displ_ord)
 
             all_codes, parents, displ_ord = zip(
-                *unpack_hierarchy(
-                    model["codings"][coding_name_value]["display"], "", displ_ord
-                )
+                *unpack_hierarchy(coding["display"], "", displ_ord)
             )
             dcols.update(
                 {
                     "code": all_codes,
                     "parent_code": parents,
-                    "meaning": [
-                        model["codings"][coding_name_value]["codes_to_meanings"][c]
-                        for c in all_codes
-                    ],
-                    "concept": [
-                        model["codings"][coding_name_value]["codes_to_concepts"][c]
-                        if (
-                            model["codings"][coding_name_value]["codes_to_concepts"]
-                            and c
-                            in model["codings"][coding_name_value][
-                                "codes_to_concepts"
-                            ].keys()
-                        )
-                        else None
-                        for c in all_codes
-                    ],
+                    "meaning": [coding["codes_to_meanings"][c] for c in all_codes],
+                    "concept": [codes_to_concepts.get(c) for c in all_codes],
                     "display_order": displ_ord,
                 }
             )
 
         else:
-            # No hierarchy; just unpack the codes dictionary
-            codes, meanings = zip(
-                *model["codings"][coding_name_value]["codes_to_meanings"].items()
-            )
-            if model["codings"][coding_name_value]["codes_to_concepts"]:
-                codes, concepts = zip(
-                    *model["codings"][coding_name_value]["codes_to_concepts"].items()
-                )
-            else:
-                concepts = [None] * len(codes)
-            display_order = [
-                int(model["codings"][coding_name_value]["display"].index(c) + 1)
-                for c in codes
-            ]
+            # No hierarchy; just unpack the codes dictionary. Every column is keyed off the
+            # same list of codes, so a `codes_to_concepts` that is ordered differently, or
+            # that omits a code, cannot pull the rows out of alignment.
+            codes = list(coding["codes_to_meanings"])
+            display = coding.get("display") or []
             dcols.update(
                 {
                     "code": codes,
-                    "meaning": meanings,
-                    "concept": concepts,
-                    "display_order": display_order,
+                    "meaning": [coding["codes_to_meanings"][c] for c in codes],
+                    "concept": [codes_to_concepts.get(c) for c in codes],
+                    "display_order": [
+                        int(display.index(c) + 1) if c in display else None
+                        for c in codes
+                    ],
                 }
             )
+
+        if paginated:
+            # Sliced in `code` order, so any display order here would be invented.
+            dcols.pop("display_order", None)
 
         dcols["coding_name"] = [coding_name_value] * len(dcols["code"])
 

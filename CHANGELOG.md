@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* `dx extract_dataset -ddd` now retrieves dataset codings from the vizserver codings route, which serves codings stored in the database's `dx_codings` table, falling back to the codings in the dataset descriptor when the route is unavailable
+
 ## [414.0] - beta
 
 ### Changed
