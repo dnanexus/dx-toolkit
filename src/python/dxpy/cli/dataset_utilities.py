@@ -21,6 +21,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import sys
 import collections
+import copy
 import json
 import os
 import re
@@ -193,6 +194,10 @@ def raw_api_call(resp, payload, sql_message=True):
 # `code` order, so the authored display order of such a coding cannot be recovered.
 CODING_PAGINATED_KEY = "_dx_paginated"
 
+# A backstop against a server bug that returns a `next` cursor that never resolves to null,
+# which would otherwise hang `-ddd` forever. Far above any realistic dataset's page count.
+MAX_CODINGS_PAGES = 10000
+
 
 def viz_meta_codings_page(resp, payload):
     """
@@ -219,19 +224,13 @@ def get_codings(resp, project_context, limit=None):
     if limit is not None:
         payload["limit"] = limit
 
-    while True:
+    for _ in range(MAX_CODINGS_PAGES):
         page = viz_meta_codings_page(resp, payload)
         for name, coding in page["results"].items():
             if name not in codings:
-                # Copy the members a later page may merge into, so a stored coding never
-                # aliases the response.
-                fresh = dict(coding)
-                for key in ("codes_to_meanings", "codes_to_concepts", "codes_to_parent"):
-                    if key in fresh:
-                        fresh[key] = dict(fresh[key] or {})
-                if "display" in fresh:
-                    fresh["display"] = list(fresh["display"] or [])
-                codings[name] = fresh
+                # Deep-copied so a stored coding never aliases the response, and so every
+                # key -- not just the ones this function knows to merge -- is safe to keep.
+                codings[name] = copy.deepcopy(coding)
                 continue
 
             # Seen already, so the server split this coding across pages. `existing` aliases
@@ -253,6 +252,10 @@ def get_codings(resp, project_context, limit=None):
         if not page.get("next"):
             return codings
         payload["starting"] = page["next"]
+
+    raise DXError(
+        "Codings pagination did not complete after {} pages".format(MAX_CODINGS_PAGES)
+    )
 
 
 def extract_dataset(args):

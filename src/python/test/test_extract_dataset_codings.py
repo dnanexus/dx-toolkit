@@ -235,6 +235,29 @@ class TestGetCodings(unittest.TestCase):
         self.assertEqual(page_coding["display"], ["0"])
         self.assertEqual(page_coding["codes_to_meanings"], {"0": "Female"})
 
+    def test_stored_coding_copies_unmerged_fields_too(self):
+        # A field this function never reads or merges (e.g. a future addition to the wire
+        # shape) must still be copied, not aliased, since it is deep-copied wholesale.
+        page_coding = flat_coding("sex", {"0": "Female"})
+        page_coding["some_future_field"] = {"nested": ["mutable"]}
+        codings, _ = self.call([{"results": {"sex": page_coding}, "next": None}])
+        codings["sex"]["some_future_field"]["nested"].append("changed")
+        self.assertEqual(page_coding["some_future_field"], {"nested": ["mutable"]})
+
+    def test_non_terminating_pagination_raises(self):
+        # A server bug that never returns `next: null` must not hang -ddd forever.
+        with patch.object(dataset_utilities, "MAX_CODINGS_PAGES", 3):
+            with self.assertRaises(DXError):
+                self.call(
+                    [
+                        {
+                            "results": {"sex": flat_coding("sex", {"0": "Female"})},
+                            "next": {"name": "sex", "after_code": "0"},
+                        }
+                    ]
+                    * 5
+                )
+
     def test_limit_is_sent_only_when_given(self):
         _, request = self.call([{"results": {}, "next": None}], limit=5)
         _, kwargs = request.call_args
