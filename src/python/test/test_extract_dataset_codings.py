@@ -210,8 +210,7 @@ class TestGetCodings(unittest.TestCase):
     def test_split_hierarchical_coding_becomes_a_display_tree(self):
         # A (root) -> A01, A02 (siblings) -> A01.1 (grandchild), split across three pages:
         # once every fragment's edges are merged, get_codings() must rebuild the tree hare
-        # couldn't safely send from a single page (see _slice_page in
-        # hare/src/lib/api_handlers/utils/processor/codings_processor.py).
+        # couldn't safely send from a single page.
         codings, calls = self.call(
             [
                 {

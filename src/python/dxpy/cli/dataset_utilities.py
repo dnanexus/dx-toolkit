@@ -219,8 +219,7 @@ def _hierarchy_from_parents(codes_to_parent, all_codes):
     Rebuilds a nested `display` tree for a hierarchical coding from its complete
     code -> parent_code edges, once every fragment of a coding split across pages has been
     merged. Siblings are ordered by code, since the wire format carries no other order for
-    a coding the server had to slice; see `_slice_page` in
-    hare/src/lib/api_handlers/utils/processor/codings_processor.py.
+    a coding the server had to slice.
     """
     children_of = collections.OrderedDict()
     for code in all_codes:
