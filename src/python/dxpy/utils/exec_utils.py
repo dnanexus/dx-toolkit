@@ -316,7 +316,7 @@ class DXExecDependencyInstaller(object):
             print(message)
 
     def generate_shellcode(self, dep_group):
-        base_apt_shellcode = "export DEBIAN_FRONTEND=noninteractive && apt-get install --yes --no-install-recommends {p}"
+        base_apt_shellcode = "export DEBIAN_FRONTEND=noninteractive && apt-get install --yes --no-install-recommends -o Dpkg::Options::=\"--force-confdef\" -o Dpkg::Options::=\"--force-confold\" {p}"
         dx_apt_update_shellcode = "apt-get update -o Dir::Etc::sourcelist=sources.list.d/nucleus.list -o Dir::Etc::sourceparts=- -o APT::Get::List-Cleanup=0"
         apt_err_msg = "APT failed, retrying with full update against official package repository"
         apt_shellcode_template = "({dx_upd} && {inst}) || (echo {e}; apt-get update && {inst})"

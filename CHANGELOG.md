@@ -6,16 +6,24 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+<<<<<<< HEAD
 ### Added
 
 * Nextflow applets support offline mode: `nextflow_run_opts="-offline"` exports `NXF_OFFLINE`, or it is enabled automatically when the job has no outbound internet access. `-offline=false` forces a run back online.
+=======
+## [414.0] - beta
+>>>>>>> master
 
 ### Changed
 
 * Decreased default `dx login` session expiration from 30 days to 18 hours to align with [current platform behaviour](https://documentation.dnanexus.com/user/login-and-logout#session-expiration)
 * Pinned versions of `dxpy` dependencies (`psutil`, `crc32c` and `awscrt`) to solve installation issues in 20.04 AEE
 
-## [413.0] - beta
+### Fixed
+
+* Fix intermittent apt dependency install failures in non-interactive jobs by adding dpkg conffile options (force-confdef, force-confold)
+
+## [413.0] - 2026.09.01
 
 * No significant changes
 
