@@ -470,6 +470,31 @@ class TestCodingDictionary(unittest.TestCase):
         self.assertEqual(column(icd10, "concept"), [None, "snomed:2"])
         self.assertEqual(list(icd10["display_order"]), [1, 2])
 
+    def test_display_order_is_written_as_an_integer(self):
+        # A split coding contributes no display_order column at all. Concatenating that
+        # block with codings that do have one must not upcast the column to float and
+        # write every order as "1.0".
+        descriptor = descriptor_stub(
+            {"sex": ("sex", False), "lab": ("lab", False)}
+        )
+        split = flat_coding("lab", {"L1": "One", "L2": "Two"}, display=["L1", "L2"])
+        split[CODING_PAGINATED_KEY] = True
+        dictionary = self.build(
+            descriptor, {"sex": flat_coding("sex", {"0": "Female"}), "lab": split}
+        )
+
+        out_directory = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, out_directory)
+        path = os.path.join(out_directory, "codings.csv")
+        dictionary.write(output_file_coding=path, sep=",")
+        with open(path) as handle:
+            written = handle.read()
+
+        # coding_name, code, meaning, then alphabetical: concept, display_order
+        self.assertIn("sex,0,Female,,1\n", written)
+        self.assertIn("lab,L1,One,,\n", written)
+        self.assertNotIn("1.0", written)
+
     def test_concepts_out_of_order_stay_row_aligned(self):
         descriptor = descriptor_stub({"sex": ("sex", False)})
         codings = {

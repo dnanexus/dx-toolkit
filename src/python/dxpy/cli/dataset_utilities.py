@@ -2299,6 +2299,12 @@ class DXDatasetDictionary:
             # Sliced in `code` order, so any display order here would be invented.
             dcols.pop("display_order", None)
 
+        if "display_order" in dcols:
+            # Nullable Int64 rather than plain int: concatenating this block with one that
+            # has no display_order at all -- a coding the server split -- would otherwise
+            # upcast the whole column to float and write every order as "1.0".
+            dcols["display_order"] = pd.array(dcols["display_order"], dtype="Int64")
+
         dcols["coding_name"] = [coding_name_value] * len(dcols["code"])
 
         try:
