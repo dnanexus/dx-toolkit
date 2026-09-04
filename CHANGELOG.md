@@ -6,13 +6,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-<<<<<<< HEAD
 ### Added
 
 * Nextflow applets support offline mode: `nextflow_run_opts="-offline"` exports `NXF_OFFLINE`, or it is enabled automatically when the job has no outbound internet access. `-offline=false` forces a run back online.
-=======
+
 ## [414.0] - beta
->>>>>>> master
 
 ### Changed
 
