@@ -673,10 +673,11 @@ validate_run_opts() {
     esac
   done
 
-  # Left as `read` on purpose, unlike parse_offline_run_opts: `read` stops at the first line
-  # break, so options after one are not validated. That is a pre-existing gap and fixing it
-  # here would newly abort runs that pass a misplaced -w or -profile after a line break, which
-  # has nothing to do with offline mode. Worth its own ticket.
+  # APPS-4441: Left as `read` on purpose, unlike parse_offline_run_opts: `read`
+  # stops at the first line break, so options after one are not validated. That
+  # is a pre-existing gap and fixing it here would newly abort runs that pass a
+  # misplaced -w or -profile after a line break, which has nothing to do with
+  # offline mode.
   IFS=" " read -r -a opts <<<"$nextflow_run_opts"
   for opt in "${opts[@]}"; do
     case $opt in
