@@ -30,6 +30,7 @@ import dxpy
 import codecs
 import subprocess
 from functools import reduce
+from typing import Optional
 from ..utils.printing import fill
 from ..bindings import DXRecord
 from ..bindings.dxdataobject_functions import is_dxlink, describe
@@ -202,7 +203,7 @@ CODING_PAGINATED_KEY = "_dx_paginated"
 MAX_CODINGS_PAGES = 10000
 
 
-def viz_meta_codings_page(resp, payload):
+def viz_meta_codings_page(resp: dict, payload: dict) -> dict:
     """
     Returns a single page of the dataset's codings. Raises rather than exiting, so the
     caller can fall back to the descriptor.
@@ -214,7 +215,7 @@ def viz_meta_codings_page(resp, payload):
     return page
 
 
-def _hierarchy_from_parents(codes_to_parent, all_codes):
+def _hierarchy_from_parents(codes_to_parent: dict, all_codes: list) -> list:
     """
     Rebuilds a nested `display` tree for a hierarchical coding from its complete
     code -> parent_code edges, once every fragment of a coding split across pages has been
@@ -234,7 +235,7 @@ def _hierarchy_from_parents(codes_to_parent, all_codes):
     return subtree("")
 
 
-def _finalize_split_codings(codings):
+def _finalize_split_codings(codings: dict) -> dict:
     """
     Turns any coding still carrying `codes_to_parent` back into the canonical shape, now
     that every fragment of it has been merged: its edges are a complete parent map, so the
@@ -252,7 +253,7 @@ def _finalize_split_codings(codings):
     return codings
 
 
-def get_codings(resp, project_context, limit=None):
+def get_codings(resp: dict, project_context: str, limit: Optional[int] = None) -> dict:
     """
     Returns all of the dataset's codings as a dict of coding name to coding, following the
     server's pagination cursor and reassembling any coding split across pages.
