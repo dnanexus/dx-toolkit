@@ -451,8 +451,8 @@ load_job_network_policy() {
 
   job_json=/home/dnanexus/dnanexus-job.json
   if [[ -s $job_json ]]; then
-    JOB_NETWORK_ACCESS_RESULT=$(jq -r 'if has("networkAccess") then (if (.networkAccess | length) > 0 then "true" else "false" end) else "" end' "$job_json" 2>/dev/null || true)
-    JOB_OUTBOUND_INTERNET_RESULT=$(jq -r 'if has("jobOutboundInternet") then (.jobOutboundInternet|tostring) else "" end' "$job_json" 2>/dev/null || true)
+    JOB_NETWORK_ACCESS_RESULT=$(jq -r '.networkAccess | if type == "array" then (if length > 0 then "true" else "false" end) else "" end' "$job_json" 2>/dev/null || true)
+    JOB_OUTBOUND_INTERNET_RESULT=$(jq -r '.jobOutboundInternet | if . == true then "true" elif . == false then "false" else "" end' "$job_json" 2>/dev/null || true)
     NETWORK_POLICY_PROJECT_ID=$(jq -r '.project // ""' "$job_json" 2>/dev/null || true)
   fi
 
@@ -463,8 +463,8 @@ load_job_network_policy() {
     describe_json=$(dx api "$DX_JOB_ID" describe '{"fields":{"networkAccess":true,"jobOutboundInternet":true,"project":true}}' 2>/dev/null || true)
 
     if [[ -n $describe_json ]]; then
-      [[ -n $JOB_NETWORK_ACCESS_RESULT ]] || JOB_NETWORK_ACCESS_RESULT=$(jq -r 'if has("networkAccess") then (if (.networkAccess | length) > 0 then "true" else "false" end) else "" end' <<<"$describe_json" 2>/dev/null || true)
-      [[ -n $JOB_OUTBOUND_INTERNET_RESULT ]] || JOB_OUTBOUND_INTERNET_RESULT=$(jq -r 'if has("jobOutboundInternet") then (.jobOutboundInternet|tostring) else "" end' <<<"$describe_json" 2>/dev/null || true)
+      [[ -n $JOB_NETWORK_ACCESS_RESULT ]] || JOB_NETWORK_ACCESS_RESULT=$(jq -r '.networkAccess | if type == "array" then (if length > 0 then "true" else "false" end) else "" end' <<<"$describe_json" 2>/dev/null || true)
+      [[ -n $JOB_OUTBOUND_INTERNET_RESULT ]] || JOB_OUTBOUND_INTERNET_RESULT=$(jq -r '.jobOutboundInternet | if . == true then "true" elif . == false then "false" else "" end' <<<"$describe_json" 2>/dev/null || true)
       [[ -n $NETWORK_POLICY_PROJECT_ID ]] || NETWORK_POLICY_PROJECT_ID=$(jq -r '.project // ""' <<<"$describe_json" 2>/dev/null || true)
     fi
   fi
@@ -479,7 +479,7 @@ load_job_network_policy() {
       project_json=$(dx api "$dx_id" describe '{"fields":{"jobOutboundInternet":true}}' 2>/dev/null || true)
       if [[ -n $project_json ]]; then
         local project_outbound
-        project_outbound=$(jq -r 'if has("jobOutboundInternet") then (.jobOutboundInternet|tostring) else "" end' <<<"$project_json" 2>/dev/null || true)
+        project_outbound=$(jq -r '.jobOutboundInternet | if . == true then "true" elif . == false then "false" else "" end' <<<"$project_json" 2>/dev/null || true)
         if [[ $project_outbound == false ]]; then
           JOB_OUTBOUND_INTERNET_RESULT=false
         elif [[ -z $JOB_OUTBOUND_INTERNET_RESULT ]]; then
