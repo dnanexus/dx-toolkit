@@ -36,13 +36,26 @@ class TestDXTabCompletion(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.project_id = dxpy.api.project_new({"name": "tab-completion project"})['id']
+        # These tests overwrite DX_PROJECT_CONTEXT_ID, which is mirrored into os.environ
+        # and inherited by every `dx` subprocess. Remember the incoming context so it can
+        # be put back, rather than leaving later tests in the same process with none.
+        cls.orig_proj_context_id = os.environ.get('DX_PROJECT_CONTEXT_ID')
+        cls.orig_workspace_id = dxpy.WORKSPACE_ID
 
     @classmethod
     def tearDownClass(cls):
         dxpy.api.project_destroy(cls.project_id)
         for entity_id in cls.ids_to_destroy:
             dxpy.DXHTTPRequest("/" + entity_id + "/destroy", {})
-        dxpy.set_workspace_id(None)
+        cls.restore_project_context()
+
+    @classmethod
+    def restore_project_context(cls):
+        if cls.orig_proj_context_id is None:
+            os.environ.pop('DX_PROJECT_CONTEXT_ID', None)
+        else:
+            os.environ['DX_PROJECT_CONTEXT_ID'] = cls.orig_proj_context_id
+        dxpy.set_workspace_id(cls.orig_workspace_id)
 
     def setUp(self):
         os.environ['IFS'] = IFS
@@ -60,9 +73,10 @@ class TestDXTabCompletion(unittest.TestCase):
             if 'completed' not in resp:
                 raise DXError('Error removing folder')
             completed = resp['completed']
-        for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS', 'DX_PROJECT_CONTEXT_ID':
+        for var in 'IFS', '_ARGCOMPLETE', '_DX_ARC_DEBUG', 'COMP_WORDBREAKS':
             if var in os.environ:
                 del os.environ[var]
+        self.restore_project_context()
 
     def get_bash_completions(self, line, point=None, stderr_contains=""):
         os.environ['COMP_LINE'] = line
@@ -159,6 +173,11 @@ class TestDXTabCompletion(unittest.TestCase):
     @unittest.skipUnless(testutil.TEST_ENV,
                          'skipping test that would clobber your local environment')
     def test_completion_with_no_current_project(self):
+        # config.save() persists to ~/.dnanexus_config, so without rewriting the file
+        # afterwards every later `dx` process on this machine inherits the removal.
+        # Cleanups run last-in-first-out: restore the context, then re-serialize it.
+        self.addCleanup(dxpy.config.save)
+        self.addCleanup(self.restore_project_context)
         del dxpy.config['DX_PROJECT_CONTEXT_ID']
         dxpy.config.save()
 

@@ -86,6 +86,11 @@ class TestCreateCohort(unittest.TestCase):
         cls.temp_proj = DXProject()
         cls.temp_proj.new(name="temp_test_create_cohort_{}".format(uuid.uuid4()))
         cls.temp_proj_id = cls.temp_proj._dxid
+        # dxpy.config mirrors this into os.environ, so every `dx` subprocess started
+        # later in this process inherits it. Remember the incoming value; tearDownClass
+        # destroys temp_proj, and leaving the context pointing at a destroyed project
+        # breaks any later test that resolves a path without an explicit project.
+        cls.prev_proj_context_id = dxpy.config.get("DX_PROJECT_CONTEXT_ID")
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = cls.temp_proj_id
         cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
         cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
@@ -100,8 +105,15 @@ class TestCreateCohort(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         print("Remmoving temporary testing project {}".format(cls.temp_proj_id))
-        cls.temp_proj.destroy()
-        del cls.temp_proj
+        try:
+            cls.temp_proj.destroy()
+            del cls.temp_proj
+        finally:
+            if cls.prev_proj_context_id is None:
+                if "DX_PROJECT_CONTEXT_ID" in dxpy.config:
+                    del dxpy.config["DX_PROJECT_CONTEXT_ID"]
+            else:
+                dxpy.config["DX_PROJECT_CONTEXT_ID"] = cls.prev_proj_context_id
 
     def find_record_id(self, text): 
         match = re.search(r"\b(record-[A-Za-z0-9]{24})\b", text)
