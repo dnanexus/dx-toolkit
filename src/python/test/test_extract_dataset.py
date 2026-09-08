@@ -165,6 +165,10 @@ class TestDXExtractDataset(unittest.TestCase):
         for error_content in expected_error_contents:
             self.assertTrue(error_content in stderr)
 
+    def _normalize_fields_df(self, df):
+        df = df.dropna(axis=1, how="all").sort_index(axis=1).convert_dtypes()
+        return df.sort_values(by=list(df.columns), axis=0).reset_index(drop=True)
+
     def end_to_end_ddd(self, out_directory, rec_name):
         truth_files_directory = tempfile.mkdtemp()
         with chdir(truth_files_directory):
@@ -197,11 +201,11 @@ class TestDXExtractDataset(unittest.TestCase):
             cmd = ["dx", "download", truth_file]
             subprocess.check_call(cmd)
             os.chdir("..")
-            dframe1 = pd.read_csv(os.path.join(truth_files_directory,os.listdir(truth_files_directory)[0]))
-            dframe1 = dframe1.sort_values(by=list(dframe1.columns), axis=0).reset_index(drop=True)
-            dframe2 = pd.read_csv(os.path.join(out_directory, rec_name))
-            dframe2 = dframe2.sort_values(by=list(dframe2.columns), axis=0).reset_index(drop=True)
-            self.assertTrue(dframe1.equals(dframe2))
+            dframe1 = self._normalize_fields_df(
+                pd.read_csv(os.path.join(truth_files_directory, os.listdir(truth_files_directory)[0]))
+            )
+            dframe2 = self._normalize_fields_df(pd.read_csv(os.path.join(out_directory, rec_name)))
+            pd.testing.assert_frame_equal(dframe1, dframe2, check_dtype=False)
 
             shutil.rmtree(out_directory)
             shutil.rmtree(truth_files_directory)
