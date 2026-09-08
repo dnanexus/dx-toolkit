@@ -373,7 +373,7 @@ class TestDXExtractAssay(unittest.TestCase):
         )
         result = process.communicate()[0]
         expected_result = (
-            '18_47359_G_T\t18\t47359\tG\tT\t["rs1342568097"]\tSNP\t0.2\t2.66771e-05'
+            "18_47359_G_T\t18\t47359\tG\tT\t['rs1342568097']\tSNP\t0.2\t2.66771e-05"
         )
         self.assertIn(expected_result, result)
 
