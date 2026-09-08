@@ -362,7 +362,7 @@ class TestCreateCohort(unittest.TestCase):
             "project_context": self.proj_id
         }
 
-        expected_results = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
+        expected_results = 'SELECT patient_1."patient_id" AS "patient_id"  FROM database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database."patient" AS patient_1  WHERE patient_1."patient_id" IN (\'patient_1\', \'patient_2\', \'patient_3\');'
 
         from_project, entity_result, resp, dataset_project = resolve_validate_record_path(self.test_record_pheno)
         sql = raw_cohort_query_api_call(resp, test_payload)
@@ -419,7 +419,7 @@ class TestCreateCohort(unittest.TestCase):
             },
             "logic": "and",
         }
-        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2');"
+        expected_sql = 'SELECT patient_1."patient_id" AS "patient_id"  FROM database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database."patient" AS patient_1  WHERE patient_1."patient_id" IN (\'patient_1\', \'patient_2\');'
         lambda_for_list_conv = lambda a, b: a+[str(b)]
         
         generated_filter = generate_pheno_filter(values, entity, field, filters, lambda_for_list_conv)
