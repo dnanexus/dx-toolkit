@@ -5,6 +5,10 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
 ## Unreleased
+### Fixed
+
+* dxpy download of symlink/drive files now verifies per-part checksums across all chunks in a part (CRC32, CRC32C, SHA1, SHA256, CRC64NVME), preventing false mismatch errors on multi-chunk parts
+* Added regression coverage for multi-part and resumed-download checksum verification paths
 
 ## [414.0] - beta
 
