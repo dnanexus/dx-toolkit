@@ -9,7 +9,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Fixed
 
 * dxpy download of symlink/drive files now verifies per-part checksums across all chunks in a part (CRC32, CRC32C, SHA1, SHA256, CRC64NVME), preventing false mismatch errors on multi-chunk parts
-* Added regression coverage for multi-part and resumed-download checksum verification paths
 
 ## [412.0] - beta
 
