@@ -5,12 +5,27 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
 ## Unreleased
-
 ### Fixed
 
 * dxpy download of symlink/drive files now verifies per-part checksums across all chunks in a part (CRC32, CRC32C, SHA1, SHA256, CRC64NVME), preventing false mismatch errors on multi-chunk parts
+* Added regression coverage for multi-part and resumed-download checksum verification paths
 
-## [412.0] - beta
+## [414.0] - beta
+
+### Changed
+
+* Decreased default `dx login` session expiration from 30 days to 18 hours to align with [current platform behaviour](https://documentation.dnanexus.com/user/login-and-logout#session-expiration)
+* Pinned versions of `dxpy` dependencies (`psutil`, `crc32c` and `awscrt`) to solve installation issues in 20.04 AEE
+
+### Fixed
+
+* Fix intermittent apt dependency install failures in non-interactive jobs by adding dpkg conffile options (force-confdef, force-confold)
+
+## [413.0] - 2026.09.01
+
+* No significant changes
+
+## [412.0] - 2026.08.03
 
 ### Added
 
