@@ -419,31 +419,37 @@ def _download_dxfile(dxid, filename, part_retry_counter,
 
         if fh.mode == "rb+":
             # We already downloaded the beginning of the file, verify that the
-            # chunk checksums match the metadata.
+            # local bytes match per-part checksums in metadata.
             last_verified_part, max_verify_chunk_size = None, 1024*1024
             try:
                 for part_id in parts_to_get:
                     part_info = parts[part_id]
-                    if "md5" not in part_info:
-                        raise DXFileError("File {} does not contain part md5 checksums".format(dxfile.get_id()))
                     bytes_to_read = part_info["size"]
-                    hasher = md5_hasher()
+                    hasher = md5_hasher() if "md5" in part_info else None
+                    part_checksum = None
+                    if dxfile_desc.get('drive') is not None and "md5" not in part_info and checksum_type is not None:
+                        part_checksum = _IncrementalChecksum(checksum_type)
+                    if hasher is None and part_checksum is None:
+                        raise DXFileError("File {} part {} does not contain a supported checksum".format(dxfile.get_id(), part_id))
                     while bytes_to_read > 0:
-                        chunk = fh.read(min(max_verify_chunk_size, bytes_to_read))
-                        if len(chunk) < min(max_verify_chunk_size, bytes_to_read):
+                        bytes_requested = min(max_verify_chunk_size, bytes_to_read)
+                        chunk = fh.read(bytes_requested)
+                        if len(chunk) < bytes_requested:
                             raise DXFileError("Local data for part {} is truncated".format(part_id))
-                        hasher.update(chunk)
-                        bytes_to_read -= max_verify_chunk_size
-                    if hasher.hexdigest() != part_info["md5"]:
+                        if hasher is not None:
+                            hasher.update(chunk)
+                        if part_checksum is not None:
+                            part_checksum.update(chunk)
+                        bytes_to_read -= bytes_requested
+                    if hasher is not None and hasher.hexdigest() != part_info["md5"]:
                         raise DXFileError("Checksum mismatch when verifying downloaded part {}".format(part_id))
-                    if dxfile_desc.get('drive') is not None and "md5" not in part_info:
-                        _verify_checksum(parts, part_id, chunk, checksum_type, dxfile.get_id())
-                    else:
-                        last_verified_part = part_id
-                        last_verified_pos = fh.tell()
-                        if show_progress:
-                            _bytes += part_info["size"]
-                            _print_progress(_bytes, file_size, filename, action="Verified")
+                    if part_checksum is not None:
+                        _compare_part_checksum(parts, part_id, part_checksum.digest(), checksum_type, dxfile.get_id())
+                    last_verified_part = part_id
+                    last_verified_pos = fh.tell()
+                    if show_progress:
+                        _bytes += part_info["size"]
+                        _print_progress(_bytes, file_size, filename, action="Verified")
             except (IOError, DXFileError) as e:
                 logger.debug(e)
             fh.seek(last_verified_pos)

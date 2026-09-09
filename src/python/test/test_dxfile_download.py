@@ -317,5 +317,119 @@ class TestDownloadMultiChunkChecksum(unittest.TestCase):
                 self.assertEqual(result, self.DATA)
 
 
+class TestDownloadMultiPartAndResumeChecksum(unittest.TestCase):
+    """Regression coverage for platform checksum verification when:
+    1) a file has multiple parts and each part is chunked, and
+    2) a resumed download verifies pre-existing bytes in rb+ preflight.
+    """
+
+    FILE_ID = 'file-xxxx'
+    DRIVE = 'drive-xxxx'
+    CHECKSUM_TYPES = ('CRC32', 'CRC32C', 'SHA1', 'SHA256', 'CRC64NVME')
+    CHUNK_SIZE = 16
+    PART1_SIZE = 48
+    PART2_SIZE = 32
+    DATA = bytes((i * 11 + 5) & 0xFF for i in range(PART1_SIZE + PART2_SIZE))
+
+    def _make_dxfile(self):
+        dxfile = DXFile()
+        dxfile._dxid = self.FILE_ID
+        return dxfile
+
+    @staticmethod
+    def _digest(checksum_type, data):
+        if checksum_type == 'CRC32':
+            return zlib.crc32(data).to_bytes(4, 'big')
+        if checksum_type == 'CRC32C':
+            return crc32c.crc32c(data).to_bytes(4, 'big')
+        if checksum_type == 'SHA1':
+            return hashlib.sha1(data).digest()
+        if checksum_type == 'SHA256':
+            return hashlib.sha256(data).digest()
+        if checksum_type == 'CRC64NVME':
+            return checksums.crc64nvme(data).to_bytes(8, 'big')
+        raise ValueError(checksum_type)
+
+    def _parts(self, checksum_type):
+        part1 = self.DATA[:self.PART1_SIZE]
+        part2 = self.DATA[self.PART1_SIZE:]
+        return {
+            '1': {
+                'size': len(part1),
+                'checksum': base64.b64encode(self._digest(checksum_type, part1)).decode()
+            },
+            '2': {
+                'size': len(part2),
+                'checksum': base64.b64encode(self._digest(checksum_type, part2)).decode()
+            }
+        }
+
+    def _describe_output(self, checksum_type):
+        return {
+            'parts': self._parts(checksum_type),
+            'size': len(self.DATA),
+            'drive': self.DRIVE,
+            'checksumType': checksum_type,
+        }
+
+    def test_multi_part_multi_chunk_downloads_ok(self):
+        """Whole-part checksum verification succeeds for every supported
+        checksum type when multiple parts are split into chunks."""
+        def fake_read_range(url, headers, start, end, timeout, sub_range=True):
+            return self.DATA[start:end + 1]
+
+        for checksum_type in self.CHECKSUM_TYPES:
+            with self.subTest(checksum_type=checksum_type):
+                dxfile = self._make_dxfile()
+                fd, filename = tempfile.mkstemp()
+                os.close(fd)
+                os.remove(filename)
+                try:
+                    with patch.object(DXFile, 'get_download_url', return_value=('http://dummy', {})), \
+                            patch.object(dxpy, '_dxhttp_read_range', side_effect=fake_read_range):
+                        dxfile_functions._download_dxfile(
+                            dxfile, filename, defaultdict(lambda: 1),
+                            chunksize=self.CHUNK_SIZE,
+                            describe_output=self._describe_output(checksum_type))
+                    with open(filename, 'rb') as fh:
+                        self.assertEqual(fh.read(), self.DATA)
+                finally:
+                    if os.path.exists(filename):
+                        os.remove(filename)
+
+    def test_resume_preflight_multi_chunk_part_downloads_ok(self):
+        """Resume preflight in rb+ mode must verify existing part bytes using
+        full-part checksum (not just the final read chunk), then continue.
+        """
+        def fake_read_range(url, headers, start, end, timeout, sub_range=True):
+            return self.DATA[start:end + 1]
+
+        for checksum_type in self.CHECKSUM_TYPES:
+            with self.subTest(checksum_type=checksum_type):
+                dxfile = self._make_dxfile()
+                describe_output = self._describe_output(checksum_type)
+                part1 = self.DATA[:self.PART1_SIZE]
+                fd, filename = tempfile.mkstemp()
+                os.close(fd)
+                try:
+                    # Seed an on-disk prefix so _download_dxfile enters rb+
+                    # preflight, verifies part 1, then resumes with part 2.
+                    with open(filename, 'wb') as fh:
+                        fh.write(part1)
+
+                    with patch.object(DXFile, 'get_download_url', return_value=('http://dummy', {})), \
+                            patch.object(dxpy, '_dxhttp_read_range', side_effect=fake_read_range):
+                        dxfile_functions._download_dxfile(
+                            dxfile, filename, defaultdict(lambda: 1),
+                            chunksize=self.CHUNK_SIZE,
+                            describe_output=describe_output)
+
+                    with open(filename, 'rb') as fh:
+                        self.assertEqual(fh.read(), self.DATA)
+                finally:
+                    if os.path.exists(filename):
+                        os.remove(filename)
+
+
 if __name__ == '__main__':
     unittest.main()
