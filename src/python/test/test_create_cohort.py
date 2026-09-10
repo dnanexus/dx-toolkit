@@ -86,6 +86,11 @@ class TestCreateCohort(unittest.TestCase):
         cls.temp_proj = DXProject()
         cls.temp_proj.new(name="temp_test_create_cohort_{}".format(uuid.uuid4()))
         cls.temp_proj_id = cls.temp_proj._dxid
+        # dxpy.config mirrors this into os.environ, so every `dx` subprocess started
+        # later in this process inherits it. Remember the incoming value; tearDownClass
+        # destroys temp_proj, and leaving the context pointing at a destroyed project
+        # breaks any later test that resolves a path without an explicit project.
+        cls.prev_proj_context_id = dxpy.config.get("DX_PROJECT_CONTEXT_ID")
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = cls.temp_proj_id
         cls.test_record_geno = "{}:/Create_Cohort/create_cohort_geno_dataset".format(proj_name)
         cls.test_record_pheno = "{}:/Create_Cohort/create_cohort_pheno_dataset".format(proj_name)
@@ -100,8 +105,15 @@ class TestCreateCohort(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         print("Remmoving temporary testing project {}".format(cls.temp_proj_id))
-        cls.temp_proj.destroy()
-        del cls.temp_proj
+        try:
+            cls.temp_proj.destroy()
+            del cls.temp_proj
+        finally:
+            if cls.prev_proj_context_id is None:
+                if "DX_PROJECT_CONTEXT_ID" in dxpy.config:
+                    del dxpy.config["DX_PROJECT_CONTEXT_ID"]
+            else:
+                dxpy.config["DX_PROJECT_CONTEXT_ID"] = cls.prev_proj_context_id
 
     def find_record_id(self, text): 
         match = re.search(r"\b(record-[A-Za-z0-9]{24})\b", text)
@@ -362,7 +374,7 @@ class TestCreateCohort(unittest.TestCase):
             "project_context": self.proj_id
         }
 
-        expected_results = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2', 'patient_3');"
+        expected_results = 'SELECT patient_1."patient_id" AS "patient_id"  FROM database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database."patient" AS patient_1  WHERE patient_1."patient_id" IN (\'patient_1\', \'patient_2\', \'patient_3\');'
 
         from_project, entity_result, resp, dataset_project = resolve_validate_record_path(self.test_record_pheno)
         sql = raw_cohort_query_api_call(resp, test_payload)
@@ -419,7 +431,7 @@ class TestCreateCohort(unittest.TestCase):
             },
             "logic": "and",
         }
-        expected_sql = "SELECT `patient_1`.`patient_id` AS `patient_id` FROM `database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database`.`patient` AS `patient_1` WHERE `patient_1`.`patient_id` IN ('patient_1', 'patient_2');"
+        expected_sql = 'SELECT patient_1."patient_id" AS "patient_id"  FROM database_yyyyyyyyyyyyyyyyyyyyyyyy__create_cohort_pheno_database."patient" AS patient_1  WHERE patient_1."patient_id" IN (\'patient_1\', \'patient_2\');'
         lambda_for_list_conv = lambda a, b: a+[str(b)]
         
         generated_filter = generate_pheno_filter(values, entity, field, filters, lambda_for_list_conv)
