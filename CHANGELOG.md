@@ -10,6 +10,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx extract_dataset -ddd` now retrieves dataset codings from the database's dx_codings table, falling back to the codings in the dataset descriptor when the database codings are unavailable.
 
+### Fixed
+
+* `dx build --create-app` now uses DNAnexus storage for temporary build projects, even when the billTo's default storage is a drive
+
 ## [414.0] - beta
 
 ### Changed
