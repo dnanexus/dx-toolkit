@@ -743,10 +743,9 @@ class TestNextflowOfflineMode(unittest.TestCase):
         # nothing else has decided already -- an explicit request costs no API call
         ("explicit_offline", "-offline", None, []),
         ("preset_env", "", "true", []),
-        # two describes of the job -- the network grant and jobOutboundInternet are separate
-        # fields and are asked for separately so the log can name which one decided -- then
-        # the project as the fallback for jobOutboundInternet
-        ("nothing_decided", "", None, ["job-xxxx", "job-xxxx", "project-yyyy"]),
+        # one describe of the job asks for both fields together, then the project is used
+        # as the fallback for jobOutboundInternet
+        ("nothing_decided", "", None, ["job-xxxx", "project-yyyy"]),
     ])
     def test_platform_queried_only_as_last_resort(self, _name, run_opts, nxf_offline, expected_calls):
         _flag, calls = self._offline_flag(describe_json='{"jobOutboundInternet":true}',
