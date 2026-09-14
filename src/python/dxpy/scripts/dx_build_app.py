@@ -86,6 +86,16 @@ def _get_version_suffix(src_dir, version):
 def parse_destination(dest_str):
     return dxpy.executable_builder.get_parsed_destination(dest_str)
 
+def _create_temporary_build_project(name, bill_to=None, region=None):
+    # An explicit null drive keeps the build on DNAnexus storage; omitting it
+    # would inherit the billTo's default storage, which may be a drive.
+    project_input = {"name": name, "drive": None}
+    if bill_to:
+        project_input["billTo"] = bill_to
+    if region:
+        project_input["region"] = region
+    return dxpy.api.project_new(project_input)["id"]
+
 def _check_suggestions(app_json, publish=False):
     """
     Examines the specified dxapp.json file and warns about any
@@ -580,13 +590,10 @@ def _build_app_remote(mode, src_dir, publish=False, destination_override=None,
     elif mode == "app":
         using_temp_project_for_remote_build = True
         try:
-            project_input = {}
-            project_input["name"] = "dx-build-app --remote temporary project"
-            if bill_to_override:
-                project_input["billTo"] = bill_to_override
-            if region:
-                project_input["region"] = region
-            build_project_id = dxpy.api.project_new(project_input)["id"]
+            build_project_id = _create_temporary_build_project(
+                "dx-build-app --remote temporary project",
+                bill_to=bill_to_override,
+                region=region)
         except:
             err_exit()
 
@@ -792,13 +799,10 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
             # Create temporary projects in each enabled region.
             try:
                 for region in enabled_regions:
-                    project_input = {
-                        "name": "Temporary build project for dx-build-app in {r}".format(r=region),
-                        "region": region
-                    }
-                    if bill_to_override:
-                        project_input["billTo"] = bill_to_override
-                    working_project = dxpy.api.project_new(project_input)["id"]
+                    working_project = _create_temporary_build_project(
+                        "Temporary build project for dx-build-app in {r}".format(r=region),
+                        bill_to=bill_to_override,
+                        region=region)
                     projects_by_region[region] = working_project
                     logger.debug("Created temporary project %s to build in" % (working_project,))
             except:
@@ -809,10 +813,9 @@ def build_and_upload_locally(src_dir, mode, overwrite=False, archive=False, publ
         else:
             # Create a temp project
             try:
-                project_input = {"name": "Temporary build project for dx-build-app"}
-                if bill_to_override:
-                    project_input["billTo"] = bill_to_override
-                working_project = dxpy.api.project_new(project_input)["id"]
+                working_project = _create_temporary_build_project(
+                    "Temporary build project for dx-build-app",
+                    bill_to=bill_to_override)
             except:
                 err_exit()
             region = dxpy.api.project_describe(working_project,
