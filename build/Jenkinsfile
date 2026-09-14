@@ -7,13 +7,6 @@ node('22.04-agent'){
             sh 'git describe > commit_hash'
             env.commit_hash = readFile('commit_hash').trim()
             sh "echo BUILDING COMMIT: \"${env.commit_hash}\""
-            sh '''
-                command -v jq >/dev/null 2>&1 || {
-                  echo "ERROR: jq is required on Jenkins agents for Nextflow offline-mode tests." >&2
-                  exit 1
-                }
-                jq --version
-            '''
         }
             
         try{

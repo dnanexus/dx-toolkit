@@ -437,6 +437,71 @@ NETWORK_POLICY_LOADED=0
 JOB_NETWORK_ACCESS_RESULT=""
 JOB_OUTBOUND_INTERNET_RESULT=""
 NETWORK_POLICY_PROJECT_ID=""
+
+json_policy_network_access() {
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.networkAccess | if type == "array" then (if length > 0 then "true" else "false" end) else "" end' 2>/dev/null || true
+    return
+  fi
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys
+try:
+    o=json.load(sys.stdin)
+except Exception:
+    print("")
+    raise SystemExit(0)
+v=o.get("networkAccess") if isinstance(o, dict) else None
+if isinstance(v, list):
+    print("true" if len(v) > 0 else "false")
+else:
+    print("")' 2>/dev/null || true
+    return
+  fi
+  echo ""
+}
+
+json_policy_job_outbound_internet() {
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.jobOutboundInternet | if . == true then "true" elif . == false then "false" else "" end' 2>/dev/null || true
+    return
+  fi
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys
+try:
+    o=json.load(sys.stdin)
+except Exception:
+    print("")
+    raise SystemExit(0)
+v=o.get("jobOutboundInternet") if isinstance(o, dict) else None
+if v is True:
+    print("true")
+elif v is False:
+    print("false")
+else:
+    print("")' 2>/dev/null || true
+    return
+  fi
+  echo ""
+}
+
+json_policy_project_id() {
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.project // ""' 2>/dev/null || true
+    return
+  fi
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys
+try:
+    o=json.load(sys.stdin)
+except Exception:
+    print("")
+    raise SystemExit(0)
+v=o.get("project") if isinstance(o, dict) else ""
+print(v if isinstance(v, str) else "")' 2>/dev/null || true
+    return
+  fi
+  echo ""
+}
 # Loads network policy signals once and caches them for the rest of the run.
 # Data sources are consulted in this order:
 # 1) /home/dnanexus/dnanexus-job.json (zero API calls)
@@ -450,9 +515,9 @@ load_job_network_policy() {
 
   job_json=/home/dnanexus/dnanexus-job.json
   if [[ -s $job_json ]]; then
-    JOB_NETWORK_ACCESS_RESULT=$(jq -r '.networkAccess | if type == "array" then (if length > 0 then "true" else "false" end) else "" end' "$job_json" 2>/dev/null || true)
-    JOB_OUTBOUND_INTERNET_RESULT=$(jq -r '.jobOutboundInternet | if . == true then "true" elif . == false then "false" else "" end' "$job_json" 2>/dev/null || true)
-    NETWORK_POLICY_PROJECT_ID=$(jq -r '.project // ""' "$job_json" 2>/dev/null || true)
+    JOB_NETWORK_ACCESS_RESULT=$(json_policy_network_access <"$job_json")
+    JOB_OUTBOUND_INTERNET_RESULT=$(json_policy_job_outbound_internet <"$job_json")
+    NETWORK_POLICY_PROJECT_ID=$(json_policy_project_id <"$job_json")
   fi
 
   # If either signal is still unknown, fetch both in one describe call.
@@ -462,9 +527,9 @@ load_job_network_policy() {
     describe_json=$(dx api "$DX_JOB_ID" describe '{"fields":{"networkAccess":true,"jobOutboundInternet":true,"project":true}}' 2>/dev/null || true)
 
     if [[ -n $describe_json ]]; then
-      [[ -n $JOB_NETWORK_ACCESS_RESULT ]] || JOB_NETWORK_ACCESS_RESULT=$(jq -r '.networkAccess | if type == "array" then (if length > 0 then "true" else "false" end) else "" end' <<<"$describe_json" 2>/dev/null || true)
-      [[ -n $JOB_OUTBOUND_INTERNET_RESULT ]] || JOB_OUTBOUND_INTERNET_RESULT=$(jq -r '.jobOutboundInternet | if . == true then "true" elif . == false then "false" else "" end' <<<"$describe_json" 2>/dev/null || true)
-      [[ -n $NETWORK_POLICY_PROJECT_ID ]] || NETWORK_POLICY_PROJECT_ID=$(jq -r '.project // ""' <<<"$describe_json" 2>/dev/null || true)
+      [[ -n $JOB_NETWORK_ACCESS_RESULT ]] || JOB_NETWORK_ACCESS_RESULT=$(json_policy_network_access <<<"$describe_json")
+      [[ -n $JOB_OUTBOUND_INTERNET_RESULT ]] || JOB_OUTBOUND_INTERNET_RESULT=$(json_policy_job_outbound_internet <<<"$describe_json")
+      [[ -n $NETWORK_POLICY_PROJECT_ID ]] || NETWORK_POLICY_PROJECT_ID=$(json_policy_project_id <<<"$describe_json")
     fi
   fi
 
@@ -478,7 +543,7 @@ load_job_network_policy() {
       project_json=$(dx api "$dx_id" describe '{"fields":{"jobOutboundInternet":true}}' 2>/dev/null || true)
       if [[ -n $project_json ]]; then
         local project_outbound
-        project_outbound=$(jq -r '.jobOutboundInternet | if . == true then "true" elif . == false then "false" else "" end' <<<"$project_json" 2>/dev/null || true)
+        project_outbound=$(json_policy_job_outbound_internet <<<"$project_json")
         if [[ $project_outbound == false ]]; then
           JOB_OUTBOUND_INTERNET_RESULT=false
         elif [[ -z $JOB_OUTBOUND_INTERNET_RESULT ]]; then
@@ -644,10 +709,10 @@ setup_offline_mode() {
   get_job_outbound_internet >/dev/null
   case $JOB_OUTBOUND_INTERNET_RESULT in
   false)
-    enable_offline_mode "this job has no outbound Internet access"
+    enable_offline_mode "this job has no outbound Internet access (jobOutboundInternet=false)"
     ;;
   true)
-    NXF_OFFLINE_REASON="this job has outbound Internet access"
+    NXF_OFFLINE_REASON="this job has outbound Internet access (jobOutboundInternet=true)"
     ;;
   *)
     NXF_OFFLINE_REASON="could not determine whether this job has outbound Internet access"
