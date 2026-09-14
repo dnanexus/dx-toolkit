@@ -437,7 +437,6 @@ NETWORK_POLICY_LOADED=0
 JOB_NETWORK_ACCESS_RESULT=""
 JOB_OUTBOUND_INTERNET_RESULT=""
 NETWORK_POLICY_PROJECT_ID=""
-
 # Loads network policy signals once and caches them for the rest of the run.
 # Data sources are consulted in this order:
 # 1) /home/dnanexus/dnanexus-job.json (zero API calls)
@@ -636,12 +635,14 @@ setup_offline_mode() {
   fi
 
   # An executable that asks for no network access has no egress regardless of the project
-  if [[ $(get_job_network_access) == false ]]; then
+  get_job_network_access >/dev/null
+  if [[ $JOB_NETWORK_ACCESS_RESULT == false ]]; then
     enable_offline_mode "this job wasn't granted outbound Internet access (networkAccess is empty)"
     return
   fi
 
-  case $(get_job_outbound_internet) in
+  get_job_outbound_internet >/dev/null
+  case $JOB_OUTBOUND_INTERNET_RESULT in
   false)
     enable_offline_mode "this job has no outbound Internet access"
     ;;
