@@ -34,6 +34,7 @@ from urllib3.exceptions import SSLError, NewConnectionError
 import dxpy
 import dxpy_testutil as testutil
 from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError, ResourceNotFound)
+from dxpy.scripts import dx_build_app
 from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
 import dxpy.app_builder as app_builder
@@ -3187,6 +3188,34 @@ class TestIdempotentRequests(unittest.TestCase):
 
 
 class TestAppBuilderUtils(unittest.TestCase):
+    @patch("dxpy.scripts.dx_build_app.dxpy.api.project_new")
+    def test_temporary_build_project_clears_drive(self, project_new):
+        project_new.return_value = {"id": "project-xxxx"}
+
+        project_id = dx_build_app._create_temporary_build_project(
+            "Temporary build project for dx-build-app in aws:us-east-1",
+            bill_to="org-xxxx",
+            region="aws:us-east-1")
+
+        self.assertEqual(project_id, "project-xxxx")
+        project_new.assert_called_once_with({
+            "name": "Temporary build project for dx-build-app in aws:us-east-1",
+            "drive": None,
+            "billTo": "org-xxxx",
+            "region": "aws:us-east-1"
+        })
+
+    @patch("dxpy.scripts.dx_build_app.dxpy.api.project_new")
+    def test_temporary_build_project_omits_unset_options(self, project_new):
+        project_new.return_value = {"id": "project-xxxx"}
+
+        dx_build_app._create_temporary_build_project("Temporary build project for dx-build-app")
+
+        project_new.assert_called_once_with({
+            "name": "Temporary build project for dx-build-app",
+            "drive": None
+        })
+
     def test_assert_consistent_regions(self):
         assert_consistent_regions = executable_builder.assert_consistent_regions
 
