@@ -6,6 +6,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+## [415.0] - beta
+
 ### Added
 
 * Nextflow applets support offline mode: `nextflow_run_opts="-offline"` exports `NXF_OFFLINE`, or it is enabled automatically when the job has no outbound internet access. `-offline=false` forces a run back online.
@@ -14,7 +16,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx extract_dataset -ddd` now retrieves dataset codings from the database's dx_codings table, falling back to the codings in the dataset descriptor when the database codings are unavailable.
 
-## [414.0] - beta
+## [414.0] - 2026.09.15
 
 ### Changed
 
