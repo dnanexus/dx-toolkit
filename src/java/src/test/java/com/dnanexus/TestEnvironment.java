@@ -63,7 +63,15 @@ public class TestEnvironment {
         /**
          * Run tests that are liable to clobber your local environment.
          */
-        ENV("DXTEST_ENV");
+        ENV("DXTEST_ENV"),
+
+        /**
+         * Run tests that need the route to the API server to cross a NAT gateway, so that an
+         * idle connection is silently dropped after the gateway's fixed timeout. These tests
+         * sleep for minutes and only reproduce anything from inside such a network, so they
+         * cannot run on a developer machine or in ordinary CI.
+         */
+        NAT_IDLE_TIMEOUT("DXTEST_NAT_IDLE_TIMEOUT");
 
         private String envVarName;
 

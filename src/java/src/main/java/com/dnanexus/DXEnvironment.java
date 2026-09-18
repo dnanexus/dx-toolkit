@@ -114,6 +114,7 @@ public class DXEnvironment implements AutoCloseable {
         private int connectionTimeout;
         private int maxTotalConnections = 200;
         private int maxDefaultConnectionsPerRoute = 50;
+        private int connectionMaxIdleSeconds = DEFAULT_CONNECTION_MAX_IDLE_SECONDS;
         private String httpProxy;
         private String httpProxyMethod;
         private String httpProxyDomain;
@@ -138,6 +139,9 @@ public class DXEnvironment implements AutoCloseable {
             workspaceId = templateEnvironment.workspaceId;
             projectContextId = templateEnvironment.projectContextId;
             disableRetry = templateEnvironment.disableRetry;
+            connectionMaxIdleSeconds = templateEnvironment.connectionMaxIdleSeconds;
+            // Note: socketTimeout, connectionTimeout and the pool size limits are not copied
+            // here. That predates this constructor's connection settings and is left alone.
             if (templateEnvironment.proxy != null) {
                 httpProxy = templateEnvironment.proxy.rawDefinition;
                 httpProxyMethod = templateEnvironment.proxy.method;
@@ -194,6 +198,10 @@ public class DXEnvironment implements AutoCloseable {
                     if (getIntValue(jsonConfig, "DX_CONNECTION_TIMEOUT") != 0) {
                         connectionTimeout = getIntValue(jsonConfig, "DX_CONNECTION_TIMEOUT");
                     }
+                    if (getIntValue(jsonConfig, "DX_CONNECTION_MAX_IDLE_SECONDS") > 0) {
+                        connectionMaxIdleSeconds =
+                                getIntValue(jsonConfig, "DX_CONNECTION_MAX_IDLE_SECONDS");
+                    }
                     if (getTextValue(jsonConfig, "DX_DISABLE_RETRY") != null) {
                         //disableRetry = getBooleanValue(jsonConfig, "DX_DISABLE_RETRY");
                         disableRetry = jsonConfig.findValue("DX_DISABLE_RETRY").asBoolean();
@@ -248,6 +256,15 @@ public class DXEnvironment implements AutoCloseable {
             if (sysEnv.containsKey("DX_CONNECTION_TIMEOUT")) {
                 connectionTimeout = Integer.valueOf(sysEnv.get("DX_CONNECTION_TIMEOUT"));
             }
+            if (sysEnv.containsKey("DX_CONNECTION_MAX_IDLE_SECONDS")) {
+                int fromEnv = Integer.valueOf(sysEnv.get("DX_CONNECTION_MAX_IDLE_SECONDS"));
+                if (fromEnv > 0) {
+                    connectionMaxIdleSeconds = fromEnv;
+                } else {
+                    System.err.println("WARNING: DX_CONNECTION_MAX_IDLE_SECONDS must be positive,"
+                            + " ignoring value " + fromEnv);
+                }
+            }
             if (sysEnv.containsKey("DX_DISABLE_RETRY")) {
                 disableRetry = Boolean.valueOf(sysEnv.get("DX_DISABLE_RETRY"));
             }
@@ -285,7 +302,7 @@ public class DXEnvironment implements AutoCloseable {
             return new DXEnvironment(apiserverHost, apiserverPort, apiserverProtocol,
                                      securityContext, jobId, workspaceId, projectContextId, disableRetry,
                                      socketTimeout, connectionTimeout, maxTotalConnections, maxDefaultConnectionsPerRoute,
-                                     httpProxy, httpProxyMethod, httpProxyDomain);
+                                     connectionMaxIdleSeconds, httpProxy, httpProxyMethod, httpProxyDomain);
         }
 
         /**
@@ -425,6 +442,36 @@ public class DXEnvironment implements AutoCloseable {
         }
 
         /**
+         * Sets how long a pooled connection may sit idle before this client refuses to reuse it.
+         *
+         * <p>
+         * Lower this if a NAT gateway, load balancer or proxy on the route to the API server
+         * drops idle connections sooner than the default of 45 seconds; reusing a connection the
+         * peer has already discarded surfaces as {@code SocketException: Connection reset} or
+         * {@code NoHttpResponseException}. Raising it preserves more connection reuse at the cost
+         * of exposure to those timeouts, and has no effect beyond 300 seconds, which is the
+         * absolute lifetime cap on a pooled connection.
+         * </p>
+         *
+         * <p>
+         * May also be set with the {@code DX_CONNECTION_MAX_IDLE_SECONDS} environment variable or
+         * config key.
+         * </p>
+         *
+         * @param connectionMaxIdleSeconds maximum idle time, in seconds; must be positive
+         *
+         * @return the same Builder object
+         *
+         * @throws IllegalArgumentException if {@code connectionMaxIdleSeconds} is not positive
+         */
+        public Builder setConnectionMaxIdleSeconds(int connectionMaxIdleSeconds) {
+            Preconditions.checkArgument(connectionMaxIdleSeconds > 0,
+                    "connectionMaxIdleSeconds must be positive");
+            this.connectionMaxIdleSeconds = connectionMaxIdleSeconds;
+            return this;
+        }
+
+        /**
          * Sets maxTotalConnections for httpclient
          *
          * @param maxTotalConnections integer
@@ -501,20 +548,22 @@ public class DXEnvironment implements AutoCloseable {
     private int maxDefaultConnectionsPerRoute;
     private final ProxyDesc proxy;
     private final CloseableHttpClient httpclient;
+    private final int connectionMaxIdleSeconds;
 
     /**
-     * Upper bound on how long a pooled connection may sit idle before we refuse to reuse it.
+     * Default upper bound on how long a pooled connection may sit idle before we refuse to reuse
+     * it.
      *
      * <p>
      * Middleboxes between the client and the API server discard idle connections without the
-     * client noticing. An AWS ALB idle timeout (60s by default) closes with a FIN; an AWS NAT
-     * gateway (350s) returns an RST and never sends a FIN at all. Reusing such a connection
-     * surfaces to the caller as {@code SocketException: Connection reset} or
-     * {@code NoHttpResponseException}. Staying below the shortest of those timeouts means the pool
-     * hands out a fresh connection instead of a dead one.
+     * client noticing. An AWS ALB idle timeout closes with a FIN; an AWS NAT gateway (350s)
+     * returns an RST and never sends a FIN at all. Reusing such a connection surfaces to the
+     * caller as {@code SocketException: Connection reset} or {@code NoHttpResponseException}.
+     * Staying below the shortest of those timeouts means the pool hands out a fresh connection
+     * instead of a dead one.
      * </p>
      */
-    private static final int CONNECTION_MAX_IDLE_SECONDS = 45;
+    static final int DEFAULT_CONNECTION_MAX_IDLE_SECONDS = 45;
 
     /**
      * Upper bound on the total lifetime of a pooled connection, counted from when it was opened.
@@ -523,8 +572,8 @@ public class DXEnvironment implements AutoCloseable {
     private static final int CONNECTION_TTL_SECONDS = 300;
 
     /**
-     * Honors the server's {@code Keep-Alive: timeout=N} header when it sends one, but never keeps
-     * a connection reusable for longer than {@link #CONNECTION_MAX_IDLE_SECONDS}.
+     * Returns a keep-alive strategy that honors the server's {@code Keep-Alive: timeout=N} header
+     * when it sends one, but never keeps a connection reusable for longer than {@code capMillis}.
      *
      * <p>
      * The pool evaluates this expiry when a connection is leased, so a connection that has been
@@ -533,16 +582,17 @@ public class DXEnvironment implements AutoCloseable {
      * over-idle connection can still be reused.
      * </p>
      */
-    private static final ConnectionKeepAliveStrategy KEEP_ALIVE_STRATEGY =
-            new ConnectionKeepAliveStrategy() {
-                @Override
-                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                    long cap = TimeUnit.SECONDS.toMillis(CONNECTION_MAX_IDLE_SECONDS);
-                    long fromServer = DefaultConnectionKeepAliveStrategy.INSTANCE
-                            .getKeepAliveDuration(response, context);
-                    return fromServer > 0 ? Math.min(fromServer, cap) : cap;
-                }
-            };
+    static ConnectionKeepAliveStrategy cappedKeepAliveStrategy(final long capMillis) {
+        Preconditions.checkArgument(capMillis > 0, "keep-alive cap must be positive");
+        return new ConnectionKeepAliveStrategy() {
+            @Override
+            public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+                long fromServer = DefaultConnectionKeepAliveStrategy.INSTANCE
+                        .getKeepAliveDuration(response, context);
+                return fromServer > 0 ? Math.min(fromServer, capMillis) : capMillis;
+            }
+        };
+    }
 
     private static final JsonFactory jsonFactory = new MappingJsonFactory();
     /**
@@ -577,7 +627,7 @@ public class DXEnvironment implements AutoCloseable {
     private DXEnvironment(String apiserverHost, String apiserverPort, String apiserverProtocol,
                           JsonNode securityContext, String jobId, String workspaceId, String projectContextId, boolean
                           disableRetry, int socketTimeout, int connectionTimeout, int maxTotalConnections, int maxDefaultConnectionsPerRoute,
-                          String httpProxy, String httpProxyMethod, String httpProxyDomain) {
+                          int connectionMaxIdleSeconds, String httpProxy, String httpProxyMethod, String httpProxyDomain) {
         this.apiserverHost = apiserverHost;
         this.apiserverPort = apiserverPort;
         this.apiserverProtocol = apiserverProtocol;
@@ -590,6 +640,7 @@ public class DXEnvironment implements AutoCloseable {
         this.connectionTimeout = connectionTimeout;
         this.maxTotalConnections = maxTotalConnections;
         this.maxDefaultConnectionsPerRoute = maxDefaultConnectionsPerRoute;
+        this.connectionMaxIdleSeconds = connectionMaxIdleSeconds;
         this.proxy = parseProxyDefinition(httpProxy, httpProxyMethod, httpProxyDomain);
 
         // TODO: additional validation on the project/workspace, and check that
@@ -612,11 +663,13 @@ public class DXEnvironment implements AutoCloseable {
         connManager.setDefaultMaxPerRoute(maxDefaultConnectionsPerRoute);
         // validateAfterInactivity is deliberately left at the httpclient default (2s). It checks a
         // pooled socket before reuse and so catches connections the server closed with a FIN,
-        // which is the half of the problem KEEP_ALIVE_STRATEGY cannot see. Do not raise it.
+        // which is the half of the problem the keep-alive cap cannot see. Do not raise it.
+        final ConnectionKeepAliveStrategy keepAliveStrategy = cappedKeepAliveStrategy(
+                TimeUnit.SECONDS.toMillis(connectionMaxIdleSeconds));
 
         if (proxy == null) {
             RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setKeepAliveStrategy(KEEP_ALIVE_STRATEGY).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setKeepAliveStrategy(keepAliveStrategy).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
             return;
         }
 
@@ -624,7 +677,7 @@ public class DXEnvironment implements AutoCloseable {
         if (!proxy.authRequired) {
             reqBuilder.setProxy(proxy.host);
             RequestConfig requestConfig = reqBuilder.build();
-            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setKeepAliveStrategy(KEEP_ALIVE_STRATEGY).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
+            this.httpclient = HttpClients.custom().setConnectionManager(connManager).setKeepAliveStrategy(keepAliveStrategy).setUserAgent(userAgent).setDefaultRequestConfig(requestConfig).build();
             return;
         }
 
@@ -659,7 +712,7 @@ public class DXEnvironment implements AutoCloseable {
 
         RequestConfig requestConfig = reqBuilder.build();
         this.httpclient = HttpClients.custom().setConnectionManager(connManager)
-                .setKeepAliveStrategy(KEEP_ALIVE_STRATEGY)
+                .setKeepAliveStrategy(keepAliveStrategy)
                 .setDefaultCredentialsProvider(credsProvider)
                 .setUserAgent(userAgent)
                 .setDefaultRequestConfig(requestConfig)
@@ -809,6 +862,16 @@ public class DXEnvironment implements AutoCloseable {
      */
     public int getConnectionTimeout() {
         return this.connectionTimeout;
+    }
+
+    /**
+     * Returns how long a pooled connection may sit idle before this client refuses to reuse it,
+     * in seconds.
+     *
+     * @see DXEnvironment.Builder#setConnectionMaxIdleSeconds(int)
+     */
+    public int getConnectionMaxIdleSeconds() {
+        return this.connectionMaxIdleSeconds;
     }
 
     @Override

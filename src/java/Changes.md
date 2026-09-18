@@ -1,5 +1,18 @@
 # Java API Bindings Changelog
 
+## Unreleased
+
+* Pooled HTTP connections are no longer reused after sitting idle for more than 45 seconds, and
+  are retired 300 seconds after being opened regardless of activity. Previously a connection
+  could be reused long after a NAT gateway, load balancer or proxy on the route to the API
+  server had silently discarded it, which surfaced to callers as
+  `SocketException: Connection reset` or `NoHttpResponseException`. The idle limit is
+  configurable with `DXEnvironment.Builder#setConnectionMaxIdleSeconds`, the
+  `DX_CONNECTION_MAX_IDLE_SECONDS` environment variable, or the same config file key; raise it
+  to preserve more connection reuse if the route has no such timeout.
+* `DXHTTPException` thrown after an I/O failure now carries the originating exception as its
+  cause, instead of discarding it.
+
 ## 0.153.0
 
 * Raise Java compatibility level from 6 to 7
