@@ -17,12 +17,16 @@
 package com.dnanexus;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketException;
 import java.nio.charset.Charset;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.auth.NTCredentials;
@@ -110,13 +114,47 @@ public class DXHTTPRequest {
     private static final String USER_AGENT = DXUserAgent.getUserAgent();
 
     private static String errorMessage(String method, String resource, String errorString,
-            int retryWait, int nextRetryNum, int maxRetries) {
+            int retryWait, int nextRetryNum, int maxRetries, boolean willRetry) {
         String baseError = method + " " + resource + ": " + errorString + ".";
-        if (nextRetryNum <= maxRetries) {
+        if (willRetry) {
             return baseError + "  Waiting " + retryWait + " seconds before retry " + nextRetryNum
                     + " of " + maxRetries;
         }
         return baseError;
+    }
+
+    /**
+     * Describes an {@link IOException} for logging, naming the stale-pooled-connection case
+     * explicitly.
+     *
+     * <p>
+     * A connection that the peer has already discarded surfaces either as a
+     * {@link SocketException} ("Connection reset", when a NAT gateway or server answers our
+     * request with an RST) or as a {@link NoHttpResponseException} (when the peer closed cleanly
+     * and our request met a dead socket). Both are recognized by type rather than by message
+     * text, which varies across JDK versions and platforms, and the cause chain is walked because
+     * over TLS the underlying socket error arrives wrapped in an {@code SSLException}.
+     * {@link ConnectException} and {@link NoRouteToHostException} are excluded: they are
+     * {@code SocketException} subclasses that mean we never reached the server at all.
+     * </p>
+     *
+     * <p>
+     * The original exception is always included so that no diagnostic detail is lost.
+     * </p>
+     */
+    private static String describeIOException(IOException e) {
+        // Bounded walk: a self-referential or cyclic cause chain must not hang the logger.
+        Throwable cause = e;
+        for (int depth = 0; cause != null && depth < 10; cause = cause.getCause(), depth++) {
+            boolean staleConnection = cause instanceof NoHttpResponseException
+                    || (cause instanceof SocketException
+                            && !(cause instanceof ConnectException)
+                            && !(cause instanceof NoRouteToHostException));
+            if (staleConnection) {
+                return "server closed the connection (" + e + ")";
+            }
+        }
+        return e.toString();
     }
 
     /**
@@ -431,11 +469,12 @@ public class DXHTTPRequest {
                 // Note, this catches both exceptions directly thrown from httpclient.execute (e.g.
                 // no connectivity to server) and exceptions thrown by our code above after parsing
                 // the response.
-                logError(errorMessage("POST", resource, e.toString(), timeoutSeconds,
-                        attempts + 1, NUM_RETRIES));
+                boolean willRetry = attempts < NUM_RETRIES && retryRequest;
+                logError(errorMessage("POST", resource, describeIOException(e), timeoutSeconds,
+                        attempts + 1, NUM_RETRIES, willRetry));
                 if (attempts == NUM_RETRIES || !retryRequest) {
                     if (statusCode == null) {
-                        throw new DXHTTPException();
+                        throw new DXHTTPException(e);
                     }
                     throw new InternalErrorException("Maximum number of retries reached, or unsafe to retry",
                             statusCode);
