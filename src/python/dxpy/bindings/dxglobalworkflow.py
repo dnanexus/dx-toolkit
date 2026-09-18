@@ -222,9 +222,13 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
             raise DXError('DXGlobalWorkflow: the global workflow {} is not enabled in region {}'.format(
                 self.get_id(), region))
 
-        underlying_workflow_id = describe_output['regionalOptions'][region]['workflow']
-        self._workflow_desc_by_region = dxpy.DXWorkflow(underlying_workflow_id)
-        return dxpy.DXWorkflow(underlying_workflow_id)
+        underlying_workflow = describe_output['regionalOptions'][region]
+        dxworkflow = dxpy.DXWorkflow(
+            dxid=underlying_workflow['workflow'],
+            project=underlying_workflow['resources'],
+        )
+        self._workflows_by_region[region] = dxworkflow
+        return dxworkflow
 
     def append_underlying_workflow_desc(self, describe_output, region):
         """
