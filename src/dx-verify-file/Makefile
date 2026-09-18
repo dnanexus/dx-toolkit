@@ -26,6 +26,9 @@ all:
 	mkdir -pv build
 ifeq ($(OS), Windows_NT)
 	cd build && cmake -G "MSYS Makefiles" .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1
+else ifeq ($(UNAME), Darwin)
+	# Add paths to homebrew openssl dir to cmake cache
+	cd build && cmake .. -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DOPENSSL_INCLUDE_DIR=/usr/local/opt/openssl/include -DOPENSSL_LIBRARIES=/usr/local/opt/openssl/lib -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1 -DCMAKE_EXE_LINKER_FLAGS="-lpthread"
 else
 	cd build && cmake .. -DCMAKE_BUILD_TYPE:STRING=RELEASE -DSTATIC_BOOST=1 -DCMAKE_EXE_LINKER_FLAGS="-lpthread"
 endif
