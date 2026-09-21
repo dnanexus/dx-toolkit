@@ -5,6 +5,12 @@ This change log spiritually adheres to [these guidelines](http://keepachangelog.
 Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Security
 
 ## Unreleased
+### Fixed
+
+* dxpy download of symlink/drive files now verifies per-part checksums across all chunks in a part (CRC32, CRC32C, SHA1, SHA256, CRC64NVME), preventing false mismatch errors on multi-chunk parts
+* Added regression coverage for multi-part and resumed-download checksum verification paths
+
+## [415.0] - beta
 
 ### Added
 
@@ -15,7 +21,11 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx extract_dataset -ddd` now retrieves dataset codings from the database's dx_codings table, falling back to the codings in the dataset descriptor when the database codings are unavailable.
 * DXJava: Pooled HTTP connections are no longer reused after sitting idle for more than 45 seconds, and are retired 300 seconds after being opened regardless of activity.
 
-## [414.0] - beta
+### Fixed
+
+* `dx build --create-app` now uses DNAnexus storage for temporary build projects, even when the billTo's default storage is a drive
+
+## [414.0] - 2026.09.15
 
 ### Changed
 
