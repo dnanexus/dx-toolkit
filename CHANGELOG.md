@@ -19,6 +19,7 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 ### Changed
 
 * `dx extract_dataset -ddd` now retrieves dataset codings from the database's dx_codings table, falling back to the codings in the dataset descriptor when the database codings are unavailable.
+* DXJava: Pooled HTTP connections are no longer reused after sitting idle for more than 45 seconds, and are retired 300 seconds after being opened regardless of activity.
 
 ### Fixed
 
