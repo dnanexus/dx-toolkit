@@ -4,8 +4,9 @@
     "aws:eu-west-2-g": "project-G4B9FBpKKgK6g9v13q423FXk",
     "aws:me-south-1": "project-GvGXBYV3pK4v9X7F2jv9zz94",
     "aws:us-east-1": "project-B6JG897KGbkGb6Z7pQ9Q02jG",
+    "azure:uksouth-ofh": "project-GK404k924z9199Bv062PkYZk",
     "azure:westeurope": "project-FGZZFkjBPJqBXq1X84pq4VJf",
     "azure:westus": "project-F3vk1q09FX8Jxxp20pq6z8P9",
-    "azure:uksouth-ofh": "project-GK404k924z9199Bv062PkYZk",
+    "oci:sa-saopaulo-1": "project-JF1gz5k79FJ33qPv2ZVkjBzX",
     "oci:us-ashburn-1": "project-J1q0ZJV6VQg98Q4Bz36JbQKJ"
 }
