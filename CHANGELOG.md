@@ -18,6 +18,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * Added regression coverage for multi-part and resumed-download checksum verification paths
 * `dx build --create-app` now uses DNAnexus storage for temporary build projects, even when the billTo's default storage is a drive
 
+### Added
+
+* Nextflow assets for oci:sa-saopaulo-1
+
 ## [415.0] - 2026.09.22
 
 ### Added
