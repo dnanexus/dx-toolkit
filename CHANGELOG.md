@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [416.0] - beta
+## [417.0] - beta
+
+### Added
+
+* Nextflow assets for oci:sa-saopaulo-1
+
+## [416.0] - 2026.10.05
 
 ### Changed
 
@@ -17,10 +23,6 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * dxpy download of symlink/drive files now verifies per-part checksums across all chunks in a part (CRC32, CRC32C, SHA1, SHA256, CRC64NVME), preventing false mismatch errors on multi-chunk parts
 * Added regression coverage for multi-part and resumed-download checksum verification paths
 * `dx build --create-app` now uses DNAnexus storage for temporary build projects, even when the billTo's default storage is a drive
-
-### Added
-
-* Nextflow assets for oci:sa-saopaulo-1
 
 ## [415.0] - 2026.09.22
 
