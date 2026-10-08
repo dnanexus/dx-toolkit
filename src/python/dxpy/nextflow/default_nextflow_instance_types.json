@@ -8,5 +8,5 @@
     "azure:westeurope": "azure:mem2_ssd1_x4",
     "azure:westus": "azure:mem2_ssd1_x4",
     "oci:sa-saopaulo-1": "oci:mem2_ssd1_v3i_x4",
-    "oci:us-ashburn-1": "oci:mem2_ssd1_v3i_x4"
+    "oci:us-ashburn-1": "oci:mem2_ssd1_v5a_x4"
 }
