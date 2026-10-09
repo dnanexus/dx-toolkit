@@ -158,6 +158,15 @@ def app_publish(app_name_or_id, alias=None, input_params={}, always_retry=True, 
     fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
+def app_recover(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /app-xxxx/recover API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-recover
+    """
+    fully_qualified_version = app_name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/recover' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
 def app_remove_authorized_users(app_name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /app-xxxx/removeAuthorizedUsers API method.
@@ -558,6 +567,14 @@ def dbcluster_new(input_params={}, always_retry=False, **kwargs):
     """
     return DXHTTPRequest('/dbcluster/new', input_params, always_retry=always_retry, **kwargs)
 
+def dbcluster_recover(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /dbcluster-xxxx/recover API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-recover
+    """
+    return DXHTTPRequest('/%s/recover' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def dbcluster_remove_tags(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /dbcluster-xxxx/removeTags API method.
@@ -840,6 +857,15 @@ def global_workflow_publish(name_or_id, alias=None, input_params={}, always_retr
     """
     fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
     return DXHTTPRequest('/%s/publish' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
+
+def global_workflow_recover(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /globalworkflow-xxxx/recover API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-recover
+    """
+    fully_qualified_version = name_or_id + (('/' + alias) if alias else '')
+    return DXHTTPRequest('/%s/recover' % fully_qualified_version, input_params, always_retry=always_retry, **kwargs)
 
 def global_workflow_remove_authorized_users(name_or_id, alias=None, input_params={}, always_retry=True, **kwargs):
     """
@@ -1143,6 +1169,14 @@ def project_list_folder(object_id, input_params={}, always_retry=True, **kwargs)
     """
     return DXHTTPRequest('/%s/listFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
 
+def project_list_recycle_bin(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /project-xxxx/listRecycleBin API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-project-xxxx-listrecyclebin
+    """
+    return DXHTTPRequest('/%s/listRecycleBin' % object_id, input_params, always_retry=always_retry, **kwargs)
+
 def project_move(object_id, input_params={}, always_retry=False, **kwargs):
     """
     Invokes the /project-xxxx/move API method.
@@ -1158,6 +1192,22 @@ def project_new_folder(object_id, input_params={}, always_retry=True, **kwargs):
     For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-newfolder
     """
     return DXHTTPRequest('/%s/newFolder' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def project_purge_recycle_bin_objects(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /project-xxxx/purgeRecycleBinObjects API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-project-xxxx-purgerecyclebinobjects
+    """
+    return DXHTTPRequest('/%s/purgeRecycleBinObjects' % object_id, input_params, always_retry=always_retry, **kwargs)
+
+def project_recover_objects(object_id, input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /project-xxxx/recoverObjects API method.
+
+    For more info, see: https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-project-xxxx-recoverobjects
+    """
+    return DXHTTPRequest('/%s/recoverObjects' % object_id, input_params, always_retry=always_retry, **kwargs)
 
 def project_remove_folder(object_id, input_params={}, always_retry=False, **kwargs):
     """
