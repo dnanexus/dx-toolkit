@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* dxpy: API bindings for deletion retention (soft delete): `project_list_recycle_bin`, `project_recover_objects`, `project_purge_recycle_bin_objects`, `dbcluster_recover`, `app_recover` and `global_workflow_recover`
+* dxpy: `DXProject.list_recycle_bin()`, `DXProject.recover_objects()` and `DXProject.purge_recycle_bin_objects()`, plus a `deletion_retention_enabled` argument on `DXProject.new()` and `DXProject.update()`
+* dxpy: `DXApp.recover()` and `DXGlobalWorkflow.recover()`
+
 ## [417.0] - beta
 
 ### Added

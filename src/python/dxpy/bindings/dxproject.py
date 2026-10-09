@@ -286,6 +286,7 @@ class DXProject(DXContainer):
             tags=None, properties=None, bill_to=None, database_ui_view_only=None,
             external_upload_restricted=None, default_symlink=None,
             database_results_restricted=None, drive=None, preview_viewer_restricted=None,
+            deletion_retention_enabled=None,
             **kwargs):
         """
         :param name: The name of the project
@@ -322,6 +323,8 @@ class DXProject(DXContainer):
         :type drive: string
         :type preview_viewer_restricted: boolean
         :param preview_viewer_restricted: If provided, whether file preview and viewer for the project should be restricted
+        :param deletion_retention_enabled: If provided, whether objects removed from the project are moved into the project's recycle bin instead of being deleted immediately. Only accepted when the billTo org has the deletionRetention feature enabled, and rejected with InvalidInput when the org enforces retention.
+        :type deletion_retention_enabled: boolean
 
         Creates a new project. Initially only the user performing this action
         will be in the permissions/member list, with ADMINISTER access.
@@ -365,6 +368,8 @@ class DXProject(DXContainer):
             input_hash["drive"] = drive
         if preview_viewer_restricted is not None:
             input_hash["previewViewerRestricted"] = preview_viewer_restricted
+        if deletion_retention_enabled is not None:
+            input_hash["deletionRetentionEnabled"] = deletion_retention_enabled
 
         self.set_id(dxpy.api.project_new(input_hash, **kwargs)["id"])
         self._desc = {}
@@ -376,7 +381,7 @@ class DXProject(DXContainer):
                database_ui_view_only=None, external_upload_restricted=None,
                database_results_restricted=None, unset_database_results_restricted=None,
                https_app_isolated_browsing=None, https_app_isolated_browsing_options=None,
-               preview_viewer_restricted=None, **kwargs):
+               preview_viewer_restricted=None, deletion_retention_enabled=None, **kwargs):
         """
         :param name: If provided, the new project name
         :type name: string
@@ -411,6 +416,8 @@ class DXProject(DXContainer):
         :type https_app_isolated_browsing_options: dict
         :type preview_viewer_restricted: boolean
         :param preview_viewer_restricted: If provided, whether file preview and viewer for the project should be restricted
+        :param deletion_retention_enabled: If provided, whether objects removed from the project are moved into the project's recycle bin instead of being deleted immediately
+        :type deletion_retention_enabled: boolean
 
         Updates the project with the new fields. All fields are
         optional. Fields that are not provided are not changed.
@@ -452,6 +459,8 @@ class DXProject(DXContainer):
             update_hash["httpsAppIsolatedBrowsingOptions"] = https_app_isolated_browsing_options
         if preview_viewer_restricted is not None:
             update_hash["previewViewerRestricted"] = preview_viewer_restricted
+        if deletion_retention_enabled is not None:
+            update_hash["deletionRetentionEnabled"] = deletion_retention_enabled
         dxpy.api.project_update(self._dxid, update_hash, **kwargs)
 
     def invite(self, invitee, level, send_email=True, **kwargs):
@@ -496,6 +505,70 @@ class DXProject(DXContainer):
         """
 
         dxpy.api.project_destroy(self._dxid, **kwargs)
+
+    def list_recycle_bin(self, **kwargs):
+        """
+        :returns: A hash with keys "id" (the project ID) and "objects" (a list
+                  of recycle bin entries)
+        :rtype: dict
+
+        Lists the objects currently held in the project's recycle bin, i.e.
+        the objects that were soft-deleted while deletion retention was
+        enabled and that can still be recovered with
+        :meth:`recover_objects()`. Each entry contains the object "id" and
+        "class" along with the retention metadata stamped at delete time:
+        "name", "deletedAt", "purgeAt" and "previousFolder". Entries whose
+        "purgeAt" deadline has already elapsed are not returned.
+
+        Requires VIEW access or greater, and raises ``InvalidState`` if the
+        project does not have deletion retention enabled.
+
+        """
+
+        return dxpy.api.project_list_recycle_bin(self._dxid, {}, **kwargs)
+
+    def recover_objects(self, objects, **kwargs):
+        """
+        :param objects: List of object IDs to recover from the recycle bin
+        :type objects: list of strings
+        :returns: A hash with keys "id" (the project ID) and "dataObjects"
+                  (the list of recovered object IDs)
+        :rtype: dict
+
+        Recovers the specified objects from the project's recycle bin back to
+        the folders they were deleted from, recreating those folders if they
+        no longer exist. The retention metadata is cleared from the recovered
+        objects.
+
+        Requires CONTRIBUTE access or greater.
+
+        """
+
+        return dxpy.api.project_recover_objects(self._dxid, {"objects": objects}, **kwargs)
+
+    def purge_recycle_bin_objects(self, objects, **kwargs):
+        """
+        :param objects: List of object IDs to purge from the recycle bin
+        :type objects: list of strings
+        :returns: A hash with keys "id" (the project ID), "scheduled" (object
+                  IDs irrevocably forfeited by this call) and "failed" (a list
+                  of hashes with keys "id" and "reason")
+        :rtype: dict
+
+        Immediately forfeits the specified objects in the project's recycle
+        bin, ahead of their "purgeAt" deadline. Forfeited objects stop being
+        recoverable and disappear from :meth:`list_recycle_bin()` right away;
+        the cleanup daemon destroys them on a subsequent run.
+
+        Partial failures are reported per object in "failed" rather than
+        failing the whole request; the "reason" is either
+        "notFoundInRecycleBin" or "expired".
+
+        Requires ADMINISTER access.
+
+        """
+
+        return dxpy.api.project_purge_recycle_bin_objects(self._dxid, {"objects": objects}, **kwargs)
 
     def set_properties(self, properties, **kwargs):
         """
