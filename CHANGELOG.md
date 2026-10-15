@@ -6,6 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx login --read-only` logs in with a read-only token. With `--token`, it derives a read-only token from the given token; `--derive-from-current` derives one from the login the shell already uses
+* `ReadOnlyTokenError`, `ReadOnlyTokensDisabled` and `TokenScopeError` exceptions
+* `read_only_ok` parameter for `dxpy.user_info()`
+
+### Changed
+
+* `dx login --read-only` lists projects at VIEW
+* `dx login` prints the token expiration before the project picker, using the expiration returned by the auth server
+
 ## [417.0] - beta
 
 ### Added
