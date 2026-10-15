@@ -16,20 +16,38 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import dxpy
 from dxpy import get_auth_server_name, DXHTTPRequest
 
 from dxpy.api import system_whoami
 
-def user_info(authserver_host=None, authserver_port=None):
+def is_read_only_session():
+    """
+    Returns True if the active security context was recorded by ``dx login``
+    as read-only.
+    """
+    return bool((dxpy.SECURITY_CONTEXT or {}).get("read_only"))
+
+def _identity_input(read_only_ok):
+    if read_only_ok is None:
+        read_only_ok = is_read_only_session()
+    return {"readOnlyOk": True} if read_only_ok else {}
+
+def user_info(authserver_host=None, authserver_port=None, read_only_ok=None):
     """Returns the result of the user_info call against the specified auth
     server.
+
+    :param read_only_ok: Whether to send ``readOnlyOk: true``, without which
+        a read-only token is refused. Defaults to whether the active security
+        context is read-only.
+    :type read_only_ok: boolean or None
 
     .. deprecated:: 0.108.0
        Use :func:`whoami` instead where possible.
 
     """
     authserver = get_auth_server_name(authserver_host, authserver_port)
-    return DXHTTPRequest(authserver + "/system/getUserInfo", {}, prepend_srv=False)
+    return DXHTTPRequest(authserver + "/system/getUserInfo", _identity_input(read_only_ok), prepend_srv=False)
 
 def whoami():
     """
