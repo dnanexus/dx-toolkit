@@ -31,6 +31,7 @@ import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy import workflow_builder
 from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound, DXCLIError, TokenScopeError
+from dxpy.bindings.auth import is_read_only_session
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
@@ -557,6 +558,9 @@ def prompt_for_env_var(prompt_str, env_var_str):
             return default
 
 
+def _default_project_level():
+    return 'VIEW' if is_read_only_session() else 'CONTRIBUTE'
+
 def pick_and_set_project(args):
     try:
         result_generator = dxpy.find_projects(describe=True,
@@ -648,7 +652,7 @@ def setenv(args):
         args.name = None
         args.public = False
         args.current = False
-        args.level = 'CONTRIBUTE'
+        args.level = _default_project_level()
         pick_and_set_project(args)
 
 def clearenv(args):
@@ -778,6 +782,8 @@ def select(args):
         cd(args)
         print("Selected project", split_unescaped(":", args.project)[0].replace("\\:", ":"))
     else:
+        if args.level is None:
+            args.level = _default_project_level()
         pick_and_set_project(args)
 
 def cd(args):
@@ -4848,7 +4854,7 @@ register_parser(parser_pwd, categories='fs')
 # select
 #####################################
 parser_select = subparsers.add_parser('select', help='List and select a project to switch to',
-                                      description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions.  Use --public to see the list of public projects.',
+                                      description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions, or VIEW in a read-only session.  Use --public to see the list of public projects.',
                                       prog='dx select',
                                       parents=[env_args])
 select_project_action = parser_select.add_argument('project', help='Name or ID of a project to switch to; if not provided a list will be provided for you',
@@ -4856,7 +4862,8 @@ select_project_action = parser_select.add_argument('project', help='Name or ID o
 select_project_action.completer = DXPathCompleter(expected='project', include_current_proj=False)
 parser_select.add_argument('--name', help='Name of the project (wildcard patterns supported)')
 parser_select.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
-                           help='Minimum level of permissions expected', default='CONTRIBUTE')
+                           help='Minimum level of permissions expected; default VIEW in a read-only session, '
+                                'otherwise CONTRIBUTE')
 parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)',
                            action='store_true')
 parser_select.set_defaults(func=select, save=False)
