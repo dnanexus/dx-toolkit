@@ -41,6 +41,7 @@ import dxpy.executable_builder
 import dxpy.workflow_builder
 from dxpy.scripts import dx_build_app
 from dxpy.scripts import dx as dx_script
+from dxpy.utils import executable_unbuilder
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
                            select_project, cd, override_environment, generate_unique_username_email,
                            without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
@@ -290,6 +291,80 @@ class TestDXLoginReadOnly(unittest.TestCase):
                          "this session is read-only; log in without --read-only to modify the platform")
         self.assertEqual(login_api_error(dxpy.exceptions.ReadOnlyTokensDisabled, "server text").error_message(),
                          "read-only tokens are not enabled yet")
+
+
+class TestDXReadOnlySession(unittest.TestCase):
+    """Checks commands other than "dx login" in a read-only session, with the API mocked."""
+
+    READ_ONLY_CONTEXT = {"auth_token": "child-token", "auth_token_type": "Bearer", "read_only": True}
+    FULL_CONTEXT = {"auth_token": "user-token", "auth_token_type": "Bearer"}
+
+    def setUp(self):
+        security_context_backup = dxpy.SECURITY_CONTEXT
+        self.addCleanup(setattr, dxpy, "SECURITY_CONTEXT", security_context_backup)
+        self.picked_levels = []
+        picker = patch.object(dx_script, "pick_and_set_project",
+                              side_effect=lambda args: self.picked_levels.append(args.level))
+        picker.start()
+        self.addCleanup(picker.stop)
+
+    def run_dx(self, *argv):
+        args = dx_script.parser.parse_args(list(argv))
+        args.func(args)
+
+    def test_whoami_opts_in_only_for_read_only_session(self):
+        with patch("dxpy.bindings.auth.system_whoami", return_value={"id": "user-alice"}) as system_whoami:
+            dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
+            self.assertEqual(dxpy.whoami(), "user-alice")
+            dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
+            dxpy.whoami()
+            dxpy.whoami(read_only_ok=True)
+        self.assertEqual([c[0][0] for c in system_whoami.call_args_list],
+                         [{"readOnlyOk": True}, {}, {"readOnlyOk": True}])
+
+    def test_select_defaults_to_view_in_read_only_session(self):
+        dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
+        self.run_dx("select")
+        self.assertEqual(self.picked_levels, ["VIEW"])
+
+    def test_select_defaults_to_contribute_otherwise(self):
+        dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
+        self.run_dx("select")
+        self.assertEqual(self.picked_levels, ["CONTRIBUTE"])
+
+    def test_select_explicit_level_wins(self):
+        dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
+        self.run_dx("select", "--level", "UPLOAD")
+        self.assertEqual(self.picked_levels, ["UPLOAD"])
+
+    def test_setenv_projects_at_view_in_read_only_session(self):
+        dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
+        with patch.object(dxpy.config, "save"):
+            self.run_dx("setenv", "--current")
+        self.assertEqual(self.picked_levels, ["VIEW"])
+
+    def test_get_applet_skips_resources_without_bill_to(self):
+        applet = dxpy.DXApplet("applet-" + "x" * 24)
+        resource = {"name": "resources.tar.gz", "id": {"$dnanexus_link": "file-" + "y" * 24}}
+        info = {"name": "my_applet", "inputSpec": [], "outputSpec": [],
+                "runSpec": {"interpreter": "bash", "code": "main() { :; }",
+                            "bundledDependsByRegion": {"aws:us-east-1": [resource]}}}
+        work_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, work_dir, ignore_errors=True)
+        with chdir(work_dir), \
+                patch.object(applet, "get", return_value=info), \
+                patch("dxpy.whoami", return_value="user-alice"), \
+                patch("dxpy.api.user_describe", return_value={"id": "user-alice"}), \
+                patch("dxpy.DXHTTPRequest") as request, \
+                patch("dxpy.utils.executable_unbuilder.download_dxfile") as download, \
+                patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            executable_unbuilder._dump_app_or_applet(applet)
+            with open("dxapp.json") as fd:
+                dxapp_json = json.load(fd)
+        self.assertFalse(request.called)
+        self.assertFalse(download.called)
+        self.assertIn("Resources will not be downloaded", stderr.getvalue())
+        self.assertEqual(dxapp_json["regionalOptions"], {"aws:us-east-1": {"bundledDepends": [resource]}})
 
 
 class TestDXTestUtils(DXTestCase):

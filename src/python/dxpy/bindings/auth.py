@@ -49,8 +49,13 @@ def user_info(authserver_host=None, authserver_port=None, read_only_ok=None):
     authserver = get_auth_server_name(authserver_host, authserver_port)
     return DXHTTPRequest(authserver + "/system/getUserInfo", _identity_input(read_only_ok), prepend_srv=False)
 
-def whoami():
+def whoami(read_only_ok=None):
     """
     Returns the user ID of the currently requesting user.
+
+    :param read_only_ok: Whether to send ``readOnlyOk: true``, without which
+        a read-only token is refused. Defaults to whether the active security
+        context is read-only.
+    :type read_only_ok: boolean or None
     """
-    return system_whoami()['id']
+    return system_whoami(_identity_input(read_only_ok))['id']
