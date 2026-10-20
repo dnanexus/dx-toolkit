@@ -33524,6 +33524,165 @@ public final class DXAPI {
     }
 
     /**
+     * Invokes the systemGetUserIdentity method with an empty input, deserializing to an object of the specified class.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemGetUserIdentity(Class<T> outputClass) {
+        return systemGetUserIdentity(mapper.createObjectNode(), outputClass);
+    }
+    /**
+     * Invokes the systemGetUserIdentity method with an empty input using the specified environment, deserializing to an object of the specified class.
+     *
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemGetUserIdentity(Class<T> outputClass, DXEnvironment env) {
+        return systemGetUserIdentity(mapper.createObjectNode(), outputClass, env);
+    }
+    /**
+     * Invokes the systemGetUserIdentity method with the specified input, deserializing to an object of the specified class.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemGetUserIdentity(Object inputObject, Class<T> outputClass) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest().request("/system/getUserIdentity", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+    /**
+     * Invokes the systemGetUserIdentity method with the specified input using the specified environment, deserializing to an object of the specified class.
+     *
+     * @param inputObject input object (to be JSON serialized to an input hash)
+     * @param outputClass class to deserialize the server reponse to
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     */
+    public static <T> T systemGetUserIdentity(Object inputObject, Class<T> outputClass, DXEnvironment env) {
+        JsonNode input = mapper.valueToTree(inputObject);
+        return DXJSON.safeTreeToValue(
+                new DXHTTPRequest(env).request("/system/getUserIdentity", input, RetryStrategy.SAFE_TO_RETRY),
+                outputClass);
+    }
+
+    /**
+     * Invokes the systemGetUserIdentity method.
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemGetUserIdentity(Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemGetUserIdentity() {
+        return systemGetUserIdentity(mapper.createObjectNode());
+    }
+    /**
+     * Invokes the systemGetUserIdentity method with the specified input parameters.
+     *
+     * @param inputParams input parameters to the API call
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemGetUserIdentity(Object, Class)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemGetUserIdentity(JsonNode inputParams) {
+        return new DXHTTPRequest().request("/system/getUserIdentity", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+    /**
+     * Invokes the systemGetUserIdentity method with the specified environment.
+     *
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemGetUserIdentity(Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemGetUserIdentity(DXEnvironment env) {
+        return systemGetUserIdentity(mapper.createObjectNode(), env);
+    }
+    /**
+     * Invokes the systemGetUserIdentity method with the specified environment and input parameters.
+     *
+     * @param inputParams input parameters to the API call
+     * @param env environment object specifying the auth token and remote server and protocol
+     *
+     * @return Server response parsed from JSON
+     *
+     * @throws DXAPIException
+     *             If the server returns a complete response with an HTTP status
+     *             code other than 200 (OK).
+     * @throws DXHTTPException
+     *             If an error occurs while making the HTTP request or obtaining
+     *             the response (includes HTTP protocol errors).
+     *
+     * @deprecated Use {@link #systemGetUserIdentity(Object, Class, DXEnvironment)} instead and supply your own class to deserialize to.
+     */
+    @Deprecated
+    public static JsonNode systemGetUserIdentity(JsonNode inputParams, DXEnvironment env) {
+        return new DXHTTPRequest(env).request("/system/getUserIdentity", inputParams, RetryStrategy.SAFE_TO_RETRY);
+    }
+
+    /**
      * Invokes the userDescribe method with an empty input, deserializing to an object of the specified class.
      *
      * <p>For more information about this method, see the <a href="https://documentation.dnanexus.com/developer/api/users#api-method-user-xxxx-describe">API specification</a>.
