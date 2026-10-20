@@ -19,7 +19,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import dxpy
 from dxpy import get_auth_server_name, DXHTTPRequest
 
-from dxpy.api import system_whoami
+from dxpy.api import system_get_user_identity
 
 def is_read_only_session():
     """
@@ -58,4 +58,4 @@ def whoami(read_only_ok=None):
         context is read-only.
     :type read_only_ok: boolean or None
     """
-    return system_whoami(_identity_input(read_only_ok))['id']
+    return system_get_user_identity(_identity_input(read_only_ok))['id']
