@@ -5994,6 +5994,32 @@ systemWhoami <- function(inputParams=emptyNamedList,
   dxHTTPRequest('/system/whoami', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
 }
 
+##' systemGetUserIdentity API wrapper
+##'
+##' This function makes an API call to the \code{/system/getUserIdentity} API
+##' method; it is a simple wrapper around the \code{\link{dxHTTPRequest}}
+##' function which makes POST HTTP requests to the API server.
+##'
+##' 
+##' @param inputParams Either an R object that will be converted into JSON
+##' using \code{RJSONIO::toJSON} to be used as the input to the API call.  If
+##' providing the JSON string directly, you must set \code{jsonifyData} to
+##' \code{FALSE}.
+##' @param jsonifyData Whether to call \code{RJSONIO::toJSON} on
+##' \code{inputParams} to create the JSON string or pass through the value of
+##' \code{inputParams} directly.  (Default is \code{TRUE}.)
+##' @param alwaysRetry Whether to always retry even when no response is
+##' received from the API server
+##' @return If the API call is successful, the parsed JSON of the API server
+##' response is returned (using \code{RJSONIO::fromJSON}).
+##' @export
+##' @seealso \code{\link{dxHTTPRequest}}
+systemGetUserIdentity <- function(inputParams=emptyNamedList,
+                                  jsonifyData=TRUE,
+                                  alwaysRetry=TRUE) {
+  dxHTTPRequest('/system/getUserIdentity', inputParams, jsonifyData=jsonifyData, alwaysRetry=alwaysRetry)
+}
+
 ##' userDescribe API wrapper
 ##'
 ##' This function makes an API call to the \code{/user-xxxx/describe} API

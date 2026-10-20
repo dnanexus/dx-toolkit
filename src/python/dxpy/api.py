@@ -1498,6 +1498,12 @@ def system_whoami(input_params={}, always_retry=True, **kwargs):
     """
     return DXHTTPRequest('/system/whoami', input_params, always_retry=always_retry, **kwargs)
 
+def system_get_user_identity(input_params={}, always_retry=True, **kwargs):
+    """
+    Invokes the /system/getUserIdentity API method.
+    """
+    return DXHTTPRequest('/system/getUserIdentity', input_params, always_retry=always_retry, **kwargs)
+
 def user_describe(object_id, input_params={}, always_retry=True, **kwargs):
     """
     Invokes the /user-xxxx/describe API method.
