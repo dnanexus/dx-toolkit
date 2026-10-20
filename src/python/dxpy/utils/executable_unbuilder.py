@@ -120,23 +120,34 @@ def _dump_app_or_applet(executable, omit_resources=False, describe_output={}):
             f.write(code)
         return script_name
     
-    # Get regions where the user's billTo are permitted
-    try:
-        bill_to = dxpy.api.user_describe(dxpy.whoami())['billTo']
-        permitted_regions = set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
-    except DXError:
-        print("Failed to get permitted regions where {} can perform billable activities.\n".format(bill_to), file=sys.stderr)
-        sys.exit(1)    
-    
     # when applet/app is built, the runSpec is initialized with fields "interpreter" and "bundledDependsByRegion"
     # even when we don't have any bundledDepends in dxapp.json
     enabled_regions = set(info["runSpec"]["bundledDependsByRegion"].keys())
-    if not enabled_regions.issubset(permitted_regions):
-        print("Region(s) {} are not among the permitted regions of {}. Resources from these regions will not be available.".format(
-            ", ".join(enabled_regions.difference(permitted_regions)), bill_to), file=sys.stderr )
-    # Update enabled regions
-    enabled_regions.intersection_update(permitted_regions)
-    
+
+    # Get regions where the user's billTo are permitted
+    bill_to = None
+    try:
+        # A read-only session gets the user's describe without billTo
+        bill_to = dxpy.api.user_describe(dxpy.whoami()).get('billTo')
+        if bill_to is not None:
+            permitted_regions = set(dxpy.DXHTTPRequest('/' + bill_to + '/describe', {}).get("permittedRegions"))
+    except DXError:
+        print("Failed to get permitted regions where {} can perform billable activities.\n".format(
+            bill_to or "the requesting user"), file=sys.stderr)
+        sys.exit(1)
+
+    if bill_to is None:
+        if not omit_resources:
+            print("The requesting user's billing account is not visible to this session (for example, a read-only "
+                  "session). Resources will not be downloaded.", file=sys.stderr)
+            omit_resources = True
+    else:
+        if not enabled_regions.issubset(permitted_regions):
+            print("Region(s) {} are not among the permitted regions of {}. Resources from these regions will not be available.".format(
+                ", ".join(enabled_regions.difference(permitted_regions)), bill_to), file=sys.stderr )
+        # Update enabled regions
+        enabled_regions.intersection_update(permitted_regions)
+
     # Start downloading when not omitting resources
     deps_downloaded = set()
     if not omit_resources:
