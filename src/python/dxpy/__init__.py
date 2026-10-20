@@ -92,6 +92,11 @@ values:
 
    The user agent string that dxpy will send to the server with each request.
 
+   When dxpy detects that an AI coding agent is driving the process, it
+   appends client-reported tokens such as ``ai-agent/claude-code
+   ai-host/vscode os/mac``. Values come from a fixed list, never from
+   environment text. Set ``DX_USER_AGENT_NO_AGENT_INFO=1`` to omit them.
+
 The :func:`dxpy.DXHTTPRequest` function uses the ``DX_SECURITY_CONTEXT``
 and ``DX_APISERVER_*`` variables to select an API server and provide
 appropriate authentication headers to it. (Note: all methods in the
@@ -142,6 +147,7 @@ from reprlib import Repr
 
 from . import exceptions
 from .utils.printing import BOLD, BLUE, YELLOW, GREEN, RED, WHITE
+from .utils.agent_info import agent_user_agent_suffix
 
 from random import randint
 import urllib3
@@ -193,6 +199,12 @@ USER_AGENT = "{name}/{version} ({platform}) Python/{python_version}".format(name
                                                     version=TOOLKIT_VERSION,
                                                     platform=platform.platform(),
                                                     python_version=platform.python_version())
+try:
+    _agent_suffix = agent_user_agent_suffix()
+    if _agent_suffix:
+        USER_AGENT += " " + _agent_suffix
+except Exception:
+    logger.debug("Could not detect AI agent information for the user agent", exc_info=True)
 _default_certs = certifi.where()
 _default_headers = {
             "User-Agent": USER_AGENT,
