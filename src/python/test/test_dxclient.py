@@ -156,6 +156,7 @@ class TestDXLoginReadOnly(unittest.TestCase):
         for p in patches:
             p.start()
             self.addCleanup(p.stop)
+        self.session_dir = dxpy.config.get_own_session_conf_dir()
 
     def tearDown(self):
         os.environ.clear()
@@ -292,6 +293,131 @@ class TestDXLoginReadOnly(unittest.TestCase):
         self.assertEqual(login_api_error(dxpy.exceptions.ReadOnlyTokensDisabled, "server text").error_message(),
                          "read-only tokens are not enabled yet")
 
+    def read_env(self, conf_dir):
+        with open(os.path.join(conf_dir, "environment.json")) as fd:
+            return json.load(fd)
+
+    def global_saved(self):
+        return os.path.exists(os.path.join(self.conf_dir, "environment.json"))
+
+    def marked(self):
+        return os.path.exists(os.path.join(self.session_dir, dxpy.config.SESSION_ONLY_MARKER))
+
+    def save_global_login(self, username, read_only=False):
+        context = {"auth_token": "global-token", "auth_token_type": "Bearer"}
+        if read_only:
+            context["read_only"] = True
+        with open(os.path.join(self.conf_dir, "environment.json"), "w") as fd:
+            json.dump({"DX_SECURITY_CONTEXT": json.dumps(context)}, fd)
+        with open(os.path.join(self.conf_dir, "DX_USERNAME"), "w") as fd:
+            fd.write(username)
+
+    def mark_session(self):
+        os.makedirs(self.session_dir)
+        dxpy.config.set_session_only(True, self.session_dir)
+
+    def test_session_only_leaves_global_untouched(self):
+        with patch.object(dx_script, "INTERACTIVE_CLI", False):
+            exit_code, stdout, stderr = self.login("--session-only")
+        self.assertIsNone(exit_code)
+        self.assertFalse(self.global_saved())
+        self.assertTrue(self.marked())
+        self.assertEqual(json.loads(self.read_env(self.session_dir)["DX_SECURITY_CONTEXT"])["auth_token"], "new-token")
+        self.assertIn("storedin" + self.session_dir, stdout.replace(" ", ""))
+        self.assertIn("ends when process " + os.path.basename(self.session_dir) + " exits", stderr)
+
+    def test_session_only_keeps_existing_global_login(self):
+        self.save_global_login("bob")
+        self.login("--session-only")
+        self.assertEqual(json.loads(self.read_env(self.conf_dir)["DX_SECURITY_CONTEXT"])["auth_token"], "global-token")
+        self.assertEqual(self.saved_username(), "bob")
+
+    def test_save_global_and_save_alias_write_both(self):
+        for flag in ("--save-global", "--save"):
+            shutil.rmtree(self.conf_dir)
+            os.makedirs(self.conf_dir)
+            self.mark_session()
+            self.assertIsNone(self.login(flag)[0])
+            self.assertEqual(self.saved_security_context()["auth_token"], "new-token")
+            self.assertEqual(self.read_env(self.session_dir)["DX_SECURITY_CONTEXT"],
+                             self.read_env(self.conf_dir)["DX_SECURITY_CONTEXT"])
+            self.assertFalse(self.marked())
+
+    def test_session_flags_are_exclusive(self):
+        with patch("sys.stderr", new_callable=io.StringIO), self.assertRaises(SystemExit) as cm:
+            dx_script.parser.parse_args(["login", "--session-only", "--save-global"])
+        self.assertEqual(cm.exception.code, 2)
+
+    def test_login_inside_marked_session_stays_local(self):
+        self.mark_session()
+        self.assertIsNone(self.login()[0])
+        self.assertFalse(self.global_saved())
+        self.assertTrue(self.marked())
+
+    def test_failed_login_saves_nothing(self):
+        self.server.new_token_error = login_api_error(dxpy.exceptions.TokenScopeError, "Some other scope problem")
+        self.assertEqual(self.login()[0], EXPECTED_ERR_EXIT_STATUS)
+        self.assertEqual(os.listdir(self.conf_dir), [])
+
+    def test_staging_saves_staging_host(self):
+        self.assertIsNone(self.login("--staging")[0])
+        self.assertEqual(self.read_env(self.conf_dir)["DX_APISERVER_HOST"], "stagingapi.dnanexus.com")
+
+    def test_terminal_prompt_when_global_login_differs(self):
+        self.save_global_login("bob")
+        with patch.object(dx_script, "INTERACTIVE_CLI", True), \
+                patch.object(dx_script, "prompt_for_yn", return_value=True) as prompt:
+            self.assertIsNone(self.login()[0])
+        self.assertEqual(prompt.call_count, 1)
+        self.assertTrue(self.marked())
+        self.assertEqual(self.saved_username(), "bob")
+
+    def test_terminal_prompt_declined_and_confirmed_saves_global(self):
+        self.save_global_login("alice", read_only=True)
+        with patch.object(dx_script, "INTERACTIVE_CLI", True), \
+                patch.object(dx_script, "prompt_for_yn", side_effect=[False, True]):
+            self.assertIsNone(self.login()[0])
+        self.assertFalse(self.marked())
+        self.assertEqual(self.saved_security_context()["auth_token"], "new-token")
+
+    def test_terminal_prompt_declined_without_confirming_stays_local(self):
+        self.save_global_login("bob")
+        with patch.object(dx_script, "INTERACTIVE_CLI", True), \
+                patch.object(dx_script, "prompt_for_yn", side_effect=[False, False]):
+            self.login()
+        self.assertTrue(self.marked())
+        self.assertEqual(self.saved_username(), "bob")
+
+    def test_no_terminal_prompt_when_global_login_matches(self):
+        self.save_global_login("alice")
+        with patch.object(dx_script, "INTERACTIVE_CLI", True), \
+                patch.object(dx_script, "prompt_for_yn") as prompt:
+            self.login()
+        prompt.assert_not_called()
+        self.assertEqual(self.saved_security_context()["auth_token"], "new-token")
+
+    def test_select_in_marked_session_writes_only_session(self):
+        self.mark_session()
+        dx_script.set_project("project-" + "x" * 24, True, name="local")
+        self.assertFalse(self.global_saved())
+        self.assertEqual(self.read_env(self.session_dir)["DX_PROJECT_CONTEXT_ID"], "project-" + "x" * 24)
+
+    def test_cd_in_unmarked_session_writes_only_its_keys(self):
+        self.save_global_login("bob")
+        dx_script.set_wd("/data", True)
+        saved = self.read_env(self.conf_dir)
+        self.assertEqual(saved["DX_CLI_WD"], "/data")
+        self.assertEqual(json.loads(saved["DX_SECURITY_CONTEXT"])["auth_token"], "global-token")
+        self.assertNotIn("DX_APISERVER_HOST", saved)
+
+    def test_clearenv_session_keeps_global(self):
+        self.save_global_login("bob")
+        self.mark_session()
+        args = dx_script.parser.parse_args(["clearenv", "--session"])
+        args.func(args)
+        self.assertFalse(os.path.exists(self.session_dir))
+        self.assertTrue(self.global_saved())
+
 
 class TestDXReadOnlySession(unittest.TestCase):
     """Checks commands other than "dx login" in a read-only session, with the API mocked."""
@@ -339,7 +465,7 @@ class TestDXReadOnlySession(unittest.TestCase):
 
     def test_setenv_projects_at_view_in_read_only_session(self):
         dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
-        with patch.object(dxpy.config, "save"):
+        with patch.object(dxpy.config, "save_scoped"):
             self.run_dx("setenv", "--current")
         self.assertEqual(self.picked_levels, ["VIEW"])
 

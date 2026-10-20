@@ -52,6 +52,7 @@ from ..exceptions import (err_exit, DXError, DXCLIError, DXAPIError, network_exc
                           format_exception)
 from ..utils import warn, group_array_by_field, normalize_timedelta, normalize_time_input, merge
 from ..utils.batch_utils import (batch_run, batch_launch_args)
+from ..utils.config import DXConfig
 
 from ..app_categories import APP_CATEGORIES
 from ..utils.printing import (CYAN, BLUE, YELLOW, GREEN, RED, WHITE, UNDERLINE, BOLD, ENDC, DNANEXUS_LOGO,
@@ -331,13 +332,51 @@ def _derive_read_only_token(parent_token, args):
     except DXError as e:
         err_exit("Login error: {}".format(_login_error_message(e, args)), arg_parser=parser)
 
-def login(args):
-    if not state['interactive']:
-        args.save = True
+def _differs_from_global_login(sec_context, username):
+    """Whether a global login is saved and its username or read-only mode differs from this login's."""
+    saved = dxpy.config.read_global()
+    try:
+        saved_context = json.loads(saved.get("DX_SECURITY_CONTEXT") or "{}")
+    except ValueError:
+        saved_context = {}
+    if saved_context.get("auth_token") in (None, "", "PUBLIC"):
+        return False
+    if bool(saved_context.get("read_only")) != bool(sec_context.get("read_only")):
+        return True
+    saved_username = saved.get("DX_USERNAME")
+    return bool(saved_username and username and saved_username != username)
 
+def _login_save_scope(args, sec_context, username):
+    """
+    Returns where login saves its settings: "session" (the immediate parent's session, marked session-only),
+    "global" (the walked session and the global configuration), or None (nothing is saved).
+    """
+    if args.session_only:
+        return "session"
+    if args.save_global:
+        return "global"
+    if state['interactive']:
+        return None
+    if dxpy.config.is_session_only():
+        return "session"
+    if INTERACTIVE_CLI and _differs_from_global_login(sec_context, username):
+        try:
+            if prompt_for_yn("Keep these login settings local to this interactive session and its children?",
+                             default=True):
+                return "session"
+            if prompt_for_yn("This replaces the saved login used by other shells and tools. Continue?",
+                             default=False):
+                return "global"
+            return "session"
+        except (KeyboardInterrupt, EOFError):
+            err_exit()
+    return "global"
+
+def login(args):
     default_authserver = 'https://auth.dnanexus.com'
     using_default = False
     token_res = None
+    login_username = None
 
     if args.derive_from_current:
         if args.token is not None:
@@ -375,7 +414,7 @@ def login(args):
                         username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
                     else:
                         username = input('Username: ')
-                dxpy.config.write("DX_USERNAME", username)
+                dxpy.config["DX_USERNAME"] = username
                 password = getpass.getpass()
 
             otp = input('Verification code: ') if get_otp else None
@@ -390,6 +429,7 @@ def login(args):
             try:
                 credentials = get_credentials(reuse=reuse, get_otp=using_otp)
                 token_res = get_token(**dict(token_input, **credentials))
+                login_username = credentials['username']
                 break
             except (KeyboardInterrupt, EOFError):
                 err_exit()
@@ -416,7 +456,7 @@ def login(args):
         sec_context = {'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]}
 
         if using_default:
-            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
+            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, False)
     else:
         if args.derive_from_current:
             using_default = dxpy.APISERVER_HOST == dxpy.DEFAULT_APISERVER_HOST
@@ -438,7 +478,7 @@ def login(args):
     dxpy.set_security_context(sec_context)
 
     # If login via token, obtain current username from auth server.
-    username = None
+    username = login_username
     if args.token is not None or args.derive_from_current:
         host, port = None, None
         if dxpy.APISERVER_HOST not in ['api.dnanexus.com', 'stagingapi.dnanexus.com']:
@@ -450,10 +490,24 @@ def login(args):
             print("Could not obtain username from auth server. Consider setting both --host and --port.", file=sys.stderr)
             print(fill(str(details)), file=sys.stderr)
 
-    if args.save:
-        dxpy.config.write("DX_SECURITY_CONTEXT", json.dumps(sec_context))
+    dxpy.config["DX_SECURITY_CONTEXT"] = json.dumps(sec_context)
+    login_vars = DXConfig.LOGIN_VAR_NAMES
     if username is not None:
-        dxpy.config.write("DX_USERNAME", username)
+        dxpy.config["DX_USERNAME"] = username
+    else:
+        login_vars = login_vars - {"DX_USERNAME"}
+    save_scope = _login_save_scope(args, sec_context, username)
+    conf_dir = None
+    if save_scope == "session":
+        conf_dir = dxpy.config.save_session(login_vars, own=True, mark=True)
+        if not INTERACTIVE_CLI:
+            warn(fill("This login is saved only in {} and ends when process {} exits. Other shells and tools "
+                      "keep using the saved global login.".format(conf_dir, os.path.basename(conf_dir))))
+    elif save_scope == "global":
+        dxpy.config.save_session(login_vars)
+        dxpy.config.set_session_only(False)
+        dxpy.config.save_global(login_vars)
+        conf_dir = dxpy.config.get_user_conf_dir()
 
     if using_default or args.staging:
         try:
@@ -471,7 +525,7 @@ def login(args):
         except Exception as e:
             warn("Error while retrieving greet data: {}".format(e))
 
-    if args.save and token_res is not None:
+    if conf_dir is not None and token_res is not None:
         if token_res.get('expires_in') is not None:
             expires_in = token_res['expires_in']
         elif args.token is None and not args.derive_from_current:
@@ -480,12 +534,13 @@ def login(args):
             expires_in = None
         msg = "You are now logged in{mode}. Your credentials are stored in {conf_dir}{expiry}. {tip}".format(
             mode=" with a read-only token" if args.read_only else "",
-            conf_dir=dxpy.config.get_user_conf_dir(),
+            conf_dir=conf_dir,
             expiry="" if expires_in is None else " and will expire in {}".format(datetime.timedelta(seconds=expires_in)),
             tip="Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") +
                 " to end this session.")
         print(fill(msg))
 
+    args.save = save_scope is not None
     args.current = False
     args.name = None
     args.level = 'VIEW' if sec_context.get('read_only') else 'CONTRIBUTE'
@@ -517,29 +572,32 @@ def logout(args):
         if state["interactive"]:
             dxpy.AUTH_HELPER = None
         else:
-            dxpy.config.write("DX_SECURITY_CONTEXT", None)
+            dxpy.config["DX_SECURITY_CONTEXT"] = None
+            dxpy.config.save_scoped(["DX_SECURITY_CONTEXT"])
 
 def set_api(protocol, host, port, write):
     dxpy.config.update(DX_APISERVER_PROTOCOL=protocol,
                        DX_APISERVER_HOST=host,
                        DX_APISERVER_PORT=port)
     if write:
-        dxpy.config.save()
+        dxpy.config.save_scoped(DXConfig.API_SERVER_VAR_NAMES)
 
 def set_project(project, write, name=None):
     if dxpy.JOB_ID is None:
         dxpy.config["DX_PROJECT_CONTEXT_ID"] = project
         dxpy.config["DX_PROJECT_CONTEXT_NAME"] = name
+        project_vars = ["DX_PROJECT_CONTEXT_ID", "DX_PROJECT_CONTEXT_NAME"]
     else:
         dxpy.config["DX_WORKSPACE_ID"] = project
+        project_vars = ["DX_WORKSPACE_ID"]
     if write:
-        dxpy.config.save()
+        dxpy.config.save_scoped(project_vars)
     dxpy.set_workspace_id(project)
 
 def set_wd(folder, write):
     dxpy.config.update(DX_CLI_WD=folder)
     if write:
-        dxpy.config.save()
+        dxpy.config.save_scoped(["DX_CLI_WD"])
 
 # Will raise KeyboardInterrupt, EOFError
 def prompt_for_env_var(prompt_str, env_var_str):
@@ -638,7 +696,7 @@ def setenv(args):
     if not state['interactive']:
         args.save = True
     if args.current:
-        dxpy.config.save()
+        dxpy.config.save_scoped(None)
     else:
         try:
             api_protocol = prompt_for_env_var('API server protocol (choose "http" or "https")', 'DX_APISERVER_PROTOCOL')
@@ -659,7 +717,7 @@ def clearenv(args):
     if args.interactive:
         print("The clearenv command is not available in the interactive shell")
         return
-    dxpy.config.clear(reset=args.reset)
+    dxpy.config.clear(reset=args.reset, session_only=args.session)
 
 def env(args):
     if args.bash:
@@ -4689,8 +4747,15 @@ port_action = parser_login.add_argument('--port', type=int, help='Log into the g
 protocol_action = parser_login.add_argument('--protocol', help='Used in conjunction with host and port arguments, gives the protocol to use when contacting auth server', default='https')
 host_action.help = port_action.help = protocol_action.help = argparse.SUPPRESS
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
-parser_login.add_argument('--save', help='Save token and other environment variables for future sessions',
-                          action='store_true')
+login_save_args = parser_login.add_mutually_exclusive_group()
+login_save_args.add_argument('--session-only', action='store_true',
+                             help='Save this login only for the current shell session and its children. Other '
+                                  'shells and tools keep using the saved global login')
+login_save_args.add_argument('--save-global', action='store_true',
+                             help='Save this login for this session and as the global login used by future '
+                                  'sessions')
+login_save_args.add_argument('--save', dest='save_global', action='store_true',
+                             help='Alias of --save-global')
 parser_login.add_argument('--timeout',
                           help='Timeout for this login token (in seconds, or use suffix s, m, h); default 18h, or the '
                                'parent token\'s expiration when deriving a read-only token')
@@ -4771,8 +4836,11 @@ register_parser(parser_setenv, categories='other')
 #####################################
 parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx',
                                         description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
-parser_clearenv.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.',
-                             action='store_true')
+clearenv_scope_args = parser_clearenv.add_mutually_exclusive_group()
+clearenv_scope_args.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.',
+                                 action='store_true')
+clearenv_scope_args.add_argument('--session', action='store_true',
+                                 help='Clear only the current shell session\'s settings')
 parser_clearenv.set_defaults(func=clearenv, interactive=False)
 register_parser(parser_clearenv, categories='session')
 

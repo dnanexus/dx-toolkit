@@ -25,7 +25,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 
 import os, sys, json, time
 import platform
-from shutil import rmtree
+from shutil import copytree, rmtree
 from collections.abc import MutableMapping
 
 import dxpy
@@ -75,6 +75,8 @@ class DXConfig(MutableMapping):
     List of variable names supported by the configuration manager.
     """
     VAR_NAMES = set.union(CORE_VAR_NAMES, STANDALONE_VAR_NAMES)
+    API_SERVER_VAR_NAMES = {"DX_APISERVER_PROTOCOL", "DX_APISERVER_HOST", "DX_APISERVER_PORT"}
+    LOGIN_VAR_NAMES = API_SERVER_VAR_NAMES | {"DX_SECURITY_CONTEXT", "DX_USERNAME"}
     defaults = {
         "DX_SECURITY_CONTEXT": json.dumps({"auth_token": "PUBLIC", "auth_token_type": "Bearer"}),
         "DX_APISERVER_PROTOCOL": DEFAULT_APISERVER_PROTOCOL,
@@ -83,6 +85,7 @@ class DXConfig(MutableMapping):
         "DX_CLI_WD": "/"
     }
     _global_conf_dir = "/etc/dnanexus"
+    SESSION_ONLY_MARKER = "session_only"
 
     def __init__(self, suppress_warning=False):
         """
@@ -213,6 +216,29 @@ class DXConfig(MutableMapping):
             warn(fill("Unexpected error while retrieving session configuration: " + format_exception(e)))
         return self._get_ppid_session_conf_dir(sessions_dir)
 
+    def get_own_session_conf_dir(self):
+        """
+        Returns ~/.dnanexus_config/sessions/<PID> for the immediate parent of this process, whether or not it
+        exists. Unlike get_session_conf_dir(), it never resolves to an ancestor's session, so a write here
+        cannot leak into an enclosing shell.
+        """
+        sessions_dir = os.path.join(self._user_conf_dir, "sessions")
+        try:
+            from psutil import Process
+            parent_process = Process(os.getpid()).parent()
+            return os.path.join(sessions_dir, str((parent_process or Process(os.getpid())).pid))
+        except Exception:
+            return self._get_ppid_session_conf_dir(sessions_dir)
+
+    def is_session_only(self, conf_dir=None):
+        """Whether *conf_dir* (default: the walked session directory) is marked session-only."""
+        conf_dir = conf_dir or self.get_session_conf_dir()
+        return os.path.exists(os.path.join(conf_dir, self.SESSION_ONLY_MARKER))
+
+    def read_global(self):
+        """Returns the variables saved in the global (user) configuration, ignoring sessions and environment."""
+        return self._read_conf_dir(self._user_conf_dir)
+
     def _get_ppid_session_conf_dir(self, sessions_dir):
         try:
             return os.path.join(sessions_dir, str(os.getppid()))
@@ -282,12 +308,55 @@ class DXConfig(MutableMapping):
         self._write_conf_dir(self.get_session_conf_dir())
         self._write_unsetenv(self._user_conf_dir)
 
+    def save_session(self, keys, own=False, mark=False):
+        """
+        Persists the variables named in *keys* to a session directory, and returns that directory.
+
+        :param keys: Variable names to write, merged onto the directory's saved values; None writes every variable.
+        :param own: Write the immediate parent's session (see get_own_session_conf_dir()) instead of the walked one.
+            When it does not exist yet, it starts as a copy of the walked session.
+        :param mark: Also mark the session as session-only.
+        """
+        conf_dir = self.get_session_conf_dir()
+        if own:
+            own_dir = self.get_own_session_conf_dir()
+            if own_dir != conf_dir and os.path.isdir(conf_dir) and not os.path.exists(own_dir):
+                try:
+                    copytree(conf_dir, own_dir)
+                except OSError as e:
+                    warn(fill("Error while copying session configuration: " + format_exception(e)))
+            conf_dir = own_dir
+        self._write_conf_dir(conf_dir, keys=keys)
+        if mark:
+            self.set_session_only(True, conf_dir)
+        return conf_dir
+
+    def save_global(self, keys):
+        """Persists the variables named in *keys* (None for every variable) to the global configuration."""
+        self._write_conf_dir(self._user_conf_dir, keys=keys)
+        self._write_unsetenv(self._user_conf_dir)
+
+    def save_scoped(self, keys):
+        """Writes *keys* to the walked session, and to the global configuration unless that session is session-only."""
+        self.save_session(keys)
+        if not self.is_session_only():
+            self.save_global(keys)
+
+    def set_session_only(self, session_only, conf_dir=None):
+        conf_dir = conf_dir or self.get_session_conf_dir()
+        marker = os.path.join(conf_dir, self.SESSION_ONLY_MARKER)
+        if not session_only:
+            _remove_ignore_errors(marker)
+        elif os.path.isdir(conf_dir):
+            with _open_for_writing_with_permissions(marker, 0o600):
+                pass
+
     def _write_unsetenv(self, conf_dir):
         if not os.path.exists(os.path.join(conf_dir, "unsetenv")):
             with open(os.path.join(conf_dir, "unsetenv"), "w") as fd:
                 fd.writelines("unset {}\n".format(var) for var in self.CORE_VAR_NAMES)
 
-    def _write_conf_dir(self, conf_dir):
+    def _write_conf_dir(self, conf_dir, keys=None):
         try:
             os.makedirs(conf_dir, 0o700)
         except OSError:
@@ -298,19 +367,40 @@ class DXConfig(MutableMapping):
                 return
 
         env_jsonfile_path = os.path.join(conf_dir, "environment.json")
+        if keys is None:
+            env_vars = {k: self.get(k, self.defaults.get(k)) for k in self}
+        else:
+            try:
+                with open(env_jsonfile_path) as fd:
+                    env_vars = json.load(fd)
+            except Exception:
+                env_vars = {}
+            for k in keys:
+                if k in os.environ:
+                    env_vars[k] = os.environ[k]
+                else:
+                    env_vars.pop(k, None)
         # Make sure the file has 600 permissions
         with _open_for_writing_with_permissions(env_jsonfile_path, 0o600) as fd:
-            json.dump({k: self.get(k, self.defaults.get(k)) for k in self}, fd, indent=4)
+            json.dump(env_vars, fd, indent=4)
             fd.write("\n")
 
         for var in self.STANDALONE_VAR_NAMES:
+            if keys is not None and var not in keys:
+                continue
             # Make sure the file has 600 permissions
             with _open_for_writing_with_permissions(os.path.join(conf_dir, var), 0o600) as fd:
                 value = self.get(var, self.defaults.get(var, ""))
                 fd.write(value)
 
-    def clear(self, reset=False):
+    def clear(self, reset=False, session_only=False):
+        """
+        Removes the walked session directory and the global configuration files. With *session_only*, removes only
+        the walked session directory (including its session-only marker).
+        """
         rmtree(self.get_session_conf_dir(), ignore_errors=True)
+        if session_only:
+            return
         _remove_ignore_errors(os.path.join(self._user_conf_dir, "environment"))
         _remove_ignore_errors(os.path.join(self._user_conf_dir, "environment.json"))
         for f in self.STANDALONE_VAR_NAMES:
