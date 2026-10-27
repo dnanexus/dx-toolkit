@@ -12,6 +12,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * dxpy: `DXProject.list_recycle_bin()`, `DXProject.recover_objects()` and `DXProject.purge_recycle_bin_objects()`, plus a `deletion_retention_enabled` argument on `DXProject.new()` and `DXProject.update()`
 * dxpy: `DXApp.recover()` and `DXGlobalWorkflow.recover()`
 
+## [418.0] - beta
+
+* No significant changes
+
+## [417.1] - 2026.10.19
+
 ## [417.0] - beta
 
 ### Added
