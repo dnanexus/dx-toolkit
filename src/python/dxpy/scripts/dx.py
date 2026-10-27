@@ -317,6 +317,8 @@ def login(args):
 
     default_authserver = 'https://auth.dnanexus.com'
     using_default = False
+    # Lifetime shown in the closing message; defaults to --timeout when not set by the login path
+    token_lifetime = None
 
     if args.auth_token and not args.token:
         args.token = args.auth_token
@@ -335,17 +337,18 @@ def login(args):
             return dxpy.DXHTTPRequest(authserver+"/system/newAuthToken", data,
                                       prepend_srv=False, auth=None, always_retry=True)
 
-        def get_credentials(reuse=None, get_otp=False):
-            if reuse:
-                username, password = reuse
-            else:
-                username = None
-                while not username:
-                    if 'DX_USERNAME' in os.environ:
-                        username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
-                    else:
-                        username = input('Username: ')
-                dxpy.config.write("DX_USERNAME", username)
+        def get_username():
+            username = None
+            while not username:
+                if 'DX_USERNAME' in os.environ:
+                    username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
+                else:
+                    username = input('Username: ')
+            dxpy.config.write("DX_USERNAME", username)
+            return username
+
+        def get_credentials(username, password=None, get_otp=False):
+            if password is None:
                 password = getpass.getpass()
 
             otp = input('Verification code: ') if get_otp else None
@@ -355,7 +358,11 @@ def login(args):
         attempt, using_otp, reuse = 1, False, None
         while attempt <= 3:
             try:
-                credentials = get_credentials(reuse=reuse, get_otp=using_otp)
+                if reuse:
+                    username, password = reuse
+                else:
+                    username, password = get_username(), None
+                credentials = get_credentials(username, password=password, get_otp=using_otp)
                 token_res = get_token(expires=normalize_time_input(args.timeout, future=True, default_unit='s'),
                                       **credentials)
                 break
@@ -439,9 +446,10 @@ def login(args):
         msg = "You are now logged in. Your credentials are stored in {conf_dir} and will expire in {timeout}. {tip}"
         tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
               " to end this session."
-        timeout = datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s') // 1000)
+        if token_lifetime is None:
+            token_lifetime = datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s') // 1000)
         print(fill(msg.format(conf_dir=dxpy.config.get_user_conf_dir(),
-                              timeout=timeout,
+                              timeout=token_lifetime,
                               tip=tip)))
 
 def logout(args):
