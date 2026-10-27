@@ -34,6 +34,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound, DX
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
+from ..cli import sso_login
 from ..cli.cp import cp
 from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic, create_cohort, extract_assay_expression
 from ..cli.download import (download_one_file, download_one_database_file, download)
@@ -362,11 +363,18 @@ def login(args):
                     username, password = reuse
                 else:
                     username, password = get_username(), None
+                    idp_id = sso_login.lookup_idp(username)
+                    if idp_id:
+                        token_res = sso_login.run_code_flow(authserver, idp_id, prompt=getpass.getpass, output=print)
+                        token_lifetime = datetime.timedelta(seconds=token_res['expires_in'])
+                        break
                 credentials = get_credentials(username, password=password, get_otp=using_otp)
                 token_res = get_token(expires=normalize_time_input(args.timeout, future=True, default_unit='s'),
                                       **credentials)
                 break
             except (KeyboardInterrupt, EOFError):
+                err_exit()
+            except (sso_login.SSOUnavailable, sso_login.SSOLoginEnded):
                 err_exit()
             except dxpy.DXAPIError as e:
                 if e.name == 'OTPRequiredError':
