@@ -41,11 +41,11 @@ from ..exceptions import DXAPIError, DXCLIError, HTTPErrorWithContent
 ONE_TIME_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 ONE_TIME_CODE_LENGTH = 8
 
-_CODE_ATTEMPTS = 3
-_DEFAULT_PORTS = {"http": 80, "https": 443}
+CODE_ATTEMPTS = 3
+DEFAULT_PORTS = {"http": 80, "https": 443}
 
 # Finalize errors after which the session cannot be used again
-_FINALIZE_ENDED_ERRORS = ("SSOSessionExpiredError", "SSOOneTimeCodeExpiredError", "SSONetworkChangedError")
+FINALIZE_ENDED_ERRORS = ("SSOSessionExpiredError", "SSOOneTimeCodeExpiredError", "SSONetworkChangedError")
 
 
 class SSOUnavailable(DXCLIError):
@@ -95,7 +95,9 @@ def normalize_one_time_code(text):
     return code
 
 
-def sso_lookup_body(username):
+def get_sso_id_args(username):
+    # /user/getSSOId takes either "email" or a user "id", not a raw username.
+    # Usernames cannot contain "@", so input with "@" is an email.
     if "@" in username:
         return {"email": username}
     if username.startswith("user-"):
@@ -109,7 +111,7 @@ def authorize_url(authserver, session_id):
     default for the scheme (e.g. ":443" for https).
     """
     url = urlsplit(authserver)
-    if url.port is not None and url.port == _DEFAULT_PORTS.get(url.scheme):
+    if url.port is not None and url.port == DEFAULT_PORTS.get(url.scheme):
         url = url._replace(netloc=url.netloc.rsplit(":", 1)[0])
     return url.geturl() + "/sso/authorize/" + session_id
 
@@ -121,7 +123,7 @@ def lookup_idp(username):
     gets the password prompt as before.
     """
     try:
-        response = dxpy.DXHTTPRequest("/user/getSSOId", sso_lookup_body(username), auth=None, max_retries=0)
+        response = dxpy.DXHTTPRequest("/user/getSSOId", get_sso_id_args(username), auth=None, max_retries=0)
         return response.get("SSOId") or None
     except Exception:
         return None
@@ -161,7 +163,7 @@ def finalize(authserver, session_id, verifier, code):
     except DXAPIError as e:
         if e.name == "SSOLoginFailedError":
             raise SSOCodeRejected(e.msg)
-        if e.name in _FINALIZE_ENDED_ERRORS:
+        if e.name in FINALIZE_ENDED_ERRORS:
             raise SSOLoginEnded(e.msg)
         raise
 
@@ -191,7 +193,7 @@ def run_code_flow(authserver, idp_id, prompt, output):
         try:
             return finalize(authserver, session_id, verifier, code)
         except SSOCodeRejected:
-            if attempt == _CODE_ATTEMPTS:
+            if attempt == CODE_ATTEMPTS:
                 raise SSOLoginEnded('Incorrect one-time code. Run "dx login" again.')
             output("Incorrect one-time code")
             attempt += 1
