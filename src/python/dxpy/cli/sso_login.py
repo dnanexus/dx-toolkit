@@ -41,6 +41,7 @@ from ..exceptions import DXAPIError, DXCLIError, HTTPErrorWithContent
 ONE_TIME_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 ONE_TIME_CODE_LENGTH = 8
 
+_CODE_ATTEMPTS = 3
 _DEFAULT_PORTS = {"http": 80, "https": 443}
 
 # Finalize errors after which the session cannot be used again
@@ -119,7 +120,11 @@ def lookup_idp(username):
     Never retried, and never raises: any error means "not SSO", so the user
     gets the password prompt as before.
     """
-    return None
+    try:
+        response = dxpy.DXHTTPRequest("/user/getSSOId", sso_lookup_body(username), auth=None, max_retries=0)
+        return response.get("SSOId") or None
+    except Exception:
+        return None
 
 
 def initialize(authserver, idp_id, challenge):
@@ -164,8 +169,29 @@ def finalize(authserver, session_id, verifier, code):
 def run_code_flow(authserver, idp_id, prompt, output):
     """
     Prints the sign-in link, reads the one-time code with *prompt* (e.g.
-    getpass.getpass) up to 3 times, and returns the response from finalize().
+    getpass.getpass), and returns the response from finalize(). A code that is
+    not valid is asked for again; the login ends after 3 rejected codes.
     *output* shows a line to the user (e.g. print). Never opens a browser.
     Raises SSOUnavailable or SSOLoginEnded if the login cannot complete.
     """
-    raise NotImplementedError()
+    verifier, challenge = make_pkce_pair()
+    session_id = initialize(authserver, idp_id, challenge)["sessionId"]
+    attempt = 1
+
+    output("To log in with single sign-on, open the following URL in a browser:")
+    output(authorize_url(authserver, session_id))
+    output("Then enter the one-time code shown in the browser.")
+
+    while True:
+        try:
+            code = normalize_one_time_code(prompt("One-time code: "))
+        except ValueError as e:
+            output(str(e))
+            continue
+        try:
+            return finalize(authserver, session_id, verifier, code)
+        except SSOCodeRejected:
+            if attempt == _CODE_ATTEMPTS:
+                raise SSOLoginEnded('Incorrect one-time code. Run "dx login" again.')
+            output("Incorrect one-time code")
+            attempt += 1
