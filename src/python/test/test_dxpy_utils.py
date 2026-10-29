@@ -19,7 +19,8 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import unittest, time, json, re, os
+import unittest, time, json, re, os, shutil, tempfile
+from unittest.mock import patch
 import dateutil.parser
 import dxpy
 from dxpy import AppError, AppInternalError, DXError, DXFile, DXRecord
@@ -337,6 +338,89 @@ class TestDXConfig(unittest.TestCase):
         finally:
             os.environ.update(environ_backup)
             dxpy.config.__init__(suppress_warning=True)
+
+
+class TestDXConfigSessionWrites(unittest.TestCase):
+    def setUp(self):
+        self.conf_dir = tempfile.mkdtemp()
+        environ_backup = os.environ.copy()
+        def restore():
+            os.environ.clear()
+            os.environ.update(environ_backup)
+            dxpy.config.__init__(suppress_warning=True)
+            shutil.rmtree(self.conf_dir, ignore_errors=True)
+        self.addCleanup(restore)
+        for var in list(os.environ):
+            if var.startswith("DX_"):
+                del os.environ[var]
+        os.environ["DX_USER_CONF_DIR"] = self.conf_dir
+        os.environ["DX_PROJECT_CONTEXT_ID"] = "project-from-shell"
+        self.c = config.DXConfig(suppress_warning=True)
+
+    def read_env(self, conf_dir):
+        with open(os.path.join(conf_dir, "environment.json")) as fd:
+            return json.load(fd)
+
+    def test_writes_only_named_keys_merged_onto_file(self):
+        with open(os.path.join(self.conf_dir, "environment.json"), "w") as fd:
+            json.dump({"DX_APISERVER_HOST": "saved-host", "DX_CLI_WD": "/old"}, fd)
+        self.c["DX_CLI_WD"] = "/new"
+        self.c.save_global(["DX_CLI_WD"])
+        self.assertEqual(self.read_env(self.conf_dir), {"DX_APISERVER_HOST": "saved-host", "DX_CLI_WD": "/new"})
+        with open(os.path.join(self.conf_dir, "DX_CLI_WD")) as fd:
+            self.assertEqual(fd.read(), "/new")
+        self.assertFalse(os.path.exists(os.path.join(self.conf_dir, "DX_USERNAME")))
+
+    def test_none_persists_live_environment(self):
+        self.c.save_global(None)
+        self.assertEqual(self.read_env(self.conf_dir)["DX_PROJECT_CONTEXT_ID"], "project-from-shell")
+
+    def test_deleted_key_is_removed_from_file(self):
+        self.c.save_global(None)
+        del self.c["DX_PROJECT_CONTEXT_ID"]
+        self.c.save_global(["DX_PROJECT_CONTEXT_ID"])
+        self.assertNotIn("DX_PROJECT_CONTEXT_ID", self.read_env(self.conf_dir))
+
+    def test_scoped_save_respects_marker(self):
+        self.c["DX_CLI_WD"] = "/a"
+        session_dir = self.c.save_session(["DX_CLI_WD"], own=True, mark=True)
+        self.assertTrue(self.c.is_session_only())
+        self.c["DX_CLI_WD"] = "/b"
+        self.c.save_scoped(["DX_CLI_WD"])
+        self.assertEqual(self.read_env(session_dir)["DX_CLI_WD"], "/b")
+        self.assertFalse(os.path.exists(os.path.join(self.conf_dir, "environment.json")))
+        self.c.set_session_only(False)
+        self.c.save_scoped(["DX_CLI_WD"])
+        self.assertEqual(self.read_env(self.conf_dir)["DX_CLI_WD"], "/b")
+
+    def test_own_session_starts_as_copy_of_walked_session(self):
+        walked = os.path.join(self.conf_dir, "sessions", "1")
+        os.makedirs(walked)
+        with open(os.path.join(walked, "environment.json"), "w") as fd:
+            json.dump({"DX_APISERVER_HOST": "outer-host"}, fd)
+        self.c["DX_CLI_WD"] = "/inner"
+        with patch.object(self.c, "get_session_conf_dir", return_value=walked):
+            own = self.c.save_session(["DX_CLI_WD"], own=True, mark=True)
+        self.assertNotEqual(own, walked)
+        self.assertEqual(self.read_env(own), {"DX_APISERVER_HOST": "outer-host", "DX_CLI_WD": "/inner"})
+        self.assertEqual(self.read_env(walked), {"DX_APISERVER_HOST": "outer-host"})
+        self.assertFalse(self.c.is_session_only(walked))
+
+    def test_read_global_ignores_session_and_environment(self):
+        self.c["DX_CLI_WD"] = "/session"
+        self.c.save_session(["DX_CLI_WD"], own=True)
+        self.assertNotIn("DX_CLI_WD", self.c.read_global())
+        self.c.save_global(["DX_CLI_WD"])
+        self.assertEqual(self.c.read_global()["DX_CLI_WD"], "/session")
+        self.assertNotIn("DX_PROJECT_CONTEXT_ID", self.c.read_global())
+
+    def test_clear_session_only_keeps_global(self):
+        self.c["DX_CLI_WD"] = "/x"
+        self.c.save_global(["DX_CLI_WD"])
+        session_dir = self.c.save_session(["DX_CLI_WD"], own=True, mark=True)
+        self.c.clear(session_only=True)
+        self.assertFalse(os.path.exists(session_dir))
+        self.assertTrue(os.path.exists(os.path.join(self.conf_dir, "environment.json")))
 
 class TestPrettyPrint(unittest.TestCase):
     def test_flatten_json_array(self):
