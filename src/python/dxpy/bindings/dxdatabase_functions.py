@@ -174,7 +174,7 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
     else:
         dxdatabase = DXDatabase(dxid, project=(project if project != DXFile.NO_PROJECT_HINT else None))
 
-    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxdatabase: {}".format(dxdatabase)) 
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dxdatabase: {}".format(dxdatabase))
 
     if describe_output and describe_output.get("parts") is not None:
         dxdatabase_desc = describe_output
@@ -195,14 +195,14 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
     do_debug("dxdatabase_functions.py _download_dxdatabasefile - parts {}".format(parts))
 
     # Create proper destination path, including any subdirectories needed within path.
-    ensure_local_dir(filename);
+    ensure_local_dir(filename)
     dest_path = os.path.join(filename, src_filename)
-    dest_dir_idx = dest_path.rfind("/");
+    dest_dir_idx = dest_path.rfind("/")
     if dest_dir_idx != -1:
         dest_dir = dest_path[:dest_dir_idx]
-        ensure_local_dir(dest_dir)      
+        ensure_local_dir(dest_dir)
 
-    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dest_path {}".format(dest_path)) 
+    do_debug("dxdatabase_functions.py _download_dxdatabasefile - dest_path {}".format(dest_path))
 
     if append:
         fh = open(dest_path, "ab")
@@ -219,6 +219,7 @@ def _download_dxdatabasefile(dxid, filename, src_filename, file_status, part_ret
         do_debug("dxdatabase_functions.py get_chunk - start {}, end {}, part id {}".format(start, end, part_id_to_get))
         url, headers = dxdatabase.get_download_url(src_filename=src_filename, project=project, **kwargs)
         # No sub ranges for database file downloads
+        # 'url' is the s3 URL, so read again to get data
         sub_range = False
         data = dxpy._dxhttp_read_range(url, headers, start, end, FILE_REQUEST_TIMEOUT, sub_range)
         return part_id_to_get, data
