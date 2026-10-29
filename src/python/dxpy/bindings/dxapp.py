@@ -354,6 +354,19 @@ class DXApp(DXObject, DXExecutable):
         else:
             return dxpy.api.app_delete('app-' + self._name, alias=self._alias, **kwargs)
 
+    def recover(self, **kwargs):
+        """
+        Recovers this app from the pending-deletion state it was put in by
+        :meth:`delete()` while deletion retention was in effect, returning it
+        to the active state.
+
+        The current user must be a developer of the app.
+        """
+        if self._dxid is not None:
+            return dxpy.api.app_recover(self._dxid, **kwargs)
+        else:
+            return dxpy.api.app_recover('app-' + self._name, alias=self._alias, **kwargs)
+
     def _run_impl(self, run_input, **kwargs):
         if self._dxid is not None:
             return DXJob(dxpy.api.app_run(self._dxid, input_params=run_input, **kwargs)["id"])
