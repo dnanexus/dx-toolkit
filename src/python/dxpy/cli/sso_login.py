@@ -149,16 +149,18 @@ def initialize(authserver, idp_id, challenge):
         raise
 
 
-def finalize(authserver, session_id, verifier, code):
+def finalize(authserver, session_id, verifier, code, expires):
     """
-    Exchanges a one-time code for an API token. Never retried, because the
-    auth server uses up the code. Raises SSOCodeRejected if the code was not
-    accepted, or SSOLoginEnded if the session or the code expired or the
-    network address changed. Other errors are raised unchanged.
+    Exchanges a one-time code for an API token that expires at *expires*
+    (milliseconds since the epoch). Never retried, because the auth server
+    uses up the code. Raises SSOCodeRejected if the code was not accepted, or
+    SSOLoginEnded if the session or the code expired or the network address
+    changed. Other errors are raised unchanged.
     """
     try:
         return dxpy.DXHTTPRequest(authserver + "/sso/finalize",
-                                  {"sessionId": session_id, "cliCodeVerifier": verifier, "oneTimeCode": code},
+                                  {"sessionId": session_id, "cliCodeVerifier": verifier, "oneTimeCode": code,
+                                   "expires": expires},
                                   prepend_srv=False, auth=None, max_retries=0)
     except DXAPIError as e:
         if e.name == "SSOLoginFailedError":
@@ -168,11 +170,12 @@ def finalize(authserver, session_id, verifier, code):
         raise
 
 
-def run_code_flow(authserver, idp_id, prompt, output):
+def run_code_flow(authserver, idp_id, expires, prompt, output):
     """
     Prints the sign-in link, reads the one-time code with *prompt* (e.g.
-    getpass.getpass), and returns the response from finalize(). A code that is
-    not valid is asked for again; the login ends after 3 rejected codes.
+    getpass.getpass), and returns the response from finalize() for a token
+    that expires at *expires*. A code that is not valid is asked for again;
+    the login ends after 3 rejected codes.
     *output* shows a line to the user (e.g. print). Never opens a browser.
     Raises SSOUnavailable or SSOLoginEnded if the login cannot complete.
     """
@@ -191,7 +194,7 @@ def run_code_flow(authserver, idp_id, prompt, output):
             output(str(e))
             continue
         try:
-            return finalize(authserver, session_id, verifier, code)
+            return finalize(authserver, session_id, verifier, code, expires)
         except SSOCodeRejected:
             if attempt == CODE_ATTEMPTS:
                 raise SSOLoginEnded('Incorrect one-time code. Run "dx login" again.')

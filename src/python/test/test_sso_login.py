@@ -34,6 +34,7 @@ AUTHSERVER = "https://auth.dnanexus.com"
 INVALID_CODE_MESSAGE = "Invalid one-time code. Enter the 8-character code shown in the browser."
 TOKEN = {"access_token": "token", "token_type": "bearer", "expires_in": 64800,
          "token_signature": "signature", "user_id": "user-alice"}
+EXPIRES = 1800000000000
 
 
 def api_error(name, message="message", code=400):
@@ -215,18 +216,17 @@ class TestFinalize(unittest.TestCase):
 
     def test_request(self):
         with patch("dxpy.DXHTTPRequest", return_value=TOKEN) as request:
-            self.assertIs(sso_login.finalize(AUTHSERVER, "sess123", "verifier", "ABCD2345"), TOKEN)
-        # Exactly these three fields: no "expires", the auth server sets the token lifetime
+            self.assertIs(sso_login.finalize(AUTHSERVER, "sess123", "verifier", "ABCD2345", EXPIRES), TOKEN)
         request.assert_called_once_with(AUTHSERVER + "/sso/finalize",
                                         {"sessionId": "sess123", "cliCodeVerifier": "verifier",
-                                         "oneTimeCode": "ABCD2345"},
+                                         "oneTimeCode": "ABCD2345", "expires": EXPIRES},
                                         prepend_srv=False, auth=None, max_retries=0)
 
     def test_code_rejected(self):
         error = api_error("SSOLoginFailedError", "SSO login could not be completed")
         with patch("dxpy.DXHTTPRequest", side_effect=error):
             with self.assertRaises(sso_login.SSOCodeRejected) as cm:
-                sso_login.finalize(AUTHSERVER, "sess123", "verifier", "ABCD2345")
+                sso_login.finalize(AUTHSERVER, "sess123", "verifier", "ABCD2345", EXPIRES)
         self.assertEqual(str(cm.exception), "SSO login could not be completed")
 
     @parameterized.expand([
@@ -237,7 +237,7 @@ class TestFinalize(unittest.TestCase):
     def test_login_ended(self, name, message):
         with patch("dxpy.DXHTTPRequest", side_effect=api_error(name, message)):
             with self.assertRaises(sso_login.SSOLoginEnded) as cm:
-                sso_login.finalize(AUTHSERVER, "sess123", "verifier", "ABCD2345")
+                sso_login.finalize(AUTHSERVER, "sess123", "verifier", "ABCD2345", EXPIRES)
         self.assertEqual(str(cm.exception), message)
 
     @parameterized.expand([
@@ -250,7 +250,7 @@ class TestFinalize(unittest.TestCase):
     def test_other_errors_pass_through(self, error):
         with patch("dxpy.DXHTTPRequest", side_effect=error) as request:
             with self.assertRaises(type(error)) as cm:
-                sso_login.finalize(AUTHSERVER, "sess123", "verifier", "ABCD2345")
+                sso_login.finalize(AUTHSERVER, "sess123", "verifier", "ABCD2345", EXPIRES)
         self.assertIs(cm.exception, error)
         request.assert_called_once()
 
@@ -282,7 +282,7 @@ class TestRunCodeFlow(unittest.TestCase):
                           side_effect=initialize_error) as initialize, \
                 patch.object(sso_login, "finalize", side_effect=list(finalize_results)) as finalize:
             self.initialize, self.finalize = initialize, finalize
-            return sso_login.run_code_flow(AUTHSERVER, "0oa123", prompt, self.output.append)
+            return sso_login.run_code_flow(AUTHSERVER, "0oa123", EXPIRES, prompt, self.output.append)
 
     def _rejected(self):
         return sso_login.SSOCodeRejected("SSO login could not be completed")
@@ -295,15 +295,15 @@ class TestRunCodeFlow(unittest.TestCase):
         authserver, idp_id, challenge = self.initialize.call_args[0]
         self.assertEqual((authserver, idp_id), (AUTHSERVER, "0oa123"))
         self.finalize.assert_called_once()
-        authserver, session_id, verifier, code = self.finalize.call_args[0]
-        self.assertEqual((authserver, session_id, code), (AUTHSERVER, "sess123", "ABCD2345"))
+        authserver, session_id, verifier, code, expires = self.finalize.call_args[0]
+        self.assertEqual((authserver, session_id, code, expires), (AUTHSERVER, "sess123", "ABCD2345", EXPIRES))
         self.assertEqual(s256(verifier), challenge)
 
     def test_invalid_code_asks_again(self):
         self.assertIs(self._run_flow(["abcd", "", "abcd-2345"]), TOKEN)
         self.assertEqual(self.output[3:], [INVALID_CODE_MESSAGE, INVALID_CODE_MESSAGE])
         self.assertEqual(len(self.prompts), 3)
-        self.assertEqual(self.finalize.call_args_list, [call(AUTHSERVER, "sess123", ANY, "ABCD2345")])
+        self.assertEqual(self.finalize.call_args_list, [call(AUTHSERVER, "sess123", ANY, "ABCD2345", EXPIRES)])
 
     def test_rejected_code_then_right_code(self):
         self.assertIs(self._run_flow(["ABCD2345", "ABCD2346"], [self._rejected(), TOKEN]), TOKEN)

@@ -28,6 +28,7 @@ import shutil
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from unittest.mock import ANY
@@ -281,14 +282,17 @@ class TestDXLogin(unittest.TestCase):
         self.assertEqual(self._exit_status(dx_login), EXPECTED_ERR_EXIT_STATUS)
         self.assertEqual(self._paths().count("/sso/finalize"), 1)
 
-    def test_sso_timeout_not_used(self):
+    def test_sso_timeout(self):
+        # A security policy can give the token a shorter lifetime than requested
         self.fake.expires_in = 3600
-        dx_login, code = self._start_sso(" --timeout 30d")
+        start = int(time.time() * 1000)
+        dx_login, code = self._start_sso(" --timeout 2h")
         dx_login.sendline(code)
         self.assertEqual(self._exit_status(dx_login), 0)
-        # The auth server sets the token lifetime: no "expires" is sent, and the closing
-        # message shows the lifetime of the token
-        self.assertEqual(sorted(self.fake.requests[2][1]), ["cliCodeVerifier", "oneTimeCode", "sessionId"])
+        end = int(time.time() * 1000)
+        # The requested expiration is sent, and the closing message shows the lifetime of the token
+        two_hours = 2 * 60 * 60 * 1000
+        self.assertTrue(start + two_hours <= self.fake.requests[2][1]["expires"] <= end + two_hours)
         self.assertRegex(dx_login.logfile_read.getvalue(), r"will\s+expire\s+in\s+1:00:00\.")
 
 
