@@ -34,6 +34,7 @@ from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound, DX
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
+from ..cli import sso_login
 from ..cli.cp import cp
 from ..cli.dataset_utilities import extract_dataset, extract_assay_germline, extract_assay_somatic, create_cohort, extract_assay_expression
 from ..cli.download import (download_one_file, download_one_database_file, download)
@@ -317,6 +318,7 @@ def login(args):
 
     default_authserver = 'https://auth.dnanexus.com'
     using_default = False
+    token_lifetime = None
 
     if args.auth_token and not args.token:
         args.token = args.auth_token
@@ -335,17 +337,18 @@ def login(args):
             return dxpy.DXHTTPRequest(authserver+"/system/newAuthToken", data,
                                       prepend_srv=False, auth=None, always_retry=True)
 
-        def get_credentials(reuse=None, get_otp=False):
-            if reuse:
-                username, password = reuse
-            else:
-                username = None
-                while not username:
-                    if 'DX_USERNAME' in os.environ:
-                        username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
-                    else:
-                        username = input('Username: ')
-                dxpy.config.write("DX_USERNAME", username)
+        def get_username():
+            username = None
+            while not username:
+                if 'DX_USERNAME' in os.environ:
+                    username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
+                else:
+                    username = input('Username: ')
+            dxpy.config.write("DX_USERNAME", username)
+            return username
+
+        def get_credentials(username, password=None, get_otp=False):
+            if password is None:
                 password = getpass.getpass()
 
             otp = input('Verification code: ') if get_otp else None
@@ -355,11 +358,24 @@ def login(args):
         attempt, using_otp, reuse = 1, False, None
         while attempt <= 3:
             try:
-                credentials = get_credentials(reuse=reuse, get_otp=using_otp)
+                if reuse:
+                    username, password = reuse
+                else:
+                    username, password = get_username(), None
+                    idp_id = sso_login.lookup_idp(username)
+                    if idp_id:
+                        expires = normalize_time_input(args.timeout, future=True, default_unit='s')
+                        token_res = sso_login.run_code_flow(authserver, idp_id, expires,
+                                                            prompt=getpass.getpass, output=print)
+                        token_lifetime = datetime.timedelta(seconds=token_res['expires_in'])
+                        break
+                credentials = get_credentials(username, password=password, get_otp=using_otp)
                 token_res = get_token(expires=normalize_time_input(args.timeout, future=True, default_unit='s'),
                                       **credentials)
                 break
             except (KeyboardInterrupt, EOFError):
+                err_exit()
+            except (sso_login.SSOUnavailable, sso_login.SSOLoginEnded):
                 err_exit()
             except dxpy.DXAPIError as e:
                 if e.name == 'OTPRequiredError':
@@ -439,9 +455,10 @@ def login(args):
         msg = "You are now logged in. Your credentials are stored in {conf_dir} and will expire in {timeout}. {tip}"
         tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
               " to end this session."
-        timeout = datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s') // 1000)
+        if token_lifetime is None:
+            token_lifetime = datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s') // 1000)
         print(fill(msg.format(conf_dir=dxpy.config.get_user_conf_dir(),
-                              timeout=timeout,
+                              timeout=token_lifetime,
                               tip=tip)))
 
 def logout(args):
@@ -4624,7 +4641,7 @@ subparsers.metavar = 'command'
 # login
 #####################################
 parser_login = subparsers.add_parser('login', help='Log in (interactively or with an existing API token)',
-                                     description='Log in interactively and acquire credentials.  Use "--token" to log in with an existing API token.',
+                                     description='Log in interactively and acquire credentials.  If your account uses single sign-on, you will be asked to sign in through a browser.  Use "--token" to log in with an existing API token.',
                                      prog='dx login', parents=[env_args])
 parser_login.add_argument('--token', help='Authentication token to use')
 host_action = parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
