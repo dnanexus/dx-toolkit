@@ -19,8 +19,6 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import base64
-import hashlib
 import unittest
 from unittest.mock import ANY, call, patch
 
@@ -30,6 +28,7 @@ from parameterized import parameterized
 import dxpy
 from dxpy.cli import sso_login
 from dxpy.exceptions import DXAPIError, HTTPErrorWithContent
+from dxpy_testutil import s256
 
 AUTHSERVER = "https://auth.dnanexus.com"
 INVALID_CODE_MESSAGE = "Invalid one-time code. Enter the 8-character code shown in the browser."
@@ -46,10 +45,6 @@ def api_error(name, message="message", code=400):
 def http_error(status):
     """The exception DXHTTPRequest raises for a non-JSON error response."""
     return HTTPErrorWithContent("{} [Time=0 RequestID=1]".format(status), "<html></html>")
-
-
-def s256(verifier):
-    return base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest()).rstrip(b"=").decode("ascii")
 
 
 class TestMakePkcePair(unittest.TestCase):
