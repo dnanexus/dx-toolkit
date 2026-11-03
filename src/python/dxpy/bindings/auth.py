@@ -19,7 +19,7 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import dxpy
 from dxpy import get_auth_server_name, DXHTTPRequest
 
-from dxpy.api import system_get_user_identity
+from dxpy.api import system_whoami
 
 def is_read_only_session():
     """
@@ -39,15 +39,8 @@ def user_info(authserver_host=None, authserver_port=None):
     authserver = get_auth_server_name(authserver_host, authserver_port)
     return DXHTTPRequest(authserver + "/system/getUserInfo", {}, prepend_srv=False)
 
-def whoami(allow_read_only=None):
+def whoami():
     """
     Returns the user ID of the currently requesting user.
-
-    :param allow_read_only: Value of ``allowReadOnly``, without which a
-        read-only token is refused. Defaults to whether the active security
-        context is read-only.
-    :type allow_read_only: boolean or None
     """
-    if allow_read_only is None:
-        allow_read_only = is_read_only_session()
-    return system_get_user_identity({"allowReadOnly": bool(allow_read_only)})['id']
+    return system_whoami()['id']
