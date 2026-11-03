@@ -28,34 +28,26 @@ def is_read_only_session():
     """
     return bool((dxpy.SECURITY_CONTEXT or {}).get("read_only"))
 
-def _identity_input(read_only_ok):
-    if read_only_ok is None:
-        read_only_ok = is_read_only_session()
-    return {"readOnlyOk": True} if read_only_ok else {}
-
-def user_info(authserver_host=None, authserver_port=None, read_only_ok=None):
+def user_info(authserver_host=None, authserver_port=None):
     """Returns the result of the user_info call against the specified auth
     server.
-
-    :param read_only_ok: Whether to send ``readOnlyOk: true``, without which
-        a read-only token is refused. Defaults to whether the active security
-        context is read-only.
-    :type read_only_ok: boolean or None
 
     .. deprecated:: 0.108.0
        Use :func:`whoami` instead where possible.
 
     """
     authserver = get_auth_server_name(authserver_host, authserver_port)
-    return DXHTTPRequest(authserver + "/system/getUserInfo", _identity_input(read_only_ok), prepend_srv=False)
+    return DXHTTPRequest(authserver + "/system/getUserInfo", {}, prepend_srv=False)
 
-def whoami(read_only_ok=None):
+def whoami(allow_read_only=None):
     """
     Returns the user ID of the currently requesting user.
 
-    :param read_only_ok: Whether to send ``readOnlyOk: true``, without which
-        a read-only token is refused. Defaults to whether the active security
+    :param allow_read_only: Value of ``allowReadOnly``, without which a
+        read-only token is refused. Defaults to whether the active security
         context is read-only.
-    :type read_only_ok: boolean or None
+    :type allow_read_only: boolean or None
     """
-    return system_get_user_identity(_identity_input(read_only_ok))['id']
+    if allow_read_only is None:
+        allow_read_only = is_read_only_session()
+    return system_get_user_identity({"allowReadOnly": bool(allow_read_only)})['id']
