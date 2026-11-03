@@ -283,21 +283,11 @@ class TestDXReadOnlySession(unittest.TestCase):
         args = dx_script.parser.parse_args(list(argv))
         args.func(args)
 
-    def test_whoami_opts_in_only_for_read_only_session(self):
-        with patch("dxpy.bindings.auth.system_get_user_identity", return_value={"id": "user-alice"}) as identity:
+    def test_whoami_calls_system_whoami_in_read_only_session(self):
+        with patch("dxpy.api.DXHTTPRequest", return_value={"id": "user-alice", "readOnly": True}) as request:
             dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
             self.assertEqual(dxpy.whoami(), "user-alice")
-            dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
-            dxpy.whoami()
-            dxpy.whoami(allow_read_only=True)
-        self.assertEqual([c[0][0] for c in identity.call_args_list],
-                         [{"allowReadOnly": True}, {"allowReadOnly": False}, {"allowReadOnly": True}])
-
-    def test_whoami_calls_get_user_identity(self):
-        with patch("dxpy.api.DXHTTPRequest", return_value={"id": "user-alice"}) as request:
-            dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
-            self.assertEqual(dxpy.whoami(), "user-alice")
-        self.assertEqual(request.call_args[0][:2], ("/system/getUserIdentity", {"allowReadOnly": False}))
+        self.assertEqual(request.call_args[0][:2], ("/system/whoami", {}))
 
     def test_select_defaults_to_view_in_read_only_session(self):
         dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
