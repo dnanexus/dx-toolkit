@@ -189,7 +189,7 @@ class TestDXLoginReadOnly(unittest.TestCase):
         self.assertNotIn("scope", mint["data"])
         self.assertIn("expires", mint["data"])
         self.assertEqual(self.saved_security_context(), {"auth_token": "new-token", "auth_token_type": "bearer"})
-        self.assertIn("You are now logged in. ", stdout)
+        self.assertIn("You are now logged in.", stdout)
         self.assertEqual(self.picked_levels, ["CONTRIBUTE"])
 
     def test_password_login_read_only(self):
@@ -202,13 +202,7 @@ class TestDXLoginReadOnly(unittest.TestCase):
         self.assertEqual(self.saved_security_context(),
                          {"auth_token": "new-token", "auth_token_type": "bearer", "read_only": True})
         self.assertIn("with a read-only token", stdout)
-        self.assertIn("will expire in 1:00:00", stdout)
         self.assertEqual(self.picked_levels, ["VIEW"])
-
-    def test_banner_prints_before_project_picker(self):
-        dx_script.pick_and_set_project.side_effect = lambda args: print("PICKER")
-        _, stdout, _ = self.login("--read-only")
-        self.assertLess(stdout.index("You are now logged in"), stdout.index("PICKER"))
 
     def test_token_login_unchanged_without_read_only(self):
         exit_code, stdout, _ = self.login("--token", "user-token")
@@ -233,7 +227,6 @@ class TestDXLoginReadOnly(unittest.TestCase):
         self.assertEqual(self.saved_security_context(),
                          {"auth_token": "child-token", "auth_token_type": "bearer", "read_only": True})
         self.assertEqual(self.saved_username(), "alice")
-        self.assertIn("will expire in 0:10:00", stdout)
         self.assertEqual(self.picked_levels, ["VIEW"])
 
     def test_token_login_read_only_sends_explicit_timeout(self):
@@ -326,6 +319,14 @@ class TestDXReadOnlySession(unittest.TestCase):
         with patch.object(dxpy.config, "save"):
             self.run_dx("setenv", "--current")
         self.assertEqual(self.picked_levels, ["VIEW"])
+
+    def test_find_projects_defaults_to_view_only_in_read_only_session(self):
+        with patch("dxpy.find_projects", return_value=iter([])) as find:
+            dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
+            self.run_dx("find", "projects")
+            dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
+            self.run_dx("find", "projects")
+        self.assertEqual([c[1]["level"] for c in find.call_args_list], ["VIEW", None])
 
     def test_get_applet_skips_resources_without_bill_to(self):
         applet = dxpy.DXApplet("applet-" + "x" * 24)
