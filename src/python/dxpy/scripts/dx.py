@@ -339,22 +339,13 @@ def login(args):
     using_default = False
     token_res = None
 
-    if args.derive_from_current:
-        if args.token is not None:
-            err_exit('Error: --derive-from-current cannot be combined with --token', 2)
-        args.read_only = True
-        parent_token = None
-        if dxpy.AUTH_HELPER is not None:
-            parent_token = dxpy.AUTH_HELPER.security_context.get('auth_token')
-        if parent_token in (None, 'PUBLIC'):
-            err_exit('Error: No current login to derive a read-only token from; run "dx login" first', 3)
-    elif args.auth_token and not args.token:
+    if args.auth_token and not args.token:
         args.token = args.auth_token
         args.auth_token = None
 
     # API server should have already been set up if --host or one of
     # the --special-host flags has been set.
-    if args.token is None and not args.derive_from_current:
+    if args.token is None:
         if (args.host is None) != (args.port is None):
             err_exit('Error: Only one of --host and --port were provided; provide either both or neither of the values', 2)
         authserver = dxpy.get_auth_server_name(args.host, args.port, args.protocol)
@@ -418,16 +409,12 @@ def login(args):
         if using_default:
             set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
     else:
-        if args.derive_from_current:
-            using_default = dxpy.APISERVER_HOST == dxpy.DEFAULT_APISERVER_HOST
-        else:
-            parent_token = args.token
-            # Ensure correct API server; it is saved together with the token below
-            if args.host is None:
-                set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, False)
-                using_default = True
+        # Ensure correct API server; it is saved together with the token below
+        if args.host is None:
+            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, False)
+            using_default = True
         if args.read_only:
-            token_res = _derive_read_only_token(parent_token, args)
+            token_res = _derive_read_only_token(args.token, args)
             sec_context = {'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]}
         else:
             sec_context = {'auth_token': args.token, 'auth_token_type': 'Bearer'}
@@ -439,7 +426,7 @@ def login(args):
 
     # If login via token, obtain current username from auth server.
     username = None
-    if args.token is not None or args.derive_from_current:
+    if args.token is not None:
         host, port = None, None
         if dxpy.APISERVER_HOST not in ['api.dnanexus.com', 'stagingapi.dnanexus.com']:
             host, port = args.host, args.port
@@ -474,7 +461,7 @@ def login(args):
     if args.save and token_res is not None:
         if token_res.get('expires_in') is not None:
             expires_in = token_res['expires_in']
-        elif args.token is None and not args.derive_from_current:
+        elif args.token is None:
             expires_in = normalize_time_input(args.timeout or '18h', default_unit='s') // 1000
         else:
             expires_in = None
@@ -4697,8 +4684,6 @@ parser_login.add_argument('--timeout',
 parser_login.add_argument('--read-only', action='store_true',
                           help='Log in with a read-only token, which can view but not modify the platform. With '
                                '--token, derive a read-only token from the given token')
-parser_login.add_argument('--derive-from-current', action='store_true',
-                          help='Derive a read-only token from the login this shell already uses (implies --read-only)')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
 parser_login.set_defaults(staging=False, func=login)
 register_parser(parser_login, categories='session')

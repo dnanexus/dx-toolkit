@@ -229,7 +229,7 @@ class TestDXLoginReadOnly(unittest.TestCase):
         self.assertEqual(mint["data"], {"scope": {"readOnly": True}})
         self.assertEqual(mint["auth"].security_context["auth_token"], "parent-token")
         [lookup] = self.server.calls_to("/system/getUserInfo")
-        self.assertEqual(lookup["data"], {"readOnlyOk": True})
+        self.assertEqual(lookup["data"], {})
         self.assertEqual(self.saved_security_context(),
                          {"auth_token": "child-token", "auth_token_type": "bearer", "read_only": True})
         self.assertEqual(self.saved_username(), "alice")
@@ -264,28 +264,6 @@ class TestDXLoginReadOnly(unittest.TestCase):
         self.assertEqual(exit_code, EXPECTED_ERR_EXIT_STATUS)
         self.assertNotIn("does not support --read-only", stderr)
 
-    def test_derive_from_current(self):
-        os.environ["DX_SECURITY_CONTEXT"] = json.dumps({"auth_token": "current-token", "auth_token_type": "Bearer"})
-        dxpy.config.__init__(suppress_warning=True)
-        exit_code, _, _ = self.login("--derive-from-current")
-        self.assertIsNone(exit_code)
-        [mint] = self.server.calls_to("/system/newAuthToken")
-        self.assertEqual(mint["data"], {"scope": {"readOnly": True}})
-        self.assertEqual(mint["auth"].security_context["auth_token"], "current-token")
-        self.assertEqual(self.saved_security_context()["read_only"], True)
-        self.assertEqual(self.saved_security_context()["auth_token"], "new-token")
-
-    def test_derive_from_current_without_login(self):
-        exit_code, _, stderr = self.login("--derive-from-current")
-        self.assertEqual(exit_code, 3)
-        self.assertIn('run "dx login" first', stderr)
-        self.assertEqual(self.server.requests, [])
-
-    def test_derive_from_current_with_token(self):
-        exit_code, _, _ = self.login("--derive-from-current", "--token", "user-token")
-        self.assertEqual(exit_code, 2)
-        self.assertEqual(self.server.requests, [])
-
     def test_read_only_error_messages(self):
         self.assertEqual(login_api_error(dxpy.exceptions.ReadOnlyTokenError, "server text").error_message(),
                          "this session is read-only; log in without --read-only to modify the platform")
@@ -318,15 +296,15 @@ class TestDXReadOnlySession(unittest.TestCase):
             self.assertEqual(dxpy.whoami(), "user-alice")
             dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
             dxpy.whoami()
-            dxpy.whoami(read_only_ok=True)
+            dxpy.whoami(allow_read_only=True)
         self.assertEqual([c[0][0] for c in identity.call_args_list],
-                         [{"readOnlyOk": True}, {}, {"readOnlyOk": True}])
+                         [{"allowReadOnly": True}, {"allowReadOnly": False}, {"allowReadOnly": True}])
 
     def test_whoami_calls_get_user_identity(self):
         with patch("dxpy.api.DXHTTPRequest", return_value={"id": "user-alice"}) as request:
             dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
             self.assertEqual(dxpy.whoami(), "user-alice")
-        self.assertEqual(request.call_args[0][:2], ("/system/getUserIdentity", {}))
+        self.assertEqual(request.call_args[0][:2], ("/system/getUserIdentity", {"allowReadOnly": False}))
 
     def test_select_defaults_to_view_in_read_only_session(self):
         dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
