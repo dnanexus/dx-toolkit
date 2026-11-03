@@ -6,7 +6,13 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
-## [418.0] - beta
+## [419.0] - beta
+
+### Fixed
+
+* Default Nextflow instance types for OCI regions
+
+## [418.0] - 2026.11.03
 
 * No significant changes
 
