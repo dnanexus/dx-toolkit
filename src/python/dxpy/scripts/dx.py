@@ -337,7 +337,6 @@ def login(args):
 
     default_authserver = 'https://auth.dnanexus.com'
     using_default = False
-    token_res = None
 
     if args.auth_token and not args.token:
         args.token = args.auth_token
@@ -458,30 +457,18 @@ def login(args):
         except Exception as e:
             warn("Error while retrieving greet data: {}".format(e))
 
-    if args.save and token_res is not None:
-        if token_res.get('expires_in') is not None:
-            expires_in = token_res['expires_in']
-        elif args.token is None:
-            expires_in = normalize_time_input(args.timeout or '18h', default_unit='s') // 1000
-        else:
-            expires_in = None
-        msg = "You are now logged in{mode}. Your credentials are stored in {conf_dir}{expiry}. {tip}".format(
-            mode=" with a read-only token" if args.read_only else "",
-            conf_dir=dxpy.config.get_user_conf_dir(),
-            expiry="" if expires_in is None else " and will expire in {}".format(datetime.timedelta(seconds=expires_in)),
-            tip="Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") +
-                " to end this session.")
-        print(fill(msg))
-
     args.current = False
     args.name = None
-    args.level = 'VIEW' if sec_context.get('read_only') else 'CONTRIBUTE'
+    args.level = _default_project_level()
     args.public = False
 
     if args.host is not None and not args.staging and not using_default:
         setenv(args)
     elif args.projects:
         pick_and_set_project(args)
+
+    if args.save and not args.token:
+        print("You are now logged in{mode}.".format(mode=" with a read-only token" if args.read_only else ""))
 
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
@@ -2592,6 +2579,8 @@ def find_projects(args):
     try_call(process_find_by_property_args, args)
     try_call(process_phi_param, args)
     try_call(process_external_upload_restricted_param, args)
+    if args.level is None and is_read_only_session():
+        args.level = 'VIEW'
 
     try:
         results = dxpy.find_projects(name=args.name, name_mode='glob',
@@ -6271,7 +6260,7 @@ parser_find_projects = subparsers_find.add_parser(
 )
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
-                                  help='Minimum level of permissions expected')
+                                  help='Minimum level of permissions expected; default VIEW in a read-only session')
 parser_find_projects.add_argument('--public',
                                   help='Include ONLY public projects (will automatically set --level to VIEW)',
                                   action='store_true')
