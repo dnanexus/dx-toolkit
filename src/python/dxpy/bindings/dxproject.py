@@ -323,7 +323,7 @@ class DXProject(DXContainer):
         :type drive: string
         :type preview_viewer_restricted: boolean
         :param preview_viewer_restricted: If provided, whether file preview and viewer for the project should be restricted
-        :param deletion_retention_enabled: If provided, whether objects removed from the project are moved into the project's recycle bin instead of being deleted immediately. Only accepted when the billTo org has the deletionRetention feature enabled, and rejected with InvalidInput when the org enforces retention.
+        :param deletion_retention_enabled: If provided, whether objects removed from the project are moved into the project's recycle bin instead of being deleted immediately. Rejected with PermissionDenied if the billTo org lacks the deletionRetention license feature, and with InvalidInput if that org sets the deletionRetentionEnforced policy and this is False (the flag is forced to True in that case).
         :type deletion_retention_enabled: boolean
 
         Creates a new project. Initially only the user performing this action
@@ -416,7 +416,7 @@ class DXProject(DXContainer):
         :type https_app_isolated_browsing_options: dict
         :type preview_viewer_restricted: boolean
         :param preview_viewer_restricted: If provided, whether file preview and viewer for the project should be restricted
-        :param deletion_retention_enabled: If provided, whether objects removed from the project are moved into the project's recycle bin instead of being deleted immediately
+        :param deletion_retention_enabled: If provided, whether objects removed from the project are moved into the project's recycle bin instead of being deleted immediately. Rejected with PermissionDenied if set to True while the billTo org lacks the deletionRetention license feature, or if set to False while that org sets the deletionRetentionEnforced policy; rejected with InvalidState if set to False while the recycle bin is non-empty.
         :type deletion_retention_enabled: boolean
 
         Updates the project with the new fields. All fields are
@@ -513,8 +513,8 @@ class DXProject(DXContainer):
         :rtype: dict
 
         Lists the objects currently held in the project's recycle bin, i.e.
-        the objects that were soft-deleted while deletion retention was
-        enabled and that can still be recovered with
+        the objects that were removed while deletion retention was enabled
+        and that can still be recovered with
         :meth:`recover_objects()`. Each entry contains the object "id" and
         "class" along with the retention metadata stamped at delete time:
         "name", "deletedAt", "purgeAt" and "previousFolder". Entries whose
