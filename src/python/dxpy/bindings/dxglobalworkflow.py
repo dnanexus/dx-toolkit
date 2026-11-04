@@ -160,6 +160,19 @@ class DXGlobalWorkflow(DXObject, DXExecutable):
         else:
             return dxpy.api.global_workflow_publish('globalworkflow-' + self._name, alias=self._alias, **kwargs)
 
+    def recover(self, **kwargs):
+        """
+        Recovers this global workflow from the pending-deletion state it was
+        put in by a delete issued while deletion retention was in effect,
+        returning it to the active state.
+
+        The current user must be a developer of the workflow.
+        """
+        if self._dxid is not None:
+            return dxpy.api.global_workflow_recover(self._dxid, **kwargs)
+        else:
+            return dxpy.api.global_workflow_recover('globalworkflow-' + self._name, alias=self._alias, **kwargs)
+
     def describe_underlying_workflow(self, region, describe_output=None):
         """
         :param region: region name
