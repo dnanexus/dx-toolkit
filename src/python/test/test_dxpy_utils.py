@@ -576,5 +576,89 @@ class TestSystemRequirementsDict(unittest.TestCase):
         expected = SystemRequirementsDict(None)
         self.assertEqual(expected.entrypoints, added.entrypoints)
 
+
+class TestNoProxy(unittest.TestCase):
+    PROXY_VARS = ('http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY', 'no_proxy', 'NO_PROXY')
+    # Nothing listens on this port, so any request routed through the proxy fails
+    DEAD_PROXY = 'http://127.0.0.1:9'
+
+    def setUp(self):
+        self.saved_env = {k: os.environ.pop(k) for k in self.PROXY_VARS if k in os.environ}
+        self._reset_pool_managers()
+
+    def tearDown(self):
+        for k in self.PROXY_VARS:
+            os.environ.pop(k, None)
+        os.environ.update(self.saved_env)
+        self._reset_pool_managers()
+
+    @staticmethod
+    def _reset_pool_managers():
+        dxpy._pool_manager = None
+        dxpy._direct_pool_manager = None
+
+    def test_should_bypass_proxy(self):
+        os.environ['no_proxy'] = '10.0.3.1, .example.com,localhost:8080'
+        self.assertTrue(dxpy._should_bypass_proxy('http://10.0.3.1:8124/system/findDataObjects'))
+        self.assertTrue(dxpy._should_bypass_proxy('https://api.example.com/file-xxxx/download'))
+        self.assertTrue(dxpy._should_bypass_proxy('http://localhost:8080/'))
+        self.assertFalse(dxpy._should_bypass_proxy('http://localhost:9090/'))
+        self.assertFalse(dxpy._should_bypass_proxy('https://api.dnanexus.com/system/whoami'))
+        self.assertFalse(dxpy._should_bypass_proxy('not a url'))
+
+        del os.environ['no_proxy']
+        os.environ['NO_PROXY'] = '*'
+        self.assertTrue(dxpy._should_bypass_proxy('https://api.dnanexus.com/system/whoami'))
+
+        del os.environ['NO_PROXY']
+        self.assertFalse(dxpy._should_bypass_proxy('http://10.0.3.1:8124/'))
+
+    def test_pool_manager_selection(self):
+        import urllib3
+        os.environ['https_proxy'] = self.DEAD_PROXY
+        proxied = dxpy._get_pool_manager(None, None, None)
+        direct = dxpy._get_pool_manager(None, None, None, bypass_proxy=True)
+        self.assertIsInstance(proxied, urllib3.ProxyManager)
+        self.assertNotIsInstance(direct, urllib3.ProxyManager)
+        self.assertIs(direct, dxpy._get_pool_manager(None, None, None, bypass_proxy=True))
+        self.assertIsNot(direct, proxied)
+
+        uncached = dxpy._get_pool_manager(False, None, None, bypass_proxy=True)
+        self.assertNotIsInstance(uncached, urllib3.ProxyManager)
+
+    def test_request_to_no_proxy_host_skips_proxy(self):
+        import threading
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self):
+                self.rfile.read(int(self.headers.get('Content-Length', 0)))
+                body = b'{"ok": true}'
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *args):
+                pass
+
+        server = HTTPServer(('127.0.0.1', 0), Handler)
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        url = 'http://127.0.0.1:{0}/system/findDataObjects'.format(server.server_port)
+        try:
+            os.environ['https_proxy'] = self.DEAD_PROXY
+            os.environ['no_proxy'] = '127.0.0.1'
+            result = dxpy.DXHTTPRequest(url, {}, prepend_srv=False, auth=None, max_retries=0)
+            self.assertEqual(result, {'ok': True})
+
+            del os.environ['no_proxy']
+            self._reset_pool_managers()
+            with self.assertRaises(Exception):
+                dxpy.DXHTTPRequest(url, {}, prepend_srv=False, auth=None, max_retries=0)
+        finally:
+            server.shutdown()
+            server.server_close()
+
 if __name__ == '__main__':
     unittest.main()
