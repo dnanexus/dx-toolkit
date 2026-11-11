@@ -365,8 +365,8 @@ def login(args):
                     idp_id = sso_login.lookup_idp(username)
                     if idp_id:
                         expires = normalize_time_input(args.timeout, future=True, default_unit='s')
-                        token_res = sso_login.run_code_flow(authserver, idp_id, expires,
-                                                            prompt=getpass.getpass, output=print)
+                        token_res = sso_login.run_sso_flow(authserver, idp_id, expires,
+                                                           prompt=getpass.getpass, output=print)
                         token_lifetime = datetime.timedelta(seconds=token_res['expires_in'])
                         break
                 credentials = get_credentials(username, password=password, get_otp=using_otp)

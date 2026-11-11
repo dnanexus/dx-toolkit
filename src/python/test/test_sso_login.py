@@ -178,13 +178,13 @@ class TestLookupIdp(unittest.TestCase):
                 sso_login.lookup_idp("alice")
 
 
-class TestInitialize(unittest.TestCase):
-    """Tests for initialize() with a mocked DXHTTPRequest."""
+class TestInitializeCode(unittest.TestCase):
+    """Tests for initialize_code() with a mocked DXHTTPRequest."""
 
     def test_request(self):
         response = {"sessionId": "sess123", "expiresIn": 300}
         with patch("dxpy.DXHTTPRequest", return_value=response) as request:
-            self.assertIs(sso_login.initialize(AUTHSERVER, "0oa123", "challenge"), response)
+            self.assertIs(sso_login.initialize_code(AUTHSERVER, "0oa123", "challenge"), response)
         request.assert_called_once_with(AUTHSERVER + "/sso/initialize",
                                         {"type": "code", "codeChallenge": "challenge", "idpId": "0oa123"},
                                         prepend_srv=False, auth=None, max_retries=0)
@@ -192,7 +192,7 @@ class TestInitialize(unittest.TestCase):
     def test_no_sso_routes(self):
         with patch("dxpy.DXHTTPRequest", side_effect=http_error("404 NOT FOUND")):
             with self.assertRaises(sso_login.SSOUnavailable) as cm:
-                sso_login.initialize(AUTHSERVER, "0oa123", "challenge")
+                sso_login.initialize_code(AUTHSERVER, "0oa123", "challenge")
         self.assertEqual(str(cm.exception), 'Logging in with single sign-on is not supported. Use the Profile page '
                                             'on the DNAnexus website to create an API token, then run "dx login '
                                             '--token" to log in with it.')
@@ -206,7 +206,7 @@ class TestInitialize(unittest.TestCase):
     def test_other_errors_pass_through(self, error):
         with patch("dxpy.DXHTTPRequest", side_effect=error) as request:
             with self.assertRaises(type(error)) as cm:
-                sso_login.initialize(AUTHSERVER, "0oa123", "challenge")
+                sso_login.initialize_code(AUTHSERVER, "0oa123", "challenge")
         self.assertIs(cm.exception, error)
         request.assert_called_once()
 
@@ -256,7 +256,7 @@ class TestFinalize(unittest.TestCase):
 
 
 class TestRunCodeFlow(unittest.TestCase):
-    """Tests for run_code_flow() with mocked initialize() and finalize()."""
+    """Tests for run_code_flow() with mocked initialize_code() and finalize()."""
 
     INSTRUCTIONS = ["To log in with single sign-on, open the following URL in a browser:",
                     AUTHSERVER + "/sso/authorize/sess123",
@@ -278,7 +278,7 @@ class TestRunCodeFlow(unittest.TestCase):
                 raise entry
             return entry
 
-        with patch.object(sso_login, "initialize", return_value={"sessionId": "sess123", "expiresIn": 300},
+        with patch.object(sso_login, "initialize_code", return_value={"sessionId": "sess123", "expiresIn": 300},
                           side_effect=initialize_error) as initialize, \
                 patch.object(sso_login, "finalize", side_effect=list(finalize_results)) as finalize:
             self.initialize, self.finalize = initialize, finalize
@@ -364,6 +364,16 @@ class TestRunCodeFlow(unittest.TestCase):
         self._run_flow(["qrst-9870", "qrst-uvwx", "wxyz-2345"], [self._rejected(), TOKEN])
         for line in self.output:
             self.assertNotRegex(line.upper(), "QRST|UVWX|WXYZ")
+
+
+class TestRunSsoFlow(unittest.TestCase):
+    """Tests for run_sso_flow()."""
+
+    def test_delegates_to_code_flow(self):
+        with patch.object(sso_login, "run_code_flow", return_value=TOKEN) as run_code_flow:
+            result = sso_login.run_sso_flow(AUTHSERVER, "0oa123", EXPIRES, "prompt", "output")
+        self.assertIs(result, TOKEN)
+        run_code_flow.assert_called_once_with(AUTHSERVER, "0oa123", EXPIRES, "prompt", "output")
 
 
 if __name__ == "__main__":

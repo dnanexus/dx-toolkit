@@ -129,15 +129,13 @@ def lookup_idp(username):
         return None
 
 
-def initialize(authserver, idp_id, challenge):
+def _initialize(authserver, body):
     """
-    Starts an SSO code-flow session and returns the response ("sessionId",
-    "expiresIn"). Never retried. Raises SSOUnavailable if the auth server does
-    not support SSO login.
+    Starts an SSO session with *body* and returns the response. Never retried.
+    Raises SSOUnavailable if the auth server does not support SSO login.
     """
     try:
-        return dxpy.DXHTTPRequest(authserver + "/sso/initialize",
-                                  {"type": "code", "codeChallenge": challenge, "idpId": idp_id},
+        return dxpy.DXHTTPRequest(authserver + "/sso/initialize", body,
                                   prepend_srv=False, auth=None, max_retries=0)
     except HTTPErrorWithContent as e:
         # A non-JSON 404 means the auth server has no /sso routes. DXHTTPRequest
@@ -147,6 +145,15 @@ def initialize(authserver, idp_id, challenge):
                                  'DNAnexus website to create an API token, then run "dx login --token" to log '
                                  'in with it.')
         raise
+
+
+def initialize_code(authserver, idp_id, challenge):
+    """
+    Starts an SSO code-flow session and returns the response ("sessionId",
+    "expiresIn"). Never retried. Raises SSOUnavailable if the auth server does
+    not support SSO login.
+    """
+    return _initialize(authserver, {"type": "code", "codeChallenge": challenge, "idpId": idp_id})
 
 
 def finalize(authserver, session_id, verifier, code, expires):
@@ -180,7 +187,7 @@ def run_code_flow(authserver, idp_id, expires, prompt, output):
     Raises SSOUnavailable or SSOLoginEnded if the login cannot complete.
     """
     verifier, challenge = make_pkce_pair()
-    session_id = initialize(authserver, idp_id, challenge)["sessionId"]
+    session_id = initialize_code(authserver, idp_id, challenge)["sessionId"]
     attempt = 1
 
     output("To log in with single sign-on, open the following URL in a browser:")
@@ -200,3 +207,10 @@ def run_code_flow(authserver, idp_id, expires, prompt, output):
                 raise SSOLoginEnded('Incorrect one-time code. Run "dx login" again.')
             output("Incorrect one-time code")
             attempt += 1
+
+
+def run_sso_flow(authserver, idp_id, expires, prompt, output):
+    """
+    Runs the SSO login flow and returns the response containing the API token.
+    """
+    return run_code_flow(authserver, idp_id, expires, prompt, output)
