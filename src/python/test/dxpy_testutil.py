@@ -18,6 +18,8 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import base64
+import hashlib
 import locale
 import os, sys, unittest, tempfile, shutil, subprocess, re, json, platform
 import time
@@ -270,6 +272,11 @@ def generate_unique_username_email():
     username = "asset_" + str(int(time.time())) + "_" + str(r)
     email = username + "@example.com"
     return username, email
+
+
+def s256(verifier):
+    """Returns the PKCE (RFC 7636) S256 code challenge for *verifier*."""
+    return base64.urlsafe_b64encode(hashlib.sha256(verifier.encode("ascii")).digest()).rstrip(b"=").decode("ascii")
 
 
 # Note: clobbers the local environment! All tests that use this should
