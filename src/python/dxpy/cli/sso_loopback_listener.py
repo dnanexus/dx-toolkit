@@ -23,6 +23,18 @@ SSO protocol requests and flow orchestration remain in sso_login.py.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import socket
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+
+class _LoopbackRequestHandler(BaseHTTPRequestHandler):
+    pass
+
+
+class _IPv6HTTPServer(HTTPServer):
+    address_family = socket.AF_INET6
+
 
 class LoopbackListener:
     '''
@@ -34,12 +46,35 @@ class LoopbackListener:
     '''
 
     def __init__(self, normalize_code):
-        raise NotImplementedError("Loopback listener binding is not implemented")
+        self._normalize_code = normalize_code
+        try:
+            self._server = HTTPServer(("127.0.0.1", 0), _LoopbackRequestHandler)
+            authority = "127.0.0.1"
+        except OSError:
+            self._server = _IPv6HTTPServer(("::1", 0), _LoopbackRequestHandler)
+            authority = "[::1]"
+
+        port = self._server.server_address[1]
+        self._redirect_url = "http://{}:{}/callback".format(authority, port)
+        self._thread = threading.Thread(
+            target=self._server.serve_forever,
+            kwargs={"poll_interval": 0.25},
+            name="dx-sso-loopback-listener",
+            daemon=True,
+        )
+        try:
+            self._thread.start()
+        except BaseException:
+            self._thread = None
+            server = self._server
+            self._server = None
+            server.server_close()
+            raise
 
     @property
     def redirect_url(self):
         '''Returns the canonical loopback callback URL for the bound listener.'''
-        raise NotImplementedError("Loopback redirect URL is not implemented")
+        return self._redirect_url
 
     def set_expected_state(self, state):
         '''Sets the SSO session state that a callback must contain.'''
@@ -65,4 +100,20 @@ class LoopbackListener:
 
     def close(self):
         '''Stops the listener and releases its bound socket.'''
-        raise NotImplementedError("Loopback listener shutdown is not implemented")
+        server = self._server
+        if server is None:
+            return
+
+        thread = self._thread
+        if thread is threading.current_thread():
+            raise RuntimeError("Loopback listener cannot be closed from its server thread")
+
+        self._server = None
+        self._thread = None
+        try:
+            server.shutdown()
+        finally:
+            try:
+                server.server_close()
+            finally:
+                thread.join()
