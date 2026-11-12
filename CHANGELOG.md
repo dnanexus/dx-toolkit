@@ -12,6 +12,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
   * Bumped `certifi` from `2024.7.4` to `2026.10.19`
   * Bumped `pip` from `26.0` to `26.2.2`
 
+* Java bindings: `DXJSON.safeTreeToValue` (and therefore all `DXAPI` wrappers taking an output class) now ignores unknown properties in API responses instead of throwing `UnrecognizedPropertyException`
+
 ## [420.0] - beta
 
 ### Added
