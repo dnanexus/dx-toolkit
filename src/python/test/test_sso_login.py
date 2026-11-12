@@ -20,7 +20,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import unittest
-from unittest.mock import ANY, call, patch
+from unittest.mock import ANY, Mock, call, patch
 
 import urllib3
 from parameterized import parameterized
@@ -31,6 +31,7 @@ from dxpy.exceptions import DXAPIError, HTTPErrorWithContent
 from dxpy_testutil import s256
 
 AUTHSERVER = "https://auth.dnanexus.com"
+REDIRECT_URL = "http://127.0.0.1:53682/callback"
 INVALID_CODE_MESSAGE = "Invalid one-time code. Enter the 8-character code shown in the browser."
 TOKEN = {"access_token": "token", "token_type": "bearer", "expires_in": 64800,
          "token_signature": "signature", "user_id": "user-alice"}
@@ -211,6 +212,20 @@ class TestInitializeCode(unittest.TestCase):
         request.assert_called_once()
 
 
+class TestInitializeLoopback(unittest.TestCase):
+    """Tests for initialize_loopback() with a mocked DXHTTPRequest."""
+
+    def test_request(self):
+        response = {"sessionId": "sess123", "expiresIn": 300}
+        with patch("dxpy.DXHTTPRequest", return_value=response) as request:
+            self.assertIs(sso_login.initialize_loopback(AUTHSERVER, "0oa123", "challenge", REDIRECT_URL),
+                          response)
+        request.assert_called_once_with(AUTHSERVER + "/sso/initialize",
+                                        {"type": "loopback", "codeChallenge": "challenge", "idpId": "0oa123",
+                                         "redirectUrl": REDIRECT_URL},
+                                        prepend_srv=False, auth=None, max_retries=0)
+
+
 class TestFinalize(unittest.TestCase):
     """Tests for finalize() with a mocked DXHTTPRequest."""
 
@@ -364,6 +379,109 @@ class TestRunCodeFlow(unittest.TestCase):
         self._run_flow(["qrst-9870", "qrst-uvwx", "wxyz-2345"], [self._rejected(), TOKEN])
         for line in self.output:
             self.assertNotRegex(line.upper(), "QRST|UVWX|WXYZ")
+
+
+class TestRunLoopbackFlow(unittest.TestCase):
+    """Tests for run_loopback_flow() with a listener test double."""
+
+    INSTRUCTIONS = ["Opening your browser to sign in to DNAnexus.",
+                    "If it doesn't open automatically, visit this URL in a browser on this computer:",
+                    "",
+                    "  " + AUTHSERVER + "/sso/authorize/sess123",
+                    "",
+                    "Waiting for authorization. Press Ctrl-C to cancel."]
+
+    def _run_flow(self, callback=("ABCD2345", None), initialize_error=None, finalize_error=None,
+                  wait_error=None, expires_in=300):
+        self.output = []
+        self.listener = Mock(spec=sso_login.LoopbackListener)
+        self.listener.redirect_url = REDIRECT_URL
+        if wait_error is None:
+            self.listener.wait_for_callback.return_value = callback
+        else:
+            self.listener.wait_for_callback.side_effect = wait_error
+
+        with patch.object(sso_login, "initialize_loopback",
+                          return_value={"sessionId": "sess123", "expiresIn": expires_in},
+                          side_effect=initialize_error) as initialize, \
+                patch.object(sso_login, "finalize", return_value=TOKEN,
+                             side_effect=finalize_error) as finalize, \
+                patch.object(sso_login.webbrowser, "open") as browser_open:
+            self.initialize = initialize
+            self.finalize = finalize
+            self.browser_open = browser_open
+            return sso_login.run_loopback_flow(AUTHSERVER, "0oa123", EXPIRES, self.listener,
+                                               self.output.append)
+
+    def test_success(self):
+        self.assertIs(self._run_flow(), TOKEN)
+        self.assertEqual(self.output, self.INSTRUCTIONS)
+        self.initialize.assert_called_once()
+        authserver, idp_id, challenge, redirect_url = self.initialize.call_args[0]
+        self.assertEqual((authserver, idp_id, redirect_url), (AUTHSERVER, "0oa123", REDIRECT_URL))
+        self.listener.set_expected_state.assert_called_once_with("sess123")
+        self.browser_open.assert_called_once_with(AUTHSERVER + "/sso/authorize/sess123")
+        self.listener.wait_for_callback.assert_called_once_with(300)
+        self.finalize.assert_called_once()
+        authserver, session_id, verifier, code, expires = self.finalize.call_args[0]
+        self.assertEqual((authserver, session_id, code, expires),
+                         (AUTHSERVER, "sess123", "ABCD2345", EXPIRES))
+        self.assertEqual(s256(verifier), challenge)
+        self.listener.report_finalize_result.assert_called_once_with()
+        self.listener.close.assert_called_once_with()
+
+    def test_received_authserver_failure(self):
+        with self.assertRaises(sso_login.SSOLoginEnded) as cm:
+            self._run_flow(callback=(None, "Access denied"))
+        self.assertEqual(str(cm.exception), "Access denied")
+        self.finalize.assert_not_called()
+        self.listener.report_finalize_result.assert_not_called()
+        self.listener.close.assert_called_once_with()
+
+    def test_initialize_error_passes_through(self):
+        error = api_error("InvalidInput", code=422)
+        with self.assertRaises(DXAPIError) as cm:
+            self._run_flow(initialize_error=error)
+        self.assertIs(cm.exception, error)
+        self.listener.set_expected_state.assert_not_called()
+        self.browser_open.assert_not_called()
+        self.listener.wait_for_callback.assert_not_called()
+        self.finalize.assert_not_called()
+        self.listener.report_finalize_result.assert_not_called()
+        self.listener.close.assert_called_once_with()
+
+    def test_rejected_code_ends_login_and_reports_failure(self):
+        error = sso_login.SSOCodeRejected("SSO login could not be completed")
+        with self.assertRaises(sso_login.SSOLoginEnded) as cm:
+            self._run_flow(finalize_error=error)
+        message = 'Login could not be completed. Run "dx login" again.'
+        self.assertEqual(str(cm.exception), message)
+        self.listener.report_finalize_result.assert_called_once_with(error=message)
+        self.listener.close.assert_called_once_with()
+
+    def test_other_finalize_error_is_reported_and_passes_through(self):
+        error = api_error("InternalError", code=500)
+        with self.assertRaises(DXAPIError) as cm:
+            self._run_flow(finalize_error=error)
+        self.assertIs(cm.exception, error)
+        self.listener.report_finalize_result.assert_called_once_with(error=str(error))
+        self.listener.close.assert_called_once_with()
+
+    def test_timeout_ends_login(self):
+        with self.assertRaises(sso_login.SSOLoginEnded) as cm:
+            self._run_flow(wait_error=TimeoutError(), expires_in=90)
+        self.assertEqual(str(cm.exception), "Sign-in did not finish within 1 minute, 30 seconds.")
+        self.listener.wait_for_callback.assert_called_once_with(90)
+        self.finalize.assert_not_called()
+        self.listener.report_finalize_result.assert_not_called()
+        self.listener.close.assert_called_once_with()
+
+    def test_ctrl_c_passes_through(self):
+        with self.assertRaises(KeyboardInterrupt):
+            self._run_flow(wait_error=KeyboardInterrupt())
+        self.finalize.assert_not_called()
+        self.listener.report_finalize_result.assert_not_called()
+        self.listener.close.assert_called_once_with()
 
 
 class TestRunSsoFlow(unittest.TestCase):

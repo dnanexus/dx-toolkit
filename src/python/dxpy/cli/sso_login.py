@@ -32,10 +32,13 @@ from __future__ import print_function, unicode_literals, division, absolute_impo
 import base64
 import hashlib
 import secrets
+import webbrowser
 from urllib.parse import urlsplit
 
 import dxpy
 from ..exceptions import DXAPIError, DXCLIError, HTTPErrorWithContent
+from ..utils.pretty_print import format_timedelta
+from .sso_loopback_listener import LoopbackListener
 
 # One-time codes have no 0, O, 1 or I, so that they are easy to read and type
 ONE_TIME_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -156,6 +159,16 @@ def initialize_code(authserver, idp_id, challenge):
     return _initialize(authserver, {"type": "code", "codeChallenge": challenge, "idpId": idp_id})
 
 
+def initialize_loopback(authserver, idp_id, challenge, redirect_url):
+    """
+    Starts an SSO Loopback session and returns the response ("sessionId",
+    "expiresIn"). Never retried. Raises SSOUnavailable if the auth server does
+    not support SSO login.
+    """
+    return _initialize(authserver, {"type": "loopback", "codeChallenge": challenge, "idpId": idp_id,
+                                    "redirectUrl": redirect_url})
+
+
 def finalize(authserver, session_id, verifier, code, expires):
     """
     Exchanges a one-time code for an API token that expires at *expires*
@@ -207,6 +220,54 @@ def run_code_flow(authserver, idp_id, expires, prompt, output):
                 raise SSOLoginEnded('Incorrect one-time code. Run "dx login" again.')
             output("Incorrect one-time code")
             attempt += 1
+
+
+def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, output):
+    """
+    Runs one browser-based SSO login using an already-bound listener.
+
+    Waits for the callback, exchanges its code for a token, and returns the
+    finalize response. Always closes the listener.
+    """
+    try:
+        verifier, challenge = make_pkce_pair()
+        initialized = initialize_loopback(authserver, idp_id, challenge, listener.redirect_url)
+        session_id = initialized["sessionId"]
+        listener.set_expected_state(session_id)
+        url = authorize_url(authserver, session_id)
+
+        output("Opening your browser to sign in to DNAnexus.")
+        webbrowser.open(url)
+        output("If it doesn't open automatically, visit this URL in a browser on this computer:")
+        output("")
+        output("  " + url)
+        output("")
+        output("Waiting for authorization. Press Ctrl-C to cancel.")
+
+        timeout = initialized["expiresIn"]
+        try:
+            code, error = listener.wait_for_callback(timeout)
+        except TimeoutError:
+            duration = format_timedelta(timeout, in_seconds=True, auto_singulars=True)
+            raise SSOLoginEnded("Sign-in did not finish within {}.".format(duration))
+
+        if error is not None:
+            raise SSOLoginEnded(error)
+
+        try:
+            result = finalize(authserver, session_id, verifier, code, expires)
+        except SSOCodeRejected:
+            message = 'Login could not be completed. Run "dx login" again.'
+            listener.report_finalize_result(error=message)
+            raise SSOLoginEnded(message)
+        except Exception as e:
+            listener.report_finalize_result(error=str(e))
+            raise
+
+        listener.report_finalize_result()
+        return result
+    finally:
+        listener.close()
 
 
 def run_sso_flow(authserver, idp_id, expires, prompt, output):
