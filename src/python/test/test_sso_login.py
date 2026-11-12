@@ -179,6 +179,52 @@ class TestLookupIdp(unittest.TestCase):
                 sso_login.lookup_idp("alice")
 
 
+class TestCanOpenBrowser(unittest.TestCase):
+    """Tests for can_open_browser()."""
+
+    def test_remote_session_has_no_browser(self):
+        for variable in ("SSH_CONNECTION", "SSH_TTY"):
+            with self.subTest(variable=variable), \
+                    patch.dict(sso_login.os.environ, {variable: "set"}, clear=True), \
+                    patch.object(sso_login.sys, "platform", "darwin"), \
+                    patch.object(sso_login.webbrowser, "get") as browser_get:
+                self.assertFalse(sso_login.can_open_browser())
+                browser_get.assert_not_called()
+
+    def test_headless_linux_has_no_browser(self):
+        with patch.dict(sso_login.os.environ, {"TERM": "xterm"}, clear=True), \
+                patch.object(sso_login.sys, "platform", "linux"), \
+                patch.object(sso_login.webbrowser, "get") as browser_get:
+            self.assertFalse(sso_login.can_open_browser())
+            browser_get.assert_not_called()
+
+    @parameterized.expand([
+        ("display", {"DISPLAY": ":0"}),
+        ("wayland", {"WAYLAND_DISPLAY": "wayland-0"}),
+    ])
+    def test_linux_graphical_browser(self, _name, environment):
+        controller = object()
+        with patch.dict(sso_login.os.environ, environment, clear=True), \
+                patch.object(sso_login.sys, "platform", "linux"), \
+                patch.object(sso_login.webbrowser, "get", return_value=controller) as browser_get:
+            self.assertTrue(sso_login.can_open_browser())
+            browser_get.assert_called_once_with()
+
+    def test_generic_system_browser_is_accepted(self):
+        controller = object()
+        with patch.dict(sso_login.os.environ, {}, clear=True), \
+                patch.object(sso_login.sys, "platform", "darwin"), \
+                patch.object(sso_login.webbrowser, "get", return_value=controller):
+            self.assertTrue(sso_login.can_open_browser())
+
+    def test_no_registered_browser(self):
+        error = sso_login.webbrowser.Error("could not locate runnable browser")
+        with patch.dict(sso_login.os.environ, {}, clear=True), \
+                patch.object(sso_login.sys, "platform", "darwin"), \
+                patch.object(sso_login.webbrowser, "get", side_effect=error):
+            self.assertFalse(sso_login.can_open_browser())
+
+
 class TestInitializeCode(unittest.TestCase):
     """Tests for initialize_code() with a mocked DXHTTPRequest."""
 
@@ -392,7 +438,7 @@ class TestRunLoopbackFlow(unittest.TestCase):
                     "Waiting for authorization. Press Ctrl-C to cancel."]
 
     def _run_flow(self, callback=("ABCD2345", None), initialize_error=None, finalize_error=None,
-                  wait_error=None, expires_in=300):
+                  wait_error=None, browser_error=None, expires_in=300):
         self.output = []
         self.listener = Mock(spec=sso_login.LoopbackListener)
         self.listener.redirect_url = REDIRECT_URL
@@ -406,7 +452,7 @@ class TestRunLoopbackFlow(unittest.TestCase):
                           side_effect=initialize_error) as initialize, \
                 patch.object(sso_login, "finalize", return_value=TOKEN,
                              side_effect=finalize_error) as finalize, \
-                patch.object(sso_login.webbrowser, "open") as browser_open:
+                patch.object(sso_login.webbrowser, "open", side_effect=browser_error) as browser_open:
             self.initialize = initialize
             self.finalize = finalize
             self.browser_open = browser_open
@@ -420,7 +466,7 @@ class TestRunLoopbackFlow(unittest.TestCase):
         authserver, idp_id, challenge, redirect_url = self.initialize.call_args[0]
         self.assertEqual((authserver, idp_id, redirect_url), (AUTHSERVER, "0oa123", REDIRECT_URL))
         self.listener.set_expected_state.assert_called_once_with("sess123")
-        self.browser_open.assert_called_once_with(AUTHSERVER + "/sso/authorize/sess123")
+        self.browser_open.assert_called_once_with(AUTHSERVER + "/sso/authorize/sess123", new=2)
         self.listener.wait_for_callback.assert_called_once_with(300)
         self.finalize.assert_called_once()
         authserver, session_id, verifier, code, expires = self.finalize.call_args[0]
@@ -428,6 +474,12 @@ class TestRunLoopbackFlow(unittest.TestCase):
                          (AUTHSERVER, "sess123", "ABCD2345", EXPIRES))
         self.assertEqual(s256(verifier), challenge)
         self.listener.report_finalize_result.assert_called_once_with()
+        self.listener.close.assert_called_once_with()
+
+    def test_browser_launch_error_still_prints_link(self):
+        self.assertIs(self._run_flow(browser_error=sso_login.webbrowser.Error("could not open browser")), TOKEN)
+        self.assertEqual(self.output, self.INSTRUCTIONS)
+        self.listener.wait_for_callback.assert_called_once_with(300)
         self.listener.close.assert_called_once_with()
 
     def test_received_authserver_failure(self):
@@ -487,11 +539,58 @@ class TestRunLoopbackFlow(unittest.TestCase):
 class TestRunSsoFlow(unittest.TestCase):
     """Tests for run_sso_flow()."""
 
-    def test_delegates_to_code_flow(self):
-        with patch.object(sso_login, "run_code_flow", return_value=TOKEN) as run_code_flow:
+    def test_no_gui_uses_code_flow_without_listener(self):
+        with patch.object(sso_login, "can_open_browser", return_value=False), \
+                patch.object(sso_login, "LoopbackListener") as listener_class, \
+                patch.object(sso_login, "run_code_flow", return_value=TOKEN) as run_code_flow:
             result = sso_login.run_sso_flow(AUTHSERVER, "0oa123", EXPIRES, "prompt", "output")
         self.assertIs(result, TOKEN)
+        listener_class.assert_not_called()
         run_code_flow.assert_called_once_with(AUTHSERVER, "0oa123", EXPIRES, "prompt", "output")
+
+    def test_bind_failure_uses_code_flow(self):
+        output = Mock()
+        with patch.object(sso_login, "can_open_browser", return_value=True), \
+                patch.object(sso_login, "LoopbackListener", side_effect=OSError("address unavailable")) \
+                as listener_class, \
+                patch.object(sso_login, "run_code_flow", return_value=TOKEN) as run_code_flow, \
+                patch.object(sso_login, "run_loopback_flow") as run_loopback_flow:
+            result = sso_login.run_sso_flow(AUTHSERVER, "0oa123", EXPIRES, "prompt", output)
+        self.assertIs(result, TOKEN)
+        listener_class.assert_called_once_with(sso_login.normalize_one_time_code)
+        output.assert_called_once_with("Could not start a local browser callback; using code-based sign-in.")
+        run_code_flow.assert_called_once_with(AUTHSERVER, "0oa123", EXPIRES, "prompt", output)
+        run_loopback_flow.assert_not_called()
+
+    def test_bound_listener_is_passed_to_loopback_flow(self):
+        listener = Mock(spec=sso_login.LoopbackListener)
+        with patch.object(sso_login, "can_open_browser", return_value=True), \
+                patch.object(sso_login, "LoopbackListener", return_value=listener) as listener_class, \
+                patch.object(sso_login, "run_code_flow") as run_code_flow, \
+                patch.object(sso_login, "run_loopback_flow", return_value=TOKEN) as run_loopback_flow:
+            result = sso_login.run_sso_flow(AUTHSERVER, "0oa123", EXPIRES, "prompt", "output")
+        self.assertIs(result, TOKEN)
+        listener_class.assert_called_once_with(sso_login.normalize_one_time_code)
+        run_loopback_flow.assert_called_once_with(AUTHSERVER, "0oa123", EXPIRES, listener, "output")
+        run_code_flow.assert_not_called()
+
+    def test_loopback_errors_do_not_fall_back(self):
+        errors = [
+            api_error("InvalidInput", code=422),
+            sso_login.SSOLoginEnded("Sign-in did not finish within 5 minutes."),
+            KeyboardInterrupt(),
+        ]
+        for error in errors:
+            with self.subTest(error=type(error).__name__):
+                listener = Mock(spec=sso_login.LoopbackListener)
+                with patch.object(sso_login, "can_open_browser", return_value=True), \
+                        patch.object(sso_login, "LoopbackListener", return_value=listener), \
+                        patch.object(sso_login, "run_code_flow") as run_code_flow, \
+                        patch.object(sso_login, "run_loopback_flow", side_effect=error):
+                    with self.assertRaises(type(error)) as cm:
+                        sso_login.run_sso_flow(AUTHSERVER, "0oa123", EXPIRES, "prompt", "output")
+                self.assertIs(cm.exception, error)
+                run_code_flow.assert_not_called()
 
 
 if __name__ == "__main__":

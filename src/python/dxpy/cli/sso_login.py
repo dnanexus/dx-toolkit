@@ -17,21 +17,19 @@
 '''
 This submodule contains the single sign-on (SSO) login used by "dx login".
 
-In the code flow, "dx login" asks the API server whether the user signs in
-with SSO. If so, it starts an SSO session on the auth server and prints a link.
-The user opens the link in a browser on any computer, signs in with their
-identity provider, and types the one-time code shown in the browser back into
-the terminal. The code is then exchanged for an API token.
-
-The code flow never opens a browser and never polls for the code: the user
-typing the code is what ties the browser sign-in to this terminal.
+When a local graphical browser is available, the Loopback flow opens it and
+receives the authorization callback on a local listener. Otherwise, the Code
+flow prints a link and asks the user to enter the one-time code shown by the
+browser.
 '''
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import base64
 import hashlib
+import os
 import secrets
+import sys
 import webbrowser
 from urllib.parse import urlsplit
 
@@ -130,6 +128,26 @@ def lookup_idp(username):
         return response.get("SSOId") or None
     except Exception:
         return None
+
+
+def can_open_browser():
+    """
+    Returns whether a local graphical browser can be launched.
+
+    Remote sessions and headless Linux environments use Code flow instead.
+    """
+    if os.environ.get("SSH_CONNECTION") or os.environ.get("SSH_TTY"):
+        return False
+    if sys.platform.startswith("linux") and not (
+            os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        return False
+
+    try:
+        webbrowser.get()
+    except webbrowser.Error:
+        return False
+
+    return True
 
 
 def _initialize(authserver, body):
@@ -237,7 +255,10 @@ def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, o
         url = authorize_url(authserver, session_id)
 
         output("Opening your browser to sign in to DNAnexus.")
-        webbrowser.open(url)
+        try:
+            webbrowser.open(url, new=2)
+        except (OSError, webbrowser.Error):
+            pass
         output("If it doesn't open automatically, visit this URL in a browser on this computer:")
         output("")
         output("  " + url)
@@ -274,4 +295,13 @@ def run_sso_flow(authserver, idp_id, expires, prompt, output):
     """
     Runs the SSO login flow and returns the response containing the API token.
     """
-    return run_code_flow(authserver, idp_id, expires, prompt, output)
+    if not can_open_browser():
+        return run_code_flow(authserver, idp_id, expires, prompt, output)
+
+    try:
+        listener = LoopbackListener(normalize_one_time_code)
+    except OSError:
+        output("Could not start a local browser callback; using code-based sign-in.")
+        return run_code_flow(authserver, idp_id, expires, prompt, output)
+
+    return run_loopback_flow(authserver, idp_id, expires, listener, output)
