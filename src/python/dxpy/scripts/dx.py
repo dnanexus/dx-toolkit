@@ -4641,7 +4641,12 @@ subparsers.metavar = 'command'
 # login
 #####################################
 parser_login = subparsers.add_parser('login', help='Log in (interactively or with an existing API token)',
-                                     description='Log in interactively and acquire credentials.  If your account uses single sign-on, you will be asked to sign in through a browser.  Use "--token" to log in with an existing API token.',
+                                     description='Log in interactively and acquire credentials.  If your account '
+                                                 'uses single sign-on, dx normally opens a browser and completes '
+                                                 'sign-in through a local callback.  On systems without a graphical '
+                                                 'browser or available callback listener, dx instead provides a URL '
+                                                 'and prompts for the one-time code shown there.  Use "--token" to '
+                                                 'log in with an existing API token.',
                                      prog='dx login', parents=[env_args])
 parser_login.add_argument('--token', help='Authentication token to use')
 host_action = parser_login.add_argument('--host', help='Log into the given auth server host (port must also be given)')
