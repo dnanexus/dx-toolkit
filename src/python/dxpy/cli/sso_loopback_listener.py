@@ -110,7 +110,17 @@ class _LoopbackRequestHandler(BaseHTTPRequestHandler):
         if target.path == "/callback":
             self._handle_callback(target)
         else:
-            self._send_status(HTTPStatus.NOT_FOUND)
+            self._send_browser_response(
+                HTTPStatus.NOT_FOUND,
+                "The requested sign-in callback was not found. Return to your terminal.",
+            )
+
+    def do_POST(self):
+        self._send_browser_response(
+            HTTPStatus.METHOD_NOT_ALLOWED,
+            "This sign-in callback only accepts GET requests. Return to your terminal.",
+            headers=(("Allow", "GET"),),
+        )
 
     def _handle_callback(self, target):
         try:
@@ -119,10 +129,16 @@ class _LoopbackRequestHandler(BaseHTTPRequestHandler):
                 self.headers.get_all("Host", []),
             )
         except _CallbackRequestError as error:
-            self._send_status(error.status)
+            self._send_browser_response(
+                error.status,
+                "The sign-in callback was invalid. Return to your terminal.",
+            )
             return
         except _CallbackAlreadyReceived:
-            self._send_status(HTTPStatus.CONFLICT)
+            self._send_browser_response(
+                HTTPStatus.CONFLICT,
+                "This sign-in response was already received. Return to your terminal.",
+            )
             return
 
         if error is None:
@@ -131,32 +147,29 @@ class _LoopbackRequestHandler(BaseHTTPRequestHandler):
                 "You may now close this tab and return to your terminal."
             )
         else:
-            message = "Login failed: {}. Return to your terminal.".format(escape(error))
-        # This temporary local response may later redirect the browser to a
-        # polished frontend confirmation page.
-        self._send_page(message)
+            message = "Login failed: {}. Return to your terminal.".format(error)
+        self._send_browser_response(HTTPStatus.OK, message)
 
-    def _send_page(self, message):
+    # This temporary local response may later redirect the browser to a
+    # polished frontend confirmation page.
+    def _send_browser_response(self, status, message, headers=()):
         body = (
             "<!doctype html>\n"
             "<html lang=\"en\">\n"
             "<head><meta charset=\"utf-8\"><title>DNAnexus login</title></head>\n"
             "<body><p>{}</p></body>\n"
             "</html>\n"
-        ).format(message).encode("utf-8")
-        self.send_response(HTTPStatus.OK)
+        ).format(escape(message)).encode("utf-8")
+        self.send_response(status)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Security-Policy", "default-src 'none'")
         self.send_header("Referrer-Policy", "no-referrer")
+        for name, value in headers:
+            self.send_header(name, value)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-
-    def _send_status(self, status):
-        self.send_response(status)
-        self.send_header("Content-Length", "0")
-        self.end_headers()
 
     def log_message(self, _format, *_args):
         pass

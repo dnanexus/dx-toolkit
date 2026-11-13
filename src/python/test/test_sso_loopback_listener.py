@@ -163,15 +163,27 @@ class TestLoopbackListenerValidation(unittest.TestCase):
         self.port = redirect.port
         self.authority = redirect.netloc
 
-    def request(self, target, host=None):
+    def request_response(self, target, host=None, method="GET"):
         connection = HTTPConnection(self.host, self.port, timeout=1)
         try:
-            connection.request("GET", target, headers={"Host": host or self.authority})
+            connection.request(method, target, headers={"Host": host or self.authority})
             response = connection.getresponse()
             response.read()
-            return response.status
+            return response.status, dict(response.getheaders())
         finally:
             connection.close()
+
+    def request(self, target, host=None, method="GET"):
+        status, _headers = self.request_response(target, host=host, method=method)
+        return status
+
+    def assert_page_response(self, status, headers, expected_status):
+        self.assertEqual(status, expected_status)
+        self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
+        self.assertEqual(headers["Cache-Control"], "no-store")
+        self.assertEqual(headers["Content-Security-Policy"], "default-src 'none'")
+        self.assertEqual(headers["Referrer-Policy"], "no-referrer")
+        self.assertGreater(int(headers["Content-Length"]), 0)
 
     def test_valid_code_is_normalized_and_queued(self):
         self.listener.set_expected_state("sess123")
@@ -242,6 +254,32 @@ class TestLoopbackListenerValidation(unittest.TestCase):
         )
         with self.assertRaises(TimeoutError):
             self.listener.wait_for_callback(0)
+
+    def test_all_responses_are_pages_with_security_headers(self):
+        self.listener.set_expected_state("sess123")
+
+        rejected_requests = [
+            ("GET", "/wrong", 404),
+            ("GET", "/callback?state=sess123", 400),
+            ("POST", "/callback?code=ABCD2345&state=sess123", 405),
+        ]
+        for method, target, expected_status in rejected_requests:
+            with self.subTest(method=method, target=target):
+                status, headers = self.request_response(target, method=method)
+                self.assert_page_response(status, headers, expected_status)
+                if method == "POST":
+                    self.assertEqual(headers["Allow"], "GET")
+
+        status, headers = self.request_response(
+            "/callback?code=ABCD2345&state=sess123",
+        )
+        self.assert_page_response(status, headers, 200)
+        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+
+        status, headers = self.request_response(
+            "/callback?error=Access+denied&state=sess123",
+        )
+        self.assert_page_response(status, headers, 409)
 
     def test_state_must_be_set_and_match(self):
         target = "/callback?code=ABCD2345&state=sess123"
