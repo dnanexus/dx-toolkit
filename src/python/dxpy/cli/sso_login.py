@@ -30,6 +30,7 @@ import hashlib
 import os
 import secrets
 import sys
+import threading
 import webbrowser
 from urllib.parse import urlsplit
 
@@ -45,6 +46,7 @@ ONE_TIME_CODE_LENGTH = 8
 CODE_ATTEMPTS = 3
 DEFAULT_PORTS = {"http": 80, "https": 443}
 SSO_LOOKUP_TIMEOUT = 10
+LOOPBACK_BROWSER_FAILURE = "Login could not be completed"
 
 # Finalize errors after which the session cannot be used again
 FINALIZE_ENDED_ERRORS = ("SSOSessionExpiredError", "SSOOneTimeCodeExpiredError", "SSONetworkChangedError")
@@ -154,12 +156,42 @@ def can_open_browser():
             os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
         return False
 
+    # webbrowser usually exposes only a generic OS launcher, not the actual
+    # browser or version. The remote sign-in service sees the real browser and
+    # owns compatibility checks; dxpy checks only whether a local graphical
+    # browser can launch.
     try:
         browser = webbrowser.get()
     except webbrowser.Error:
         return False
 
     return getattr(browser, "basename", None) not in TEXT_BROWSERS
+
+
+def _open_browser(browser, url):
+    try:
+        browser.open(url, new=2)
+    except (OSError, webbrowser.Error):
+        pass
+
+
+def _launch_browser(url):
+    try:
+        browser = webbrowser.get()
+    except (OSError, webbrowser.Error):
+        return None
+
+    thread = threading.Thread(
+        target=_open_browser,
+        args=(browser, url),
+        name="dx-sso-browser-launcher",
+        daemon=True,
+    )
+    try:
+        thread.start()
+    except RuntimeError:
+        return None
+    return thread
 
 
 def _initialize(authserver, body):
@@ -267,12 +299,9 @@ def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, o
         url = authorize_url(authserver, session_id)
 
         output("Opening your browser to sign in to DNAnexus.")
-        try:
-            # Open only the browser can_open_browser() checked. webbrowser.open()
-            # tries every registered browser in turn, including text-mode ones.
-            webbrowser.get().open(url, new=2)
-        except (OSError, webbrowser.Error):
-            pass
+        # Open only the browser can_open_browser() checked. webbrowser.open()
+        # tries every registered browser in turn, including text-mode ones.
+        _launch_browser(url)
         output("If it doesn't open automatically, visit this URL in a browser on this computer:")
         output("")
         output("  " + url)
@@ -287,13 +316,24 @@ def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, o
             raise SSOLoginEnded("Sign-in did not finish within {}.".format(duration))
 
         if error is not None:
+            listener.set_finalize_result(error)
             raise SSOLoginEnded(error)
 
         try:
-            return finalize(authserver, session_id, verifier, code, expires)
+            result = finalize(authserver, session_id, verifier, code, expires)
         except SSOCodeRejected:
             message = 'Login could not be completed. Run "dx login" again.'
+            listener.set_finalize_result(message)
             raise SSOLoginEnded(message)
+        except SSOLoginEnded as error:
+            listener.set_finalize_result(str(error))
+            raise
+        except BaseException:
+            listener.set_finalize_result(LOOPBACK_BROWSER_FAILURE)
+            raise
+
+        listener.set_finalize_result()
+        return result
     finally:
         listener.close()
 

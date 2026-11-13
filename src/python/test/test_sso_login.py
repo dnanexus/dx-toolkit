@@ -19,6 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import threading
 import unittest
 from unittest.mock import ANY, Mock, call, patch
 
@@ -254,6 +255,56 @@ class TestCanOpenBrowser(unittest.TestCase):
             self.assertFalse(sso_login.can_open_browser())
 
 
+class TestLaunchBrowser(unittest.TestCase):
+    """Tests for launching the selected browser without blocking the CLI."""
+
+    def test_blocking_browser_runs_in_a_daemon_thread(self):
+        started = threading.Event()
+        release = threading.Event()
+        browser = Mock()
+
+        def open_browser(_url, new):
+            started.set()
+            release.wait(1)
+
+        browser.open.side_effect = open_browser
+        with patch.object(sso_login.webbrowser, "get", return_value=browser):
+            thread = sso_login._launch_browser(AUTHSERVER)
+
+        self.addCleanup(thread.join, 1)
+        self.addCleanup(release.set)
+        self.assertTrue(started.wait(1))
+        self.assertTrue(thread.daemon)
+        self.assertEqual(thread.name, "dx-sso-browser-launcher")
+        self.assertTrue(thread.is_alive())
+
+        release.set()
+        thread.join(1)
+        self.assertFalse(thread.is_alive())
+        browser.open.assert_called_once_with(AUTHSERVER, new=2)
+
+    def test_browser_open_error_is_ignored(self):
+        browser = Mock()
+        browser.open.side_effect = OSError("could not open browser")
+        with patch.object(sso_login.webbrowser, "get", return_value=browser):
+            thread = sso_login._launch_browser(AUTHSERVER)
+
+        thread.join(1)
+        self.assertFalse(thread.is_alive())
+
+    def test_missing_browser_returns_none(self):
+        error = sso_login.webbrowser.Error("could not locate runnable browser")
+        with patch.object(sso_login.webbrowser, "get", side_effect=error):
+            self.assertIsNone(sso_login._launch_browser(AUTHSERVER))
+
+    def test_thread_start_error_returns_none(self):
+        thread = Mock()
+        thread.start.side_effect = RuntimeError("can't start new thread")
+        with patch.object(sso_login.webbrowser, "get", return_value=Mock()), \
+                patch.object(sso_login.threading, "Thread", return_value=thread):
+            self.assertIsNone(sso_login._launch_browser(AUTHSERVER))
+
+
 class TestInitializeCode(unittest.TestCase):
     """Tests for initialize_code() with a mocked DXHTTPRequest."""
 
@@ -467,28 +518,34 @@ class TestRunLoopbackFlow(unittest.TestCase):
                     "Waiting for authorization. Press Ctrl-C to cancel."]
 
     def _run_flow(self, callback=("ABCD2345", None), initialize_error=None, finalize_error=None,
-                  wait_error=None, browser_error=None, expires_in=300):
+                  wait_error=None, expires_in=300):
         self.output = []
+        self.events = []
         self.listener = Mock(spec=sso_login.LoopbackListener)
         self.listener.redirect_url = REDIRECT_URL
+        self.listener.set_finalize_result.side_effect = (
+            lambda error=None: self.events.append(("finalize_result", error))
+        )
+        self.listener.close.side_effect = lambda: self.events.append(("close",))
         if wait_error is None:
             self.listener.wait_for_callback.return_value = callback
         else:
             self.listener.wait_for_callback.side_effect = wait_error
-        browser = Mock()
-        browser.open.side_effect = browser_error
+
+        def finish_login(*_args):
+            self.events.append(("finalize",))
+            if finalize_error is not None:
+                raise finalize_error
+            return TOKEN
 
         with patch.object(sso_login, "initialize_loopback",
                           return_value={"sessionId": "sess123", "expiresIn": expires_in},
                           side_effect=initialize_error) as initialize, \
-                patch.object(sso_login, "finalize", return_value=TOKEN,
-                             side_effect=finalize_error) as finalize, \
-                patch.object(sso_login.webbrowser, "get", return_value=browser), \
-                patch.object(sso_login.webbrowser, "open") as open_any_browser:
+                patch.object(sso_login, "finalize", side_effect=finish_login) as finalize, \
+                patch.object(sso_login, "_launch_browser", return_value=None) as launch_browser:
             self.initialize = initialize
             self.finalize = finalize
-            self.browser_open = browser.open
-            self.open_any_browser = open_any_browser
+            self.launch_browser = launch_browser
             return sso_login.run_loopback_flow(AUTHSERVER, "0oa123", EXPIRES, self.listener,
                                                self.output.append)
 
@@ -499,18 +556,22 @@ class TestRunLoopbackFlow(unittest.TestCase):
         authserver, idp_id, challenge, redirect_url = self.initialize.call_args[0]
         self.assertEqual((authserver, idp_id, redirect_url), (AUTHSERVER, "0oa123", REDIRECT_URL))
         self.listener.set_expected_state.assert_called_once_with("sess123")
-        self.browser_open.assert_called_once_with(AUTHSERVER + "/sso/authorize/sess123", new=2)
-        self.open_any_browser.assert_not_called()
+        self.launch_browser.assert_called_once_with(AUTHSERVER + "/sso/authorize/sess123")
         self.listener.wait_for_callback.assert_called_once_with(300)
         self.finalize.assert_called_once()
         authserver, session_id, verifier, code, expires = self.finalize.call_args[0]
         self.assertEqual((authserver, session_id, code, expires),
                          (AUTHSERVER, "sess123", "ABCD2345", EXPIRES))
         self.assertEqual(s256(verifier), challenge)
+        self.listener.set_finalize_result.assert_called_once_with()
         self.listener.close.assert_called_once_with()
+        self.assertEqual(
+            self.events,
+            [("finalize",), ("finalize_result", None), ("close",)],
+        )
 
-    def test_browser_launch_error_still_prints_link(self):
-        self.assertIs(self._run_flow(browser_error=sso_login.webbrowser.Error("could not open browser")), TOKEN)
+    def test_browser_launcher_returning_none_still_prints_link(self):
+        self.assertIs(self._run_flow(), TOKEN)
         self.assertEqual(self.output, self.INSTRUCTIONS)
         self.listener.wait_for_callback.assert_called_once_with(300)
         self.listener.close.assert_called_once_with()
@@ -520,7 +581,12 @@ class TestRunLoopbackFlow(unittest.TestCase):
             self._run_flow(callback=(None, "Access denied"))
         self.assertEqual(str(cm.exception), "Access denied")
         self.finalize.assert_not_called()
+        self.listener.set_finalize_result.assert_called_once_with("Access denied")
         self.listener.close.assert_called_once_with()
+        self.assertEqual(
+            self.events,
+            [("finalize_result", "Access denied"), ("close",)],
+        )
 
     def test_initialize_error_passes_through(self):
         error = api_error("InvalidInput", code=422)
@@ -528,10 +594,12 @@ class TestRunLoopbackFlow(unittest.TestCase):
             self._run_flow(initialize_error=error)
         self.assertIs(cm.exception, error)
         self.listener.set_expected_state.assert_not_called()
-        self.browser_open.assert_not_called()
+        self.launch_browser.assert_not_called()
         self.listener.wait_for_callback.assert_not_called()
         self.finalize.assert_not_called()
+        self.listener.set_finalize_result.assert_not_called()
         self.listener.close.assert_called_once_with()
+        self.assertEqual(self.events, [("close",)])
 
     def test_rejected_code_ends_login(self):
         error = sso_login.SSOCodeRejected("SSO login could not be completed")
@@ -539,14 +607,58 @@ class TestRunLoopbackFlow(unittest.TestCase):
             self._run_flow(finalize_error=error)
         message = 'Login could not be completed. Run "dx login" again.'
         self.assertEqual(str(cm.exception), message)
+        self.listener.set_finalize_result.assert_called_once_with(message)
         self.listener.close.assert_called_once_with()
+        self.assertEqual(
+            self.events,
+            [("finalize",), ("finalize_result", message), ("close",)],
+        )
+
+    def test_finalize_login_ended_passes_through(self):
+        error = sso_login.SSOLoginEnded("The SSO login session expired. Run dx login again.")
+        with self.assertRaises(sso_login.SSOLoginEnded) as cm:
+            self._run_flow(finalize_error=error)
+        self.assertIs(cm.exception, error)
+        self.listener.set_finalize_result.assert_called_once_with(str(error))
+        self.listener.close.assert_called_once_with()
+        self.assertEqual(
+            self.events,
+            [("finalize",), ("finalize_result", str(error)), ("close",)],
+        )
 
     def test_other_finalize_error_passes_through(self):
         error = api_error("InternalError", code=500)
         with self.assertRaises(DXAPIError) as cm:
             self._run_flow(finalize_error=error)
         self.assertIs(cm.exception, error)
+        self.listener.set_finalize_result.assert_called_once_with(
+            sso_login.LOOPBACK_BROWSER_FAILURE,
+        )
         self.listener.close.assert_called_once_with()
+        self.assertEqual(
+            self.events,
+            [
+                ("finalize",),
+                ("finalize_result", sso_login.LOOPBACK_BROWSER_FAILURE),
+                ("close",),
+            ],
+        )
+
+    def test_ctrl_c_during_finalize_passes_through(self):
+        with self.assertRaises(KeyboardInterrupt):
+            self._run_flow(finalize_error=KeyboardInterrupt())
+        self.listener.set_finalize_result.assert_called_once_with(
+            sso_login.LOOPBACK_BROWSER_FAILURE,
+        )
+        self.listener.close.assert_called_once_with()
+        self.assertEqual(
+            self.events,
+            [
+                ("finalize",),
+                ("finalize_result", sso_login.LOOPBACK_BROWSER_FAILURE),
+                ("close",),
+            ],
+        )
 
     def test_timeout_ends_login(self):
         with self.assertRaises(sso_login.SSOLoginEnded) as cm:
@@ -554,13 +666,17 @@ class TestRunLoopbackFlow(unittest.TestCase):
         self.assertEqual(str(cm.exception), "Sign-in did not finish within 1 minute, 30 seconds.")
         self.listener.wait_for_callback.assert_called_once_with(90)
         self.finalize.assert_not_called()
+        self.listener.set_finalize_result.assert_not_called()
         self.listener.close.assert_called_once_with()
+        self.assertEqual(self.events, [("close",)])
 
     def test_ctrl_c_passes_through(self):
         with self.assertRaises(KeyboardInterrupt):
             self._run_flow(wait_error=KeyboardInterrupt())
         self.finalize.assert_not_called()
+        self.listener.set_finalize_result.assert_not_called()
         self.listener.close.assert_called_once_with()
+        self.assertEqual(self.events, [("close",)])
 
 
 class TestRunSsoFlow(unittest.TestCase):

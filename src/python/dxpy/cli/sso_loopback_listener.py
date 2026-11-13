@@ -49,8 +49,10 @@ class _CallbackExchange:
         self.normalize_code = normalize_code
         self.expected_state = None
         self.authority = None
-        self._callback_result_queue = queue.Queue()
         self._accepted = False
+        self._finalize_result_set = False
+        self._callback_result_queue = queue.Queue()
+        self._finalize_result_queue = queue.Queue(maxsize=1)
 
     def set_authority(self, host, port):
         self.authority = "{}:{}".format(host, port)
@@ -96,7 +98,14 @@ class _CallbackExchange:
             raise _CallbackAlreadyReceived()
         self._accepted = True
         self._callback_result_queue.put(result)
-        return result
+        return self._finalize_result_queue.get()
+
+    def set_finalize_result(self, error):
+        if self._finalize_result_set:
+            return False
+        self._finalize_result_queue.put(error)
+        self._finalize_result_set = True
+        return True
 
     def wait_for_callback(self, timeout):
         deadline = time.monotonic() + timeout
@@ -136,7 +145,7 @@ class _LoopbackRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_callback(self, target):
         try:
-            _code, error = self.server.callback_exchange.accept_callback(
+            error = self.server.callback_exchange.accept_callback(
                 target,
                 self.headers.get_all("Host", []),
             )
@@ -155,7 +164,7 @@ class _LoopbackRequestHandler(BaseHTTPRequestHandler):
 
         if error is None:
             message = (
-                "You have successfully authenticated in your browser. "
+                "Login completed successfully. "
                 "You may now close this tab and return to your terminal."
             )
         else:
@@ -256,6 +265,16 @@ class LoopbackListener:
         '''
         return self._exchange.wait_for_callback(timeout)
 
+    def set_finalize_result(self, error=None):
+        '''
+        Releases the accepted browser callback with the final login result.
+
+        *error* is None for success or a safe message to show for failure.
+        The result may be set only once.
+        '''
+        if not self._exchange.set_finalize_result(error):
+            raise RuntimeError("Login callback has already completed")
+
     def close(self):
         '''Stops the listener and releases its bound socket.'''
         server = self._server
@@ -266,6 +285,7 @@ class LoopbackListener:
         if thread is threading.current_thread():
             raise RuntimeError("Loopback listener cannot be closed from its server thread")
 
+        self._exchange.set_finalize_result("Login could not be completed")
         self._server = None
         self._thread = None
         try:

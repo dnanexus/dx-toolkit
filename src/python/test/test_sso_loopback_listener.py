@@ -147,20 +147,35 @@ class TestLoopbackListenerBinding(unittest.TestCase):
 
         redirect = urlsplit(listener.redirect_url)
         self.assertEqual(redirect.hostname, "::1")
-        connection = HTTPConnection(redirect.hostname, redirect.port, timeout=1)
-        try:
-            connection.request(
-                "GET",
-                "/callback?code=abcd-2345&state=sess123",
-                headers={"Host": redirect.netloc},
-            )
-            response = connection.getresponse()
-            response.read()
-        finally:
-            connection.close()
+        response_queue = queue.Queue()
 
-        self.assertEqual(response.status, 200)
+        def request_callback():
+            connection = HTTPConnection(redirect.hostname, redirect.port, timeout=1)
+            try:
+                connection.request(
+                    "GET",
+                    "/callback?code=abcd-2345&state=sess123",
+                    headers={"Host": redirect.netloc},
+                )
+                response = connection.getresponse()
+                response.read()
+                response_queue.put((response.status, None))
+            except BaseException as error:
+                response_queue.put((None, error))
+            finally:
+                connection.close()
+
+        request_thread = threading.Thread(target=request_callback)
+        request_thread.start()
         self.assertEqual(listener.wait_for_callback(1), ("ABCD2345", None))
+        self.assertTrue(request_thread.is_alive())
+        listener.set_finalize_result()
+        status, error = response_queue.get(timeout=1)
+        request_thread.join(1)
+
+        self.assertIsNone(error)
+        self.assertFalse(request_thread.is_alive())
+        self.assertEqual(status, 200)
 
     def test_both_bind_failures_raise_the_ipv6_error(self):
         attempts = []
@@ -270,6 +285,36 @@ class TestLoopbackListenerValidation(unittest.TestCase):
         status, _headers = self.request_response(target, host=host, method=method)
         return status
 
+    def start_request(self, target, host=None, method="GET"):
+        responses = queue.Queue()
+
+        def send_request():
+            try:
+                responses.put((self.request_response(target, host=host, method=method), None))
+            except BaseException as error:
+                responses.put((None, error))
+
+        thread = threading.Thread(target=send_request)
+        thread.start()
+        return thread, responses
+
+    def finish_request(self, thread, responses):
+        response, error = responses.get(timeout=1)
+        thread.join(1)
+        self.assertFalse(thread.is_alive())
+        if error is not None:
+            raise error
+        return response
+
+    def accept_request(self, target, finalize_error=None, host=None):
+        thread, responses = self.start_request(target, host=host)
+        callback = self.listener.wait_for_callback(1)
+        self.assertTrue(thread.is_alive())
+        with self.assertRaises(queue.Empty):
+            responses.get_nowait()
+        self.listener.set_finalize_result(finalize_error)
+        return callback, self.finish_request(thread, responses)
+
     def assert_page_response(self, status, headers, expected_status):
         self.assertEqual(status, expected_status)
         self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
@@ -281,21 +326,22 @@ class TestLoopbackListenerValidation(unittest.TestCase):
     def test_valid_code_is_normalized_and_queued(self):
         self.listener.set_expected_state("sess123")
 
-        self.assertEqual(
-            self.request("/callback?code=abcd-2345&state=sess123"),
-            200,
+        callback, (status, _headers) = self.accept_request(
+            "/callback?code=abcd-2345&state=sess123",
         )
-        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+        self.assertEqual(status, 200)
+        self.assertEqual(callback, ("ABCD2345", None))
         self.normalizer.assert_called_once_with("abcd-2345")
 
     def test_valid_error_is_queued_without_normalization(self):
         self.listener.set_expected_state("sess123")
 
-        self.assertEqual(
-            self.request("/callback?error=Access+denied&state=sess123"),
-            200,
+        callback, (status, _headers) = self.accept_request(
+            "/callback?error=Access+denied&state=sess123",
+            finalize_error="Access denied",
         )
-        self.assertEqual(self.listener.wait_for_callback(1), (None, "Access denied"))
+        self.assertEqual(status, 200)
+        self.assertEqual(callback, (None, "Access denied"))
         self.normalizer.assert_not_called()
 
     # To make sure that we dont leak one time code to the terminal
@@ -304,13 +350,40 @@ class TestLoopbackListenerValidation(unittest.TestCase):
         captured = io.StringIO()
 
         with patch("sys.stderr", new=captured):
-            self.assertEqual(
-                self.request("/callback?code=abcd-2345&state=sess123"),
-                200,
+            callback, (status, _headers) = self.accept_request(
+                "/callback?code=abcd-2345&state=sess123",
             )
 
+        self.assertEqual(status, 200)
         self.assertEqual(captured.getvalue(), "")
+        self.assertEqual(callback, ("ABCD2345", None))
+
+    def test_finalize_result_can_only_be_set_once(self):
+        self.listener.set_expected_state("sess123")
+        thread, responses = self.start_request(
+            "/callback?code=ABCD2345&state=sess123",
+        )
         self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+
+        self.listener.set_finalize_result()
+        with self.assertRaisesRegex(RuntimeError, "already been set"):
+            self.listener.set_finalize_result("failed")
+
+        status, _headers = self.finish_request(thread, responses)
+        self.assertEqual(status, 200)
+
+    def test_close_releases_callback_waiting_for_finalize(self):
+        self.listener.set_expected_state("sess123")
+        thread, responses = self.start_request(
+            "/callback?code=ABCD2345&state=sess123",
+        )
+        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+        self.assertTrue(thread.is_alive())
+
+        self.listener.close()
+
+        status, _headers = self.finish_request(thread, responses)
+        self.assertEqual(status, 200)
 
     def test_invalid_code_is_rejected_without_queueing(self):
         self.listener.set_expected_state("sess123")
@@ -327,11 +400,11 @@ class TestLoopbackListenerValidation(unittest.TestCase):
         self.listener.set_expected_state("sess123")
 
         self.assertEqual(self.request("/wrong?code=ABCD2345&state=sess123"), 404)
-        self.assertEqual(
-            self.request("/callback?code=ABCD2345&state=sess123"),
-            200,
+        callback, (status, _headers) = self.accept_request(
+            "/callback?code=ABCD2345&state=sess123",
         )
-        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+        self.assertEqual(status, 200)
+        self.assertEqual(callback, ("ABCD2345", None))
 
     def test_invalid_request_does_not_claim_callback(self):
         self.listener.set_expected_state("sess123")
@@ -340,20 +413,20 @@ class TestLoopbackListenerValidation(unittest.TestCase):
             self.request("/callback?code=ABCD2345&state=sess123", host="localhost:1234"),
             400,
         )
-        self.assertEqual(
-            self.request("/callback?code=ABCD2345&state=sess123"),
-            200,
+        callback, (status, _headers) = self.accept_request(
+            "/callback?code=ABCD2345&state=sess123",
         )
-        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+        self.assertEqual(status, 200)
+        self.assertEqual(callback, ("ABCD2345", None))
 
     def test_only_first_valid_callback_is_accepted(self):
         self.listener.set_expected_state("sess123")
 
-        self.assertEqual(
-            self.request("/callback?code=ABCD2345&state=sess123"),
-            200,
+        callback, (status, _headers) = self.accept_request(
+            "/callback?code=ABCD2345&state=sess123",
         )
-        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+        self.assertEqual(status, 200)
+        self.assertEqual(callback, ("ABCD2345", None))
 
         self.assertEqual(
             self.request("/callback?error=Access+denied&state=sess123"),
@@ -377,11 +450,11 @@ class TestLoopbackListenerValidation(unittest.TestCase):
                 if method == "POST":
                     self.assertEqual(headers["Allow"], "GET")
 
-        status, headers = self.request_response(
+        callback, (status, headers) = self.accept_request(
             "/callback?code=ABCD2345&state=sess123",
         )
         self.assert_page_response(status, headers, 200)
-        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+        self.assertEqual(callback, ("ABCD2345", None))
 
         status, headers = self.request_response(
             "/callback?error=Access+denied&state=sess123",
@@ -395,8 +468,9 @@ class TestLoopbackListenerValidation(unittest.TestCase):
         self.listener.set_expected_state("different")
         self.assertEqual(self.request(target), 400)
         self.listener.set_expected_state("sess123")
-        self.assertEqual(self.request(target), 200)
-        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
+        callback, (status, _headers) = self.accept_request(target)
+        self.assertEqual(status, 200)
+        self.assertEqual(callback, ("ABCD2345", None))
 
     def test_query_requires_one_state_and_exactly_one_result(self):
         self.listener.set_expected_state("sess123")
