@@ -20,6 +20,7 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import io
+import queue
 import socket
 import threading
 import unittest
@@ -30,7 +31,61 @@ from urllib.parse import urlsplit
 from dxpy.cli import sso_loopback_listener
 
 
+class TestCallbackExchange(unittest.TestCase):
+    def test_wait_for_callback_polls_until_the_deadline(self):
+        exchange = sso_loopback_listener._CallbackExchange(lambda code: code)
+        result = ("ABCD2345", None)
+        exchange._callback_result_queue = Mock()
+        exchange._callback_result_queue.get.side_effect = [
+            queue.Empty,
+            queue.Empty,
+            result,
+        ]
+
+        with patch.object(
+                sso_loopback_listener.time,
+                "monotonic",
+                side_effect=[100.0, 100.5, 101.0]):
+            self.assertEqual(exchange.wait_for_callback(1.2), result)
+
+        timeouts = [
+            item.kwargs["timeout"]
+            for item in exchange._callback_result_queue.get.call_args_list
+        ]
+        self.assertEqual(timeouts[:2], [0.5, 0.5])
+        self.assertAlmostEqual(timeouts[2], 0.2)
+
+    def test_wait_for_callback_times_out_at_the_deadline(self):
+        exchange = sso_loopback_listener._CallbackExchange(lambda code: code)
+        exchange._callback_result_queue = Mock()
+        exchange._callback_result_queue.get.side_effect = queue.Empty
+
+        with patch.object(
+                sso_loopback_listener.time,
+                "monotonic",
+                side_effect=[100.0, 100.5, 101.0]):
+            with self.assertRaises(TimeoutError):
+                exchange.wait_for_callback(1.0)
+
+        self.assertEqual(
+            exchange._callback_result_queue.get.call_args_list,
+            [call(timeout=0.5), call(timeout=0.5)],
+        )
+
+
 class TestLoopbackListenerBinding(unittest.TestCase):
+    def test_request_connections_have_a_timeout(self):
+        request = Mock()
+        with patch.object(sso_loopback_listener._LoopbackRequestHandler, "handle"), \
+                patch.object(sso_loopback_listener._LoopbackRequestHandler, "finish"):
+            sso_loopback_listener._LoopbackRequestHandler(
+                request,
+                ("127.0.0.1", 54321),
+                Mock(),
+            )
+
+        request.settimeout.assert_called_once_with(5)
+
     def test_binds_ipv4_on_an_ephemeral_port(self):
         listener = sso_loopback_listener.LoopbackListener(lambda code: code)
         self.addCleanup(listener.close)
@@ -41,6 +96,7 @@ class TestLoopbackListenerBinding(unittest.TestCase):
         self.assertEqual(listener.redirect_url, "http://127.0.0.1:{}/callback".format(port))
         self.assertIs(listener._server.callback_exchange, listener._exchange)
         self.assertFalse(hasattr(listener._server, "listener"))
+        self.assertFalse(listener._server.allow_reuse_address)
 
     def test_ipv4_bind_failure_falls_back_to_ipv6(self):
         attempts = []

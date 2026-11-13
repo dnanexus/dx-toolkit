@@ -27,6 +27,7 @@ import hmac
 import queue
 import socket
 import threading
+import time
 from html import escape
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from http import HTTPStatus
@@ -98,13 +99,24 @@ class _CallbackExchange:
         return result
 
     def wait_for_callback(self, timeout):
-        try:
-            return self._callback_result_queue.get(timeout=timeout)
-        except queue.Empty:
-            raise TimeoutError() from None
+        deadline = time.monotonic() + timeout
+        remaining = timeout
+        # On Windows with Python < 3.14, Ctrl-C cannot interrupt Queue.get()
+        # while it waits on its lock. Poll briefly so Ctrl-C is handled within
+        # 0.5 seconds, while the deadline preserves the requested total timeout.
+        while True:
+            try:
+                return self._callback_result_queue.get(timeout=min(remaining, 0.5))
+            except queue.Empty:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise TimeoutError() from None
 
 
 class _LoopbackRequestHandler(BaseHTTPRequestHandler):
+    # Browsers may speculatively open a connection without sending a request.
+    timeout = 5
+
     def do_GET(self):
         target = urlsplit(self.path)
         if target.path == "/callback":
@@ -177,6 +189,9 @@ class _LoopbackRequestHandler(BaseHTTPRequestHandler):
 
 
 class _LoopbackHTTPServer(HTTPServer):
+    # SO_REUSEADDR allows competing processes to share a listening port on Windows.
+    allow_reuse_address = False
+
     def __init__(self, address, callback_exchange):
         self.callback_exchange = callback_exchange
         super().__init__(address, _LoopbackRequestHandler)

@@ -140,7 +140,13 @@ class TestLookupIdp(unittest.TestCase):
     def test_sso_user(self):
         with patch("dxpy.DXHTTPRequest", return_value={"SSOId": "0oa123"}) as request:
             self.assertEqual(sso_login.lookup_idp("alice"), "0oa123")
-        request.assert_called_once_with("/user/getSSOId", {"id": "user-alice"}, auth=None, max_retries=0)
+        request.assert_called_once_with(
+            "/user/getSSOId",
+            {"id": "user-alice"},
+            auth=None,
+            max_retries=0,
+            timeout=10,
+        )
 
     def test_body_from_username(self):
         with patch("dxpy.DXHTTPRequest", return_value={"SSOId": ""}) as request:

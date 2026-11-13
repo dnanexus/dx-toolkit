@@ -44,6 +44,7 @@ ONE_TIME_CODE_LENGTH = 8
 
 CODE_ATTEMPTS = 3
 DEFAULT_PORTS = {"http": 80, "https": 443}
+SSO_LOOKUP_TIMEOUT = 10
 
 # Finalize errors after which the session cannot be used again
 FINALIZE_ENDED_ERRORS = ("SSOSessionExpiredError", "SSOOneTimeCodeExpiredError", "SSONetworkChangedError")
@@ -124,7 +125,13 @@ def lookup_idp(username):
     gets the password prompt as before.
     """
     try:
-        response = dxpy.DXHTTPRequest("/user/getSSOId", get_sso_id_args(username), auth=None, max_retries=0)
+        response = dxpy.DXHTTPRequest(
+            "/user/getSSOId",
+            get_sso_id_args(username),
+            auth=None,
+            max_retries=0,
+            timeout=SSO_LOOKUP_TIMEOUT,
+        )
         return response.get("SSOId") or None
     except Exception:
         return None
