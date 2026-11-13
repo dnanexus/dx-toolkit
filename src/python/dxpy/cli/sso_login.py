@@ -49,6 +49,10 @@ SSO_LOOKUP_TIMEOUT = 10
 # Finalize errors after which the session cannot be used again
 FINALIZE_ENDED_ERRORS = ("SSOSessionExpiredError", "SSOOneTimeCodeExpiredError", "SSONetworkChangedError")
 
+# Text-mode browsers that webbrowser registers when TERM is set. They run in
+# the terminal and block until closed, so use Code flow instead.
+TEXT_BROWSERS = ("www-browser", "links", "elinks", "lynx", "w3m")
+
 
 class SSOUnavailable(DXCLIError):
     '''
@@ -141,7 +145,8 @@ def can_open_browser():
     """
     Returns whether a local graphical browser can be launched.
 
-    Remote sessions and headless Linux environments use Code flow instead.
+    Remote sessions, headless Linux environments and text-mode browsers use
+    Code flow instead.
     """
     if os.environ.get("SSH_CONNECTION") or os.environ.get("SSH_TTY"):
         return False
@@ -150,11 +155,11 @@ def can_open_browser():
         return False
 
     try:
-        webbrowser.get()
+        browser = webbrowser.get()
     except webbrowser.Error:
         return False
 
-    return True
+    return getattr(browser, "basename", None) not in TEXT_BROWSERS
 
 
 def _initialize(authserver, body):
@@ -263,7 +268,9 @@ def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, o
 
         output("Opening your browser to sign in to DNAnexus.")
         try:
-            webbrowser.open(url, new=2)
+            # Open only the browser can_open_browser() checked. webbrowser.open()
+            # tries every registered browser in turn, including text-mode ones.
+            webbrowser.get().open(url, new=2)
         except (OSError, webbrowser.Error):
             pass
         output("If it doesn't open automatically, visit this URL in a browser on this computer:")
