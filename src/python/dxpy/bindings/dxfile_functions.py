@@ -788,6 +788,28 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
             suffix = suffix.replace('/', os.sep)
         return os.path.join(d, suffix) if suffix != "" else d
 
+    def is_within_destination(dest_root, candidate_path):
+        normalized_dest_root = os.path.normcase(os.path.realpath(dest_root))
+        normalized_candidate = os.path.normcase(os.path.realpath(candidate_path))
+        return normalized_candidate == normalized_dest_root or normalized_candidate.startswith(
+            normalized_dest_root + os.sep
+        )
+
+    def ensure_within_destination(dest_root, candidate_path):
+        if not is_within_destination(dest_root, candidate_path):
+            raise DXFileError(
+                "Refusing to write outside destination directory '{}'".format(dest_root)
+            )
+
+    def is_invalid_filename(name):
+        if name in ("", ".", ".."):
+            return True
+        if os.path.isabs(name):
+            return True
+        if os.path.splitdrive(name)[0] != "":
+            return True
+        return "/" in name or "\\" in name
+
     normalized_folder = folder.strip()
     if normalized_folder != "/" and normalized_folder.endswith("/"):
         normalized_folder = normalized_folder[:-1]
@@ -802,7 +824,9 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         raise DXFileError("Remote folder '{}' not found".format(normalized_folder))
     remote_folders.sort()
     for remote_subfolder in remote_folders:
-        ensure_local_dir(compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder))
+        local_dir = compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder)
+        ensure_within_destination(normalized_dest_dir, local_dir)
+        ensure_local_dir(local_dir)
 
     # Downloading files
     describe_input = dict(fields=dict(folder=True,
@@ -824,10 +848,13 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
 
     # Now it is safe, in both python 2 and 3, to iterate on the generator
     for remote_file in files_gen:
-        local_filename = os.path.join(compose_local_dir(normalized_dest_dir,
-                                                        normalized_folder,
-                                                        remote_file['describe']['folder']),
-                                      remote_file['describe']['name'])
+        local_dir = compose_local_dir(normalized_dest_dir, normalized_folder, remote_file['describe']['folder'])
+        ensure_within_destination(normalized_dest_dir, local_dir)
+        file_name = remote_file['describe']['name']
+        if is_invalid_filename(file_name):
+            raise DXFileError("Invalid remote file name: '{}'".format(file_name))
+        local_filename = os.path.join(local_dir, file_name)
+        ensure_within_destination(normalized_dest_dir, local_filename)
         if os.path.exists(local_filename) and not overwrite:
             raise DXFileError(
                 "Destination file '{}' already exists but no overwrite option is provided".format(local_filename)

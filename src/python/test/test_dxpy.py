@@ -1012,6 +1012,31 @@ class TestFolder(unittest.TestCase):
             dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="a/b")
 
 
+class TestDownloadFolderPathValidation(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp(prefix="test.dx-toolkit.dxpy.DownloadFolderPathValidation.")
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+
+    def test_download_folder_rejects_path_traversal_file_name(self):
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/"]), \
+                patch("dxpy.bindings.dxfile_functions.dxpy.search.find_data_objects",
+                      return_value=iter([{"describe": {"folder": "/", "name": "../outside.txt", "id": "file-123",
+                                                        "parts": {}, "size": 1, "drive": "drive-123", "md5": None}}])), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
+            mock_download.assert_not_called()
+
+    def test_download_folder_rejects_path_traversal_remote_folder(self):
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/", "/../escape"]), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
+            mock_download.assert_not_called()
+
+
 class TestDXRecord(testutil.DXTestCaseCompat):
     """
     Most of these tests really are testing DXDataObject methods
