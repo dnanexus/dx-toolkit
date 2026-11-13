@@ -1012,6 +1012,64 @@ class TestFolder(unittest.TestCase):
             dxpy.download_folder(self.proj_id, os.path.join(self.temp_dir, "foobar"), folder="a/b")
 
 
+class TestDownloadFolderPathValidation(unittest.TestCase):
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp(prefix="test.dx-toolkit.dxpy.DownloadFolderPathValidation.")
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+
+    def test_download_folder_rejects_path_traversal_file_name(self):
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/"]), \
+                patch("dxpy.bindings.dxfile_functions.dxpy.search.find_data_objects",
+                      return_value=iter([{"describe": {"folder": "/", "name": "../outside.txt", "id": "file-123",
+                                                        "parts": {}, "size": 1, "drive": "drive-123", "md5": None}}])), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
+            mock_download.assert_not_called()
+
+    def test_download_folder_rejects_path_traversal_remote_folder(self):
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/", "/../escape"]), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
+            mock_download.assert_not_called()
+
+    @unittest.skipIf(sys.platform == "win32", "Symlink creation may require elevated privileges on Windows")
+    def test_download_folder_rejects_symlinked_subdirectory(self):
+        safe_dest = os.path.join(self.temp_dir, "safe_dest")
+        outside_dir = os.path.join(self.temp_dir, "outside")
+        os.makedirs(safe_dest)
+        os.makedirs(outside_dir)
+        os.symlink(outside_dir, os.path.join(safe_dest, "linked_subdir"))
+
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/", "/linked_subdir"]), \
+                patch("dxpy.bindings.dxfile_functions.dxpy.search.find_data_objects", return_value=iter([])), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", safe_dest, folder="/")
+            mock_download.assert_not_called()
+
+    @unittest.skipIf(sys.platform == "win32", "Symlink creation may require elevated privileges on Windows")
+    def test_download_folder_rejects_symlinked_file_target(self):
+        safe_dest = os.path.join(self.temp_dir, "safe_dest")
+        outside_file = os.path.join(self.temp_dir, "outside.txt")
+        os.makedirs(safe_dest)
+        with open(outside_file, "w") as fd:
+            fd.write("outside")
+        os.symlink(outside_file, os.path.join(safe_dest, "target.txt"))
+
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/"]), \
+                patch("dxpy.bindings.dxfile_functions.dxpy.search.find_data_objects",
+                      return_value=iter([{"describe": {"folder": "/", "name": "target.txt", "id": "file-123",
+                                                        "parts": {}, "size": 1, "drive": "drive-123", "md5": None}}])), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", safe_dest, folder="/", overwrite=True)
+            mock_download.assert_not_called()
+
+
 class TestDXRecord(testutil.DXTestCaseCompat):
     """
     Most of these tests really are testing DXDataObject methods
