@@ -25,6 +25,9 @@ def main():
     opener = build_opener(ProxyHandler({}))
     with opener.open(sys.argv[1], timeout=10) as response:
         response.read()
+    if len(sys.argv) > 2:
+        with open(sys.argv[2], "w") as marker:
+            marker.write("complete\n")
 
 
 if __name__ == "__main__":

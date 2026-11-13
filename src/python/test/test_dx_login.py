@@ -51,6 +51,7 @@ SSO_TOKEN = {"access_token": "sso-token", "token_type": "bearer", "expires_in": 
              "token_signature": "signature", "user_id": "user-alice"}
 NOT_FOUND_PAGE = "<html><title>404 Not Found</title></html>"
 FAKE_BROWSER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fake_browser.py")
+FINALIZE_RESPONSE_HOLD_SECONDS = 1
 
 
 class FakeServer(HTTPServer):
@@ -69,6 +70,8 @@ class FakeServer(HTTPServer):
         self.expires_in = SSO_TOKEN["expires_in"]
         self.session_expires_in = 300
         self.authorization_error = None
+        self.browser_response_marker = None
+        self.browser_response_completed_while_finalize_pending = None
         self.sessions = {}
 
     def approve(self, session_id):
@@ -77,6 +80,11 @@ class FakeServer(HTTPServer):
         return ONE_TIME_CODE
 
     def respond(self, path, body):
+        session = None
+        if path == "/sso/finalize":
+            session = self.sessions.get(body["sessionId"])
+            if session is not None and session["type"] == "loopback":
+                self._record_browser_response_during_finalize()
         if path in self.errors:
             return self.errors[path]
         if path == "/user/getSSOId":
@@ -98,7 +106,6 @@ class FakeServer(HTTPServer):
             }
             return 200, {"sessionId": session_id, "expiresIn": self.session_expires_in}
         if path == "/sso/finalize":
-            session = self.sessions.get(body["sessionId"])
             # Like the auth server, one error for a wrong session, code or verifier
             if (session is None or body["oneTimeCode"] != session["code"]
                     or s256(body["cliCodeVerifier"]) != session["challenge"]):
@@ -106,6 +113,19 @@ class FakeServer(HTTPServer):
                                        "message": "SSO login could not be completed"}}
             return 200, dict(SSO_TOKEN, expires_in=self.expires_in)
         return 404, NOT_FOUND_PAGE
+
+    def _record_browser_response_during_finalize(self):
+        if self.browser_response_marker is None:
+            return
+
+        # Hold finalize pending so an early callback response has time to
+        # complete and create the marker.
+        deadline = time.monotonic() + FINALIZE_RESPONSE_HOLD_SECONDS
+        while not os.path.exists(self.browser_response_marker) and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.browser_response_completed_while_finalize_pending = os.path.exists(
+            self.browser_response_marker
+        )
 
     def authorize(self, session_id):
         """Returns the Loopback callback URL produced by browser authorization."""
@@ -168,9 +188,12 @@ class TestDXLogin(unittest.TestCase):
         self.authserver = "http://127.0.0.1:{}".format(self.fake.server_port)
         self.home = tempfile.mkdtemp()
         self.addCleanup(shutil.rmtree, self.home)
-        self.fake_browser = "{} {} %s".format(
+        self.browser_response_marker = os.path.join(self.home, "browser-response-complete")
+        self.fake.browser_response_marker = self.browser_response_marker
+        self.fake_browser = "{} {} %s {}".format(
             shlex.quote(sys.executable),
             shlex.quote(FAKE_BROWSER),
+            shlex.quote(self.browser_response_marker),
         )
         self.idle_browser = os.path.join(self.home, "idle-browser")
         with open(self.idle_browser, "w") as fd:
@@ -236,6 +259,12 @@ class TestDXLogin(unittest.TestCase):
 
     def _paths(self):
         return [path for path, body in self.fake.requests]
+
+    def _wait_for_browser_response(self, timeout=2):
+        deadline = time.monotonic() + timeout
+        while not os.path.exists(self.browser_response_marker) and time.monotonic() < deadline:
+            time.sleep(0.01)
+        return os.path.exists(self.browser_response_marker)
 
     def test_password_login(self):
         dx_login = self._spawn()
@@ -303,6 +332,8 @@ class TestDXLogin(unittest.TestCase):
         self.assertEqual(json.loads(self._saved("DX_SECURITY_CONTEXT")),
                          {"auth_token": "sso-token", "auth_token_type": "bearer"})
         self.assertEqual(self._saved("DX_USERNAME"), "alice")
+        self.assertFalse(self.fake.browser_response_completed_while_finalize_pending)
+        self.assertTrue(self._wait_for_browser_response())
         output = dx_login.logfile_read.getvalue()
         self.assertNotIn("Password", output)
         self.assertNotIn("One-time code", output)
@@ -319,7 +350,21 @@ class TestDXLogin(unittest.TestCase):
         )
         self.assertRegex(self.fake.requests[2][0], r"^/sso/authorize/\w+$")
         self.assertNotIn("/sso/finalize", self._paths())
+        self.assertIsNone(self.fake.browser_response_completed_while_finalize_pending)
+        self.assertTrue(self._wait_for_browser_response())
         self.assertNotIn("One-time code", dx_login.logfile_read.getvalue())
+
+    def test_sso_loopback_finalize_failure_releases_browser(self):
+        self.fake.errors["/sso/finalize"] = (
+            500,
+            {"error": {"type": "InternalError", "message": "Internal error"}},
+        )
+        dx_login = self._start_loopback_sso()
+        dx_login.expect("Internal error")
+        self.assertEqual(self._exit_status(dx_login), EXPECTED_ERR_EXIT_STATUS)
+        self.assertEqual(self._paths().count("/sso/finalize"), 1)
+        self.assertFalse(self.fake.browser_response_completed_while_finalize_pending)
+        self.assertTrue(self._wait_for_browser_response())
 
     def test_sso_loopback_initialize_error_does_not_fall_back(self):
         self.fake.errors["/sso/initialize"] = (
