@@ -19,6 +19,8 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import io
+import socket
 import threading
 import unittest
 from http.client import HTTPConnection
@@ -68,6 +70,41 @@ class TestLoopbackListenerBinding(unittest.TestCase):
         listener.close()
         ipv6_server.shutdown.assert_called_once_with()
         ipv6_server.server_close.assert_called_once_with()
+
+    def test_accepts_valid_ipv6_callback(self):
+        if not socket.has_ipv6:
+            self.skipTest("IPv6 is unavailable")
+        try:
+            with socket.socket(socket.AF_INET6, socket.SOCK_STREAM) as probe:
+                probe.bind(("::1", 0))
+        except OSError as error:
+            self.skipTest("IPv6 loopback is unavailable: {}".format(error))
+
+        with patch.object(
+                sso_loopback_listener,
+                "_LoopbackHTTPServer",
+                side_effect=OSError("IPv4 unavailable")):
+            listener = sso_loopback_listener.LoopbackListener(
+                lambda code: code.replace("-", "").upper())
+        self.addCleanup(listener.close)
+        listener.set_expected_state("sess123")
+
+        redirect = urlsplit(listener.redirect_url)
+        self.assertEqual(redirect.hostname, "::1")
+        connection = HTTPConnection(redirect.hostname, redirect.port, timeout=1)
+        try:
+            connection.request(
+                "GET",
+                "/callback?code=abcd-2345&state=sess123",
+                headers={"Host": redirect.netloc},
+            )
+            response = connection.getresponse()
+            response.read()
+        finally:
+            connection.close()
+
+        self.assertEqual(response.status, 200)
+        self.assertEqual(listener.wait_for_callback(1), ("ABCD2345", None))
 
     def test_both_bind_failures_raise_the_ipv6_error(self):
         attempts = []
@@ -204,6 +241,20 @@ class TestLoopbackListenerValidation(unittest.TestCase):
         )
         self.assertEqual(self.listener.wait_for_callback(1), (None, "Access denied"))
         self.normalizer.assert_not_called()
+
+    # To make sure that we dont leak one time code to the terminal
+    def test_callback_request_is_not_logged_to_stderr(self):
+        self.listener.set_expected_state("sess123")
+        captured = io.StringIO()
+
+        with patch("sys.stderr", new=captured):
+            self.assertEqual(
+                self.request("/callback?code=abcd-2345&state=sess123"),
+                200,
+            )
+
+        self.assertEqual(captured.getvalue(), "")
+        self.assertEqual(self.listener.wait_for_callback(1), ("ABCD2345", None))
 
     def test_invalid_code_is_rejected_without_queueing(self):
         self.listener.set_expected_state("sess123")

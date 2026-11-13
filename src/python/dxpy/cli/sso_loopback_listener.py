@@ -172,6 +172,7 @@ class _LoopbackRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def log_message(self, _format, *_args):
+        # Callback URLs contain one-time codes and session state, so never log requests.
         pass
 
 
