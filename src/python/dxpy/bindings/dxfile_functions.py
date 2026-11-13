@@ -45,6 +45,23 @@ from ..utils import response_iterator
 import subprocess
 import concurrent.futures
 
+def _ensure_no_symlink_components(dest_root, candidate_path):
+    abs_dest_root = os.path.abspath(dest_root)
+    abs_candidate_path = os.path.abspath(candidate_path)
+    relative_path = os.path.relpath(abs_candidate_path, abs_dest_root)
+    if relative_path in (".", ""):
+        return
+
+    current_path = abs_dest_root
+    for path_component in relative_path.split(os.sep):
+        if path_component in ("", "."):
+            continue
+        current_path = os.path.join(current_path, path_component)
+        if os.path.lexists(current_path) and os.path.islink(current_path):
+            raise DXFileError(
+                "Refusing to write through symlinked destination path component '{}'".format(current_path)
+            )
+
 def open_dxfile(dxid, project=None, mode=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
     :param dxid: file ID
@@ -826,6 +843,7 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     for remote_subfolder in remote_folders:
         local_dir = compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder)
         ensure_within_destination(normalized_dest_dir, local_dir)
+        _ensure_no_symlink_components(normalized_dest_dir, local_dir)
         ensure_local_dir(local_dir)
 
     # Downloading files
@@ -855,6 +873,7 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
             raise DXFileError("Invalid remote file name: '{}'".format(file_name))
         local_filename = os.path.join(local_dir, file_name)
         ensure_within_destination(normalized_dest_dir, local_filename)
+        _ensure_no_symlink_components(normalized_dest_dir, local_filename)
         if os.path.exists(local_filename) and not overwrite:
             raise DXFileError(
                 "Destination file '{}' already exists but no overwrite option is provided".format(local_filename)
