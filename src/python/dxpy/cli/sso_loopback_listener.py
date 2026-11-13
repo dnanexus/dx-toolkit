@@ -23,16 +23,152 @@ SSO protocol requests and flow orchestration remain in sso_login.py.
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import hmac
+import queue
 import socket
 import threading
+from html import escape
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from http import HTTPStatus
+from urllib.parse import parse_qs, urlsplit
 
 
-class _LoopbackRequestHandler(BaseHTTPRequestHandler):
+class _CallbackRequestError(Exception):
+    def __init__(self, status):
+        super().__init__()
+        self.status = status
+
+
+class _CallbackAlreadyReceived(Exception):
     pass
 
 
-class _IPv6HTTPServer(HTTPServer):
+class _CallbackExchange:
+    def __init__(self, normalize_code):
+        self.normalize_code = normalize_code
+        self.expected_state = None
+        self.authority = None
+        self._callback_result_queue = queue.Queue()
+        self._accepted = False
+
+    def set_authority(self, host, port):
+        self.authority = "{}:{}".format(host, port)
+
+    def set_expected_state(self, state):
+        self.expected_state = state
+
+    def parse_request(self, target, host_headers):
+        if target.scheme or target.netloc or target.fragment or host_headers != [self.authority]:
+            raise _CallbackRequestError(HTTPStatus.BAD_REQUEST)
+
+        try:
+            query = parse_qs(target.query, keep_blank_values=True, strict_parsing=True)
+        except ValueError:
+            raise _CallbackRequestError(HTTPStatus.BAD_REQUEST)
+
+        if set(query) not in ({"code", "state"}, {"error", "state"}):
+            raise _CallbackRequestError(HTTPStatus.BAD_REQUEST)
+        # reject if appears more than once
+        if any(len(values) != 1 for values in query.values()):
+            raise _CallbackRequestError(HTTPStatus.BAD_REQUEST)
+
+        state = query["state"][0]
+        if self.expected_state is None or not hmac.compare_digest(
+                state.encode("utf-8"), self.expected_state.encode("utf-8")):
+            raise _CallbackRequestError(HTTPStatus.BAD_REQUEST)
+
+        code = query.get("code", [None])[0]
+        error = query.get("error", [None])[0]
+        if code is not None:
+            try:
+                code = self.normalize_code(code)
+            except ValueError:
+                raise _CallbackRequestError(HTTPStatus.BAD_REQUEST)
+
+        return code, error
+
+    def accept_callback(self, target, host_headers):
+        result = self.parse_request(target, host_headers)
+        # HTTPServer runs handlers sequentially on one server thread. Switching
+        # to a threaded server would require locking this check-and-set.
+        if self._accepted:
+            raise _CallbackAlreadyReceived()
+        self._accepted = True
+        self._callback_result_queue.put(result)
+        return result
+
+    def wait_for_callback(self, timeout):
+        try:
+            return self._callback_result_queue.get(timeout=timeout)
+        except queue.Empty:
+            raise TimeoutError() from None
+
+
+class _LoopbackRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        target = urlsplit(self.path)
+        if target.path == "/callback":
+            self._handle_callback(target)
+        else:
+            self._send_status(HTTPStatus.NOT_FOUND)
+
+    def _handle_callback(self, target):
+        try:
+            _code, error = self.server.callback_exchange.accept_callback(
+                target,
+                self.headers.get_all("Host", []),
+            )
+        except _CallbackRequestError as error:
+            self._send_status(error.status)
+            return
+        except _CallbackAlreadyReceived:
+            self._send_status(HTTPStatus.CONFLICT)
+            return
+
+        if error is None:
+            message = (
+                "You have successfully authenticated in your browser. "
+                "You may now close this tab and return to your terminal."
+            )
+        else:
+            message = "Login failed: {}. Return to your terminal.".format(escape(error))
+        # This temporary local response may later redirect the browser to a
+        # polished frontend confirmation page.
+        self._send_page(message)
+
+    def _send_page(self, message):
+        body = (
+            "<!doctype html>\n"
+            "<html lang=\"en\">\n"
+            "<head><meta charset=\"utf-8\"><title>DNAnexus login</title></head>\n"
+            "<body><p>{}</p></body>\n"
+            "</html>\n"
+        ).format(message).encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Content-Security-Policy", "default-src 'none'")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _send_status(self, status):
+        self.send_response(status)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
+    def log_message(self, _format, *_args):
+        pass
+
+
+class _LoopbackHTTPServer(HTTPServer):
+    def __init__(self, address, callback_exchange):
+        self.callback_exchange = callback_exchange
+        super().__init__(address, _LoopbackRequestHandler)
+
+
+class _IPv6HTTPServer(_LoopbackHTTPServer):
     address_family = socket.AF_INET6
 
 
@@ -46,16 +182,17 @@ class LoopbackListener:
     '''
 
     def __init__(self, normalize_code):
-        self._normalize_code = normalize_code
+        self._exchange = _CallbackExchange(normalize_code)
         try:
-            self._server = HTTPServer(("127.0.0.1", 0), _LoopbackRequestHandler)
-            authority = "127.0.0.1"
+            self._server = _LoopbackHTTPServer(("127.0.0.1", 0), self._exchange)
+            host = "127.0.0.1"
         except OSError:
-            self._server = _IPv6HTTPServer(("::1", 0), _LoopbackRequestHandler)
-            authority = "[::1]"
+            self._server = _IPv6HTTPServer(("::1", 0), self._exchange)
+            host = "[::1]"
 
         port = self._server.server_address[1]
-        self._redirect_url = "http://{}:{}/callback".format(authority, port)
+        self._exchange.set_authority(host, port)
+        self._redirect_url = "http://{}/callback".format(self._exchange.authority)
         self._thread = threading.Thread(
             target=self._server.serve_forever,
             kwargs={"poll_interval": 0.25},
@@ -78,7 +215,7 @@ class LoopbackListener:
 
     def set_expected_state(self, state):
         '''Sets the SSO session state that a callback must contain.'''
-        raise NotImplementedError("Loopback callback state validation is not implemented")
+        self._exchange.set_expected_state(state)
 
     def wait_for_callback(self, timeout):
         '''
@@ -88,15 +225,7 @@ class LoopbackListener:
         before it is returned; an error is the known failure sent by the auth
         server.
         '''
-        raise NotImplementedError("Loopback callback waiting is not implemented")
-
-    def report_finalize_result(self, error=None):
-        '''
-        Reports the final login outcome to the browser callback response.
-
-        A missing *error* indicates that finalize succeeded.
-        '''
-        raise NotImplementedError("Loopback finalize result reporting is not implemented")
+        return self._exchange.wait_for_callback(timeout)
 
     def close(self):
         '''Stops the listener and releases its bound socket.'''

@@ -473,7 +473,6 @@ class TestRunLoopbackFlow(unittest.TestCase):
         self.assertEqual((authserver, session_id, code, expires),
                          (AUTHSERVER, "sess123", "ABCD2345", EXPIRES))
         self.assertEqual(s256(verifier), challenge)
-        self.listener.report_finalize_result.assert_called_once_with()
         self.listener.close.assert_called_once_with()
 
     def test_browser_launch_error_still_prints_link(self):
@@ -487,7 +486,6 @@ class TestRunLoopbackFlow(unittest.TestCase):
             self._run_flow(callback=(None, "Access denied"))
         self.assertEqual(str(cm.exception), "Access denied")
         self.finalize.assert_not_called()
-        self.listener.report_finalize_result.assert_not_called()
         self.listener.close.assert_called_once_with()
 
     def test_initialize_error_passes_through(self):
@@ -499,24 +497,21 @@ class TestRunLoopbackFlow(unittest.TestCase):
         self.browser_open.assert_not_called()
         self.listener.wait_for_callback.assert_not_called()
         self.finalize.assert_not_called()
-        self.listener.report_finalize_result.assert_not_called()
         self.listener.close.assert_called_once_with()
 
-    def test_rejected_code_ends_login_and_reports_failure(self):
+    def test_rejected_code_ends_login(self):
         error = sso_login.SSOCodeRejected("SSO login could not be completed")
         with self.assertRaises(sso_login.SSOLoginEnded) as cm:
             self._run_flow(finalize_error=error)
         message = 'Login could not be completed. Run "dx login" again.'
         self.assertEqual(str(cm.exception), message)
-        self.listener.report_finalize_result.assert_called_once_with(error=message)
         self.listener.close.assert_called_once_with()
 
-    def test_other_finalize_error_is_reported_and_passes_through(self):
+    def test_other_finalize_error_passes_through(self):
         error = api_error("InternalError", code=500)
         with self.assertRaises(DXAPIError) as cm:
             self._run_flow(finalize_error=error)
         self.assertIs(cm.exception, error)
-        self.listener.report_finalize_result.assert_called_once_with(error=str(error))
         self.listener.close.assert_called_once_with()
 
     def test_timeout_ends_login(self):
@@ -525,14 +520,12 @@ class TestRunLoopbackFlow(unittest.TestCase):
         self.assertEqual(str(cm.exception), "Sign-in did not finish within 1 minute, 30 seconds.")
         self.listener.wait_for_callback.assert_called_once_with(90)
         self.finalize.assert_not_called()
-        self.listener.report_finalize_result.assert_not_called()
         self.listener.close.assert_called_once_with()
 
     def test_ctrl_c_passes_through(self):
         with self.assertRaises(KeyboardInterrupt):
             self._run_flow(wait_error=KeyboardInterrupt())
         self.finalize.assert_not_called()
-        self.listener.report_finalize_result.assert_not_called()
         self.listener.close.assert_called_once_with()
 
 

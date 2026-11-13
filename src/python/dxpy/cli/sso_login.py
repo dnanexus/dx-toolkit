@@ -276,17 +276,10 @@ def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, o
             raise SSOLoginEnded(error)
 
         try:
-            result = finalize(authserver, session_id, verifier, code, expires)
+            return finalize(authserver, session_id, verifier, code, expires)
         except SSOCodeRejected:
             message = 'Login could not be completed. Run "dx login" again.'
-            listener.report_finalize_result(error=message)
             raise SSOLoginEnded(message)
-        except Exception as e:
-            listener.report_finalize_result(error=str(e))
-            raise
-
-        listener.report_finalize_result()
-        return result
     finally:
         listener.close()
 
