@@ -435,11 +435,11 @@ def login(args):
     elif args.projects:
         pick_and_set_project(args)
 
-    if args.save and not args.token:
+    if args.save and args.token is None:
         msg = "You are now logged in. Your credentials are stored in {conf_dir} and will expire in {timeout}. {tip}"
         tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
               " to end this session."
-        timeout = datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s') // 1000)
+        timeout = datetime.timedelta(seconds=token_res["expires_in"])
         print(fill(msg.format(conf_dir=dxpy.config.get_user_conf_dir(),
                               timeout=timeout,
                               tip=tip)))
