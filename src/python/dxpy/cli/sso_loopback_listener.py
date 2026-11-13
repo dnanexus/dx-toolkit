@@ -168,7 +168,7 @@ class _LoopbackRequestHandler(BaseHTTPRequestHandler):
                 "You may now close this tab and return to your terminal."
             )
         else:
-            message = "Login failed: {}. Return to your terminal.".format(error)
+            message = "Login failed: {}. Return to your terminal.".format(error.rstrip("."))
         self._send_browser_response(HTTPStatus.OK, message)
 
     # This temporary local response may later redirect the browser to a
@@ -273,7 +273,7 @@ class LoopbackListener:
         The result may be set only once.
         '''
         if not self._exchange.set_finalize_result(error):
-            raise RuntimeError("Login callback has already completed")
+            raise RuntimeError("Finalize result has already been set")
 
     def close(self):
         '''Stops the listener and releases its bound socket.'''

@@ -143,18 +143,19 @@ def lookup_idp(username):
         return None
 
 
-def can_open_browser():
+def find_local_browser():
     """
-    Returns whether a local graphical browser can be launched.
+    Returns the local graphical browser to open the sign-in link with, or None
+    if there is none.
 
     Remote sessions, headless Linux environments and text-mode browsers use
     Code flow instead.
     """
     if os.environ.get("SSH_CONNECTION") or os.environ.get("SSH_TTY"):
-        return False
+        return None
     if sys.platform.startswith("linux") and not (
             os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
-        return False
+        return None
 
     # webbrowser usually exposes only a generic OS launcher, not the actual
     # browser or version. The remote sign-in service sees the real browser and
@@ -163,9 +164,11 @@ def can_open_browser():
     try:
         browser = webbrowser.get()
     except webbrowser.Error:
-        return False
+        return None
 
-    return getattr(browser, "basename", None) not in TEXT_BROWSERS
+    if getattr(browser, "basename", None) in TEXT_BROWSERS:
+        return None
+    return browser
 
 
 def _open_browser(browser, url):
@@ -175,12 +178,7 @@ def _open_browser(browser, url):
         pass
 
 
-def _launch_browser(url):
-    try:
-        browser = webbrowser.get()
-    except (OSError, webbrowser.Error):
-        return None
-
+def _launch_browser(browser, url):
     thread = threading.Thread(
         target=_open_browser,
         args=(browser, url),
@@ -190,8 +188,7 @@ def _launch_browser(url):
     try:
         thread.start()
     except RuntimeError:
-        return None
-    return thread
+        pass
 
 
 def _initialize(authserver, body):
@@ -284,9 +281,10 @@ def run_code_flow(authserver, idp_id, expires, prompt, output):
             attempt += 1
 
 
-def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, output):
+def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, browser, output):
     """
-    Runs one browser-based SSO login using an already-bound listener.
+    Runs one browser-based SSO login using an already-bound listener and the
+    browser from find_local_browser().
 
     Waits for the callback, exchanges its code for a token, and returns the
     finalize response. Always closes the listener.
@@ -299,9 +297,9 @@ def run_loopback_flow(authserver, idp_id, expires, listener: LoopbackListener, o
         url = authorize_url(authserver, session_id)
 
         output("Opening your browser to sign in to DNAnexus.")
-        # Open only the browser can_open_browser() checked. webbrowser.open()
+        # Open only the browser find_local_browser() checked. webbrowser.open()
         # tries every registered browser in turn, including text-mode ones.
-        _launch_browser(url)
+        _launch_browser(browser, url)
         output("If it doesn't open automatically, visit this URL in a browser on this computer:")
         output("")
         output("  " + url)
@@ -342,7 +340,8 @@ def run_sso_flow(authserver, idp_id, expires, prompt, output):
     """
     Runs the SSO login flow and returns the response containing the API token.
     """
-    if not can_open_browser():
+    browser = find_local_browser()
+    if browser is None:
         return run_code_flow(authserver, idp_id, expires, prompt, output)
 
     try:
@@ -351,4 +350,4 @@ def run_sso_flow(authserver, idp_id, expires, prompt, output):
         output("Could not start a local browser callback; using code-based sign-in.")
         return run_code_flow(authserver, idp_id, expires, prompt, output)
 
-    return run_loopback_flow(authserver, idp_id, expires, listener, output)
+    return run_loopback_flow(authserver, idp_id, expires, listener, browser, output)

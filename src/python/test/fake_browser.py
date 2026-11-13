@@ -17,6 +17,7 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+import os
 import sys
 from urllib.request import build_opener, ProxyHandler
 
@@ -24,10 +25,13 @@ from urllib.request import build_opener, ProxyHandler
 def main():
     opener = build_opener(ProxyHandler({}))
     with opener.open(sys.argv[1], timeout=10) as response:
-        response.read()
+        page = response.read()
     if len(sys.argv) > 2:
-        with open(sys.argv[2], "w") as marker:
-            marker.write("complete\n")
+        # Write the page in one step, so that the marker never exists half-written
+        partial = sys.argv[2] + ".partial"
+        with open(partial, "wb") as marker:
+            marker.write(page)
+        os.replace(partial, sys.argv[2])
 
 
 if __name__ == "__main__":

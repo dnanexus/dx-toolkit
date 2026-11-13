@@ -54,6 +54,14 @@ FAKE_BROWSER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fake_br
 FINALIZE_RESPONSE_HOLD_SECONDS = 1
 
 
+def wait_for_file(path, timeout):
+    """Waits up to *timeout* seconds for *path* to exist, and returns whether it does."""
+    deadline = time.monotonic() + timeout
+    while not os.path.exists(path) and time.monotonic() < deadline:
+        time.sleep(0.01)
+    return os.path.exists(path)
+
+
 class FakeServer(HTTPServer):
     """
     A fake API server and auth server on one local port, for the requests that
@@ -120,11 +128,8 @@ class FakeServer(HTTPServer):
 
         # Hold finalize pending so an early callback response has time to
         # complete and create the marker.
-        deadline = time.monotonic() + FINALIZE_RESPONSE_HOLD_SECONDS
-        while not os.path.exists(self.browser_response_marker) and time.monotonic() < deadline:
-            time.sleep(0.01)
-        self.browser_response_completed_while_finalize_pending = os.path.exists(
-            self.browser_response_marker
+        self.browser_response_completed_while_finalize_pending = wait_for_file(
+            self.browser_response_marker, FINALIZE_RESPONSE_HOLD_SECONDS
         )
 
     def authorize(self, session_id):
@@ -260,11 +265,11 @@ class TestDXLogin(unittest.TestCase):
     def _paths(self):
         return [path for path, body in self.fake.requests]
 
-    def _wait_for_browser_response(self, timeout=2):
-        deadline = time.monotonic() + timeout
-        while not os.path.exists(self.browser_response_marker) and time.monotonic() < deadline:
-            time.sleep(0.01)
-        return os.path.exists(self.browser_response_marker)
+    def _browser_page(self):
+        """Waits for the fake browser to get the callback response, and returns the page."""
+        self.assertTrue(wait_for_file(self.browser_response_marker, 2))
+        with open(self.browser_response_marker) as fd:
+            return fd.read()
 
     def test_password_login(self):
         dx_login = self._spawn()
@@ -332,8 +337,8 @@ class TestDXLogin(unittest.TestCase):
         self.assertEqual(json.loads(self._saved("DX_SECURITY_CONTEXT")),
                          {"auth_token": "sso-token", "auth_token_type": "bearer"})
         self.assertEqual(self._saved("DX_USERNAME"), "alice")
-        self.assertFalse(self.fake.browser_response_completed_while_finalize_pending)
-        self.assertTrue(self._wait_for_browser_response())
+        self.assertIs(self.fake.browser_response_completed_while_finalize_pending, False)
+        self.assertIn("Login completed successfully.", self._browser_page())
         output = dx_login.logfile_read.getvalue()
         self.assertNotIn("Password", output)
         self.assertNotIn("One-time code", output)
@@ -351,7 +356,7 @@ class TestDXLogin(unittest.TestCase):
         self.assertRegex(self.fake.requests[2][0], r"^/sso/authorize/\w+$")
         self.assertNotIn("/sso/finalize", self._paths())
         self.assertIsNone(self.fake.browser_response_completed_while_finalize_pending)
-        self.assertTrue(self._wait_for_browser_response())
+        self.assertIn("Login failed: Access denied. Return to your terminal.", self._browser_page())
         self.assertNotIn("One-time code", dx_login.logfile_read.getvalue())
 
     def test_sso_loopback_finalize_failure_releases_browser(self):
@@ -363,8 +368,9 @@ class TestDXLogin(unittest.TestCase):
         dx_login.expect("Internal error")
         self.assertEqual(self._exit_status(dx_login), EXPECTED_ERR_EXIT_STATUS)
         self.assertEqual(self._paths().count("/sso/finalize"), 1)
-        self.assertFalse(self.fake.browser_response_completed_while_finalize_pending)
-        self.assertTrue(self._wait_for_browser_response())
+        self.assertIs(self.fake.browser_response_completed_while_finalize_pending, False)
+        self.assertIn("Login failed: Login could not be completed. Return to your terminal.",
+                      self._browser_page())
 
     def test_sso_loopback_initialize_error_does_not_fall_back(self):
         self.fake.errors["/sso/initialize"] = (
