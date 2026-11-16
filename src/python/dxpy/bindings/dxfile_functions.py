@@ -41,7 +41,7 @@ from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..compat import md5_hasher
-from ..utils import response_iterator
+from ..utils import response_iterator, has_windows_drive_prefix
 import subprocess
 import concurrent.futures
 
@@ -801,9 +801,26 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
 
     def compose_local_dir(d, remote_folder, remote_subfolder):
         suffix = remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]
+        validate_remote_relative_path(suffix)
         if os.sep != '/':
             suffix = suffix.replace('/', os.sep)
         return os.path.join(d, suffix) if suffix != "" else d
+
+    def validate_remote_relative_path(path_value):
+        if path_value in ("", "."):
+            return
+        if path_value == "..":
+            raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+        if "\x00" in path_value:
+            raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+        if path_value.startswith("/") or path_value.startswith("\\") or has_windows_drive_prefix(path_value):
+            raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+        path_components = path_value.split("/")
+        for component in path_components:
+            if component in ("", ".", "..") or "\x00" in component or has_windows_drive_prefix(component):
+                raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+            if "\\" in component:
+                raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
 
     def is_within_destination(dest_root, candidate_path):
         normalized_dest_root = os.path.normcase(os.path.realpath(dest_root))
@@ -821,9 +838,11 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
     def is_invalid_filename(name):
         if name in ("", ".", ".."):
             return True
+        if "\x00" in name:
+            return True
         if os.path.isabs(name):
             return True
-        if os.path.splitdrive(name)[0] != "":
+        if has_windows_drive_prefix(name):
             return True
         return "/" in name or "\\" in name
 

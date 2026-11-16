@@ -34,6 +34,7 @@ from urllib3.exceptions import SSLError, NewConnectionError
 import dxpy
 import dxpy_testutil as testutil
 from dxpy.exceptions import (DXAPIError, DXFileError, DXError, DXJobFailureError, ResourceNotFound)
+from dxpy.cli import download as download_cli
 from dxpy.scripts import dx_build_app
 from dxpy.utils import pretty_print, warn, Nonce
 from dxpy.utils.resolver import resolve_path, resolve_existing_path, ResolutionError, is_project_explicit
@@ -1029,8 +1030,45 @@ class TestDownloadFolderPathValidation(unittest.TestCase):
                 dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
             mock_download.assert_not_called()
 
+    def test_download_folder_rejects_absolute_path_file_name(self):
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/"]), \
+                patch("dxpy.bindings.dxfile_functions.dxpy.search.find_data_objects",
+                      return_value=iter([{"describe": {"folder": "/", "name": "/etc/passwd", "id": "file-123",
+                                                        "parts": {}, "size": 1, "drive": "drive-123", "md5": None}}])), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
+            mock_download.assert_not_called()
+
+    def test_download_folder_rejects_windows_drive_file_name(self):
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/"]), \
+                patch("dxpy.bindings.dxfile_functions.dxpy.search.find_data_objects",
+                      return_value=iter([{"describe": {"folder": "/", "name": "C:\\Windows\\win.ini", "id": "file-123",
+                                                        "parts": {}, "size": 1, "drive": "drive-123", "md5": None}}])), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
+            mock_download.assert_not_called()
+
+    def test_download_folder_rejects_null_byte_file_name(self):
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/"]), \
+                patch("dxpy.bindings.dxfile_functions.dxpy.search.find_data_objects",
+                      return_value=iter([{"describe": {"folder": "/", "name": "bad\x00name.txt", "id": "file-123",
+                                                        "parts": {}, "size": 1, "drive": "drive-123", "md5": None}}])), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
+            mock_download.assert_not_called()
+
     def test_download_folder_rejects_path_traversal_remote_folder(self):
         with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/", "/../escape"]), \
+                patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
+            with self.assertRaises(DXFileError):
+                dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
+            mock_download.assert_not_called()
+
+    def test_download_folder_rejects_nested_folder_traversal(self):
+        with patch("dxpy.bindings.dxfile_functions.list_subfolders", return_value=["/", "/a/../../b"]), \
                 patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
             with self.assertRaises(DXFileError):
                 dxpy.download_folder("project-test", os.path.join(self.temp_dir, "safe_dest"), folder="/")
@@ -1067,6 +1105,35 @@ class TestDownloadFolderPathValidation(unittest.TestCase):
                 patch("dxpy.bindings.dxfile_functions.download_dxfile") as mock_download:
             with self.assertRaises(DXFileError):
                 dxpy.download_folder("project-test", safe_dest, folder="/", overwrite=True)
+            mock_download.assert_not_called()
+
+
+class TestDownloadCliPathValidation(unittest.TestCase):
+    class _Args(object):
+        overwrite = True
+        show_progress = False
+
+    def test_download_files_escapes_separator_characters_for_single_file_download(self):
+        files = {"project-test": [{"describe": {"name": "/etc\\passwd", "id": "file-123"}}]}
+        with patch("dxpy.cli.download.download_one_file") as mock_download:
+            download_cli._download_files(files, "/tmp/destdir", self._Args())
+            self.assertEqual(mock_download.call_count, 1)
+            self.assertEqual(mock_download.call_args[0][2], "/tmp/destdir/%2Fetc%5Cpasswd")
+
+    def test_download_files_rejects_windows_drive_prefixed_name(self):
+        files = {"project-test": [{"describe": {"name": "C:windows_file.txt", "id": "file-123"}}]}
+        with patch("dxpy.cli.download.err_exit", side_effect=RuntimeError("invalid-name")), \
+                patch("dxpy.cli.download.download_one_file") as mock_download:
+            with self.assertRaises(RuntimeError):
+                download_cli._download_files(files, "/tmp/destdir", self._Args())
+            mock_download.assert_not_called()
+
+    def test_download_files_rejects_null_byte_name(self):
+        files = {"project-test": [{"describe": {"name": "bad\x00name.txt", "id": "file-123"}}]}
+        with patch("dxpy.cli.download.err_exit", side_effect=RuntimeError("invalid-name")), \
+                patch("dxpy.cli.download.download_one_file") as mock_download:
+            with self.assertRaises(RuntimeError):
+                download_cli._download_files(files, "/tmp/destdir", self._Args())
             mock_download.assert_not_called()
 
 
