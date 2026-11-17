@@ -6,6 +6,17 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx login --no-save` uses the login in the current terminal only and keeps your saved login
+
+### Changed
+
+* `dx login --save` always replaces your saved login, including outside `dx sh`
+* `dx login` with a username and password over a saved read-only login asks whether to use the new login in this terminal only; without a terminal, it does so without asking
+* `dx login --read-only` on a terminal asks whether to use the login in this terminal only, which is the default answer
+* `dx login --token` in `dx sh` saves the token only with `--save`
+
 ## [420.0] - beta
 
 ### Added

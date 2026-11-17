@@ -16,9 +16,17 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
+import dxpy
 from dxpy import get_auth_server_name, DXHTTPRequest
 
 from dxpy.api import system_whoami
+
+def is_read_only_session():
+    """
+    Returns True if the active security context was recorded by ``dx login``
+    as read-only.
+    """
+    return bool((dxpy.SECURITY_CONTEXT or {}).get("read_only"))
 
 def user_info(authserver_host=None, authserver_port=None):
     """Returns the result of the user_info call against the specified auth
