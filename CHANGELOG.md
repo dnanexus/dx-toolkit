@@ -10,11 +10,15 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 * `dx login --read-only` logs in with a read-only token, which can view but not modify the platform. It cannot be used with `--token`
 * Error messages for read-only tokens: an action a read-only token is not allowed to perform, read-only tokens not enabled yet, and an auth server that does not support `--read-only`
+* `dx login --no-save` uses the login in the current terminal only and keeps your saved login
 
 ### Changed
 
 * `dx login --read-only` lists projects at VIEW instead of CONTRIBUTE
 * `dx get` of an app or applet skips its resources when the user's billing account is not visible, for example in a read-only session
+* `dx login --save` always replaces your saved login, including outside `dx sh`
+* `dx login --read-only` on a terminal asks whether to use the login in this terminal only, which is the default answer
+* `dx login --token` in `dx sh` saves the token only with `--save`
 
 ## [421.0] - beta
 

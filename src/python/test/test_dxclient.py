@@ -127,7 +127,7 @@ class FakeAuthServer(object):
         return [r for r in self.requests if r["resource"].endswith(route)]
 
 
-class TestDXLoginReadOnly(unittest.TestCase):
+class DXLoginTestCase(unittest.TestCase):
     """Runs "dx login" in process against a mocked auth server, so no platform login is needed."""
 
     def setUp(self):
@@ -152,6 +152,7 @@ class TestDXLoginReadOnly(unittest.TestCase):
             patch.object(dx_script, "pick_and_set_project", side_effect=lambda args: self.picked_levels.append(args.level)),
             patch("builtins.input", return_value="alice"),
             patch("getpass.getpass", return_value="secret"),
+            patch.object(dx_script, "INTERACTIVE_CLI", False),
         ]
         for p in patches:
             p.start()
@@ -182,6 +183,19 @@ class TestDXLoginReadOnly(unittest.TestCase):
         with open(os.path.join(self.conf_dir, "DX_USERNAME")) as fd:
             return fd.read()
 
+    def session_dir(self):
+        return dxpy.config.get_session_conf_dir()
+
+    def saved_session_security_context(self):
+        with open(os.path.join(self.session_dir(), "environment.json")) as fd:
+            return json.loads(json.load(fd)["DX_SECURITY_CONTEXT"])
+
+    def saved_session_env(self):
+        with open(os.path.join(self.session_dir(), "environment.json")) as fd:
+            return json.load(fd)
+
+
+class TestDXLoginReadOnly(DXLoginTestCase):
     def test_password_login_unchanged_without_read_only(self):
         exit_code, stdout, _ = self.login()
         self.assertIsNone(exit_code)
@@ -247,6 +261,139 @@ class TestDXLoginReadOnly(unittest.TestCase):
                          "this session is read-only. Log in without --read-only to modify the platform")
         self.assertEqual(login_api_error(dxpy.exceptions.ReadOnlyTokensDisabled, "server text").error_message(),
                          "read-only tokens are not enabled yet")
+
+
+class TestDXLoginSave(DXLoginTestCase):
+    """Checks where "dx login" saves: the session and the global login, or the session only."""
+
+    GLOBAL_CONTEXT = {"auth_token": "global-token", "auth_token_type": "Bearer"}
+
+    def global_file(self):
+        return os.path.join(self.conf_dir, "environment.json")
+
+    def marker(self):
+        return os.path.join(self.session_dir(), dxpy.config.SESSION_ONLY_MARKER)
+
+    def seed_global_login(self, sec_context):
+        with open(self.global_file(), "w") as fd:
+            json.dump({"DX_SECURITY_CONTEXT": json.dumps(sec_context)}, fd)
+
+    def global_bytes(self):
+        with open(self.global_file(), "rb") as fd:
+            return fd.read()
+
+    def assert_saved_globally(self, token):
+        self.assertEqual(self.saved_security_context()["auth_token"], token)
+        self.assertEqual(self.saved_session_security_context()["auth_token"], token)
+        self.assertFalse(os.path.exists(self.marker()))
+
+    def assert_saved_to_session_only(self, token, global_bytes):
+        self.assertEqual(self.saved_session_security_context()["auth_token"], token)
+        self.assertTrue(os.path.exists(self.marker()))
+        self.assertEqual(self.global_bytes(), global_bytes)
+
+    def test_no_save_leaves_global_login_unchanged(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        before = self.global_bytes()
+        exit_code, _, _ = self.login("--no-save", "--token", "user-token")
+        self.assertIsNone(exit_code)
+        self.assert_saved_to_session_only("user-token", before)
+
+    def test_later_saves_in_session_only_session_leave_global_login_unchanged(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        before = self.global_bytes()
+        self.login("--no-save", "--token", "user-token")
+        dx_script.set_wd("/", True)
+        self.assertEqual(self.global_bytes(), before)
+        self.assertEqual(self.saved_session_env()["DX_CLI_WD"], "/")
+
+    def test_save_replaces_global_login_and_removes_marker(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        dxpy.config.set_session_only(True)
+        with patch.object(dx_script, "prompt_for_yn") as prompt:
+            exit_code, stdout, _ = self.login("--save")
+        self.assertIsNone(exit_code)
+        prompt.assert_not_called()
+        self.assert_saved_globally("new-token")
+        self.assertIn("You are now logged in.", stdout)
+
+    def test_token_login_saves_globally(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        with patch.object(dx_script, "prompt_for_yn") as prompt:
+            self.login("--token", "user-token")
+        prompt.assert_not_called()
+        self.assert_saved_globally("user-token")
+
+    def test_read_only_login_without_terminal_saves_globally(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        with patch.object(dx_script, "prompt_for_yn") as prompt:
+            self.login("--read-only")
+        prompt.assert_not_called()
+        self.assert_saved_globally("new-token")
+
+    def test_credentials_login_saves_globally(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        with patch.object(dx_script, "prompt_for_yn") as prompt:
+            self.login()
+        prompt.assert_not_called()
+        self.assert_saved_globally("new-token")
+        self.assertEqual(self.saved_username(), "alice")
+
+    def login_on_terminal(self, *answers, argv=()):
+        with patch.object(dx_script, "INTERACTIVE_CLI", True), \
+                patch.object(dx_script, "prompt_for_yn", side_effect=list(answers)) as prompt:
+            self.login(*argv)
+        return [c[0][0] for c in prompt.call_args_list]
+
+    def test_read_only_login_on_terminal_defaults_to_this_terminal(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        before = self.global_bytes()
+        prompts = self.login_on_terminal(True, argv=["--read-only"])
+        self.assertEqual(prompts, ["Use this login in this terminal only?"])
+        self.assert_saved_to_session_only("new-token", before)
+
+    def test_read_only_login_on_terminal_can_save_globally(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        prompts = self.login_on_terminal(False, argv=["--read-only"])
+        self.assertEqual(prompts, ["Use this login in this terminal only?"])
+        self.assert_saved_globally("new-token")
+
+    def test_credentials_login_on_terminal_does_not_prompt(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        prompts = self.login_on_terminal(argv=[])
+        self.assertEqual(prompts, [])
+        self.assert_saved_globally("new-token")
+
+    def test_dx_sh_saves_only_with_save(self):
+        with patch.dict(dx_script.state, {"interactive": True}):
+            self.login("--token", "user-token")
+            self.login("--token", "user-token", "--no-save")
+            self.assertFalse(os.path.exists(self.global_file()))
+            self.assertFalse(os.path.exists(os.path.join(self.conf_dir, "DX_USERNAME")))
+            self.assertFalse(os.path.exists(self.session_dir()))
+            self.login("--token", "user-token", "--save")
+        self.assert_saved_globally("user-token")
+
+    def test_staging_no_save_saves_api_server_to_session_only(self):
+        exit_code, _, _ = self.login("--staging", "--no-save", "--token", "user-token")
+        self.assertIsNone(exit_code)
+        self.assertFalse(os.path.exists(self.global_file()))
+        self.assertEqual(self.saved_session_env()["DX_APISERVER_HOST"], "stagingapi.dnanexus.com")
+
+    def test_failed_credentials_login_does_not_save_username(self):
+        self.server.new_token_error = dxpy.exceptions.DXAPIError(
+            {"error": {"type": "UsernameOrPasswordError", "message": "Incorrect username and/or password"}}, 401)
+        exit_code, _, _ = self.login()
+        self.assertEqual(exit_code, EXPECTED_ERR_EXIT_STATUS)
+        self.assertEqual(len(self.server.calls_to("/system/newAuthToken")), 3)
+        self.assertFalse(os.path.exists(os.path.join(self.conf_dir, "DX_USERNAME")))
+        self.assertFalse(os.path.exists(os.path.join(self.session_dir(), "DX_USERNAME")))
+
+    def test_save_and_no_save_are_exclusive(self):
+        with patch("sys.stderr", new_callable=io.StringIO):
+            with self.assertRaises(SystemExit) as cm:
+                dx_script.parser.parse_args(["login", "--save", "--no-save"])
+        self.assertEqual(cm.exception.code, 2)
 
 
 class TestDXReadOnlySession(unittest.TestCase):
