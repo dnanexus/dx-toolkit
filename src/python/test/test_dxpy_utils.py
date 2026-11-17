@@ -19,7 +19,7 @@
 
 from __future__ import print_function, unicode_literals, division, absolute_import
 
-import unittest, time, json, re, os
+import unittest, time, json, re, os, shutil, stat, tempfile
 import dateutil.parser
 import dxpy
 from dxpy import AppError, AppInternalError, DXError, DXFile, DXRecord
@@ -337,6 +337,63 @@ class TestDXConfig(unittest.TestCase):
         finally:
             os.environ.update(environ_backup)
             dxpy.config.__init__(suppress_warning=True)
+
+class TestDXConfigSessionOnly(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp()
+        self.conf_dir = os.path.join(self.tmp_dir, "conf")
+        self.environ_backup = os.environ.copy()
+        for var in list(os.environ):
+            if var.startswith("DX_"):
+                del os.environ[var]
+        os.environ["DX_USER_CONF_DIR"] = self.conf_dir
+        self.config = config.DXConfig(suppress_warning=True)
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self.environ_backup)
+        dxpy.config.__init__(suppress_warning=True)
+        shutil.rmtree(self.tmp_dir, ignore_errors=True)
+
+    def saved_wd(self, conf_dir):
+        with open(os.path.join(conf_dir, "DX_CLI_WD")) as fd:
+            return fd.read()
+
+    def marker(self):
+        return os.path.join(self.config.get_session_conf_dir(), config.DXConfig.SESSION_ONLY_MARKER)
+
+    def test_save_skips_global_conf_only_while_marked(self):
+        session_dir = self.config.get_session_conf_dir()
+        self.config.write("DX_CLI_WD", "/a")
+        self.assertEqual(self.saved_wd(self.conf_dir), "/a")
+        self.assertEqual(self.saved_wd(session_dir), "/a")
+
+        self.config.set_session_only(True)
+        self.config.write("DX_CLI_WD", "/b")
+        self.assertEqual(self.saved_wd(self.conf_dir), "/a")
+        self.assertEqual(self.saved_wd(session_dir), "/b")
+
+        self.config.set_session_only(False)
+        self.assertFalse(os.path.exists(self.marker()))
+        self.config.write("DX_CLI_WD", "/c")
+        self.assertEqual(self.saved_wd(self.conf_dir), "/c")
+        self.assertEqual(self.saved_wd(session_dir), "/c")
+
+    def test_read_user_conf_returns_global_values(self):
+        self.config.write("DX_CLI_WD", "/global")
+        self.config.set_session_only(True)
+        self.config.write("DX_CLI_WD", "/session")
+        self.assertEqual(self.config.read_user_conf()["DX_CLI_WD"], "/global")
+
+    def test_set_session_only_creates_private_conf_dir(self):
+        self.config.set_session_only(True)
+        self.assertTrue(os.path.exists(self.marker()))
+        self.assertEqual(stat.S_IMODE(os.stat(self.conf_dir).st_mode), 0o700)
+
+    def test_clear_removes_marker(self):
+        self.config.set_session_only(True)
+        self.config.clear()
+        self.assertFalse(os.path.exists(self.marker()))
 
 class TestPrettyPrint(unittest.TestCase):
     def test_flatten_json_array(self):

@@ -331,10 +331,38 @@ def _derive_read_only_token(parent_token, args):
     except DXError as e:
         err_exit("Login error: {}".format(_login_error_message(e, args)), arg_parser=parser)
 
-def login(args):
-    if not state['interactive']:
-        args.save = True
+def _global_login_is_read_only():
+    """Whether the saved global login was made with `dx login --read-only`."""
+    try:
+        return bool(json.loads(dxpy.config.read_user_conf()["DX_SECURITY_CONTEXT"]).get("read_only"))
+    except (KeyError, ValueError, AttributeError):
+        return False
 
+def _login_save_target(args):
+    """Where `dx login` saves: "global" (the session and the global login), "session" (the session only), or None (nothing, in `dx sh`)."""
+    if state['interactive']:
+        return "global" if args.save else None
+    if args.no_save:
+        return "session"
+    if args.save or args.token is not None:
+        return "global"
+    if args.read_only:
+        if INTERACTIVE_CLI and prompt_for_yn("Use this login in this terminal only?", default=True):
+            return "session"
+        return "global"
+    if not _global_login_is_read_only():
+        return "global"
+    if not INTERACTIVE_CLI:
+        print("Your saved login is read-only, so this login applies to this terminal only. "
+              "To use it everywhere, run dx login --save.", file=sys.stderr)
+        return "session"
+    if prompt_for_yn("Use this login in this terminal only?", default=True):
+        return "session"
+    if prompt_for_yn("Replace your saved read-only login globally?", default=False):
+        return "global"
+    return "session"
+
+def login(args):
     default_authserver = 'https://auth.dnanexus.com'
     using_default = False
 
@@ -365,7 +393,8 @@ def login(args):
                         username = input('Username [' + os.environ['DX_USERNAME'] + ']: ') or os.environ['DX_USERNAME']
                     else:
                         username = input('Username: ')
-                dxpy.config.write("DX_USERNAME", username)
+                # Saved together with the token below, once it is known where to save
+                dxpy.config["DX_USERNAME"] = username
                 password = getpass.getpass()
 
             otp = input('Verification code: ') if get_otp else None
@@ -406,7 +435,7 @@ def login(args):
         sec_context = {'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]}
 
         if using_default:
-            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
+            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, False)
     else:
         # Ensure correct API server; it is saved together with the token below
         if args.host is None:
@@ -417,6 +446,11 @@ def login(args):
             sec_context = {'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]}
         else:
             sec_context = {'auth_token': args.token, 'auth_token_type': 'Bearer'}
+
+    save_to = _login_save_target(args)
+    args.save = save_to is not None
+    if args.save:
+        dxpy.config.set_session_only(save_to == "session")
 
     if args.read_only:
         sec_context['read_only'] = True
@@ -436,10 +470,10 @@ def login(args):
             print("Could not obtain username from auth server. Consider setting both --host and --port.", file=sys.stderr)
             print(fill(str(details)), file=sys.stderr)
 
+    if username is not None:
+        dxpy.config["DX_USERNAME"] = username
     if args.save:
         dxpy.config.write("DX_SECURITY_CONTEXT", json.dumps(sec_context))
-    if username is not None:
-        dxpy.config.write("DX_USERNAME", username)
 
     if using_default or args.staging:
         try:
@@ -468,7 +502,8 @@ def login(args):
         pick_and_set_project(args)
 
     if args.save and not args.token:
-        print("You are now logged in{mode}.".format(mode=" with a read-only token" if args.read_only else ""))
+        print("You are now logged in{mode}{scope}.".format(mode=" with a read-only token" if args.read_only else "",
+                                                           scope=" (this terminal only)" if save_to == "session" else ""))
 
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
@@ -4513,8 +4548,8 @@ class SetStagingEnv(argparse.Action):
         setattr(namespace, 'port', '443')
         setattr(namespace, 'protocol', 'https')
         setattr(namespace, 'staging', True)
-        set_api(protocol='https', host='stagingapi.dnanexus.com', port='443',
-                write=(not state['interactive'] or namespace.save))
+        # Not written here: --save/--no-save may not be parsed yet. login() saves it with the token.
+        set_api(protocol='https', host='stagingapi.dnanexus.com', port='443', write=False)
 
 class PrintDXVersion(argparse.Action):
     # Prints to stdout instead of the default stderr that argparse
@@ -4665,8 +4700,12 @@ port_action = parser_login.add_argument('--port', type=int, help='Log into the g
 protocol_action = parser_login.add_argument('--protocol', help='Used in conjunction with host and port arguments, gives the protocol to use when contacting auth server', default='https')
 host_action.help = port_action.help = protocol_action.help = argparse.SUPPRESS
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
-parser_login.add_argument('--save', help='Save token and other environment variables for future sessions',
-                          action='store_true')
+login_save_group = parser_login.add_mutually_exclusive_group()
+login_save_group.add_argument('--save', action='store_true',
+                              help='Use this login everywhere, replacing your saved login (the default, except over a '
+                                   'saved read-only login)')
+login_save_group.add_argument('--no-save', dest='no_save', action='store_true',
+                              help='Use this login in this terminal only; keep your saved login')
 parser_login.add_argument('--timeout',
                           help='Timeout for this login token (in seconds, or use suffix s, m, h); default 18h, or the '
                                'parent token\'s expiration when deriving a read-only token')
