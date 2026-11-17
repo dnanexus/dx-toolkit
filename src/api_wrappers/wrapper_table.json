@@ -153,6 +153,15 @@
         }
     ],
     [
+        "/app-xxxx/recover",
+        "appRecover(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/running-analyses/apps#api-method-app-xxxx-yyyy-recover"
+        }
+    ],
+    [
         "/app-xxxx/removeAuthorizedUsers",
         "appRemoveAuthorizedUsers(req, objectId)",
         {
@@ -598,6 +607,15 @@
         }
     ],
     [
+        "/dbcluster-xxxx/recover",
+        "dbclusterRecover(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/introduction-to-data-object-classes/dbclusters#api-method-dbcluster-xxxx-recover"
+        }
+    ],
+    [
         "/dbcluster-xxxx/removeTags",
         "dbclusterRemoveTags(req, objectId)",
         {
@@ -902,6 +920,15 @@
             "objectMethod": true,
             "retryable": true,
             "wikiLink": "https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-publish"
+        }
+    ],
+    [
+        "/globalworkflow-xxxx/recover",
+        "globalWorkflowRecover(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/running-analyses/global-workflows#api-method-globalworkflow-xxxx-yyyy-recover"
         }
     ],
     [
@@ -1242,6 +1269,15 @@
         }
     ],
     [
+        "/project-xxxx/listRecycleBin",
+        "projectListRecycleBin(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-project-xxxx-listrecyclebin"
+        }
+    ],
+    [
         "/project-xxxx/move",
         "projectMove(req, objectId)",
         {
@@ -1257,6 +1293,24 @@
             "objectMethod": true,
             "retryable": true,
             "wikiLink": "https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-class-xxxx-newfolder"
+        }
+    ],
+    [
+        "/project-xxxx/purgeRecycleBinObjects",
+        "projectPurgeRecycleBinObjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-project-xxxx-purgerecyclebinobjects"
+        }
+    ],
+    [
+        "/project-xxxx/recoverObjects",
+        "projectRecoverObjects(req, objectId)",
+        {
+            "objectMethod": true,
+            "retryable": true,
+            "wikiLink": "https://documentation.dnanexus.com/developer/api/data-containers/folders-and-deletion#api-method-project-xxxx-recoverobjects"
         }
     ],
     [

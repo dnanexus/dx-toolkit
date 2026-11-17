@@ -120,6 +120,12 @@ environment variables:
 
    HTTPS proxy, in the form 'protocol://hostname:port'
 
+.. envvar:: NO_PROXY
+
+   Comma-separated list of hosts (or domain suffixes, e.g. '.example.com')
+   that are accessed directly, bypassing the proxy. '*' bypasses the proxy
+   for all hosts. The lowercase 'no_proxy' takes precedence if both are set.
+
 '''
 
 from __future__ import print_function, unicode_literals, division, absolute_import
@@ -147,6 +153,7 @@ from random import randint
 import urllib3
 from threading import Lock
 from urllib.parse import urlsplit
+from urllib.request import proxy_bypass_environment
 
 sequence_number_mutex = threading.Lock()
 counter = 0
@@ -209,6 +216,8 @@ _expected_exceptions = (exceptions.network_exceptions, exceptions.DXAPIError, Ba
 # access and make it thread safe.
 _pool_mutex = Lock()
 _pool_manager = None
+# Used instead of _pool_manager for hosts listed in NO_PROXY when a proxy is configured
+_direct_pool_manager = None
 
 def _get_proxy_info(url):
     proxy_info = {}
@@ -243,8 +252,25 @@ def _get_env_var_proxy(print_proxy=False):
           file=sys.stderr)
   return proxy
 
-def _get_pool_manager(verify, cert_file, key_file, ssl_context=None):
-    global _pool_manager
+def _should_bypass_proxy(url):
+    '''
+    Returns True if requests to *url* should not go through the proxy
+    because its host matches the NO_PROXY / no_proxy environment variable.
+    '''
+    try:
+        url_info = urlsplit(url)
+        host = url_info.hostname
+        if not host:
+            return False
+        if url_info.port:
+            host = '{0}:{1}'.format(host, url_info.port)
+        return bool(proxy_bypass_environment(host))
+    except ValueError:
+        return False
+
+def _get_pool_manager(verify, cert_file, key_file, ssl_context=None, bypass_proxy=False):
+    global _pool_manager, _direct_pool_manager
+    use_proxy = bool(_get_env_var_proxy()) and not bypass_proxy
     default_pool_args = dict(maxsize=32,
                              cert_reqs=ssl.CERT_REQUIRED,
                              headers=_default_headers,
@@ -257,8 +283,12 @@ def _get_pool_manager(verify, cert_file, key_file, ssl_context=None):
 
     if cert_file is None and verify is None and 'DX_CA_CERT' not in os.environ:
         with _pool_mutex:
+            if not use_proxy and _get_env_var_proxy():
+                if _direct_pool_manager is None:
+                    _direct_pool_manager = urllib3.PoolManager(**default_pool_args)
+                return _direct_pool_manager
             if _pool_manager is None:
-                if _get_env_var_proxy():
+                if use_proxy:
                     proxy_params = _get_proxy_info(_get_env_var_proxy(print_proxy=True))
                     default_pool_args.update(proxy_params)
                     _pool_manager = urllib3.ProxyManager(**default_pool_args)
@@ -276,7 +306,7 @@ def _get_pool_manager(verify, cert_file, key_file, ssl_context=None):
         if verify is False or os.environ.get('DX_CA_CERT') == 'NOVERIFY':
             pool_args.update(cert_reqs=ssl.CERT_NONE, ca_certs=None)
             urllib3.disable_warnings()
-        if _get_env_var_proxy():
+        if use_proxy:
             proxy_params = _get_proxy_info(_get_env_var_proxy(print_proxy=True))
             pool_args.update(proxy_params)
             return urllib3.ProxyManager(**pool_args)
@@ -581,6 +611,7 @@ def DXHTTPRequest(resource, data, method='POST', headers=None, auth=True,
         try:
             time_started = time.time()
             _method, _url, _headers = _process_method_url_headers(method, url, headers)
+            pool_args['bypass_proxy'] = _should_bypass_proxy(_url)
 
             _debug_print_request(_DEBUG, seq_num, time_started, _method, _url, _headers, jsonify_data, data)
 
