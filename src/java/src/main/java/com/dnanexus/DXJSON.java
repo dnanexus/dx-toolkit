@@ -41,7 +41,7 @@ import com.google.common.collect.Lists;
 public class DXJSON {
 
     private static final JsonFactory dxJsonFactory = new MappingJsonFactory();
-    private static ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private static final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     // Utility class should not be instantiated
     private DXJSON() {
