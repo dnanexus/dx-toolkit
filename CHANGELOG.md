@@ -6,6 +6,10 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Java bindings: `DXJSON.safeTreeToValue` (and therefore all `DXAPI` wrappers taking an output class) now ignores unknown properties in API responses instead of throwing `UnrecognizedPropertyException`
+
 ## [420.0] - beta
 
 ### Added
