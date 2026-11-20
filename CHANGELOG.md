@@ -6,6 +6,12 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Changed
+
+* Updated dependencies in dxpy
+  * Bumped `certifi` from `2024.7.4` to `2026.10.19`
+  * Bumped `pip` from `26.0` to `26.2.2`
+
 ## [420.0] - beta
 
 ### Added
