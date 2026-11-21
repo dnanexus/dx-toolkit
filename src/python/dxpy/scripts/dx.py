@@ -30,7 +30,8 @@ from ..compat import sys_encoding, basestring
 import dxpy
 from dxpy.scripts import dx_build_app
 from dxpy import workflow_builder
-from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound, DXCLIError
+from dxpy.exceptions import PermissionDenied, InvalidState, ResourceNotFound, DXCLIError, TokenScopeError
+from dxpy.bindings.auth import is_read_only_session
 
 from ..cli import try_call, prompt_for_yn, INTERACTIVE_CLI
 from ..cli import workflow as workflow_cli
@@ -311,6 +312,25 @@ class DXCLICompleter():
         else:
             return None
 
+def _is_read_only_scope_unsupported(e):
+    return isinstance(e, TokenScopeError)
+
+def _login_error_message(e, args):
+    if args.read_only and _is_read_only_scope_unsupported(e):
+        return "this auth server does not support --read-only"
+    return str(e)
+
+def _derive_read_only_token(parent_token, args):
+    try:
+        authserver = dxpy.get_auth_server_name(args.host, args.port, args.protocol)
+        token_input = {'scope': {'readOnly': True}}
+        if args.timeout is not None:
+            token_input['expires'] = normalize_time_input(args.timeout, future=True, default_unit='s')
+        return dxpy.DXHTTPRequest(authserver + "/system/newAuthToken", token_input, prepend_srv=False,
+                                  auth=dxpy.DXHTTPOAuth2({'auth_token': parent_token, 'auth_token_type': 'Bearer'}))
+    except DXError as e:
+        err_exit("Login error: {}".format(_login_error_message(e, args)), arg_parser=parser)
+
 def login(args):
     if not state['interactive']:
         args.save = True
@@ -352,12 +372,14 @@ def login(args):
             return dict(username=username, password=password, otp=otp)
 
         print('Acquiring credentials from ' + authserver)
+        token_input = {'expires': normalize_time_input(args.timeout or '18h', future=True, default_unit='s')}
+        if args.read_only:
+            token_input['scope'] = {'readOnly': True}
         attempt, using_otp, reuse = 1, False, None
         while attempt <= 3:
             try:
                 credentials = get_credentials(reuse=reuse, get_otp=using_otp)
-                token_res = get_token(expires=normalize_time_input(args.timeout, future=True, default_unit='s'),
-                                      **credentials)
+                token_res = get_token(**dict(token_input, **credentials))
                 break
             except (KeyboardInterrupt, EOFError):
                 err_exit()
@@ -377,37 +399,47 @@ def login(args):
                     else:
                         err_exit("Incorrect username and/or password", arg_parser=parser)
                 else:
-                    err_exit("Login error: {}".format(e), arg_parser=parser)
+                    err_exit("Login error: {}".format(_login_error_message(e, args)), arg_parser=parser)
             except Exception as e:
                 err_exit("Login error: {}".format(e), arg_parser=parser)
 
-        sec_context=json.dumps({'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]})
+        sec_context = {'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]}
 
         if using_default:
             set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
     else:
-        sec_context = '{"auth_token":"' + args.token + '","auth_token_type":"Bearer"}'
-        # Ensure correct API server
+        # Ensure correct API server; it is saved together with the token below
         if args.host is None:
-            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, args.save)
+            set_api(dxpy.DEFAULT_APISERVER_PROTOCOL, dxpy.DEFAULT_APISERVER_HOST, dxpy.DEFAULT_APISERVER_PORT, False)
             using_default = True
+        if args.read_only:
+            token_res = _derive_read_only_token(args.token, args)
+            sec_context = {'auth_token': token_res["access_token"], 'auth_token_type': token_res["token_type"]}
+        else:
+            sec_context = {'auth_token': args.token, 'auth_token_type': 'Bearer'}
 
-    os.environ['DX_SECURITY_CONTEXT'] = sec_context
-    dxpy.set_security_context(json.loads(sec_context))
-    if args.save:
-        dxpy.config.write("DX_SECURITY_CONTEXT", sec_context)
+    if args.read_only:
+        sec_context['read_only'] = True
+    os.environ['DX_SECURITY_CONTEXT'] = json.dumps(sec_context)
+    dxpy.set_security_context(sec_context)
 
     # If login via token, obtain current username from auth server.
+    username = None
     if args.token is not None:
         host, port = None, None
         if dxpy.APISERVER_HOST not in ['api.dnanexus.com', 'stagingapi.dnanexus.com']:
             host, port = args.host, args.port
         try:
-            dxpy.config.write("DX_USERNAME", dxpy.user_info(host, port)['username'])
+            username = dxpy.user_info(host, port)['username']
         except DXError as details:
             # Consider failure to obtain username to be a non-fatal error.
             print("Could not obtain username from auth server. Consider setting both --host and --port.", file=sys.stderr)
             print(fill(str(details)), file=sys.stderr)
+
+    if args.save:
+        dxpy.config.write("DX_SECURITY_CONTEXT", json.dumps(sec_context))
+    if username is not None:
+        dxpy.config.write("DX_USERNAME", username)
 
     if using_default or args.staging:
         try:
@@ -427,7 +459,7 @@ def login(args):
 
     args.current = False
     args.name = None
-    args.level = 'CONTRIBUTE'
+    args.level = _default_project_level()
     args.public = False
 
     if args.host is not None and not args.staging and not using_default:
@@ -436,13 +468,7 @@ def login(args):
         pick_and_set_project(args)
 
     if args.save and not args.token:
-        msg = "You are now logged in. Your credentials are stored in {conf_dir} and will expire in {timeout}. {tip}"
-        tip = "Use " + BOLD("dx login --timeout") + " to control the expiration date, or " + BOLD("dx logout") + \
-              " to end this session."
-        timeout = datetime.timedelta(seconds=normalize_time_input(args.timeout, default_unit='s') // 1000)
-        print(fill(msg.format(conf_dir=dxpy.config.get_user_conf_dir(),
-                              timeout=timeout,
-                              tip=tip)))
+        print("You are now logged in{mode}.".format(mode=" with a read-only token" if args.read_only else ""))
 
 def logout(args):
     if dxpy.AUTH_HELPER is not None:
@@ -505,6 +531,9 @@ def prompt_for_env_var(prompt_str, env_var_str):
         elif default is not None:
             return default
 
+
+def _default_project_level():
+    return 'VIEW' if is_read_only_session() else 'CONTRIBUTE'
 
 def pick_and_set_project(args):
     try:
@@ -597,7 +626,7 @@ def setenv(args):
         args.name = None
         args.public = False
         args.current = False
-        args.level = 'CONTRIBUTE'
+        args.level = _default_project_level()
         pick_and_set_project(args)
 
 def clearenv(args):
@@ -727,6 +756,8 @@ def select(args):
         cd(args)
         print("Selected project", split_unescaped(":", args.project)[0].replace("\\:", ":"))
     else:
+        if args.level is None:
+            args.level = _default_project_level()
         pick_and_set_project(args)
 
 def cd(args):
@@ -2548,6 +2579,8 @@ def find_projects(args):
     try_call(process_find_by_property_args, args)
     try_call(process_phi_param, args)
     try_call(process_external_upload_restricted_param, args)
+    if args.level is None and is_read_only_session():
+        args.level = 'VIEW'
 
     try:
         results = dxpy.find_projects(name=args.name, name_mode='glob',
@@ -4634,8 +4667,12 @@ host_action.help = port_action.help = protocol_action.help = argparse.SUPPRESS
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 parser_login.add_argument('--save', help='Save token and other environment variables for future sessions',
                           action='store_true')
-parser_login.add_argument('--timeout', default='18h',
-                          help='Timeout for this login token (in seconds, or use suffix s, m, h)')
+parser_login.add_argument('--timeout',
+                          help='Timeout for this login token (in seconds, or use suffix s, m, h); default 18h, or the '
+                               'parent token\'s expiration when deriving a read-only token')
+parser_login.add_argument('--read-only', action='store_true',
+                          help='Log in with a read-only token, which can view but not modify the platform. With '
+                               '--token, derive a read-only token from the given token')
 parser_login.add_argument('--staging', nargs=0, help=argparse.SUPPRESS, action=SetStagingEnv)
 parser_login.set_defaults(staging=False, func=login)
 register_parser(parser_login, categories='session')
@@ -4791,7 +4828,7 @@ register_parser(parser_pwd, categories='fs')
 # select
 #####################################
 parser_select = subparsers.add_parser('select', help='List and select a project to switch to',
-                                      description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions.  Use --public to see the list of public projects.',
+                                      description='Interactively list and select a project to switch to.  By default, only lists projects for which you have at least CONTRIBUTE permissions, or VIEW in a read-only session.  Use --public to see the list of public projects.',
                                       prog='dx select',
                                       parents=[env_args])
 select_project_action = parser_select.add_argument('project', help='Name or ID of a project to switch to; if not provided a list will be provided for you',
@@ -4799,7 +4836,8 @@ select_project_action = parser_select.add_argument('project', help='Name or ID o
 select_project_action.completer = DXPathCompleter(expected='project', include_current_proj=False)
 parser_select.add_argument('--name', help='Name of the project (wildcard patterns supported)')
 parser_select.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
-                           help='Minimum level of permissions expected', default='CONTRIBUTE')
+                           help='Minimum level of permissions expected; default VIEW in a read-only session, '
+                                'otherwise CONTRIBUTE')
 parser_select.add_argument('--public', help='Include ONLY public projects (will automatically set --level to VIEW)',
                            action='store_true')
 parser_select.set_defaults(func=select, save=False)
@@ -6222,7 +6260,7 @@ parser_find_projects = subparsers_find.add_parser(
 )
 parser_find_projects.add_argument('--name', help='Name of the project')
 parser_find_projects.add_argument('--level', choices=['VIEW', 'UPLOAD', 'CONTRIBUTE', 'ADMINISTER'],
-                                  help='Minimum level of permissions expected')
+                                  help='Minimum level of permissions expected; default VIEW in a read-only session')
 parser_find_projects.add_argument('--public',
                                   help='Include ONLY public projects (will automatically set --level to VIEW)',
                                   action='store_true')
