@@ -31,7 +31,7 @@ from ..utils.resolver import (resolve_existing_path, get_first_pos_of_char, is_p
 from ..exceptions import err_exit
 from . import try_call
 from dxpy.utils.printing import (fill)
-from dxpy.utils import pathmatch
+from dxpy.utils import pathmatch, has_windows_drive_prefix
 
 # Check if a program (wget, curl, etc.) is on the path, and
 # can be called.
@@ -158,10 +158,15 @@ def _rel2abs(path, project):
 
 
 def _download_files(files, destdir, args, dest_filename=None):
+    def sanitize_single_file_name(name):
+        if name in ("", ".", "..") or "\x00" in name or has_windows_drive_prefix(name):
+            err_exit(fill('Error: invalid remote file name "{name}" for local download path'.format(name=name)))
+        return name.replace('\\', '%5C').replace('/', '%2F')
+
     for project in files:
         for f in files[project]:
             file_desc = f['describe']
-            dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
+            dest = dest_filename or os.path.join(destdir, sanitize_single_file_name(file_desc['name']))
             download_one_file(project, file_desc, dest, args)
 
 

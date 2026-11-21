@@ -41,9 +41,26 @@ from . import dxfile, DXFile
 from .dxfile import FILE_REQUEST_TIMEOUT
 from ..exceptions import DXError, DXFileError, DXPartLengthMismatchError, DXChecksumMismatchError, DXIncompleteReadsError, err_exit
 from ..compat import md5_hasher
-from ..utils import response_iterator
+from ..utils import response_iterator, has_windows_drive_prefix
 import subprocess
 import concurrent.futures
+
+def _ensure_no_symlink_components(dest_root, candidate_path):
+    abs_dest_root = os.path.abspath(dest_root)
+    abs_candidate_path = os.path.abspath(candidate_path)
+    relative_path = os.path.relpath(abs_candidate_path, abs_dest_root)
+    if relative_path in (".", ""):
+        return
+
+    current_path = abs_dest_root
+    for path_component in relative_path.split(os.sep):
+        if path_component in ("", "."):
+            continue
+        current_path = os.path.join(current_path, path_component)
+        if os.path.lexists(current_path) and os.path.islink(current_path):
+            raise DXFileError(
+                "Refusing to write through symlinked destination path component '{}'".format(current_path)
+            )
 
 def open_dxfile(dxid, project=None, mode=None, read_buffer_size=dxfile.DEFAULT_BUFFER_SIZE):
     '''
@@ -784,9 +801,50 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
 
     def compose_local_dir(d, remote_folder, remote_subfolder):
         suffix = remote_subfolder[1:] if remote_folder == "/" else remote_subfolder[len(remote_folder) + 1:]
+        validate_remote_relative_path(suffix)
         if os.sep != '/':
             suffix = suffix.replace('/', os.sep)
         return os.path.join(d, suffix) if suffix != "" else d
+
+    def validate_remote_relative_path(path_value):
+        if path_value in ("", "."):
+            return
+        if path_value == "..":
+            raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+        if "\x00" in path_value:
+            raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+        if path_value.startswith("/") or path_value.startswith("\\") or has_windows_drive_prefix(path_value):
+            raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+        path_components = path_value.split("/")
+        for component in path_components:
+            if component in ("", ".", "..") or "\x00" in component or has_windows_drive_prefix(component):
+                raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+            if "\\" in component:
+                raise DXFileError("Invalid remote folder path: '{}'".format(path_value))
+
+    def is_within_destination(dest_root, candidate_path):
+        normalized_dest_root = os.path.normcase(os.path.realpath(dest_root))
+        normalized_candidate = os.path.normcase(os.path.realpath(candidate_path))
+        return normalized_candidate == normalized_dest_root or normalized_candidate.startswith(
+            normalized_dest_root + os.sep
+        )
+
+    def ensure_within_destination(dest_root, candidate_path):
+        if not is_within_destination(dest_root, candidate_path):
+            raise DXFileError(
+                "Refusing to write outside destination directory '{}'".format(dest_root)
+            )
+
+    def is_invalid_filename(name):
+        if name in ("", ".", ".."):
+            return True
+        if "\x00" in name:
+            return True
+        if os.path.isabs(name):
+            return True
+        if has_windows_drive_prefix(name):
+            return True
+        return "/" in name or "\\" in name
 
     normalized_folder = folder.strip()
     if normalized_folder != "/" and normalized_folder.endswith("/"):
@@ -802,7 +860,10 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
         raise DXFileError("Remote folder '{}' not found".format(normalized_folder))
     remote_folders.sort()
     for remote_subfolder in remote_folders:
-        ensure_local_dir(compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder))
+        local_dir = compose_local_dir(normalized_dest_dir, normalized_folder, remote_subfolder)
+        ensure_within_destination(normalized_dest_dir, local_dir)
+        _ensure_no_symlink_components(normalized_dest_dir, local_dir)
+        ensure_local_dir(local_dir)
 
     # Downloading files
     describe_input = dict(fields=dict(folder=True,
@@ -824,10 +885,14 @@ def download_folder(project, destdir, folder="/", overwrite=False, chunksize=dxf
 
     # Now it is safe, in both python 2 and 3, to iterate on the generator
     for remote_file in files_gen:
-        local_filename = os.path.join(compose_local_dir(normalized_dest_dir,
-                                                        normalized_folder,
-                                                        remote_file['describe']['folder']),
-                                      remote_file['describe']['name'])
+        local_dir = compose_local_dir(normalized_dest_dir, normalized_folder, remote_file['describe']['folder'])
+        ensure_within_destination(normalized_dest_dir, local_dir)
+        file_name = remote_file['describe']['name']
+        if is_invalid_filename(file_name):
+            raise DXFileError("Invalid remote file name: '{}'".format(file_name))
+        local_filename = os.path.join(local_dir, file_name)
+        ensure_within_destination(normalized_dest_dir, local_filename)
+        _ensure_no_symlink_components(normalized_dest_dir, local_filename)
         if os.path.exists(local_filename) and not overwrite:
             raise DXFileError(
                 "Destination file '{}' already exists but no overwrite option is provided".format(local_filename)

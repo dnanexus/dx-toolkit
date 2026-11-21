@@ -157,6 +157,10 @@ def string_buffer_length(buf):
     return buf_len
 
 
+def has_windows_drive_prefix(path):
+    return len(path) >= 2 and path[1] == ":" and path[0].isalpha()
+
+
 def normalize_time_input(t, future=False, default_unit='ms'):
     """
     :param default_unit: units of the input time *t*; must be one of "s" or
