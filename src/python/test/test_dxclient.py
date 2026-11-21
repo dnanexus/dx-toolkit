@@ -20,13 +20,14 @@
 from __future__ import print_function, unicode_literals, division, absolute_import
 
 import os, sys, unittest, json, tempfile, subprocess, shutil, re, base64, random, time
+import io
 import filecmp
 import shlex
 import stat
 import hashlib
 import collections
 import string
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout
 import pexpect
 import requests
 import textwrap
@@ -1372,6 +1373,57 @@ class TestDXClient(DXTestCase):
         error_regex = r"Request Time=\d{1,15}\.\d{0,8}, Request ID=\d{13}-\d{1,6}"
         with self.assertSubprocessFailure(stderr_regexp=error_regex, exit_code=3):
             run("dx api file-InvalidFileID describe")
+
+
+class TestDXLoginExpiryMessage(unittest.TestCase):
+    def _token_res(self, expires_in):
+        return {"access_token": "tok", "token_type": "bearer", "expires_in": expires_in,
+                "token_signature": "sig", "user_id": "user-alice"}
+
+    def _run_login(self, argv, token_res):
+        from dxpy.scripts import dx
+        args = dx.parser.parse_args(argv)
+        buf = io.StringIO()
+        with patch("dxpy.scripts.dx.dxpy.get_auth_server_name", return_value="https://auth.example.com"), \
+                patch("dxpy.scripts.dx.dxpy.DXHTTPRequest", return_value=token_res) as http_request, \
+                patch("builtins.input", return_value="alice"), \
+                patch("dxpy.scripts.dx.getpass.getpass", return_value="pw"), \
+                patch.object(dxpy.config, "write"), \
+                patch.object(dxpy.config, "get_user_conf_dir", return_value="/tmp/dxconf"), \
+                patch("dxpy.scripts.dx.dxpy.set_security_context"), \
+                patch("dxpy.scripts.dx.set_api"), \
+                patch("dxpy.scripts.dx.dxpy.user_info", return_value={"username": "alice"}), \
+                patch("dxpy.scripts.dx.dxpy.api.system_greet", return_value={}), \
+                patch.dict(os.environ, {}), \
+                redirect_stdout(buf):
+            dx.login(args)
+        return " ".join(buf.getvalue().split()), http_request
+
+    def test_login_message_uses_server_expires_in_when_capped(self):
+        out, _ = self._run_login(["login", "--save", "--noprojects", "--timeout", "30d"],
+                                 self._token_res(expires_in=64800))
+        self.assertIn("will expire in 18:00:00.", out)
+        self.assertNotIn("30 days", out)
+
+    def test_login_message_uses_server_expires_in_when_policy_is_stricter(self):
+        out, _ = self._run_login(["login", "--save", "--noprojects"],
+                                 self._token_res(expires_in=3600))
+        self.assertIn("will expire in 1:00:00.", out)
+
+    def test_login_still_requests_expiry_from_timeout(self):
+        before = int(time.time() * 1000)
+        _, http_request = self._run_login(["login", "--save", "--noprojects", "--timeout", "30d"],
+                                          self._token_res(expires_in=64800))
+        after = int(time.time() * 1000)
+        data = http_request.call_args[0][1]
+        thirty_days_ms = 30 * 24 * 60 * 60 * 1000
+        self.assertGreaterEqual(data["expires"], before + thirty_days_ms)
+        self.assertLessEqual(data["expires"], after + thirty_days_ms)
+
+    def test_login_with_empty_token_prints_no_expiry_message(self):
+        out, _ = self._run_login(["login", "--save", "--noprojects", "--token", ""],
+                                 self._token_res(expires_in=64800))
+        self.assertNotIn("will expire in", out)
 
 
 class TestDXNewRecord(DXTestCase):
