@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +41,7 @@ import com.google.common.collect.Lists;
 public class DXJSON {
 
     private static final JsonFactory dxJsonFactory = new MappingJsonFactory();
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     // Utility class should not be instantiated
     private DXJSON() {
@@ -270,6 +271,10 @@ public class DXJSON {
      * <p>
      * This is a wrapper around Jackson's {@code treeToValue} that suppresses
      * {@code JsonProcessingException} and rethrows it as an unchecked exception.
+     * </p>
+     *
+     * <p>
+     * Properties in {@code json} that do not exist on {@code valueType} are ignored.
      * </p>
      *
      * @param json JSON object
