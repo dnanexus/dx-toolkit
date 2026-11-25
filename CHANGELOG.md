@@ -6,6 +6,16 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 
 ## Unreleased
 
+### Added
+
+* `dx login --read-only` logs in with a read-only token, which can view but not modify the platform. It cannot be used with `--token`
+* Error messages for read-only tokens: an action a read-only token is not allowed to perform, read-only tokens not enabled yet, and an auth server that does not support `--read-only`
+
+### Changed
+
+* `dx login --read-only` lists projects at VIEW instead of CONTRIBUTE
+* `dx get` of an app or applet skips its resources when the user's billing account is not visible, for example in a read-only session
+
 ## [421.0] - beta
 
 ### Added

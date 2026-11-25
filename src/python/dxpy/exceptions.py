@@ -110,7 +110,7 @@ class TokenScopeError(DXAPIError):
 class ReadOnlyTokenError(DXAPIError):
     ''' Raised when a read-only token is used for an action that read-only tokens are not allowed to perform. '''
     def error_message(self):
-        return "this session is read-only; log in without --read-only to modify the platform"
+        return "this session is read-only. Log in without --read-only to modify the platform"
 
 class ReadOnlyTokensDisabled(DXAPIError):
     ''' Raised when a read-only token is requested that has not been enabled. '''

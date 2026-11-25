@@ -105,7 +105,7 @@ def login_api_error(error_class, message):
 
 
 class FakeAuthServer(object):
-    """Stands in for DXHTTPRequest; records each request and answers by route."""
+    """Stands in for DXHTTPRequest. Records each request and answers by route."""
 
     def __init__(self):
         self.requests = []
@@ -199,8 +199,7 @@ class TestDXLoginReadOnly(unittest.TestCase):
         self.assertEqual(mint["data"]["scope"], {"readOnly": True})
         self.assertEqual(mint["data"]["username"], "alice")
         self.assertIn("expires", mint["data"])
-        self.assertEqual(self.saved_security_context(),
-                         {"auth_token": "new-token", "auth_token_type": "bearer", "read_only": True})
+        self.assertEqual(self.saved_security_context(), {"auth_token": "new-token", "auth_token_type": "bearer"})
         self.assertIn("with a read-only token", stdout)
         self.assertEqual(self.picked_levels, ["VIEW"])
 
@@ -215,33 +214,19 @@ class TestDXLoginReadOnly(unittest.TestCase):
         self.assertNotIn("You are now logged in", stdout)
         self.assertEqual(self.picked_levels, ["CONTRIBUTE"])
 
-    def test_token_login_read_only_derives_child(self):
-        self.server.new_token_response = {"access_token": "child-token", "token_type": "bearer", "expires_in": 600}
-        exit_code, stdout, _ = self.login("--token", "parent-token", "--read-only")
-        self.assertIsNone(exit_code)
-        [mint] = self.server.calls_to("/system/newAuthToken")
-        self.assertEqual(mint["data"], {"scope": {"readOnly": True}})
-        self.assertEqual(mint["auth"].security_context["auth_token"], "parent-token")
-        [lookup] = self.server.calls_to("/system/getUserInfo")
-        self.assertEqual(lookup["data"], {})
-        self.assertEqual(self.saved_security_context(),
-                         {"auth_token": "child-token", "auth_token_type": "bearer", "read_only": True})
-        self.assertEqual(self.saved_username(), "alice")
-        self.assertEqual(self.picked_levels, ["VIEW"])
+    def test_token_login_read_only_is_rejected(self):
+        exit_code, _, stderr = self.login("--token", "user-token", "--read-only")
+        self.assertEqual(exit_code, 2)
+        self.assertIn("--read-only cannot be used with --token", stderr)
+        self.assertEqual(self.server.requests, [])
+        self.assertFalse(os.path.exists(os.path.join(self.conf_dir, "environment.json")))
 
-    def test_token_login_read_only_sends_explicit_timeout(self):
-        self.login("--token", "parent-token", "--read-only", "--timeout", "1h")
-        [mint] = self.server.calls_to("/system/newAuthToken")
-        self.assertIn("expires", mint["data"])
-
-    def test_failed_derivation_leaves_config_unchanged(self):
+    def test_read_only_tokens_disabled(self):
         self.server.new_token_error = login_api_error(dxpy.exceptions.ReadOnlyTokensDisabled,
                                                       "Read-only tokens are disabled")
-        exit_code, _, stderr = self.login("--token", "parent-token", "--read-only")
+        exit_code, _, stderr = self.login("--read-only")
         self.assertEqual(exit_code, EXPECTED_ERR_EXIT_STATUS)
         self.assertIn("read-only tokens are not enabled yet", stderr)
-        self.assertFalse(os.path.exists(os.path.join(self.conf_dir, "environment.json")))
-        self.assertEqual(self.server.calls_to("/system/getUserInfo"), [])
 
     def test_old_authserver_rejects_read_only_scope(self):
         self.server.new_token_error = login_api_error(
@@ -259,7 +244,7 @@ class TestDXLoginReadOnly(unittest.TestCase):
 
     def test_read_only_error_messages(self):
         self.assertEqual(login_api_error(dxpy.exceptions.ReadOnlyTokenError, "server text").error_message(),
-                         "this session is read-only; log in without --read-only to modify the platform")
+                         "this session is read-only. Log in without --read-only to modify the platform")
         self.assertEqual(login_api_error(dxpy.exceptions.ReadOnlyTokensDisabled, "server text").error_message(),
                          "read-only tokens are not enabled yet")
 
@@ -267,56 +252,15 @@ class TestDXLoginReadOnly(unittest.TestCase):
 class TestDXReadOnlySession(unittest.TestCase):
     """Checks commands other than "dx login" in a read-only session, with the API mocked."""
 
-    READ_ONLY_CONTEXT = {"auth_token": "child-token", "auth_token_type": "Bearer", "read_only": True}
-    FULL_CONTEXT = {"auth_token": "user-token", "auth_token_type": "Bearer"}
-
     def setUp(self):
         security_context_backup = dxpy.SECURITY_CONTEXT
         self.addCleanup(setattr, dxpy, "SECURITY_CONTEXT", security_context_backup)
-        self.picked_levels = []
-        picker = patch.object(dx_script, "pick_and_set_project",
-                              side_effect=lambda args: self.picked_levels.append(args.level))
-        picker.start()
-        self.addCleanup(picker.stop)
-
-    def run_dx(self, *argv):
-        args = dx_script.parser.parse_args(list(argv))
-        args.func(args)
 
     def test_whoami_calls_system_whoami_in_read_only_session(self):
         with patch("dxpy.api.DXHTTPRequest", return_value={"id": "user-alice", "readOnly": True}) as request:
-            dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
+            dxpy.SECURITY_CONTEXT = {"auth_token": "child-token", "auth_token_type": "Bearer"}
             self.assertEqual(dxpy.whoami(), "user-alice")
         self.assertEqual(request.call_args[0][:2], ("/system/whoami", {}))
-
-    def test_select_defaults_to_view_in_read_only_session(self):
-        dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
-        self.run_dx("select")
-        self.assertEqual(self.picked_levels, ["VIEW"])
-
-    def test_select_defaults_to_contribute_otherwise(self):
-        dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
-        self.run_dx("select")
-        self.assertEqual(self.picked_levels, ["CONTRIBUTE"])
-
-    def test_select_explicit_level_wins(self):
-        dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
-        self.run_dx("select", "--level", "UPLOAD")
-        self.assertEqual(self.picked_levels, ["UPLOAD"])
-
-    def test_setenv_projects_at_view_in_read_only_session(self):
-        dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
-        with patch.object(dxpy.config, "save"):
-            self.run_dx("setenv", "--current")
-        self.assertEqual(self.picked_levels, ["VIEW"])
-
-    def test_find_projects_defaults_to_view_only_in_read_only_session(self):
-        with patch("dxpy.find_projects", return_value=iter([])) as find:
-            dxpy.SECURITY_CONTEXT = self.READ_ONLY_CONTEXT
-            self.run_dx("find", "projects")
-            dxpy.SECURITY_CONTEXT = self.FULL_CONTEXT
-            self.run_dx("find", "projects")
-        self.assertEqual([c[1]["level"] for c in find.call_args_list], ["VIEW", None])
 
     def test_get_applet_skips_resources_without_bill_to(self):
         applet = dxpy.DXApplet("applet-" + "x" * 24)
