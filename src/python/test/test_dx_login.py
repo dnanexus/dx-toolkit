@@ -67,6 +67,8 @@ class FakeServer(HTTPServer):
     A fake API server and auth server on one local port, for the requests that
     "dx login" makes. Each request is kept in *requests* as a (path, body)
     pair. A path in *errors* gets that (status, content) response instead.
+    Setting *code_flow_enabled* to False refuses Code-flow sessions, as the
+    auth server does for an identity provider with Code flow turned off.
     """
 
     def __init__(self):
@@ -74,6 +76,7 @@ class FakeServer(HTTPServer):
         self.requests = []
         self.errors = {}
         self.sso_id = ""
+        self.code_flow_enabled = True
         self.otp_required = False
         self.expires_in = SSO_TOKEN["expires_in"]
         self.session_expires_in = 300
@@ -105,6 +108,10 @@ class FakeServer(HTTPServer):
                 return 401, {"error": {"type": "OTPRequiredError", "message": "Verification code required"}}
             return 200, PASSWORD_TOKEN
         if path == "/sso/initialize":
+            # Like the auth server, refused before a session is opened, and never for Loopback flow
+            if body["type"] == "code" and not self.code_flow_enabled:
+                return 403, {"error": {"type": "SSOCodeFlowDisabledError",
+                                       "message": "Code-based SSO sign-in is disabled for this identity provider."}}
             session_id = secrets.token_hex(12)
             self.sessions[session_id] = {
                 "challenge": body["codeChallenge"],

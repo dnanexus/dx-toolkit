@@ -213,9 +213,17 @@ def initialize_code(authserver, idp_id, challenge):
     """
     Starts an SSO code-flow session and returns the response ("sessionId",
     "expiresIn"). Never retried. Raises SSOUnavailable if the auth server does
-    not support SSO login.
+    not support SSO login, or if Code flow is turned off for the identity
+    provider.
     """
-    return _initialize(authserver, {"type": "code", "codeChallenge": challenge, "idpId": idp_id})
+    try:
+        return _initialize(authserver, {"type": "code", "codeChallenge": challenge, "idpId": idp_id})
+    except DXAPIError as e:
+        if e.name == "SSOCodeFlowDisabledError":
+            raise SSOUnavailable('Code-based SSO sign-in is disabled for your identity provider, and browser-based '
+                                 'sign-in is unavailable in this environment. Use the Profile page on the DNAnexus '
+                                 'website to create an API token, then run "dx login --token" to log in with it.')
+        raise
 
 
 def initialize_loopback(authserver, idp_id, challenge, redirect_url):

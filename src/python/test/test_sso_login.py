@@ -34,6 +34,7 @@ from dxpy_testutil import s256
 AUTHSERVER = "https://auth.dnanexus.com"
 REDIRECT_URL = "http://127.0.0.1:53682/callback"
 INVALID_CODE_MESSAGE = "Invalid one-time code. Enter the 8-character code shown in the browser."
+CODE_FLOW_DISABLED_MESSAGE = "Code-based SSO sign-in is disabled for this identity provider."
 TOKEN = {"access_token": "token", "token_type": "bearer", "expires_in": 64800,
          "token_signature": "signature", "user_id": "user-alice"}
 EXPIRES = 1800000000000
@@ -320,9 +321,21 @@ class TestInitializeCode(unittest.TestCase):
                                             'on the DNAnexus website to create an API token, then run "dx login '
                                             '--token" to log in with it.')
 
+    def test_code_flow_disabled(self):
+        error = api_error("SSOCodeFlowDisabledError", CODE_FLOW_DISABLED_MESSAGE, code=403)
+        with patch("dxpy.DXHTTPRequest", side_effect=error) as request:
+            with self.assertRaises(sso_login.SSOUnavailable) as cm:
+                sso_login.initialize_code(AUTHSERVER, "0oa123", "challenge")
+        self.assertEqual(str(cm.exception), 'Code-based SSO sign-in is disabled for your identity provider, and '
+                                            'browser-based sign-in is unavailable in this environment. Use the '
+                                            'Profile page on the DNAnexus website to create an API token, then run '
+                                            '"dx login --token" to log in with it.')
+        request.assert_called_once()
+
     @parameterized.expand([
         (api_error("ResourceNotFound", code=404),),
         (api_error("RateLimitConditional", code=429),),
+        (api_error("PermissionDenied", CODE_FLOW_DISABLED_MESSAGE, code=403),),
         (http_error("400 BAD REQUEST"),),
         (http_error("502 Bad Gateway"),),
     ])
