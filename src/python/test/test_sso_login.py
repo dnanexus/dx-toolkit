@@ -709,6 +709,21 @@ class TestRunSsoFlow(unittest.TestCase):
         run_code_flow.assert_called_once_with(AUTHSERVER, "0oa123", EXPIRES, "prompt", output)
         run_loopback_flow.assert_not_called()
 
+    def test_bind_failure_with_code_flow_disabled(self):
+        output = []
+        prompt = Mock()
+        error = api_error("SSOCodeFlowDisabledError", CODE_FLOW_DISABLED_MESSAGE, code=403)
+        with patch.object(sso_login, "find_local_browser", return_value=Mock()), \
+                patch.object(sso_login, "LoopbackListener", side_effect=OSError("address unavailable")), \
+                patch("dxpy.DXHTTPRequest", side_effect=error) as request:
+            with self.assertRaises(sso_login.SSOUnavailable):
+                sso_login.run_sso_flow(AUTHSERVER, "0oa123", EXPIRES, prompt, output.append)
+        # The fallback notice, then the error: no sign-in link and no code prompt
+        self.assertEqual(output, ["Could not start a local browser callback; using code-based sign-in."])
+        prompt.assert_not_called()
+        request.assert_called_once()
+        self.assertEqual(request.call_args[0][1]["type"], "code")
+
     def test_bound_listener_and_found_browser_are_passed_to_loopback_flow(self):
         listener = Mock(spec=sso_login.LoopbackListener)
         browser = Mock()

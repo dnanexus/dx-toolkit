@@ -402,6 +402,16 @@ class TestDXLogin(unittest.TestCase):
         self.assertNotIn("/sso/finalize", self._paths())
         self.assertNotIn("One-time code", dx_login.logfile_read.getvalue())
 
+    def test_sso_loopback_login_with_code_flow_disabled(self):
+        self.fake.code_flow_enabled = False
+        dx_login = self._start_loopback_sso()
+        self.assertEqual(self._exit_status(dx_login), 0)
+        # One Loopback session, and no Code-flow session is tried
+        self.assertEqual(self._paths(), ["/user/getSSOId", "/sso/initialize", ANY, "/sso/finalize"])
+        self.assertEqual(self.fake.requests[1][1]["type"], "loopback")
+        self.assertEqual(json.loads(self._saved("DX_SECURITY_CONTEXT")),
+                         {"auth_token": "sso-token", "auth_token_type": "bearer"})
+
     def test_sso_code_flow_without_browser(self):
         dx_login, code = self._start_code_sso()
         # Typed as the browser shows it
@@ -445,6 +455,23 @@ class TestDXLogin(unittest.TestCase):
         self.assertEqual(self._paths(), ["/user/getSSOId", "/sso/initialize"])
         # Shown once, not again as "Login error: ..."
         self.assertNotIn("Login error", dx_login.logfile_read.getvalue())
+
+    def test_sso_code_flow_disabled_without_browser(self):
+        self.fake.code_flow_enabled = False
+        self.fake.sso_id = SSO_ID
+        dx_login = self._spawn()
+        dx_login.expect("Username: ")
+        dx_login.sendline("alice")
+        dx_login.expect_exact("dxpy.cli.sso_login.SSOUnavailable: Code-based SSO sign-in is disabled for your "
+                              "identity provider")
+        self.assertEqual(self._exit_status(dx_login), EXPECTED_ERR_EXIT_STATUS)
+        # Not retried, and no other way of logging in is tried
+        self.assertEqual(self._paths(), ["/user/getSSOId", "/sso/initialize"])
+        self.assertEqual(self.fake.requests[1][1]["type"], "code")
+        output = dx_login.logfile_read.getvalue()
+        self.assertNotIn("/sso/authorize/", output)
+        self.assertNotIn("Password", output)
+        self.assertNotIn("Login error", output)
 
     def test_sso_finalize_not_retried(self):
         self.fake.errors["/sso/finalize"] = (500, {"error": {"type": "InternalError", "message": "Internal error"}})
