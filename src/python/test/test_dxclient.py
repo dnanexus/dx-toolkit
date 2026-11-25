@@ -40,6 +40,8 @@ import dxpy
 import dxpy.executable_builder
 import dxpy.workflow_builder
 from dxpy.scripts import dx_build_app
+from dxpy.scripts import dx as dx_script
+from dxpy.utils import executable_unbuilder
 from dxpy_testutil import (DXTestCase, DXTestCaseBuildApps, DXTestCaseBuildWorkflows, check_output, temporary_project,
                            select_project, cd, override_environment, generate_unique_username_email,
                            without_project_context, without_auth, as_second_user, chdir, run, DXCalledProcessError)
@@ -96,6 +98,192 @@ class TestDXPYImport(unittest.TestCase):
         """
         del sys.modules['dxpy.cli']
         from dxpy.cli import INTERACTIVE_CLI
+
+
+def login_api_error(error_class, message):
+    return error_class({"error": {"type": error_class.__name__, "message": message}}, 403)
+
+
+class FakeAuthServer(object):
+    """Stands in for DXHTTPRequest. Records each request and answers by route."""
+
+    def __init__(self):
+        self.requests = []
+        self.new_token_response = {"access_token": "new-token", "token_type": "bearer", "expires_in": 3600}
+        self.new_token_error = None
+        self.user_info_response = {"username": "alice"}
+
+    def __call__(self, resource, data, prepend_srv=True, auth=True, **kwargs):
+        self.requests.append({"resource": resource, "data": data, "auth": auth})
+        if resource.endswith("/system/newAuthToken"):
+            if self.new_token_error is not None:
+                raise self.new_token_error
+            return dict(self.new_token_response)
+        if resource.endswith("/system/getUserInfo"):
+            return dict(self.user_info_response)
+        raise AssertionError("Unexpected request to " + resource)
+
+    def calls_to(self, route):
+        return [r for r in self.requests if r["resource"].endswith(route)]
+
+
+class TestDXLoginReadOnly(unittest.TestCase):
+    """Runs "dx login" in process against a mocked auth server, so no platform login is needed."""
+
+    def setUp(self):
+        self.conf_dir = tempfile.mkdtemp()
+        self.environ_backup = os.environ.copy()
+        for var in list(os.environ):
+            if var.startswith("DX_"):
+                del os.environ[var]
+        os.environ["DX_USER_CONF_DIR"] = self.conf_dir
+        os.environ["DX_APISERVER_PROTOCOL"] = dxpy.DEFAULT_APISERVER_PROTOCOL
+        os.environ["DX_APISERVER_HOST"] = dxpy.DEFAULT_APISERVER_HOST
+        os.environ["DX_APISERVER_PORT"] = dxpy.DEFAULT_APISERVER_PORT
+        dxpy.config.__init__(suppress_warning=True)
+        dxpy.AUTH_HELPER, dxpy.SECURITY_CONTEXT = None, None
+
+        self.server = FakeAuthServer()
+        self.picked_levels = []
+        patches = [
+            patch("dxpy.DXHTTPRequest", self.server),
+            patch("dxpy.bindings.auth.DXHTTPRequest", self.server),
+            patch("dxpy.api.system_greet", return_value={}),
+            patch.object(dx_script, "pick_and_set_project", side_effect=lambda args: self.picked_levels.append(args.level)),
+            patch("builtins.input", return_value="alice"),
+            patch("getpass.getpass", return_value="secret"),
+        ]
+        for p in patches:
+            p.start()
+            self.addCleanup(p.stop)
+
+    def tearDown(self):
+        os.environ.clear()
+        os.environ.update(self.environ_backup)
+        dxpy.config.__init__(suppress_warning=True)
+        shutil.rmtree(self.conf_dir, ignore_errors=True)
+
+    def login(self, *argv):
+        args = dx_script.parser.parse_args(["login"] + list(argv))
+        with patch("sys.stdout", new_callable=io.StringIO) as stdout, \
+                patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            try:
+                args.func(args)
+                exit_code = None
+            except SystemExit as e:
+                exit_code = e.code
+        return exit_code, " ".join(stdout.getvalue().split()), " ".join(stderr.getvalue().split())
+
+    def saved_security_context(self):
+        with open(os.path.join(self.conf_dir, "environment.json")) as fd:
+            return json.loads(json.load(fd)["DX_SECURITY_CONTEXT"])
+
+    def saved_username(self):
+        with open(os.path.join(self.conf_dir, "DX_USERNAME")) as fd:
+            return fd.read()
+
+    def test_password_login_unchanged_without_read_only(self):
+        exit_code, stdout, _ = self.login()
+        self.assertIsNone(exit_code)
+        [mint] = self.server.calls_to("/system/newAuthToken")
+        self.assertNotIn("scope", mint["data"])
+        self.assertIn("expires", mint["data"])
+        self.assertEqual(self.saved_security_context(), {"auth_token": "new-token", "auth_token_type": "bearer"})
+        self.assertIn("You are now logged in.", stdout)
+        self.assertEqual(self.picked_levels, ["CONTRIBUTE"])
+
+    def test_password_login_read_only(self):
+        exit_code, stdout, _ = self.login("--read-only")
+        self.assertIsNone(exit_code)
+        [mint] = self.server.calls_to("/system/newAuthToken")
+        self.assertEqual(mint["data"]["scope"], {"readOnly": True})
+        self.assertEqual(mint["data"]["username"], "alice")
+        self.assertIn("expires", mint["data"])
+        self.assertEqual(self.saved_security_context(), {"auth_token": "new-token", "auth_token_type": "bearer"})
+        self.assertIn("with a read-only token", stdout)
+        self.assertEqual(self.picked_levels, ["VIEW"])
+
+    def test_token_login_unchanged_without_read_only(self):
+        exit_code, stdout, _ = self.login("--token", "user-token")
+        self.assertIsNone(exit_code)
+        self.assertEqual(self.server.calls_to("/system/newAuthToken"), [])
+        [lookup] = self.server.calls_to("/system/getUserInfo")
+        self.assertEqual(lookup["data"], {})
+        self.assertEqual(self.saved_security_context(), {"auth_token": "user-token", "auth_token_type": "Bearer"})
+        self.assertEqual(self.saved_username(), "alice")
+        self.assertNotIn("You are now logged in", stdout)
+        self.assertEqual(self.picked_levels, ["CONTRIBUTE"])
+
+    def test_token_login_read_only_is_rejected(self):
+        exit_code, _, stderr = self.login("--token", "user-token", "--read-only")
+        self.assertEqual(exit_code, 2)
+        self.assertIn("--read-only cannot be used with --token", stderr)
+        self.assertEqual(self.server.requests, [])
+        self.assertFalse(os.path.exists(os.path.join(self.conf_dir, "environment.json")))
+
+    def test_read_only_tokens_disabled(self):
+        self.server.new_token_error = login_api_error(dxpy.exceptions.ReadOnlyTokensDisabled,
+                                                      "Read-only tokens are disabled")
+        exit_code, _, stderr = self.login("--read-only")
+        self.assertEqual(exit_code, EXPECTED_ERR_EXIT_STATUS)
+        self.assertIn("read-only tokens are not enabled yet", stderr)
+
+    def test_old_authserver_rejects_read_only_scope(self):
+        self.server.new_token_error = login_api_error(
+            dxpy.exceptions.TokenScopeError,
+            "Error while processing requested token scope: Unexpected scope field readOnly")
+        exit_code, _, stderr = self.login("--read-only")
+        self.assertEqual(exit_code, EXPECTED_ERR_EXIT_STATUS)
+        self.assertIn("this auth server does not support --read-only", stderr)
+
+    def test_token_scope_error_without_read_only_is_not_remapped(self):
+        self.server.new_token_error = login_api_error(dxpy.exceptions.TokenScopeError, "Some other scope problem")
+        exit_code, _, stderr = self.login()
+        self.assertEqual(exit_code, EXPECTED_ERR_EXIT_STATUS)
+        self.assertNotIn("does not support --read-only", stderr)
+
+    def test_read_only_error_messages(self):
+        self.assertEqual(login_api_error(dxpy.exceptions.ReadOnlyTokenError, "server text").error_message(),
+                         "this session is read-only. Log in without --read-only to modify the platform")
+        self.assertEqual(login_api_error(dxpy.exceptions.ReadOnlyTokensDisabled, "server text").error_message(),
+                         "read-only tokens are not enabled yet")
+
+
+class TestDXReadOnlySession(unittest.TestCase):
+    """Checks commands other than "dx login" in a read-only session, with the API mocked."""
+
+    def setUp(self):
+        security_context_backup = dxpy.SECURITY_CONTEXT
+        self.addCleanup(setattr, dxpy, "SECURITY_CONTEXT", security_context_backup)
+
+    def test_whoami_calls_system_whoami_in_read_only_session(self):
+        with patch("dxpy.api.DXHTTPRequest", return_value={"id": "user-alice", "readOnly": True}) as request:
+            dxpy.SECURITY_CONTEXT = {"auth_token": "child-token", "auth_token_type": "Bearer"}
+            self.assertEqual(dxpy.whoami(), "user-alice")
+        self.assertEqual(request.call_args[0][:2], ("/system/whoami", {}))
+
+    def test_get_applet_skips_resources_without_bill_to(self):
+        applet = dxpy.DXApplet("applet-" + "x" * 24)
+        resource = {"name": "resources.tar.gz", "id": {"$dnanexus_link": "file-" + "y" * 24}}
+        info = {"name": "my_applet", "inputSpec": [], "outputSpec": [],
+                "runSpec": {"interpreter": "bash", "code": "main() { :; }",
+                            "bundledDependsByRegion": {"aws:us-east-1": [resource]}}}
+        work_dir = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, work_dir, ignore_errors=True)
+        with chdir(work_dir), \
+                patch.object(applet, "get", return_value=info), \
+                patch("dxpy.whoami", return_value="user-alice"), \
+                patch("dxpy.api.user_describe", return_value={"id": "user-alice"}), \
+                patch("dxpy.DXHTTPRequest") as request, \
+                patch("dxpy.utils.executable_unbuilder.download_dxfile") as download, \
+                patch("sys.stderr", new_callable=io.StringIO) as stderr:
+            executable_unbuilder._dump_app_or_applet(applet)
+            with open("dxapp.json") as fd:
+                dxapp_json = json.load(fd)
+        self.assertFalse(request.called)
+        self.assertFalse(download.called)
+        self.assertIn("Resources will not be downloaded", stderr.getvalue())
+        self.assertEqual(dxapp_json["regionalOptions"], {"aws:us-east-1": {"bundledDepends": [resource]}})
 
 
 class TestDXTestUtils(DXTestCase):
