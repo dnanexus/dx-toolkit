@@ -158,10 +158,40 @@ def _rel2abs(path, project):
 
 
 def _download_files(files, destdir, args, dest_filename=None):
+    def has_windows_drive_prefix(path):
+        return len(path) >= 2 and path[1] == ":" and path[0].isalpha()
+
+    def is_invalid_filename(name):
+        if name in ("", ".", ".."):
+            return True
+        if "\x00" in name:
+            return True
+        if os.path.isabs(name):
+            return True
+        if has_windows_drive_prefix(name):
+            return True
+        return "/" in name or "\\" in name
+
+    def is_within_destination(dest_root, candidate_path):
+        normalized_dest_root = os.path.normcase(os.path.realpath(dest_root))
+        normalized_candidate = os.path.normcase(os.path.realpath(candidate_path))
+        return normalized_candidate == normalized_dest_root or normalized_candidate.startswith(
+            normalized_dest_root + os.sep
+        )
+
     for project in files:
         for f in files[project]:
             file_desc = f['describe']
-            dest = dest_filename or os.path.join(destdir, file_desc['name'].replace('/', '%2F'))
+            if dest_filename is None:
+                if is_invalid_filename(file_desc['name']):
+                    err_exit(fill('Error: invalid remote file name "{name}" for local download path'
+                                  .format(name=file_desc['name'])))
+                dest = os.path.join(destdir, file_desc['name'])
+                if not is_within_destination(destdir, dest):
+                    err_exit(fill('Error: refusing to write outside destination directory "{path}"'
+                                  .format(path=destdir)))
+            else:
+                dest = dest_filename
             download_one_file(project, file_desc, dest, args)
 
 
