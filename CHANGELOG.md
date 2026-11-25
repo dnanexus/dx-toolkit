@@ -17,7 +17,8 @@ Categories for each release: Added, Changed, Deprecated, Removed, Fixed, Securit
 * `dx login --read-only` lists projects at VIEW instead of CONTRIBUTE
 * `dx get` of an app or applet skips its resources when the user's billing account is not visible, for example in a read-only session
 * `dx login --save` always replaces your saved login, including outside `dx sh`
-* `dx login --read-only` on a terminal asks whether to use the login in this terminal only, which is the default answer
+* `dx login` without `--token` uses the login in the current terminal only by default. On a terminal it asks first, and this terminal only is the default answer. Use `--save` to replace your saved login
+* `dx login --token` still saves globally by default, so scripts keep working. Use `--no-save` to keep the token in the current terminal only
 * `dx login --token` in `dx sh` saves the token only with `--save`
 
 ## [421.0] - beta

@@ -202,8 +202,8 @@ class TestDXLoginReadOnly(DXLoginTestCase):
         [mint] = self.server.calls_to("/system/newAuthToken")
         self.assertNotIn("scope", mint["data"])
         self.assertIn("expires", mint["data"])
-        self.assertEqual(self.saved_security_context(), {"auth_token": "new-token", "auth_token_type": "bearer"})
-        self.assertIn("You are now logged in.", stdout)
+        self.assertEqual(self.saved_session_security_context(), {"auth_token": "new-token", "auth_token_type": "bearer"})
+        self.assertIn("You are now logged in", stdout)
         self.assertEqual(self.picked_levels, ["CONTRIBUTE"])
 
     def test_password_login_read_only(self):
@@ -213,7 +213,7 @@ class TestDXLoginReadOnly(DXLoginTestCase):
         self.assertEqual(mint["data"]["scope"], {"readOnly": True})
         self.assertEqual(mint["data"]["username"], "alice")
         self.assertIn("expires", mint["data"])
-        self.assertEqual(self.saved_security_context(), {"auth_token": "new-token", "auth_token_type": "bearer"})
+        self.assertEqual(self.saved_session_security_context(), {"auth_token": "new-token", "auth_token_type": "bearer"})
         self.assertIn("with a read-only token", stdout)
         self.assertEqual(self.picked_levels, ["VIEW"])
 
@@ -324,20 +324,24 @@ class TestDXLoginSave(DXLoginTestCase):
         prompt.assert_not_called()
         self.assert_saved_globally("user-token")
 
-    def test_read_only_login_without_terminal_saves_globally(self):
+    def test_read_only_login_without_terminal_saves_to_session_only(self):
         self.seed_global_login(self.GLOBAL_CONTEXT)
+        before = self.global_bytes()
         with patch.object(dx_script, "prompt_for_yn") as prompt:
             self.login("--read-only")
         prompt.assert_not_called()
-        self.assert_saved_globally("new-token")
+        self.assert_saved_to_session_only("new-token", before)
 
-    def test_credentials_login_saves_globally(self):
+    def test_credentials_login_without_terminal_saves_to_session_only(self):
         self.seed_global_login(self.GLOBAL_CONTEXT)
+        before = self.global_bytes()
         with patch.object(dx_script, "prompt_for_yn") as prompt:
-            self.login()
+            exit_code, stdout, _ = self.login()
+        self.assertIsNone(exit_code)
         prompt.assert_not_called()
-        self.assert_saved_globally("new-token")
-        self.assertEqual(self.saved_username(), "alice")
+        self.assert_saved_to_session_only("new-token", before)
+        self.assertIn("You are now logged in (this terminal only).", stdout)
+        self.assertFalse(os.path.exists(os.path.join(self.conf_dir, "DX_USERNAME")))
 
     def login_on_terminal(self, *answers, argv=()):
         with patch.object(dx_script, "INTERACTIVE_CLI", True), \
@@ -358,11 +362,25 @@ class TestDXLoginSave(DXLoginTestCase):
         self.assertEqual(prompts, ["Use this login in this terminal only?"])
         self.assert_saved_globally("new-token")
 
-    def test_credentials_login_on_terminal_does_not_prompt(self):
+    def test_credentials_login_on_terminal_defaults_to_this_terminal(self):
         self.seed_global_login(self.GLOBAL_CONTEXT)
-        prompts = self.login_on_terminal(argv=[])
-        self.assertEqual(prompts, [])
+        before = self.global_bytes()
+        prompts = self.login_on_terminal(True)
+        self.assertEqual(prompts, ["Use this login in this terminal only?"])
+        self.assert_saved_to_session_only("new-token", before)
+
+    def test_credentials_login_on_terminal_can_save_globally(self):
+        self.seed_global_login(self.GLOBAL_CONTEXT)
+        prompts = self.login_on_terminal(False)
+        self.assertEqual(prompts, ["Use this login in this terminal only?"])
         self.assert_saved_globally("new-token")
+        self.assertEqual(self.saved_username(), "alice")
+
+    def test_save_and_no_save_never_prompt_on_terminal(self):
+        self.assertEqual(self.login_on_terminal(argv=["--save"]), [])
+        self.assert_saved_globally("new-token")
+        self.assertEqual(self.login_on_terminal(argv=["--no-save"]), [])
+        self.assertTrue(os.path.exists(self.marker()))
 
     def test_dx_sh_saves_only_with_save(self):
         with patch.dict(dx_script.state, {"interactive": True}):

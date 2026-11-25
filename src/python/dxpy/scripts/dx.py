@@ -325,10 +325,12 @@ def _login_save_target(args):
         return "global" if args.save else None
     if args.no_save:
         return "session"
-    if args.read_only and not args.save and INTERACTIVE_CLI and \
-            prompt_for_yn("Use this login in this terminal only?", default=True):
-        return "session"
-    return "global"
+    # --token defaults to --save, to keep non-interactive scripts working
+    if args.save or args.token is not None:
+        return "global"
+    if INTERACTIVE_CLI and not prompt_for_yn("Use this login in this terminal only?", default=True):
+        return "global"
+    return "session"
 
 def login(args):
     default_authserver = 'https://auth.dnanexus.com'
@@ -4669,9 +4671,11 @@ host_action.help = port_action.help = protocol_action.help = argparse.SUPPRESS
 parser_login.add_argument('--noprojects', dest='projects', help='Do not print available projects', action='store_false')
 login_save_group = parser_login.add_mutually_exclusive_group()
 login_save_group.add_argument('--save', action='store_true',
-                              help='Save the login settings so they can be used by other unrelated processes')
+                              help='Save the login settings so they can be used by other unrelated processes. The '
+                                   'default with --token')
 login_save_group.add_argument('--no-save', dest='no_save', action='store_true',
-                              help='Keep the login settings local to this session and its children')
+                              help='Keep the login settings local to this session and its children. The default '
+                                   'without --token')
 parser_login.add_argument('--timeout', default='18h',
                           help='Timeout for this login token (in seconds, or use suffix s, m, h), default 18h')
 parser_login.add_argument('--read-only', action='store_true',
