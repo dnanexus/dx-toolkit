@@ -62,9 +62,10 @@ class DXConfig(MutableMapping):
 
     To save (serialize) the value of a variable to a persistent dxpy
     configuration file, use ``dxpy.config.write(key, value)`` or
-    ``dxpy.config.save()`` after assigning variable values. To clear
-    the values in persistent dxpy configuration, use
-    ``dxpy.config.clear()``.
+    ``dxpy.config.save()`` after assigning variable values. Saved values
+    apply to the current terminal and to future sessions, or only to the
+    current terminal if it is marked session-only. To clear the values
+    in persistent dxpy configuration, use ``dxpy.config.clear()``.
     """
     CORE_VAR_NAMES = {"DX_APISERVER_HOST", "DX_APISERVER_PORT",
                       "DX_APISERVER_PROTOCOL", "DX_PROJECT_CONTEXT_ID",
@@ -83,6 +84,7 @@ class DXConfig(MutableMapping):
         "DX_CLI_WD": "/"
     }
     _global_conf_dir = "/etc/dnanexus"
+    SESSION_ONLY_MARKER = "session_only"
 
     def __init__(self, suppress_warning=False):
         """
@@ -277,9 +279,30 @@ class DXConfig(MutableMapping):
         self[item] = value
         self.save()
 
+    def set_session_only(self, session_only):
+        """
+        If *session_only* is True, marks the shell session so that later saves write only its session
+        configuration directory and leave ~/.dnanexus_config unchanged. If False, removes the mark.
+        """
+        session_conf_dir = self.get_session_conf_dir()
+        marker = os.path.join(session_conf_dir, self.SESSION_ONLY_MARKER)
+        if session_only:
+            # Create the user conf dir first so that makedirs does not leave it with default permissions
+            for conf_dir in (self._user_conf_dir, session_conf_dir):
+                try:
+                    os.makedirs(conf_dir, 0o700)
+                except OSError:
+                    pass
+            with _open_for_writing_with_permissions(marker, 0o600):
+                pass
+        else:
+            _remove_ignore_errors(marker)
+
     def save(self):
-        self._write_conf_dir(self._user_conf_dir)
-        self._write_conf_dir(self.get_session_conf_dir())
+        session_conf_dir = self.get_session_conf_dir()
+        if not os.path.exists(os.path.join(session_conf_dir, self.SESSION_ONLY_MARKER)):
+            self._write_conf_dir(self._user_conf_dir)
+        self._write_conf_dir(session_conf_dir)
         self._write_unsetenv(self._user_conf_dir)
 
     def _write_unsetenv(self, conf_dir):
