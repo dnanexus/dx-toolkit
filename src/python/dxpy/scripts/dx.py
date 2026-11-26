@@ -4752,7 +4752,7 @@ register_parser(parser_setenv, categories='other')
 # clearenv
 #####################################
 parser_clearenv = subparsers.add_parser('clearenv', help='Clears all environment variables set by dx',
-                                        description='Clears all environment variables set by dx.  More specifically, it removes local state stored in ~/.dnanexus_config/environment.  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
+                                        description='Clears all environment variables set by dx, for both this session and other terminals.  More specifically, it removes this session\'s settings and the saved login in ~/.dnanexus_config that other terminals use, even after "dx login --no-save".  Does not affect the environment variables currently set in your shell.', prog='dx clearenv')
 parser_clearenv.add_argument('--reset', help='Reset dx environment variables to empty values. Use this to avoid interference between multiple dx sessions when using shell environment variables.',
                              action='store_true')
 parser_clearenv.set_defaults(func=clearenv, interactive=False)
